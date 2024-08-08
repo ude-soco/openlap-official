@@ -1,5 +1,4 @@
 import {
-  AppBar,
   Grid,
   IconButton,
   ListItem,
@@ -12,8 +11,11 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import MuiAppBar from "@mui/material/AppBar";
+import { styled } from "@mui/material/styles";
 import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
+import FirstPageIcon from "@mui/icons-material/FirstPage";
 import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useContext, useState } from "react";
@@ -22,31 +24,83 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager.jsx";
 
-const NavBar = ({ message, moveTo, buttonLabel }) => {
+const drawerWidth = 280;
+const AppBar = styled(MuiAppBar, {
+  shouldForwardProp: (prop) => prop !== "open",
+})(({ theme, open }) => ({
+  transition: theme.transitions.create(["margin", "width"], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  ...(open && {
+    width: `calc(100% - ${drawerWidth}px)`,
+    marginLeft: `${drawerWidth}px`,
+    transition: theme.transitions.create(["margin", "width"], {
+      easing: theme.transitions.easing.easeOut,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  }),
+}));
+
+const NavBar = ({ openSidebar, toggleSidebar }) => {
   const { logout } = useContext(AuthContext);
   const { darkMode, toggleDarkMode } = useContext(CustomThemeContext);
   const navigate = useNavigate();
-  const [open, setOpen] = useState(true);
   const [menu, setMenu] = useState(null);
   return (
     <>
-      <AppBar position="fixed" elevation={1} open={open} color="inherit">
+      <AppBar
+        position="fixed"
+        elevation={1}
+        open={openSidebar}
+        sx={{ zIndex: 11, bgcolor: "openlapTheme.main" }}
+      >
         <Toolbar>
-          <Tooltip title="Open sidebar">
-            <IconButton color="primary">
+          <Tooltip
+            title={
+              <Typography variant="body2" sx={{ p: 1 }}>
+                Open sidebar
+              </Typography>
+            }
+          >
+            <IconButton
+              color="primary"
+              sx={{ mr: 2, ...(openSidebar && { display: "none" }) }}
+              onClick={toggleSidebar}
+              edge="start"
+            >
               <MenuIcon />
             </IconButton>
           </Tooltip>
-
           <Grid container justifyContent="space-between" alignItems="center">
             <Grid
               item
+              onClick={() => navigate("/dashboard")}
+              sx={{
+                cursor: "pointer",
+                height: 40,
+                ...(openSidebar && { display: "none" }),
+              }}
               component="img"
-              sx={{ height: 35, cursor: "pointer" }}
               src={OpenLAPLogo}
               alt="Soco logo"
-              onClick={() => navigate("/indicator")}
             />
+            <Tooltip
+              title={
+                <Typography variant="body2" sx={{ p: 1 }}>
+                  Hide sidebar
+                </Typography>
+              }
+            >
+              <IconButton
+                onClick={toggleSidebar}
+                color="primary"
+                sx={{ ...(!openSidebar && { display: "none" }) }}
+                edge="start"
+              >
+                <FirstPageIcon />
+              </IconButton>
+            </Tooltip>
 
             <Tooltip title={<Typography>Open settings</Typography>}>
               <IconButton
@@ -65,7 +119,7 @@ const NavBar = ({ message, moveTo, buttonLabel }) => {
               transformOrigin={{ vertical: "top", horizontal: "right" }}
             >
               <MenuItem sx={{ py: 1.5 }}>
-                <ListItemText sx={{ pr: 2 }}>Account Settings</ListItemText>
+                <ListItemText>Account Settings</ListItemText>
                 <ListItemIcon>
                   <PersonIcon color="primary" />
                 </ListItemIcon>
