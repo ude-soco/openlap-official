@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../../setup/app-context-manager/app-context-manager";
 import { useNavigate } from "react-router-dom";
 import OpenLAPLogo from "../../assets/brand/openlap-logo.svg";
@@ -16,13 +16,15 @@ import {
   MenuItem,
   Radio,
   RadioGroup,
+  FormHelperText,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import RoleTypes from "../../common/enums/role-types";
 import UniqueIdentifierTypes from "../../common/enums/unique-identifier-types";
+import { fetchLRSData, register } from "./register-api";
 
 const Register = () => {
-  const { register } = useContext(AuthContext);
+  const { api } = useContext(AuthContext);
   const [formFields, setFormFields] = useState({
     name: "",
     email: "",
@@ -38,9 +40,29 @@ const Register = () => {
     lrsId: "",
     uniqueIdentifier: "",
   });
+  const [lrsList, setLrsList] = useState([
+    {
+      title: "AAA",
+      lrsId: "",
+      uniqueIdentifierType: "",
+    },
+  ]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const lrsData = await fetchLRSData(api);
+        setLrsList(lrsData);
+      } catch (error) {
+        console.error("Failed to load LRS list", error);
+      }
+    };
+
+    loadData();
+  }, [api]);
 
   const handleFormFields = (event) => {
     const { name, value } = event.target;
@@ -62,7 +84,7 @@ const Register = () => {
       ...lrsConsumerRequest,
       [name]: value,
     }));
-    if (errors["lrsConsumerRequest." + name] !== "") {
+    if (errors?.["lrsConsumerRequest." + name] !== "") {
       setErrors(() => ({
         ...errors,
         ["lrsConsumerRequest." + name]: "",
@@ -77,7 +99,7 @@ const Register = () => {
       [name]: value,
     }));
 
-    if (errors["lrsProviderRequest." + name] !== "") {
+    if (errors?.["lrsProviderRequest." + name] !== "") {
       setErrors(() => ({
         ...errors,
         ["lrsProviderRequest." + name]: "",
@@ -87,6 +109,7 @@ const Register = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setLoading(true);
     if (formFields.role === RoleTypes.user) {
       handleRegister(lrsConsumerRequest, null);
     } else handleRegister(null, lrsProviderRequest);
@@ -95,6 +118,7 @@ const Register = () => {
   const handleRegister = async (lrsConsumerRequest, lrsProviderRequest) => {
     try {
       const response = await register(
+        api,
         formFields.name,
         formFields.email,
         formFields.password,
@@ -103,13 +127,15 @@ const Register = () => {
         lrsConsumerRequest,
         lrsProviderRequest
       );
-      if (response.status === 400) {
-        setErrors(() => response.data.errors);
-      }
+
       if (response.status === 201) {
         navigate("/login");
       }
     } catch (error) {
+      if (error.status === 400) {
+        setErrors(() => error.data.errors);
+        setLoading(false);
+      }
       console.error("Failed to register", error);
     }
   };
@@ -228,15 +254,33 @@ const Register = () => {
               {formFields.role === RoleTypes.user && (
                 <>
                   <Grid item xs={12}>
-                    <TextField
+                    <FormControl
                       fullWidth
-                      name="lrsId"
-                      label="LRS ID"
-                      placeholder="LRS ID"
                       error={Boolean(errors?.["lrsConsumerRequest.lrsId"])}
-                      helperText={errors?.["lrsConsumerRequest.lrsId"]}
-                      onChange={handleLrsConsumerRequest}
-                    />
+                    >
+                      <InputLabel id="lrs-select-label">
+                        Available LRS
+                      </InputLabel>
+                      <Select
+                        name="lrsId"
+                        value={lrsConsumerRequest.lrsId}
+                        label="LRS ID"
+                        onChange={handleLrsConsumerRequest}
+                      >
+                        {lrsList.map((lrs) => {
+                          return (
+                            <MenuItem key={lrs.lrsId} value={lrs.lrsId}>
+                              {lrs.title}
+                            </MenuItem>
+                          );
+                        })}
+                      </Select>
+                      {Boolean(errors?.["lrsConsumerRequest.lrsId"]) && (
+                        <FormHelperText color="error">
+                          {errors?.["lrsConsumerRequest.lrsId"]}
+                        </FormHelperText>
+                      )}
+                    </FormControl>
                   </Grid>
                   <Grid item xs={12}>
                     <TextField
@@ -271,11 +315,11 @@ const Register = () => {
                   </Grid>
                   <Grid item xs={12}>
                     <FormControl fullWidth>
-                      <InputLabel id="demo-simple-select-label">
+                      <InputLabel id="unique-type-select-label">
                         Unique Identifier Type
                       </InputLabel>
                       <Select
-                        labelId="demo-simple-select-label"
+                        labelId="unique-type-select-label"
                         name="uniqueIdentifierType"
                         value={lrsProviderRequest.uniqueIdentifierType}
                         label="Unique Identifier Type"
@@ -314,7 +358,7 @@ const Register = () => {
                       sx={{ cursor: "pointer" }}
                       variant="body2"
                     >
-                      {"Already have an account? Login"}
+                      {"Already have an account? Log in to your account"}
                     </Link>
                   </Grid>
                 </Grid>
