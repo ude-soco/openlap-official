@@ -20,7 +20,8 @@ import { SelectionContext } from "../../selection-panel";
 
 const Dataset = () => {
   const { api } = useContext(AuthContext);
-  const { indicatorQuery, setIndicatorQuery } = useContext(SelectionContext);
+  const { indicatorQuery, setIndicatorQuery, setLockedStep } =
+    useContext(SelectionContext);
   const [state, setState] = useState({
     openPanel: true,
     lrsList: [],
@@ -32,6 +33,14 @@ const Dataset = () => {
     setState((prevState) => ({
       ...prevState,
       openPanel: !prevState.openPanel,
+    }));
+  };
+
+  const handleUnlockFilters = () => {
+    handleTogglePanel();
+    setLockedStep((prevState) => ({
+      ...prevState,
+      filters: false,
     }));
   };
 
@@ -301,12 +310,26 @@ const Dataset = () => {
                   <Grid container spacing={1}>
                     {indicatorQuery.platforms?.map((platformName, index) => (
                       <Grid item key={index}>
-                        <Chip
-                          label={platformName}
-                          onDelete={() =>
-                            handleDeselectPlatformList(platformName)
+                        <Tooltip
+                          arrow
+                          title={
+                            indicatorQuery.activityTypes.length ? (
+                              <Typography variant="body2">
+                                Deselect the Activity types(s) from filters
+                                below in order to remove a platform.
+                              </Typography>
+                            ) : undefined
                           }
-                        />
+                        >
+                          <Chip
+                            label={platformName}
+                            onDelete={
+                              indicatorQuery.activityTypes.length
+                                ? undefined
+                                : () => handleDeselectPlatformList(platformName)
+                            }
+                          />
+                        </Tooltip>
                       </Grid>
                     ))}
                   </Grid>
@@ -320,7 +343,15 @@ const Dataset = () => {
         </AccordionDetails>
         <AccordionActions>
           <Grid container>
-            <Button variant="contained" fullWidth onClick={handleTogglePanel}>
+            <Button
+              variant="contained"
+              fullWidth
+              disabled={
+                !indicatorQuery.lrsStores.length ||
+                !indicatorQuery.platforms.length
+              }
+              onClick={handleUnlockFilters}
+            >
               Next
             </Button>
           </Grid>
