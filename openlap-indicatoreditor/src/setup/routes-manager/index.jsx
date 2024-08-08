@@ -1,11 +1,19 @@
 import React, { useContext } from "react";
-import { Route, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { AuthContext } from "../app-context-manager/app-context-manager";
 
-const PrivateRoute = ({ component: Component, ...rest }) => {
+const PrivateRoute = ({ component: Component, allowedRoles }) => {
   const { user } = useContext(AuthContext);
 
-  return user ? <Component /> : <Navigate to="/login" />;
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  if (!user.roles.some((role) => allowedRoles.includes(role))) {
+    return <Navigate to="/login" />;
+  }
+
+  return Component;
 };
 
 export default PrivateRoute;

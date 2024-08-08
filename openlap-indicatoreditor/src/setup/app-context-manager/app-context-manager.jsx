@@ -27,9 +27,9 @@ const AuthProvider = ({ children }) => {
     }
   }, [authTokens]);
 
-  const login = async (userEmail, password) => {
+  const login = async (email, password) => {
     const params = new URLSearchParams();
-    params.append("userEmail", userEmail);
+    params.append("userEmail", email);
     params.append("password", password);
 
     const response = await axios.post(BackendURL + "login", params, {
@@ -42,6 +42,36 @@ const AuthProvider = ({ children }) => {
     setAuthTokens(tokens);
     setUser(jwtDecode(tokens.access_token));
     localStorage.setItem("authTokens", JSON.stringify(tokens));
+  };
+
+  const register = async (
+    name,
+    email,
+    password,
+    confirmPassword,
+    role,
+    lrsConsumerRequest,
+    lrsProviderRequest
+  ) => {
+    const requestBody = {
+      name,
+      email,
+      password,
+      confirmPassword,
+      role,
+      lrsConsumerRequest,
+      lrsProviderRequest,
+    };
+
+    try {
+      const response = await axios.post(
+        BackendURL + "v1/register",
+        requestBody
+      );
+      return response;
+    } catch (e) {
+      return e.response;
+    }
   };
 
   const logout = () => {
@@ -102,7 +132,9 @@ const AuthProvider = ({ children }) => {
   );
 
   return (
-    <AuthContext.Provider value={{ authTokens, user, login, logout, api }}>
+    <AuthContext.Provider
+      value={{ authTokens, user, login, register, logout, api }}
+    >
       {children}
     </AuthContext.Provider>
   );
