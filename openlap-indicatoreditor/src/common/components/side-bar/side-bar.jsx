@@ -109,7 +109,7 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
         open={openSidebar}
         sx={{
           width: drawerWidth,
-          zIndex: openSidebar ? 3 : 0,
+          // zIndex: openSidebar ? 1 : 0,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
             width: drawerWidth,
