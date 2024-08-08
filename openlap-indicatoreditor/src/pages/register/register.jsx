@@ -225,7 +225,6 @@ const Register = () => {
                   onChange={handleFormFields}
                 />
               </Grid>
-
               <Grid item xs={12}>
                 <FormControl>
                   <FormLabel id="role-label">Choose role</FormLabel>
@@ -366,7 +365,8 @@ const Register = () => {
         </Grid>
       </Grid>
     </>
-  );
+  )
+    ;
 };
 
 export default Register;
