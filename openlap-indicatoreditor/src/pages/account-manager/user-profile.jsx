@@ -1,9 +1,9 @@
-import React, { useState, useContext, useEffect } from "react";
-import { AuthContext } from "../../setup/app-context-manager/app-context-manager";
-import { fetchUserData } from "./user-api";
+import React, {useContext, useEffect, useState} from "react";
+import {AuthContext} from "../../setup/auth-context-manager/auth-context-manager.jsx";
+import {fetchUserData} from "./user-api";
 
 const UserProfile = () => {
-  const { user, logout, api } = useContext(AuthContext);
+  const {logout, api} = useContext(AuthContext);
 
   const [data, setData] = useState(null);
 

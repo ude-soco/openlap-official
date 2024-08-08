@@ -1,5 +1,3 @@
-import axios from "axios";
-
 export const fetchLRSData = async (api) => {
   try {
     const response = await api.get("v1/register/lrs");

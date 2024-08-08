@@ -1,12 +1,12 @@
-import React, { useState, useContext } from "react";
-import { AuthContext } from "../../setup/app-context-manager/app-context-manager";
-import { useNavigate } from "react-router-dom";
+import React, {useContext, useState} from "react";
+import {AuthContext} from "../../setup/auth-context-manager/auth-context-manager.jsx";
+import {useNavigate} from "react-router-dom";
 import OpenLAPLogo from "../../assets/brand/openlap-logo.svg";
-import { Grid, Box, TextField, Typography, Link } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
+import {Grid, Link, TextField, Typography} from "@mui/material";
+import {LoadingButton} from "@mui/lab";
 
 const Login = () => {
-  const { login } = useContext(AuthContext);
+  const {login} = useContext(AuthContext);
   const [formFields, setFormFields] = useState({
     email: "",
     password: "",
@@ -27,7 +27,7 @@ const Login = () => {
   };
 
   const handleFormFields = (event) => {
-    const { name, value } = event.target;
+    const {name, value} = event.target;
     setFormFields(() => ({
       ...formFields,
       [name]: value,
@@ -40,13 +40,12 @@ const Login = () => {
         container
         sx={{
           position: "absolute",
-          top: "30%",
+          top: "40%",
           left: "50%",
           transform: "translate(-50%, -50%)",
           maxWidth: 500,
           p: 4,
         }}
-        component={Box}
         justifyContent="center"
         alignItems="center"
       >
@@ -54,7 +53,7 @@ const Login = () => {
           item
           xs={12}
           component="img"
-          sx={{ height: 50, mb: 3 }}
+          sx={{height: 50, mb: 3}}
           src={OpenLAPLogo}
           alt="Soco logo"
         />
@@ -99,6 +98,9 @@ const Login = () => {
                   fullWidth
                   loading={loading}
                   variant="contained"
+                  disabled={
+                    formFields.email === "" || formFields.password === ""
+                  }
                 >
                   <span>Login with email</span>
                 </LoadingButton>
@@ -113,7 +115,7 @@ const Login = () => {
                   <Grid item>
                     <Link
                       onClick={() => navigate("/register")}
-                      sx={{ cursor: "pointer" }}
+                      sx={{cursor: "pointer"}}
                       variant="body2"
                     >
                       {"Don't have an account? Create an account"}
