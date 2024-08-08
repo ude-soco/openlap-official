@@ -22,8 +22,16 @@ const SelectionPanel = () => {
     userQueryCondition: Condition.only_me,
   });
 
+  const [lockedStep, setLockedStep] = useState({
+    filters: true,
+    analysis: true,
+    visualization: true,
+  });
+
   return (
-    <SelectionContext.Provider value={{ indicatorQuery, setIndicatorQuery }}>
+    <SelectionContext.Provider
+      value={{ indicatorQuery, lockedStep, setIndicatorQuery, setLockedStep }}
+    >
       <Dataset />
       <Filters />
       <Analysis />
