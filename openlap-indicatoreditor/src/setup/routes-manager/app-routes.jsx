@@ -8,13 +8,20 @@ import UserProfile from "../../pages/account-manager/user-profile";
 import Login from "../../pages/login/login";
 import Register from "../../pages/register/register";
 import RoleTypes from "../../common/enums/role-types.js";
-import IndicatorEditorDashboard from "../../pages/indicator-editor/indicator-editor-dashboard.jsx";
 import { ThemeProvider } from "@mui/material/styles";
 import { CustomThemeContext } from "../theme-manager/theme-context-manager.jsx";
 import { AuthContext } from "../auth-context-manager/auth-context-manager.jsx";
 import NavBar from "../../common/components/nav-bar/nav-bar.jsx";
 import Sidebar from "../../common/components/side-bar/side-bar.jsx";
-import IndicatorEditor from "../../pages/indicator-editor/components/indicator-editor/indicator-editor.jsx";
+import IndicatorEditorDashboard from "../../pages/indicator-editor/dashboard/indicator-editor-dashboard.jsx";
+import IndicatorPool from "../../pages/indicator-editor/indicator-pool/indicator-pool.jsx";
+import IndicatorEditor from "../../pages/indicator-editor/editor/indicator-editor.jsx";
+import ISCCreator from "../../pages/isc-creator/creator/isc-creator.jsx";
+import ISCDashboard from "../../pages/isc-creator/dashboard/isc-dashboard.jsx";
+import ISCPool from "../../pages/isc-creator/isc-pool/isc-pool.jsx";
+import GQIDashboard from "../../pages/gqi-editor/dashboard/gqi-dashboard.jsx";
+import GQIEditor from "../../pages/gqi-editor/gqi-editor/gqi-editor.jsx";
+import GQIPool from "../../pages/gqi-editor/gqi-pool/gqi-pool.jsx";
 import { DrawerHeader } from "../../common/components/side-bar/side-bar.jsx";
 import Footer from "../../common/components/footer/footer.jsx";
 
@@ -64,9 +71,12 @@ const AppRoutes = () => {
               <NavBar openSidebar={openSidebar} toggleSidebar={toggleSidebar} />
             )}
             {Boolean(user) && <Sidebar openSidebar={openSidebar} />}
-            <Main open={openSidebar}>
-              <DrawerHeader />
-              <Grid container justifyContent="center">
+            <Grid container justifyContent="center">
+              <Main
+                open={openSidebar}
+                sx={{ maxWidth: "1920px", width: "100%" }}
+              >
+                <DrawerHeader />
                 <Paper
                   elevation={0}
                   sx={{
@@ -110,12 +120,80 @@ const AppRoutes = () => {
                           />
                         }
                       />
+                      <Route
+                        path="pool"
+                        element={
+                          <PrivateRoute
+                            component={<IndicatorPool />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                    </Route>
+                    <Route path="/isc">
+                      <Route
+                        index
+                        element={
+                          <PrivateRoute
+                            component={<ISCDashboard />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                      <Route
+                        path="creator"
+                        element={
+                          <PrivateRoute
+                            component={<ISCCreator />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                      <Route
+                        path="pool"
+                        element={
+                          <PrivateRoute
+                            component={<ISCPool />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                    </Route>
+
+                    <Route path="/gqi">
+                      <Route
+                        index
+                        element={
+                          <PrivateRoute
+                            component={<GQIDashboard />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                      <Route
+                        path="editor"
+                        element={
+                          <PrivateRoute
+                            component={<GQIEditor />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                      <Route
+                        path="pool"
+                        element={
+                          <PrivateRoute
+                            component={<GQIPool />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
                     </Route>
                   </Routes>
                 </Paper>
-              </Grid>
-              <Footer />
-            </Main>
+                <Footer />
+              </Main>
+            </Grid>
           </Box>
         </Router>
       </ThemeProvider>

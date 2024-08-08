@@ -56,6 +56,13 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
       icon: <AddchartIcon />,
       disabled: false,
     },
+    {
+      primary: "Pool of ISC",
+      secondary: "List of all ISCs",
+      navigate: "/isc/pool",
+      icon: <AddchartIcon />,
+      disabled: false,
+    },
   ];
 
   const gqiMenus = [
@@ -73,6 +80,13 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
       icon: <ListAltIcon />,
       disabled: false,
     },
+    {
+      primary: "Pool of Questions",
+      secondary: "Create Questions and associate Indicators",
+      navigate: "gqi/pool",
+      icon: <ListAltIcon />,
+      disabled: false,
+    },
   ];
 
   const indicatorMenus = [
@@ -87,6 +101,13 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
       primary: "Indicator Editor",
       secondary: "Create Basic, Composite, & Multi-level Indicator",
       navigate: "indicator/editor",
+      icon: <AddchartIcon />,
+      disabled: false,
+    },
+    {
+      primary: "Indicator Pool",
+      secondary: "List of all indicators",
+      navigate: "indicator/pool",
       icon: <AddchartIcon />,
       disabled: false,
     },
@@ -144,7 +165,6 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
                     sx={{ pl: 4 }}
                     onClick={() => {
                       navigate(menu.navigate);
-                      dispatch(setSidebarMenu(menu.navigate));
                     }}
                     key={index}
                     disabled={menu.disabled}
@@ -178,7 +198,6 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
                     sx={{ pl: 4 }}
                     onClick={() => {
                       navigate(menu.navigate);
-                      dispatch(setSidebarMenu(menu.navigate));
                     }}
                     key={index}
                     disabled={menu.disabled}
@@ -212,7 +231,6 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
                     sx={{ pl: 4 }}
                     onClick={() => {
                       navigate(menu.navigate);
-                      dispatch(setSidebarMenu(menu.navigate));
                     }}
                     key={index}
                     disabled={menu.disabled}
@@ -246,7 +264,6 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
                     sx={{ pl: 4 }}
                     onClick={() => {
                       navigate(menu.navigate);
-                      dispatch(setSidebarMenu(menu.navigate));
                     }}
                     key={index}
                     disabled={menu.disabled}
