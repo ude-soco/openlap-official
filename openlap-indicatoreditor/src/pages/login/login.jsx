@@ -61,7 +61,7 @@ const Login = () => {
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <Typography variant="h5" align="center" color="grey.700">
-              Sign in to your account
+              Log in to your account
             </Typography>
           </Grid>
           <Grid item xs={12}>

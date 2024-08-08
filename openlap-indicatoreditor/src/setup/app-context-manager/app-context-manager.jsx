@@ -44,36 +44,6 @@ const AuthProvider = ({ children }) => {
     localStorage.setItem("authTokens", JSON.stringify(tokens));
   };
 
-  const register = async (
-    name,
-    email,
-    password,
-    confirmPassword,
-    role,
-    lrsConsumerRequest,
-    lrsProviderRequest
-  ) => {
-    const requestBody = {
-      name,
-      email,
-      password,
-      confirmPassword,
-      role,
-      lrsConsumerRequest,
-      lrsProviderRequest,
-    };
-
-    try {
-      const response = await axios.post(
-        BackendURL + "v1/register",
-        requestBody
-      );
-      return response;
-    } catch (e) {
-      return e.response;
-    }
-  };
-
   const logout = () => {
     setAuthTokens(null);
     setUser(null);
@@ -132,9 +102,7 @@ const AuthProvider = ({ children }) => {
   );
 
   return (
-    <AuthContext.Provider
-      value={{ authTokens, user, login, register, logout, api }}
-    >
+    <AuthContext.Provider value={{ authTokens, user, login, logout, api }}>
       {children}
     </AuthContext.Provider>
   );
