@@ -1,12 +1,12 @@
-import React, { createContext, useState, useEffect } from "react";
-import { jwtDecode } from "jwt-decode";
+import React, {createContext, useEffect, useState} from "react";
+import {jwtDecode} from "jwt-decode";
 import axios from "axios";
 
 const AuthContext = createContext();
 
 const BackendURL = import.meta.env.VITE_BACKEND_URL;
 
-const AuthProvider = ({ children }) => {
+const AuthProvider = ({children}) => {
   const [authTokens, setAuthTokens] = useState(() => {
     const tokens = localStorage.getItem("authTokens");
     return tokens ? JSON.parse(tokens) : null;
@@ -102,10 +102,10 @@ const AuthProvider = ({ children }) => {
   );
 
   return (
-    <AuthContext.Provider value={{ authTokens, user, login, logout, api }}>
+    <AuthContext.Provider value={{authTokens, user, login, logout, api}}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export { AuthContext, AuthProvider };
+export {AuthContext, AuthProvider};

@@ -1,30 +1,29 @@
-import React, { useState, useContext, useEffect } from "react";
-import { AuthContext } from "../../setup/app-context-manager/app-context-manager";
-import { useNavigate } from "react-router-dom";
+import React, {useContext, useEffect, useState} from "react";
+import {AuthContext} from "../../setup/auth-context-manager/auth-context-manager.jsx";
+import {useNavigate} from "react-router-dom";
 import OpenLAPLogo from "../../assets/brand/openlap-logo.svg";
 import {
-  Grid,
-  Box,
-  TextField,
-  Typography,
-  Link,
   FormControl,
-  FormLabel,
   FormControlLabel,
+  FormHelperText,
+  FormLabel,
+  Grid,
   InputLabel,
-  Select,
+  Link,
   MenuItem,
   Radio,
   RadioGroup,
-  FormHelperText,
+  Select,
+  TextField,
+  Typography,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
+import {LoadingButton} from "@mui/lab";
 import RoleTypes from "../../common/enums/role-types";
 import UniqueIdentifierTypes from "../../common/enums/unique-identifier-types";
-import { fetchLRSData, register } from "./register-api";
+import {fetchLRSData, register} from "./register-api";
 
 const Register = () => {
-  const { api } = useContext(AuthContext);
+  const {api} = useContext(AuthContext);
   const [formFields, setFormFields] = useState({
     name: "",
     email: "",
@@ -65,7 +64,7 @@ const Register = () => {
   }, [api]);
 
   const handleFormFields = (event) => {
-    const { name, value } = event.target;
+    const {name, value} = event.target;
     setFormFields(() => ({
       ...formFields,
       [name]: value,
@@ -79,7 +78,7 @@ const Register = () => {
   };
 
   const handleLrsConsumerRequest = (event) => {
-    const { name, value } = event.target;
+    const {name, value} = event.target;
     setLrsConsumerRequest(() => ({
       ...lrsConsumerRequest,
       [name]: value,
@@ -93,7 +92,7 @@ const Register = () => {
   };
 
   const handleLrsProviderRequest = (event) => {
-    const { name, value } = event.target;
+    const {name, value} = event.target;
     setLrsProviderRequest(() => ({
       ...lrsProviderRequest,
       [name]: value,
@@ -152,7 +151,6 @@ const Register = () => {
           maxWidth: 500,
           p: 4,
         }}
-        component={Box}
         justifyContent="center"
         alignItems="center"
       >
@@ -160,7 +158,7 @@ const Register = () => {
           item
           xs={12}
           component="img"
-          sx={{ height: 50, mb: 3 }}
+          sx={{height: 50, mb: 3}}
           src={OpenLAPLogo}
           alt="Soco logo"
         />
@@ -240,12 +238,12 @@ const Register = () => {
                   >
                     <FormControlLabel
                       value={RoleTypes.user}
-                      control={<Radio />}
+                      control={<Radio/>}
                       label="User"
                     />
                     <FormControlLabel
                       value={RoleTypes["data provider"]}
-                      control={<Radio />}
+                      control={<Radio/>}
                       label="Data Provider"
                     />
                   </RadioGroup>
@@ -355,7 +353,7 @@ const Register = () => {
                   <Grid item>
                     <Link
                       onClick={() => navigate("/login")}
-                      sx={{ cursor: "pointer" }}
+                      sx={{cursor: "pointer"}}
                       variant="body2"
                     >
                       {"Already have an account? Log in to your account"}
