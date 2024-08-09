@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useContext } from "react";
 import {
   Chip,
   Grid,
@@ -10,8 +10,7 @@ import {
 } from "@mui/material";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { SelectionContext } from "../../../selection-panel";
-import { fetchActivitiesList } from "../filters-api";
-import { getLastWordAndCapitalize } from "../../../utils/utils";
+import { fetchActivitiesList } from "../utils/filters-api";
 
 const Activities = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
