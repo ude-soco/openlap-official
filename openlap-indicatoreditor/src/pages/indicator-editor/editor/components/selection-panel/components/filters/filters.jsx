@@ -2,29 +2,34 @@ import { useEffect, useState, useContext } from "react";
 import {
   Accordion,
   AccordionSummary,
-  AccordionActions,
   Chip,
-  Button,
-  ListItemText,
   AccordionDetails,
   Grid,
   Typography,
-  TextField,
-  Autocomplete,
-  Divider,
   Tooltip,
+  FormControl,
+  Divider,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockIcon from "@mui/icons-material/Lock";
 import IconButton from "@mui/material/IconButton";
-import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { SelectionContext } from "../../selection-panel";
-import { fetchActivityTypesList } from "./filters-api";
 import { getLastWordAndCapitalize } from "../../utils/utils";
+import ActivityTypes from "./components/activity-types";
+import Activities from "./components/activities";
+import ActionOnActivities from "./components/action-on-activities";
+import Condition from "../../utils/condition";
+import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs from "dayjs";
 
 const Filters = () => {
-  const { api } = useContext(AuthContext);
-  const { indicatorQuery, lockedStep, setIndicatorQuery, setLockedStep } =
+  const { indicatorQuery, setIndicatorQuery, lockedStep } =
     useContext(SelectionContext);
   const [state, setState] = useState({
     openPanel: false,
@@ -48,73 +53,30 @@ const Filters = () => {
     }));
   }, [lockedStep.filters]);
 
-  useEffect(() => {
-    const loadActivityTypesData = async () => {
-      try {
-        const activityTypesData = await fetchActivityTypesList(
-          api,
-          indicatorQuery.lrsStores,
-          indicatorQuery.platforms
-        );
-        setState((prevState) => ({
-          ...prevState,
-          activityTypesList: activityTypesData.filter(
-            (activityType) =>
-              !indicatorQuery.activityTypes.includes(activityType.id)
-          ),
-        }));
-      } catch (error) {
-        console.log("Failed to load Activity types list", error);
-      }
-    };
-
-    if (indicatorQuery.platforms.length) {
-      loadActivityTypesData();
-    }
-  }, [indicatorQuery.platforms.length > 0]);
-
-  const handleSelectActivityTypes = (selectedActivityType) => {
-    setState((prevState) => ({
-      ...prevState,
-      activityTypesList: prevState.activityTypesList.filter(
-        (item) => item.id !== selectedActivityType.id
-      ),
-      autoCompleteValue: null,
-    }));
-
-    setIndicatorQuery((prevState) => {
-      let tempActivityTypes = [
-        ...prevState.activityTypes,
-        selectedActivityType.id,
-      ];
-      return {
-        ...prevState,
-        activityTypes: tempActivityTypes,
-      };
-    });
-  };
-
-  const handleDeselectActivityTypes = (selectedActivityType) => {
-    setState((prevState) => {
-      let tempActivityType = {
-        id: selectedActivityType,
-        name: getLastWordAndCapitalize(selectedActivityType),
-      };
-      return {
-        ...prevState,
-        activityTypesList: [
-          ...prevState.activityTypesList,
-          tempActivityType,
-        ].sort((a, b) => a.name.localeCompare(b.name)),
-        autoCompleteValue: null,
-      };
-    });
-
+  const handleUpdateUserData = (event) => {
     setIndicatorQuery((prevState) => ({
       ...prevState,
-      activityTypes: prevState.activityTypes.filter(
-        (item) => item !== selectedActivityType
-      ),
+      userQueryCondition: event.target.value,
+    }));
+  };
+
+  const handleUpdateStartDate = (value) => {
+    setIndicatorQuery((prevState) => ({
+      ...prevState,
+      duration: {
+        ...prevState.duration,
+        from: value.toISOString(),
+      },
+    }));
+  };
+
+  const handleUpdateEndDate = (value) => {
+    setIndicatorQuery((prevState) => ({
+      ...prevState,
+      duration: {
+        ...prevState.duration,
+        until: value.toISOString(),
+      },
     }));
   };
 
@@ -185,20 +147,14 @@ const Filters = () => {
                       </Grid>
                       <Grid item md>
                         <Grid container spacing={1} alignItems="center">
-                          <Grid item>
-                            <Chip label="Activity 1" />
-                          </Grid>
-                          <Grid item>
-                            <Chip label="Activity 2" />
-                          </Grid>
-                          <Grid item>
-                            <Typography
-                              variant="body2"
-                              sx={{ fontStyle: "italic" }}
-                            >
-                              17 more ...
-                            </Typography>
-                          </Grid>
+                          {Object.values(indicatorQuery.activities)?.map(
+                            (array) =>
+                              array.map((activity, index) => (
+                                <Grid item key={index}>
+                                  <Chip label={activity} />
+                                </Grid>
+                              ))
+                          )}
                         </Grid>
                       </Grid>
                     </Grid>
@@ -215,20 +171,15 @@ const Filters = () => {
                       </Grid>
                       <Grid item>
                         <Grid container spacing={1} alignItems="center">
-                          <Grid item>
-                            <Chip label="Annotated" />
-                          </Grid>
-                          <Grid item>
-                            <Chip label="Replied" />
-                          </Grid>
-                          <Grid item>
-                            <Typography
-                              variant="body2"
-                              sx={{ fontStyle: "italic" }}
-                            >
-                              7 more ...
-                            </Typography>
-                          </Grid>
+                          {indicatorQuery.actionOnActivities?.map(
+                            (action, index) => (
+                              <Grid item key={index}>
+                                <Chip
+                                  label={getLastWordAndCapitalize(action)}
+                                />
+                              </Grid>
+                            )
+                          )}
                         </Grid>
                       </Grid>
                     </Grid>
@@ -237,33 +188,33 @@ const Filters = () => {
 
                 {/* Date Range */}
 
-                {indicatorQuery.duration.from.length !== 0 &&
-                  indicatorQuery.duration.until.length !== 0 && (
-                    <Grid item xs={12}>
-                      <Grid container alignItems="center" spacing={1}>
-                        <Grid item>
-                          <Typography>Date Range:</Typography>
-                        </Grid>
-                        <Grid item sm>
-                          <Grid container spacing={1}>
-                            <Tooltip title="10/02/2023 (From)" arrow>
-                              <Grid item>
-                                <Chip label="10/02/2023" />
+                {!lockedStep.filters && (
+                  <Grid item xs={12}>
+                    <Grid container alignItems="center" spacing={1}>
+                      <Grid item>
+                        <Typography>Date Range:</Typography>
+                      </Grid>
+                      <Grid item sm>
+                        <Grid container spacing={1}>
+                          {Object.entries(indicatorQuery.duration).map(
+                            ([key, value]) => (
+                              <Grid item key={key}>
+                                <Chip
+                                  label={`${key}: ${dayjs(value).format(
+                                    "YYYY-MM-DD"
+                                  )}`}
+                                />
                               </Grid>
-                            </Tooltip>
-                            <Tooltip title="20/02/2024 (Until)" arrow>
-                              <Grid item>
-                                <Chip label="20/02/2024" />
-                              </Grid>
-                            </Tooltip>
-                          </Grid>
+                            )
+                          )}
                         </Grid>
                       </Grid>
                     </Grid>
-                  )}
+                  </Grid>
+                )}
 
                 {/* Users */}
-                {indicatorQuery.outputs.length !== 0 && (
+                {!lockedStep.filters && (
                   <Grid item xs={12}>
                     <Grid container alignItems="center" spacing={1}>
                       <Grid item>
@@ -272,7 +223,16 @@ const Filters = () => {
                       <Grid item xs>
                         <Grid container spacing={1}>
                           <Grid item>
-                            <Chip label="Only me" />
+                            <Chip
+                              label={
+                                indicatorQuery.userQueryCondition ===
+                                Condition.only_me
+                                  ? "Use only my data"
+                                  : Condition.exclude_me
+                                  ? "Exclude my data"
+                                  : "Include all data"
+                              }
+                            />
                           </Grid>
                         </Grid>
                       </Grid>
@@ -286,78 +246,77 @@ const Filters = () => {
         <AccordionDetails>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <Autocomplete
-                disablePortal
-                id="combo-box-lrs"
-                options={state.activityTypesList}
-                fullWidth
-                getOptionLabel={(option) => option.name}
-                value={state.autoCompleteValue}
-                renderOption={(props, option) => (
-                  <li {...props} key={option.id}>
-                    <Grid container>
-                      <Grid item xs={12}>
-                        <Typography>{option.name}</Typography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="body2">{option.id}</Typography>
-                      </Grid>
-                    </Grid>
-                  </li>
-                )}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    placeholder="*Search for Activity types"
-                  />
-                )}
-                onChange={(event, value) => {
-                  if (value) handleSelectActivityTypes(value);
-                }}
-              />
+              <ActivityTypes state={state} setState={setState} />
             </Grid>
-
             <Grid item xs={12}>
-              <Grid container spacing={1}>
+              <Activities state={state} setState={setState} />
+            </Grid>
+            <Grid item xs={12}>
+              <ActionOnActivities state={state} setState={setState} />
+            </Grid>
+            <Grid item xs={12}>
+              <Grid container spacing={4}>
                 <Grid item xs={12}>
-                  <Typography>Selected Activity type(s)</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Grid container spacing={1}>
-                    {indicatorQuery.activityTypes?.map(
-                      (activityType, index) => (
-                        <Grid item key={index}>
-                          <Tooltip
-                            arrow
-                            title={
-                              indicatorQuery.activities.length ? (
-                                <Typography variant="body2">
-                                  Deselect the activities(s) below in order to
-                                  remove a activity type.
-                                </Typography>
-                              ) : undefined
-                            }
-                          >
-                            <Chip
-                              label={getLastWordAndCapitalize(activityType)}
-                              onDelete={
-                                indicatorQuery.activities.length
-                                  ? undefined
-                                  : () =>
-                                      handleDeselectActivityTypes(activityType)
-                              }
-                            />
-                          </Tooltip>
-                        </Grid>
-                      )
-                    )}
+                  <Typography gutterBottom>Date range</Typography>
+                  {/* Date range */}
+                  <Grid container spacing={2}>
+                    <Grid item>
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DemoContainer components={["DatePicker"]}>
+                          <DatePicker
+                            label="Start date"
+                            value={dayjs(indicatorQuery.duration.from)}
+                            maxDate={dayjs(indicatorQuery.duration.until)}
+                            fullWidth
+                            onChange={(value) => handleUpdateStartDate(value)}
+                          />
+                        </DemoContainer>
+                      </LocalizationProvider>
+                    </Grid>
+                    <Grid item>
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DemoContainer components={["DatePicker"]}>
+                          <DatePicker
+                            label="End date"
+                            value={dayjs(indicatorQuery.duration.until)}
+                            minDate={dayjs(indicatorQuery.duration.from)}
+                            fullWidth
+                            onChange={(value) => handleUpdateEndDate(value)}
+                          />
+                        </DemoContainer>
+                      </LocalizationProvider>
+                    </Grid>
                   </Grid>
                 </Grid>
+                <Grid item xs={12}>
+                  <Typography>Users</Typography>
+                  <FormControl>
+                    <RadioGroup
+                      row
+                      aria-labelledby="radio-buttons-group-role-label"
+                      name="role"
+                      value={indicatorQuery.userQueryCondition}
+                      onChange={handleUpdateUserData}
+                    >
+                      <FormControlLabel
+                        value={Condition.only_me}
+                        control={<Radio />}
+                        label="Use only my data"
+                      />
+                      <FormControlLabel
+                        value={Condition.exclude_me}
+                        control={<Radio />}
+                        label="Exclude my data"
+                      />
+                      <FormControlLabel
+                        value={Condition.all}
+                        control={<Radio />}
+                        label="Include all data"
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                </Grid>
               </Grid>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Divider />
             </Grid>
           </Grid>
         </AccordionDetails>

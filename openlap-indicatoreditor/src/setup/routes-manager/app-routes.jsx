@@ -80,7 +80,7 @@ const AppRoutes = () => {
                 <Paper
                   elevation={0}
                   sx={{
-                    height: "100vh",
+                    minHeight: "100vh",
                     p: 2,
                     width: "100%",
                   }}

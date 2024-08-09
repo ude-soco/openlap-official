@@ -8,7 +8,7 @@ const main = blue[700];
 const main2 = orange[500];
 
 const CustomThemeProvider = ({ children }) => {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
 
   const toggleDarkMode = () => {
     setDarkMode((prevState) => !prevState);

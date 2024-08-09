@@ -220,6 +220,7 @@ const Dataset = () => {
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <Autocomplete
+                autoFocus
                 disablePortal
                 id="combo-box-lrs"
                 options={state.lrsList}
@@ -279,26 +280,41 @@ const Dataset = () => {
             </Grid>
 
             <Grid item xs={12}>
-              <Autocomplete
-                disablePortal
-                disabled={state.platformList.length === 0}
-                id="combo-box-lrs"
-                options={state.platformList}
-                fullWidth
-                getOptionLabel={(option) => option.name}
-                value={state.autoCompleteValue}
-                renderOption={(props, option) => (
-                  <li {...props} key={option.id}>
-                    {option.name}
-                  </li>
-                )}
-                renderInput={(params) => (
-                  <TextField {...params} placeholder="*Search for platforms" />
-                )}
-                onChange={(event, value) => {
-                  if (value) handleSelectPlatformList(value);
-                }}
-              />
+              <Tooltip
+                arrow
+                title={
+                  indicatorQuery.lrsStores.length === 0 ? (
+                    <Typography variant="body2">
+                      Select at least one LRS from above to view the list of
+                      Platforms.
+                    </Typography>
+                  ) : undefined
+                }
+              >
+                <Autocomplete
+                  disablePortal
+                  disabled={indicatorQuery.lrsStores.length === 0}
+                  id="combo-box-lrs"
+                  options={state.platformList}
+                  fullWidth
+                  getOptionLabel={(option) => option.name}
+                  value={state.autoCompleteValue}
+                  renderOption={(props, option) => (
+                    <li {...props} key={option.id}>
+                      {option.name}
+                    </li>
+                  )}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      placeholder="*Search for platforms"
+                    />
+                  )}
+                  onChange={(event, value) => {
+                    if (value) handleSelectPlatformList(value);
+                  }}
+                />
+              </Tooltip>
             </Grid>
 
             <Grid item xs={12}>
