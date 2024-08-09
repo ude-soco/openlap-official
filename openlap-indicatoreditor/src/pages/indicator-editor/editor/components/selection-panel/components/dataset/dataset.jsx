@@ -23,7 +23,7 @@ const Dataset = () => {
   const { indicatorQuery, setIndicatorQuery, setLockedStep } =
     useContext(SelectionContext);
   const [state, setState] = useState({
-    openPanel: true,
+    openPanel: false,
     lrsList: [],
     platformList: [],
     autoCompleteValue: null,
