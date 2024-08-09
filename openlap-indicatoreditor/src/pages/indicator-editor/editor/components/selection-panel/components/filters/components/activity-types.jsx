@@ -7,6 +7,12 @@ import {
   Autocomplete,
   Divider,
   Tooltip,
+  FormHelperText,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Paper,
 } from "@mui/material";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { SelectionContext } from "../../../selection-panel";
@@ -29,7 +35,7 @@ const ActivityTypes = ({ state, setState }) => {
           ...prevState,
           activityTypesList: activityTypesData.filter(
             (activityType) =>
-              !indicatorQuery.activityTypes.includes(activityType.id)
+              !prevState.selectedActivityTypesList.includes(activityType.id)
           ),
         }));
       } catch (error) {
@@ -48,6 +54,10 @@ const ActivityTypes = ({ state, setState }) => {
       activityTypesList: prevState.activityTypesList.filter(
         (item) => item.id !== selectedActivityType.id
       ),
+      selectedActivityTypesList: [
+        ...prevState.selectedActivityTypesList,
+        selectedActivityType,
+      ],
       autoCompleteValue: null,
     }));
 
@@ -65,16 +75,15 @@ const ActivityTypes = ({ state, setState }) => {
 
   const handleDeselectActivityTypes = (selectedActivityType) => {
     setState((prevState) => {
-      let tempActivityType = {
-        id: selectedActivityType,
-        name: getLastWordAndCapitalize(selectedActivityType),
-      };
       return {
         ...prevState,
         activityTypesList: [
           ...prevState.activityTypesList,
-          tempActivityType,
+          selectedActivityType,
         ].sort((a, b) => a.name.localeCompare(b.name)),
+        selectedActivityTypesList: prevState.selectedActivityTypesList.filter(
+          (type) => type.id !== selectedActivityType.id
+        ),
         autoCompleteValue: null,
       };
     });
@@ -83,7 +92,7 @@ const ActivityTypes = ({ state, setState }) => {
       return {
         ...prevState,
         activityTypes: prevState.activityTypes.filter(
-          (item) => item !== selectedActivityType
+          (item) => item !== selectedActivityType.id
         ),
       };
     });
@@ -101,20 +110,26 @@ const ActivityTypes = ({ state, setState }) => {
                   Select at least one Platform from Dataset to view the list of
                   Activity types.
                 </Typography>
+              ) : state.selectedActivitiesList.length > 0 ? (
+                <Typography variant="body2">
+                  Deselect all the Activities below to remove an activity type.
+                </Typography>
               ) : undefined
             }
           >
             <Autocomplete
-              disabled={indicatorQuery.platforms.length === 0}
+              disabled={
+                indicatorQuery.platforms.length === 0 ||
+                state.selectedActivitiesList.length > 0
+              }
               disablePortal
               id="combo-box-lrs"
               options={state.activityTypesList}
               fullWidth
               getOptionLabel={(option) => option.name}
-              value={state.autoCompleteValue}
               renderOption={(props, option) => (
                 <li {...props} key={option.id}>
-                  <Grid container>
+                  <Grid container sx={{ py: 0.5 }}>
                     <Grid item xs={12}>
                       <Typography>{option.name}</Typography>
                     </Grid>
@@ -144,21 +159,21 @@ const ActivityTypes = ({ state, setState }) => {
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1}>
-                {indicatorQuery.activityTypes?.map((activityType, index) => (
+                {state.selectedActivityTypesList?.map((activityType, index) => (
                   <Grid item key={index}>
                     <Tooltip
                       arrow
                       title={
                         Object.keys(indicatorQuery.activities).length ? (
                           <Typography variant="body2">
-                            Deselect the activities(s) below in order to remove
-                            a activity type.
+                            Deselect all the Activities below to remove an
+                            activity type.
                           </Typography>
                         ) : undefined
                       }
                     >
                       <Chip
-                        label={getLastWordAndCapitalize(activityType)}
+                        label={getLastWordAndCapitalize(activityType.name)}
                         onDelete={
                           Object.keys(indicatorQuery.activities).length
                             ? undefined

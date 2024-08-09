@@ -8,7 +8,6 @@ const Footer = () => {
       <Grid
         container
         sx={{
-          bgcolor: "openlapTheme.main",
           px: 2,
           py: 1,
           borderTop: 2,
@@ -19,7 +18,7 @@ const Footer = () => {
         alignItems="center"
       >
         <Grid item xs sx={{ zIndex: 1 }}>
-          <Typography variant="body2" color="openlapTheme.contrast">
+          <Typography variant="body2">
             {" Copyright @ "}
             <Link
               color="inherit"
@@ -34,14 +33,10 @@ const Footer = () => {
         </Grid>
         <Grid item>
           <Grid container alignItems="center">
-            <Typography
-              sx={{ color: "openlapTheme.contrast", mr: 1 }}
-              variant="body2"
-            >
-              Follow us{" "}
+            <Typography sx={{ mr: 1 }} variant="body2">
+              Follow us
             </Typography>
             <IconButton
-              sx={{ color: "openlapTheme.contrast" }}
               onClick={() =>
                 window.open(
                   "https://www.youtube.com/channel/UCQV36Dfq-mfmAG0SqrQ_QbA"
@@ -51,7 +46,6 @@ const Footer = () => {
               <YouTubeIcon />
             </IconButton>
             <IconButton
-              sx={{ color: "openlapTheme.contrast" }}
               onClick={() => window.open("https://github.com/ude-soco")}
             >
               <GitHubIcon />

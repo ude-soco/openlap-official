@@ -18,7 +18,10 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockIcon from "@mui/icons-material/Lock";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import { fetchAnalyticsTechnique } from "../utils/analytics-api";
+import {
+  fetchAnalyticsTechnique,
+  fetchTechniqueInputs,
+} from "../utils/analytics-api";
 
 const AnalyticsTechnique = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
@@ -27,16 +30,19 @@ const AnalyticsTechnique = ({ state, setState }) => {
 
   useEffect(() => {
     const loadAnalyticsTechniqueData = async () => {
-      const analyticsTechniqueListResponse = await fetchAnalyticsTechnique(api);
-      setState((prevState) => ({
-        ...prevState,
-        techniqueList: analyticsTechniqueListResponse,
-      }));
       try {
+        const analyticsTechniqueListResponse = await fetchAnalyticsTechnique(
+          api
+        );
+        setState((prevState) => ({
+          ...prevState,
+          techniqueList: analyticsTechniqueListResponse,
+        }));
       } catch (error) {
         console.log("Failed to load the Analytics Technique list", error);
       }
     };
+
     if (state.techniqueList.length === 0) {
       loadAnalyticsTechniqueData();
     }
@@ -47,6 +53,17 @@ const AnalyticsTechnique = ({ state, setState }) => {
       ...prevState,
       analyticsTechniqueId: value.id,
     }));
+
+    const loadTechniqueInputs = async (value) => {
+      const techniqueInputsList = await fetchTechniqueInputs(api, value.id);
+
+      setState((prevState) => ({
+        ...state,
+        inputs: techniqueInputsList,
+      }));
+    };
+
+    loadTechniqueInputs(value);
   };
 
   const handleDeselectTechnique = (value) => {
@@ -70,9 +87,11 @@ const AnalyticsTechnique = ({ state, setState }) => {
             getOptionLabel={(option) => option.name}
             renderOption={(props, option) => (
               <li {...props} key={option.id}>
-                <Grid container sx={{ py: 1 }}>
+                <Grid container sx={{ py: 0.5 }}>
                   <Grid item xs={12}>
-                    <Typography>{option.name}</Typography>
+                    <Typography>
+                      {option.name}
+                    </Typography>
                   </Grid>
                   <Grid item xs={12}>
                     <Typography variant="body2" sx={{ fontStyle: "italic" }}>

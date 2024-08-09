@@ -31,7 +31,6 @@ export const DrawerHeader = styled("div")(({ theme }) => ({
   padding: theme.spacing(0, 1),
   ...theme.mixins.toolbar,
   justifyContent: "center",
-  backgroundColor: theme.palette.openlapTheme.main,
 }));
 
 const Sidebar = ({ openSidebar, toggleSidebar }) => {

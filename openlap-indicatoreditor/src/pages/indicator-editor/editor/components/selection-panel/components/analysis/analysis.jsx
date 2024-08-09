@@ -16,6 +16,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import AnalyticsTechnique from "./components/analytics-technique";
+import Inputs from "./components/inputs";
 
 // const [analysisRef, setAnalysisRef] = useState({
 //   analyticsTechniqueId: "",
@@ -35,8 +36,6 @@ const Analysis = () => {
     paramters: [],
     autoCompleteValue: null,
   });
-
-  console.log(state.techniqueList);
 
   const handleTogglePanel = () => {
     setState((prevState) => ({
@@ -76,30 +75,41 @@ const Analysis = () => {
                 </Grid>
               </Grid>
             </Grid>
-
-            {/* Analytics Technique */}
-            {/* <Grid item xs={12}>
-              <Grid container alignItems="center" spacing={1}>
-                <Grid item>
-                  <Typography>Technique:</Typography>
-                </Grid>
-                <Grid item xs>
-                  <Grid container spacing={1}>
-                    <Tooltip
-                      title="Count N most occurring or least occurring items"
-                      arrow
-                    >
+            {!state.openPanel && (
+              <>
+                {/* Analytics Technique */}
+                {analysisRef.analyticsTechniqueId.length && (
+                  <Grid item xs={12}>
+                    <Grid container alignItems="center" spacing={1}>
                       <Grid item>
-                        <Chip label="Count N most occurring ..." />
+                        <Typography>Technique:</Typography>
                       </Grid>
-                    </Tooltip>
+                      <Grid item xs>
+                        <Grid container spacing={1}>
+                          {state.techniqueList?.map((technique, index) => {
+                            if (
+                              technique.id === analysisRef.analyticsTechniqueId
+                            ) {
+                              return (
+                                <Grid item key={index}>
+                                  <Chip
+                                    label={state.techniqueList.filter(
+                                      (technique) =>
+                                        analysisRef.analyticsTechniqueId
+                                    )}
+                                  />
+                                </Grid>
+                              );
+                            }
+                          })}
+                        </Grid>
+                      </Grid>
+                    </Grid>
                   </Grid>
-                </Grid>
-              </Grid>
-            </Grid> */}
+                )}
 
-            {/* Analysis inputs */}
-            {/* <Grid item xs={12}>
+                {/* Analysis inputs */}
+                {/* <Grid item xs={12}>
               <Grid container alignItems="center" spacing={1}>
                 <Grid item>
                   <Typography>Inputs:</Typography>
@@ -121,8 +131,8 @@ const Analysis = () => {
               </Grid>
             </Grid> */}
 
-            {/* Parameters */}
-            {/* <Grid item xs={12}>
+                {/* Parameters */}
+                {/* <Grid item xs={12}>
               <Grid container alignItems="center" spacing={1}>
                 <Grid item>
                   <Typography>Parameters:</Typography>
@@ -148,6 +158,8 @@ const Analysis = () => {
                 </Grid>
               </Grid>
             </Grid> */}
+              </>
+            )}
           </Grid>
         </AccordionSummary>
         <AccordionDetails>
@@ -156,7 +168,9 @@ const Analysis = () => {
               <AnalyticsTechnique state={state} setState={setState} />
             </Grid>
             <Grid item xs={12}>
-              <Typography>Choose Inputs</Typography>
+              {analysisRef.analyticsTechniqueId.length !== 0 && (
+                <Inputs state={state} setState={setState} />
+              )}
             </Grid>
             <Grid item xs={12}>
               <Typography>Choose Params</Typography>

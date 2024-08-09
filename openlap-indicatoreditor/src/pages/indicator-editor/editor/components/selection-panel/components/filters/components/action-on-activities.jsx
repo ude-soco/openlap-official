@@ -15,7 +15,8 @@ import { getLastWordAndCapitalize } from "../../../utils/utils";
 
 const ActionOnActivities = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
-  const { indicatorQuery, setIndicatorQuery } = useContext(SelectionContext);
+  const { indicatorQuery, setIndicatorQuery, setAnalysisInputMenu } =
+    useContext(SelectionContext);
 
   useEffect(() => {
     const loadActivityTypesData = async () => {
@@ -37,11 +38,10 @@ const ActionOnActivities = ({ state, setState }) => {
         console.log("Failed to load Action on Activities list", error);
       }
     };
-
-    if (Object.entries(indicatorQuery.activities).length) {
+    if (state.selectedActivitiesList.length > 0) {
       loadActivityTypesData();
     }
-  }, [Object.entries(indicatorQuery.activities).length]);
+  }, [state.selectedActivitiesList.length]);
 
   const handleSelectActionOnActivity = (selectedAction) => {
     setState((prevState) => ({
@@ -49,42 +49,75 @@ const ActionOnActivities = ({ state, setState }) => {
       actionsList: prevState.actionsList.filter(
         (item) => item.id !== selectedAction.id
       ),
+      selectedActionsList: [...prevState.selectedActionsList, selectedAction],
       autoCompleteValue: null,
     }));
 
-    setIndicatorQuery((prevState) => {
-      let tempActionOnActivities = [
-        ...prevState.actionOnActivities,
-        selectedAction.id,
-      ];
-      return {
-        ...prevState,
-        actionOnActivities: tempActionOnActivities,
-      };
+    setIndicatorQuery((prevState) => ({
+      ...prevState,
+      actionOnActivities: [...prevState.actionOnActivities, selectedAction.id],
+    }));
+
+    setAnalysisInputMenu((prevState) => {
+      let tempActionOptionExists = [
+        ...prevState.actionOnActivities.options,
+      ].some((output) => output === selectedAction.queryId);
+      if (!tempActionOptionExists) {
+        let tempOptions = [
+          ...prevState.actionOnActivities.options,
+          selectedAction.queryId,
+        ];
+        return {
+          ...prevState,
+          actionOnActivities: {
+            ...prevState.actionOnActivities,
+            id: tempOptions.length === 1 ? tempOptions[0] : undefined,
+            options: tempOptions,
+          },
+        };
+      }
+      return prevState;
     });
   };
 
   const handleDeselectActionOnActivity = (selectedAction) => {
     setState((prevState) => {
-      let tempActionOnActivity = {
-        id: selectedAction,
-        name: getLastWordAndCapitalize(selectedAction),
-      };
+      let tempSelectedActionList = prevState.selectedActionsList.filter(
+        (item) => item.id !== selectedAction.id
+      );
+
+      setAnalysisInputMenu((prevInputState) => {
+        const uniqueQueryIds = [
+          ...new Set(tempSelectedActionList.map((item) => item.queryId)),
+        ];
+        return {
+          ...prevInputState,
+          actionOnActivities: {
+            ...prevInputState.actionOnActivities,
+            id: uniqueQueryIds.length === 1 ? uniqueQueryIds[0] : undefined,
+            options: uniqueQueryIds,
+          },
+        };
+      });
+
       return {
         ...prevState,
-        actionsList: [...prevState.actionsList, tempActionOnActivity].sort(
-          (a, b) => a.name.localeCompare(b.name)
+        actionsList: [...prevState.actionsList, selectedAction].sort((a, b) =>
+          a.name.localeCompare(b.name)
         ),
+        selectedActionsList: tempSelectedActionList,
         autoCompleteValue: null,
       };
     });
 
-    setIndicatorQuery((prevState) => ({
-      ...prevState,
-      actionOnActivities: prevState.actionOnActivities.filter(
-        (item) => item !== selectedAction
-      ),
-    }));
+    setIndicatorQuery((prevState) => {
+      return {
+        ...prevState,
+        actionOnActivities: prevState.actionOnActivities.filter(
+          (item) => item !== selectedAction.id
+        ),
+      };
+    });
   };
 
   return (
@@ -108,16 +141,15 @@ const ActionOnActivities = ({ state, setState }) => {
               id="combo-box-lrs"
               options={state.actionsList}
               fullWidth
-              getOptionLabel={(option) => option.name}
-              value={state.autoCompleteValue}
+              getOptionLabel={(option) => option?.name}
               renderOption={(props, option) => (
-                <li {...props} key={option.id}>
+                <li {...props} key={option?.id}>
                   <Grid container>
                     <Grid item xs={12}>
-                      <Typography>{option.name}</Typography>
+                      <Typography>{option?.name}</Typography>
                     </Grid>
                     <Grid item xs={12}>
-                      <Typography variant="body2">{option.id}</Typography>
+                      <Typography variant="body2">{option?.id}</Typography>
                     </Grid>
                   </Grid>
                 </li>
@@ -139,10 +171,10 @@ const ActionOnActivities = ({ state, setState }) => {
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1}>
-                {indicatorQuery.actionOnActivities?.map((action, index) => (
+                {state.selectedActionsList?.map((action, index) => (
                   <Grid item key={index}>
                     <Chip
-                      label={getLastWordAndCapitalize(action)}
+                      label={getLastWordAndCapitalize(action.name)}
                       onDelete={() => handleDeselectActionOnActivity(action)}
                     />
                   </Grid>
