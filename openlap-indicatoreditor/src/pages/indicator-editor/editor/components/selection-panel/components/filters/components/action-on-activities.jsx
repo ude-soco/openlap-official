@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useContext } from "react";
 import {
   Chip,
   Grid,
@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { SelectionContext } from "../../../selection-panel";
-import { fetchActionOnActivitiesList } from "../filters-api";
+import { fetchActionOnActivitiesList } from "../utils/filters-api";
 import { getLastWordAndCapitalize } from "../../../utils/utils";
 
 const ActionOnActivities = ({ state, setState }) => {

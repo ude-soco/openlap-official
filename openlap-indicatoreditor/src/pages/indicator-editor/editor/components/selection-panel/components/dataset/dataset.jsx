@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
-import { fetchPlatformList, fetchUserLRSList } from "./dataset-api";
+import { fetchPlatformList, fetchUserLRSList } from "./utils/dataset-api";
 import { SelectionContext } from "../../selection-panel";
 
 const Dataset = () => {
