@@ -31,6 +31,56 @@ const SelectionPanel = () => {
     },
   });
 
+  const [analysisInputMenu, setAnalysisInputMenu] = useState({
+    activities: {
+      id: undefined,
+      type: "Text",
+      required: true,
+      name: "Activities",
+      displayName: "Activities",
+      description:
+        "Selected list of all the Activities specified in Activity Filter. " +
+        'E.g. courses that are selected in Activity name section are "Learning Analytics", "Data Mining" etc.',
+      options: [],
+    },
+    activityTypes: {
+      id: "statement.object.definition.type",
+      type: "Text",
+      required: true,
+      name: "Activity Types",
+      displayName: "Activity Types",
+      description: "Types of activities",
+    },
+    actionOnActivities: {
+      id: undefined,
+      type: "Text",
+      required: true,
+      name: "Actions",
+      displayName: "Actions",
+      description:
+        "Selected list of actions performed on the activity(ies). E.g. a list of actions that were " +
+        'performed on a course such as "viewed", "enrolled" etc.',
+      options: [],
+    },
+    platforms: {
+      id: "statement.context.platform",
+      type: "Text",
+      required: true,
+      name: "Platforms",
+      displayName: "Platforms",
+      description:
+        'Selected list of sources specified in Dataset such as "Moodle" etc.',
+    },
+    user: {
+      id: "statement.actor.account.name",
+      type: "Text",
+      required: true,
+      name: "User",
+      displayName: "User",
+      description: "Selected list of the User(s) specified in User Filter",
+    },
+  });
+
   const [lockedStep, setLockedStep] = useState({
     filters: true,
     analysis: false,
@@ -43,9 +93,11 @@ const SelectionPanel = () => {
         indicatorQuery,
         lockedStep,
         analysisRef,
+        analysisInputMenu,
         setIndicatorQuery,
         setLockedStep,
         setAnalysisRef,
+        setAnalysisInputMenu,
       }}
     >
       <Dataset />

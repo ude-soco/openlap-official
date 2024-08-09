@@ -53,7 +53,7 @@ const NavBar = ({ openSidebar, toggleSidebar }) => {
         position="fixed"
         elevation={1}
         open={openSidebar}
-        sx={{ bgcolor: "openlapTheme.main" }}
+        sx={{ bgcolor: darkMode ? undefined : "white" }}
       >
         <Toolbar>
           <Tooltip

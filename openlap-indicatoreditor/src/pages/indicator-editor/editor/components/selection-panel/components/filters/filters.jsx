@@ -30,8 +30,11 @@ const Filters = () => {
   const [state, setState] = useState({
     openPanel: false,
     activityTypesList: [],
+    selectedActivityTypesList: [],
     activitiesList: [],
+    selectedActivitiesList: [],
     actionsList: [],
+    selectedActionsList: [],
     autoCompleteValue: null,
   });
 
