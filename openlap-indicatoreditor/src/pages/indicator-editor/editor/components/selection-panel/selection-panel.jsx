@@ -4,6 +4,7 @@ import Filters from "./components/filters/filters";
 import Analysis from "./components/analysis/analysis";
 import Visualization from "./components/visualization/visualization";
 import Condition from "./utils/condition";
+import dayjs from 'dayjs';
 
 export const SelectionContext = createContext();
 
@@ -12,11 +13,11 @@ const SelectionPanel = () => {
     lrsStores: [],
     platforms: [],
     activityTypes: [],
-    actionOnActivities: [],
     activities: {},
+    actionOnActivities: [],
     duration: {
-      from: "",
-      until: "",
+      from: dayjs().subtract(1, 'year').toISOString(),
+      until: dayjs().toISOString(),
     },
     outputs: [],
     userQueryCondition: Condition.only_me,
@@ -28,6 +29,7 @@ const SelectionPanel = () => {
     visualization: true,
   });
 
+  console.log(indicatorQuery.duration);
   return (
     <SelectionContext.Provider
       value={{ indicatorQuery, lockedStep, setIndicatorQuery, setLockedStep }}
