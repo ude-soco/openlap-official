@@ -1,7 +1,9 @@
 import { useEffect, useState, useContext } from "react";
 import {
   Accordion,
+  AccordionActions,
   AccordionSummary,
+  Button,
   Chip,
   AccordionDetails,
   Grid,
@@ -23,7 +25,8 @@ import DateRangeChips from "./components/date-range-chips.jsx";
 import UserChips from "./components/user-chips.jsx";
 
 const Filters = () => {
-  const { lockedStep } = useContext(SelectionContext);
+  const { indicatorQuery, lockedStep, setLockedStep } =
+    useContext(SelectionContext);
   const [state, setState] = useState({
     openPanel: false,
     activityTypesList: [],
@@ -32,6 +35,13 @@ const Filters = () => {
     autoCompleteValue: null,
   });
 
+  useEffect(() => {
+    setState((prevState) => ({
+      ...prevState,
+      openPanel: !lockedStep.filters,
+    }));
+  }, [lockedStep.filters]);
+
   const handleTogglePanel = () => {
     setState((prevState) => ({
       ...prevState,
@@ -39,12 +49,13 @@ const Filters = () => {
     }));
   };
 
-  useEffect(() => {
-    setState((prevState) => ({
+  const handleUnlockAnalysis = () => {
+    handleTogglePanel();
+    setLockedStep((prevState) => ({
       ...prevState,
-      openPanel: !lockedStep.filters,
+      analysis: false,
     }));
-  }, [lockedStep.filters]);
+  };
 
   return (
     <>
@@ -112,6 +123,22 @@ const Filters = () => {
             </Grid>
           </Grid>
         </AccordionDetails>
+        <AccordionActions>
+          <Grid container>
+            <Button
+              variant="contained"
+              fullWidth
+              disabled={
+                !indicatorQuery.activityTypes.length ||
+                !Object.entries(indicatorQuery.activities).length ||
+                !indicatorQuery.actionOnActivities.length
+              }
+              onClick={handleUnlockAnalysis}
+            >
+              Next
+            </Button>
+          </Grid>
+        </AccordionActions>
       </Accordion>
     </>
   );
