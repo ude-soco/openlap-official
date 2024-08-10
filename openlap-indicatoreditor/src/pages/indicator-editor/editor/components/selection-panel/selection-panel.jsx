@@ -27,19 +27,16 @@ const SelectionPanel = () => {
     analyticsTechniqueId: "",
     analyticsTechniqueParams: [],
     analyticsTechniqueMapping: {
-      mappings: [],
+      mapping: [],
     },
   });
-
-  console.log(analysisRef);
 
   const [analysisInputMenu, setAnalysisInputMenu] = useState({
     activities: {
       id: undefined,
       type: "Text",
       required: true,
-      name: "Activities",
-      displayName: "Activities",
+      title: "Activities",
       description:
         "Selected list of all the Activities specified in Activity Filter. " +
         'E.g. courses that are selected in Activity name section are "Learning Analytics", "Data Mining" etc.',
@@ -49,16 +46,14 @@ const SelectionPanel = () => {
       id: "statement.object.definition.type",
       type: "Text",
       required: true,
-      name: "Activity Types",
-      displayName: "Activity Types",
+      title: "Activity Types",
       description: "Types of activities",
     },
     actionOnActivities: {
       id: undefined,
       type: "Text",
       required: true,
-      name: "Actions",
-      displayName: "Actions",
+      title: "Actions",
       description:
         "Selected list of actions performed on the activity(ies). E.g. a list of actions that were " +
         'performed on a course such as "viewed", "enrolled" etc.',
@@ -68,8 +63,7 @@ const SelectionPanel = () => {
       id: "statement.context.platform",
       type: "Text",
       required: true,
-      name: "Platforms",
-      displayName: "Platforms",
+      title: "Platforms",
       description:
         'Selected list of sources specified in Dataset such as "Moodle" etc.',
     },
@@ -77,8 +71,7 @@ const SelectionPanel = () => {
       id: "statement.actor.account.name",
       type: "Text",
       required: true,
-      name: "User",
-      displayName: "User",
+      title: "User",
       description: "Selected list of the User(s) specified in User Filter",
     },
   });

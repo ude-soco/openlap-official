@@ -18,6 +18,8 @@ import Tooltip from "@mui/material/Tooltip";
 import AnalyticsTechnique from "./components/analytics-technique";
 import Inputs from "./components/inputs";
 import Params from "./components/params";
+import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
+import { fetchAnalyzedData } from "./utils/analytics-api";
 
 // const [analysisRef, setAnalysisRef] = useState({
 //   analyticsTechniqueId: "",
@@ -28,6 +30,7 @@ import Params from "./components/params";
 // });
 
 const Analysis = () => {
+  const { api } = useContext(AuthContext);
   const { indicatorQuery, lockedStep, analysisRef, setAnalysisRef } =
     useContext(SelectionContext);
   const [state, setState] = useState({
@@ -43,6 +46,23 @@ const Analysis = () => {
       ...prevState,
       openPanel: !prevState.openPanel,
     }));
+  };
+
+  const handlePreviewAnalyzedData = () => {
+    const loadAnalyzedData = async (api, indicatorQuery, analysisRef) => {
+      try {
+        let response = await fetchAnalyzedData(
+          api,
+          indicatorQuery,
+          analysisRef
+        );
+        console.log(response);
+      } catch (error) {
+        console.log("Error analyzing the data");
+      }
+    };
+
+    loadAnalyzedData(api, indicatorQuery, analysisRef);
   };
 
   return (
@@ -106,27 +126,28 @@ const Analysis = () => {
                 )}
 
                 {/* Analysis inputs */}
-                {/* <Grid item xs={12}>
-              <Grid container alignItems="center" spacing={1}>
-                <Grid item>
-                  <Typography>Inputs:</Typography>
-                </Grid>
-                <Grid item md>
-                  <Grid container spacing={1}>
-                    <Tooltip title="Activities (Items)" arrow>
+                {analysisRef.analyticsTechniqueMapping.mappings.length > 0 && (
+                  <Grid item xs={12}>
+                    <Grid container alignItems="center" spacing={1}>
                       <Grid item>
-                        <Chip label="Activities" />
+                        <Typography>Inputs:</Typography>
                       </Grid>
-                    </Tooltip>
-                    <Tooltip title="Users (Users)" arrow>
-                      <Grid item>
-                        <Chip label="Users" />
+                      <Grid item xs>
+                        <Grid container spacing={1}>
+                          {analysisRef.analyticsTechniqueMapping.mappings?.map(
+                            (mapping, index) => (
+                              <Grid item key={index}>
+                                <Chip
+                                  label={`${mapping.inputPort.title}: ${mapping.outputPort.title}`}
+                                />
+                              </Grid>
+                            )
+                          )}
+                        </Grid>
                       </Grid>
-                    </Tooltip>
+                    </Grid>
                   </Grid>
-                </Grid>
-              </Grid>
-            </Grid> */}
+                )}
 
                 {/* Parameters */}
                 {analysisRef.analyticsTechniqueParams.length > 0 && (
@@ -151,6 +172,8 @@ const Analysis = () => {
                     </Grid>
                   </Grid>
                 )}
+
+                {/* Outputs */}
               </>
             )}
           </Grid>
@@ -173,19 +196,35 @@ const Analysis = () => {
           </Grid>
         </AccordionDetails>
         <AccordionActions>
-          <Grid container>
-            <Button
-              variant="contained"
-              fullWidth
-              // disabled={
-              //   !indicatorQuery.activityTypes.length ||
-              //   !Object.entries(indicatorQuery.activities).length ||
-              //   !indicatorQuery.actionOnActivities.length
-              // }
-              // onClick={handleUnlockAnalysis}
-            >
-              Next
-            </Button>
+          <Grid container spacing={2}>
+            <Grid item xs>
+              <Button
+                variant="contained"
+                fullWidth
+                // disabled={
+                //   !indicatorQuery.activityTypes.length ||
+                //   !Object.entries(indicatorQuery.activities).length ||
+                //   !indicatorQuery.actionOnActivities.length
+                // }
+                onClick={handlePreviewAnalyzedData}
+              >
+                Preview data
+              </Button>
+            </Grid>
+            <Grid item xs>
+              <Button
+                variant="contained"
+                fullWidth
+                // disabled={
+                //   !indicatorQuery.activityTypes.length ||
+                //   !Object.entries(indicatorQuery.activities).length ||
+                //   !indicatorQuery.actionOnActivities.length
+                // }
+                // onClick={handleUnlockAnalysis}
+              >
+                Next
+              </Button>
+            </Grid>
           </Grid>
         </AccordionActions>
       </Accordion>

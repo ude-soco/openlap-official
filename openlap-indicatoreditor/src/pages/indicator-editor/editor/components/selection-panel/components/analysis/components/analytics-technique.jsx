@@ -1,28 +1,16 @@
 import { useEffect, useState, useContext } from "react";
 import {
   Autocomplete,
-  Accordion,
-  AccordionSummary,
-  AccordionActions,
   Chip,
-  Button,
   Divider,
   TextField,
   Grid,
   Typography,
-  Paper,
 } from "@mui/material";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { SelectionContext } from "../../../selection-panel";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import LockIcon from "@mui/icons-material/Lock";
-import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import {
-  fetchAnalyticsTechnique,
-  fetchTechniqueInputs,
-  fetchTechniqueParams,
-} from "../utils/analytics-api";
+import { fetchAnalyticsTechnique } from "../utils/analytics-api";
 
 const AnalyticsTechnique = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
@@ -40,7 +28,7 @@ const AnalyticsTechnique = ({ state, setState }) => {
           techniqueList: analyticsTechniqueListResponse,
         }));
       } catch (error) {
-        console.log("Failed to load the Analytics Technique list", error);
+        console.log("Failed to load the Analytics Technique list");
       }
     };
 
@@ -54,42 +42,17 @@ const AnalyticsTechnique = ({ state, setState }) => {
       ...prevState,
       analyticsTechniqueId: value.id,
     }));
-
-    const loadTechniqueInputs = async (value) => {
-      try {
-        const techniqueInputsList = await fetchTechniqueInputs(api, value.id);
-        setState((prevState) => ({
-          ...prevState,
-          inputs: techniqueInputsList,
-        }));
-      } catch (error) {
-        console.log("Error fetching Analytics technique input list");
-      }
-    };
-    const loadTechniqueParams = async (value) => {
-      try {
-        const techniqueParamsList = await fetchTechniqueParams(api, value.id);
-        techniqueParamsList.forEach(
-          (param) => (param.value = param.defaultValue)
-        );
-        setAnalysisRef((prevState) => ({
-          ...prevState,
-          analyticsTechniqueParams: techniqueParamsList,
-        }));
-      } catch (error) {
-        console.log("Error fetching Analytics technique input list");
-      }
-    };
-
-    loadTechniqueInputs(value);
-    loadTechniqueParams(value);
   };
 
-  const handleDeselectTechnique = (value) => {
+  const handleDeselectTechnique = () => {
     setAnalysisRef((prevState) => {
       return {
         ...prevState,
         analyticsTechniqueId: "",
+        analyticsTechniqueParams: [],
+        analyticsTechniqueMapping: {
+          mappings: [],
+        },
       };
     });
   };
@@ -139,7 +102,7 @@ const AnalyticsTechnique = ({ state, setState }) => {
               <Grid container spacing={1}>
                 <Grid item>
                   {state.techniqueList?.map((technique) => {
-                    if (technique.id === analysisRef.analyticsTechniqueId)
+                    if (technique.id === analysisRef.analyticsTechniqueId) {
                       return (
                         <>
                           <Tooltip
@@ -156,6 +119,8 @@ const AnalyticsTechnique = ({ state, setState }) => {
                           </Tooltip>
                         </>
                       );
+                    }
+                    return undefined;
                   })}
                 </Grid>
               </Grid>

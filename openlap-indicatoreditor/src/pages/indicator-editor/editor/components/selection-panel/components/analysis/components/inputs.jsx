@@ -6,6 +6,7 @@ import {
   AccordionActions,
   Chip,
   Button,
+  IconButton,
   Divider,
   Grid,
   Typography,
@@ -19,19 +20,81 @@ import { AuthContext } from "../../../../../../../../setup/auth-context-manager/
 import { SelectionContext } from "../../../selection-panel";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockIcon from "@mui/icons-material/Lock";
-import IconButton from "@mui/material/IconButton";
+import HelpIcon from "@mui/icons-material/Help";
 import Tooltip from "@mui/material/Tooltip";
-import { fetchAnalyticsTechnique } from "../utils/analytics-api";
+import { fetchTechniqueInputs } from "../utils/analytics-api";
 
 const Inputs = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
   const {
     analysisInputMenu,
     indicatorQuery,
+    setIndicatorQuery,
     lockedStep,
     analysisRef,
     setAnalysisRef,
   } = useContext(SelectionContext);
+
+  useEffect(() => {
+    const loadTechniqueInputs = async (value) => {
+      try {
+        const techniqueInputsList = await fetchTechniqueInputs(api, value);
+        setState((prevState) => ({
+          ...prevState,
+          inputs: techniqueInputsList,
+        }));
+      } catch (error) {
+        console.log("Error fetching Analytics technique input list");
+      }
+    };
+    if (analysisRef.analyticsTechniqueId !== "")
+      loadTechniqueInputs(analysisRef.analyticsTechniqueId);
+  }, [analysisRef.analyticsTechniqueId]);
+
+  const handleChangeInputMapping = (event, input) => {
+    const { value } = event.target;
+
+    const updateMappingsMethod = (newMappings, oldMappings) => {
+      let found = false;
+
+      oldMappings.forEach((item, index) => {
+        if (item.inputPort.id === newMappings.inputPort.id) {
+          oldMappings[index].outputPort = newMappings.outputPort;
+          found = true;
+        }
+      });
+
+      if (!found) {
+        oldMappings.push(newMappings);
+      }
+
+      return oldMappings;
+    };
+
+    setAnalysisRef((prevState) => {
+      let tempInputMappings = {
+        inputPort: input,
+        outputPort: value,
+      };
+      let updatedMappings = updateMappingsMethod(
+        tempInputMappings,
+        prevState.analyticsTechniqueMapping.mapping
+      );
+
+      setIndicatorQuery((prevState) => ({
+        ...prevState,
+        outputs: updatedMappings.map((item) => item.outputPort.id),
+      }));
+
+      return {
+        ...prevState,
+        analyticsTechniqueMapping: {
+          ...prevState.analyticsTechniqueMapping,
+          mapping: updatedMappings,
+        },
+      };
+    });
+  };
 
   return (
     <>
@@ -41,18 +104,39 @@ const Inputs = ({ state, setState }) => {
         </Grid>
         {state.inputs?.map((input, index) => (
           <Grid item xs={12} sm={6} key={index}>
-            <FormControl fullWidth>
-              <InputLabel>{input.title}</InputLabel>
+            <Grid container spacing={1}>
+              <Grid item xs>
+                <FormControl fullWidth>
+                  <InputLabel required={Boolean(input.required)}>
+                    {input.title}
+                  </InputLabel>
 
-              <Select label={input.title}>
-                {Object.values(analysisInputMenu).map((value, index) => (
-                  <MenuItem key={index}>{value.name}</MenuItem>
-                ))}
-              </Select>
-              {Boolean(input.required) && (
-                <FormHelperText>Required</FormHelperText>
-              )}
-            </FormControl>
+                  <Select
+                    label={input.title}
+                    onChange={(event) => handleChangeInputMapping(event, input)}
+                  >
+                    {Object.values(analysisInputMenu).map((value, index) => (
+                      <MenuItem key={index} value={value}>
+                        {value.title}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {Boolean(input.required) && (
+                    <FormHelperText>Input is required</FormHelperText>
+                  )}
+                </FormControl>
+              </Grid>
+              <Grid item sx={{ mt: 1 }}>
+                <Tooltip
+                  arrow
+                  title={<Typography>{input.description}</Typography>}
+                >
+                  <IconButton>
+                    <HelpIcon />
+                  </IconButton>
+                </Tooltip>
+              </Grid>
+            </Grid>
           </Grid>
         ))}
         <Grid item xs={12} sx={{ py: 2 }}>
