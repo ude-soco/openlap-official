@@ -46,6 +46,10 @@ const VisualizationLibrary = ({ state, setState }) => {
       ...prevState,
       visualizationLibraryId: value.id,
     }));
+    setState((prevState) => ({
+      ...prevState,
+      typeList: [],
+    }));
   };
 
   const handleDeselectVisualizationLibrary = () => {
@@ -55,10 +59,15 @@ const VisualizationLibrary = ({ state, setState }) => {
         visualizationLibraryId: "",
         visualizationTypeId: "",
         visualizationMapping: {
-          mappings: [],
+          ...prevState.visualizationMapping,
+          mapping: [],
         },
       };
     });
+    setState((prevState) => ({
+      ...prevState,
+      typeList: [],
+    }));
   };
 
   return (
@@ -68,7 +77,9 @@ const VisualizationLibrary = ({ state, setState }) => {
           <Autocomplete
             disablePortal
             id="combo-box-lrs"
-            options={state.libraryList}
+            options={state.libraryList.sort((a, b) =>
+              a.name.localeCompare(b.name)
+            )}
             fullWidth
             getOptionLabel={(option) => option.name}
             renderOption={(props, option) => (
