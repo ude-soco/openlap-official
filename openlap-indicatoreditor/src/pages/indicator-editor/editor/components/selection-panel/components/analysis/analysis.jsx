@@ -17,6 +17,7 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import AnalyticsTechnique from "./components/analytics-technique";
 import Inputs from "./components/inputs";
+import Params from "./components/params";
 
 // const [analysisRef, setAnalysisRef] = useState({
 //   analyticsTechniqueId: "",
@@ -33,7 +34,7 @@ const Analysis = () => {
     openPanel: true,
     techniqueList: [],
     inputs: [],
-    paramters: [],
+    parameters: [],
     autoCompleteValue: null,
   });
 
@@ -78,7 +79,7 @@ const Analysis = () => {
             {!state.openPanel && (
               <>
                 {/* Analytics Technique */}
-                {analysisRef.analyticsTechniqueId.length && (
+                {analysisRef.analyticsTechniqueId.length > 0 && (
                   <Grid item xs={12}>
                     <Grid container alignItems="center" spacing={1}>
                       <Grid item>
@@ -92,15 +93,11 @@ const Analysis = () => {
                             ) {
                               return (
                                 <Grid item key={index}>
-                                  <Chip
-                                    label={state.techniqueList.filter(
-                                      (technique) =>
-                                        analysisRef.analyticsTechniqueId
-                                    )}
-                                  />
+                                  <Chip label={technique.name} />
                                 </Grid>
                               );
                             }
+                            return undefined;
                           })}
                         </Grid>
                       </Grid>
@@ -132,32 +129,28 @@ const Analysis = () => {
             </Grid> */}
 
                 {/* Parameters */}
-                {/* <Grid item xs={12}>
-              <Grid container alignItems="center" spacing={1}>
-                <Grid item>
-                  <Typography>Parameters:</Typography>
-                </Grid>
-                <Grid item md>
-                  <Grid container spacing={1}>
-                    <Tooltip title="Most Occuring (Counting direction)" arrow>
+                {analysisRef.analyticsTechniqueParams.length > 0 && (
+                  <Grid item xs={12}>
+                    <Grid container alignItems="center" spacing={1}>
                       <Grid item>
-                        <Chip label="Most Occuring" />
+                        <Typography>Parameters:</Typography>
                       </Grid>
-                    </Tooltip>
-                    <Tooltip title="All Items (Counting Type)" arrow>
-                      <Grid item>
-                        <Chip label="All Items" />
+                      <Grid item xs>
+                        <Grid container spacing={1}>
+                          {analysisRef.analyticsTechniqueParams?.map(
+                            (param, index) => (
+                              <Grid item key={index}>
+                                <Chip
+                                  label={`${param.title}: ${param.value}`}
+                                />
+                              </Grid>
+                            )
+                          )}
+                        </Grid>
                       </Grid>
-                    </Tooltip>
-                    <Tooltip title="10 (Number of Items to Return (N))" arrow>
-                      <Grid item>
-                        <Chip label="10" />
-                      </Grid>
-                    </Tooltip>
+                    </Grid>
                   </Grid>
-                </Grid>
-              </Grid>
-            </Grid> */}
+                )}
               </>
             )}
           </Grid>
@@ -167,14 +160,16 @@ const Analysis = () => {
             <Grid item xs={12}>
               <AnalyticsTechnique state={state} setState={setState} />
             </Grid>
-            <Grid item xs={12}>
-              {analysisRef.analyticsTechniqueId.length !== 0 && (
+            {analysisRef.analyticsTechniqueId.length !== 0 && (
+              <Grid item xs={12}>
                 <Inputs state={state} setState={setState} />
-              )}
-            </Grid>
-            <Grid item xs={12}>
-              <Typography>Choose Params</Typography>
-            </Grid>
+              </Grid>
+            )}
+            {analysisRef.analyticsTechniqueId.length !== 0 && (
+              <Grid item xs={12}>
+                <Params state={state} setState={setState} />
+              </Grid>
+            )}
           </Grid>
         </AccordionDetails>
         <AccordionActions>

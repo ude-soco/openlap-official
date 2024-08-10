@@ -31,6 +31,8 @@ const SelectionPanel = () => {
     },
   });
 
+  console.log(analysisRef);
+
   const [analysisInputMenu, setAnalysisInputMenu] = useState({
     activities: {
       id: undefined,

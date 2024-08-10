@@ -55,6 +55,9 @@ const Inputs = ({ state, setState }) => {
             </FormControl>
           </Grid>
         ))}
+        <Grid item xs={12} sx={{ py: 2 }}>
+          <Divider />
+        </Grid>
       </Grid>
     </>
   );
