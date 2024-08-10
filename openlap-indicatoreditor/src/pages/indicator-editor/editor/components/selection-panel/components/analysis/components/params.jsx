@@ -13,12 +13,12 @@ import {
 } from "@mui/material";
 import HelpIcon from "@mui/icons-material/Help";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
-import { SelectionContext } from "../../../selection-panel";
 import { fetchTechniqueParams } from "../utils/analytics-api";
+import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
 const Params = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
-  const { analysisRef, setAnalysisRef } = useContext(SelectionContext);
+  const { analysisRef, setAnalysisRef } = useContext(IndicatorEditorContext);
 
   useEffect(() => {
     const loadTechniqueParams = async (techniqueId) => {

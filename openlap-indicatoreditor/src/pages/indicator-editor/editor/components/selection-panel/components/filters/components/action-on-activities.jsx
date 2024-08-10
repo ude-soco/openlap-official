@@ -9,14 +9,14 @@ import {
   Tooltip,
 } from "@mui/material";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
-import { SelectionContext } from "../../../selection-panel";
 import { fetchActionOnActivitiesList } from "../utils/filters-api";
 import { getLastWordAndCapitalize } from "../../../utils/utils";
+import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
 const ActionOnActivities = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
   const { indicatorQuery, setIndicatorQuery, setAnalysisInputMenu } =
-    useContext(SelectionContext);
+    useContext(IndicatorEditorContext);
 
   useEffect(() => {
     const loadActivityTypesData = async () => {

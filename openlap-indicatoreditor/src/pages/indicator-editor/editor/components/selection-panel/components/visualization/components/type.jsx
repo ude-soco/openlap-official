@@ -1,20 +1,10 @@
 import { useEffect, useState, useContext } from "react";
-import {
-  Autocomplete,
-  Box,
-  Chip,
-  Divider,
-  TextField,
-  Grid,
-  Typography,
-  Tooltip,
-  ToggleButton,
-} from "@mui/material";
+import { Box, Divider, Grid, Typography, ToggleButton } from "@mui/material";
 import { CustomThemeContext } from "../../../../../../../../setup/theme-manager/theme-context-manager";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
-import { SelectionContext } from "../../../selection-panel";
 import { fetchVisualizationTypeByLibraryId } from "../utils/visualization-api";
 import images from "../config/images";
+import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
 const VisualizationType = ({ state, setState }) => {
   const { darkMode } = useContext(CustomThemeContext);
@@ -26,7 +16,7 @@ const VisualizationType = ({ state, setState }) => {
     setAnalysisRef,
     visRef,
     setVisRef,
-  } = useContext(SelectionContext);
+  } = useContext(IndicatorEditorContext);
 
   useEffect(() => {
     const loadVisualizationTypeData = async (libraryId) => {

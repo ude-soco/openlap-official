@@ -8,10 +8,12 @@ import {
   Divider,
   Tooltip,
 } from "@mui/material";
-import { SelectionContext } from "../../../selection-panel";
+import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
 const Platform = ({ state, setState }) => {
-  const { indicatorQuery, setIndicatorQuery } = useContext(SelectionContext);
+  const { indicatorQuery, setIndicatorQuery } = useContext(
+    IndicatorEditorContext
+  );
 
   const handleSelectPlatformList = (selectedPlatform) => {
     setState((prevState) => ({
@@ -55,7 +57,6 @@ const Platform = ({ state, setState }) => {
         ),
       };
     });
-
   };
 
   return (

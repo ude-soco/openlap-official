@@ -15,13 +15,15 @@ import {
   Paper,
 } from "@mui/material";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
-import { SelectionContext } from "../../../selection-panel";
 import { fetchActivityTypesList } from "../utils/filters-api";
 import { getLastWordAndCapitalize } from "../../../utils/utils";
+import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
 const ActivityTypes = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
-  const { indicatorQuery, setIndicatorQuery } = useContext(SelectionContext);
+  const { indicatorQuery, setIndicatorQuery } = useContext(
+    IndicatorEditorContext
+  );
 
   useEffect(() => {
     const loadActivityTypesData = async () => {

@@ -1,13 +1,6 @@
 import { useEffect, useState, useContext } from "react";
 import {
-  Autocomplete,
-  Accordion,
-  AccordionSummary,
-  AccordionActions,
-  Chip,
-  Button,
   IconButton,
-  Divider,
   Grid,
   Typography,
   FormHelperText,
@@ -17,12 +10,10 @@ import {
   MenuItem,
 } from "@mui/material";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
-import { SelectionContext } from "../../../selection-panel";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import LockIcon from "@mui/icons-material/Lock";
 import HelpIcon from "@mui/icons-material/Help";
 import Tooltip from "@mui/material/Tooltip";
 import { fetchVisualizationTypeInputs } from "../utils/visualization-api";
+import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
 const Inputs = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
@@ -35,7 +26,7 @@ const Inputs = ({ state, setState }) => {
     setAnalysisRef,
     visRef,
     setVisRef,
-  } = useContext(SelectionContext);
+  } = useContext(IndicatorEditorContext);
 
   useEffect(() => {
     const loadVisTypeInputs = async (typeId) => {

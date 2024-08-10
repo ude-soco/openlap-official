@@ -10,11 +10,13 @@ import {
 } from "@mui/material";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { fetchPlatformList, fetchUserLRSList } from "../utils/dataset-api";
-import { SelectionContext } from "../../../selection-panel";
+import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
 const LRS = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
-  const { indicatorQuery, setIndicatorQuery } = useContext(SelectionContext);
+  const { indicatorQuery, setIndicatorQuery } = useContext(
+    IndicatorEditorContext
+  );
 
   const handleSelectLrsList = (selectedLrs) => {
     setState((prevState) => ({

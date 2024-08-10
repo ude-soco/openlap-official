@@ -8,28 +8,30 @@ import {
   AccordionDetails,
   Grid,
   Typography,
-  Paper,
   FormGroup,
   FormControlLabel,
   Switch,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockIcon from "@mui/icons-material/Lock";
 import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
-import { SelectionContext } from "../../selection-panel";
 import VisualizationLibrary from "./components/library";
 import VisualizationType from "./components/type";
 import Inputs from "./components/inputs";
 import { fetchPreviewVisualization } from "./utils/visualization-api";
-import { IndicatoEditorContext } from "../../../../indicator-editor";
+import { IndicatorEditorContext } from "../../../../indicator-editor";
 
 const Visualization = () => {
-  const { indicator, setIndicator } = useContext(IndicatoEditorContext);
+  const {
+    indicatorQuery,
+    lockedStep,
+    analysisRef,
+    visRef,
+    setVisRef,
+    indicator,
+    setIndicator,
+  } = useContext(IndicatorEditorContext);
   const { api } = useContext(AuthContext);
-  const { indicatorQuery, lockedStep, analysisRef, visRef, setVisRef } =
-    useContext(SelectionContext);
   const [state, setState] = useState({
     openPanel: false,
     showSelections: true,

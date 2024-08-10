@@ -1,12 +1,12 @@
 import { Box, Grid, Typography, Paper, TextField, Button } from "@mui/material";
 import { useContext, useEffect } from "react";
-import { IndicatoEditorContext } from "../../indicator-editor";
+import { IndicatorEditorContext } from "../../indicator-editor";
 import EmptyPreview from "../../../../../assets/images/vis-empty-state/no-indicator-preview.svg";
 import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager";
 
 const PreviewPanel = () => {
   const { darkMode } = useContext(CustomThemeContext);
-  const { indicator } = useContext(IndicatoEditorContext);
+  const { indicator } = useContext(IndicatorEditorContext);
 
   useEffect(() => {
     const script = document.createElement("script");

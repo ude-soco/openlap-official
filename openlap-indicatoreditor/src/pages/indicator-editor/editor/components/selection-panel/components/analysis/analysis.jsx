@@ -8,31 +8,19 @@ import {
   AccordionDetails,
   Grid,
   Typography,
-  Paper,
   FormGroup,
   FormControlLabel,
   Switch,
 } from "@mui/material";
-import { SelectionContext } from "../../selection-panel";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockIcon from "@mui/icons-material/Lock";
 import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
 import AnalyticsTechnique from "./components/analytics-technique";
 import Inputs from "./components/inputs";
 import Params from "./components/params";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { fetchAnalyzedData } from "./utils/analytics-api";
 import AnalyzedDataTable from "./components/analyzed-data-table";
-
-// const [analysisRef, setAnalysisRef] = useState({
-//   analyticsTechniqueId: "",
-//   analyticsTechniqueParams: [],
-//   analyticsTechniqueMapping: {
-//     mappings: [],
-//   },
-// });
-
+import { IndicatorEditorContext } from "../../../../indicator-editor";
 const Analysis = () => {
   const { api } = useContext(AuthContext);
   const {
@@ -41,7 +29,7 @@ const Analysis = () => {
     setLockedStep,
     analysisRef,
     setAnalysisRef,
-  } = useContext(SelectionContext);
+  } = useContext(IndicatorEditorContext);
   const [state, setState] = useState({
     openPanel: false,
     showSelections: true,

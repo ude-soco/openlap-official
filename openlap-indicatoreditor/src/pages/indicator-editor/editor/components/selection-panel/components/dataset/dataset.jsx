@@ -12,13 +12,12 @@ import {
   FormControlLabel,
   Switch,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { SelectionContext } from "../../selection-panel";
 import Platform from "./components/platform";
 import LRS from "./components/lrs";
+import { IndicatorEditorContext } from "../../../../indicator-editor";
 
 const Dataset = () => {
-  const { indicatorQuery, setLockedStep } = useContext(SelectionContext);
+  const { indicatorQuery, setLockedStep } = useContext(IndicatorEditorContext);
   const [state, setState] = useState({
     openPanel: true,
     showSelections: true,
@@ -53,7 +52,7 @@ const Dataset = () => {
 
   return (
     <>
-      <Accordion sx={{ mb: 1}} expanded={state.openPanel} >
+      <Accordion sx={{ mb: 1 }} expanded={state.openPanel}>
         <AccordionSummary aria-controls="panel1-content" id="panel1-header">
           <Grid container spacing={1}>
             {/* Label */}
@@ -85,10 +84,7 @@ const Dataset = () => {
                         />
                       </FormGroup>
                     )}
-                    <Button
-                      color="primary"
-                      onClick={handleTogglePanel}
-                    >
+                    <Button color="primary" onClick={handleTogglePanel}>
                       {state.openPanel ? "Close section" : "CHANGE"}
                     </Button>
                   </Grid>
