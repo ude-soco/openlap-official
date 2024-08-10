@@ -31,6 +31,7 @@ export const fetchTechniqueParams = async (api, techniqueId) => {
     throw error; // Re-throw the error to handle it in the component
   }
 };
+
 export const fetchAnalyzedData = async (api, indicatorQuery, analysisRef) => {
   try {
     const requestBody = {

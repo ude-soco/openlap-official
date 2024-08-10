@@ -44,9 +44,6 @@ const SelectionPanel = () => {
     },
   });
 
-  console.log(visRef.visualizationMapping.mapping);
-  
-
   const [analysisInputMenu, setAnalysisInputMenu] = useState({
     activities: {
       id: undefined,
@@ -95,7 +92,7 @@ const SelectionPanel = () => {
   const [lockedStep, setLockedStep] = useState({
     filters: true,
     analysis: true,
-    visualization: false,
+    visualization: true,
   });
 
   return (

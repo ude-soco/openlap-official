@@ -1,13 +1,27 @@
 import { Grid, Typography, useMediaQuery, useTheme } from "@mui/material";
 import PreviewPanel from "./components/preview-panel/preview-panel";
 import SelectionPanel from "./components/selection-panel/selection-panel";
+import { useState, createContext } from "react";
+
+export const IndicatoEditorContext = createContext();
 
 const IndicatorEditor = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("lg"));
 
+  const [indicator, setIndicator] = useState({
+    previewData: {
+      displayCode: "",
+      scriptData: [],
+    },
+    indicatorName: {},
+    type: "BASIC",
+  });
+
+  console.log(indicator);
+
   return (
-    <>
+    <IndicatoEditorContext.Provider value={{ indicator, setIndicator }}>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Typography>Indicator Editor</Typography>
@@ -36,7 +50,7 @@ const IndicatorEditor = () => {
           </Grid>
         </Grid>
       </Grid>
-    </>
+    </IndicatoEditorContext.Provider>
   );
 };
 

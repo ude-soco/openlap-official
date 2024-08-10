@@ -32,7 +32,7 @@ import AnalyzedDataTable from "./components/analyzed-data-table";
 
 const Analysis = () => {
   const { api } = useContext(AuthContext);
-  const { indicatorQuery, lockedStep, analysisRef, setAnalysisRef } =
+  const { indicatorQuery, lockedStep, setLockedStep, analysisRef, setAnalysisRef } =
     useContext(SelectionContext);
   const [state, setState] = useState({
     openPanel: false,
@@ -75,6 +75,14 @@ const Analysis = () => {
 
     loadAnalyzedData(api, indicatorQuery, analysisRef);
   };
+
+  const handleUnlockAnalysis = () => {
+    handleTogglePanel();
+    setLockedStep((prevState) => ({
+      ...prevState,
+      visualization: false,
+    }));
+  }
 
   return (
     <>
@@ -254,7 +262,7 @@ const Analysis = () => {
                 //   !Object.entries(indicatorQuery.activities).length ||
                 //   !indicatorQuery.actionOnActivities.length
                 // }
-                // onClick={handleUnlockAnalysis}
+                onClick={handleUnlockAnalysis}
               >
                 Next
               </Button>

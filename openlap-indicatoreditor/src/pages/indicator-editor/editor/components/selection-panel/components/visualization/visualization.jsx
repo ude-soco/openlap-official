@@ -19,10 +19,13 @@ import { SelectionContext } from "../../selection-panel";
 import VisualizationLibrary from "./components/library";
 import VisualizationType from "./components/type";
 import Inputs from "./components/inputs";
+import { fetchPreviewVisualization } from "./utils/visualization-api";
+import { IndicatoEditorContext } from "../../../../indicator-editor";
 
 const Visualization = () => {
+  const { indicator, setIndicator } = useContext(IndicatoEditorContext);
   const { api } = useContext(AuthContext);
-  const { indicatorQuery, lockedStep, visRef, setVisRef } =
+  const { indicatorQuery, lockedStep, analysisRef, visRef, setVisRef } =
     useContext(SelectionContext);
   const [state, setState] = useState({
     openPanel: false,
@@ -44,6 +47,34 @@ const Visualization = () => {
       ...prevState,
       openPanel: !prevState.openPanel,
     }));
+  };
+
+  const handleGeneratePreview = () => {
+    console.log("Generate preview api");
+    const loadPreviewVisualization = async (
+      api,
+      indicatorQuery,
+      analysisRef,
+      visRef
+    ) => {
+      try {
+        let previewResponse = await fetchPreviewVisualization(
+          api,
+          indicatorQuery,
+          analysisRef,
+          visRef
+        );
+
+        setIndicator((prevState) => ({
+          ...prevState,
+          previewData: previewResponse,
+        }));
+      } catch (error) {
+        console.log("Error analyzing the data");
+      }
+    };
+
+    loadPreviewVisualization(api, indicatorQuery, analysisRef, visRef);
   };
 
   return (
@@ -165,8 +196,19 @@ const Visualization = () => {
           </Grid>
         </AccordionDetails>
         <AccordionActions>
-          <Button>Cancel</Button>
-          <Button>Agree</Button>
+          <Grid container>
+            <Button
+              variant="contained"
+              fullWidth
+              // disabled={
+              //   !indicatorQuery.lrsStores.length ||
+              //   !indicatorQuery.platforms.length
+              // }
+              onClick={handleGeneratePreview}
+            >
+              Generate Preview
+            </Button>
+          </Grid>
         </AccordionActions>
       </Accordion>
     </>
