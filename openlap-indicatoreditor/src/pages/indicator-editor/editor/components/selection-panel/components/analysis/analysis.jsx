@@ -9,6 +9,9 @@ import {
   Grid,
   Typography,
   Paper,
+  FormGroup,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import { SelectionContext } from "../../selection-panel";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -32,10 +35,16 @@ import AnalyzedDataTable from "./components/analyzed-data-table";
 
 const Analysis = () => {
   const { api } = useContext(AuthContext);
-  const { indicatorQuery, lockedStep, setLockedStep, analysisRef, setAnalysisRef } =
-    useContext(SelectionContext);
+  const {
+    indicatorQuery,
+    lockedStep,
+    setLockedStep,
+    analysisRef,
+    setAnalysisRef,
+  } = useContext(SelectionContext);
   const [state, setState] = useState({
     openPanel: false,
+    showSelections: true,
     techniqueList: [],
     inputs: [],
     parameters: [],
@@ -53,6 +62,13 @@ const Analysis = () => {
     setState((prevState) => ({
       ...prevState,
       openPanel: !prevState.openPanel,
+    }));
+  };
+
+  const handletoggleShowSelection = () => {
+    setState((prevState) => ({
+      ...prevState,
+      showSelections: !prevState.showSelections,
     }));
   };
 
@@ -82,7 +98,7 @@ const Analysis = () => {
       ...prevState,
       visualization: false,
     }));
-  }
+  };
 
   return (
     <>
@@ -118,17 +134,28 @@ const Analysis = () => {
                   </Grid>
                 </Grid>
                 <Grid item>
-                  <Button
-                    size="small"
-                    color="primary"
-                    onClick={handleTogglePanel}
-                  >
-                    {state.openPanel ? "Close section" : "CHANGE"}
-                  </Button>
+                <Grid container>
+                    {!state.openPanel && (
+                      <FormGroup>
+                        <FormControlLabel
+                          control={<Switch checked={state.showSelections} />}
+                          onChange={handletoggleShowSelection}
+                          label="Show selections"
+                        />
+                      </FormGroup>
+                    )}
+                    <Button
+                      size="small"
+                      color="primary"
+                      onClick={handleTogglePanel}
+                    >
+                      {state.openPanel ? "Close section" : "CHANGE"}
+                    </Button>
+                  </Grid>
                 </Grid>
               </Grid>
             </Grid>
-            {!state.openPanel && (
+            {!state.openPanel && state.showSelections && (
               <>
                 {/* Analytics Technique */}
                 {analysisRef.analyticsTechniqueId.length > 0 && (

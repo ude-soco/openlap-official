@@ -18,8 +18,6 @@ const IndicatorEditor = () => {
     type: "BASIC",
   });
 
-  console.log(indicator);
-
   return (
     <IndicatoEditorContext.Provider value={{ indicator, setIndicator }}>
       <Grid container spacing={2}>

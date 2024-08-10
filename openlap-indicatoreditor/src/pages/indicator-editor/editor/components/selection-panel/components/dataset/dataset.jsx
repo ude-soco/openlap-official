@@ -8,6 +8,9 @@ import {
   AccordionDetails,
   Grid,
   Typography,
+  FormGroup,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { SelectionContext } from "../../selection-panel";
@@ -18,6 +21,7 @@ const Dataset = () => {
   const { indicatorQuery, setLockedStep } = useContext(SelectionContext);
   const [state, setState] = useState({
     openPanel: true,
+    showSelections: true,
     lrsList: [],
     selectedLrsList: [],
     platformList: [],
@@ -29,6 +33,13 @@ const Dataset = () => {
     setState((prevState) => ({
       ...prevState,
       openPanel: !prevState.openPanel,
+    }));
+  };
+
+  const handletoggleShowSelection = () => {
+    setState((prevState) => ({
+      ...prevState,
+      showSelections: !prevState.showSelections,
     }));
   };
 
@@ -64,17 +75,28 @@ const Dataset = () => {
                   </Grid>
                 </Grid>
                 <Grid item>
-                  <Button
-                    size="small"
-                    color="primary"
-                    onClick={handleTogglePanel}
-                  >
-                    {state.openPanel ? "Close section" : "CHANGE"}
-                  </Button>
+                  <Grid container>
+                    {!state.openPanel && (
+                      <FormGroup>
+                        <FormControlLabel
+                          control={<Switch checked={state.showSelections} />}
+                          onChange={handletoggleShowSelection}
+                          label="Show selections"
+                        />
+                      </FormGroup>
+                    )}
+                    <Button
+                      size="small"
+                      color="primary"
+                      onClick={handleTogglePanel}
+                    >
+                      {state.openPanel ? "Close section" : "CHANGE"}
+                    </Button>
+                  </Grid>
                 </Grid>
               </Grid>
             </Grid>
-            {!state.openPanel && (
+            {!state.openPanel && state.showSelections && (
               <>
                 {/* LRS */}
                 {indicatorQuery.lrsStores.length !== 0 && (

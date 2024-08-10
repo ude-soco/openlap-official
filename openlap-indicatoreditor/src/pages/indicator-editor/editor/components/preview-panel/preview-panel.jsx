@@ -1,4 +1,4 @@
-import { Box, Grid, Typography, Paper, TextField } from "@mui/material";
+import { Box, Grid, Typography, Paper, TextField, Button } from "@mui/material";
 import { useContext, useEffect } from "react";
 import { IndicatoEditorContext } from "../../indicator-editor";
 import EmptyPreview from "../../../../../assets/images/vis-empty-state/no-indicator-preview.svg";
@@ -37,43 +37,40 @@ const PreviewPanel = () => {
             <Typography>Preview panel</Typography>
           </Grid>
           <Grid item xs={12}>
-            <Grid container justifyContent="center">
-              <Grid
-                item
-                sx={{
-                  backgroundColor:
-                    indicator.previewData.displayCode.length !== 0
-                      ? "white"
-                      : undefined,
-                  borderRadius: 1.5,
-                  p: 2,
-                }}
-              >
-                {indicator.previewData.displayCode.length !== 0 ? (
-                  indicator.previewData.displayCode
-                ) : (
-                  <Grid
-                    container
-                    justifyContent="center"
-                    alignItems="center"
-                    spacing={2}
-                  >
-                    <Grid item>
-                      <Box
-                        component="img"
-                        src={EmptyPreview}
-                        sx={{
-                          p: 4,
-                          width: "100%",
-                          height: "100%",
-                          filter: darkMode ? "invert(1)" : undefined,
-                        }}
-                      />
-                    </Grid>
-                  </Grid>
-                )}
-              </Grid>
+            <Grid
+              container
+              justifyContent="center"
+              sx={{
+                backgroundColor:
+                  indicator.previewData.displayCode.length !== 0
+                    ? "white"
+                    : undefined,
+                borderRadius: 1.5,
+                p: 2,
+              }}
+            >
+              {indicator.previewData.displayCode.length !== 0 ? (
+                indicator.previewData.displayCode
+              ) : (
+                <Grid item>
+                  <Box
+                    component="img"
+                    src={EmptyPreview}
+                    sx={{
+                      p: 4,
+                      width: "100%",
+                      height: "100%",
+                      filter: darkMode ? "invert(1)" : undefined,
+                    }}
+                  />
+                </Grid>
+              )}
             </Grid>
+          </Grid>
+          <Grid item xs={12}>
+            <Button variant="contained" fullWidth>
+              Save Indicator
+            </Button>
           </Grid>
         </Grid>
       </Paper>
