@@ -49,7 +49,7 @@ const AnalyzedDataTable = () => {
       </Grid>
       <Grid item xs={12}>
         <TableContainer component={Paper}>
-          <Table>
+          <Table size="small">
             <TableHead>
               <TableRow>
                 {columns.map((column, index) => (

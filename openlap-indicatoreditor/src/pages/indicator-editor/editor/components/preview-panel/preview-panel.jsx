@@ -67,11 +67,13 @@ const PreviewPanel = () => {
               )}
             </Grid>
           </Grid>
-          <Grid item xs={12}>
-            <Button variant="contained" fullWidth>
-              Save Indicator
-            </Button>
-          </Grid>
+          {indicator.previewData.displayCode.length !== 0 ? (
+            <Grid item xs={12}>
+              <Button variant="contained" fullWidth>
+                Save Indicator
+              </Button>
+            </Grid>
+          ) : undefined}
         </Grid>
       </Paper>
     </>

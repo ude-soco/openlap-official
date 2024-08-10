@@ -11,7 +11,7 @@ import {
   Paper,
   FormGroup,
   FormControlLabel,
-  Switch
+  Switch,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockIcon from "@mui/icons-material/Lock";
@@ -61,7 +61,6 @@ const Visualization = () => {
   };
 
   const handleGeneratePreview = () => {
-    console.log("Generate preview api");
     const loadPreviewVisualization = async (
       api,
       indicatorQuery,
@@ -122,7 +121,7 @@ const Visualization = () => {
                   </Grid>
                 </Grid>
                 <Grid item>
-                <Grid container>
+                  <Grid container>
                     {!state.openPanel && (
                       <FormGroup>
                         <FormControlLabel
@@ -132,11 +131,7 @@ const Visualization = () => {
                         />
                       </FormGroup>
                     )}
-                    <Button
-                      size="small"
-                      color="primary"
-                      onClick={handleTogglePanel}
-                    >
+                    <Button color="primary" onClick={handleTogglePanel}>
                       {state.openPanel ? "Close section" : "CHANGE"}
                     </Button>
                   </Grid>
@@ -147,55 +142,75 @@ const Visualization = () => {
             {!state.openPanel && state.showSelections && (
               <>
                 {/* Visualization Library */}
-                <Grid item xs={12}>
-                  <Grid container alignItems="center" spacing={1}>
-                    <Grid item>
-                      <Typography>Library:</Typography>
-                    </Grid>
-                    <Grid item md>
-                      <Grid container spacing={1}>
-                        <Grid item>
-                          <Chip label="C3.js" />
+                {visRef.visualizationLibraryId.length > 0 && (
+                  <Grid item xs={12}>
+                    <Grid container alignItems="center" spacing={1}>
+                      <Grid item>
+                        <Typography>Library:</Typography>
+                      </Grid>
+                      <Grid item xs>
+                        <Grid container spacing={1}>
+                          {state.libraryList?.map((library, index) => {
+                            if (library.id === visRef.visualizationLibraryId) {
+                              return (
+                                <Grid item key={index}>
+                                  <Chip label={library.name} />
+                                </Grid>
+                              );
+                            }
+                          })}
                         </Grid>
                       </Grid>
                     </Grid>
                   </Grid>
-                </Grid>
-
+                )}
                 {/* Visualization Type */}
-                <Grid item xs={12}>
-                  <Grid container alignItems="center" spacing={1}>
-                    <Grid item>
-                      <Typography>Type:</Typography>
-                    </Grid>
-                    <Grid item md>
-                      <Grid container spacing={1}>
-                        <Grid item>
-                          <Chip label="Bar Chart" />
+                {visRef.visualizationTypeId.length > 0 && (
+                  <Grid item xs={12}>
+                    <Grid container alignItems="center" spacing={1}>
+                      <Grid item>
+                        <Typography>Type:</Typography>
+                      </Grid>
+                      <Grid item md>
+                        <Grid container spacing={1}>
+                          {state.typeList?.map((type, index) => {
+                            if (type.id === visRef.visualizationTypeId) {
+                              return (
+                                <Grid item key={index}>
+                                  <Chip label={type.name} />
+                                </Grid>
+                              );
+                            }
+                          })}
                         </Grid>
                       </Grid>
                     </Grid>
                   </Grid>
-                </Grid>
+                )}
 
                 {/* Visualization Inputs */}
-                <Grid item xs={12}>
-                  <Grid container alignItems="center" spacing={1}>
-                    <Grid item>
-                      <Typography>Inputs:</Typography>
-                    </Grid>
-                    <Grid item md>
-                      <Grid container spacing={1}>
-                        <Grid item>
-                          <Chip label="Item names (X-Axis)" />
-                        </Grid>
-                        <Grid item>
-                          <Chip label="Item count (Y-Axis)" />
+                {visRef.visualizationMapping.mapping.length > 0 && (
+                  <Grid item xs={12}>
+                    <Grid container alignItems="center" spacing={1}>
+                      <Grid item>
+                        <Typography>Inputs:</Typography>
+                      </Grid>
+                      <Grid item md>
+                        <Grid container spacing={1}>
+                          {visRef.visualizationMapping.mapping.map(
+                            (mapping, index) => (
+                              <Grid item>
+                                <Chip
+                                  label={`${mapping.inputPort.title}: ${mapping.outputPort.title}`}
+                                />
+                              </Grid>
+                            )
+                          )}
                         </Grid>
                       </Grid>
                     </Grid>
                   </Grid>
-                </Grid>
+                )}
               </>
             )}
           </Grid>
