@@ -8,6 +8,9 @@ import {
   AccordionDetails,
   Grid,
   Typography,
+  FormGroup,
+  FormControlLabel,
+  Switch
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockIcon from "@mui/icons-material/Lock";
@@ -29,6 +32,7 @@ const Filters = () => {
     useContext(SelectionContext);
   const [state, setState] = useState({
     openPanel: false,
+    showSelections: true,
     activityTypesList: [],
     selectedActivityTypesList: [],
     activitiesList: [],
@@ -52,6 +56,13 @@ const Filters = () => {
     }));
   };
 
+  const handletoggleShowSelection = () => {
+    setState((prevState) => ({
+      ...prevState,
+      showSelections: !prevState.showSelections,
+    }));
+  };
+
   const handleUnlockAnalysis = () => {
     handleTogglePanel();
     setLockedStep((prevState) => ({
@@ -67,10 +78,7 @@ const Filters = () => {
         expanded={state.openPanel}
         disabled={lockedStep.filters}
       >
-        <AccordionSummary
-          aria-controls="panel2-content"
-          id="panel2-header"
-        >
+        <AccordionSummary aria-controls="panel2-content" id="panel2-header">
           <Grid container spacing={1}>
             {/* Label */}
             <Grid item xs={12}>
@@ -97,18 +105,29 @@ const Filters = () => {
                   </Grid>
                 </Grid>
                 <Grid item>
-                  <Button
-                    size="small"
-                    color="primary"
-                    onClick={handleTogglePanel}
-                  >
-                    {state.openPanel ? "Close section" : "CHANGE"}
-                  </Button>
+                  <Grid container>
+                    {!state.openPanel && (
+                      <FormGroup>
+                        <FormControlLabel
+                          control={<Switch checked={state.showSelections} />}
+                          onChange={handletoggleShowSelection}
+                          label="Show selections"
+                        />
+                      </FormGroup>
+                    )}
+                    <Button
+                      size="small"
+                      color="primary"
+                      onClick={handleTogglePanel}
+                    >
+                      {state.openPanel ? "Close section" : "CHANGE"}
+                    </Button>
+                  </Grid>
                 </Grid>
               </Grid>
             </Grid>
 
-            {!state.openPanel && (
+            {!state.openPanel && state.showSelections && (
               <>
                 <ActivityTypeChips />
                 <ActivityChips />
