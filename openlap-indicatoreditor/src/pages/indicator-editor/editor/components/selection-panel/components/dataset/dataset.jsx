@@ -17,7 +17,7 @@ import LRS from "./components/lrs";
 const Dataset = () => {
   const { indicatorQuery, setLockedStep } = useContext(SelectionContext);
   const [state, setState] = useState({
-    openPanel: false,
+    openPanel: true,
     lrsList: [],
     selectedLrsList: [],
     platformList: [],

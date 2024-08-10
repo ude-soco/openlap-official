@@ -88,9 +88,12 @@ const Params = ({ state, setState }) => {
                     </>
                   ) : param.type === "Textbox" ? (
                     <TextField
-                      defaultValue={param.defaultValue}
-                      value={param.value}
-                      type={param.dataType === "INTEGER" ? "number" : "string"}
+                      value={
+                        param.value !== undefined && param.value !== null
+                          ? param.value
+                          : param.defaultValue
+                      }
+                      type={param.dataType === "INTEGER" ? "number" : "text"}
                       required={Boolean(param.required)}
                       label={param.title}
                       onChange={(event) => handleChangeParam(event, param)}

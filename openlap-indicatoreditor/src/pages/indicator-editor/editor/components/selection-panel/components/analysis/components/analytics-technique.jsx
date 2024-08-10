@@ -104,20 +104,18 @@ const AnalyticsTechnique = ({ state, setState }) => {
                   {state.techniqueList?.map((technique) => {
                     if (technique.id === analysisRef.analyticsTechniqueId) {
                       return (
-                        <>
-                          <Tooltip
-                            key={technique.id}
-                            arrow
-                            title={
-                              <Typography>{technique.description}</Typography>
-                            }
-                          >
-                            <Chip
-                              label={technique.name}
-                              onDelete={handleDeselectTechnique}
-                            />
-                          </Tooltip>
-                        </>
+                        <Tooltip
+                          key={technique.id}
+                          arrow
+                          title={
+                            <Typography>{technique.description}</Typography>
+                          }
+                        >
+                          <Chip
+                            label={technique.name}
+                            onDelete={handleDeselectTechnique}
+                          />
+                        </Tooltip>
                       );
                     }
                     return undefined;

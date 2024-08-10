@@ -20,6 +20,7 @@ import Inputs from "./components/inputs";
 import Params from "./components/params";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { fetchAnalyzedData } from "./utils/analytics-api";
+import AnalyzedDataTable from "./components/analyzed-data-table";
 
 // const [analysisRef, setAnalysisRef] = useState({
 //   analyticsTechniqueId: "",
@@ -34,12 +35,19 @@ const Analysis = () => {
   const { indicatorQuery, lockedStep, analysisRef, setAnalysisRef } =
     useContext(SelectionContext);
   const [state, setState] = useState({
-    openPanel: true,
+    openPanel: false,
     techniqueList: [],
     inputs: [],
     parameters: [],
     autoCompleteValue: null,
   });
+
+  useEffect(() => {
+    setState((prevState) => ({
+      ...prevState,
+      openPanel: !lockedStep.analysis,
+    }));
+  }, [lockedStep.analysis]);
 
   const handleTogglePanel = () => {
     setState((prevState) => ({
@@ -51,12 +59,15 @@ const Analysis = () => {
   const handlePreviewAnalyzedData = () => {
     const loadAnalyzedData = async (api, indicatorQuery, analysisRef) => {
       try {
-        let response = await fetchAnalyzedData(
+        let analyzedDataResponse = await fetchAnalyzedData(
           api,
           indicatorQuery,
           analysisRef
         );
-        console.log(response);
+        setAnalysisRef((prevState) => ({
+          ...prevState,
+          analyzedData: analyzedDataResponse,
+        }));
       } catch (error) {
         console.log("Error analyzing the data");
       }
@@ -126,7 +137,7 @@ const Analysis = () => {
                 )}
 
                 {/* Analysis inputs */}
-                {analysisRef.analyticsTechniqueMapping.mappings.length > 0 && (
+                {analysisRef.analyticsTechniqueMapping.mappings?.length > 0 && (
                   <Grid item xs={12}>
                     <Grid container alignItems="center" spacing={1}>
                       <Grid item>
@@ -191,6 +202,11 @@ const Analysis = () => {
             {analysisRef.analyticsTechniqueId.length !== 0 && (
               <Grid item xs={12}>
                 <Params state={state} setState={setState} />
+              </Grid>
+            )}
+            {Object.entries(analysisRef.analyzedData).length !== 0 && (
+              <Grid item xs={12}>
+                <AnalyzedDataTable />
               </Grid>
             )}
           </Grid>

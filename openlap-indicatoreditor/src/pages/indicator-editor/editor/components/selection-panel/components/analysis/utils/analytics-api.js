@@ -38,7 +38,7 @@ export const fetchAnalyzedData = async (api, indicatorQuery, analysisRef) => {
       ...analysisRef,
     };
     const response = await api.post("v1/indicators/basic/analyze", requestBody);
-    return response.data.data;
+    return response.data.data.columns;
   } catch (error) {
     console.error("Failed to fetch analytics technique param data");
     throw error; // Re-throw the error to handle it in the component

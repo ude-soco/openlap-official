@@ -29,6 +29,7 @@ const SelectionPanel = () => {
     analyticsTechniqueMapping: {
       mapping: [],
     },
+    analyzedData: {},
   });
 
   const [analysisInputMenu, setAnalysisInputMenu] = useState({
@@ -78,7 +79,7 @@ const SelectionPanel = () => {
 
   const [lockedStep, setLockedStep] = useState({
     filters: true,
-    analysis: false,
+    analysis: true,
     visualization: true,
   });
 
