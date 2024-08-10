@@ -16,11 +16,12 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { SelectionContext } from "../../selection-panel";
-import VisualizationLibrary from "./components/visualization-library";
+import VisualizationLibrary from "./components/library";
+import VisualizationType from "./components/type";
 
 const Visualization = () => {
   const { api } = useContext(AuthContext);
-  const { indicatorQuery, lockedStep, analysisRef, setAnalysisRef } =
+  const { indicatorQuery, lockedStep, visRef, setVisRef } =
     useContext(SelectionContext);
   const [state, setState] = useState({
     openPanel: false,
@@ -150,6 +151,11 @@ const Visualization = () => {
             <Grid item xs={12}>
               <VisualizationLibrary state={state} setState={setState} />
             </Grid>
+            {visRef.visualizationLibraryId.length > 0 && (
+              <Grid item xs={12}>
+                <VisualizationType state={state} setState={setState} />
+              </Grid>
+            )}
           </Grid>
         </AccordionDetails>
         <AccordionActions>

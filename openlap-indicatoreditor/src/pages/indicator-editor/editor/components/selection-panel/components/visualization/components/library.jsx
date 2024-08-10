@@ -49,11 +49,11 @@ const VisualizationLibrary = ({ state, setState }) => {
   };
 
   const handleDeselectVisualizationLibrary = () => {
-    setAnalysisRef((prevState) => {
+    setVisRef((prevState) => {
       return {
         ...prevState,
         visualizationLibraryId: "",
-        visualizationTypeId: [],
+        visualizationTypeId: "",
         visualizationMapping: {
           mappings: [],
         },
@@ -105,18 +105,16 @@ const VisualizationLibrary = ({ state, setState }) => {
             <Grid item xs={12}>
               <Grid container spacing={1}>
                 <Grid item>
-                  {state.libraryList?.map((technique) => {
-                    if (technique.id === visRef.visualizationLibraryId) {
+                  {state.libraryList?.map((library) => {
+                    if (library.id === visRef.visualizationLibraryId) {
                       return (
                         <Tooltip
-                          key={technique.id}
+                          key={library.id}
                           arrow
-                          title={
-                            <Typography>{technique.description}</Typography>
-                          }
+                          title={<Typography>{library.description}</Typography>}
                         >
                           <Chip
-                            label={technique.name}
+                            label={library.name}
                             onDelete={handleDeselectVisualizationLibrary}
                           />
                         </Tooltip>
