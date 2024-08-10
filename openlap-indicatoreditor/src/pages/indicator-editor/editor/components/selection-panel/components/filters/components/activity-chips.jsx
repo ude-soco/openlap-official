@@ -1,9 +1,9 @@
 import { useContext } from "react";
-import { SelectionContext } from "../../../selection-panel";
 import { Chip, Grid, Typography } from "@mui/material";
+import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
 const ActivityChips = () => {
-  const { indicatorQuery } = useContext(SelectionContext);
+  const { indicatorQuery } = useContext(IndicatorEditorContext);
   const activities = Object.values(indicatorQuery.activities).flat();
   const maxDisplayed = 3;
   const moreCount =

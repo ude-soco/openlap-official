@@ -6,11 +6,13 @@ import {
   RadioGroup,
   FormControlLabel,
 } from "@mui/material";
-import { SelectionContext } from "../../../selection-panel";
 import Condition from "../../../utils/condition";
+import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
 const User = () => {
-  const { indicatorQuery, setIndicatorQuery } = useContext(SelectionContext);
+  const { indicatorQuery, setIndicatorQuery } = useContext(
+    IndicatorEditorContext
+  );
 
   const handleUpdateUserData = (event) => {
     setIndicatorQuery((prevState) => ({

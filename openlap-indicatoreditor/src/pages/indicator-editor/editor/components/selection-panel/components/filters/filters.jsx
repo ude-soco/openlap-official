@@ -12,10 +12,8 @@ import {
   FormControlLabel,
   Switch,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockIcon from "@mui/icons-material/Lock";
 import IconButton from "@mui/material/IconButton";
-import { SelectionContext } from "../../selection-panel";
 import ActivityTypes from "./components/activity-types";
 import Activities from "./components/activities";
 import ActionOnActivities from "./components/action-on-activities";
@@ -26,10 +24,12 @@ import DateRange from "./components/date-range.jsx";
 import User from "./components/user.jsx";
 import DateRangeChips from "./components/date-range-chips.jsx";
 import UserChips from "./components/user-chips.jsx";
+import { IndicatorEditorContext } from "../../../../indicator-editor.jsx";
 
 const Filters = () => {
-  const { indicatorQuery, lockedStep, setLockedStep } =
-    useContext(SelectionContext);
+  const { indicatorQuery, lockedStep, setLockedStep } = useContext(
+    IndicatorEditorContext
+  );
   const [state, setState] = useState({
     openPanel: false,
     showSelections: true,

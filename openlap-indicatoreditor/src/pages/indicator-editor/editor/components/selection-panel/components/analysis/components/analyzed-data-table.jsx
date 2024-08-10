@@ -11,11 +11,11 @@ import {
   TablePagination,
   Typography,
 } from "@mui/material";
-import { SelectionContext } from "../../../selection-panel";
+import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
 const AnalyzedDataTable = () => {
   const { indicatorQuery, lockedStep, analysisRef, setAnalysisRef } =
-    useContext(SelectionContext);
+    useContext(IndicatorEditorContext);
 
   const [page, setPage] = useState(0); // Current page
   const [rowsPerPage, setRowsPerPage] = useState(5); // Rows per page

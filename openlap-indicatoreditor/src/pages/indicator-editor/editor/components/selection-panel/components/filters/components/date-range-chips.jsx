@@ -1,10 +1,10 @@
 import { useContext } from "react";
 import { Chip, Grid, Typography } from "@mui/material";
-import { SelectionContext } from "../../../selection-panel";
+import { IndicatorEditorContext } from "../../../../../indicator-editor";
 import dayjs from "dayjs";
 
 const DateRangeChips = () => {
-  const { indicatorQuery, lockedStep } = useContext(SelectionContext);
+  const { indicatorQuery, lockedStep } = useContext(IndicatorEditorContext);
 
   return (
     <>
