@@ -42,6 +42,10 @@ const AnalyticsTechnique = ({ state, setState }) => {
       ...prevState,
       analyticsTechniqueId: value.id,
     }));
+    setState((prevState) => ({
+      ...prevState,
+      autoCompleteValue: null,
+    }));
   };
 
   const handleDeselectTechnique = () => {
@@ -62,10 +66,12 @@ const AnalyticsTechnique = ({ state, setState }) => {
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Autocomplete
+            disabled={analysisRef.analyticsTechniqueId !== ""}
             disablePortal
             id="combo-box-lrs"
             options={state.techniqueList}
             fullWidth
+            value={state.autoCompleteValue}
             getOptionLabel={(option) => option.name}
             renderOption={(props, option) => (
               <li {...props} key={option.id}>

@@ -133,22 +133,24 @@ const Analysis = () => {
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item>
-                  <Grid container>
-                    {!state.openPanel && (
-                      <FormGroup>
-                        <FormControlLabel
-                          control={<Switch checked={state.showSelections} />}
-                          onChange={handletoggleShowSelection}
-                          label="Show selections"
-                        />
-                      </FormGroup>
-                    )}
-                    <Button color="primary" onClick={handleTogglePanel}>
-                      {state.openPanel ? "Close section" : "CHANGE"}
-                    </Button>
+                {!lockedStep.analysis && (
+                  <Grid item>
+                    <Grid container>
+                      {!state.openPanel && (
+                        <FormGroup>
+                          <FormControlLabel
+                            control={<Switch checked={state.showSelections} />}
+                            onChange={handletoggleShowSelection}
+                            label="Show selections"
+                          />
+                        </FormGroup>
+                      )}
+                      <Button color="primary" onClick={handleTogglePanel}>
+                        {state.openPanel ? "Close section" : "CHANGE"}
+                      </Button>
+                    </Grid>
                   </Grid>
-                </Grid>
+                )}
               </Grid>
             </Grid>
             {!state.openPanel && state.showSelections && (

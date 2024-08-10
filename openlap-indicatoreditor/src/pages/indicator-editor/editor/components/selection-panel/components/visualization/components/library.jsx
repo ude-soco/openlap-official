@@ -49,6 +49,7 @@ const VisualizationLibrary = ({ state, setState }) => {
     setState((prevState) => ({
       ...prevState,
       typeList: [],
+      autoCompleteValue: null,
     }));
   };
 
@@ -75,12 +76,14 @@ const VisualizationLibrary = ({ state, setState }) => {
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Autocomplete
+            disabled={visRef.visualizationLibraryId !== ""}
             disablePortal
             id="combo-box-lrs"
             options={state.libraryList.sort((a, b) =>
               a.name.localeCompare(b.name)
             )}
             fullWidth
+            value={state.autoCompleteValue}
             getOptionLabel={(option) => option.name}
             renderOption={(props, option) => (
               <li {...props} key={option.id}>
