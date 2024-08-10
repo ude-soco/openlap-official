@@ -10,7 +10,7 @@ export const fetchVisualizationLibrary = async (api) => {
 
 export const fetchVisualizationTypeByLibraryId = async (api, libraryId) => {
   try {
-    const response = await api.get("v1/visualizations/" + libraryId + "/types");
+    const response = await api.get("v1/visualizations/libraries/" + libraryId + "/types");
     return response.data.data;
   } catch (error) {
     console.error("Failed to fetch visualization type data");
