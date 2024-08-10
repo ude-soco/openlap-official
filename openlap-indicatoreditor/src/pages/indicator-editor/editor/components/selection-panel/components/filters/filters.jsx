@@ -65,29 +65,45 @@ const Filters = () => {
       <Accordion
         sx={{ mb: 1 }}
         expanded={state.openPanel}
-        onChange={handleTogglePanel}
         disabled={lockedStep.filters}
       >
         <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
           aria-controls="panel2-content"
           id="panel2-header"
         >
           <Grid container spacing={1}>
             {/* Label */}
             <Grid item xs={12}>
-              <Grid container alignItems="center" spacing={1}>
-                <Grid item>
-                  {!lockedStep.filters ? (
-                    <Chip label="2" color="primary" />
-                  ) : (
-                    <IconButton size="small">
-                      <LockIcon />
-                    </IconButton>
-                  )}
+              <Grid
+                container
+                alignItems="center"
+                justifyContent="space-between"
+                spacing={1}
+              >
+                <Grid item xs>
+                  <Grid container alignItems="center" spacing={1}>
+                    <Grid item>
+                      {!lockedStep.filters ? (
+                        <Chip label="2" color="primary" />
+                      ) : (
+                        <IconButton size="small">
+                          <LockIcon />
+                        </IconButton>
+                      )}
+                    </Grid>
+                    <Grid item>
+                      <Typography>Filters</Typography>
+                    </Grid>
+                  </Grid>
                 </Grid>
                 <Grid item>
-                  <Typography>Filters</Typography>
+                  <Button
+                    size="small"
+                    color="primary"
+                    onClick={handleTogglePanel}
+                  >
+                    {state.openPanel ? "Close section" : "CHANGE"}
+                  </Button>
                 </Grid>
               </Grid>
             </Grid>

@@ -32,6 +32,18 @@ const SelectionPanel = () => {
     analyzedData: {},
   });
 
+  const [visRef, setVisRef] = useState({
+    visualizationLibraryId: "",
+    visualizationTypeId: "",
+    visualizationParams: {
+      height: 400,
+      width: 400,
+    },
+    visualizationMapping: {
+      mapping: [],
+    },
+  });
+
   const [analysisInputMenu, setAnalysisInputMenu] = useState({
     activities: {
       id: undefined,
@@ -80,7 +92,7 @@ const SelectionPanel = () => {
   const [lockedStep, setLockedStep] = useState({
     filters: true,
     analysis: true,
-    visualization: true,
+    visualization: false,
   });
 
   return (
@@ -90,10 +102,12 @@ const SelectionPanel = () => {
         lockedStep,
         analysisRef,
         analysisInputMenu,
+        visRef,
         setIndicatorQuery,
         setLockedStep,
         setAnalysisRef,
         setAnalysisInputMenu,
+        setVisRef,
       }}
     >
       <Dataset />

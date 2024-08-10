@@ -81,29 +81,42 @@ const Analysis = () => {
       <Accordion
         sx={{ mb: 1 }}
         expanded={state.openPanel}
-        onChange={handleTogglePanel}
         disabled={lockedStep.analysis}
       >
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel3-content"
-          id="panel3-header"
-        >
+        <AccordionSummary aria-controls="panel3-content" id="panel3-header">
           <Grid container spacing={1}>
             {/* Label */}
             <Grid item xs={12}>
-              <Grid container alignItems="center" spacing={1}>
-                <Grid item>
-                  {!lockedStep.filters ? (
-                    <Chip label="3" color="primary" />
-                  ) : (
-                    <IconButton size="small">
-                      <LockIcon />
-                    </IconButton>
-                  )}
+              <Grid
+                container
+                alignItems="center"
+                justifyContent="space-between"
+                spacing={1}
+              >
+                <Grid item xs>
+                  <Grid container alignItems="center" spacing={1}>
+                    <Grid item>
+                      {!lockedStep.analysis ? (
+                        <Chip label="3" color="primary" />
+                      ) : (
+                        <IconButton size="small">
+                          <LockIcon />
+                        </IconButton>
+                      )}
+                    </Grid>
+                    <Grid item>
+                      <Typography>Analysis</Typography>
+                    </Grid>
+                  </Grid>
                 </Grid>
                 <Grid item>
-                  <Typography>Analysis</Typography>
+                  <Button
+                    size="small"
+                    color="primary"
+                    onClick={handleTogglePanel}
+                  >
+                    {state.openPanel ? "Close section" : "CHANGE"}
+                  </Button>
                 </Grid>
               </Grid>
             </Grid>
@@ -137,7 +150,7 @@ const Analysis = () => {
                 )}
 
                 {/* Analysis inputs */}
-                {analysisRef.analyticsTechniqueMapping.mappings?.length > 0 && (
+                {analysisRef.analyticsTechniqueMapping.mapping.length > 0 && (
                   <Grid item xs={12}>
                     <Grid container alignItems="center" spacing={1}>
                       <Grid item>
@@ -145,7 +158,7 @@ const Analysis = () => {
                       </Grid>
                       <Grid item xs>
                         <Grid container spacing={1}>
-                          {analysisRef.analyticsTechniqueMapping.mappings?.map(
+                          {analysisRef.analyticsTechniqueMapping.mapping.map(
                             (mapping, index) => (
                               <Grid item key={index}>
                                 <Chip
@@ -185,6 +198,11 @@ const Analysis = () => {
                 )}
 
                 {/* Outputs */}
+                {Object.entries(analysisRef.analyzedData).length !== 0 && (
+                  <Grid item xs={12}>
+                    <AnalyzedDataTable />
+                  </Grid>
+                )}
               </>
             )}
           </Grid>
