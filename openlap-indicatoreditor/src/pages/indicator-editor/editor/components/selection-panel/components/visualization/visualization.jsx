@@ -18,6 +18,7 @@ import { AuthContext } from "../../../../../../../setup/auth-context-manager/aut
 import { SelectionContext } from "../../selection-panel";
 import VisualizationLibrary from "./components/library";
 import VisualizationType from "./components/type";
+import Inputs from "./components/inputs";
 
 const Visualization = () => {
   const { api } = useContext(AuthContext);
@@ -154,6 +155,11 @@ const Visualization = () => {
             {visRef.visualizationLibraryId.length > 0 && (
               <Grid item xs={12}>
                 <VisualizationType state={state} setState={setState} />
+              </Grid>
+            )}
+            {visRef.visualizationTypeId.length > 0 && (
+              <Grid item xs={12}>
+                <Inputs state={state} setState={setState} />
               </Grid>
             )}
           </Grid>

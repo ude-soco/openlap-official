@@ -44,6 +44,9 @@ const SelectionPanel = () => {
     },
   });
 
+  console.log(visRef.visualizationMapping.mapping);
+  
+
   const [analysisInputMenu, setAnalysisInputMenu] = useState({
     activities: {
       id: undefined,

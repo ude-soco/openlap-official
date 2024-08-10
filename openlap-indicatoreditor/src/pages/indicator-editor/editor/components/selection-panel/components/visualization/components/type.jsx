@@ -1,18 +1,23 @@
 import { useEffect, useState, useContext } from "react";
 import {
   Autocomplete,
+  Box,
   Chip,
   Divider,
   TextField,
   Grid,
   Typography,
+  Tooltip,
+  ToggleButton,
 } from "@mui/material";
+import { CustomThemeContext } from "../../../../../../../../setup/theme-manager/theme-context-manager";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { SelectionContext } from "../../../selection-panel";
-import Tooltip from "@mui/material/Tooltip";
 import { fetchVisualizationTypeByLibraryId } from "../utils/visualization-api";
+import images from "../config/images";
 
 const VisualizationType = ({ state, setState }) => {
+  const { darkMode } = useContext(CustomThemeContext);
   const { api } = useContext(AuthContext);
   const {
     indicatorQuery,
@@ -25,7 +30,6 @@ const VisualizationType = ({ state, setState }) => {
 
   useEffect(() => {
     const loadVisualizationTypeData = async (libraryId) => {
-      console.log(libraryId);
       try {
         const typeListResponse = await fetchVisualizationTypeByLibraryId(
           api,
@@ -49,89 +53,73 @@ const VisualizationType = ({ state, setState }) => {
     setVisRef((prevState) => ({
       ...prevState,
       visualizationTypeId: value.id,
+      visualizationMapping: {
+        ...prevState.visualizationMapping,
+        mapping: [],
+      },
     }));
-  };
-
-  const handleDeselectVisualizationType = () => {
-    setVisRef((prevState) => {
-      return {
-        ...prevState,
-        visualizationTypeId: "",
-        visualizationMapping: {
-          mappings: [],
-        },
-      };
-    });
   };
 
   return (
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Autocomplete
-            disablePortal
-            id="combo-box-lrs"
-            options={state.typeList}
-            fullWidth
-            getOptionLabel={(option) => option.name}
-            renderOption={(props, option) => (
-              <li {...props} key={option.id}>
-                <Grid container sx={{ py: 0.5 }}>
-                  <Grid item xs={12}>
-                    <Typography>{option.name}</Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="body2" sx={{ fontStyle: "italic" }}>
-                      {option.description}
+          <Grid item xs={12}>
+            <Typography>Available chart types</Typography>
+          </Grid>
+        </Grid>
+        <Grid item xs={12}>
+          <Grid container spacing={3}>
+            {state.typeList
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((type) => {
+                let imgUrl = images.find(
+                  (image) => image.imageCode === type.imageCode
+                );
+                return (
+                  <Grid item key={type.id}>
+                    <ToggleButton
+                      sx={{ height: 72, width: 72, mb: 1 }}
+                      value={type}
+                      color={
+                        type.id === visRef.visualizationTypeId
+                          ? "primary"
+                          : undefined
+                      }
+                      selected={type.id === visRef.visualizationTypeId}
+                      onClick={() => handleSelectVisualizationType(type)}
+                    >
+                      <Box
+                        component="img"
+                        src={imgUrl.image}
+                        alt={imgUrl.imageCode}
+                        sx={{
+                          width: "80%",
+                          height: "80%",
+                          filter: darkMode ? "invert(1)" : undefined,
+                        }}
+                      />
+                    </ToggleButton>
+
+                    <Typography
+                      variant="body2"
+                      sx={{ width: 72 }}
+                      color={
+                        type.id === visRef.visualizationTypeId
+                          ? "primary"
+                          : undefined
+                      }
+                      align="center"
+                    >
+                      {type.name}
                     </Typography>
                   </Grid>
-                </Grid>
-              </li>
-            )}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="*Search for an Visualization type"
-              />
-            )}
-            onChange={(event, value) => {
-              if (value) handleSelectVisualizationType(value);
-            }}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
-          <Grid container spacing={1}>
-            <Grid item xs={12}>
-              <Typography>Selected Visualization library</Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <Grid container spacing={1}>
-                <Grid item>
-                  {state.typeList?.map((type) => {
-                    if (type.id === visRef.visualizationTypeId) {
-                      return (
-                        <Tooltip
-                          key={type.id}
-                          arrow
-                          title={<Typography>{type.description}</Typography>}
-                        >
-                          <Chip
-                            label={type.name}
-                            onDelete={handleDeselectVisualizationType}
-                          />
-                        </Tooltip>
-                      );
-                    }
-                    return undefined;
-                  })}
-                </Grid>
-              </Grid>
-            </Grid>
-            <Grid item xs={12} sx={{ pb: 2 }}>
-              <Divider />
-            </Grid>
+                );
+              })}
           </Grid>
+        </Grid>
+        <Grid item xs={12} sx={{ pb: 2 }}>
+          <Divider />
         </Grid>
       </Grid>
     </>
