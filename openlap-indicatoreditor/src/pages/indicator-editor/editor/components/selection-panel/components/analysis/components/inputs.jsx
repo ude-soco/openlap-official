@@ -122,7 +122,7 @@ const Inputs = ({ state, setState }) => {
                     ))}
                   </Select>
                   {Boolean(input.required) && (
-                    <FormHelperText>Input is required</FormHelperText>
+                    <FormHelperText>Required</FormHelperText>
                   )}
                 </FormControl>
               </Grid>

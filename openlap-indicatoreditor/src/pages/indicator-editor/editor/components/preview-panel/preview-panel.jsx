@@ -18,41 +18,41 @@ const PreviewPanel = () => {
   }, [indicator.previewData.scriptData]);
 
   return (
-    <>
-      <Paper
-        sx={{ p: 2, border: "1px solid #e0e0e0", minHeight: 600 }}
-        elevation={0}
-      >
-        <Grid container spacing={2}>
-          <Grid item xs={12} sx={{ pb: 2 }}>
-            <TextField
-              autoFocus
-              label="Indicator name"
-              placeholder="E.g., Student's performance chart"
-              variant="standard"
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Typography>Preview panel</Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <Grid
-              container
-              justifyContent="center"
-              sx={{
-                backgroundColor:
-                  indicator.previewData.displayCode.length !== 0
-                    ? "white"
-                    : undefined,
-                borderRadius: 1.5,
-                p: 2,
-              }}
-            >
-              {indicator.previewData.displayCode.length !== 0 ? (
-                indicator.previewData.displayCode
-              ) : (
-                <Grid item>
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <Paper
+          sx={{ p: 2, border: "1px solid #e0e0e0", minHeight: 600 }}
+          elevation={0}
+        >
+          <Grid container spacing={2}>
+            <Grid item xs={12} sx={{ pb: 2 }}>
+              <TextField
+                autoFocus
+                label="Indicator name"
+                placeholder="E.g., Student's performance chart"
+                variant="standard"
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Typography>Preview</Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Grid
+                container
+                justifyContent="center"
+                sx={{
+                  backgroundColor:
+                    indicator.previewData.displayCode.length !== 0
+                      ? "white"
+                      : undefined,
+                  borderRadius: 1.5,
+                  p: 2,
+                }}
+              >
+                {indicator.previewData.displayCode.length !== 0 ? (
+                  indicator.previewData.displayCode
+                ) : (
                   <Box
                     component="img"
                     src={EmptyPreview}
@@ -63,20 +63,20 @@ const PreviewPanel = () => {
                       filter: darkMode ? "invert(1)" : undefined,
                     }}
                   />
-                </Grid>
-              )}
+                )}
+              </Grid>
             </Grid>
           </Grid>
-          {indicator.previewData.displayCode.length !== 0 ? (
-            <Grid item xs={12}>
-              <Button variant="contained" fullWidth>
-                Save Indicator
-              </Button>
-            </Grid>
-          ) : undefined}
+        </Paper>
+      </Grid>
+      {indicator.previewData.displayCode.length !== 0 ? (
+        <Grid item xs={12}>
+          <Button variant="contained" fullWidth>
+            Save Indicator
+          </Button>
         </Grid>
-      </Paper>
-    </>
+      ) : undefined}
+    </Grid>
   );
 };
 
