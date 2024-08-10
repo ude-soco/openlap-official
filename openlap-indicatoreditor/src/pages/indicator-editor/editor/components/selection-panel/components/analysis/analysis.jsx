@@ -134,7 +134,7 @@ const Analysis = () => {
                   </Grid>
                 </Grid>
                 <Grid item>
-                <Grid container>
+                  <Grid container>
                     {!state.openPanel && (
                       <FormGroup>
                         <FormControlLabel
@@ -144,11 +144,7 @@ const Analysis = () => {
                         />
                       </FormGroup>
                     )}
-                    <Button
-                      size="small"
-                      color="primary"
-                      onClick={handleTogglePanel}
-                    >
+                    <Button color="primary" onClick={handleTogglePanel}>
                       {state.openPanel ? "Close section" : "CHANGE"}
                     </Button>
                   </Grid>

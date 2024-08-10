@@ -10,7 +10,7 @@ import {
   Typography,
   FormGroup,
   FormControlLabel,
-  Switch
+  Switch,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockIcon from "@mui/icons-material/Lock";
@@ -115,11 +115,7 @@ const Filters = () => {
                         />
                       </FormGroup>
                     )}
-                    <Button
-                      size="small"
-                      color="primary"
-                      onClick={handleTogglePanel}
-                    >
+                    <Button color="primary" onClick={handleTogglePanel}>
                       {state.openPanel ? "Close section" : "CHANGE"}
                     </Button>
                   </Grid>

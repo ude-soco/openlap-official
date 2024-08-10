@@ -53,7 +53,7 @@ const Dataset = () => {
 
   return (
     <>
-      <Accordion sx={{ mb: 1 }} expanded={state.openPanel}>
+      <Accordion sx={{ mb: 1}} expanded={state.openPanel} >
         <AccordionSummary aria-controls="panel1-content" id="panel1-header">
           <Grid container spacing={1}>
             {/* Label */}
@@ -86,7 +86,6 @@ const Dataset = () => {
                       </FormGroup>
                     )}
                     <Button
-                      size="small"
                       color="primary"
                       onClick={handleTogglePanel}
                     >
