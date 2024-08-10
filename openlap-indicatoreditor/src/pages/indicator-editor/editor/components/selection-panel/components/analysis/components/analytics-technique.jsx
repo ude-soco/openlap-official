@@ -21,6 +21,7 @@ import Tooltip from "@mui/material/Tooltip";
 import {
   fetchAnalyticsTechnique,
   fetchTechniqueInputs,
+  fetchTechniqueParams,
 } from "../utils/analytics-api";
 
 const AnalyticsTechnique = ({ state, setState }) => {
@@ -55,15 +56,33 @@ const AnalyticsTechnique = ({ state, setState }) => {
     }));
 
     const loadTechniqueInputs = async (value) => {
-      const techniqueInputsList = await fetchTechniqueInputs(api, value.id);
-
-      setState((prevState) => ({
-        ...state,
-        inputs: techniqueInputsList,
-      }));
+      try {
+        const techniqueInputsList = await fetchTechniqueInputs(api, value.id);
+        setState((prevState) => ({
+          ...prevState,
+          inputs: techniqueInputsList,
+        }));
+      } catch (error) {
+        console.log("Error fetching Analytics technique input list");
+      }
+    };
+    const loadTechniqueParams = async (value) => {
+      try {
+        const techniqueParamsList = await fetchTechniqueParams(api, value.id);
+        techniqueParamsList.forEach(
+          (param) => (param.value = param.defaultValue)
+        );
+        setAnalysisRef((prevState) => ({
+          ...prevState,
+          analyticsTechniqueParams: techniqueParamsList,
+        }));
+      } catch (error) {
+        console.log("Error fetching Analytics technique input list");
+      }
     };
 
     loadTechniqueInputs(value);
+    loadTechniqueParams(value);
   };
 
   const handleDeselectTechnique = (value) => {
@@ -89,9 +108,7 @@ const AnalyticsTechnique = ({ state, setState }) => {
               <li {...props} key={option.id}>
                 <Grid container sx={{ py: 0.5 }}>
                   <Grid item xs={12}>
-                    <Typography>
-                      {option.name}
-                    </Typography>
+                    <Typography>{option.name}</Typography>
                   </Grid>
                   <Grid item xs={12}>
                     <Typography variant="body2" sx={{ fontStyle: "italic" }}>
