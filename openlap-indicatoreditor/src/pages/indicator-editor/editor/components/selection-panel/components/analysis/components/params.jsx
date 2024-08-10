@@ -1,18 +1,47 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import {
   TextField,
   Grid,
   Typography,
-  FormHelperText,
+  Divider,
+  IconButton,
+  Tooltip,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
 } from "@mui/material";
+import HelpIcon from "@mui/icons-material/Help";
+import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { SelectionContext } from "../../../selection-panel";
+import { fetchTechniqueParams } from "../utils/analytics-api";
 
 const Params = ({ state, setState }) => {
+  const { api } = useContext(AuthContext);
   const { analysisRef, setAnalysisRef } = useContext(SelectionContext);
+
+  useEffect(() => {
+    const loadTechniqueParams = async (techniqueId) => {
+      try {
+        const techniqueParamsList = await fetchTechniqueParams(
+          api,
+          techniqueId
+        );
+        techniqueParamsList.forEach(
+          (param) => (param.value = param.defaultValue)
+        );
+        setAnalysisRef((prevState) => ({
+          ...prevState,
+          analyticsTechniqueParams: techniqueParamsList,
+        }));
+      } catch (error) {
+        console.log("Error fetching Analytics technique input list");
+      }
+    };
+
+    if (analysisRef.analyticsTechniqueId !== "")
+      loadTechniqueParams(analysisRef.analyticsTechniqueId);
+  }, [analysisRef.analyticsTechniqueId]);
 
   const handleChangeParam = (event, param) => {
     const { value } = event.target;
@@ -37,39 +66,54 @@ const Params = ({ state, setState }) => {
         </Grid>
         {analysisRef.analyticsTechniqueParams?.map((param, index) => (
           <Grid item xs={12} sm={6} key={index}>
-            <FormControl fullWidth>
-              {param.type === "Choice" ? (
-                <>
-                  <InputLabel>{param.title}</InputLabel>
-                  <Select
-                    label={param.title}
-                    defaultValue={param.defaultValue}
-                    onChange={(event) => handleChangeParam(event, param)}
-                  >
-                    {param.possibleValues.split(",").map((value, index) => (
-                      <MenuItem key={index} value={value}>
-                        {value}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </>
-              ) : param.type === "Textbox" ? (
-                <TextField
-                  defaultValue={param.defaultValue}
-                  value={param.value}
-                  type={param.dataType === "INTEGER" ? "number" : "string"}
-                  required={Boolean(param.required)}
-                  label={param.title}
-                  onChange={(event) => handleChangeParam(event, param)}
-                />
-              ) : undefined}
-
-              {Boolean(param.required) && (
-                <FormHelperText>Required</FormHelperText>
-              )}
-            </FormControl>
+            <Grid container spacing={1}>
+              <Grid item xs>
+                <FormControl fullWidth>
+                  {param.type === "Choice" ? (
+                    <>
+                      <InputLabel required={Boolean(param.required)}>
+                        {param.title}
+                      </InputLabel>
+                      <Select
+                        label={param.title}
+                        defaultValue={param.defaultValue}
+                        onChange={(event) => handleChangeParam(event, param)}
+                      >
+                        {param.possibleValues.split(",").map((value, index) => (
+                          <MenuItem key={index} value={value}>
+                            {value}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </>
+                  ) : param.type === "Textbox" ? (
+                    <TextField
+                      defaultValue={param.defaultValue}
+                      value={param.value}
+                      type={param.dataType === "INTEGER" ? "number" : "string"}
+                      required={Boolean(param.required)}
+                      label={param.title}
+                      onChange={(event) => handleChangeParam(event, param)}
+                    />
+                  ) : undefined}
+                </FormControl>
+              </Grid>
+              <Grid item sx={{ mt: 1 }}>
+                <Tooltip
+                  arrow
+                  title={<Typography>{param.description}</Typography>}
+                >
+                  <IconButton>
+                    <HelpIcon />
+                  </IconButton>
+                </Tooltip>
+              </Grid>
+            </Grid>
           </Grid>
         ))}
+        <Grid item xs={12} sx={{ py: 2 }}>
+          <Divider />
+        </Grid>
       </Grid>
     </>
   );
