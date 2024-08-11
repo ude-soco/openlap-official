@@ -1,4 +1,4 @@
-import { Grid, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Grid, Typography, Divider, useMediaQuery, useTheme } from "@mui/material";
 import PreviewPanel from "./components/preview-panel/preview-panel";
 import SelectionPanel from "./components/selection-panel/selection-panel";
 import { useState, createContext } from "react";
@@ -126,6 +126,9 @@ const IndicatorEditor = () => {
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Typography>Indicator Editor</Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Divider />
         </Grid>
         <Grid item xs={12}>
           <Grid container spacing={2}>

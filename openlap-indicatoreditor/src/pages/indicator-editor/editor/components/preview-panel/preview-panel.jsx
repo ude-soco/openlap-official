@@ -15,9 +15,9 @@ const PreviewPanel = () => {
   useEffect(() => {
     const script = document.createElement("script");
     script.innerHTML = indicator.previewData.scriptData;
-    document.getElementById("preview").appendChild(script);
+    document.getElementById("root").appendChild(script);
     return () => {
-      document.getElementById("preview").removeChild(script);
+      document.getElementById("root").removeChild(script);
     };
   }, [indicator.previewData.scriptData]);
 
@@ -107,8 +107,8 @@ const PreviewPanel = () => {
                     src={EmptyPreview}
                     sx={{
                       p: 4,
-                      width: "100%",
-                      height: "100%",
+                      maxWidth: 300,
+                      maxHeight: 300,
                       filter: darkMode ? "invert(1)" : undefined,
                     }}
                   />

@@ -191,8 +191,8 @@ const AppRoutes = () => {
                     </Route>
                   </Routes>
                 </Paper>
-                <Footer />
               </Main>
+              <Footer />
             </Grid>
           </Box>
         </Router>
