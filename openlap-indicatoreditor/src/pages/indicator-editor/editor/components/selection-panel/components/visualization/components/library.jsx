@@ -15,6 +15,7 @@ import { IndicatorEditorContext } from "../../../../../indicator-editor";
 const VisualizationLibrary = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
   const {
+    setIndicator,
     indicatorQuery,
     lockedStep,
     analysisRef,
@@ -68,6 +69,15 @@ const VisualizationLibrary = ({ state, setState }) => {
     setState((prevState) => ({
       ...prevState,
       typeList: [],
+      previewDisabled: true,
+    }));
+    setIndicator((prevState) => ({
+      ...prevState,
+      previewData: {
+        ...prevState.previewData,
+        displayCode: "",
+        scriptData: [],
+      },
     }));
   };
 

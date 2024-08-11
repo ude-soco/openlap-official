@@ -48,6 +48,10 @@ const VisualizationType = ({ state, setState }) => {
         mapping: [],
       },
     }));
+    setState((prevState) => ({
+      ...prevState,
+      previewDisabled: false,
+    }));
   };
 
   return (
