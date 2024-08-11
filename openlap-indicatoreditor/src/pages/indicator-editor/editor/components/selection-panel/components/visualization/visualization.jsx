@@ -39,6 +39,7 @@ const Visualization = () => {
     typeList: [],
     inputs: [],
     autoCompleteValue: null,
+    previewDisabled: true,
   });
 
   useEffect(() => {
@@ -80,6 +81,11 @@ const Visualization = () => {
         setIndicator((prevState) => ({
           ...prevState,
           previewData: previewResponse,
+        }));
+
+        setState((prevState) => ({
+          ...prevState,
+          previewDisabled: true,
         }));
       } catch (error) {
         console.log("Error analyzing the data");
@@ -241,10 +247,12 @@ const Visualization = () => {
             <Button
               variant="contained"
               fullWidth
-              // disabled={
-              //   !indicatorQuery.lrsStores.length ||
-              //   !indicatorQuery.platforms.length
-              // }
+              disabled={
+                !visRef.visualizationLibraryId.length ||
+                !visRef.visualizationTypeId.length ||
+                !visRef.visualizationMapping.mapping.length ||
+                state.previewDisabled
+              }
               onClick={handleGeneratePreview}
             >
               Generate Preview
