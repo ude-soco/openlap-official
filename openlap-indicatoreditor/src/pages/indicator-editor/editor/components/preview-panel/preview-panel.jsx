@@ -15,9 +15,9 @@ const PreviewPanel = () => {
   useEffect(() => {
     const script = document.createElement("script");
     script.innerHTML = indicator.previewData.scriptData;
-    document.getElementById("root").appendChild(script);
+    document.getElementById("preview").appendChild(script);
     return () => {
-      document.getElementById("root").removeChild(script);
+      document.getElementById("preview").removeChild(script);
     };
   }, [indicator.previewData.scriptData]);
 
@@ -89,6 +89,7 @@ const PreviewPanel = () => {
               <Grid
                 container
                 justifyContent="center"
+                id="preview"
                 sx={{
                   backgroundColor:
                     indicator.previewData.displayCode.length !== 0
@@ -120,6 +121,7 @@ const PreviewPanel = () => {
       {indicator.previewData.displayCode.length !== 0 ? (
         <Grid item xs={12}>
           <Button
+            disabled={indicator.indicatorName.length === 0}
             variant="contained"
             fullWidth
             onClick={handleCreateBasicPreview}
