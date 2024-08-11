@@ -20,6 +20,7 @@ import VisualizationType from "./components/type";
 import Inputs from "./components/inputs";
 import { fetchPreviewVisualization } from "./utils/visualization-api";
 import { IndicatorEditorContext } from "../../../../indicator-editor";
+import { LoadingButton } from "@mui/lab";
 
 const Visualization = () => {
   const {
@@ -40,6 +41,7 @@ const Visualization = () => {
     inputs: [],
     autoCompleteValue: null,
     previewDisabled: true,
+    loadingPreview: false,
   });
 
   useEffect(() => {
@@ -86,12 +88,16 @@ const Visualization = () => {
         setState((prevState) => ({
           ...prevState,
           previewDisabled: true,
+          loadingPreview: false,
         }));
       } catch (error) {
         console.log("Error analyzing the data");
       }
     };
-
+    setState((prevState) => ({
+      ...prevState,
+      loadingPreview: true,
+    }));
     loadPreviewVisualization(api, indicatorQuery, analysisRef, visRef);
   };
 
@@ -244,7 +250,9 @@ const Visualization = () => {
         </AccordionDetails>
         <AccordionActions>
           <Grid container>
-            <Button
+            <LoadingButton
+              loading={state.loadingPreview}
+              loadingPosition="start"
               variant="contained"
               fullWidth
               disabled={
@@ -256,7 +264,7 @@ const Visualization = () => {
               onClick={handleGeneratePreview}
             >
               Generate Preview
-            </Button>
+            </LoadingButton>
           </Grid>
         </AccordionActions>
       </Accordion>
