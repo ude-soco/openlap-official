@@ -21,6 +21,7 @@ import { AuthContext } from "../../../../../../../setup/auth-context-manager/aut
 import { fetchAnalyzedData } from "./utils/analytics-api";
 import AnalyzedDataTable from "./components/analyzed-data-table";
 import { IndicatorEditorContext } from "../../../../indicator-editor";
+import { LoadingButton } from "@mui/lab";
 
 const Analysis = () => {
   const { api } = useContext(AuthContext);
@@ -39,6 +40,7 @@ const Analysis = () => {
     parameters: [],
     autoCompleteValue: null,
     previewDisabled: true,
+    loadingPreview: false,
   });
 
   useEffect(() => {
@@ -77,12 +79,20 @@ const Analysis = () => {
         setState((prevState) => ({
           ...prevState,
           previewDisabled: true,
+          loadingPreview: false,
         }));
       } catch (error) {
+        setState((prevState) => ({
+          ...prevState,
+          loadingPreview: false,
+        }));
         console.log("Error analyzing the data");
       }
     };
-
+    setState((prevState) => ({
+      ...prevState,
+      loadingPreview: true,
+    }));
     loadAnalyzedData(api, indicatorQuery, analysisRef);
   };
 
@@ -259,7 +269,9 @@ const Analysis = () => {
         <AccordionActions>
           <Grid container spacing={2}>
             <Grid item xs>
-              <Button
+              <LoadingButton
+                loading={state.loadingPreview}
+                loadingIndicator="Loading…"
                 variant="contained"
                 fullWidth
                 disabled={
@@ -271,7 +283,7 @@ const Analysis = () => {
                 onClick={handlePreviewAnalyzedData}
               >
                 Preview data
-              </Button>
+              </LoadingButton>
             </Grid>
             <Grid item xs>
               <Button
