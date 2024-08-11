@@ -60,6 +60,10 @@ const AnalyticsTechnique = ({ state, setState }) => {
         analyzedData: {},
       };
     });
+    setState((prevState) => ({
+      ...prevState,
+      previewDisabled: true,
+    }));
   };
 
   return (

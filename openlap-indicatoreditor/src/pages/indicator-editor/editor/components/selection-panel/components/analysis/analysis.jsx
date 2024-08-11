@@ -38,6 +38,7 @@ const Analysis = () => {
     inputs: [],
     parameters: [],
     autoCompleteValue: null,
+    previewDisabled: true,
   });
 
   useEffect(() => {
@@ -72,6 +73,10 @@ const Analysis = () => {
         setAnalysisRef((prevState) => ({
           ...prevState,
           analyzedData: analyzedDataResponse,
+        }));
+        setState((prevState) => ({
+          ...prevState,
+          previewDisabled: true,
         }));
       } catch (error) {
         console.log("Error analyzing the data");
@@ -260,7 +265,8 @@ const Analysis = () => {
                 disabled={
                   !analysisRef.analyticsTechniqueId.length ||
                   !analysisRef.analyticsTechniqueMapping.mapping.length ||
-                  !analysisRef.analyticsTechniqueParams.length
+                  !analysisRef.analyticsTechniqueParams.length ||
+                  state.previewDisabled
                 }
                 onClick={handlePreviewAnalyzedData}
               >

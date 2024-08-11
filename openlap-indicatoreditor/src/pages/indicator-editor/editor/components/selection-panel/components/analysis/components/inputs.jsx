@@ -63,6 +63,12 @@ const Inputs = ({ state, setState }) => {
       return oldMappings;
     };
 
+    // TODO: Check the length of the arrays of the input and the mapping if same then false
+    setState((prevState) => ({
+      ...prevState,
+      previewDisabled: false,
+    }));
+
     setAnalysisRef((prevState) => {
       let tempInputMappings = {
         inputPort: input,
@@ -132,6 +138,7 @@ const Inputs = ({ state, setState }) => {
             </Grid>
           </Grid>
         ))}
+
         <Grid item xs={12} sx={{ py: 2 }}>
           <Divider />
         </Grid>

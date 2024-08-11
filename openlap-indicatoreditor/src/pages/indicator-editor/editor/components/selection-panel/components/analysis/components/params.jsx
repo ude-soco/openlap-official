@@ -76,7 +76,11 @@ const Params = ({ state, setState }) => {
                       </InputLabel>
                       <Select
                         label={param.title}
-                        defaultValue={param.defaultValue}
+                        value={
+                          param.value !== undefined && param.value !== null
+                            ? param.value
+                            : param.defaultValue
+                        }
                         onChange={(event) => handleChangeParam(event, param)}
                       >
                         {param.possibleValues.split(",").map((value, index) => (
@@ -91,7 +95,7 @@ const Params = ({ state, setState }) => {
                       value={
                         param.value !== undefined && param.value !== null
                           ? param.value
-                          : param.defaultValue
+                          : param.defaultValue || ""
                       }
                       type={param.dataType === "INTEGER" ? "number" : "text"}
                       required={Boolean(param.required)}
