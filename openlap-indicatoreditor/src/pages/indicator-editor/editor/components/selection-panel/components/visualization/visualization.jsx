@@ -91,12 +91,23 @@ const Visualization = () => {
           loadingPreview: false,
         }));
       } catch (error) {
+        setState((prevState) => ({
+          ...prevState,
+          loadingPreview: false,
+        }));
         console.log("Error analyzing the data");
       }
     };
     setState((prevState) => ({
       ...prevState,
       loadingPreview: true,
+    }));
+    setIndicator((prevState) => ({
+      ...prevState,
+      previewData: {
+        displayCode: "",
+        scriptData: [],
+      },
     }));
     loadPreviewVisualization(api, indicatorQuery, analysisRef, visRef);
   };
@@ -252,7 +263,7 @@ const Visualization = () => {
           <Grid container>
             <LoadingButton
               loading={state.loadingPreview}
-              loadingPosition="start"
+              loadingIndicator="Generating…"
               variant="contained"
               fullWidth
               disabled={
