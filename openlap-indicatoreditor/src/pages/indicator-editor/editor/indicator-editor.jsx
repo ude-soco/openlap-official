@@ -16,7 +16,7 @@ const IndicatorEditor = () => {
       displayCode: "",
       scriptData: [],
     },
-    indicatorName: {},
+    indicatorName: "",
     type: "BASIC",
   });
 
