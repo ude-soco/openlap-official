@@ -21,6 +21,7 @@ import { AuthContext } from "../../../../../../../setup/auth-context-manager/aut
 import { fetchAnalyzedData } from "./utils/analytics-api";
 import AnalyzedDataTable from "./components/analyzed-data-table";
 import { IndicatorEditorContext } from "../../../../indicator-editor";
+
 const Analysis = () => {
   const { api } = useContext(AuthContext);
   const {
@@ -80,7 +81,7 @@ const Analysis = () => {
     loadAnalyzedData(api, indicatorQuery, analysisRef);
   };
 
-  const handleUnlockAnalysis = () => {
+  const handleUnlockVisualization = () => {
     handleTogglePanel();
     setLockedStep((prevState) => ({
       ...prevState,
@@ -256,11 +257,11 @@ const Analysis = () => {
               <Button
                 variant="contained"
                 fullWidth
-                // disabled={
-                //   !indicatorQuery.activityTypes.length ||
-                //   !Object.entries(indicatorQuery.activities).length ||
-                //   !indicatorQuery.actionOnActivities.length
-                // }
+                disabled={
+                  !analysisRef.analyticsTechniqueId.length ||
+                  !analysisRef.analyticsTechniqueMapping.mapping.length ||
+                  !analysisRef.analyticsTechniqueParams.length
+                }
                 onClick={handlePreviewAnalyzedData}
               >
                 Preview data
@@ -270,12 +271,13 @@ const Analysis = () => {
               <Button
                 variant="contained"
                 fullWidth
-                // disabled={
-                //   !indicatorQuery.activityTypes.length ||
-                //   !Object.entries(indicatorQuery.activities).length ||
-                //   !indicatorQuery.actionOnActivities.length
-                // }
-                onClick={handleUnlockAnalysis}
+                disabled={
+                  !analysisRef.analyticsTechniqueId.length ||
+                  !analysisRef.analyticsTechniqueMapping.mapping.length ||
+                  !analysisRef.analyticsTechniqueParams.length ||
+                  Object.entries(analysisRef.analyzedData).length === 0
+                }
+                onClick={handleUnlockVisualization}
               >
                 Next
               </Button>

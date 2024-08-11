@@ -88,26 +88,38 @@ const LRS = ({ state, setState }) => {
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Autocomplete
-            autoFocus
-            disablePortal
-            id="combo-box-lrs"
-            options={state.lrsList}
-            fullWidth
-            getOptionLabel={(option) => option.lrsTitle}
-            value={state.autoCompleteValue}
-            renderOption={(props, option) => (
-              <li {...props} key={option.id}>
-                {option.lrsTitle}
-              </li>
-            )}
-            renderInput={(params) => (
-              <TextField {...params} placeholder="*Search for LRSs" />
-            )}
-            onChange={(event, value) => {
-              if (value) handleSelectLrsList(value);
-            }}
-          />
+          <Tooltip
+            arrow
+            title={
+              indicatorQuery.platforms.length > 0 ? (
+                <Typography variant="body2">
+                  Deselect the Platform(s) below in order to remove a LRS.
+                </Typography>
+              ) : undefined
+            }
+          >
+            <Autocomplete
+              disabled={indicatorQuery.platforms.length > 0}
+              autoFocus
+              disablePortal
+              id="combo-box-lrs"
+              options={state.lrsList}
+              fullWidth
+              getOptionLabel={(option) => option.lrsTitle}
+              value={state.autoCompleteValue}
+              renderOption={(props, option) => (
+                <li {...props} key={option.id}>
+                  {option.lrsTitle}
+                </li>
+              )}
+              renderInput={(params) => (
+                <TextField {...params} placeholder="*Search for LRSs" />
+              )}
+              onChange={(event, value) => {
+                if (value) handleSelectLrsList(value);
+              }}
+            />
+          </Tooltip>
         </Grid>
         <Grid item xs={12}>
           <Grid container spacing={1}>
@@ -123,7 +135,7 @@ const LRS = ({ state, setState }) => {
                       title={
                         indicatorQuery.platforms.length ? (
                           <Typography variant="body2">
-                            Deselect the platform(s) below in order to remove a
+                            Deselect the Platform(s) below in order to remove a
                             LRS.
                           </Typography>
                         ) : undefined

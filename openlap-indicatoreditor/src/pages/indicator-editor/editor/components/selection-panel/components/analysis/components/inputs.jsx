@@ -84,6 +84,7 @@ const Inputs = ({ state, setState }) => {
           ...prevState.analyticsTechniqueMapping,
           mapping: updatedMappings,
         },
+        analyzedData: {},
       };
     });
   };
