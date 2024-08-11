@@ -55,8 +55,9 @@ const AnalyticsTechnique = ({ state, setState }) => {
         analyticsTechniqueId: "",
         analyticsTechniqueParams: [],
         analyticsTechniqueMapping: {
-          mappings: [],
+          mapping: [],
         },
+        analyzedData: {},
       };
     });
   };

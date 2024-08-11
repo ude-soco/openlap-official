@@ -71,12 +71,17 @@ const Platform = ({ state, setState }) => {
                   Select at least one LRS from above to view the list of
                   Platforms.
                 </Typography>
+              ) : indicatorQuery.activityTypes.length ? (
+                <Typography variant="body2">
+                  Deselect the Activity types(s) from filters below in order to
+                  remove a platform.
+                </Typography>
               ) : undefined
             }
           >
             <Autocomplete
               disablePortal
-              disabled={state.selectedLrsList.length === 0}
+              disabled={state.selectedLrsList.length === 0 || indicatorQuery.activityTypes.length > 0}
               id="combo-box-lrs"
               options={state.platformList}
               fullWidth
