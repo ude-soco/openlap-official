@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { Grid, Typography, Chip } from "@mui/material";
+import { Grid, Typography, Chip, Tooltip } from "@mui/material";
 import { getLastWordAndCapitalize } from "../../../utils/utils";
 import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
@@ -27,7 +27,14 @@ const ActivityTypeChips = () => {
               <Grid container spacing={1} alignItems="center">
                 {displayedActivityTypes.map((activityType, index) => (
                   <Grid item key={index}>
-                    <Chip label={getLastWordAndCapitalize(activityType)} />
+                    <Tooltip
+                      arrow
+                      title={
+                        <Typography align="center">{activityType}</Typography>
+                      }
+                    >
+                      <Chip label={getLastWordAndCapitalize(activityType)} />
+                    </Tooltip>
                   </Grid>
                 ))}
                 {moreCount > 0 && (
