@@ -4,12 +4,6 @@ import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
 import ArchitectureIcon from "@mui/icons-material/Architecture";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import QuizIcon from "@mui/icons-material/Quiz";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import ListAltIcon from "@mui/icons-material/ListAlt";
-import AddchartIcon from "@mui/icons-material/Addchart";
-import { useNavigate } from "react-router-dom";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import StyleIcon from "@mui/icons-material/Style";
 import {
   Drawer,
   Box,
@@ -20,8 +14,13 @@ import {
   ListItemText,
   ListItemButton,
 } from "@mui/material";
+import { useNavigate, useLocation } from "react-router-dom";
 import { styled } from "@mui/material/styles";
-
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ListAltIcon from "@mui/icons-material/ListAlt";
+import AddchartIcon from "@mui/icons-material/Addchart";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import StyleIcon from "@mui/icons-material/Style";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 
 const drawerWidth = 280;
@@ -39,6 +38,7 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
   const [openIndicator, setOpenIndicator] = useState(true);
   const [openTools, setOpenTools] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const iscMenus = [
     {
@@ -46,21 +46,18 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
       secondary: "List of my ISCs",
       navigate: "/isc",
       icon: <DashboardIcon />,
-      disabled: false,
     },
     {
       primary: "ISC Creator",
       secondary: "Create or edit an ISC",
       navigate: "/isc/creator",
       icon: <AddchartIcon />,
-      disabled: false,
     },
     {
       primary: "Pool of ISC",
       secondary: "List of all ISCs",
       navigate: "/isc/pool",
       icon: <AddchartIcon />,
-      disabled: false,
     },
   ];
 
@@ -70,21 +67,18 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
       secondary: "List of my Questions and associated Indicators",
       navigate: "/gqi",
       icon: <DashboardIcon />,
-      disabled: false,
     },
     {
       primary: "GQI Editor",
       secondary: "Create Questions and associate Indicators",
-      navigate: "gqi/editor",
+      navigate: "/gqi/editor",
       icon: <ListAltIcon />,
-      disabled: false,
     },
     {
       primary: "Pool of Questions",
       secondary: "Create Questions and associate Indicators",
-      navigate: "gqi/pool",
+      navigate: "/gqi/pool",
       icon: <ListAltIcon />,
-      disabled: false,
     },
   ];
 
@@ -94,21 +88,18 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
       secondary: "List of my Indicators",
       navigate: "/indicator",
       icon: <DashboardIcon />,
-      disabled: false,
     },
     {
       primary: "Indicator Editor",
       secondary: "Create Basic, Composite, & Multi-level Indicator",
-      navigate: "indicator/editor",
+      navigate: "/indicator/editor",
       icon: <AddchartIcon />,
-      disabled: false,
     },
     {
       primary: "Indicator Pool",
       secondary: "List of all indicators",
-      navigate: "indicator/pool",
+      navigate: "/indicator/pool",
       icon: <AddchartIcon />,
-      disabled: false,
     },
   ];
 
@@ -118,7 +109,6 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
       secondary: "Convert CSV to xAPI and vice versa",
       navigate: "/csv-xapi-converter",
       icon: <ChangeCircleIcon />,
-      disabled: false,
     },
   ];
   return (
@@ -129,7 +119,6 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
         open={openSidebar}
         sx={{
           width: drawerWidth,
-          // zIndex: openSidebar ? 1 : 0,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
             width: drawerWidth,
@@ -166,8 +155,7 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
                       navigate(menu.navigate);
                     }}
                     key={index}
-                    disabled={menu.disabled}
-                    // selected={selectedMenu === menu.navigate}
+                    selected={location.pathname === menu.navigate}
                   >
                     <ListItemIcon> {menu.icon} </ListItemIcon>
                     <ListItemText
@@ -199,8 +187,7 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
                       navigate(menu.navigate);
                     }}
                     key={index}
-                    disabled={menu.disabled}
-                    // selected={selectedMenu === menu.navigate}
+                    selected={location.pathname === menu.navigate}
                   >
                     <ListItemIcon> {menu.icon} </ListItemIcon>
                     <ListItemText
@@ -232,8 +219,7 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
                       navigate(menu.navigate);
                     }}
                     key={index}
-                    disabled={menu.disabled}
-                    // selected={selectedMenu === menu.navigate}
+                    selected={location.pathname === menu.navigate}
                   >
                     <ListItemIcon> {menu.icon} </ListItemIcon>
                     <ListItemText
@@ -265,8 +251,7 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
                       navigate(menu.navigate);
                     }}
                     key={index}
-                    disabled={menu.disabled}
-                    // selected={selectedMenu === menu.navigate}
+                    selected={location.pathname === menu.navigate}
                   >
                     <ListItemIcon> {menu.icon} </ListItemIcon>
                     <ListItemText
