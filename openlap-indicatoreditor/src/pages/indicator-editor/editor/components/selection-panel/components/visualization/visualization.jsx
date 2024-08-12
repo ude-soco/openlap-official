@@ -21,6 +21,7 @@ import Inputs from "./components/inputs";
 import { fetchPreviewVisualization } from "./utils/visualization-api";
 import { IndicatorEditorContext } from "../../../../indicator-editor";
 import { LoadingButton } from "@mui/lab";
+import { useSnackbar } from "notistack";
 
 const Visualization = () => {
   const {
@@ -40,9 +41,9 @@ const Visualization = () => {
     typeList: [],
     inputs: [],
     autoCompleteValue: null,
-    previewDisabled: true,
     loadingPreview: false,
   });
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     setState((prevState) => ({
@@ -82,19 +83,24 @@ const Visualization = () => {
 
         setIndicator((prevState) => ({
           ...prevState,
-          previewData: previewResponse,
+          previewData: {
+            ...prevState.previewData,
+            displayCode: previewResponse.displayCode,
+            scriptData: previewResponse.scriptData,
+          },
         }));
 
         setState((prevState) => ({
           ...prevState,
-          previewDisabled: true,
           loadingPreview: false,
         }));
+        enqueueSnackbar(previewResponse.message, { variant: "success" });
       } catch (error) {
         setState((prevState) => ({
           ...prevState,
           loadingPreview: false,
         }));
+        enqueueSnackbar(error.response.data.message, { variant: "error" });
         console.log("Error analyzing the data");
       }
     };
@@ -269,8 +275,7 @@ const Visualization = () => {
               disabled={
                 !visRef.visualizationLibraryId.length ||
                 !visRef.visualizationTypeId.length ||
-                !visRef.visualizationMapping.mapping.length ||
-                state.previewDisabled
+                !visRef.visualizationMapping.mapping.length
               }
               onClick={handleGeneratePreview}
             >
