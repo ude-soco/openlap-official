@@ -15,8 +15,12 @@ import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
 const ActionOnActivities = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
-  const { indicatorQuery, setIndicatorQuery, setAnalysisInputMenu } =
-    useContext(IndicatorEditorContext);
+  const {
+    indicatorQuery,
+    setIndicatorQuery,
+    setAnalysisInputMenu,
+    setAnalysisRef,
+  } = useContext(IndicatorEditorContext);
 
   useEffect(() => {
     const loadActivityTypesData = async () => {
@@ -58,6 +62,12 @@ const ActionOnActivities = ({ state, setState }) => {
       actionOnActivities: [...prevState.actionOnActivities, selectedAction.id],
     }));
 
+    // If query is changed
+    setAnalysisRef((prevState) => ({
+      ...prevState,
+      analyzedData: {},
+    }));
+
     setAnalysisInputMenu((prevState) => {
       let tempActionOptionExists = [
         ...prevState.actionOnActivities.options,
@@ -85,6 +95,12 @@ const ActionOnActivities = ({ state, setState }) => {
       let tempSelectedActionList = prevState.selectedActionsList.filter(
         (item) => item.id !== selectedAction.id
       );
+
+      // If query is changed
+      setAnalysisRef((prevState) => ({
+        ...prevState,
+        analyzedData: {},
+      }));
 
       setAnalysisInputMenu((prevInputState) => {
         const uniqueQueryIds = [

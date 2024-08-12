@@ -21,7 +21,7 @@ import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
 const ActivityTypes = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
-  const { indicatorQuery, setIndicatorQuery } = useContext(
+  const { indicatorQuery, setIndicatorQuery, setAnalysisRef } = useContext(
     IndicatorEditorContext
   );
 
@@ -63,6 +63,12 @@ const ActivityTypes = ({ state, setState }) => {
       autoCompleteValue: null,
     }));
 
+    // If query is changed
+    setAnalysisRef((prevState) => ({
+      ...prevState,
+      analyzedData: {},
+    }));
+
     setIndicatorQuery((prevState) => {
       let tempActivityTypes = [
         ...prevState.activityTypes,
@@ -90,6 +96,12 @@ const ActivityTypes = ({ state, setState }) => {
       };
     });
 
+    // If query is changed
+    setAnalysisRef((prevState) => ({
+      ...prevState,
+      analyzedData: {},
+    }));
+    
     setIndicatorQuery((prevState) => {
       return {
         ...prevState,

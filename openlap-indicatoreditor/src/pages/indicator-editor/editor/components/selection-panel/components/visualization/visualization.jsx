@@ -29,33 +29,37 @@ const Visualization = () => {
     lockedStep,
     analysisRef,
     visRef,
-    setVisRef,
+    setLockedStep,
     indicator,
     setIndicator,
   } = useContext(IndicatorEditorContext);
   const { api } = useContext(AuthContext);
-  const [state, setState] = useState({
-    openPanel: false,
-    showSelections: true,
-    libraryList: [],
-    typeList: [],
-    inputs: [],
-    autoCompleteValue: null,
-    loadingPreview: false,
+  const [state, setState] = useState(() => {
+    const savedState = sessionStorage.getItem("visualization");
+    return savedState
+      ? JSON.parse(savedState)
+      : {
+          showSelections: true,
+          libraryList: [],
+          typeList: [],
+          inputs: [],
+          autoCompleteValue: null,
+          loadingPreview: false,
+        };
   });
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
-    setState((prevState) => ({
-      ...prevState,
-      openPanel: !lockedStep.visualization,
-    }));
-  }, [lockedStep.visualization]);
+    sessionStorage.setItem("visualization", JSON.stringify(state));
+  }, [state]);
 
   const handleTogglePanel = () => {
-    setState((prevState) => ({
+    setLockedStep((prevState) => ({
       ...prevState,
-      openPanel: !prevState.openPanel,
+      visualization: {
+        ...prevState.visualization,
+        openPanel: !prevState.visualization.openPanel,
+      },
     }));
   };
 
@@ -122,8 +126,8 @@ const Visualization = () => {
     <>
       <Accordion
         sx={{ mb: 1 }}
-        expanded={state.openPanel}
-        disabled={lockedStep.visualization}
+        expanded={lockedStep.visualization.openPanel}
+        disabled={lockedStep.visualization.locked}
       >
         <AccordionSummary aria-controls="panel3-content" id="panel3-header">
           <Grid container spacing={1}>
@@ -138,7 +142,7 @@ const Visualization = () => {
                 <Grid item xs>
                   <Grid container alignItems="center" spacing={1}>
                     <Grid item>
-                      {!lockedStep.visualization ? (
+                      {!lockedStep.visualization.locked ? (
                         <Chip label="4" color="primary" />
                       ) : (
                         <IconButton size="small">
@@ -151,10 +155,10 @@ const Visualization = () => {
                     </Grid>
                   </Grid>
                 </Grid>
-                {!lockedStep.visualization && (
+                {!lockedStep.visualization.locked && (
                   <Grid item>
                     <Grid container>
-                      {!state.openPanel && (
+                      {!lockedStep.visualization.openPanel && (
                         <FormGroup>
                           <FormControlLabel
                             control={<Switch checked={state.showSelections} />}
@@ -164,7 +168,9 @@ const Visualization = () => {
                         </FormGroup>
                       )}
                       <Button color="primary" onClick={handleTogglePanel}>
-                        {state.openPanel ? "Close section" : "CHANGE"}
+                        {lockedStep.visualization.openPanel
+                          ? "Close section"
+                          : "CHANGE"}
                       </Button>
                     </Grid>
                   </Grid>
@@ -172,7 +178,7 @@ const Visualization = () => {
               </Grid>
             </Grid>
 
-            {!state.openPanel && state.showSelections && (
+            {!lockedStep.visualization.openPanel && state.showSelections && (
               <>
                 {/* Visualization Library */}
                 {visRef.visualizationLibraryId.length > 0 && (
