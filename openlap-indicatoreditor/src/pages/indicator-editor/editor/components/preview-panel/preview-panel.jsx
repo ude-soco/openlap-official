@@ -54,6 +54,7 @@ const PreviewPanel = () => {
           variant: "success",
         });
         navigate("/indicator");
+        clearSession();
       } catch (error) {
         console.log("Error analyzing the data");
       }
@@ -66,6 +67,14 @@ const PreviewPanel = () => {
       visRef,
       indicator
     );
+  };
+
+  const clearSession = () => {
+    sessionStorage.removeItem("session");
+    sessionStorage.removeItem("dataset");
+    sessionStorage.removeItem("filters");
+    sessionStorage.removeItem("analysis");
+    sessionStorage.removeItem("visualization");
   };
 
   return (
