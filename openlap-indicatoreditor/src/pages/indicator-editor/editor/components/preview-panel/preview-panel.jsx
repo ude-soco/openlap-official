@@ -5,12 +5,16 @@ import EmptyPreview from "../../../../../assets/images/vis-empty-state/no-indica
 import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager";
 import { fetchCreateBasicIndicator } from "./utils/preview-api";
 import { AuthContext } from "../../../../../setup/auth-context-manager/auth-context-manager";
+import { useNavigate } from "react-router-dom";
+import { useSnackbar } from "notistack";
 
 const PreviewPanel = () => {
   const { api } = useContext(AuthContext);
   const { darkMode } = useContext(CustomThemeContext);
   const { indicatorQuery, analysisRef, visRef, indicator, setIndicator } =
     useContext(IndicatorEditorContext);
+  const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -46,8 +50,10 @@ const PreviewPanel = () => {
             visRef,
             indicator
           );
-
-        console.log(createBasicIndicatorMessageResponse);
+        enqueueSnackbar(createBasicIndicatorMessageResponse, {
+          variant: "success",
+        });
+        navigate("/indicator");
       } catch (error) {
         console.log("Error analyzing the data");
       }

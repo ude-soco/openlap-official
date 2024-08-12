@@ -19,7 +19,11 @@ import {
   Divider,
   Button,
 } from "@mui/material";
-import { fetchMyIndicators } from "./utils/indicator-dashboard";
+import {
+  fetchMyIndicators,
+  fetchIndicatorFullDetail,
+  fetchRequestIndicatorCode,
+} from "./utils/indicator-dashboard";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
 import {
   ArrowDownward,
@@ -28,9 +32,12 @@ import {
   Edit,
   ContentCopy,
   MoreVert,
+  Delete,
 } from "@mui/icons-material";
 import images from "./utils/images";
 import { useNavigate } from "react-router-dom";
+import { useSnackbar } from "notistack";
+import { handleDisplayType } from "./utils/utils";
 
 const MyIndicatorsTable = () => {
   const { api } = useContext(AuthContext);
@@ -46,6 +53,7 @@ const MyIndicatorsTable = () => {
     },
   });
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedIndicator, setSelectedIndicator] = useState(null);
@@ -129,8 +137,8 @@ const MyIndicatorsTable = () => {
   };
 
   const handlePreview = () => {
-    console.log("Preview indicator:", selectedIndicator);
     handleMenuClose();
+    navigate(`/indicator/${selectedIndicator.id}`);
   };
 
   const handleEdit = () => {
@@ -138,8 +146,25 @@ const MyIndicatorsTable = () => {
     handleMenuClose();
   };
 
+  const handleDuplicate = () => {
+    console.log("Duplicate indicator:", selectedIndicator);
+    handleMenuClose();
+  };
+
   const handleCopyCode = () => {
     console.log("Copy code for indicator:", selectedIndicator);
+    const loadIndicatorCode = async (api, indicatorId) => {
+      try {
+        const indicatorCode = await fetchRequestIndicatorCode(api, indicatorId);
+
+        console.log(indicatorCode);
+        enqueueSnackbar("Copied indicator code!", { variant: "success" });
+      } catch (error) {
+        console.log("Error requesting my indicators");
+      }
+    };
+
+    loadIndicatorCode(api, selectedIndicator.id);
     handleMenuClose();
   };
 
@@ -232,16 +257,7 @@ const MyIndicatorsTable = () => {
                       </IconButton>
                     </Grid>
                   </TableCell>
-                  <TableCell>
-                    <Grid container alignItems="center">
-                      <Typography
-                        variant="overline"
-                        sx={{ fontWeight: "bold" }}
-                      >
-                        Created By
-                      </Typography>
-                    </Grid>
-                  </TableCell>
+
                   <TableCell align="right">
                     <Grid
                       container
@@ -273,8 +289,7 @@ const MyIndicatorsTable = () => {
                 {state.myIndicators.map((indicator) => (
                   <TableRow key={indicator.id}>
                     <TableCell>{indicator.name}</TableCell>
-                    <TableCell>{indicator.type}</TableCell>
-                    <TableCell>{indicator.createdBy}</TableCell>
+                    <TableCell>{handleDisplayType(indicator.type)}</TableCell>
                     <TableCell align="right">{indicator.createdOn}</TableCell>
                     <TableCell align="right">
                       <IconButton
@@ -290,26 +305,32 @@ const MyIndicatorsTable = () => {
                       >
                         <MenuItem onClick={handlePreview}>
                           <ListItemIcon>
-                            <Preview fontSize="small" />
+                            <Preview fontSize="small" color="primary" />
                           </ListItemIcon>
                           <ListItemText primary="Preview Indicator" />
                         </MenuItem>
                         <MenuItem onClick={handleCopyCode}>
                           <ListItemIcon>
-                            <ContentCopy fontSize="small" />
+                            <ContentCopy fontSize="small" color="primary" />
                           </ListItemIcon>
                           <ListItemText primary="Copy Code" />
                         </MenuItem>
                         <Divider />
                         <MenuItem onClick={handleEdit}>
                           <ListItemIcon>
-                            <Edit fontSize="small" />
+                            <Edit fontSize="small" color="primary" />
                           </ListItemIcon>
                           <ListItemText primary="Edit Indicator" />
                         </MenuItem>
+                        <MenuItem onClick={handleDuplicate}>
+                          <ListItemIcon>
+                            <ContentCopy fontSize="small" color="primary" />
+                          </ListItemIcon>
+                          <ListItemText primary="Duplicate Indicator" />
+                        </MenuItem>
                         <MenuItem onClick={handleDeleteIndicator}>
                           <ListItemIcon>
-                            <ContentCopy fontSize="small" />
+                            <Delete fontSize="small" color="error" />
                           </ListItemIcon>
                           <ListItemText primary="Delete Indicator" />
                         </MenuItem>
