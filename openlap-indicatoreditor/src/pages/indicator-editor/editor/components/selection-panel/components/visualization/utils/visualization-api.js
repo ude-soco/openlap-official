@@ -80,13 +80,13 @@ export const fetchPreviewVisualization = async (
       console.error("Error script code", error);
     }
     let previewData = {
+      message: response.data.message,
       displayCode,
       scriptData,
     };
 
     return previewData;
   } catch (error) {
-    console.error("Failed to fetch analytics technique param data");
     throw error; // Re-throw the error to handle it in the component
   }
 };

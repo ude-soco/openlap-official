@@ -22,6 +22,7 @@ import { fetchAnalyzedData } from "./utils/analytics-api";
 import AnalyzedDataTable from "./components/analyzed-data-table";
 import { IndicatorEditorContext } from "../../../../indicator-editor";
 import { LoadingButton } from "@mui/lab";
+import { useSnackbar } from "notistack";
 
 const Analysis = () => {
   const { api } = useContext(AuthContext);
@@ -39,9 +40,9 @@ const Analysis = () => {
     inputs: [],
     parameters: [],
     autoCompleteValue: null,
-    previewDisabled: true,
     loadingPreview: false,
   });
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     setState((prevState) => ({
@@ -74,13 +75,14 @@ const Analysis = () => {
         );
         setAnalysisRef((prevState) => ({
           ...prevState,
-          analyzedData: analyzedDataResponse,
+          analyzedData: analyzedDataResponse.data,
         }));
         setState((prevState) => ({
           ...prevState,
-          previewDisabled: true,
           loadingPreview: false,
         }));
+
+        enqueueSnackbar(analyzedDataResponse.message, { variant: "success" });
       } catch (error) {
         setState((prevState) => ({
           ...prevState,
@@ -277,8 +279,7 @@ const Analysis = () => {
                 disabled={
                   !analysisRef.analyticsTechniqueId.length ||
                   !analysisRef.analyticsTechniqueMapping.mapping.length ||
-                  !analysisRef.analyticsTechniqueParams.length ||
-                  state.previewDisabled
+                  !analysisRef.analyticsTechniqueParams.length
                 }
                 onClick={handlePreviewAnalyzedData}
               >

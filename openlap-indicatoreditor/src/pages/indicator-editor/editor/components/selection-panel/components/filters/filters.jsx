@@ -27,9 +27,8 @@ import UserChips from "./components/user-chips.jsx";
 import { IndicatorEditorContext } from "../../../../indicator-editor.jsx";
 
 const Filters = () => {
-  const { indicatorQuery, lockedStep, setLockedStep } = useContext(
-    IndicatorEditorContext
-  );
+  const { setAnalysisRef, indicatorQuery, lockedStep, setLockedStep } =
+    useContext(IndicatorEditorContext);
   const [state, setState] = useState({
     openPanel: false,
     showSelections: true,
@@ -48,6 +47,14 @@ const Filters = () => {
       openPanel: !lockedStep.filters,
     }));
   }, [lockedStep.filters]);
+
+  useEffect(() => {
+    // ? This effect is when the user decides to change the query again.
+    setAnalysisRef((prevState) => ({
+      ...prevState,
+      analyzedData: {},
+    }));
+  }, [indicatorQuery]);
 
   const handleTogglePanel = () => {
     setState((prevState) => ({

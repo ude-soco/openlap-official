@@ -160,7 +160,8 @@ const MyIndicatorsTable = () => {
         console.log(indicatorCode);
         enqueueSnackbar("Copied indicator code!", { variant: "success" });
       } catch (error) {
-        console.log("Error requesting my indicators");
+        enqueueSnackbar(error.response.data.message, { variant: "error" });
+        console.error("Error requesting my indicators");
       }
     };
 
