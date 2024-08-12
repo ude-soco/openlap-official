@@ -54,8 +54,8 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
       icon: <AddchartIcon />,
     },
     {
-      primary: "Pool of ISC",
-      secondary: "List of all ISCs",
+      primary: "ISC Pool",
+      secondary: "Search for ISCs",
       navigate: "/isc/pool",
       icon: <AddchartIcon />,
     },
@@ -64,19 +64,19 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
   const gqiMenus = [
     {
       primary: "GQI Dashboard",
-      secondary: "List of my Questions and associated Indicators",
+      secondary: "List of my GQIs",
       navigate: "/gqi",
       icon: <DashboardIcon />,
     },
     {
       primary: "GQI Editor",
-      secondary: "Create Questions and associate Indicators",
+      secondary: "Create or edit a GQI",
       navigate: "/gqi/editor",
       icon: <ListAltIcon />,
     },
     {
-      primary: "Pool of Questions",
-      secondary: "Create Questions and associate Indicators",
+      primary: "GQI Pool",
+      secondary: "Search for GQIs",
       navigate: "/gqi/pool",
       icon: <ListAltIcon />,
     },
@@ -91,13 +91,13 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
     },
     {
       primary: "Indicator Editor",
-      secondary: "Create Basic, Composite, & Multi-level Indicator",
+      secondary: "Create or edit an Indicator",
       navigate: "/indicator/editor",
       icon: <AddchartIcon />,
     },
     {
       primary: "Indicator Pool",
-      secondary: "List of all indicators",
+      secondary: "Search for indicators",
       navigate: "/indicator/pool",
       icon: <AddchartIcon />,
     },
