@@ -14,7 +14,7 @@ import { AuthContext } from "../../../../../../../../setup/auth-context-manager/
 import HelpIcon from "@mui/icons-material/Help";
 import Tooltip from "@mui/material/Tooltip";
 import { fetchTechniqueInputs } from "../utils/analytics-api";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const Inputs = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
@@ -25,7 +25,7 @@ const Inputs = ({ state, setState }) => {
     lockedStep,
     analysisRef,
     setAnalysisRef,
-  } = useContext(IndicatorEditorContext);
+  } = useContext(BasicIndicatorContext);
 
   useEffect(() => {
     const loadTechniqueInputs = async (value) => {

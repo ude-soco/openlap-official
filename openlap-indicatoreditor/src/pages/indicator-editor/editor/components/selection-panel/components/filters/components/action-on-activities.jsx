@@ -11,7 +11,7 @@ import {
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { fetchActionOnActivitiesList } from "../utils/filters-api";
 import { getLastWordAndCapitalize } from "../../../utils/utils";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const ActionOnActivities = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
@@ -20,7 +20,7 @@ const ActionOnActivities = ({ state, setState }) => {
     setIndicatorQuery,
     setAnalysisInputMenu,
     setAnalysisRef,
-  } = useContext(IndicatorEditorContext);
+  } = useContext(BasicIndicatorContext);
 
   useEffect(() => {
     const loadActivityTypesData = async () => {

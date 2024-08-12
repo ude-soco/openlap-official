@@ -14,11 +14,11 @@ import {
 import HelpIcon from "@mui/icons-material/Help";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { fetchTechniqueParams } from "../utils/analytics-api";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const Params = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
-  const { analysisRef, setAnalysisRef } = useContext(IndicatorEditorContext);
+  const { analysisRef, setAnalysisRef } = useContext(BasicIndicatorContext);
 
   useEffect(() => {
     const loadTechniqueParams = async (techniqueId) => {

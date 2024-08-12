@@ -24,11 +24,11 @@ import DateRange from "./components/date-range.jsx";
 import User from "./components/user.jsx";
 import DateRangeChips from "./components/date-range-chips.jsx";
 import UserChips from "./components/user-chips.jsx";
-import { IndicatorEditorContext } from "../../../../indicator-editor.jsx";
+import { BasicIndicatorContext } from "../../../basic-indicator.jsx";
 
 const Filters = () => {
   const { setAnalysisRef, indicatorQuery, lockedStep, setLockedStep } =
-    useContext(IndicatorEditorContext);
+    useContext(BasicIndicatorContext);
   const [state, setState] = useState(() => {
     const savedState = sessionStorage.getItem("filters");
     return savedState

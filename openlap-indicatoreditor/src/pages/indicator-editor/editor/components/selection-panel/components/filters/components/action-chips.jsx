@@ -1,10 +1,10 @@
 import { useContext } from "react";
 import { Chip, Grid, Typography } from "@mui/material";
 import { getLastWordAndCapitalize } from "../../../utils/utils";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const ActionsChips = () => {
-  const { indicatorQuery } = useContext(IndicatorEditorContext);
+  const { indicatorQuery } = useContext(BasicIndicatorContext);
   const actions = indicatorQuery.actionOnActivities;
   const maxDisplayed = 3;
   const moreCount =

@@ -17,12 +17,12 @@ import {
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { fetchActivityTypesList } from "../utils/filters-api";
 import { getLastWordAndCapitalize } from "../../../utils/utils";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const ActivityTypes = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
   const { indicatorQuery, setIndicatorQuery, setAnalysisRef } = useContext(
-    IndicatorEditorContext
+    BasicIndicatorContext
   );
 
   useEffect(() => {

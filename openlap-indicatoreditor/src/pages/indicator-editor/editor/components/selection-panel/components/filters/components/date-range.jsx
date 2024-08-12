@@ -4,12 +4,12 @@ import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 import dayjs from "dayjs";
 
 const DateRange = () => {
   const { indicatorQuery, setIndicatorQuery, setAnalysisRef } = useContext(
-    IndicatorEditorContext
+    BasicIndicatorContext
   );
 
   const handleUpdateStartDate = (value) => {

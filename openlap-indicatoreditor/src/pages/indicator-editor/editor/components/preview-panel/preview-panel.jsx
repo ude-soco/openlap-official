@@ -1,6 +1,6 @@
 import { Box, Grid, Typography, Paper, TextField, Button } from "@mui/material";
 import { useContext, useEffect } from "react";
-import { IndicatorEditorContext } from "../../indicator-editor";
+import { BasicIndicatorContext } from "../basic-indicator.jsx";
 import EmptyPreview from "../../../../../assets/images/vis-empty-state/no-indicator-preview.svg";
 import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager";
 import { fetchCreateBasicIndicator } from "./utils/preview-api";
@@ -12,7 +12,7 @@ const PreviewPanel = () => {
   const { api } = useContext(AuthContext);
   const { darkMode } = useContext(CustomThemeContext);
   const { indicatorQuery, analysisRef, visRef, indicator, setIndicator } =
-    useContext(IndicatorEditorContext);
+    useContext(BasicIndicatorContext);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 

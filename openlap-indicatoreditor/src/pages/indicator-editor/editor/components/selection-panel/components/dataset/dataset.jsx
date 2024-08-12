@@ -8,11 +8,11 @@ import {
 } from "@mui/material";
 import Platform from "./components/platform";
 import LRS from "./components/lrs";
-import { IndicatorEditorContext } from "../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../basic-indicator.jsx";
 import DatasetSummary from "./components/dataset-summary";
 
 const Dataset = () => {
-  const { indicatorQuery, setLockedStep } = useContext(IndicatorEditorContext);
+  const { indicatorQuery, setLockedStep } = useContext(BasicIndicatorContext);
   const [state, setState] = useState(() => {
     const savedState = sessionStorage.getItem("dataset");
     return savedState

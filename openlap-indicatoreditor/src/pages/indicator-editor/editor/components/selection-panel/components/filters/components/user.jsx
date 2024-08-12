@@ -7,11 +7,11 @@ import {
   FormControlLabel,
 } from "@mui/material";
 import Condition from "../../../utils/condition";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const User = () => {
   const { indicatorQuery, setIndicatorQuery, setAnalysisRef } = useContext(
-    IndicatorEditorContext
+    BasicIndicatorContext
   );
 
   const handleUpdateUserData = (event) => {
