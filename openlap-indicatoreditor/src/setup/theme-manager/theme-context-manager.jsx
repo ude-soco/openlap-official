@@ -10,6 +10,10 @@ const CustomThemeProvider = ({ children }) => {
     setDarkMode((prevState) => !prevState);
   };
 
+  const handleLightMode = () => {
+    setDarkMode(false);
+  };
+
   const themeDark = createTheme({
     palette: {
       mode: "dark",
@@ -24,7 +28,13 @@ const CustomThemeProvider = ({ children }) => {
 
   return (
     <CustomThemeContext.Provider
-      value={{ darkMode, toggleDarkMode, themeDark, themeLight }}
+      value={{
+        darkMode,
+        toggleDarkMode,
+        handleLightMode,
+        themeDark,
+        themeLight,
+      }}
     >
       {children}
     </CustomThemeContext.Provider>

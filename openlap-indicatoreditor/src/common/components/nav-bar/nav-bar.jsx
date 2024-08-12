@@ -44,9 +44,15 @@ const AppBar = styled(MuiAppBar, {
 
 const NavBar = ({ openSidebar, toggleSidebar }) => {
   const { logout } = useContext(AuthContext);
-  const { darkMode, toggleDarkMode } = useContext(CustomThemeContext);
+  const { darkMode, toggleDarkMode, handleLightMode } =
+    useContext(CustomThemeContext);
   const navigate = useNavigate();
   const [menu, setMenu] = useState(null);
+
+  const handleSignOut = () => {
+    logout();
+    handleLightMode();
+  };
   return (
     <>
       <AppBar
@@ -129,7 +135,7 @@ const NavBar = ({ openSidebar, toggleSidebar }) => {
                 <Switch checked={darkMode} onChange={toggleDarkMode} />
               </ListItem>
 
-              <MenuItem sx={{ py: 1.5 }} onClick={logout}>
+              <MenuItem sx={{ py: 1.5 }} onClick={handleSignOut}>
                 <ListItemText>Sign out</ListItemText>
                 <ListItemIcon>
                   <LogoutIcon color="primary" />
