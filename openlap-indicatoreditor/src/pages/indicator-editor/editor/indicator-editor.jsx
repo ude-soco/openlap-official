@@ -95,7 +95,7 @@ const IndicatorEditor = () => {
       id: "statement.actor.account.name",
       type: "Text",
       required: true,
-      title: "User",
+      title: "Users",
       description: "Selected list of the User(s) specified in User Filter",
     },
   });
