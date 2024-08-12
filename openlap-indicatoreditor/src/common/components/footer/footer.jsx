@@ -10,8 +10,6 @@ const Footer = () => {
         sx={{
           px: 2,
           py: 1,
-          borderTop: 2,
-          borderColor: "grey.300",
         }}
         justifyContent="space-between"
         component={Box}

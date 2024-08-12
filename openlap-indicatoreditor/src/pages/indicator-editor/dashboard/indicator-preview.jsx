@@ -96,7 +96,7 @@ const IndicatorPreview = () => {
             </IconButton>
           </Grid>
           <Grid item xs={12} md={6}>
-            <Typography>Go back</Typography>
+            <Typography>Back</Typography>
           </Grid>
         </Grid>
       </Grid>
