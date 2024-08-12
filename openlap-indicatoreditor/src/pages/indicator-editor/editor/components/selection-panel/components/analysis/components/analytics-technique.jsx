@@ -8,14 +8,14 @@ import {
   Typography,
 } from "@mui/material";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 import Tooltip from "@mui/material/Tooltip";
 import { fetchAnalyticsTechnique } from "../utils/analytics-api";
 
 const AnalyticsTechnique = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
   const { indicatorQuery, lockedStep, analysisRef, setAnalysisRef } =
-    useContext(IndicatorEditorContext);
+    useContext(BasicIndicatorContext);
 
   useEffect(() => {
     const loadAnalyticsTechniqueData = async () => {

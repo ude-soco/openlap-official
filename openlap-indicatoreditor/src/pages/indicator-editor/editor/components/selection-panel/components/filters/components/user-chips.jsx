@@ -1,10 +1,10 @@
 import { useContext } from "react";
 import { Chip, Grid, Typography } from "@mui/material";
 import Condition from "../../../utils/condition";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const UserChips = () => {
-  const { indicatorQuery, lockedStep } = useContext(IndicatorEditorContext);
+  const { indicatorQuery, lockedStep } = useContext(BasicIndicatorContext);
 
   return (
     <>

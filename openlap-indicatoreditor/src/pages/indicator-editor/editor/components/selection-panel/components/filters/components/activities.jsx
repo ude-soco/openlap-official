@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { fetchActivitiesList } from "../utils/filters-api";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const Activities = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
@@ -19,7 +19,7 @@ const Activities = ({ state, setState }) => {
     indicatorQuery,
     setIndicatorQuery,
     setAnalysisInputMenu,
-  } = useContext(IndicatorEditorContext);
+  } = useContext(BasicIndicatorContext);
 
   useEffect(() => {
     const loadActivitiesData = async () => {

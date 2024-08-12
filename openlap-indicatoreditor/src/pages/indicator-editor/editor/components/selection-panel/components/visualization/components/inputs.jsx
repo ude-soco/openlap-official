@@ -13,7 +13,7 @@ import { AuthContext } from "../../../../../../../../setup/auth-context-manager/
 import HelpIcon from "@mui/icons-material/Help";
 import Tooltip from "@mui/material/Tooltip";
 import { fetchVisualizationTypeInputs } from "../utils/visualization-api";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const Inputs = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
@@ -26,7 +26,7 @@ const Inputs = ({ state, setState }) => {
     setAnalysisRef,
     visRef,
     setVisRef,
-  } = useContext(IndicatorEditorContext);
+  } = useContext(BasicIndicatorContext);
 
   useEffect(() => {
     const loadVisTypeInputs = async (typeId) => {

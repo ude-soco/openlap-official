@@ -4,7 +4,7 @@ import { CustomThemeContext } from "../../../../../../../../setup/theme-manager/
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { fetchVisualizationTypeByLibraryId } from "../utils/visualization-api";
 import images from "../config/images";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const VisualizationType = ({ state, setState }) => {
   const { darkMode } = useContext(CustomThemeContext);
@@ -16,7 +16,7 @@ const VisualizationType = ({ state, setState }) => {
     setAnalysisRef,
     visRef,
     setVisRef,
-  } = useContext(IndicatorEditorContext);
+  } = useContext(BasicIndicatorContext);
 
   useEffect(() => {
     const loadVisualizationTypeData = async (libraryId) => {

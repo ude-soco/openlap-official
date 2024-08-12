@@ -20,7 +20,7 @@ import Params from "./components/params";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { fetchAnalyzedData } from "./utils/analytics-api";
 import AnalyzedDataTable from "./components/analyzed-data-table";
-import { IndicatorEditorContext } from "../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../basic-indicator.jsx";
 import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
 
@@ -32,7 +32,7 @@ const Analysis = () => {
     setLockedStep,
     analysisRef,
     setAnalysisRef,
-  } = useContext(IndicatorEditorContext);
+  } = useContext(BasicIndicatorContext);
   const [state, setState] = useState(() => {
     const savedState = sessionStorage.getItem("analysis");
     return savedState
@@ -134,7 +134,7 @@ const Analysis = () => {
                 <Grid item xs>
                   <Grid container alignItems="center" spacing={1}>
                     <Grid item>
-                      {!lockedStep.analysis ? (
+                      {!lockedStep.analysis.locked ? (
                         <Chip label="3" color="primary" />
                       ) : (
                         <IconButton size="small">

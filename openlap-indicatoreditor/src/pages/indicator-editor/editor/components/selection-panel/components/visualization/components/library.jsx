@@ -10,7 +10,7 @@ import {
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import Tooltip from "@mui/material/Tooltip";
 import { fetchVisualizationLibrary } from "../utils/visualization-api";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const VisualizationLibrary = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
@@ -22,7 +22,7 @@ const VisualizationLibrary = ({ state, setState }) => {
     setAnalysisRef,
     visRef,
     setVisRef,
-  } = useContext(IndicatorEditorContext);
+  } = useContext(BasicIndicatorContext);
 
   useEffect(() => {
     const loadVisualizationLibraryData = async () => {

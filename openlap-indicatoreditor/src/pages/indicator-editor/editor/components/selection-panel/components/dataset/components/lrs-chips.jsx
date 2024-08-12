@@ -1,9 +1,9 @@
 import { useContext } from "react";
 import { Chip, Grid, Typography } from "@mui/material";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const LRSChips = () => {
-  const { indicatorQuery } = useContext(IndicatorEditorContext);
+  const { indicatorQuery } = useContext(BasicIndicatorContext);
 
   return (
     <>

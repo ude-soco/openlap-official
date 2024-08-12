@@ -11,11 +11,11 @@ import {
   TablePagination,
   Typography,
 } from "@mui/material";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const AnalyzedDataTable = () => {
   const { indicatorQuery, lockedStep, analysisRef, setAnalysisRef } =
-    useContext(IndicatorEditorContext);
+    useContext(BasicIndicatorContext);
 
   const [page, setPage] = useState(0); // Current page
   const [rowsPerPage, setRowsPerPage] = useState(5); // Rows per page

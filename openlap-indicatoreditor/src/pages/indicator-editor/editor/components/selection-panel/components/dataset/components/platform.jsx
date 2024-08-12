@@ -8,11 +8,11 @@ import {
   Divider,
   Tooltip,
 } from "@mui/material";
-import { IndicatorEditorContext } from "../../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const Platform = ({ state, setState }) => {
   const { indicatorQuery, setIndicatorQuery } = useContext(
-    IndicatorEditorContext
+    BasicIndicatorContext
   );
 
   const handleSelectPlatformList = (selectedPlatform) => {

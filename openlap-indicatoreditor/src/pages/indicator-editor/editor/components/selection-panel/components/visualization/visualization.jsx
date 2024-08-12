@@ -19,7 +19,7 @@ import VisualizationLibrary from "./components/library";
 import VisualizationType from "./components/type";
 import Inputs from "./components/inputs";
 import { fetchPreviewVisualization } from "./utils/visualization-api";
-import { IndicatorEditorContext } from "../../../../indicator-editor";
+import { BasicIndicatorContext } from "../../../basic-indicator.jsx";
 import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
 
@@ -32,7 +32,7 @@ const Visualization = () => {
     setLockedStep,
     indicator,
     setIndicator,
-  } = useContext(IndicatorEditorContext);
+  } = useContext(BasicIndicatorContext);
   const { api } = useContext(AuthContext);
   const [state, setState] = useState(() => {
     const savedState = sessionStorage.getItem("visualization");
