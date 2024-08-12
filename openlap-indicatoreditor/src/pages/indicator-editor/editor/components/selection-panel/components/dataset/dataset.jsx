@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import {
   Accordion,
   AccordionActions,
@@ -13,15 +13,24 @@ import DatasetSummary from "./components/dataset-summary";
 
 const Dataset = () => {
   const { indicatorQuery, setLockedStep } = useContext(IndicatorEditorContext);
-  const [state, setState] = useState({
-    openPanel: true,
-    showSelections: true,
-    lrsList: [],
-    selectedLrsList: [],
-    platformList: [],
-    selectedPlatformList: [],
-    autoCompleteValue: null,
+  const [state, setState] = useState(() => {
+    const savedState = sessionStorage.getItem("dataset");
+    return savedState
+      ? JSON.parse(savedState)
+      : {
+          openPanel: true,
+          showSelections: true,
+          lrsList: [],
+          selectedLrsList: [],
+          platformList: [],
+          selectedPlatformList: [],
+          autoCompleteValue: null,
+        };
   });
+
+  useEffect(() => {
+    sessionStorage.setItem("dataset", JSON.stringify(state));
+  }, [state]);
 
   const handleTogglePanel = () => {
     setState((prevState) => ({
@@ -41,7 +50,11 @@ const Dataset = () => {
     handleTogglePanel();
     setLockedStep((prevState) => ({
       ...prevState,
-      filters: false,
+      filter: {
+        ...prevState,
+        locked: false,
+        openPanel: true,
+      },
     }));
   };
 

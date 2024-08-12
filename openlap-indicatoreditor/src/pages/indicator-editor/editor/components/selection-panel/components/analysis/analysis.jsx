@@ -33,28 +33,32 @@ const Analysis = () => {
     analysisRef,
     setAnalysisRef,
   } = useContext(IndicatorEditorContext);
-  const [state, setState] = useState({
-    openPanel: false,
-    showSelections: true,
-    techniqueList: [],
-    inputs: [],
-    parameters: [],
-    autoCompleteValue: null,
-    loadingPreview: false,
+  const [state, setState] = useState(() => {
+    const savedState = sessionStorage.getItem("analysis");
+    return savedState
+      ? JSON.parse(savedState)
+      : {
+          showSelections: true,
+          techniqueList: [],
+          inputs: [],
+          parameters: [],
+          autoCompleteValue: null,
+          loadingPreview: false,
+        };
   });
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
-    setState((prevState) => ({
-      ...prevState,
-      openPanel: !lockedStep.analysis,
-    }));
-  }, [lockedStep.analysis]);
+    sessionStorage.setItem("analysis", JSON.stringify(state));
+  }, [state]);
 
   const handleTogglePanel = () => {
-    setState((prevState) => ({
+    setLockedStep((prevState) => ({
       ...prevState,
-      openPanel: !prevState.openPanel,
+      analysis: {
+        ...prevState.analysis,
+        openPanel: !prevState.analysis.openPanel,
+      },
     }));
   };
 
@@ -102,7 +106,11 @@ const Analysis = () => {
     handleTogglePanel();
     setLockedStep((prevState) => ({
       ...prevState,
-      visualization: false,
+      visualization: {
+        ...prevState.visualization,
+        locked: false,
+        openPanel: true
+      },
     }));
   };
 
@@ -110,8 +118,8 @@ const Analysis = () => {
     <>
       <Accordion
         sx={{ mb: 1 }}
-        expanded={state.openPanel}
-        disabled={lockedStep.analysis}
+        expanded={lockedStep.analysis.openPanel}
+        disabled={lockedStep.analysis.locked}
       >
         <AccordionSummary aria-controls="panel3-content" id="panel3-header">
           <Grid container spacing={1}>
@@ -139,10 +147,10 @@ const Analysis = () => {
                     </Grid>
                   </Grid>
                 </Grid>
-                {!lockedStep.analysis && (
+                {!lockedStep.analysis.locked && (
                   <Grid item>
                     <Grid container>
-                      {!state.openPanel && (
+                      {!lockedStep.analysis.openPanel && (
                         <FormGroup>
                           <FormControlLabel
                             control={<Switch checked={state.showSelections} />}
@@ -152,14 +160,14 @@ const Analysis = () => {
                         </FormGroup>
                       )}
                       <Button color="primary" onClick={handleTogglePanel}>
-                        {state.openPanel ? "Close section" : "CHANGE"}
+                        {lockedStep.analysis.openPanel ? "Close section" : "CHANGE"}
                       </Button>
                     </Grid>
                   </Grid>
                 )}
               </Grid>
             </Grid>
-            {!state.openPanel && state.showSelections && (
+            {!lockedStep.analysis.openPanel && state.showSelections && (
               <>
                 {/* Analytics Technique */}
                 {analysisRef.analyticsTechniqueId.length > 0 && (

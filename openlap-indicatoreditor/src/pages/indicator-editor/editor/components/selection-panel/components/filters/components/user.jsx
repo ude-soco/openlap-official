@@ -10,11 +10,17 @@ import Condition from "../../../utils/condition";
 import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
 const User = () => {
-  const { indicatorQuery, setIndicatorQuery } = useContext(
+  const { indicatorQuery, setIndicatorQuery, setAnalysisRef } = useContext(
     IndicatorEditorContext
   );
 
   const handleUpdateUserData = (event) => {
+    // If query is changed
+    setAnalysisRef((prevState) => ({
+      ...prevState,
+      analyzedData: {},
+    }));
+
     setIndicatorQuery((prevState) => ({
       ...prevState,
       userQueryCondition: event.target.value,

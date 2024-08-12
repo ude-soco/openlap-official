@@ -8,11 +8,17 @@ import { IndicatorEditorContext } from "../../../../../indicator-editor";
 import dayjs from "dayjs";
 
 const DateRange = () => {
-  const { indicatorQuery, setIndicatorQuery } = useContext(
+  const { indicatorQuery, setIndicatorQuery, setAnalysisRef } = useContext(
     IndicatorEditorContext
   );
 
   const handleUpdateStartDate = (value) => {
+    // If query is changed
+    setAnalysisRef((prevState) => ({
+      ...prevState,
+      analyzedData: {},
+    }));
+
     setIndicatorQuery((prevState) => ({
       ...prevState,
       duration: {
@@ -23,6 +29,12 @@ const DateRange = () => {
   };
 
   const handleUpdateEndDate = (value) => {
+    // If query is changed
+    setAnalysisRef((prevState) => ({
+      ...prevState,
+      analyzedData: {},
+    }));
+
     setIndicatorQuery((prevState) => ({
       ...prevState,
       duration: {

@@ -29,37 +29,34 @@ import { IndicatorEditorContext } from "../../../../indicator-editor.jsx";
 const Filters = () => {
   const { setAnalysisRef, indicatorQuery, lockedStep, setLockedStep } =
     useContext(IndicatorEditorContext);
-  const [state, setState] = useState({
-    openPanel: false,
-    showSelections: true,
-    activityTypesList: [],
-    selectedActivityTypesList: [],
-    activitiesList: [],
-    selectedActivitiesList: [],
-    actionsList: [],
-    selectedActionsList: [],
-    autoCompleteValue: null,
+  const [state, setState] = useState(() => {
+    const savedState = sessionStorage.getItem("filters");
+    return savedState
+      ? JSON.parse(savedState)
+      : {
+          openPanel: false,
+          showSelections: true,
+          activityTypesList: [],
+          selectedActivityTypesList: [],
+          activitiesList: [],
+          selectedActivitiesList: [],
+          actionsList: [],
+          selectedActionsList: [],
+          autoCompleteValue: null,
+        };
   });
 
   useEffect(() => {
-    setState((prevState) => ({
-      ...prevState,
-      openPanel: !lockedStep.filters,
-    }));
-  }, [lockedStep.filters]);
-
-  useEffect(() => {
-    // ? This effect is when the user decides to change the query again.
-    setAnalysisRef((prevState) => ({
-      ...prevState,
-      analyzedData: {},
-    }));
-  }, [indicatorQuery]);
+    sessionStorage.setItem("filters", JSON.stringify(state));
+  }, [state]);
 
   const handleTogglePanel = () => {
-    setState((prevState) => ({
+    setLockedStep((prevState) => ({
       ...prevState,
-      openPanel: !prevState.openPanel,
+      filter: {
+        ...prevState.filter,
+        openPanel: !prevState.filter.openPanel,
+      },
     }));
   };
 
@@ -74,7 +71,10 @@ const Filters = () => {
     handleTogglePanel();
     setLockedStep((prevState) => ({
       ...prevState,
-      analysis: false,
+      analysis: {
+        locked: false,
+        openPanel: true,
+      },
     }));
   };
 
@@ -82,8 +82,8 @@ const Filters = () => {
     <>
       <Accordion
         sx={{ mb: 1 }}
-        expanded={state.openPanel}
-        disabled={lockedStep.filters}
+        expanded={lockedStep.filter.openPanel}
+        disabled={lockedStep.filter.locked}
       >
         <AccordionSummary aria-controls="panel2-content" id="panel2-header">
           <Grid container spacing={1}>
@@ -98,7 +98,7 @@ const Filters = () => {
                 <Grid item xs>
                   <Grid container alignItems="center" spacing={1}>
                     <Grid item>
-                      {!lockedStep.filters ? (
+                      {!lockedStep.filter.locked ? (
                         <Chip label="2" color="primary" />
                       ) : (
                         <IconButton size="small">
@@ -111,10 +111,10 @@ const Filters = () => {
                     </Grid>
                   </Grid>
                 </Grid>
-                {!lockedStep.filters && (
+                {!lockedStep.filter.locked && (
                   <Grid item>
                     <Grid container>
-                      {!state.openPanel && (
+                      {!lockedStep.filter.openPanel && (
                         <FormGroup>
                           <FormControlLabel
                             control={<Switch checked={state.showSelections} />}
@@ -124,7 +124,9 @@ const Filters = () => {
                         </FormGroup>
                       )}
                       <Button color="primary" onClick={handleTogglePanel}>
-                        {state.openPanel ? "Close section" : "CHANGE"}
+                        {lockedStep.filter.openPanel
+                          ? "Close section"
+                          : "CHANGE"}
                       </Button>
                     </Grid>
                   </Grid>
@@ -132,15 +134,17 @@ const Filters = () => {
               </Grid>
             </Grid>
 
-            {!state.openPanel && state.showSelections && (
-              <>
-                <ActivityTypeChips />
-                <ActivityChips />
-                <ActionsChips />
-                <DateRangeChips />
-                <UserChips />
-              </>
-            )}
+            {!lockedStep.filter.openPanel &&
+              !lockedStep.filter.locked &&
+              state.showSelections && (
+                <>
+                  <ActivityTypeChips />
+                  <ActivityChips />
+                  <ActionsChips />
+                  <DateRangeChips />
+                  <UserChips />
+                </>
+              )}
           </Grid>
         </AccordionSummary>
         <AccordionDetails>

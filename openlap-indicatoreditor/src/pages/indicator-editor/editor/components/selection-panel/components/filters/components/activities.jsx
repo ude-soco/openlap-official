@@ -14,8 +14,12 @@ import { IndicatorEditorContext } from "../../../../../indicator-editor";
 
 const Activities = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
-  const { indicatorQuery, setIndicatorQuery, setAnalysisInputMenu } =
-    useContext(IndicatorEditorContext);
+  const {
+    setAnalysisRef,
+    indicatorQuery,
+    setIndicatorQuery,
+    setAnalysisInputMenu,
+  } = useContext(IndicatorEditorContext);
 
   useEffect(() => {
     const loadActivitiesData = async () => {
@@ -56,6 +60,12 @@ const Activities = ({ state, setState }) => {
       autoCompleteValue: null,
     }));
 
+    // If query is changed
+    setAnalysisRef((prevState) => ({
+      ...prevState,
+      analyzedData: {},
+    }));
+
     setIndicatorQuery((prevState) => {
       const { queryId, name } = selectedActivity;
       let tempActivities = { ...prevState.activities };
@@ -75,6 +85,7 @@ const Activities = ({ state, setState }) => {
           options: tempActivityKeys,
         },
       }));
+
       return {
         ...prevState,
         activities: tempActivities,
@@ -111,6 +122,12 @@ const Activities = ({ state, setState }) => {
         }
       }
 
+      // If query is changed
+      setAnalysisRef((prevState) => ({
+        ...prevState,
+        analyzedData: {},
+      }));
+
       let tempActivityKeys = Object.keys(tempActivities);
       setAnalysisInputMenu((prevState) => ({
         ...prevState,
@@ -120,6 +137,7 @@ const Activities = ({ state, setState }) => {
           options: tempActivityKeys,
         },
       }));
+
       return {
         ...prevState,
         activities: tempActivities,
