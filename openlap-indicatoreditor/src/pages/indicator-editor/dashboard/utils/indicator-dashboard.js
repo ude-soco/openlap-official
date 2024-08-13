@@ -1,17 +1,17 @@
 import parse from "html-react-parser";
 
-export const fetchMyIndicators = async (api, params = {}) => {
+export const requestMyIndicators = async (api, params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
     const response = await api.get(`v1/indicators/my?${queryString}`);
     return response.data.data;
   } catch (error) {
     console.error("Failed to fetch user's indicators list data");
-    throw error; // Re-throw the error to handle it in the component
+    throw error;
   }
 };
 
-export const fetchIndicatorFullDetail = async (api, indicatorId) => {
+export const requestIndicatorFullDetail = async (api, indicatorId) => {
   try {
     const response = await api.get(`v1/indicators/${indicatorId}`);
     const unescapedVizCode = decodeURIComponent(
@@ -34,17 +34,27 @@ export const fetchIndicatorFullDetail = async (api, indicatorId) => {
     };
     return updatedResponse;
   } catch (error) {
-    console.error("Failed to fetch indicators code data");
-    throw error; // Re-throw the error to handle it in the component
+    console.error("Failed to request indicator details");
+    throw error;
   }
 };
 
-export const fetchRequestIndicatorCode = async (api, indicatorId) => {
+export const requestIndicatorCode = async (api, indicatorId) => {
   try {
     const response = await api.get(`v1/indicators/${indicatorId}/code`);
-    return response.data.data;
+    return response.data;
   } catch (error) {
-    console.error("Failed to fetch indicators code data");
-    throw error; // Re-throw the error to handle it in the component
+    console.error("Failed to request indicators code data");
+    throw error;
   }
-};
+}
+
+export const requestIndicatorDeletion = async (api, indicatorId) => {
+  try {
+    const response = await api.delete(`v1/indicators/${indicatorId}/delete`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to delete indicator");
+    throw error.response.data;
+  }
+}

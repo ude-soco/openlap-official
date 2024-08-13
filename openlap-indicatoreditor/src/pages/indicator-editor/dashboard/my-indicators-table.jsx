@@ -18,19 +18,30 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import {fetchMyIndicators, fetchRequestIndicatorCode,} from "./utils/indicator-dashboard";
+import {requestIndicatorCode, requestIndicatorDeletion, requestMyIndicators,} from "./utils/indicator-dashboard";
 import {AuthContext} from "../../../setup/auth-context-manager/auth-context-manager";
-import {ArrowDownward, ArrowUpward, ContentCopy, Delete, Edit, MoreVert, Preview,} from "@mui/icons-material";
+import {ArrowDownward, ArrowUpward, ContentCopy, Delete, Edit, Link, MoreVert, Preview} from "@mui/icons-material";
 import {useNavigate} from "react-router-dom";
 import {useSnackbar} from "notistack";
 import {handleDisplayType} from "./utils/utils";
+import DeleteDialog from "../../../common/components/delete-dialog/delete-dialog.jsx";
 
 const MyIndicatorsTable = () => {
   const {api} = useContext(AuthContext);
   const [state, setState] = useState({
-    myIndicators: [], pageable: {pageSize: 10, pageNumber: 0}, totalElements: 0, params: {
-      page: 0, size: 10, sortDirection: "dsc", sortBy: "createdOn",
+    myIndicators: [],
+    pageable: {
+      pageSize: 10,
+      pageNumber: 0
     },
+    totalElements: 0,
+    params: {
+      page: 0,
+      size: 10,
+      sortDirection: "dsc",
+      sortBy: "createdOn",
+    },
+    openDeleteDialog: false
   });
   const navigate = useNavigate();
   const {enqueueSnackbar} = useSnackbar();
@@ -48,23 +59,30 @@ const MyIndicatorsTable = () => {
     setSelectedIndicator(null);
   };
 
+  const toggleOpenDeleteDialog = () => {
+    setState(prevState => ({
+      ...prevState,
+      openDeleteDialog: !prevState.openDeleteDialog
+    }))
+  }
+
   useEffect(() => {
     const loadMyIndicators = async (api, params) => {
       try {
-        const myIndicatorsList = await fetchMyIndicators(api, params);
-
-        setState((prevState) => ({
-          ...prevState,
-          myIndicators: myIndicatorsList.content,
-          pageable: myIndicatorsList.pageable,
-          totalElements: myIndicatorsList.totalElements,
-        }));
+        return await requestMyIndicators(api, params);
       } catch (error) {
         console.log("Error requesting my indicators");
       }
     };
 
-    loadMyIndicators(api, state.params);
+    loadMyIndicators(api, state.params).then(response => {
+      setState((prevState) => ({
+        ...prevState,
+        myIndicators: response.content,
+        pageable: response.pageable,
+        totalElements: response.totalElements,
+      }));
+    });
   }, [api, state.params]);
 
   // Handle page change
@@ -122,173 +140,203 @@ const MyIndicatorsTable = () => {
     console.log("Copy code for indicator:", selectedIndicator);
     const loadIndicatorCode = async (api, indicatorId) => {
       try {
-        const indicatorCode = await fetchRequestIndicatorCode(api, indicatorId);
-
-        console.log(indicatorCode);
-        enqueueSnackbar("Copied indicator code!", {variant: "success"});
+        return await requestIndicatorCode(api, indicatorId);
       } catch (error) {
         enqueueSnackbar(error.response.data.message, {variant: "error"});
         console.error("Error requesting my indicators");
       }
     };
 
-    loadIndicatorCode(api, selectedIndicator.id);
+    loadIndicatorCode(api, selectedIndicator.id).then(response => {
+      navigator.clipboard
+        .writeText(response.data)
+        .then(() => setCopiedCode(!copiedCode));
+      enqueueSnackbar(response.message, {variant: "success"});
+    });
     handleMenuClose();
   };
 
+  const confirmDeleteIndicator = () => {
+    setState(prevState => ({
+      ...prevState,
+      openDeleteDialog: true
+    }))
+    setAnchorEl(null);
+  }
+
   const handleDeleteIndicator = () => {
-    console.log("Delete indicator:", selectedIndicator);
-    handleMenuClose();
+    const deleteIndicator = async (api, indicatorId) => {
+      try {
+        return await requestIndicatorDeletion(api, indicatorId);
+      } catch (error) {
+        enqueueSnackbar(error.message, {variant: "error"});
+      }
+    }
+    if (selectedIndicator !== null) {
+      deleteIndicator(api, selectedIndicator.id).then(response => {
+        enqueueSnackbar(response.message, {variant: "success"});
+        setState((prevState) => ({
+          ...prevState,
+          myIndicators: prevState.myIndicators.filter(indicator => indicator.id !== selectedIndicator.id),
+        }));
+      });
+      handleMenuClose();
+    }
   };
 
   return (<>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Grid container justifyContent="space-between">
-            <Grid item xs>
-              <Typography>My Indicators</Typography>
-            </Grid>
-            <Grid item>
-              <Button variant="contained" size="small" onClick={() => navigate("/indicator/editor")}>
-                Create new
-              </Button>
-            </Grid>
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <Grid container justifyContent="space-between">
+          <Grid item xs>
+            <Typography>My Indicators</Typography>
+          </Grid>
+          <Grid item>
+            <Button variant="contained" size="small" onClick={() => navigate("/indicator/editor")}>
+              Create new
+            </Button>
           </Grid>
         </Grid>
-        <Grid item xs={12}>
-          <TableContainer
-            component={Paper}
-            variant="outlined"
-          >
-            <Table stickyHeader size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>
-                    <Grid container alignItems="center">
-                      <Typography
-                        variant="overline"
-                        sx={{fontWeight: "bold"}}
-                      >
-                        Name
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleSort("name")}
-                      >
-                        {renderSortIcon("name")}
-                      </IconButton>
-                    </Grid>
-                  </TableCell>
-                  <TableCell>
-                    <Grid container alignItems="center">
-                      <Typography
-                        variant="overline"
-                        sx={{fontWeight: "bold"}}
-                      >
-                        Type
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleSort("indicatorType")}
-                      >
-                        {renderSortIcon("indicatorType")}
-                      </IconButton>
-                    </Grid>
-                  </TableCell>
-
-                  <TableCell align="right">
-                    <Grid
-                      container
-                      alignItems="center"
-                      justifyContent="flex-end"
-                    >
-                      <Typography
-                        variant="overline"
-                        sx={{fontWeight: "bold"}}
-                      >
-                        Created On
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleSort("createdOn")}
-                      >
-                        {renderSortIcon("createdOn")}
-                      </IconButton>
-                    </Grid>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="overline" sx={{fontWeight: "bold"}}>
-                      Actions
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {state.myIndicators.map((indicator) => (<TableRow key={indicator.id}>
-                    <TableCell>{indicator.name}</TableCell>
-                    <TableCell>{handleDisplayType(indicator.type)}</TableCell>
-                    <TableCell align="right">{indicator.createdOn}</TableCell>
-                    <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        onClick={(event) => handleMenuOpen(event, indicator)}
-                      >
-                        <MoreVert/>
-                      </IconButton>
-                      <Menu
-                        anchorEl={anchorEl}
-                        open={Boolean(anchorEl)}
-                        onClose={handleMenuClose}
-                      >
-                        <MenuItem onClick={handlePreview}>
-                          <ListItemIcon>
-                            <Preview fontSize="small" color="primary"/>
-                          </ListItemIcon>
-                          <ListItemText primary="Preview Indicator"/>
-                        </MenuItem>
-                        <MenuItem onClick={handleCopyCode}>
-                          <ListItemIcon>
-                            <ContentCopy fontSize="small" color="primary"/>
-                          </ListItemIcon>
-                          <ListItemText primary="Copy Code"/>
-                        </MenuItem>
-                        <Divider/>
-                        <MenuItem onClick={handleEdit}>
-                          <ListItemIcon>
-                            <Edit fontSize="small" color="primary"/>
-                          </ListItemIcon>
-                          <ListItemText primary="Edit Indicator"/>
-                        </MenuItem>
-                        <MenuItem onClick={handleDuplicate}>
-                          <ListItemIcon>
-                            <ContentCopy fontSize="small" color="primary"/>
-                          </ListItemIcon>
-                          <ListItemText primary="Duplicate Indicator"/>
-                        </MenuItem>
-                        <MenuItem onClick={handleDeleteIndicator}>
-                          <ListItemIcon>
-                            <Delete fontSize="small" color="error"/>
-                          </ListItemIcon>
-                          <ListItemText primary="Delete Indicator"/>
-                        </MenuItem>
-                      </Menu>
-                    </TableCell>
-                  </TableRow>))}
-              </TableBody>
-            </Table>
-            <TablePagination
-              component="div"
-              count={state.totalElements}
-              page={state.pageable.pageNumber}
-              onPageChange={handlePageChange}
-              rowsPerPage={state.pageable.pageSize}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              rowsPerPageOptions={[5, 10, 25]}
-            />
-          </TableContainer>
-        </Grid>
       </Grid>
-    </>);
+      <Grid item xs={12}>
+        <TableContainer
+          component={Paper}
+          variant="outlined"
+        >
+          <Table stickyHeader size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>
+                  <Grid container alignItems="center">
+                    <Typography
+                      variant="overline"
+                      sx={{fontWeight: "bold"}}
+                    >
+                      Name
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleSort("name")}
+                    >
+                      {renderSortIcon("name")}
+                    </IconButton>
+                  </Grid>
+                </TableCell>
+                <TableCell>
+                  <Grid container alignItems="center">
+                    <Typography
+                      variant="overline"
+                      sx={{fontWeight: "bold"}}
+                    >
+                      Type
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleSort("indicatorType")}
+                    >
+                      {renderSortIcon("indicatorType")}
+                    </IconButton>
+                  </Grid>
+                </TableCell>
+
+                <TableCell align="right">
+                  <Grid
+                    container
+                    alignItems="center"
+                    justifyContent="flex-end"
+                  >
+                    <Typography
+                      variant="overline"
+                      sx={{fontWeight: "bold"}}
+                    >
+                      Created On
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleSort("createdOn")}
+                    >
+                      {renderSortIcon("createdOn")}
+                    </IconButton>
+                  </Grid>
+                </TableCell>
+                <TableCell align="right">
+                  <Typography variant="overline" sx={{fontWeight: "bold"}}>
+                    Actions
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {state.myIndicators.map((indicator) => (<TableRow key={indicator.id}>
+                <TableCell>{indicator.name}</TableCell>
+                <TableCell>{handleDisplayType(indicator.type)}</TableCell>
+                <TableCell align="right">{indicator.createdOn}</TableCell>
+                <TableCell align="right">
+                  <IconButton
+                    size="small"
+                    onClick={(event) => handleMenuOpen(event, indicator)}
+                  >
+                    <MoreVert/>
+                  </IconButton>
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={handleMenuClose}
+                  >
+                    <MenuItem onClick={handlePreview}>
+                      <ListItemIcon>
+                        <Preview fontSize="small" color="primary"/>
+                      </ListItemIcon>
+                      <ListItemText primary="Preview Indicator"/>
+                    </MenuItem>
+                    <MenuItem onClick={handleCopyCode}>
+                      <ListItemIcon>
+                        <Link fontSize="small" color="primary"/>
+                      </ListItemIcon>
+                      <ListItemText primary="Copy Code"/>
+                    </MenuItem>
+                    <Divider/>
+                    <MenuItem onClick={handleEdit} disabled>
+                      <ListItemIcon>
+                        <Edit fontSize="small" color="primary"/>
+                      </ListItemIcon>
+                      <ListItemText primary="Edit Indicator"/>
+                    </MenuItem>
+                    <MenuItem onClick={handleDuplicate} disabled>
+                      <ListItemIcon>
+                        <ContentCopy fontSize="small" color="primary"/>
+                      </ListItemIcon>
+                      <ListItemText primary="Duplicate Indicator"/>
+                    </MenuItem>
+                    <MenuItem onClick={confirmDeleteIndicator}>
+                      <ListItemIcon>
+                        <Delete fontSize="small" color="error"/>
+                      </ListItemIcon>
+                      <ListItemText primary="Delete Indicator"/>
+                    </MenuItem>
+                  </Menu>
+                </TableCell>
+              </TableRow>))}
+            </TableBody>
+          </Table>
+          <TablePagination
+            component="div"
+            count={state.totalElements}
+            page={state.pageable.pageNumber}
+            onPageChange={handlePageChange}
+            rowsPerPage={state.pageable.pageSize}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            rowsPerPageOptions={[5, 10, 25]}
+          />
+        </TableContainer>
+      </Grid>
+    </Grid>
+    <DeleteDialog
+      open={state.openDeleteDialog}
+      toggleOpen={toggleOpenDeleteDialog}
+      handleDelete={handleDeleteIndicator}
+    />
+  </>);
 };
 
 export default MyIndicatorsTable;
