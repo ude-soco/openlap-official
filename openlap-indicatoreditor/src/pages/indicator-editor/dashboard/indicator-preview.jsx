@@ -9,7 +9,7 @@ import {
 import { ArrowBack } from "@mui/icons-material";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { fetchIndicatorFullDetail } from "./utils/indicator-dashboard";
+import { requestIndicatorFullDetail } from "./utils/indicator-dashboard";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
 import { handleDisplayType } from "./utils/utils";
 
@@ -56,7 +56,7 @@ const IndicatorPreview = () => {
         loading: true,
       }));
       try {
-        const indicatorDetail = await fetchIndicatorFullDetail(
+        const indicatorDetail = await requestIndicatorFullDetail(
           api,
           indicatorId
         );
