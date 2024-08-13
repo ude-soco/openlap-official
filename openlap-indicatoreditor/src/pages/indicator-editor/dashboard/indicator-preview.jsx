@@ -105,7 +105,7 @@ const IndicatorPreview = () => {
       </Grid>
       <Grid item xs={12}>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} lg={5}>
             {state.loading ? (
               <Skeleton variant="rounded" height={500} />
             ) : (
@@ -118,10 +118,10 @@ const IndicatorPreview = () => {
               </Grid>
             )}
           </Grid>
-          <Grid item xs={12} md={8}>
+          <Grid item xs={12} lg={7}>
             <Grid container spacing={2}>
               <Grid item xs>
-                <Typography variant="h5">
+                <Typography variant="h5" gutterBottom>
                   {state.loading ? <Skeleton /> : `${state.name}`}
                 </Typography>
                 <Typography>

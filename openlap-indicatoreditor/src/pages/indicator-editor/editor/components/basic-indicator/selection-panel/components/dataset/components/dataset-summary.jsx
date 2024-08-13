@@ -13,7 +13,7 @@ import PlatformChips from "./platform-chips.jsx";
 
 const DatasetSummary = ({
   state,
-  handletoggleShowSelection,
+  handleToggleShowSelection,
   handleTogglePanel,
 }) => {
   return (
@@ -44,7 +44,7 @@ const DatasetSummary = ({
                     <FormGroup>
                       <FormControlLabel
                         control={<Switch checked={state.showSelections} />}
-                        onChange={handletoggleShowSelection}
+                        onChange={handleToggleShowSelection}
                         label="Show selections"
                       />
                     </FormGroup>

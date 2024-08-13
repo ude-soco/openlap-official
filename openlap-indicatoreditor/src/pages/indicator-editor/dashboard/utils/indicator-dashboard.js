@@ -25,14 +25,13 @@ export const requestIndicatorFullDetail = async (api, indicatorId) => {
       console.error("Error script code", error);
     }
 
-    let updatedResponse = {
+    return {
       ...response.data.data,
       indicatorCode: {
         displayCode,
         scriptData,
       },
     };
-    return updatedResponse;
   } catch (error) {
     console.error("Failed to request indicator details");
     throw error;
