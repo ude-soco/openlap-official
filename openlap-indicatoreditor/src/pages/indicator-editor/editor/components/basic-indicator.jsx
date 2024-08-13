@@ -200,7 +200,7 @@ const BasicIndicator = () => {
         lockedStep,
         indicator,
       };
-    }, 5000);
+    }, 4000);
 
     return () => clearInterval(intervalId);
   }, [indicatorQuery, analysisRef, visRef, analysisInputMenu, lockedStep, indicator]);
