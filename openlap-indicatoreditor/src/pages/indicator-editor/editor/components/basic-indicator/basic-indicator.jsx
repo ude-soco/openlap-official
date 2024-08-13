@@ -210,12 +210,12 @@ const BasicIndicator = () => {
           <SelectionPanel/>
         </Grid>
         <Grid item xs={12} lg={4}>
-          <PreviewPanel indicatorName={indicator.indicatorName} changeIndicatorName={handleChangeIndicatorName}
+          <PreviewPanel indicator={indicator} changeIndicatorName={handleChangeIndicatorName}
                         handleSaveIndicator={handleSaveNewBasicIndicator}/>
         </Grid>
       </>) : (<>
         <Grid item xs={12} lg={4}>
-          <PreviewPanel indicatorName={indicator.indicatorName} changeIndicatorName={handleChangeIndicatorName}
+          <PreviewPanel indicator={indicator} changeIndicatorName={handleChangeIndicatorName}
                         handleSaveIndicator={handleSaveNewBasicIndicator}/>
         </Grid>
         <Grid item xs={12} lg={8}>

@@ -39,7 +39,7 @@ const Dataset = () => {
     }));
   };
 
-  const handletoggleShowSelection = () => {
+  const handleToggleShowSelection = () => {
     setState((prevState) => ({
       ...prevState,
       showSelections: !prevState.showSelections,
@@ -63,7 +63,7 @@ const Dataset = () => {
       <Accordion sx={{ mb: 1 }} expanded={state.openPanel}>
         <DatasetSummary
           state={state}
-          handletoggleShowSelection={handletoggleShowSelection}
+          handleToggleShowSelection={handleToggleShowSelection}
           handleTogglePanel={handleTogglePanel}
         />
         <AccordionDetails>
