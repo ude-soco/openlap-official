@@ -1,5 +1,6 @@
 import React, {useContext, useEffect, useState} from "react";
 import {
+  Button,
   Divider,
   Grid,
   IconButton,
@@ -7,6 +8,7 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  Paper,
   Table,
   TableBody,
   TableCell,
@@ -26,14 +28,8 @@ import {handleDisplayType} from "./utils/utils";
 const MyIndicatorsTable = () => {
   const {api} = useContext(AuthContext);
   const [state, setState] = useState({
-    myIndicators: [],
-    pageable: {pageSize: 10, pageNumber: 0},
-    totalElements: 0,
-    params: {
-      page: 0,
-      size: 10,
-      sortDirection: "dsc",
-      sortBy: "createdOn",
+    myIndicators: [], pageable: {pageSize: 10, pageNumber: 0}, totalElements: 0, params: {
+      page: 0, size: 10, sortDirection: "dsc", sortBy: "createdOn",
     },
   });
   const navigate = useNavigate();
@@ -74,10 +70,8 @@ const MyIndicatorsTable = () => {
   // Handle page change
   const handlePageChange = (event, newPage) => {
     setState((prevState) => ({
-      ...prevState,
-      params: {
-        ...prevState.params,
-        page: newPage,
+      ...prevState, params: {
+        ...prevState.params, page: newPage,
       },
     }));
   };
@@ -85,11 +79,8 @@ const MyIndicatorsTable = () => {
   // Handle rows per page change
   const handleRowsPerPageChange = (event) => {
     setState((prevState) => ({
-      ...prevState,
-      params: {
-        ...prevState.params,
-        size: parseInt(event.target.value, 10),
-        page: 0,
+      ...prevState, params: {
+        ...prevState.params, size: parseInt(event.target.value, 10), page: 0,
       },
     }));
   };
@@ -97,15 +88,10 @@ const MyIndicatorsTable = () => {
   // Handle sorting
   const handleSort = (sortBy) => {
     setState((prevState) => ({
-      ...prevState,
-      params: {
+      ...prevState, params: {
         ...prevState.params,
         sortBy,
-        sortDirection:
-          prevState.params.sortBy === sortBy &&
-          prevState.params.sortDirection === "asc"
-            ? "dsc"
-            : "asc",
+        sortDirection: prevState.params.sortBy === sortBy && prevState.params.sortDirection === "asc" ? "dsc" : "asc",
         page: 0, // Reset to first page on sort change
       },
     }));
@@ -113,11 +99,8 @@ const MyIndicatorsTable = () => {
 
   const renderSortIcon = (column) => {
     if (state.params.sortBy !== column) return null;
-    return state.params.sortDirection === "asc" ? (
-      <ArrowUpward fontSize="small"/>
-    ) : (
-      <ArrowDownward fontSize="small"/>
-    );
+    return state.params.sortDirection === "asc" ? (<ArrowUpward fontSize="small"/>) : (
+      <ArrowDownward fontSize="small"/>);
   };
 
   const handlePreview = () => {
@@ -158,15 +141,24 @@ const MyIndicatorsTable = () => {
     handleMenuClose();
   };
 
-  return (
-    <>
+  return (<>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Typography>My Indicators</Typography>
+          <Grid container justifyContent="space-between">
+            <Grid item xs>
+              <Typography>My Indicators</Typography>
+            </Grid>
+            <Grid item>
+              <Button variant="contained" size="small" onClick={() => navigate("/indicator/editor")}>
+                Create new
+              </Button>
+            </Grid>
+          </Grid>
         </Grid>
         <Grid item xs={12}>
           <TableContainer
-            sx={{border: "2px solid #e0e0e0", borderRadius: 1.5}}
+            component={Paper}
+            variant="outlined"
           >
             <Table stickyHeader size="small">
               <TableHead>
@@ -232,8 +224,7 @@ const MyIndicatorsTable = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {state.myIndicators.map((indicator) => (
-                  <TableRow key={indicator.id}>
+                {state.myIndicators.map((indicator) => (<TableRow key={indicator.id}>
                     <TableCell>{indicator.name}</TableCell>
                     <TableCell>{handleDisplayType(indicator.type)}</TableCell>
                     <TableCell align="right">{indicator.createdOn}</TableCell>
@@ -282,8 +273,7 @@ const MyIndicatorsTable = () => {
                         </MenuItem>
                       </Menu>
                     </TableCell>
-                  </TableRow>
-                ))}
+                  </TableRow>))}
               </TableBody>
             </Table>
             <TablePagination
@@ -298,8 +288,7 @@ const MyIndicatorsTable = () => {
           </TableContainer>
         </Grid>
       </Grid>
-    </>
-  );
+    </>);
 };
 
 export default MyIndicatorsTable;

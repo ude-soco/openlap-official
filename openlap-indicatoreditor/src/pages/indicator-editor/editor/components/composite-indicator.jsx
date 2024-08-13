@@ -1,6 +1,6 @@
 import React from 'react';
 import {Divider, Grid, Typography} from "@mui/material";
-import CreateIndicator from "./create-indicator.jsx";
+
 
 const CompositeIndicator = () => {
   return (

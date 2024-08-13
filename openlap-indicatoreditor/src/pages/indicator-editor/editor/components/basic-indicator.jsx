@@ -18,7 +18,14 @@ const BasicIndicator = () => {
   const [indicator, setIndicator] = useState(() => {
     const savedState = sessionStorage.getItem("session");
     return savedState
-      ? JSON.parse(savedState).indicator
+      ?
+      {
+        ...JSON.parse(savedState).indicator,
+        previewData: {
+          displayCode: "",
+          scriptData: [],
+        }
+      }
       : {
         previewData: {
           displayCode: "",
@@ -196,7 +203,7 @@ const BasicIndicator = () => {
     }, 5000);
 
     return () => clearInterval(intervalId);
-  }, [indicatorQuery, analysisRef, visRef, analysisInputMenu, lockedStep]);
+  }, [indicatorQuery, analysisRef, visRef, analysisInputMenu, lockedStep, indicator]);
 
   return (
     <BasicIndicatorContext.Provider
