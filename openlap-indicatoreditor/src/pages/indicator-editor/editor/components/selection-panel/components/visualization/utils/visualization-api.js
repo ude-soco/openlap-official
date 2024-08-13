@@ -79,13 +79,11 @@ export const fetchPreviewVisualization = async (
     } catch (error) {
       console.error("Error script code", error);
     }
-    let previewData = {
+    return {
       message: response.data.message,
       displayCode,
       scriptData,
     };
-
-    return previewData;
   } catch (error) {
     throw error; // Re-throw the error to handle it in the component
   }

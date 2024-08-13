@@ -1,27 +1,27 @@
-import { useEffect, useState, useContext } from "react";
+import {useContext, useEffect, useState} from "react";
 import {
   Accordion,
-  AccordionSummary,
   AccordionActions,
-  Chip,
-  Button,
   AccordionDetails,
-  Grid,
-  Typography,
-  FormGroup,
+  AccordionSummary,
+  Button,
+  Chip,
   FormControlLabel,
+  FormGroup,
+  Grid,
   Switch,
+  Typography,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import IconButton from "@mui/material/IconButton";
-import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
+import {AuthContext} from "../../../../../../../setup/auth-context-manager/auth-context-manager";
 import VisualizationLibrary from "./components/library";
 import VisualizationType from "./components/type";
 import Inputs from "./components/inputs";
-import { fetchPreviewVisualization } from "./utils/visualization-api";
-import { BasicIndicatorContext } from "../../../basic-indicator.jsx";
-import { LoadingButton } from "@mui/lab";
-import { useSnackbar } from "notistack";
+import {fetchPreviewVisualization} from "./utils/visualization-api";
+import {BasicIndicatorContext} from "../../../basic-indicator.jsx";
+import {LoadingButton} from "@mui/lab";
+import {useSnackbar} from "notistack";
 
 const Visualization = () => {
   const {
@@ -33,21 +33,21 @@ const Visualization = () => {
     indicator,
     setIndicator,
   } = useContext(BasicIndicatorContext);
-  const { api } = useContext(AuthContext);
+  const {api} = useContext(AuthContext);
   const [state, setState] = useState(() => {
     const savedState = sessionStorage.getItem("visualization");
     return savedState
       ? JSON.parse(savedState)
       : {
-          showSelections: true,
-          libraryList: [],
-          typeList: [],
-          inputs: [],
-          autoCompleteValue: null,
-          loadingPreview: false,
-        };
+        showSelections: true,
+        libraryList: [],
+        typeList: [],
+        inputs: [],
+        autoCompleteValue: null,
+        loadingPreview: false,
+      };
   });
-  const { enqueueSnackbar } = useSnackbar();
+  const {enqueueSnackbar} = useSnackbar();
 
   useEffect(() => {
     sessionStorage.setItem("visualization", JSON.stringify(state));
@@ -98,13 +98,13 @@ const Visualization = () => {
           ...prevState,
           loadingPreview: false,
         }));
-        enqueueSnackbar(previewResponse.message, { variant: "success" });
+        enqueueSnackbar(previewResponse.message, {variant: "success"});
       } catch (error) {
         setState((prevState) => ({
           ...prevState,
           loadingPreview: false,
         }));
-        enqueueSnackbar(error.response.data.message, { variant: "error" });
+        enqueueSnackbar(error.response.data.message, {variant: "error"});
         console.log("Error analyzing the data");
       }
     };
@@ -125,7 +125,7 @@ const Visualization = () => {
   return (
     <>
       <Accordion
-        sx={{ mb: 1 }}
+        sx={{mb: 1}}
         expanded={lockedStep.visualization.openPanel}
         disabled={lockedStep.visualization.locked}
       >
@@ -143,10 +143,10 @@ const Visualization = () => {
                   <Grid container alignItems="center" spacing={1}>
                     <Grid item>
                       {!lockedStep.visualization.locked ? (
-                        <Chip label="4" color="primary" />
+                        <Chip label="4" color="primary"/>
                       ) : (
                         <IconButton size="small">
-                          <LockIcon />
+                          <LockIcon/>
                         </IconButton>
                       )}
                     </Grid>
@@ -161,7 +161,7 @@ const Visualization = () => {
                       {!lockedStep.visualization.openPanel && (
                         <FormGroup>
                           <FormControlLabel
-                            control={<Switch checked={state.showSelections} />}
+                            control={<Switch checked={state.showSelections}/>}
                             onChange={handletoggleShowSelection}
                             label="Show selections"
                           />
@@ -193,7 +193,7 @@ const Visualization = () => {
                             if (library.id === visRef.visualizationLibraryId) {
                               return (
                                 <Grid item key={index}>
-                                  <Chip label={library.name} />
+                                  <Chip label={library.name}/>
                                 </Grid>
                               );
                             }
@@ -216,7 +216,7 @@ const Visualization = () => {
                             if (type.id === visRef.visualizationTypeId) {
                               return (
                                 <Grid item key={index}>
-                                  <Chip label={type.name} />
+                                  <Chip label={type.name}/>
                                 </Grid>
                               );
                             }
@@ -257,16 +257,16 @@ const Visualization = () => {
         <AccordionDetails>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <VisualizationLibrary state={state} setState={setState} />
+              <VisualizationLibrary state={state} setState={setState}/>
             </Grid>
             {visRef.visualizationLibraryId.length > 0 && (
               <Grid item xs={12}>
-                <VisualizationType state={state} setState={setState} />
+                <VisualizationType state={state} setState={setState}/>
               </Grid>
             )}
             {visRef.visualizationTypeId.length > 0 && (
               <Grid item xs={12}>
-                <Inputs state={state} setState={setState} />
+                <Inputs state={state} setState={setState}/>
               </Grid>
             )}
           </Grid>

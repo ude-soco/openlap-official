@@ -3,8 +3,13 @@ import images from "../utils/images.js"
 import {Button, Grid, Paper, Typography} from "@mui/material";
 import {useNavigate} from "react-router-dom";
 
-const CreateIndicator = () => {
+const CreateIndicator = ({handleClearSession}) => {
   const navigate = useNavigate();
+
+  const handleCreateIndicator = (link) => {
+    navigate(link);
+    handleClearSession();
+  }
   return (<>
     <Grid item xs={12}>
       <Typography>Create a new indicator</Typography>
@@ -18,7 +23,7 @@ const CreateIndicator = () => {
                 <Button
                   fullWidth
                   color="primary"
-                  onClick={() => navigate(image.link)}
+                  onClick={() => handleCreateIndicator(image.link)}
                 >
                   <Paper
                     component="img"

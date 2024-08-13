@@ -48,7 +48,7 @@ const AnalyzedDataTable = () => {
         <Typography>Preview data</Typography>
       </Grid>
       <Grid item xs={12}>
-        <TableContainer component={Paper} sx={{ border: "2px solid #e0e0e0", borderRadius: 1.5 }} elevation={0}>
+        <TableContainer component={Paper} variant="outlined">
           <Table size="small">
             <TableHead>
               <TableRow>
