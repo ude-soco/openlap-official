@@ -1,36 +1,32 @@
-import {
-  Grid,
-  Typography,
-  Divider,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
+import {Divider, Grid, IconButton, Tooltip, Typography, useMediaQuery, useTheme,} from "@mui/material";
+import {ArrowBack} from "@mui/icons-material";
 import PreviewPanel from "./preview-panel/preview-panel.jsx";
 import SelectionPanel from "./selection-panel/selection-panel.jsx";
-import { useState, createContext, useEffect, useRef } from "react";
+import React, {createContext, useEffect, useRef, useState} from "react";
 import dayjs from "dayjs";
 import Condition from "./selection-panel/utils/condition.js";
-import { useSnackbar } from "notistack";
+import {useSnackbar} from "notistack";
+import {useNavigate} from "react-router-dom";
 
 export const BasicIndicatorContext = createContext(undefined);
 
 const BasicIndicator = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("lg"));
-  const { enqueueSnackbar } = useSnackbar();
-
+  const {enqueueSnackbar} = useSnackbar();
+  const navigate = useNavigate();
   const [indicator, setIndicator] = useState(() => {
     const savedState = sessionStorage.getItem("session");
     return savedState
       ? JSON.parse(savedState).indicator
       : {
-          previewData: {
-            displayCode: "",
-            scriptData: [],
-          },
-          indicatorName: "",
-          type: "BASIC",
-        };
+        previewData: {
+          displayCode: "",
+          scriptData: [],
+        },
+        indicatorName: "",
+        type: "BASIC",
+      };
   });
 
   const [indicatorQuery, setIndicatorQuery] = useState(() => {
@@ -38,18 +34,18 @@ const BasicIndicator = () => {
     return savedState
       ? JSON.parse(savedState).indicatorQuery
       : {
-          lrsStores: [],
-          platforms: [],
-          activityTypes: [],
-          activities: {},
-          actionOnActivities: [],
-          duration: {
-            from: dayjs().subtract(1, "year").toISOString(),
-            until: dayjs().toISOString(),
-          },
-          outputs: [],
-          userQueryCondition: Condition.only_me,
-        };
+        lrsStores: [],
+        platforms: [],
+        activityTypes: [],
+        activities: {},
+        actionOnActivities: [],
+        duration: {
+          from: dayjs().subtract(1, "year").toISOString(),
+          until: dayjs().toISOString(),
+        },
+        outputs: [],
+        userQueryCondition: Condition.only_me,
+      };
   });
 
   const [analysisRef, setAnalysisRef] = useState(() => {
@@ -57,13 +53,13 @@ const BasicIndicator = () => {
     return savedState
       ? JSON.parse(savedState).analysisRef
       : {
-          analyticsTechniqueId: "",
-          analyticsTechniqueParams: [],
-          analyticsTechniqueMapping: {
-            mapping: [],
-          },
-          analyzedData: {},
-        };
+        analyticsTechniqueId: "",
+        analyticsTechniqueParams: [],
+        analyticsTechniqueMapping: {
+          mapping: [],
+        },
+        analyzedData: {},
+      };
   });
 
   const [visRef, setVisRef] = useState(() => {
@@ -71,16 +67,16 @@ const BasicIndicator = () => {
     return savedState
       ? JSON.parse(savedState).visRef
       : {
-          visualizationLibraryId: "",
-          visualizationTypeId: "",
-          visualizationParams: {
-            height: 400,
-            width: 400,
-          },
-          visualizationMapping: {
-            mapping: [],
-          },
-        };
+        visualizationLibraryId: "",
+        visualizationTypeId: "",
+        visualizationParams: {
+          height: 400,
+          width: 400,
+        },
+        visualizationMapping: {
+          mapping: [],
+        },
+      };
   });
 
   const [analysisInputMenu, setAnalysisInputMenu] = useState(() => {
@@ -88,50 +84,50 @@ const BasicIndicator = () => {
     return savedState
       ? JSON.parse(savedState).analysisInputMenu
       : {
-          activities: {
-            id: undefined,
-            type: "Text",
-            required: true,
-            title: "Activities",
-            description:
-              "Selected list of all the Activities specified in Activity Filter. " +
-              'E.g. courses that are selected in Activity name section are "Learning Analytics", "Data Mining" etc.',
-            options: [],
-          },
-          activityTypes: {
-            id: "statement.object.definition.type",
-            type: "Text",
-            required: true,
-            title: "Activity Types",
-            description: "Types of activities",
-          },
-          actionOnActivities: {
-            id: undefined,
-            type: "Text",
-            required: true,
-            title: "Actions",
-            description:
-              "Selected list of actions performed on the activity(ies). E.g. a list of actions that were " +
-              'performed on a course such as "viewed", "enrolled" etc.',
-            options: [],
-          },
-          platforms: {
-            id: "statement.context.platform",
-            type: "Text",
-            required: true,
-            title: "Platforms",
-            description:
-              'Selected list of sources specified in Dataset such as "Moodle" etc.',
-          },
-          user: {
-            id: "statement.actor.account.name",
-            type: "Text",
-            required: true,
-            title: "Users",
-            description:
-              "Selected list of the User(s) specified in User Filter",
-          },
-        };
+        activities: {
+          id: undefined,
+          type: "Text",
+          required: true,
+          title: "Activities",
+          description:
+            "Selected list of all the Activities specified in Activity Filter. " +
+            'E.g. courses that are selected in Activity name section are "Learning Analytics", "Data Mining" etc.',
+          options: [],
+        },
+        activityTypes: {
+          id: "statement.object.definition.type",
+          type: "Text",
+          required: true,
+          title: "Activity Types",
+          description: "Types of activities",
+        },
+        actionOnActivities: {
+          id: undefined,
+          type: "Text",
+          required: true,
+          title: "Actions",
+          description:
+            "Selected list of actions performed on the activity(ies). E.g. a list of actions that were " +
+            'performed on a course such as "viewed", "enrolled" etc.',
+          options: [],
+        },
+        platforms: {
+          id: "statement.context.platform",
+          type: "Text",
+          required: true,
+          title: "Platforms",
+          description:
+            'Selected list of sources specified in Dataset such as "Moodle" etc.',
+        },
+        user: {
+          id: "statement.actor.account.name",
+          type: "Text",
+          required: true,
+          title: "Users",
+          description:
+            "Selected list of the User(s) specified in User Filter",
+        },
+      };
   });
 
   const [lockedStep, setLockedStep] = useState(() => {
@@ -139,19 +135,19 @@ const BasicIndicator = () => {
     return savedState
       ? JSON.parse(savedState).lockedStep
       : {
-          filter: {
-            locked: true,
-            openPanel: false,
-          },
-          analysis: {
-            locked: true,
-            openPanel: false,
-          },
-          visualization: {
-            locked: true,
-            openPanel: false,
-          },
-        };
+        filter: {
+          locked: true,
+          openPanel: false,
+        },
+        analysis: {
+          locked: true,
+          openPanel: false,
+        },
+        visualization: {
+          locked: true,
+          openPanel: false,
+        },
+      };
   });
 
   const prevDependencies = useRef({
@@ -185,7 +181,7 @@ const BasicIndicator = () => {
         prevDependencies.current.lockedStep !== lockedStep ||
         prevDependencies.current.indicator !== indicator
       ) {
-        enqueueSnackbar("Autosaved", { variant: "success" });
+        enqueueSnackbar("Autosaved", {variant: "success"});
       }
 
       // Update the previous dependencies to the current ones
@@ -220,22 +216,39 @@ const BasicIndicator = () => {
       }}
     >
       <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Grid container alignItems="center">
+            <Grid item>
+              <Tooltip arrow title={<Typography variant="body2">Back to Indicator Editor</Typography>}>
+                <IconButton size="small" onClick={() => navigate("/indicator/editor")}>
+                  <ArrowBack/>
+                </IconButton>
+              </Tooltip>
+            </Grid>
+            <Grid item xs>
+              <Typography align="center">Basic Indicator Editor</Typography>
+            </Grid>
+          </Grid>
+        </Grid>
+        <Grid item xs={12}>
+          <Divider/>
+        </Grid>
         {isSmallScreen ? (
           <>
             <Grid item xs={12} lg={8}>
-              <SelectionPanel />
+              <SelectionPanel/>
             </Grid>
             <Grid item xs={12} lg={4}>
-              <PreviewPanel />
+              <PreviewPanel/>
             </Grid>
           </>
         ) : (
           <>
             <Grid item xs={12} lg={4}>
-              <PreviewPanel />
+              <PreviewPanel/>
             </Grid>
             <Grid item xs={12} lg={8}>
-              <SelectionPanel />
+              <SelectionPanel/>
             </Grid>
           </>
         )}

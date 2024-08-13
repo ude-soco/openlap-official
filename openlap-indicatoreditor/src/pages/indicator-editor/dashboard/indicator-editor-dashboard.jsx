@@ -1,23 +1,22 @@
 import React from "react";
-import { Divider, Grid, Typography } from "@mui/material";
+import {Divider, Grid, Typography} from "@mui/material";
 import MyIndicatorsTable from "./my-indicators-table";
 
 const IndicatorEditorDashboard = () => {
-  return (
-    <>
+  return (<>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Typography>Indicator Dashboard</Typography>
         </Grid>
         <Grid item xs={12}>
-          <Divider />
+          <Divider/>
         </Grid>
+
         <Grid item xs={12}>
-          <MyIndicatorsTable />
+          <MyIndicatorsTable/>
         </Grid>
       </Grid>
-    </>
-  );
+    </>);
 };
 
 export default IndicatorEditorDashboard;

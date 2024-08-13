@@ -1,49 +1,33 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {useContext, useEffect, useState} from "react";
 import {
-  Box,
+  Divider,
   Grid,
-  Table,
-  TableCell,
-  TableHead,
-  TableRow,
-  TableBody,
-  TablePagination,
-  Typography,
-  TableContainer,
-  Paper,
   IconButton,
-  Menu,
-  MenuItem,
   ListItemIcon,
   ListItemText,
-  Divider,
-  Button,
+  Menu,
+  MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  Typography,
 } from "@mui/material";
-import {
-  fetchMyIndicators,
-  fetchIndicatorFullDetail,
-  fetchRequestIndicatorCode,
-} from "./utils/indicator-dashboard";
-import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
-import {
-  ArrowDownward,
-  ArrowUpward,
-  Preview,
-  Edit,
-  ContentCopy,
-  MoreVert,
-  Delete,
-} from "@mui/icons-material";
-import images from "./utils/images";
-import { useNavigate } from "react-router-dom";
-import { useSnackbar } from "notistack";
-import { handleDisplayType } from "./utils/utils";
+import {fetchMyIndicators, fetchRequestIndicatorCode,} from "./utils/indicator-dashboard";
+import {AuthContext} from "../../../setup/auth-context-manager/auth-context-manager";
+import {ArrowDownward, ArrowUpward, ContentCopy, Delete, Edit, MoreVert, Preview,} from "@mui/icons-material";
+import {useNavigate} from "react-router-dom";
+import {useSnackbar} from "notistack";
+import {handleDisplayType} from "./utils/utils";
 
 const MyIndicatorsTable = () => {
-  const { api } = useContext(AuthContext);
+  const {api} = useContext(AuthContext);
   const [state, setState] = useState({
     myIndicators: [],
-    pageable: { pageSize: 10, pageNumber: 0 },
+    pageable: {pageSize: 10, pageNumber: 0},
     totalElements: 0,
     params: {
       page: 0,
@@ -53,7 +37,7 @@ const MyIndicatorsTable = () => {
     },
   });
   const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
+  const {enqueueSnackbar} = useSnackbar();
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedIndicator, setSelectedIndicator] = useState(null);
@@ -130,9 +114,9 @@ const MyIndicatorsTable = () => {
   const renderSortIcon = (column) => {
     if (state.params.sortBy !== column) return null;
     return state.params.sortDirection === "asc" ? (
-      <ArrowUpward fontSize="small" />
+      <ArrowUpward fontSize="small"/>
     ) : (
-      <ArrowDownward fontSize="small" />
+      <ArrowDownward fontSize="small"/>
     );
   };
 
@@ -158,9 +142,9 @@ const MyIndicatorsTable = () => {
         const indicatorCode = await fetchRequestIndicatorCode(api, indicatorId);
 
         console.log(indicatorCode);
-        enqueueSnackbar("Copied indicator code!", { variant: "success" });
+        enqueueSnackbar("Copied indicator code!", {variant: "success"});
       } catch (error) {
-        enqueueSnackbar(error.response.data.message, { variant: "error" });
+        enqueueSnackbar(error.response.data.message, {variant: "error"});
         console.error("Error requesting my indicators");
       }
     };
@@ -178,50 +162,11 @@ const MyIndicatorsTable = () => {
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Typography>Create a new indicator</Typography>
-        </Grid>
-        <Grid item xs={12}>
-          <Grid container spacing={4}>
-            {images.map((image, index) => {
-              return (
-                <Grid item xs={4} lg={3} key={index}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <Button
-                        fullWidth
-                        color="primary"
-                        onClick={() => navigate(image.link)}
-                      >
-                        <Paper
-                          component="img"
-                          src={image.image}
-                          alt={image.imageCode}
-                          sx={{
-                            width: "100%",
-                            height: "100%",
-                            backgroundColor: "white",
-                          }}
-                        />
-                      </Button>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Typography>{image.name}</Typography>
-                      <Typography variant="caption">
-                        {image.description}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </Grid>
-              );
-            })}
-          </Grid>
-        </Grid>
-        <Grid item xs={12}>
           <Typography>My Indicators</Typography>
         </Grid>
         <Grid item xs={12}>
           <TableContainer
-            sx={{ border: "2px solid #e0e0e0", borderRadius: 1.5 }}
+            sx={{border: "2px solid #e0e0e0", borderRadius: 1.5}}
           >
             <Table stickyHeader size="small">
               <TableHead>
@@ -230,7 +175,7 @@ const MyIndicatorsTable = () => {
                     <Grid container alignItems="center">
                       <Typography
                         variant="overline"
-                        sx={{ fontWeight: "bold" }}
+                        sx={{fontWeight: "bold"}}
                       >
                         Name
                       </Typography>
@@ -246,7 +191,7 @@ const MyIndicatorsTable = () => {
                     <Grid container alignItems="center">
                       <Typography
                         variant="overline"
-                        sx={{ fontWeight: "bold" }}
+                        sx={{fontWeight: "bold"}}
                       >
                         Type
                       </Typography>
@@ -267,7 +212,7 @@ const MyIndicatorsTable = () => {
                     >
                       <Typography
                         variant="overline"
-                        sx={{ fontWeight: "bold" }}
+                        sx={{fontWeight: "bold"}}
                       >
                         Created On
                       </Typography>
@@ -280,7 +225,7 @@ const MyIndicatorsTable = () => {
                     </Grid>
                   </TableCell>
                   <TableCell align="right">
-                    <Typography variant="overline" sx={{ fontWeight: "bold" }}>
+                    <Typography variant="overline" sx={{fontWeight: "bold"}}>
                       Actions
                     </Typography>
                   </TableCell>
@@ -297,7 +242,7 @@ const MyIndicatorsTable = () => {
                         size="small"
                         onClick={(event) => handleMenuOpen(event, indicator)}
                       >
-                        <MoreVert />
+                        <MoreVert/>
                       </IconButton>
                       <Menu
                         anchorEl={anchorEl}
@@ -306,34 +251,34 @@ const MyIndicatorsTable = () => {
                       >
                         <MenuItem onClick={handlePreview}>
                           <ListItemIcon>
-                            <Preview fontSize="small" color="primary" />
+                            <Preview fontSize="small" color="primary"/>
                           </ListItemIcon>
-                          <ListItemText primary="Preview Indicator" />
+                          <ListItemText primary="Preview Indicator"/>
                         </MenuItem>
                         <MenuItem onClick={handleCopyCode}>
                           <ListItemIcon>
-                            <ContentCopy fontSize="small" color="primary" />
+                            <ContentCopy fontSize="small" color="primary"/>
                           </ListItemIcon>
-                          <ListItemText primary="Copy Code" />
+                          <ListItemText primary="Copy Code"/>
                         </MenuItem>
-                        <Divider />
+                        <Divider/>
                         <MenuItem onClick={handleEdit}>
                           <ListItemIcon>
-                            <Edit fontSize="small" color="primary" />
+                            <Edit fontSize="small" color="primary"/>
                           </ListItemIcon>
-                          <ListItemText primary="Edit Indicator" />
+                          <ListItemText primary="Edit Indicator"/>
                         </MenuItem>
                         <MenuItem onClick={handleDuplicate}>
                           <ListItemIcon>
-                            <ContentCopy fontSize="small" color="primary" />
+                            <ContentCopy fontSize="small" color="primary"/>
                           </ListItemIcon>
-                          <ListItemText primary="Duplicate Indicator" />
+                          <ListItemText primary="Duplicate Indicator"/>
                         </MenuItem>
                         <MenuItem onClick={handleDeleteIndicator}>
                           <ListItemIcon>
-                            <Delete fontSize="small" color="error" />
+                            <Delete fontSize="small" color="error"/>
                           </ListItemIcon>
-                          <ListItemText primary="Delete Indicator" />
+                          <ListItemText primary="Delete Indicator"/>
                         </MenuItem>
                       </Menu>
                     </TableCell>
