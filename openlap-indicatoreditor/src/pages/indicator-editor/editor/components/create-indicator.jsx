@@ -5,11 +5,11 @@ import {useNavigate} from "react-router-dom";
 
 const CreateIndicator = ({handleClearSession}) => {
   const navigate = useNavigate();
-
-  const handleCreateIndicator = (link) => {
-    navigate(link);
+  const handleStartIndicatorCreationProcess = (image) => {
+    navigate(image.link);
     handleClearSession();
   }
+
   return (<>
     <Grid item xs={12}>
       <Typography>Create a new indicator</Typography>
@@ -23,7 +23,7 @@ const CreateIndicator = ({handleClearSession}) => {
                 <Button
                   fullWidth
                   color="primary"
-                  onClick={() => handleCreateIndicator(image.link)}
+                  onClick={() => handleStartIndicatorCreationProcess(image)}
                 >
                   <Paper
                     component="img"
@@ -46,7 +46,7 @@ const CreateIndicator = ({handleClearSession}) => {
         })}
       </Grid>
     </Grid>
-  </>);
+  </>)
 }
 
 export default CreateIndicator;

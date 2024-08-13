@@ -5,14 +5,14 @@ import Multi from "../../../../assets/images/vis-dashboard-cover/multi.png";
 const images = [
   {
     image: Basic,
-    imageCode: "Basic",
+    imageCode: "BASIC",
     name: "Basic indicator",
     description: "Create a simple indicator from scratch.",
     link: "/indicator/editor/basic",
   },
   {
     image: Composite,
-    imageCode: "Composite",
+    imageCode: "COMPOSITE",
     name: "Composite indicator",
     description:
       "Combine two or more basic indicators with the same analysis method.",
@@ -20,7 +20,7 @@ const images = [
   },
   {
     image: Multi,
-    imageCode: "Multi",
+    imageCode: "MULTI_LEVEL",
     name: "Multi-level analysis indicator",
     description:
       "Combine two or more basic indicators based on one shared data.",
