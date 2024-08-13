@@ -63,7 +63,7 @@ const Visualization = () => {
     }));
   };
 
-  const handletoggleShowSelection = () => {
+  const handleToggleShowSelection = () => {
     setState((prevState) => ({
       ...prevState,
       showSelections: !prevState.showSelections,
@@ -78,27 +78,12 @@ const Visualization = () => {
       visRef
     ) => {
       try {
-        let previewResponse = await fetchPreviewVisualization(
+        return await fetchPreviewVisualization(
           api,
           indicatorQuery,
           analysisRef,
           visRef
         );
-
-        setIndicator((prevState) => ({
-          ...prevState,
-          previewData: {
-            ...prevState.previewData,
-            displayCode: previewResponse.displayCode,
-            scriptData: previewResponse.scriptData,
-          },
-        }));
-
-        setState((prevState) => ({
-          ...prevState,
-          loadingPreview: false,
-        }));
-        enqueueSnackbar(previewResponse.message, {variant: "success"});
       } catch (error) {
         setState((prevState) => ({
           ...prevState,
@@ -119,7 +104,22 @@ const Visualization = () => {
         scriptData: [],
       },
     }));
-    loadPreviewVisualization(api, indicatorQuery, analysisRef, visRef);
+    loadPreviewVisualization(api, indicatorQuery, analysisRef, visRef).then(previewResponse => {
+      setIndicator((prevState) => ({
+        ...prevState,
+        previewData: {
+          ...prevState.previewData,
+          displayCode: previewResponse.displayCode,
+          scriptData: previewResponse.scriptData,
+        },
+      }));
+
+      setState((prevState) => ({
+        ...prevState,
+        loadingPreview: false,
+      }));
+      enqueueSnackbar(previewResponse.message, {variant: "success"});
+    });
   };
 
   return (
@@ -162,7 +162,7 @@ const Visualization = () => {
                         <FormGroup>
                           <FormControlLabel
                             control={<Switch checked={state.showSelections}/>}
-                            onChange={handletoggleShowSelection}
+                            onChange={handleToggleShowSelection}
                             label="Show selections"
                           />
                         </FormGroup>
