@@ -1,5 +1,6 @@
-import { Grid, Typography, Divider } from "@mui/material";
-import BasicIndicator from "./components/basic-indicator.jsx";
+import {Divider, Grid, Typography,} from "@mui/material";
+import React from "react";
+import CreateIndicator from "./components/create-indicator.jsx";
 
 const IndicatorEditor = () => {
   return (
@@ -9,10 +10,10 @@ const IndicatorEditor = () => {
           <Typography>Indicator Editor</Typography>
         </Grid>
         <Grid item xs={12}>
-          <Divider />
+          <Divider/>
         </Grid>
         <Grid item xs={12}>
-          <BasicIndicator />
+          <CreateIndicator/>
         </Grid>
       </Grid>
     </>

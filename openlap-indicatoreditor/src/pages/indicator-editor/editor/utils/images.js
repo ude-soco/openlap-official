@@ -8,7 +8,7 @@ const images = [
     imageCode: "Basic",
     name: "Basic indicator",
     description: "Create a simple indicator from scratch.",
-    link: "/indicator/editor",
+    link: "/indicator/editor/basic",
   },
   {
     image: Composite,
@@ -16,7 +16,7 @@ const images = [
     name: "Composite indicator",
     description:
       "Combine two or more basic indicators with the same analysis method.",
-    link: "/indicator/editor",
+    link: "/indicator/editor/composite",
   },
   {
     image: Multi,
@@ -24,7 +24,7 @@ const images = [
     name: "Multi-level analysis indicator",
     description:
       "Combine two or more basic indicators based on one shared data.",
-    link: "/indicator/editor",
+    link: "/indicator/editor/multi-level-analysis",
   },
 ];
 
