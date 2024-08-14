@@ -49,12 +49,9 @@ const SelectionPanel = () => {
         setVisRef={setVisRef}
         analyzedData={analysisRef.analyzedData}
         setIndicator={setIndicator}
-        handlePreview={loadPreviewVisualization(
-          api,
-          indicatorQuery,
-          analysisRef,
-          visRef,
-        )}
+        handlePreview={() =>
+          loadPreviewVisualization(api, indicatorQuery, analysisRef, visRef)
+        }
       />
     </>
   );
