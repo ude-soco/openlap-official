@@ -23,6 +23,7 @@ const CompositeIndicator = () => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("xl"));
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+
   const [indicator, setIndicator] = useState(() => {
     const savedState = sessionStorage.getItem("session");
     return savedState
@@ -43,9 +44,15 @@ const CompositeIndicator = () => {
         };
   });
 
-  const [indicatorRef, setIndicatorRef] = useState({
-    columnToMerge: {},
-    indicators: [],
+  const [indicatorRef, setIndicatorRef] = useState(() => {
+    const savedState = sessionStorage.getItem("session");
+    return savedState
+      ? JSON.parse(savedState).indicatorRef
+      : {
+          columnToMerge: {},
+          indicators: [],
+          analyzedData: {},
+        };
   });
 
   const [visRef, setVisRef] = useState(() => {
@@ -80,6 +87,48 @@ const CompositeIndicator = () => {
           },
         };
   });
+
+  // TODO: Autosaving feature
+  // const prevDependencies = useRef({
+  //   indicator,
+  //   indicatorRef,
+  //   visRef,
+  //   lockedStep,
+  // });
+  //
+  // useEffect(() => {
+  //   const intervalId = setInterval(() => {
+  //     let session = {
+  //       indicator,
+  //       indicatorRef,
+  //       visRef,
+  //       lockedStep,
+  //     };
+  //
+  //     sessionStorage.setItem("session", JSON.stringify(session));
+  //
+  //     // Check if any of the dependencies have changed
+  //     if (
+  //       prevDependencies.current.indicator !== indicator ||
+  //       prevDependencies.current.indicatorRef !== indicatorRef ||
+  //       prevDependencies.current.visRef !== visRef ||
+  //       prevDependencies.current.visRef !== visRef ||
+  //       prevDependencies.current.lockedStep !== lockedStep
+  //     ) {
+  //       enqueueSnackbar("Autosaved", { variant: "success" });
+  //     }
+  //
+  //     // Update the previous dependencies to the current ones
+  //     prevDependencies.current = {
+  //       indicator,
+  //       indicatorRef,
+  //       visRef,
+  //       lockedStep,
+  //     };
+  //   }, 4000);
+  //
+  //   return () => clearInterval(intervalId);
+  // }, [indicator, indicatorRef, visRef, lockedStep]);
 
   const handleChangeIndicatorName = (event) => {
     const { name, value } = event.target;

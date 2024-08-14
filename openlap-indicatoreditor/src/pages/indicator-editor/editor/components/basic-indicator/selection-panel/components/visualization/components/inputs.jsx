@@ -1,54 +1,43 @@
-import { useEffect, useState, useContext } from "react";
+import { useContext, useEffect } from "react";
 import {
-  IconButton,
-  Grid,
-  Typography,
-  FormHelperText,
   FormControl,
+  FormHelperText,
+  Grid,
+  IconButton,
   InputLabel,
-  Select,
   MenuItem,
+  Select,
+  Typography,
 } from "@mui/material";
-import { AuthContext } from "../../../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import HelpIcon from "@mui/icons-material/Help";
 import Tooltip from "@mui/material/Tooltip";
 import { fetchVisualizationTypeInputs } from "../utils/visualization-api.js";
-import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
+import { AuthContext } from "../../../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 
-const Inputs = ({ state, setState }) => {
+const Inputs = ({ state, setState, visRef, setVisRef, analyzedData }) => {
   const { api } = useContext(AuthContext);
-  const {
-    analysisInputMenu,
-    indicatorQuery,
-    setIndicatorQuery,
-    lockedStep,
-    analysisRef,
-    setAnalysisRef,
-    visRef,
-    setVisRef,
-  } = useContext(BasicIndicatorContext);
-
   useEffect(() => {
     const loadVisTypeInputs = async (typeId) => {
       try {
-        const typeInputsList = await fetchVisualizationTypeInputs(api, typeId);
-        setState((prevState) => ({
-          ...prevState,
-          inputs: typeInputsList,
-        }));
+        return await fetchVisualizationTypeInputs(api, typeId);
       } catch (error) {
         console.log("Error fetching visualization library input list");
       }
     };
     if (visRef.visualizationTypeId !== "")
-      loadVisTypeInputs(visRef.visualizationTypeId);
+      loadVisTypeInputs(visRef.visualizationTypeId).then((response) => {
+        setState((prevState) => ({
+          ...prevState,
+          inputs: response,
+        }));
+      });
   }, [visRef.visualizationTypeId]);
 
   useEffect(() => {
     // Set default value for each input if only one possible option is available
     state.inputs?.forEach((input) => {
-      const filteredValues = Object.values(analysisRef.analyzedData).filter(
-        (value) => input.type === value.configurationData.type
+      const filteredValues = Object.values(analyzedData).filter(
+        (value) => input.type === value.configurationData.type,
       );
 
       if (filteredValues.length === 1) {
@@ -87,7 +76,7 @@ const Inputs = ({ state, setState }) => {
       };
       let updatedMappings = updateMappingsMethod(
         tempInputMappings,
-        prevState.visualizationMapping.mapping
+        prevState.visualizationMapping.mapping,
       );
 
       return {
@@ -107,8 +96,8 @@ const Inputs = ({ state, setState }) => {
           <Typography>Inputs</Typography>
         </Grid>
         {state.inputs?.map((input, index) => {
-          const filteredValues = Object.values(analysisRef.analyzedData).filter(
-            (value) => input.type === value.configurationData.type
+          const filteredValues = Object.values(analyzedData).filter(
+            (value) => input.type === value.configurationData.type,
           );
 
           return (

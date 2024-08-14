@@ -13,7 +13,7 @@ export const fetchVisualizationLibrary = async (api) => {
 export const fetchVisualizationTypeByLibraryId = async (api, libraryId) => {
   try {
     const response = await api.get(
-      "v1/visualizations/libraries/" + libraryId + "/types"
+      "v1/visualizations/libraries/" + libraryId + "/types",
     );
     return response.data.data;
   } catch (error) {
@@ -25,7 +25,7 @@ export const fetchVisualizationTypeByLibraryId = async (api, libraryId) => {
 export const fetchVisualizationTypeInputs = async (api, typeId) => {
   try {
     const response = await api.get(
-      "v1/visualizations/types/" + typeId + "/inputs"
+      "v1/visualizations/types/" + typeId + "/inputs",
     );
     return response.data.data;
   } catch (error) {
@@ -34,11 +34,11 @@ export const fetchVisualizationTypeInputs = async (api, typeId) => {
   }
 };
 
-export const fetchPreviewVisualization = async (
+export const requestBasicIndicatorPreview = async (
   api,
   indicatorQuery,
   analysisRef,
-  visRef
+  visRef,
 ) => {
   try {
     const requestBody = {
@@ -85,6 +85,47 @@ export const fetchPreviewVisualization = async (
       scriptData,
     };
   } catch (error) {
-    throw error; // Re-throw the error to handle it in the component
+    throw error;
+  }
+};
+
+export const requestCompositeIndicatorPreview = async (
+  api,
+  indicatorRef,
+  visRef,
+) => {
+  try {
+    const requestBody = {
+      columnToMerge: indicatorRef.columnToMerge,
+      indicators: indicatorRef.indicators,
+      visualizationLibraryId: visRef.visualizationLibraryId,
+      visualizationTypeId: visRef.visualizationTypeId,
+      visualizationParams: {
+        ...visRef.visualizationParams,
+      },
+      visualizationMapping: {
+        mapping: visRef.visualizationMapping.mapping,
+      },
+    };
+    const response = await api.post(
+      "v1/indicators/composite/preview",
+      requestBody,
+    );
+
+    const unescapedVizCode = decodeURIComponent(response.data.data);
+    let displayCode = parse(unescapedVizCode);
+    let scriptData;
+    try {
+      scriptData = displayCode[1].props.dangerouslySetInnerHTML.__html;
+    } catch (error) {
+      console.error("Error script code", error);
+    }
+    return {
+      message: response.data.message,
+      displayCode,
+      scriptData,
+    };
+  } catch (e) {
+    throw e;
   }
 };

@@ -159,8 +159,8 @@ const CompatibleIndicatorList = ({ state, setState }) => {
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1}>
-                {state.selectedCompatibleIndicators.map((indicator) => (
-                  <Grid item>
+                {state.selectedCompatibleIndicators.map((indicator, index) => (
+                  <Grid item key={index}>
                     <Chip label={indicator.name} />
                   </Grid>
                 ))}

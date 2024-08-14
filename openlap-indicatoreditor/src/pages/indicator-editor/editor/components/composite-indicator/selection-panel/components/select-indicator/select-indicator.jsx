@@ -24,8 +24,8 @@ import MergedDataTable from "./components/merged-data-table.jsx";
 
 const SelectIndicator = () => {
   const { api } = useContext(AuthContext);
-  const { indicatorRef } = useContext(CompositeIndicatorContext);
-  const { lockedStep, setLockedStep } = useContext(CompositeIndicatorContext);
+  const { lockedStep, setLockedStep, indicatorRef, setIndicatorRef } =
+    useContext(CompositeIndicatorContext);
   const [state, setState] = useState({
     showSelections: true,
     params: {
@@ -50,7 +50,6 @@ const SelectIndicator = () => {
     selectedCompatibleIndicators: [],
     selectedAnalyticsOutput: {},
     loadingPreview: false,
-    analyzedData: {},
   });
 
   const handleTogglePanel = () => {
@@ -76,6 +75,10 @@ const SelectIndicator = () => {
       loadingPreview: true,
       analyzedData: {},
     }));
+    setIndicatorRef((prevState) => ({
+      ...prevState,
+      analyzedData: {},
+    }));
 
     const loadMergeData = async (api, columnToMerge, indicators) => {
       try {
@@ -93,6 +96,9 @@ const SelectIndicator = () => {
       setState((prevState) => ({
         ...prevState,
         loadingPreview: false,
+      }));
+      setIndicatorRef((prevState) => ({
+        ...prevState,
         analyzedData: response.data.columns,
       }));
     });
@@ -225,7 +231,7 @@ const SelectIndicator = () => {
                   </>
                 )}
                 {/*  Preview data */}
-                {Object.entries(state.analyzedData).length !== 0 && (
+                {Object.entries(indicatorRef.analyzedData).length !== 0 && (
                   <Grid item xs={12}>
                     <MergedDataTable state={state} />
                   </Grid>
@@ -276,7 +282,7 @@ const SelectIndicator = () => {
               </Grid>
             ) : undefined}
 
-            {Object.entries(state.analyzedData).length !== 0 && (
+            {Object.entries(indicatorRef.analyzedData).length !== 0 && (
               <Grid item xs={12}>
                 <MergedDataTable state={state} />
               </Grid>
@@ -309,7 +315,7 @@ const SelectIndicator = () => {
                 disabled={
                   !Object.entries(indicatorRef.columnToMerge).length ||
                   indicatorRef.indicators.length <= 1 ||
-                  !Object.entries(state.analyzedData).length
+                  !Object.entries(indicatorRef.analyzedData).length
                 }
                 onClick={handleUnlockVisualization}
               >
