@@ -16,7 +16,7 @@ import {
 import IndicatorList from "./indicator-list.jsx";
 
 const SelectIndicator = () => {
-  const { lockedStep, setLockedStep, indicatorRef } = useContext(
+  const { lockedStep, setLockedStep } = useContext(
     MultiLevelAnalysisIndicatorContext,
   );
   const [state, setState] = useState({
@@ -158,7 +158,7 @@ const SelectIndicator = () => {
             //   indicatorRef.indicators.length <= 1 ||
             //   !Object.entries(indicatorRef.analyzedData).length
             // }
-            // onClick={handleUnlockColumnMerge}
+            onClick={handleUnlockColumnMerge}
           >
             Next
           </Button>
