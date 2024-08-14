@@ -18,7 +18,7 @@ import HelpIcon from "@mui/icons-material/Help";
 
 const MergedDataTable = ({ state }) => {
   const { indicatorRef, lockedStep } = useContext(CompositeIndicatorContext);
-  const { analyzedData } = state;
+  const { analyzedData } = indicatorRef;
 
   // State for pagination
   const [page, setPage] = useState(0);

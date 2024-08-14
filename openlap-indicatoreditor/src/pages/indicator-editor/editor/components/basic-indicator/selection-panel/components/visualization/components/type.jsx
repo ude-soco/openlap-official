@@ -1,41 +1,32 @@
-import { useEffect, useState, useContext } from "react";
-import { Box, Divider, Grid, Typography, ToggleButton } from "@mui/material";
+import { useContext, useEffect } from "react";
+import { Box, Divider, Grid, ToggleButton, Typography } from "@mui/material";
 import { CustomThemeContext } from "../../../../../../../../../setup/theme-manager/theme-context-manager.jsx";
-import { AuthContext } from "../../../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { fetchVisualizationTypeByLibraryId } from "../utils/visualization-api.js";
 import images from "../config/images.js";
-import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
+import { AuthContext } from "../../../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 
-const VisualizationType = ({ state, setState }) => {
+const VisualizationType = ({ state, setState, visRef, setVisRef }) => {
   const { darkMode } = useContext(CustomThemeContext);
   const { api } = useContext(AuthContext);
-  const {
-    indicatorQuery,
-    lockedStep,
-    analysisRef,
-    setAnalysisRef,
-    visRef,
-    setVisRef,
-  } = useContext(BasicIndicatorContext);
 
   useEffect(() => {
     const loadVisualizationTypeData = async (libraryId) => {
       try {
-        const typeListResponse = await fetchVisualizationTypeByLibraryId(
-          api,
-          libraryId
-        );
-        setState((prevState) => ({
-          ...prevState,
-          typeList: typeListResponse,
-        }));
+        return await fetchVisualizationTypeByLibraryId(api, libraryId);
       } catch (error) {
         console.log("Failed to load the Visualization type list");
       }
     };
 
     if (state.typeList.length === 0) {
-      loadVisualizationTypeData(visRef.visualizationLibraryId);
+      loadVisualizationTypeData(visRef.visualizationLibraryId).then(
+        (response) => {
+          setState((prevState) => ({
+            ...prevState,
+            typeList: response,
+          }));
+        },
+      );
     }
   }, [state.typeList.length]);
 
@@ -68,7 +59,7 @@ const VisualizationType = ({ state, setState }) => {
               .sort((a, b) => a.name.localeCompare(b.name))
               .map((type) => {
                 let imgUrl = images.find(
-                  (image) => image.imageCode === type.imageCode
+                  (image) => image.imageCode === type.imageCode,
                 );
                 return (
                   <Grid item key={type.id}>

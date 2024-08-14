@@ -23,13 +23,15 @@ const IndicatorList = ({ state, setState }) => {
       }
     };
 
-    loadIndicatorList(api, state.params).then((response) => {
-      setState((prevState) => ({
-        ...prevState,
-        allIndicators: response,
-      }));
-    });
-  }, [state.params.page]);
+    if (state.allIndicators.content.length === 0) {
+      loadIndicatorList(api, state.params).then((response) => {
+        setState((prevState) => ({
+          ...prevState,
+          allIndicators: response,
+        }));
+      });
+    }
+  }, [state.allIndicators.content.length]);
 
   const handleChangePagination = (event, value) => {
     console.log(value);
