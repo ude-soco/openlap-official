@@ -12,9 +12,13 @@ import { requestCompatibleIndicators } from "../../../utils/selection-api.js";
 import { AuthContext } from "../../../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import CompatibleIndicatorCard from "./compatible-indicator-card.jsx";
 import HelpIcon from "@mui/icons-material/Help";
+import { CompositeIndicatorContext } from "../../../../composite-indicator.jsx";
 
 const CompatibleIndicatorList = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
+  const { indicatorRef, setIndicatorRef } = useContext(
+    CompositeIndicatorContext,
+  );
 
   useEffect(() => {
     const loadCompatibleIndicators = async (api, indicatorId) => {
@@ -36,6 +40,18 @@ const CompatibleIndicatorList = ({ state, setState }) => {
               analyticsTechnique: response.analyticsTechnique,
               analyticsOutputs: response.analyticsOutputs,
             },
+            selectedAnalyticsOutput:
+              response.analyticsOutputs.length === 1
+                ? response.analyticsOutputs[0]
+                : {},
+          }));
+
+          setIndicatorRef((prevState) => ({
+            ...prevState,
+            columnToMerge:
+              response.analyticsOutputs.length === 1
+                ? response.analyticsOutputs[0]
+                : {},
           }));
         },
       );
@@ -47,28 +63,9 @@ const CompatibleIndicatorList = ({ state, setState }) => {
       <Grid container spacing={2}>
         <Grid item xs={12}>
           {Boolean(state.compatibleIndicators.analyticsTechnique.name) ? (
-            <Grid container spacing={1}>
-              <Grid item xs={12}>
-                <Typography>Shared analysis technique</Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <Chip
-                  label={state.compatibleIndicators.analyticsTechnique.name}
-                />
-              </Grid>
-            </Grid>
-          ) : (
-            <Skeleton />
-          )}
-        </Grid>
-        {/*<Grid item xs={12} sx={{ mb: 1 }}>*/}
-        {/*  <Divider />*/}
-        {/*</Grid>*/}
-        <Grid item xs={12}>
-          {Boolean(state.compatibleIndicators.analyticsTechnique.name) ? (
             <Grid container alignItems="center">
               <Grid item>
-                <Typography>Compatible indicators</Typography>
+                <Typography>Combine compatible indicators</Typography>
               </Grid>
               <Grid item>
                 <Tooltip
@@ -140,10 +137,10 @@ const CompatibleIndicatorList = ({ state, setState }) => {
                 ))}
               </Grid>
             </Grid>
+            <Grid item xs={12} sx={{ mb: 1 }}>
+              <Divider />
+            </Grid>
           </Grid>
-        </Grid>
-        <Grid item xs={12} sx={{ mb: 1 }}>
-          <Divider />
         </Grid>
       </Grid>
     </>

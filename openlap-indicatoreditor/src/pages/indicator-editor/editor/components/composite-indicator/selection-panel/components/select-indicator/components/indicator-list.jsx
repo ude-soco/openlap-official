@@ -49,6 +49,9 @@ const IndicatorList = ({ state, setState }) => {
   return (
     <>
       <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Typography>Select an indicator</Typography>
+        </Grid>
         {Object.entries(state.selectedIndicator).length === 0 ? (
           <>
             <Grid item xs={12}>
@@ -124,10 +127,10 @@ const IndicatorList = ({ state, setState }) => {
                 <Chip label={state.selectedIndicator.name} />
               ) : undefined}
             </Grid>
+            <Grid item xs={12} sx={{ mb: 1 }}>
+              <Divider />
+            </Grid>
           </Grid>
-        </Grid>
-        <Grid item xs={12} sx={{ mb: 1 }}>
-          <Divider />
         </Grid>
       </Grid>
     </>

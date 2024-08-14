@@ -1,16 +1,16 @@
-import { useEffect, useState, useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
   Accordion,
-  AccordionSummary,
   AccordionActions,
-  Chip,
-  Button,
   AccordionDetails,
-  Grid,
-  Typography,
-  FormGroup,
+  AccordionSummary,
+  Button,
+  Chip,
   FormControlLabel,
+  FormGroup,
+  Grid,
   Switch,
+  Typography,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import IconButton from "@mui/material/IconButton";
@@ -75,7 +75,7 @@ const Analysis = () => {
         let analyzedDataResponse = await fetchAnalyzedData(
           api,
           indicatorQuery,
-          analysisRef
+          analysisRef,
         );
         setAnalysisRef((prevState) => ({
           ...prevState,
@@ -109,7 +109,7 @@ const Analysis = () => {
       visualization: {
         ...prevState.visualization,
         locked: false,
-        openPanel: true
+        openPanel: true,
       },
     }));
   };
@@ -160,7 +160,9 @@ const Analysis = () => {
                         </FormGroup>
                       )}
                       <Button color="primary" onClick={handleTogglePanel}>
-                        {lockedStep.analysis.openPanel ? "Close section" : "CHANGE"}
+                        {lockedStep.analysis.openPanel
+                          ? "Close section"
+                          : "CHANGE"}
                       </Button>
                     </Grid>
                   </Grid>
@@ -212,7 +214,7 @@ const Analysis = () => {
                                   label={`${mapping.inputPort.title}: ${mapping.outputPort.title}`}
                                 />
                               </Grid>
-                            )
+                            ),
                           )}
                         </Grid>
                       </Grid>
@@ -236,7 +238,7 @@ const Analysis = () => {
                                   label={`${param.title}: ${param.value}`}
                                 />
                               </Grid>
-                            )
+                            ),
                           )}
                         </Grid>
                       </Grid>

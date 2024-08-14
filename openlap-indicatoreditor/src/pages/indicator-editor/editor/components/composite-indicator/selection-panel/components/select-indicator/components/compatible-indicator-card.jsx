@@ -25,7 +25,10 @@ const CompatibleIndicatorCard = ({ indicator, state, setState }) => {
   }, [indicator.scriptData]);
 
   const handleToggleSelectIndicator = () => {
-    if (state.selectedIndicator.id !== indicator.id) {
+    const foundSelected = state.selectedCompatibleIndicators.find(
+      (item) => item.id === indicator.id,
+    );
+    if (!Boolean(foundSelected)) {
       setState((prevState) => ({
         ...prevState,
         selectedCompatibleIndicators: [
