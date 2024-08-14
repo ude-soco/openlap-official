@@ -47,6 +47,7 @@ const VisualizationLibrary = ({
       ...prevState,
       typeList: [],
       autoCompleteValue: null,
+      loadingPreview: false,
     }));
   };
 

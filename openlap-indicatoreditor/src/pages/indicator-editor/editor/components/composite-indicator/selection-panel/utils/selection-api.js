@@ -63,7 +63,7 @@ export const requestCompatibleIndicators = async (
       newIndicatorList.push(newIndicator);
     }
 
-    let newResponse = {
+    return {
       ...response.data.data,
       content: [
         {
@@ -72,8 +72,6 @@ export const requestCompatibleIndicators = async (
         },
       ],
     };
-    console.log(newResponse);
-    return newResponse;
   } catch (error) {
     console.error("Failed to request indicator details");
     throw error;

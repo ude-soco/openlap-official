@@ -14,6 +14,7 @@ import { AuthContext } from "../../../../../setup/auth-context-manager/auth-cont
 import { useSnackbar } from "notistack";
 import PreviewPanel from "../basic-indicator/preview-panel/preview-panel.jsx";
 import SelectionPanel from "./selection-panel/selection-panel.jsx";
+import { requestCreateCompositeIndicator } from "../basic-indicator/preview-panel/utils/preview-api.js";
 
 export const CompositeIndicatorContext = createContext(undefined);
 
@@ -139,7 +140,37 @@ const CompositeIndicator = () => {
   };
 
   const handleSaveNewBasicIndicator = () => {
-    console.log("Saved");
+    const loadCreateCompositeIndicator = async (
+      api,
+      indicator,
+      indicatorRef,
+      visRef,
+    ) => {
+      try {
+        return await requestCreateCompositeIndicator(
+          api,
+          indicator,
+          indicatorRef,
+          visRef,
+        );
+      } catch (error) {
+        console.log("Error analyzing the data");
+      }
+    };
+
+    loadCreateCompositeIndicator(api, indicator, indicatorRef, visRef).then(
+      (response) => {
+        enqueueSnackbar(response.message, {
+          variant: "success",
+        });
+        navigate("/indicator");
+        clearSession();
+      },
+    );
+  };
+
+  const clearSession = () => {
+    sessionStorage.removeItem("visualization");
   };
 
   return (
