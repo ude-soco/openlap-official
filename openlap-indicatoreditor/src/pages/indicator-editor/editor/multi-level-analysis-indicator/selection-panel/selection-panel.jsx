@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { AuthContext } from "../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { MultiLevelAnalysisIndicatorContext } from "../multi-level-analysis-indicator.jsx";
 import SelectIndicator from "./components/select-indicator/select-indicator.jsx";
+import ColumnMerge from "./components/column-merge/column-merge.jsx";
 
 const SelectionPanel = () => {
   const { api } = useContext(AuthContext);
@@ -17,6 +18,7 @@ const SelectionPanel = () => {
   return (
     <>
       <SelectIndicator />
+      <ColumnMerge />
     </>
   );
 };
