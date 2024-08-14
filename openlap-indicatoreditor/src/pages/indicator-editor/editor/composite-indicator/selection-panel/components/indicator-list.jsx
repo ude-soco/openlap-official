@@ -7,12 +7,14 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
-import IndicatorCard from "./indicator-card.jsx";
+import IndicatorCard from "../../../components/indicator-card/indicator-card.jsx";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { requestAllMyIndicatorsWithCode } from "../utils/selection-api.js";
+import { CompositeIndicatorContext } from "../../composite-indicator.jsx";
 
 const IndicatorList = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
+  const { setIndicatorRef } = useContext(CompositeIndicatorContext);
 
   useEffect(() => {
     const loadIndicatorList = async (api, params) => {
@@ -34,7 +36,6 @@ const IndicatorList = ({ state, setState }) => {
   }, [state.allIndicators.content.length]);
 
   const handleChangePagination = (event, value) => {
-    console.log(value);
     setState((prevState) => ({
       ...prevState,
       params: {
@@ -48,13 +49,49 @@ const IndicatorList = ({ state, setState }) => {
     }));
   };
 
+  const handleSelectIndicator = (indicator) => {
+    if (!Boolean(state.selectedIndicator.length)) {
+      setState((prevState) => ({
+        ...prevState,
+        selectedIndicator: [indicator],
+      }));
+      setIndicatorRef((prevState) => ({
+        ...prevState,
+        indicators: [
+          {
+            indicatorId: indicator.id,
+          },
+        ],
+      }));
+    } else {
+      setState((prevState) => ({
+        ...prevState,
+        selectedIndicator: [],
+        compatibleIndicators: {
+          content: [
+            {
+              indicators: [],
+              analyticsTechnique: {},
+              analyticsOutputs: [],
+            },
+          ],
+        },
+        selectedCompatibleIndicators: [],
+      }));
+      setIndicatorRef((prevState) => ({
+        ...prevState,
+        indicators: [],
+      }));
+    }
+  };
+
   return (
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Typography>Select an indicator</Typography>
         </Grid>
-        {Object.entries(state.selectedIndicator).length === 0 ? (
+        {state.selectedIndicator.length === 0 ? (
           <>
             <Grid item xs={12}>
               <Grid container spacing={2} sx={{ minHeight: 300 }}>
@@ -84,8 +121,10 @@ const IndicatorList = ({ state, setState }) => {
                       >
                         <IndicatorCard
                           indicator={indicator}
-                          state={state}
-                          setState={setState}
+                          selectedIndicator={state.selectedIndicator}
+                          handleSelection={() =>
+                            handleSelectIndicator(indicator)
+                          }
                         />
                       </Grid>
                     ))}
@@ -110,9 +149,11 @@ const IndicatorList = ({ state, setState }) => {
             <Grid container spacing={2} sx={{ minHeight: 300 }}>
               <Grid item xs={12} lg={6}>
                 <IndicatorCard
-                  indicator={state.selectedIndicator}
-                  state={state}
-                  setState={setState}
+                  indicator={state.selectedIndicator[0]}
+                  selectedIndicator={state.selectedIndicator}
+                  handleSelection={() =>
+                    handleSelectIndicator(state.selectedIndicator[0])
+                  }
                 />
               </Grid>
             </Grid>
@@ -126,7 +167,7 @@ const IndicatorList = ({ state, setState }) => {
             </Grid>
             <Grid item xs={12}>
               {Object.entries(state.selectedIndicator).length ? (
-                <Chip label={state.selectedIndicator.name} />
+                <Chip label={state.selectedIndicator[0].name} />
               ) : undefined}
             </Grid>
             <Grid item xs={12} sx={{ mb: 1 }}>

@@ -34,7 +34,7 @@ const SelectIndicator = () => {
     allIndicators: {
       content: [],
     },
-    selectedIndicator: {},
+    selectedIndicator: [],
     compatibleIndicatorParams: {
       page: 0,
     },
@@ -161,14 +161,14 @@ const SelectIndicator = () => {
             </Grid>
             {!lockedStep.indicators.openPanel && state.showSelections ? (
               <>
-                {Object.entries(state.selectedIndicator).length !== 0 && (
+                {state.selectedIndicator.length !== 0 && (
                   <Grid item xs={12}>
                     <Grid container alignItems="center" spacing={1}>
                       <Grid item>
                         <Typography>Selected indicator:</Typography>
                       </Grid>
                       <Grid item>
-                        <Chip label={state.selectedIndicator.name} />
+                        <Chip label={state.selectedIndicator[0].name} />
                       </Grid>
                     </Grid>
                   </Grid>
@@ -248,7 +248,7 @@ const SelectIndicator = () => {
               <IndicatorList state={state} setState={setState} />
             </Grid>
 
-            {Object.entries(state.selectedIndicator).length !== 0 && (
+            {state.selectedIndicator.length !== 0 && (
               <Grid item xs={12}>
                 <CompatibleIndicatorList state={state} setState={setState} />
               </Grid>
@@ -301,8 +301,6 @@ const SelectIndicator = () => {
                 disabled={
                   !Object.entries(indicatorRef.columnToMerge).length ||
                   indicatorRef.indicators.length <= 1
-                  //   !analysisRef.analyticsTechniqueMapping.mapping.length ||
-                  //   !analysisRef.analyticsTechniqueParams.length
                 }
                 onClick={handlePreviewAnalyzedData}
               >
