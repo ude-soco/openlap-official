@@ -93,8 +93,8 @@ const IndicatorList = ({ state, setState }) => {
               <Grid container justifyContent="center">
                 <Pagination
                   count={
-                    Boolean(state.allIndicators.pageable)
-                      ? state.allIndicators.pageable.pageSize
+                    Boolean(state.allIndicators.totalPages)
+                      ? state.allIndicators.totalPages
                       : 1
                   }
                   color="primary"

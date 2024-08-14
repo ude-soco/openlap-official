@@ -34,12 +34,19 @@ export const requestAllMyIndicatorsWithCode = async (api, params = {}) => {
   }
 };
 
-export const requestCompatibleIndicators = async (api, indicatorId) => {
+export const requestCompatibleIndicators = async (
+  api,
+  indicatorId,
+  params = {},
+) => {
   try {
-    const response = await api.get(`v1/indicators/${indicatorId}/compatible`);
+    const queryString = new URLSearchParams(params).toString();
+    const response = await api.get(
+      `v1/indicators/${indicatorId}/compatible?${queryString}`,
+    );
     let newIndicatorList = [];
-    for (let i = 0; i < response.data.data.indicators.length; i++) {
-      let tempContent = response.data.data.indicators[i];
+    for (let i = 0; i < response.data.data.content[0].indicators.length; i++) {
+      let tempContent = response.data.data.content[0].indicators[i];
       const unescapedVizCode = decodeURIComponent(tempContent.indicatorCode);
       let displayCode = parse(unescapedVizCode);
       let scriptData;
@@ -55,10 +62,18 @@ export const requestCompatibleIndicators = async (api, indicatorId) => {
       };
       newIndicatorList.push(newIndicator);
     }
-    return {
+
+    let newResponse = {
       ...response.data.data,
-      indicators: newIndicatorList,
+      content: [
+        {
+          ...response.data.data.content[0],
+          indicators: newIndicatorList,
+        },
+      ],
     };
+    console.log(newResponse);
+    return newResponse;
   } catch (error) {
     console.error("Failed to request indicator details");
     throw error;

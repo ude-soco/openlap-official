@@ -4,6 +4,7 @@ import {
   Divider,
   Grid,
   IconButton,
+  Pagination,
   Skeleton,
   Tooltip,
   Typography,
@@ -16,53 +17,66 @@ import { CompositeIndicatorContext } from "../../../../composite-indicator.jsx";
 
 const CompatibleIndicatorList = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
-  const { indicatorRef, setIndicatorRef } = useContext(
-    CompositeIndicatorContext,
-  );
+  const { setIndicatorRef } = useContext(CompositeIndicatorContext);
 
   useEffect(() => {
-    const loadCompatibleIndicators = async (api, indicatorId) => {
+    const loadCompatibleIndicators = async (api, indicatorId, params) => {
       try {
-        return requestCompatibleIndicators(api, indicatorId);
+        return requestCompatibleIndicators(api, indicatorId, params);
       } catch (error) {
         console.log("Could not find compatible indicators");
       }
     };
 
     if (Object.entries(state.selectedIndicator).length !== 0) {
-      loadCompatibleIndicators(api, state.selectedIndicator.id).then(
-        (response) => {
-          setState((prevState) => ({
-            ...prevState,
-            compatibleIndicators: {
-              ...prevState.compatibleIndicators,
-              indicators: response.indicators,
-              analyticsTechnique: response.analyticsTechnique,
-              analyticsOutputs: response.analyticsOutputs,
-            },
-            selectedAnalyticsOutput:
-              response.analyticsOutputs.length === 1
-                ? response.analyticsOutputs[0]
-                : {},
-          }));
+      loadCompatibleIndicators(
+        api,
+        state.selectedIndicator.id,
+        state.compatibleIndicatorParams,
+      ).then((response) => {
+        setState((prevState) => ({
+          ...prevState,
+          compatibleIndicators: {
+            ...response,
+          },
+          selectedAnalyticsOutput:
+            response.content[0].analyticsOutputs.length === 1
+              ? response.content[0].analyticsOutputs[0]
+              : {},
+        }));
 
-          setIndicatorRef((prevState) => ({
-            ...prevState,
-            columnToMerge:
-              response.analyticsOutputs.length === 1
-                ? response.analyticsOutputs[0]
-                : {},
-          }));
-        },
-      );
+        setIndicatorRef((prevState) => ({
+          ...prevState,
+          columnToMerge:
+            response.content[0].analyticsOutputs.length === 1
+              ? response.content[0].analyticsOutputs[0]
+              : {},
+        }));
+      });
     }
   }, [state.selectedIndicator]);
+
+  const handleChangePagination = (event, value) => {
+    setState((prevState) => ({
+      ...prevState,
+      compatibleIndicatorParams: {
+        ...prevState.compatibleIndicatorParams,
+        page: value - 1,
+      },
+      compatibleIndicators: {
+        ...prevState.compatibleIndicators,
+        content: [],
+      },
+    }));
+  };
 
   return (
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          {Boolean(state.compatibleIndicators.analyticsTechnique.name) ? (
+          {Boolean(
+            state.compatibleIndicators.content[0].analyticsTechnique.name,
+          ) ? (
             <Grid container alignItems="center">
               <Grid item>
                 <Typography>Combine compatible indicators</Typography>
@@ -93,7 +107,7 @@ const CompatibleIndicatorList = ({ state, setState }) => {
         </Grid>
         <Grid item xs={12}>
           <Grid container spacing={2} sx={{ minHeight: 300 }}>
-            {state.compatibleIndicators.indicators.length === 0
+            {state.compatibleIndicators.content[0].indicators.length === 0
               ? Array.from({ length: 2 }).map((_, index) => (
                   <Grid
                     item
@@ -105,21 +119,36 @@ const CompatibleIndicatorList = ({ state, setState }) => {
                     <Skeleton variant="rectangular" height={300} width="100%" />
                   </Grid>
                 ))
-              : state.compatibleIndicators.indicators?.map((indicator) => (
-                  <Grid
-                    item
-                    xs={12}
-                    lg={6}
-                    key={indicator.id}
-                    sx={{ display: "flex", alignItems: "stretch" }}
-                  >
-                    <CompatibleIndicatorCard
-                      indicator={indicator}
-                      state={state}
-                      setState={setState}
-                    />
-                  </Grid>
-                ))}
+              : state.compatibleIndicators.content[0].indicators?.map(
+                  (indicator) => (
+                    <Grid
+                      item
+                      xs={12}
+                      lg={6}
+                      key={indicator.id}
+                      sx={{ display: "flex", alignItems: "stretch" }}
+                    >
+                      <CompatibleIndicatorCard
+                        indicator={indicator}
+                        state={state}
+                        setState={setState}
+                      />
+                    </Grid>
+                  ),
+                )}
+          </Grid>
+        </Grid>
+        <Grid item xs={12}>
+          <Grid container justifyContent="center">
+            <Pagination
+              count={
+                Boolean(state.compatibleIndicators.totalPages)
+                  ? state.compatibleIndicators.totalPages
+                  : 1
+              }
+              color="primary"
+              onChange={handleChangePagination}
+            />
           </Grid>
         </Grid>
 
