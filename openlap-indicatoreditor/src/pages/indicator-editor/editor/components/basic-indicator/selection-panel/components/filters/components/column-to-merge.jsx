@@ -68,7 +68,7 @@ const ColumnToMerge = ({ state, setState }) => {
               value={state.selectedAnalyticsOutput.id}
               onChange={handleSelectColumnToMerge}
             >
-              {state.compatibleIndicators.analyticsOutputs.map(
+              {state.compatibleIndicators.content[0].analyticsOutputs.map(
                 (output, index) => (
                   <FormControlLabel
                     key={index}

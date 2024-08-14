@@ -35,10 +35,17 @@ const SelectIndicator = () => {
       content: [],
     },
     selectedIndicator: {},
+    compatibleIndicatorParams: {
+      page: 0,
+    },
     compatibleIndicators: {
-      indicators: [],
-      analyticsTechnique: {},
-      analyticsOutputs: [],
+      content: [
+        {
+          indicators: [],
+          analyticsTechnique: {},
+          analyticsOutputs: [],
+        },
+      ],
     },
     selectedCompatibleIndicators: [],
     selectedAnalyticsOutput: {},
@@ -173,7 +180,9 @@ const SelectIndicator = () => {
                 <CompatibleIndicatorList state={state} setState={setState} />
               </Grid>
             )}
-            {Boolean(state.compatibleIndicators.analyticsTechnique.name) && (
+            {Boolean(
+              state.compatibleIndicators.content[0].analyticsTechnique.name,
+            ) && (
               <>
                 <Grid item xs={12}>
                   <Grid container spacing={2}>
@@ -183,7 +192,8 @@ const SelectIndicator = () => {
                     <Grid item xs={12}>
                       <Chip
                         label={
-                          state.compatibleIndicators.analyticsTechnique.name
+                          state.compatibleIndicators.content[0]
+                            .analyticsTechnique.name
                         }
                       />
                     </Grid>
