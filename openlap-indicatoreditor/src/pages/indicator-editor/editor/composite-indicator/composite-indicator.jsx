@@ -12,9 +12,9 @@ import { ArrowBack } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { useSnackbar } from "notistack";
-import PreviewPanel from "../basic-indicator/preview-panel/preview-panel.jsx";
+import PreviewPanel from "../components/preview-panel/preview-panel.jsx";
 import SelectionPanel from "./selection-panel/selection-panel.jsx";
-import { requestCreateCompositeIndicator } from "../basic-indicator/preview-panel/utils/preview-api.js";
+import { requestCreateCompositeIndicator } from "../components/preview-panel/utils/preview-api.js";
 
 export const CompositeIndicatorContext = createContext(undefined);
 

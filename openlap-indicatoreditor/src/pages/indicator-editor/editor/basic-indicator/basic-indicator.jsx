@@ -8,7 +8,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
-import PreviewPanel from "./preview-panel/preview-panel.jsx";
+import PreviewPanel from "../components/preview-panel/preview-panel.jsx";
 import SelectionPanel from "./selection-panel/selection-panel.jsx";
 import React, {
   createContext,
@@ -21,7 +21,7 @@ import dayjs from "dayjs";
 import Condition from "./selection-panel/utils/condition.js";
 import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
-import { requestCreateBasicIndicator } from "./preview-panel/utils/preview-api.js";
+import { requestCreateBasicIndicator } from "../components/preview-panel/utils/preview-api.js";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 
 export const BasicIndicatorContext = createContext(undefined);

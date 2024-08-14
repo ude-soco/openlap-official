@@ -11,9 +11,9 @@ import {
 } from "@mui/material";
 import { requestCompatibleIndicators } from "../utils/selection-api.js";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import CompatibleIndicatorCard from "./compatible-indicator-card.jsx";
 import HelpIcon from "@mui/icons-material/Help";
 import { CompositeIndicatorContext } from "../../composite-indicator.jsx";
+import IndicatorCard from "../../../components/indicator-card/indicator-card.jsx";
 
 const CompatibleIndicatorList = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
@@ -32,14 +32,14 @@ const CompatibleIndicatorList = ({ state, setState }) => {
       }
     };
 
-    if (Object.entries(state.selectedIndicator).length !== 0) {
+    if (state.selectedIndicator.length !== 0) {
       setState((prevState) => ({
         ...prevState,
         loadingCompatibleIndicator: true,
       }));
       loadCompatibleIndicators(
         api,
-        state.selectedIndicator.id,
+        state.selectedIndicator[0].id,
         state.compatibleIndicatorParams,
       ).then((response) => {
         setState((prevState) => ({
@@ -77,6 +77,40 @@ const CompatibleIndicatorList = ({ state, setState }) => {
         content: [],
       },
     }));
+  };
+
+  const handleToggleSelectIndicator = (indicator) => {
+    const foundSelected = state.selectedCompatibleIndicators.find(
+      (item) => item.id === indicator.id,
+    );
+    if (!Boolean(foundSelected)) {
+      setState((prevState) => ({
+        ...prevState,
+        selectedCompatibleIndicators: [
+          ...prevState.selectedCompatibleIndicators,
+          indicator,
+        ],
+      }));
+
+      setIndicatorRef((prevState) => ({
+        ...prevState,
+        indicators: [...prevState.indicators, { indicatorId: indicator.id }],
+      }));
+    } else {
+      setState((prevState) => ({
+        ...prevState,
+        selectedCompatibleIndicators:
+          prevState.selectedCompatibleIndicators.filter(
+            (item) => item.id !== indicator.id,
+          ),
+      }));
+      setIndicatorRef((prevState) => ({
+        ...prevState,
+        indicators: prevState.indicators.filter(
+          (item) => item.indicatorId !== indicator.id,
+        ),
+      }));
+    }
   };
 
   return (
@@ -139,10 +173,12 @@ const CompatibleIndicatorList = ({ state, setState }) => {
                     key={indicator.id}
                     sx={{ display: "flex", alignItems: "stretch" }}
                   >
-                    <CompatibleIndicatorCard
+                    <IndicatorCard
                       indicator={indicator}
-                      state={state}
-                      setState={setState}
+                      selectedIndicator={state.selectedCompatibleIndicators}
+                      handleSelection={() =>
+                        handleToggleSelectIndicator(indicator)
+                      }
                     />
                   </Grid>
                 ),
