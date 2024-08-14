@@ -17,7 +17,7 @@ import { CompositeIndicatorContext } from "../../../../composite-indicator.jsx";
 import HelpIcon from "@mui/icons-material/Help";
 
 const MergedDataTable = ({ state }) => {
-  const { indicatorRef } = useContext(CompositeIndicatorContext);
+  const { indicatorRef, lockedStep } = useContext(CompositeIndicatorContext);
   const { analyzedData } = state;
 
   // State for pagination
@@ -56,19 +56,21 @@ const MergedDataTable = ({ state }) => {
           <Grid item>
             <Typography>Preview data</Typography>
           </Grid>
-          <Grid item>
-            <Tooltip
-              title={
-                <Grid container>
-                  <Typography>To be explained</Typography>
-                </Grid>
-              }
-            >
-              <IconButton color="primary">
-                <HelpIcon />
-              </IconButton>
-            </Tooltip>
-          </Grid>
+          {lockedStep.indicators.openPanel && (
+            <Grid item>
+              <Tooltip
+                title={
+                  <Grid container>
+                    <Typography>To be explained</Typography>
+                  </Grid>
+                }
+              >
+                <IconButton color="primary">
+                  <HelpIcon />
+                </IconButton>
+              </Tooltip>
+            </Grid>
+          )}
         </Grid>
       </Grid>
       <Grid item xs={12}>

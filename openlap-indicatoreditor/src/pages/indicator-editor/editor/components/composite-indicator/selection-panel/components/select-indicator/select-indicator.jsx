@@ -152,20 +152,86 @@ const SelectIndicator = () => {
                 </Grid>
               </Grid>
             </Grid>
-            {!lockedStep.indicators.openPanel &&
-              state.showSelections &&
-              Object.entries(state.selectedIndicator).length !== 0 && (
-                <Grid item xs={12}>
-                  <Grid container alignItems="center" spacing={1}>
-                    <Grid item>
-                      <Typography>Selected indicator:</Typography>
-                    </Grid>
-                    <Grid item>
-                      <Chip label={state.selectedIndicator.name} />
+            {!lockedStep.indicators.openPanel && state.showSelections ? (
+              <>
+                {Object.entries(state.selectedIndicator).length !== 0 && (
+                  <Grid item xs={12}>
+                    <Grid container alignItems="center" spacing={1}>
+                      <Grid item>
+                        <Typography>Selected indicator:</Typography>
+                      </Grid>
+                      <Grid item>
+                        <Chip label={state.selectedIndicator.name} />
+                      </Grid>
                     </Grid>
                   </Grid>
-                </Grid>
-              )}
+                )}
+                {state.selectedCompatibleIndicators.length !== 0 && (
+                  <Grid item xs={12}>
+                    <Grid container spacing={1} alignItems="center">
+                      <Grid item>
+                        <Typography>
+                          Select compatible indicator(s):{" "}
+                        </Typography>
+                      </Grid>
+                      <Grid item>
+                        <Grid container spacing={1}>
+                          {state.selectedCompatibleIndicators.map(
+                            (indicator, index) => (
+                              <Grid item key={index}>
+                                <Chip label={indicator.name} />
+                              </Grid>
+                            ),
+                          )}
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                )}
+                {Boolean(
+                  state.compatibleIndicators.content[0].analyticsTechnique.name,
+                ) && (
+                  <>
+                    <Grid item xs={12}>
+                      <Grid container spacing={1} alignItems="center">
+                        <Grid item>
+                          <Typography>Shared analysis technique: </Typography>
+                        </Grid>
+                        <Grid item>
+                          <Chip
+                            label={
+                              state.compatibleIndicators.content[0]
+                                .analyticsTechnique.name
+                            }
+                          />
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </>
+                )}
+                {/*  Column to merge */}
+                {Object.entries(state.selectedAnalyticsOutput).length !== 0 && (
+                  <>
+                    <Grid item xs={12}>
+                      <Grid container spacing={1} alignItems="center">
+                        <Grid item>
+                          <Typography>Merged column: </Typography>
+                        </Grid>
+                        <Grid item>
+                          <Chip label={state.selectedAnalyticsOutput.title} />
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </>
+                )}
+                {/*  Preview data */}
+                {Object.entries(state.analyzedData).length !== 0 && (
+                  <Grid item xs={12}>
+                    <MergedDataTable state={state} />
+                  </Grid>
+                )}
+              </>
+            ) : undefined}
           </Grid>
         </AccordionSummary>
 
@@ -210,11 +276,11 @@ const SelectIndicator = () => {
               </Grid>
             ) : undefined}
 
-            {Object.entries(state.analyzedData).length > 0 ? (
+            {Object.entries(state.analyzedData).length !== 0 && (
               <Grid item xs={12}>
                 <MergedDataTable state={state} />
               </Grid>
-            ) : undefined}
+            )}
           </Grid>
         </AccordionDetails>
         <AccordionActions>
