@@ -1,10 +1,12 @@
 import React, { useContext, useState } from "react";
 import {
   Accordion,
+  AccordionActions,
   AccordionDetails,
   AccordionSummary,
   Button,
   Chip,
+  Divider,
   FormControlLabel,
   FormGroup,
   Grid,
@@ -15,9 +17,14 @@ import { AuthContext } from "../../../../../../../../setup/auth-context-manager/
 import { CompositeIndicatorContext } from "../../../composite-indicator.jsx";
 import IndicatorList from "./components/indicator-list.jsx";
 import CompatibleIndicatorList from "./components/compatible-indicator-list.jsx";
+import ColumnToMerge from "../../../../basic-indicator/selection-panel/components/filters/components/column-to-merge.jsx";
+import { LoadingButton } from "@mui/lab";
+import { requestMergeIndicatorData } from "../../utils/selection-api.js";
+import MergedDataTable from "./components/merged-data-table.jsx";
 
 const SelectIndicator = () => {
   const { api } = useContext(AuthContext);
+  const { indicatorRef } = useContext(CompositeIndicatorContext);
   const { lockedStep, setLockedStep } = useContext(CompositeIndicatorContext);
   const [state, setState] = useState({
     showSelections: true,
@@ -34,6 +41,9 @@ const SelectIndicator = () => {
       analyticsOutputs: [],
     },
     selectedCompatibleIndicators: [],
+    selectedAnalyticsOutput: {},
+    loadingPreview: false,
+    analyzedData: {},
   });
 
   const handleTogglePanel = () => {
@@ -50,6 +60,46 @@ const SelectIndicator = () => {
     setState((prevState) => ({
       ...prevState,
       showSelections: !prevState.showSelections,
+    }));
+  };
+
+  const handlePreviewAnalyzedData = () => {
+    setState((prevState) => ({
+      ...prevState,
+      loadingPreview: true,
+      analyzedData: {},
+    }));
+
+    const loadMergeData = async (api, columnToMerge, indicators) => {
+      try {
+        return requestMergeIndicatorData(api, columnToMerge, indicators);
+      } catch (error) {
+        console.log("Error merging indicators");
+      }
+    };
+
+    loadMergeData(
+      api,
+      indicatorRef.columnToMerge,
+      indicatorRef.indicators,
+    ).then((response) => {
+      setState((prevState) => ({
+        ...prevState,
+        loadingPreview: false,
+        analyzedData: response.data.columns,
+      }));
+    });
+  };
+
+  const handleUnlockVisualization = () => {
+    handleTogglePanel();
+    setLockedStep((prevState) => ({
+      ...prevState,
+      visualization: {
+        ...prevState.visualization,
+        locked: false,
+        openPanel: true,
+      },
     }));
   };
 
@@ -71,7 +121,7 @@ const SelectIndicator = () => {
                       <Chip label="1" color="primary" />
                     </Grid>
                     <Grid item>
-                      <Typography>Select an indicator</Typography>
+                      <Typography>Combine indicators</Typography>
                     </Grid>
                   </Grid>
                 </Grid>
@@ -123,8 +173,75 @@ const SelectIndicator = () => {
                 <CompatibleIndicatorList state={state} setState={setState} />
               </Grid>
             )}
+            {Boolean(state.compatibleIndicators.analyticsTechnique.name) && (
+              <>
+                <Grid item xs={12}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <Typography>Shared analysis technique</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Chip
+                        label={
+                          state.compatibleIndicators.analyticsTechnique.name
+                        }
+                      />
+                    </Grid>
+                    <Grid item xs={12} sx={{ mb: 1 }}>
+                      <Divider />
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </>
+            )}
+            {state.selectedCompatibleIndicators.length > 0 ? (
+              <Grid item xs={12}>
+                <ColumnToMerge state={state} setState={setState} />
+              </Grid>
+            ) : undefined}
+
+            {Object.entries(state.analyzedData).length > 0 ? (
+              <Grid item xs={12}>
+                <MergedDataTable state={state} />
+              </Grid>
+            ) : undefined}
           </Grid>
         </AccordionDetails>
+        <AccordionActions>
+          <Grid container spacing={2}>
+            <Grid item xs>
+              <LoadingButton
+                loading={state.loadingPreview}
+                loadingIndicator="Loading…"
+                variant="contained"
+                fullWidth
+                disabled={
+                  !Object.entries(indicatorRef.columnToMerge).length ||
+                  indicatorRef.indicators.length <= 1
+                  //   !analysisRef.analyticsTechniqueMapping.mapping.length ||
+                  //   !analysisRef.analyticsTechniqueParams.length
+                }
+                onClick={handlePreviewAnalyzedData}
+              >
+                Preview data
+              </LoadingButton>
+            </Grid>
+            <Grid item xs>
+              <Button
+                variant="contained"
+                fullWidth
+                disabled={
+                  !Object.entries(indicatorRef.columnToMerge).length ||
+                  indicatorRef.indicators.length <= 1 ||
+                  !Object.entries(state.analyzedData).length
+                }
+                onClick={handleUnlockVisualization}
+              >
+                Next
+              </Button>
+            </Grid>
+          </Grid>
+        </AccordionActions>
       </Accordion>
     </>
   );
