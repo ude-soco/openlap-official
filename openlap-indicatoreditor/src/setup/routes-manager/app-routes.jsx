@@ -26,9 +26,9 @@ import GQIPool from "../../pages/gqi-editor/gqi-pool/gqi-pool.jsx";
 import Footer from "../../common/components/footer/footer.jsx";
 import { SnackbarProvider } from "notistack";
 import IndicatorPreview from "../../pages/indicator-editor/dashboard/indicator-preview.jsx";
-import BasicIndicator from "../../pages/indicator-editor/editor/components/basic-indicator/basic-indicator.jsx";
-import CompositeIndicator from "../../pages/indicator-editor/editor/components/composite-indicator/composite-indicator.jsx";
-import MultiLevelAnalysisIndicator from "../../pages/indicator-editor/editor/components/multi-level-analysis-indicator/multi-level-analysis-indicator.jsx";
+import BasicIndicator from "../../pages/indicator-editor/editor/basic-indicator/basic-indicator.jsx";
+import CompositeIndicator from "../../pages/indicator-editor/editor/composite-indicator/composite-indicator.jsx";
+import MultiLevelAnalysisIndicator from "../../pages/indicator-editor/editor/multi-level-analysis-indicator/multi-level-analysis-indicator.jsx";
 
 const drawerWidth = 280;
 
