@@ -1,14 +1,5 @@
 import React, { useEffect } from "react";
-import {
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  CardHeader,
-  Grid,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Grid, Paper, Typography } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 
 const IndicatorCard = ({ indicator, selectedIndicator, handleSelection }) => {
@@ -23,20 +14,31 @@ const IndicatorCard = ({ indicator, selectedIndicator, handleSelection }) => {
 
   return (
     <>
-      <Card variant="outlined" sx={{ flex: 1 }}>
-        <CardHeader subheader={indicator.name} />
-        <CardContent>
-          <Typography>
-            <Grid
-              container
-              justifyContent="center"
-              sx={{ backgroundColor: "white", borderRadius: 2 }}
-            >
-              <Box>{indicator.displayCode}</Box>
+      <Grid
+        container
+        component={Paper}
+        direction="column"
+        spacing={1}
+        variant="outlined"
+        sx={{ flex: 1, p: 2 }}
+      >
+        <Grid item xs>
+          <Grid container spacing={1}>
+            <Grid item xs={12}>
+              <Typography variant="h6">{indicator.name}</Typography>
             </Grid>
-          </Typography>
-        </CardContent>
-        <CardActions>
+            <Grid item xs={12}>
+              <Grid
+                container
+                justifyContent="center"
+                sx={{ backgroundColor: "white", borderRadius: 2 }}
+              >
+                <Box>{indicator.displayCode}</Box>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Grid>
+        <Grid item>
           <Button
             fullWidth
             variant="contained"
@@ -56,8 +58,9 @@ const IndicatorCard = ({ indicator, selectedIndicator, handleSelection }) => {
               ? "Selected"
               : "Select"}
           </Button>
-        </CardActions>
-      </Card>
+        </Grid>
+        {/*</Grid>*/}
+      </Grid>
     </>
   );
 };
