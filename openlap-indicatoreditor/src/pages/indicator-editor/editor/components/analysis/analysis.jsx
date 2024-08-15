@@ -20,6 +20,7 @@ import Params from "./components/params.jsx";
 import AnalyzedDataTable from "../analyzed-data-table/analyzed-data-table.jsx";
 import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
+import InputsMultiLevelIndicator from "./components/inputs-multi-level-indicator.jsx";
 
 const Analysis = ({
   lockedStep,
@@ -261,6 +262,12 @@ const Analysis = ({
               <Grid item xs={12}>
                 {indicator.type === "BASIC" && (
                   <InputsBasicIndicator state={state} setState={setState} />
+                )}
+                {indicator.type === "MULTI_LEVEL" && (
+                  <InputsMultiLevelIndicator
+                    state={state}
+                    setState={setState}
+                  />
                 )}
               </Grid>
             )}

@@ -18,6 +18,6 @@ export const requestMergeIndicatorsToPreviewData = async (api, indicators) => {
     return response.data;
   } catch (error) {
     console.error("Failed to request indicator details");
-    throw error;
+    throw error.response;
   }
 };

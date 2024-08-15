@@ -10,6 +10,7 @@ import {
   FormControlLabel,
   FormGroup,
   Grid,
+  Skeleton,
   Switch,
   Typography,
 } from "@mui/material";
@@ -23,6 +24,8 @@ import { useSnackbar } from "notistack";
 import MergeCard from "./merge-card.jsx";
 import AnalyzedDataTable from "../../../../components/analyzed-data-table/analyzed-data-table.jsx";
 import { LoadingButton } from "@mui/lab";
+import IconButton from "@mui/material/IconButton";
+import LockIcon from "@mui/icons-material/Lock";
 
 const ColumnMerge = () => {
   const { api } = useContext(AuthContext);
@@ -74,10 +77,6 @@ const ColumnMerge = () => {
               indicators: tempIndicators,
             };
           });
-
-          enqueueSnackbar(response.message, {
-            variant: "success",
-          });
         })
         .catch((error) => {
           enqueueSnackbar(error.response.message, {
@@ -90,6 +89,7 @@ const ColumnMerge = () => {
         });
     }
   }, [indicatorRef.indicators.length]);
+  console.log(state.indicatorsToMerge);
 
   const handleTogglePanel = () => {
     setLockedStep((prevState) => ({
@@ -109,7 +109,6 @@ const ColumnMerge = () => {
   };
 
   const handlePreviewMergeData = () => {
-    console.log("Preview data");
     const loadMergePreviewData = async (api, indicators) => {
       try {
         return await requestMergeIndicatorsToPreviewData(api, indicators);
@@ -122,21 +121,47 @@ const ColumnMerge = () => {
       ...prevState,
       loadingPreview: true,
     }));
-    loadMergePreviewData(api, indicatorRef.indicators).then((response) => {
-      setState((prevState) => ({
-        ...prevState,
-        loadingPreview: false,
-      }));
-      setIndicatorRef((prevState) => ({
-        ...prevState,
-        mergedData: response.data.mergedData.columns,
-      }));
-    });
+    console.log(indicatorRef.indicators);
+    loadMergePreviewData(api, indicatorRef.indicators)
+      .then((response) => {
+        setState((prevState) => ({
+          ...prevState,
+          loadingPreview: false,
+        }));
+        setIndicatorRef((prevState) => ({
+          ...prevState,
+          mergedData: response.data.mergedData.columns,
+        }));
+      })
+      .catch((error) => {
+        setState((prevState) => ({
+          ...prevState,
+          loadingPreview: false,
+        }));
+        enqueueSnackbar(error.data.message, {
+          variant: "error",
+        });
+      });
+  };
+
+  const handleUnlockAnalysis = () => {
+    handleTogglePanel();
+    setLockedStep((prevState) => ({
+      ...prevState,
+      analysis: {
+        locked: false,
+        openPanel: true,
+      },
+    }));
   };
 
   return (
     <>
-      <Accordion sx={{ mb: 1 }} expanded={lockedStep.columnMerge.openPanel}>
+      <Accordion
+        sx={{ mb: 1 }}
+        expanded={lockedStep.columnMerge.openPanel}
+        disabled={lockedStep.columnMerge.locked}
+      >
         <AccordionSummary>
           <Grid container spacing={1}>
             <Grid item xs={12}>
@@ -149,53 +174,48 @@ const ColumnMerge = () => {
                 <Grid item xs>
                   <Grid container alignItems="center" spacing={1}>
                     <Grid item>
-                      <Chip label="2" color="primary" />
+                      {!lockedStep.columnMerge.locked ? (
+                        <Chip label="2" color="primary" />
+                      ) : (
+                        <IconButton size="small">
+                          <LockIcon />
+                        </IconButton>
+                      )}
                     </Grid>
                     <Grid item>
-                      <Typography>Column to merge</Typography>
+                      <Typography>Columns to merge</Typography>
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item>
-                  <Grid container>
-                    {!lockedStep.columnMerge.openPanel && (
-                      <FormGroup>
-                        <FormControlLabel
-                          control={<Switch checked={state.showSelections} />}
-                          onChange={handleToggleShowSelection}
-                          label="Show selections"
-                        />
-                      </FormGroup>
-                    )}
-                    <Button color="primary" onClick={handleTogglePanel}>
-                      {lockedStep.columnMerge.openPanel
-                        ? "Close section"
-                        : "CHANGE"}
-                    </Button>
+                {!lockedStep.columnMerge.locked && (
+                  <Grid item>
+                    <Grid container>
+                      {!lockedStep.columnMerge.openPanel && (
+                        <FormGroup>
+                          <FormControlLabel
+                            control={<Switch checked={state.showSelections} />}
+                            onChange={handleToggleShowSelection}
+                            label="Show selections"
+                          />
+                        </FormGroup>
+                      )}
+                      <Button color="primary" onClick={handleTogglePanel}>
+                        {lockedStep.columnMerge.openPanel
+                          ? "Close section"
+                          : "CHANGE"}
+                      </Button>
+                    </Grid>
                   </Grid>
-                </Grid>
+                )}
               </Grid>
             </Grid>
-            {!lockedStep.indicators.openPanel && state.showSelections ? (
+            {!lockedStep.columnMerge.openPanel && state.showSelections ? (
               <>
-                {/*{state.selectedIndicators.length !== 0 && (*/}
-                {/*  <Grid item xs={12}>*/}
-                {/*    <Grid container spacing={1} alignItems="center">*/}
-                {/*      <Grid item>*/}
-                {/*        <Typography>Selected indicators:</Typography>*/}
-                {/*      </Grid>*/}
-                {/*      <Grid item>*/}
-                {/*        <Grid container spacing={1}>*/}
-                {/*          {state.selectedIndicators.map((indicator, index) => (*/}
-                {/*            <Grid item key={index}>*/}
-                {/*              <Chip label={indicator.name} />*/}
-                {/*            </Grid>*/}
-                {/*          ))}*/}
-                {/*        </Grid>*/}
-                {/*      </Grid>*/}
-                {/*    </Grid>*/}
-                {/*  </Grid>*/}
-                {/*)}*/}
+                {Object.entries(indicatorRef.mergedData).length > 0 && (
+                  <Grid item xs={12}>
+                    <AnalyzedDataTable analyzedData={indicatorRef.mergedData} />
+                  </Grid>
+                )}
               </>
             ) : undefined}
           </Grid>
@@ -203,7 +223,19 @@ const ColumnMerge = () => {
 
         <AccordionDetails>
           <Grid container spacing={3}>
-            {state.indicatorsToMerge.length !== 0 && (
+            {state.loadingIndicators ? (
+              Array.from({ length: 2 }).map((_, index) => (
+                <Grid
+                  item
+                  xs={12}
+                  lg={6}
+                  key={index}
+                  sx={{ display: "flex", alignItems: "stretch" }}
+                >
+                  <Skeleton variant="rectangular" height={300} width="100%" />
+                </Grid>
+              ))
+            ) : state.indicatorsToMerge.length !== 0 ? (
               <>
                 {state.indicatorsToMerge.map((indicator) => {
                   return (
@@ -222,14 +254,27 @@ const ColumnMerge = () => {
                   );
                 })}
               </>
+            ) : (
+              <Grid item xs={12}>
+                <Typography>
+                  Merge not possible. Choose other indicators.
+                </Typography>
+              </Grid>
             )}
+
             <Grid item xs={12}>
               <Divider />
             </Grid>
-            {Object.entries(indicatorRef.mergedData).length > 0 && (
+            {state.loadingPreview ? (
               <Grid item xs={12}>
-                <AnalyzedDataTable analyzedData={indicatorRef.mergedData} />
+                <Skeleton variant="rectangular" height={200} width="100%" />
               </Grid>
+            ) : (
+              Object.entries(indicatorRef.mergedData).length > 0 && (
+                <Grid item xs={12}>
+                  <AnalyzedDataTable analyzedData={indicatorRef.mergedData} />
+                </Grid>
+              )
             )}
           </Grid>
         </AccordionDetails>
@@ -241,11 +286,12 @@ const ColumnMerge = () => {
                 loadingIndicator="Loading…"
                 variant="contained"
                 fullWidth
-                // disabled={
-                //   !Object.entries(indicatorRef.columnToMerge).length ||
-                //   indicatorRef.indicators.length <= 1 ||
-                //   !Object.entries(indicatorRef.analyzedData).length
-                // }
+                disabled={
+                  state.indicatorsToMerge.length <= 1 ||
+                  !indicatorRef.indicators.every((indicator) =>
+                    indicator.hasOwnProperty("columnToMerge"),
+                  )
+                }
                 onClick={handlePreviewMergeData}
               >
                 Preview data
@@ -255,12 +301,14 @@ const ColumnMerge = () => {
               <Button
                 variant="contained"
                 fullWidth
-                // disabled={
-                //   !Object.entries(indicatorRef.columnToMerge).length ||
-                //   indicatorRef.indicators.length <= 1 ||
-                //   !Object.entries(indicatorRef.analyzedData).length
-                // }
-                // onClick={handleUnlockColumnMerge}
+                disabled={
+                  indicatorRef.indicators.length <= 1 ||
+                  !Object.entries(indicatorRef.mergedData).length ||
+                  indicatorRef.mergedData[
+                    Object.keys(indicatorRef.mergedData)[0]
+                  ].data.length === 0
+                }
+                onClick={handleUnlockAnalysis}
               >
                 Next
               </Button>

@@ -11,6 +11,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import { Alert } from "@mui/lab";
 
 const AnalyzedDataTable = ({ analyzedData }) => {
   const [page, setPage] = useState(0); // Current page
@@ -76,6 +77,15 @@ const AnalyzedDataTable = ({ analyzedData }) => {
           />
         </TableContainer>
       </Grid>
+      {numRows === 0 && (
+        <Grid item xs={12}>
+          <Alert severity="warning">
+            The columns selected cannot be merged as they don’t share common
+            data between the chosen indicators. Consider selecting columns with
+            shared data.
+          </Alert>
+        </Grid>
+      )}
     </Grid>
   );
 };

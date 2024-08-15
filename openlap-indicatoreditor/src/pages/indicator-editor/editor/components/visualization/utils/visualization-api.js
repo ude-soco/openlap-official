@@ -129,3 +129,46 @@ export const requestCompositeIndicatorPreview = async (
     throw e;
   }
 };
+
+export const requestMultiLevelIndicatorPreview = async (
+  api,
+  indicatorRef,
+  analysisRef,
+  visRef,
+) => {
+  try {
+    const requestBody = {
+      indicators: indicatorRef.indicators,
+      analyticsTechniqueId: analysisRef.analyticsTechniqueId,
+      analyticsTechniqueMapping: {
+        mapping: analysisRef.analyticsTechniqueMapping.mapping,
+      },
+      analyticsTechniqueParams: analysisRef.analyticsTechniqueParams,
+      visualizationLibraryId: visRef.visualizationLibraryId,
+      visualizationTypeId: visRef.visualizationTypeId,
+      visualizationParams: visRef.visualizationParams,
+      visualizationMapping: {
+        mapping: visRef.visualizationMapping.mapping,
+      },
+    };
+    const response = await api.post(
+      "v1/indicators/multilevel/preview",
+      requestBody,
+    );
+    const unescapedVizCode = decodeURIComponent(response.data.data);
+    let displayCode = parse(unescapedVizCode);
+    let scriptData;
+    try {
+      scriptData = displayCode[1].props.dangerouslySetInnerHTML.__html;
+    } catch (error) {
+      console.error("Error script code", error);
+    }
+    return {
+      message: response.data.message,
+      displayCode,
+      scriptData,
+    };
+  } catch (error) {
+    throw error;
+  }
+};

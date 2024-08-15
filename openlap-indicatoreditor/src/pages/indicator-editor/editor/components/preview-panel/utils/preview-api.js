@@ -76,3 +76,38 @@ export const requestCreateCompositeIndicator = async (
     throw e;
   }
 };
+
+export const requestCreateMultiLevelIndicatorIndicator = async (
+  api,
+  indicator,
+  indicatorRef,
+  analysisRef,
+  visRef,
+) => {
+  try {
+    const requestBody = {
+      name: indicator.indicatorName,
+      indicatorType: indicator.type,
+      indicators: indicatorRef.indicators,
+      analyticsTechniqueId: analysisRef.analyticsTechniqueId,
+      analyticsTechniqueMapping: {
+        mapping: analysisRef.analyticsTechniqueMapping.mapping,
+      },
+      analyticsTechniqueParams: analysisRef.analyticsTechniqueParams,
+      visualizationLibraryId: visRef.visualizationLibraryId,
+      visualizationTypeId: visRef.visualizationTypeId,
+      visualizationParams: visRef.visualizationParams,
+      visualizationMapping: {
+        mapping: visRef.visualizationMapping.mapping,
+      },
+    };
+    const response = await api.post(
+      "v1/indicators/multilevel/create",
+      requestBody,
+    );
+
+    return response.data;
+  } catch (e) {
+    throw e;
+  }
+};
