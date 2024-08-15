@@ -6,6 +6,7 @@ import {
   AccordionSummary,
   Button,
   Chip,
+  Divider,
   FormControlLabel,
   FormGroup,
   Grid,
@@ -13,20 +14,26 @@ import {
   Typography,
 } from "@mui/material";
 import { MultiLevelAnalysisIndicatorContext } from "../../../multi-level-analysis-indicator.jsx";
-import { requestCompatibleColumnsToMerge } from "./utils/column-merge-api.js";
+import {
+  requestCompatibleColumnsToMerge,
+  requestMergeIndicatorsToPreviewData,
+} from "./utils/column-merge-api.js";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { useSnackbar } from "notistack";
+import MergeCard from "./merge-card.jsx";
+import AnalyzedDataTable from "../../../../components/analyzed-data-table/analyzed-data-table.jsx";
+import { LoadingButton } from "@mui/lab";
 
 const ColumnMerge = () => {
   const { api } = useContext(AuthContext);
-  const { lockedStep, setLockedStep, indicatorRef } = useContext(
-    MultiLevelAnalysisIndicatorContext,
-  );
+  const { lockedStep, setLockedStep, indicatorRef, setIndicatorRef } =
+    useContext(MultiLevelAnalysisIndicatorContext);
   const { enqueueSnackbar } = useSnackbar();
   const [state, setState] = useState({
     showSelections: true,
     loadingIndicators: false,
     indicatorsToMerge: [],
+    loadingPreview: false,
   });
 
   useEffect(() => {
@@ -49,6 +56,25 @@ const ColumnMerge = () => {
             loadingIndicators: false,
             indicatorsToMerge: response.data,
           }));
+          setIndicatorRef((prevState) => {
+            let tempIndicators = [...prevState.indicators];
+            for (let indicator of tempIndicators) {
+              let correspondingData = response.data.find(
+                (item) => item.indicatorId === indicator.indicatorId,
+              );
+              if (
+                correspondingData &&
+                correspondingData.columnsToMerge.length === 1
+              ) {
+                indicator.columnToMerge = correspondingData.columnsToMerge[0];
+              }
+            }
+            return {
+              ...prevState,
+              indicators: tempIndicators,
+            };
+          });
+
           enqueueSnackbar(response.message, {
             variant: "success",
           });
@@ -65,8 +91,6 @@ const ColumnMerge = () => {
     }
   }, [indicatorRef.indicators.length]);
 
-  console.log(state.indicatorsToMerge);
-
   const handleTogglePanel = () => {
     setLockedStep((prevState) => ({
       ...prevState,
@@ -82,6 +106,32 @@ const ColumnMerge = () => {
       ...prevState,
       showSelections: !prevState.showSelections,
     }));
+  };
+
+  const handlePreviewMergeData = () => {
+    console.log("Preview data");
+    const loadMergePreviewData = async (api, indicators) => {
+      try {
+        return await requestMergeIndicatorsToPreviewData(api, indicators);
+      } catch (error) {
+        throw error;
+      }
+    };
+
+    setState((prevState) => ({
+      ...prevState,
+      loadingPreview: true,
+    }));
+    loadMergePreviewData(api, indicatorRef.indicators).then((response) => {
+      setState((prevState) => ({
+        ...prevState,
+        loadingPreview: false,
+      }));
+      setIndicatorRef((prevState) => ({
+        ...prevState,
+        mergedData: response.data.mergedData.columns,
+      }));
+    });
   };
 
   return (
@@ -153,24 +203,69 @@ const ColumnMerge = () => {
 
         <AccordionDetails>
           <Grid container spacing={3}>
+            {state.indicatorsToMerge.length !== 0 && (
+              <>
+                {state.indicatorsToMerge.map((indicator) => {
+                  return (
+                    <Grid
+                      item
+                      xs={6}
+                      key={indicator.id}
+                      sx={{ display: "flex", alignItems: "stretch" }}
+                    >
+                      <MergeCard
+                        indicator={indicator}
+                        columnsToMerge={indicator.columnsToMerge}
+                        analyzedData={indicator.analyzedDataset.columns}
+                      />
+                    </Grid>
+                  );
+                })}
+              </>
+            )}
             <Grid item xs={12}>
-              {/*<IndicatorList state={state} setState={setState} />*/}
+              <Divider />
             </Grid>
+            {Object.entries(indicatorRef.mergedData).length > 0 && (
+              <Grid item xs={12}>
+                <AnalyzedDataTable analyzedData={indicatorRef.mergedData} />
+              </Grid>
+            )}
           </Grid>
         </AccordionDetails>
         <AccordionActions>
-          <Button
-            variant="contained"
-            fullWidth
-            // disabled={
-            //   !Object.entries(indicatorRef.columnToMerge).length ||
-            //   indicatorRef.indicators.length <= 1 ||
-            //   !Object.entries(indicatorRef.analyzedData).length
-            // }
-            // onClick={handleUnlockColumnMerge}
-          >
-            Next
-          </Button>
+          <Grid container spacing={2}>
+            <Grid item xs>
+              <LoadingButton
+                loading={state.loadingPreview}
+                loadingIndicator="Loading…"
+                variant="contained"
+                fullWidth
+                // disabled={
+                //   !Object.entries(indicatorRef.columnToMerge).length ||
+                //   indicatorRef.indicators.length <= 1 ||
+                //   !Object.entries(indicatorRef.analyzedData).length
+                // }
+                onClick={handlePreviewMergeData}
+              >
+                Preview data
+              </LoadingButton>
+            </Grid>
+            <Grid item xs>
+              <Button
+                variant="contained"
+                fullWidth
+                // disabled={
+                //   !Object.entries(indicatorRef.columnToMerge).length ||
+                //   indicatorRef.indicators.length <= 1 ||
+                //   !Object.entries(indicatorRef.analyzedData).length
+                // }
+                // onClick={handleUnlockColumnMerge}
+              >
+                Next
+              </Button>
+            </Grid>
+          </Grid>
         </AccordionActions>
       </Accordion>
     </>

@@ -1,46 +1,44 @@
 import { useContext, useEffect } from "react";
 import {
-  TextField,
-  Grid,
-  Typography,
   Divider,
-  IconButton,
-  Tooltip,
   FormControl,
+  Grid,
+  IconButton,
   InputLabel,
-  Select,
   MenuItem,
+  Select,
+  TextField,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import HelpIcon from "@mui/icons-material/Help";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { fetchTechniqueParams } from "../utils/analytics-api.js";
-import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
-const Params = ({ state, setState }) => {
+const Params = ({ analysisRef, setAnalysisRef }) => {
   const { api } = useContext(AuthContext);
-  const { analysisRef, setAnalysisRef } = useContext(BasicIndicatorContext);
 
   useEffect(() => {
     const loadTechniqueParams = async (techniqueId) => {
       try {
-        const techniqueParamsList = await fetchTechniqueParams(
-          api,
-          techniqueId,
-        );
-        techniqueParamsList.forEach(
-          (param) => (param.value = param.defaultValue),
-        );
-        setAnalysisRef((prevState) => ({
-          ...prevState,
-          analyticsTechniqueParams: techniqueParamsList,
-        }));
+        return await fetchTechniqueParams(api, techniqueId);
       } catch (error) {
-        console.log("Error fetching Analytics technique input list");
+        throw error;
       }
     };
 
     if (analysisRef.analyticsTechniqueId !== "")
-      loadTechniqueParams(analysisRef.analyticsTechniqueId);
+      loadTechniqueParams(analysisRef.analyticsTechniqueId)
+        .then((response) => {
+          response.forEach((param) => (param.value = param.defaultValue));
+          setAnalysisRef((prevState) => ({
+            ...prevState,
+            analyticsTechniqueParams: response,
+          }));
+        })
+        .catch((error) => {
+          console.log("Error fetching Analytics technique input list", error);
+        });
   }, [analysisRef.analyticsTechniqueId]);
 
   const handleChangeParam = (event, param) => {

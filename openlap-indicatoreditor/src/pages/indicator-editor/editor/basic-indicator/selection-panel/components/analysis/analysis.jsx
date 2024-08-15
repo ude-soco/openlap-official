@@ -19,20 +19,19 @@ import Inputs from "./components/inputs.jsx";
 import Params from "./components/params.jsx";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { fetchAnalyzedData } from "./utils/analytics-api.js";
-import AnalyzedDataTable from "./components/analyzed-data-table.jsx";
+import AnalyzedDataTable from "../../../../components/analyzed-data-table/analyzed-data-table.jsx";
 import { BasicIndicatorContext } from "../../../basic-indicator.jsx";
 import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
 
-const Analysis = () => {
+const Analysis = ({
+  lockedStep,
+  setLockedStep,
+  analysisRef,
+  setAnalysisRef,
+}) => {
   const { api } = useContext(AuthContext);
-  const {
-    indicatorQuery,
-    lockedStep,
-    setLockedStep,
-    analysisRef,
-    setAnalysisRef,
-  } = useContext(BasicIndicatorContext);
+  const { indicatorQuery } = useContext(BasicIndicatorContext);
   const [state, setState] = useState(() => {
     const savedState = sessionStorage.getItem("analysis");
     return savedState
@@ -62,7 +61,7 @@ const Analysis = () => {
     }));
   };
 
-  const handletoggleShowSelection = () => {
+  const handleToggleShowSelection = () => {
     setState((prevState) => ({
       ...prevState,
       showSelections: !prevState.showSelections,
@@ -72,34 +71,34 @@ const Analysis = () => {
   const handlePreviewAnalyzedData = () => {
     const loadAnalyzedData = async (api, indicatorQuery, analysisRef) => {
       try {
-        let analyzedDataResponse = await fetchAnalyzedData(
-          api,
-          indicatorQuery,
-          analysisRef,
-        );
-        setAnalysisRef((prevState) => ({
-          ...prevState,
-          analyzedData: analyzedDataResponse.data,
-        }));
-        setState((prevState) => ({
-          ...prevState,
-          loadingPreview: false,
-        }));
-
-        enqueueSnackbar(analyzedDataResponse.message, { variant: "success" });
+        return await fetchAnalyzedData(api, indicatorQuery, analysisRef);
       } catch (error) {
-        setState((prevState) => ({
-          ...prevState,
-          loadingPreview: false,
-        }));
-        console.log("Error analyzing the data");
+        throw error;
       }
     };
     setState((prevState) => ({
       ...prevState,
       loadingPreview: true,
     }));
-    loadAnalyzedData(api, indicatorQuery, analysisRef);
+    loadAnalyzedData(api, indicatorQuery, analysisRef)
+      .then((response) => {
+        setAnalysisRef((prevState) => ({
+          ...prevState,
+          analyzedData: response.data,
+        }));
+        setState((prevState) => ({
+          ...prevState,
+          loadingPreview: false,
+        }));
+        enqueueSnackbar(response.message, { variant: "success" });
+      })
+      .catch((error) => {
+        setState((prevState) => ({
+          ...prevState,
+          loadingPreview: false,
+        }));
+        enqueueSnackbar(error.message, { variant: "error" });
+      });
   };
 
   const handleUnlockVisualization = () => {
@@ -154,7 +153,7 @@ const Analysis = () => {
                         <FormGroup>
                           <FormControlLabel
                             control={<Switch checked={state.showSelections} />}
-                            onChange={handletoggleShowSelection}
+                            onChange={handleToggleShowSelection}
                             label="Show selections"
                           />
                         </FormGroup>
@@ -249,7 +248,9 @@ const Analysis = () => {
                 {/* Outputs */}
                 {Object.entries(analysisRef.analyzedData).length !== 0 && (
                   <Grid item xs={12}>
-                    <AnalyzedDataTable />
+                    <AnalyzedDataTable
+                      analyzedData={analysisRef.analyzedData}
+                    />
                   </Grid>
                 )}
               </>
@@ -259,7 +260,12 @@ const Analysis = () => {
         <AccordionDetails>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <AnalyticsTechnique state={state} setState={setState} />
+              <AnalyticsTechnique
+                state={state}
+                setState={setState}
+                analysisRef={analysisRef}
+                setAnalysisRef={setAnalysisRef}
+              />
             </Grid>
             {analysisRef.analyticsTechniqueId.length !== 0 && (
               <Grid item xs={12}>
@@ -268,12 +274,15 @@ const Analysis = () => {
             )}
             {analysisRef.analyticsTechniqueId.length !== 0 && (
               <Grid item xs={12}>
-                <Params state={state} setState={setState} />
+                <Params
+                  analysisRef={analysisRef}
+                  setAnalysisRef={setAnalysisRef}
+                />
               </Grid>
             )}
             {Object.entries(analysisRef.analyzedData).length !== 0 && (
               <Grid item xs={12}>
-                <AnalyzedDataTable />
+                <AnalyzedDataTable analyzedData={analysisRef.analyzedData} />
               </Grid>
             )}
           </Grid>

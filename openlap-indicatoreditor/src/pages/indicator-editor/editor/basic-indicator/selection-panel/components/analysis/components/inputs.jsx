@@ -1,14 +1,14 @@
-import { useEffect, useContext } from "react";
+import { useContext, useEffect } from "react";
 import {
-  IconButton,
   Divider,
-  Grid,
-  Typography,
-  FormHelperText,
   FormControl,
+  FormHelperText,
+  Grid,
+  IconButton,
   InputLabel,
-  Select,
   MenuItem,
+  Select,
+  Typography,
 } from "@mui/material";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import HelpIcon from "@mui/icons-material/Help";
@@ -16,31 +16,31 @@ import Tooltip from "@mui/material/Tooltip";
 import { fetchTechniqueInputs } from "../utils/analytics-api.js";
 import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
-const Inputs = ({ state, setState }) => {
+const Inputs = ({ state, setState, analysisRef, setAnalysisRef }) => {
   const { api } = useContext(AuthContext);
-  const {
-    analysisInputMenu,
-    indicatorQuery,
-    setIndicatorQuery,
-    lockedStep,
-    analysisRef,
-    setAnalysisRef,
-  } = useContext(BasicIndicatorContext);
+  const { analysisInputMenu, setIndicatorQuery } = useContext(
+    BasicIndicatorContext,
+  );
 
   useEffect(() => {
     const loadTechniqueInputs = async (value) => {
       try {
-        const techniqueInputsList = await fetchTechniqueInputs(api, value);
-        setState((prevState) => ({
-          ...prevState,
-          inputs: techniqueInputsList,
-        }));
+        return await fetchTechniqueInputs(api, value);
       } catch (error) {
-        console.log("Error fetching Analytics technique input list");
+        throw error;
       }
     };
     if (analysisRef.analyticsTechniqueId !== "")
-      loadTechniqueInputs(analysisRef.analyticsTechniqueId);
+      loadTechniqueInputs(analysisRef.analyticsTechniqueId)
+        .then((response) => {
+          setState((prevState) => ({
+            ...prevState,
+            inputs: response,
+          }));
+        })
+        .catch((error) => {
+          console.log("Error fetching Analytics technique input list", error);
+        });
   }, [analysisRef.analyticsTechniqueId]);
 
   const handleChangeInputMapping = (event, input) => {
@@ -48,18 +48,15 @@ const Inputs = ({ state, setState }) => {
 
     const updateMappingsMethod = (newMappings, oldMappings) => {
       let found = false;
-
       oldMappings.forEach((item, index) => {
         if (item.inputPort.id === newMappings.inputPort.id) {
           oldMappings[index].outputPort = newMappings.outputPort;
           found = true;
         }
       });
-
       if (!found) {
         oldMappings.push(newMappings);
       }
-
       return oldMappings;
     };
 
@@ -78,12 +75,10 @@ const Inputs = ({ state, setState }) => {
         tempInputMappings,
         prevState.analyticsTechniqueMapping.mapping,
       );
-
       setIndicatorQuery((prevState) => ({
         ...prevState,
         outputs: updatedMappings.map((item) => item.outputPort.id),
       }));
-
       return {
         ...prevState,
         analyticsTechniqueMapping: {
