@@ -54,6 +54,10 @@ const CompositeIndicator = () => {
       locked: false,
       openPanel: true,
     },
+    columnMerge: {
+      locked: true,
+      openPanel: false,
+    },
     visualization: {
       locked: true,
       openPanel: false,

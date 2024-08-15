@@ -10,6 +10,7 @@ import {
   FormControlLabel,
   FormGroup,
   Grid,
+  Skeleton,
   Switch,
   Typography,
 } from "@mui/material";
@@ -21,6 +22,7 @@ import ColumnToMerge from "../../basic-indicator/selection-panel/components/filt
 import { LoadingButton } from "@mui/lab";
 import { requestMergeIndicatorData } from "./utils/selection-api.js";
 import MergedDataTable from "./components/merged-data-table.jsx";
+import MergeCard from "./components/merge-card.jsx";
 
 const SelectIndicator = () => {
   const { api } = useContext(AuthContext);
@@ -87,23 +89,28 @@ const SelectIndicator = () => {
         return requestMergeIndicatorData(api, columnToMerge, indicators);
       } catch (error) {
         console.log("Error merging indicators");
+        throw error;
       }
     };
 
-    loadMergeData(
-      api,
-      indicatorRef.columnToMerge,
-      indicatorRef.indicators,
-    ).then((response) => {
-      setState((prevState) => ({
-        ...prevState,
-        loadingPreview: false,
-      }));
-      setIndicatorRef((prevState) => ({
-        ...prevState,
-        analyzedData: response.data.columns,
-      }));
-    });
+    loadMergeData(api, indicatorRef.columnToMerge, indicatorRef.indicators)
+      .then((response) => {
+        setState((prevState) => ({
+          ...prevState,
+          loadingPreview: false,
+        }));
+        setIndicatorRef((prevState) => ({
+          ...prevState,
+          analyzedData: response.data.columns,
+        }));
+      })
+      .catch((error) => {
+        setState((prevState) => ({
+          ...prevState,
+          loadingPreview: false,
+          analyzedData: {},
+        }));
+      });
   };
 
   const handleUnlockVisualization = () => {
@@ -254,49 +261,48 @@ const SelectIndicator = () => {
                 <CompatibleIndicatorList state={state} setState={setState} />
               </Grid>
             )}
-            <Grid item xs={12}>
-              <Grid container spacing={2} alignItems="center">
-                {Boolean(
-                  state.compatibleIndicators.content[0].analyticsTechnique.name,
-                ) && (
-                  <>
-                    <Grid item xs={12} md={6}>
-                      <Grid container spacing={1} alignItems="center">
-                        <Grid item xs={12}>
-                          <Typography>Shared analysis technique</Typography>
-                        </Grid>
-                        <Grid item xs={12}>
-                          <Chip
-                            label={
-                              state.compatibleIndicators.content[0]
-                                .analyticsTechnique.name
-                            }
-                          />
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                  </>
-                )}
-                {state.selectedCompatibleIndicators.length > 0 && (
-                  <Grid item xs={12} md={6}>
-                    <ColumnToMerge state={state} setState={setState} />
-                  </Grid>
-                )}
-                {state.selectedCompatibleIndicators.length > 0 && (
-                  <Grid item xs={12} sx={{ mb: 1 }}>
-                    <Divider />
-                  </Grid>
-                )}
-              </Grid>
-            </Grid>
-            {state.selectedCompatibleIndicators.length > 0 &&
-            Object.entries(indicatorRef.analyzedData).length !== 0 ? (
+
+            {state.selectedCompatibleIndicators.length > 0 && (
               <>
+                <Grid item xs={12} md={6}>
+                  <ColumnToMerge state={state} setState={setState} />
+                </Grid>
+                <Grid item xs={12}>
+                  <Grid container spacing={1}>
+                    {[
+                      ...state.selectedIndicator,
+                      ...state.selectedCompatibleIndicators,
+                    ].map((indicator, index) => {
+                      return (
+                        <Grid
+                          item
+                          xs={12}
+                          md={6}
+                          sx={{ display: "flex", alignItems: "stretch" }}
+                        >
+                          <MergeCard key={index} indicator={indicator} />
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                </Grid>
+                <Grid item xs={12} sx={{ pb: 1 }}>
+                  <Divider />
+                </Grid>
+              </>
+            )}
+
+            {state.loadingPreview ? (
+              <Grid item xs={12}>
+                <Skeleton variant="rectangular" height={200} width="100%" />
+              </Grid>
+            ) : (
+              Object.entries(indicatorRef.analyzedData).length > 0 && (
                 <Grid item xs={12}>
                   <MergedDataTable state={state} />
                 </Grid>
-              </>
-            ) : undefined}
+              )
+            )}
           </Grid>
         </AccordionDetails>
         <AccordionActions>
