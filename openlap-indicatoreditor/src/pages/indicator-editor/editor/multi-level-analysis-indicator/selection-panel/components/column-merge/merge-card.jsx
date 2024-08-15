@@ -43,7 +43,7 @@ const MergeCard = ({ indicator, columnsToMerge, analyzedData }) => {
       <Paper variant="outlined" sx={{ flex: 1, p: 2 }}>
         <Grid container spacing={1}>
           <Grid item xs={12}>
-            <Typography variant="h6">{indicator.name}</Typography>
+            <Typography>{indicator.name}</Typography>
           </Grid>
           <Grid item xs={12} sx={{ pb: 1 }}>
             <Divider />
@@ -53,7 +53,14 @@ const MergeCard = ({ indicator, columnsToMerge, analyzedData }) => {
               {columnsToMerge.length > 0 && (
                 <>
                   <Grid item xs={12}>
-                    <Typography>Select a column to merge</Typography>
+                    <Typography
+                      sx={{
+                        fontWeight:
+                          columnsToMerge.length === 1 ? undefined : "bold",
+                      }}
+                    >
+                      Select a column to merge
+                    </Typography>
                   </Grid>
                   <Grid item xs={12}>
                     <FormControl>

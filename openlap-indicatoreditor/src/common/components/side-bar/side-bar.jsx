@@ -5,16 +5,16 @@ import ArchitectureIcon from "@mui/icons-material/Architecture";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import QuizIcon from "@mui/icons-material/Quiz";
 import {
-  Drawer,
   Box,
-  Divider,
-  List,
   Collapse,
+  Divider,
+  Drawer,
+  List,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
-  ListItemButton,
 } from "@mui/material";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { styled } from "@mui/material/styles";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ListAltIcon from "@mui/icons-material/ListAlt";
@@ -49,7 +49,7 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
     },
     {
       primary: "ISC Creator",
-      secondary: "Create or edit an ISC",
+      secondary: "Create a ISC",
       navigate: "/isc/creator",
       icon: <AddchartIcon />,
     },
@@ -70,7 +70,7 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
     },
     {
       primary: "GQI Editor",
-      secondary: "Create or edit a GQI",
+      secondary: "Create a GQI",
       navigate: "/gqi/editor",
       icon: <ListAltIcon />,
     },
@@ -91,7 +91,7 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
     },
     {
       primary: "Indicator Editor",
-      secondary: "Create or edit an Indicator",
+      secondary: "Create an Indicator",
       navigate: "/indicator/editor",
       icon: <AddchartIcon />,
     },
@@ -107,7 +107,7 @@ const Sidebar = ({ openSidebar, toggleSidebar }) => {
     {
       primary: "CSV-xAPI Converter",
       secondary: "Convert CSV to xAPI and vice versa",
-      navigate: "/csv-xapi-converter",
+      navigate: "/csv-xapi",
       icon: <ChangeCircleIcon />,
     },
   ];

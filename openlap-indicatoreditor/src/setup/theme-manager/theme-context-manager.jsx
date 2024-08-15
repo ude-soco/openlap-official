@@ -24,6 +24,9 @@ const CustomThemeProvider = ({ children }) => {
     palette: {
       mode: "light",
     },
+    background: {
+      default: "#fafafa", // Custom light background color
+    },
   });
 
   return (

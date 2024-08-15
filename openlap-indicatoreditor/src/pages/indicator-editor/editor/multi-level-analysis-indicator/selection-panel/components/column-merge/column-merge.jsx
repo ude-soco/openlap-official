@@ -47,7 +47,7 @@ const ColumnMerge = () => {
         throw error;
       }
     };
-    if (indicatorRef.indicators.length > 1) {
+    if (indicatorRef.indicators.length > 0) {
       setState((prevState) => ({
         ...prevState,
         loadingIndicators: true,
@@ -87,6 +87,18 @@ const ColumnMerge = () => {
             loadingIndicators: false,
           }));
         });
+    } else if (indicatorRef.indicators.length === 0) {
+      setLockedStep((prevState) => ({
+        ...prevState,
+        columnMerge: {
+          locked: true,
+          openPanel: false,
+        },
+      }));
+      setState((prevState) => ({
+        ...prevState,
+        indicatorsToMerge: [],
+      }));
     }
   }, [indicatorRef.indicators.length]);
   console.log(state.indicatorsToMerge);
