@@ -270,7 +270,9 @@ const SelectIndicator = () => {
                 <Grid item xs={12}>
                   <Grid container spacing={1}>
                     {[
-                      ...state.selectedIndicator,
+                      ...state.compatibleIndicators.content[0].indicators.filter(
+                        (item) => item.id === state.selectedIndicator[0].id,
+                      ),
                       ...state.selectedCompatibleIndicators,
                     ].map((indicator, index) => {
                       return (

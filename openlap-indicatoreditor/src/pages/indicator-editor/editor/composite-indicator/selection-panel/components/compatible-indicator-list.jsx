@@ -158,8 +158,9 @@ const CompatibleIndicatorList = ({ state, setState }) => {
               ))
             ) : state.compatibleIndicators.content[0].indicators.length !==
               0 ? (
-              state.compatibleIndicators.content[0].indicators?.map(
-                (indicator) => (
+              state.compatibleIndicators.content[0].indicators
+                .filter((item) => item.id !== state.selectedIndicator[0].id)
+                ?.map((indicator) => (
                   <Grid
                     item
                     xs={12}
@@ -175,8 +176,7 @@ const CompatibleIndicatorList = ({ state, setState }) => {
                       }
                     />
                   </Grid>
-                ),
-              )
+                ))
             ) : (
               <Grid item xs={12}>
                 <Typography>

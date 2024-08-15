@@ -18,9 +18,10 @@ const ColumnToMerge = ({ state, setState }) => {
     const { value } = event.target;
 
     console.log("value", value);
-    const selectedOutput = state.compatibleIndicators.analyticsOutputs.find(
-      (item) => item.id === value,
-    );
+    const selectedOutput =
+      state.compatibleIndicators.content[0].analyticsOutputs.find(
+        (item) => item.id === value,
+      );
 
     if (selectedOutput) {
       setState((prevState) => ({
