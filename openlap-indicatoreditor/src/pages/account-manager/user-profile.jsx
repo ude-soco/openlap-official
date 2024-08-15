@@ -1,12 +1,31 @@
-import React, {useContext, useEffect, useState} from "react";
-import {AuthContext} from "../../setup/auth-context-manager/auth-context-manager.jsx";
-import {fetchUserData} from "./user-api";
+import React, { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
+import { fetchUserData } from "./user-api";
 
 const UserProfile = () => {
-  const {logout, api} = useContext(AuthContext);
+  const { logout, api, user } = useContext(AuthContext);
+
+  const [state, setState] = useState({
+    userData: {
+      name: "",
+      email: "",
+      lrsConsumerList: [],
+      lrsProviderList: [],
+      password: "",
+      confirmPassword: "",
+    },
+    lrsConsumerRequest: {
+      lrsId: "",
+      uniqueIdentifier: "",
+    },
+    lrsProviderRequest: {
+      title: "",
+      uniqueIdentifier: "",
+    },
+    loadingData: false,
+  });
 
   const [data, setData] = useState(null);
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

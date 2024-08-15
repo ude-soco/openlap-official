@@ -85,7 +85,7 @@ const MergedDataTable = ({ state }) => {
                       if (key !== indicatorRef.columnToMerge.id) {
                         let title = value.configurationData.title;
                         let tempSelected = [
-                          state.selectedIndicator,
+                          state.selectedIndicator[0],
                           ...state.selectedCompatibleIndicators,
                         ];
                         return value.data.map((_, index) => {

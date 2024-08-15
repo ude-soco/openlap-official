@@ -1,16 +1,15 @@
 import React, { useContext } from "react";
 import {
+  Chip,
   FormControl,
   FormControlLabel,
   Grid,
-  IconButton,
   Radio,
   RadioGroup,
   Tooltip,
   Typography,
 } from "@mui/material";
 import { CompositeIndicatorContext } from "../../../../../composite-indicator/composite-indicator.jsx";
-import HelpIcon from "@mui/icons-material/Help.js";
 
 const ColumnToMerge = ({ state, setState }) => {
   const { setIndicatorRef } = useContext(CompositeIndicatorContext);
@@ -40,32 +39,14 @@ const ColumnToMerge = ({ state, setState }) => {
     <>
       <Grid container spacing={1}>
         <Grid item xs={12}>
-          <Grid container alignItems="center">
-            <Grid item>
-              <Typography>Select column to merge</Typography>
-            </Grid>
-            <Grid item>
-              <Tooltip
-                title={
-                  <Grid container>
-                    <Typography>To be explained</Typography>
-                  </Grid>
-                }
-              >
-                <IconButton color="primary">
-                  <HelpIcon />
-                </IconButton>
-              </Tooltip>
-            </Grid>
-          </Grid>
+          <Typography>Select column to merge</Typography>
         </Grid>
         <Grid item xs={12}>
           <FormControl>
             <RadioGroup
               row
               aria-labelledby="radio-buttons-group-role-label"
-              name="role"
-              value={state.selectedAnalyticsOutput.id}
+              defaultValue={state.selectedAnalyticsOutput.id || undefined}
               onChange={handleSelectColumnToMerge}
             >
               {state.compatibleIndicators.content[0].analyticsOutputs.map(
@@ -74,7 +55,28 @@ const ColumnToMerge = ({ state, setState }) => {
                     key={index}
                     value={output.id}
                     control={<Radio />}
-                    label={output.title}
+                    label={
+                      <Grid container spacing={1} alignItems="center">
+                        <Grid item>
+                          <Typography>{output.title}</Typography>
+                        </Grid>
+                        {state.compatibleIndicators.content[0].analyticsOutputs
+                          .length === 1 && (
+                          <Grid item>
+                            <Tooltip
+                              title={
+                                <Typography variant="body2" align="center">
+                                  There is only one compatible column available
+                                  to merge
+                                </Typography>
+                              }
+                            >
+                              <Chip label="Preselected" />
+                            </Tooltip>
+                          </Grid>
+                        )}
+                      </Grid>
+                    }
                   />
                 ),
               )}
