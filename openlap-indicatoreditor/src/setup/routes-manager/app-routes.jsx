@@ -29,6 +29,7 @@ import IndicatorPreview from "../../pages/indicator-editor/dashboard/indicator-p
 import BasicIndicator from "../../pages/indicator-editor/editor/basic-indicator/basic-indicator.jsx";
 import CompositeIndicator from "../../pages/indicator-editor/editor/composite-indicator/composite-indicator.jsx";
 import MultiLevelAnalysisIndicator from "../../pages/indicator-editor/editor/multi-level-analysis-indicator/multi-level-analysis-indicator.jsx";
+import CsvXapiDashboard from "../../pages/csv-xapi-converter/csv-xapi-dashboard.jsx";
 
 const drawerWidth = 280;
 
@@ -97,6 +98,7 @@ const AppRoutes = () => {
                     <Routes>
                       <Route path="/login" element={<Login />} />
                       <Route path="/register" element={<Register />} />
+
                       <Route
                         path="/"
                         element={
@@ -234,6 +236,8 @@ const AppRoutes = () => {
                           }
                         />
                       </Route>
+
+                      <Route path="/csv-xapi" element={<CsvXapiDashboard />} />
                     </Routes>
                   </Paper>
                   <Footer />

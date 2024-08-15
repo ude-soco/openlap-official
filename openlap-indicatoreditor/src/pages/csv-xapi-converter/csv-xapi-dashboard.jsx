@@ -1,12 +1,12 @@
-import { Divider, Grid, Typography } from "@mui/material";
 import React from "react";
+import { Divider, Grid, Typography } from "@mui/material";
 
-const GQIEditor = () => {
+const CsvXapiDashboard = () => {
   return (
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Typography>GQI Editor</Typography>
+          <Typography>CSV xAPI Dashboard</Typography>
         </Grid>
         <Grid item xs={12}>
           <Divider />
@@ -15,4 +15,5 @@ const GQIEditor = () => {
     </>
   );
 };
-export default GQIEditor;
+
+export default CsvXapiDashboard;

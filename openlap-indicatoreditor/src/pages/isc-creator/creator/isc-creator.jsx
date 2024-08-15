@@ -1,9 +1,17 @@
-import { Typography } from "@mui/material";
+import { Divider, Grid, Typography } from "@mui/material";
+import React from "react";
 
 const ISCCreator = () => {
   return (
     <>
-      <Typography>ISC Creator</Typography>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Typography>ISC Creator</Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Divider />
+        </Grid>
+      </Grid>
     </>
   );
 };
