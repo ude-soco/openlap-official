@@ -1,7 +1,6 @@
 import React, { useContext, useState } from "react";
 import {
   Grid,
-  IconButton,
   Paper,
   Table,
   TableBody,
@@ -10,11 +9,9 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { CompositeIndicatorContext } from "../../composite-indicator.jsx";
-import HelpIcon from "@mui/icons-material/Help";
 
 const MergedDataTable = ({ state }) => {
   const { indicatorRef, lockedStep } = useContext(CompositeIndicatorContext);
@@ -52,26 +49,7 @@ const MergedDataTable = ({ state }) => {
   return (
     <Grid container spacing={1}>
       <Grid item xs={12}>
-        <Grid container alignItems="center">
-          <Grid item>
-            <Typography>Preview data</Typography>
-          </Grid>
-          {lockedStep.indicators.openPanel && (
-            <Grid item>
-              <Tooltip
-                title={
-                  <Grid container>
-                    <Typography>To be explained</Typography>
-                  </Grid>
-                }
-              >
-                <IconButton color="primary">
-                  <HelpIcon />
-                </IconButton>
-              </Tooltip>
-            </Grid>
-          )}
-        </Grid>
+        <Typography>Preview data</Typography>
       </Grid>
       <Grid item xs={12}>
         <TableContainer component={Paper} variant="outlined">

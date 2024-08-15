@@ -3,15 +3,12 @@ import {
   Chip,
   Divider,
   Grid,
-  IconButton,
   Pagination,
   Skeleton,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { requestCompatibleIndicators } from "../utils/selection-api.js";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import HelpIcon from "@mui/icons-material/Help";
 import { CompositeIndicatorContext } from "../../composite-indicator.jsx";
 import IndicatorCard from "../../../components/indicator-card/indicator-card.jsx";
 
@@ -117,39 +114,34 @@ const CompatibleIndicatorList = ({ state, setState }) => {
 
   return (
     <>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          {Boolean(
-            state.compatibleIndicators.content[0].analyticsTechnique.name,
-          ) ? (
-            <Grid container alignItems="center">
-              <Grid item>
-                <Typography>Combine compatible indicators</Typography>
-              </Grid>
-              <Grid item>
-                <Tooltip
-                  title={
-                    <Grid container>
-                      <Typography gutterBottom>
-                        Why these indicators?
-                      </Typography>
-                      <Typography>
-                        All of the indicators below share the same analysis
-                        method
-                      </Typography>
-                    </Grid>
-                  }
-                >
-                  <IconButton color="primary">
-                    <HelpIcon />
-                  </IconButton>
-                </Tooltip>
+      <Grid container spacing={3}>
+        {Boolean(
+          state.compatibleIndicators.content[0].analyticsTechnique.name,
+        ) ? (
+          <>
+            <Grid item xs={12}>
+              <Typography>Combine compatible indicators</Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Grid container spacing={1} alignItems="center">
+                <Grid item>
+                  <Typography>Shared analysis technique</Typography>
+                </Grid>
+                <Grid item>
+                  <Chip
+                    label={
+                      state.compatibleIndicators.content[0].analyticsTechnique
+                        .name
+                    }
+                  />
+                </Grid>
               </Grid>
             </Grid>
-          ) : (
-            <Skeleton />
-          )}
-        </Grid>
+          </>
+        ) : (
+          <Skeleton />
+        )}
+
         <Grid item xs={12}>
           <Grid container spacing={2} sx={{ minHeight: 300 }}>
             {state.loadingCompatibleIndicator ? (
