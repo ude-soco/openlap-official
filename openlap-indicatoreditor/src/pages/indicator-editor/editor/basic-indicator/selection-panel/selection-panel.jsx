@@ -10,11 +10,12 @@ import { AuthContext } from "../../../../../setup/auth-context-manager/auth-cont
 const SelectionPanel = () => {
   const { api } = useContext(AuthContext);
   const {
-    indicatorQuery,
-    visRef,
-    analysisRef,
     lockedStep,
+    indicatorQuery,
+    analysisRef,
+    visRef,
     setLockedStep,
+    setAnalysisRef,
     setVisRef,
     setIndicator,
   } = useContext(BasicIndicatorContext);
@@ -41,7 +42,12 @@ const SelectionPanel = () => {
     <>
       <Dataset />
       <Filters />
-      <Analysis />
+      <Analysis
+        lockedStep={lockedStep}
+        setLockedStep={setLockedStep}
+        analysisRef={analysisRef}
+        setAnalysisRef={setAnalysisRef}
+      />
       <Visualization
         lockedStep={lockedStep}
         setLockedStep={setLockedStep}

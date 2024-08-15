@@ -54,21 +54,17 @@ const Inputs = ({ state, setState, visRef, setVisRef, analyzedData }) => {
   const handleChange = (value, input) => {
     const updateMappingsMethod = (newMappings, oldMappings) => {
       let found = false;
-
       oldMappings.forEach((item, index) => {
         if (item.inputPort.id === newMappings.inputPort.id) {
           oldMappings[index].outputPort = newMappings.outputPort;
           found = true;
         }
       });
-
       if (!found) {
         oldMappings.push(newMappings);
       }
-
       return oldMappings;
     };
-
     setVisRef((prevState) => {
       let tempInputMappings = {
         inputPort: input,
@@ -78,7 +74,6 @@ const Inputs = ({ state, setState, visRef, setVisRef, analyzedData }) => {
         tempInputMappings,
         prevState.visualizationMapping.mapping,
       );
-
       return {
         ...prevState,
         visualizationMapping: {

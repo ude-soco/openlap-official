@@ -1,10 +1,10 @@
-import { useEffect, useContext } from "react";
+import { useContext, useEffect } from "react";
 import {
   Autocomplete,
   Chip,
   Divider,
-  TextField,
   Grid,
+  TextField,
   Typography,
 } from "@mui/material";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
@@ -12,27 +12,35 @@ import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 import Tooltip from "@mui/material/Tooltip";
 import { fetchAnalyticsTechnique } from "../utils/analytics-api.js";
 
-const AnalyticsTechnique = ({ state, setState }) => {
+const AnalyticsTechnique = ({
+  state,
+  setState,
+  analysisRef,
+  setAnalysisRef,
+}) => {
   const { api } = useContext(AuthContext);
-  const { indicatorQuery, lockedStep, analysisRef, setAnalysisRef } =
-    useContext(BasicIndicatorContext);
+  const { analysisRef, setAnalysisRef } = useContext(BasicIndicatorContext);
 
   useEffect(() => {
     const loadAnalyticsTechniqueData = async () => {
       try {
-        const analyticsTechniqueListResponse =
-          await fetchAnalyticsTechnique(api);
-        setState((prevState) => ({
-          ...prevState,
-          techniqueList: analyticsTechniqueListResponse,
-        }));
+        return await fetchAnalyticsTechnique(api);
       } catch (error) {
-        console.log("Failed to load the Analytics Technique list");
+        throw error;
       }
     };
 
     if (state.techniqueList.length === 0) {
-      loadAnalyticsTechniqueData();
+      loadAnalyticsTechniqueData()
+        .then((response) => {
+          setState((prevState) => ({
+            ...prevState,
+            techniqueList: response,
+          }));
+        })
+        .catch((error) => {
+          console.log("Failed to load the Analytics Technique list", error);
+        });
     }
   }, [state.techniqueList.length]);
 
