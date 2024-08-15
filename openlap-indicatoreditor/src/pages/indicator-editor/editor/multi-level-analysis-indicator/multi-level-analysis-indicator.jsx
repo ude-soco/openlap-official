@@ -98,10 +98,10 @@ const MultiLevelAnalysisIndicator = () => {
           },
           columnMerge: {
             locked: false,
-            openPanel: true,
+            openPanel: false,
           },
           analysis: {
-            locked: true,
+            locked: false,
             openPanel: false,
           },
           visualization: {

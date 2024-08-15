@@ -3,12 +3,16 @@ import { AuthContext } from "../../../../../setup/auth-context-manager/auth-cont
 import { MultiLevelAnalysisIndicatorContext } from "../multi-level-analysis-indicator.jsx";
 import SelectIndicator from "./components/select-indicator/select-indicator.jsx";
 import ColumnMerge from "./components/column-merge/column-merge.jsx";
+import Analysis from "../../components/analysis/analysis.jsx";
 
 const SelectionPanel = () => {
   const { api } = useContext(AuthContext);
   const {
     lockedStep,
     setLockedStep,
+    indicator,
+    analysisRef,
+    setAnalysisRef,
     visRef,
     setVisRef,
     indicatorRef,
@@ -19,6 +23,17 @@ const SelectionPanel = () => {
     <>
       <SelectIndicator />
       <ColumnMerge />
+      <Analysis
+        lockedStep={lockedStep}
+        setLockedStep={setLockedStep}
+        indicator={indicator}
+        analysisRef={analysisRef}
+        setAnalysisRef={setAnalysisRef}
+        loadAnalyzedData={
+          () => console.log("preview")
+          // loadAnalyzedData={() => loadAnalyzedData(api, indicatorQuery, analysisRef)
+        }
+      />
     </>
   );
 };
