@@ -11,17 +11,20 @@ import IndicatorCard from "../../../components/indicator-card/indicator-card.jsx
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { requestAllMyIndicatorsWithCode } from "../utils/selection-api.js";
 import { CompositeIndicatorContext } from "../../composite-indicator.jsx";
+import { useSnackbar } from "notistack";
 
 const IndicatorList = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
   const { setIndicatorRef } = useContext(CompositeIndicatorContext);
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     const loadIndicatorList = async (api, params) => {
       try {
-        return requestAllMyIndicatorsWithCode(api, params);
+        return await requestAllMyIndicatorsWithCode(api, params);
       } catch (error) {
-        console.log("Error getting indicators");
+        enqueueSnackbar("Error getting indicators", { variant: "error" });
+        console.log(error);
       }
     };
 
@@ -33,7 +36,7 @@ const IndicatorList = ({ state, setState }) => {
         }));
       });
     }
-  }, [state.allIndicators.content.length]);
+  }, [state.allIndicators.content]);
 
   const handleChangePagination = (event, value) => {
     setState((prevState) => ({
@@ -133,11 +136,7 @@ const IndicatorList = ({ state, setState }) => {
             <Grid item xs={12}>
               <Grid container justifyContent="center">
                 <Pagination
-                  count={
-                    Boolean(state.allIndicators.totalPages)
-                      ? state.allIndicators.totalPages
-                      : 1
-                  }
+                  count={state.allIndicators.totalPages}
                   color="primary"
                   onChange={handleChangePagination}
                 />

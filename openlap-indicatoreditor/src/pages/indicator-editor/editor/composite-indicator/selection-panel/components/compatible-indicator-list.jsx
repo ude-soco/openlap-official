@@ -28,7 +28,6 @@ const CompatibleIndicatorList = ({ state, setState }) => {
           ...prevState,
           loadingCompatibleIndicator: false,
         }));
-        console.log("Could not find compatible indicators");
       }
     };
 
@@ -83,6 +82,7 @@ const CompatibleIndicatorList = ({ state, setState }) => {
     const foundSelected = state.selectedCompatibleIndicators.find(
       (item) => item.id === indicator.id,
     );
+
     if (!Boolean(foundSelected)) {
       setState((prevState) => ({
         ...prevState,
@@ -95,6 +95,7 @@ const CompatibleIndicatorList = ({ state, setState }) => {
       setIndicatorRef((prevState) => ({
         ...prevState,
         indicators: [...prevState.indicators, { indicatorId: indicator.id }],
+        analyzedData: {},
       }));
     } else {
       setState((prevState) => ({
@@ -109,6 +110,7 @@ const CompatibleIndicatorList = ({ state, setState }) => {
         indicators: prevState.indicators.filter(
           (item) => item.indicatorId !== indicator.id,
         ),
+        analyzedData: {},
       }));
     }
   };

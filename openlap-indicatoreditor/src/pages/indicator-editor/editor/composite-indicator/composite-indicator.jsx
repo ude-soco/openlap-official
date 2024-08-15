@@ -25,68 +25,39 @@ const CompositeIndicator = () => {
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
-  const [indicator, setIndicator] = useState(() => {
-    const savedState = sessionStorage.getItem("session");
-    return savedState
-      ? {
-          ...JSON.parse(savedState).indicator,
-          previewData: {
-            displayCode: "",
-            scriptData: [],
-          },
-        }
-      : {
-          previewData: {
-            displayCode: "",
-            scriptData: [],
-          },
-          indicatorName: "",
-          type: "COMPOSITE",
-        };
+  const [indicator, setIndicator] = useState({
+    previewData: {
+      displayCode: "",
+      scriptData: [],
+    },
+    indicatorName: "",
+    type: "COMPOSITE",
   });
 
-  const [indicatorRef, setIndicatorRef] = useState(() => {
-    const savedState = sessionStorage.getItem("session");
-    return savedState
-      ? JSON.parse(savedState).indicatorRef
-      : {
-          columnToMerge: {},
-          indicators: [],
-          analyzedData: {},
-        };
+  const [indicatorRef, setIndicatorRef] = useState({
+    columnToMerge: {},
+    indicators: [],
+    analyzedData: {},
   });
 
-  const [visRef, setVisRef] = useState(() => {
-    const savedState = sessionStorage.getItem("session");
-    return savedState
-      ? JSON.parse(savedState).visRef
-      : {
-          visualizationLibraryId: "",
-          visualizationTypeId: "",
-          visualizationParams: {
-            height: 400,
-            width: 400,
-          },
-          visualizationMapping: {
-            mapping: [],
-          },
-        };
+  const [visRef, setVisRef] = useState({
+    visualizationLibraryId: "",
+    visualizationTypeId: "",
+    visualizationParams: {},
+    visualizationMapping: {
+      mapping: [],
+    },
   });
 
-  const [lockedStep, setLockedStep] = useState(() => {
-    const savedState = sessionStorage.getItem("session");
-    return savedState
-      ? JSON.parse(savedState).lockedStep
-      : {
-          indicators: {
-            locked: false,
-            openPanel: true,
-          },
-          visualization: {
-            locked: true,
-            openPanel: false,
-          },
-        };
+  const [lockedStep, setLockedStep] = useState({
+    indicators: {
+      locked: false,
+      openPanel: true,
+    },
+    visualization: {
+      locked: true,
+      openPanel: false,
+    },
   });
 
   // TODO: Autosaving feature

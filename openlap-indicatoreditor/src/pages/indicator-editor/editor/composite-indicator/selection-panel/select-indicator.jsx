@@ -33,6 +33,7 @@ const SelectIndicator = () => {
     },
     allIndicators: {
       content: [],
+      totalPages: 1,
     },
     selectedIndicator: [],
     compatibleIndicatorParams: {
@@ -253,41 +254,49 @@ const SelectIndicator = () => {
                 <CompatibleIndicatorList state={state} setState={setState} />
               </Grid>
             )}
-            {Boolean(
-              state.compatibleIndicators.content[0].analyticsTechnique.name,
-            ) && (
+            <Grid item xs={12}>
+              <Grid container spacing={2} alignItems="center">
+                {Boolean(
+                  state.compatibleIndicators.content[0].analyticsTechnique.name,
+                ) && (
+                  <>
+                    <Grid item xs={12} md={6}>
+                      <Grid container spacing={1} alignItems="center">
+                        <Grid item xs={12}>
+                          <Typography>Shared analysis technique</Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Chip
+                            label={
+                              state.compatibleIndicators.content[0]
+                                .analyticsTechnique.name
+                            }
+                          />
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </>
+                )}
+                {state.selectedCompatibleIndicators.length > 0 && (
+                  <Grid item xs={12} md={6}>
+                    <ColumnToMerge state={state} setState={setState} />
+                  </Grid>
+                )}
+                {state.selectedCompatibleIndicators.length > 0 && (
+                  <Grid item xs={12} sx={{ mb: 1 }}>
+                    <Divider />
+                  </Grid>
+                )}
+              </Grid>
+            </Grid>
+            {state.selectedCompatibleIndicators.length > 0 &&
+            Object.entries(indicatorRef.analyzedData).length !== 0 ? (
               <>
                 <Grid item xs={12}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <Typography>Shared analysis technique</Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Chip
-                        label={
-                          state.compatibleIndicators.content[0]
-                            .analyticsTechnique.name
-                        }
-                      />
-                    </Grid>
-                    <Grid item xs={12} sx={{ mb: 1 }}>
-                      <Divider />
-                    </Grid>
-                  </Grid>
+                  <MergedDataTable state={state} />
                 </Grid>
               </>
-            )}
-            {state.selectedCompatibleIndicators.length > 0 ? (
-              <Grid item xs={12}>
-                <ColumnToMerge state={state} setState={setState} />
-              </Grid>
             ) : undefined}
-
-            {Object.entries(indicatorRef.analyzedData).length !== 0 && (
-              <Grid item xs={12}>
-                <MergedDataTable state={state} />
-              </Grid>
-            )}
           </Grid>
         </AccordionDetails>
         <AccordionActions>
