@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import HelpIcon from "@mui/icons-material/Help";
-import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
+import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { fetchTechniqueParams } from "../utils/analytics-api.js";
 
 const Params = ({ analysisRef, setAnalysisRef }) => {

@@ -7,8 +7,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
+import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
+import { BasicIndicatorContext } from "../../../basic-indicator/basic-indicator.jsx";
 import Tooltip from "@mui/material/Tooltip";
 import { fetchAnalyticsTechnique } from "../utils/analytics-api.js";
 
@@ -19,7 +19,6 @@ const AnalyticsTechnique = ({
   setAnalysisRef,
 }) => {
   const { api } = useContext(AuthContext);
-  const { analysisRef, setAnalysisRef } = useContext(BasicIndicatorContext);
 
   useEffect(() => {
     const loadAnalyticsTechniqueData = async () => {

@@ -10,17 +10,16 @@ import {
   Select,
   Typography,
 } from "@mui/material";
-import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
+import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import HelpIcon from "@mui/icons-material/Help";
 import Tooltip from "@mui/material/Tooltip";
 import { fetchTechniqueInputs } from "../utils/analytics-api.js";
-import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
+import { BasicIndicatorContext } from "../../../basic-indicator/basic-indicator.jsx";
 
-const Inputs = ({ state, setState, analysisRef, setAnalysisRef }) => {
+const InputsBasicIndicator = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
-  const { analysisInputMenu, setIndicatorQuery } = useContext(
-    BasicIndicatorContext,
-  );
+  const { analysisInputMenu, setIndicatorQuery, analysisRef, setAnalysisRef } =
+    useContext(BasicIndicatorContext);
 
   useEffect(() => {
     const loadTechniqueInputs = async (value) => {
@@ -142,4 +141,4 @@ const Inputs = ({ state, setState, analysisRef, setAnalysisRef }) => {
   );
 };
 
-export default Inputs;
+export default InputsBasicIndicator;

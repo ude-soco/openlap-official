@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Accordion,
   AccordionActions,
@@ -15,23 +15,20 @@ import {
 import LockIcon from "@mui/icons-material/Lock";
 import IconButton from "@mui/material/IconButton";
 import AnalyticsTechnique from "./components/analytics-technique.jsx";
-import Inputs from "./components/inputs.jsx";
+import InputsBasicIndicator from "./components/inputs-basic-indicator.jsx";
 import Params from "./components/params.jsx";
-import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import { fetchAnalyzedData } from "./utils/analytics-api.js";
-import AnalyzedDataTable from "../../../../components/analyzed-data-table/analyzed-data-table.jsx";
-import { BasicIndicatorContext } from "../../../basic-indicator.jsx";
+import AnalyzedDataTable from "../analyzed-data-table/analyzed-data-table.jsx";
 import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
 
 const Analysis = ({
   lockedStep,
   setLockedStep,
+  indicator,
   analysisRef,
   setAnalysisRef,
+  loadAnalyzedData,
 }) => {
-  const { api } = useContext(AuthContext);
-  const { indicatorQuery } = useContext(BasicIndicatorContext);
   const [state, setState] = useState(() => {
     const savedState = sessionStorage.getItem("analysis");
     return savedState
@@ -69,18 +66,11 @@ const Analysis = ({
   };
 
   const handlePreviewAnalyzedData = () => {
-    const loadAnalyzedData = async (api, indicatorQuery, analysisRef) => {
-      try {
-        return await fetchAnalyzedData(api, indicatorQuery, analysisRef);
-      } catch (error) {
-        throw error;
-      }
-    };
     setState((prevState) => ({
       ...prevState,
       loadingPreview: true,
     }));
-    loadAnalyzedData(api, indicatorQuery, analysisRef)
+    loadAnalyzedData()
       .then((response) => {
         setAnalysisRef((prevState) => ({
           ...prevState,
@@ -269,7 +259,9 @@ const Analysis = ({
             </Grid>
             {analysisRef.analyticsTechniqueId.length !== 0 && (
               <Grid item xs={12}>
-                <Inputs state={state} setState={setState} />
+                {indicator.type === "BASIC" && (
+                  <InputsBasicIndicator state={state} setState={setState} />
+                )}
               </Grid>
             )}
             {analysisRef.analyticsTechniqueId.length !== 0 && (
