@@ -187,21 +187,28 @@ const MultiLevelAnalysisIndicator = () => {
         <Grid item xs={12}>
           <Grid container alignItems="center">
             <Grid item>
-              <Tooltip
-                arrow
-                title={
-                  <Typography variant="body2">
-                    Back to Indicator Editor
-                  </Typography>
-                }
-              >
-                <IconButton
-                  size="small"
-                  onClick={() => navigate("/indicator/editor")}
-                >
-                  <ArrowBack />
-                </IconButton>
-              </Tooltip>
+              <Grid container alignItems="center">
+                <Grid item>
+                  <Tooltip
+                    arrow
+                    title={
+                      <Typography variant="body2">
+                        Back to Indicator Editor
+                      </Typography>
+                    }
+                  >
+                    <IconButton
+                      size="small"
+                      onClick={() => navigate("/indicator/editor")}
+                    >
+                      <ArrowBack />
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
+                <Grid item>
+                  <Typography>Back</Typography>
+                </Grid>
+              </Grid>
             </Grid>
             <Grid item xs>
               <Typography align="center">
