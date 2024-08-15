@@ -53,7 +53,7 @@ const MergeCard = ({ indicator, columnsToMerge, analyzedData }) => {
               {columnsToMerge.length > 0 && (
                 <>
                   <Grid item xs={12}>
-                    <Typography>Column to merge</Typography>
+                    <Typography>Select a column to merge</Typography>
                   </Grid>
                   <Grid item xs={12}>
                     <FormControl>

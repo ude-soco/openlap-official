@@ -4,6 +4,9 @@ import { MultiLevelAnalysisIndicatorContext } from "../multi-level-analysis-indi
 import SelectIndicator from "./components/select-indicator/select-indicator.jsx";
 import ColumnMerge from "./components/column-merge/column-merge.jsx";
 import Analysis from "../../components/analysis/analysis.jsx";
+import { requestAnalyzedDataForMultiLevelIndicator } from "../../components/analysis/utils/analytics-api.js";
+import Visualization from "../../components/visualization/visualization.jsx";
+import { requestMultiLevelIndicatorPreview } from "../../components/visualization/utils/visualization-api.js";
 
 const SelectionPanel = () => {
   const { api } = useContext(AuthContext);
@@ -19,6 +22,37 @@ const SelectionPanel = () => {
     setIndicator,
   } = useContext(MultiLevelAnalysisIndicatorContext);
 
+  const loadAnalyzedData = async (api, indicatorRef, analysisRef) => {
+    try {
+      return await requestAnalyzedDataForMultiLevelIndicator(
+        api,
+        indicatorRef,
+        analysisRef,
+      );
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const loadPreviewVisualization = async (
+    api,
+    indicatorRef,
+    analysisRef,
+    visRef,
+  ) => {
+    try {
+      return await requestMultiLevelIndicatorPreview(
+        api,
+        indicatorRef,
+        analysisRef,
+        visRef,
+      );
+    } catch (error) {
+      console.log("Error analyzing the data");
+      throw error;
+    }
+  };
+
   return (
     <>
       <SelectIndicator />
@@ -29,9 +63,19 @@ const SelectionPanel = () => {
         indicator={indicator}
         analysisRef={analysisRef}
         setAnalysisRef={setAnalysisRef}
-        loadAnalyzedData={
-          () => console.log("preview")
-          // loadAnalyzedData={() => loadAnalyzedData(api, indicatorQuery, analysisRef)
+        loadAnalyzedData={() =>
+          loadAnalyzedData(api, indicatorRef, analysisRef)
+        }
+      />
+      <Visualization
+        lockedStep={lockedStep}
+        setLockedStep={setLockedStep}
+        visRef={visRef}
+        setVisRef={setVisRef}
+        analyzedData={analysisRef.analyzedData}
+        setIndicator={setIndicator}
+        handlePreview={() =>
+          loadPreviewVisualization(api, indicatorRef, analysisRef, visRef)
         }
       />
     </>

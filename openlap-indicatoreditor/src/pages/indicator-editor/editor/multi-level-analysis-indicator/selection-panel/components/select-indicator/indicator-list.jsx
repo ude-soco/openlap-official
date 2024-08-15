@@ -88,6 +88,7 @@ const IndicatorList = ({ state, setState }) => {
         indicators: prevState.indicators.filter(
           (item) => item.indicatorId !== indicator.id,
         ),
+        mergedData: {},
       }));
     }
   };
@@ -154,7 +155,10 @@ const IndicatorList = ({ state, setState }) => {
               <Grid container spacing={1}>
                 {state.selectedIndicators.map((indicator, index) => (
                   <Grid item key={index}>
-                    <Chip label={indicator.name} />
+                    <Chip
+                      label={indicator.name}
+                      onDelete={() => handleToggleSelectIndicator(indicator)}
+                    />
                   </Grid>
                 ))}
               </Grid>

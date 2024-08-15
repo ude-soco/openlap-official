@@ -14,6 +14,7 @@ import { AuthContext } from "../../../../setup/auth-context-manager/auth-context
 import { useSnackbar } from "notistack";
 import SelectionPanel from "./selection-panel/selection-panel.jsx";
 import PreviewPanel from "../components/preview-panel/preview-panel.jsx";
+import { requestCreateMultiLevelIndicatorIndicator } from "../components/preview-panel/utils/preview-api.js";
 
 export const MultiLevelAnalysisIndicatorContext = createContext(undefined);
 
@@ -53,6 +54,8 @@ const MultiLevelAnalysisIndicator = () => {
           mergedData: {},
         };
   });
+
+  console.log(indicatorRef.indicators);
 
   const [analysisRef, setAnalysisRef] = useState(() => {
     const savedState = sessionStorage.getItem("session");
@@ -94,14 +97,14 @@ const MultiLevelAnalysisIndicator = () => {
       : {
           indicators: {
             locked: false,
-            openPanel: false,
+            openPanel: true,
           },
           columnMerge: {
-            locked: false,
+            locked: true,
             openPanel: false,
           },
           analysis: {
-            locked: false,
+            locked: true,
             openPanel: false,
           },
           visualization: {
@@ -120,33 +123,47 @@ const MultiLevelAnalysisIndicator = () => {
   };
 
   const handleSaveNewBasicIndicator = () => {
-    // const loadCreateCompositeIndicator = async (
-    //   api,
-    //   indicator,
-    //   indicatorRef,
-    //   visRef,
-    // ) => {
-    //   try {
-    //     return await requestCreateCompositeIndicator(
-    //       api,
-    //       indicator,
-    //       indicatorRef,
-    //       visRef,
-    //     );
-    //   } catch (error) {
-    //     console.log("Error analyzing the data");
-    //   }
-    // };
-    //
-    // loadCreateCompositeIndicator(api, indicator, indicatorRef, visRef).then(
-    //   (response) => {
-    //     enqueueSnackbar(response.message, {
-    //       variant: "success",
-    //     });
-    //     navigate("/indicator");
-    //     clearSession();
-    //   },
-    // );
+    const loadCreateMultiLevelIndicator = async (
+      api,
+      indicator,
+      indicatorRef,
+      analysisRef,
+      visRef,
+    ) => {
+      try {
+        return await requestCreateMultiLevelIndicatorIndicator(
+          api,
+          indicator,
+          indicatorRef,
+          analysisRef,
+          visRef,
+        );
+      } catch (error) {
+        console.log("Error analyzing the data");
+      }
+    };
+
+    loadCreateMultiLevelIndicator(
+      api,
+      indicator,
+      indicatorRef,
+      analysisRef,
+      visRef,
+    ).then((response) => {
+      enqueueSnackbar(response.message, {
+        variant: "success",
+      });
+      navigate("/indicator");
+      clearSession();
+    });
+  };
+
+  const clearSession = () => {
+    sessionStorage.removeItem("session");
+    sessionStorage.removeItem("dataset");
+    sessionStorage.removeItem("filters");
+    sessionStorage.removeItem("analysis");
+    sessionStorage.removeItem("visualization");
   };
 
   return (
