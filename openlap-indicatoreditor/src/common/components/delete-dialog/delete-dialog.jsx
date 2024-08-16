@@ -29,10 +29,13 @@ const DeleteDialog = ({ open, toggleOpen, message, handleDelete }) => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={toggleOpen}>Cancel</Button>
+          <Button fullWidth onClick={toggleOpen}>
+            Cancel
+          </Button>
           <Button
             onClick={handleClose}
             autoFocus
+            fullWidth
             variant="contained"
             color="error"
           >

@@ -15,8 +15,8 @@ import {
   Typography,
 } from "@mui/material";
 import {
-  requestAvailableLRSInOpenLAP,
-  requestLRSConsumerValidation,
+  requestAvailableLrsInOpenLAP,
+  requestLrsConsumerValidation,
 } from "../utils/account-manager-api.js";
 import { useSnackbar } from "notistack";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
@@ -39,7 +39,7 @@ const AddLrsConsumer = ({ addLrsConsumer, toggleOpen }) => {
   useEffect(() => {
     const loadLRSData = async (api) => {
       try {
-        return await requestAvailableLRSInOpenLAP(api);
+        return await requestAvailableLrsInOpenLAP(api);
       } catch (error) {
         throw error;
       }
@@ -87,7 +87,7 @@ const AddLrsConsumer = ({ addLrsConsumer, toggleOpen }) => {
       },
     }));
 
-    await requestLRSConsumerValidation(api, state.lrsId, state.uniqueIdentifier)
+    await requestLrsConsumerValidation(api, state.lrsId, state.uniqueIdentifier)
       .then((response) => {
         setState((prevState) => ({
           ...prevState,

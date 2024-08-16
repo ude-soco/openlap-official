@@ -1,11 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import {
-  Accordion,
-  AccordionActions,
-  AccordionDetails,
-  AccordionSummary,
   Button,
-  Chip,
   Divider,
   Grid,
   Paper,
@@ -13,16 +8,20 @@ import {
   Typography,
 } from "@mui/material";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
-import { fetchUserData } from "./user-api.js";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Alert } from "@mui/lab";
 import AddLrsConsumer from "./components/add-lrs-consumer.jsx";
 import { useSnackbar } from "notistack";
-import DeleteDialog from "../../common/components/delete-dialog/delete-dialog.jsx";
-import { requestDeleteLRSConsumer } from "./utils/account-manager-api.js";
+import { requestUserDetails } from "./utils/account-manager-api.js";
+import ManageLrsConsumerList from "./components/manage-lrs-consumer-list.jsx";
+import ManageLrsProviderList from "./components/manage-lrs-provider-list.jsx";
+import RoleTypes from "../../common/enums/role-types.js";
+import AddLrsProvider from "./components/add-lrs-provider.jsx";
 
 const ManageLrs = () => {
-  const { api } = useContext(AuthContext);
+  const {
+    api,
+    user: { roles },
+  } = useContext(AuthContext);
   const [state, setState] = useState({
     loading: false,
     user: {
@@ -37,7 +36,15 @@ const ManageLrs = () => {
     },
     deleteLrsConsumerDialog: {
       open: false,
-      lrsConsumerId: "",
+      lrsProviderId: "",
+    },
+    addLRSProviderDialog: {
+      open: false,
+      lrsProviderUpdated: true,
+    },
+    deleteLrsProviderDialog: {
+      open: false,
+      lrsProviderId: "",
     },
   });
   const { enqueueSnackbar } = useSnackbar();
@@ -45,13 +52,15 @@ const ManageLrs = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        return await fetchUserData(api);
+        return await requestUserDetails(api);
       } catch (error) {
         console.error("Failed to load user data", error);
       }
     };
-    if (state.addLRSConsumerDialog.lrsConsumerUpdated) {
-      console.log("Effect", state.user);
+    if (
+      state.addLRSConsumerDialog.lrsConsumerUpdated ||
+      state.addLRSProviderDialog.lrsProviderUpdated
+    ) {
       setState((prevState) => ({
         ...prevState,
         loading: true,
@@ -68,10 +77,17 @@ const ManageLrs = () => {
             ...prevState.addLRSConsumerDialog,
             lrsConsumerUpdated: false,
           },
+          addLRSProviderDialog: {
+            ...prevState.addLRSProviderDialog,
+            lrsProviderUpdated: false,
+          },
         }));
       });
     }
-  }, [state.addLRSConsumerDialog.lrsConsumerUpdated === true]);
+  }, [
+    state.addLRSConsumerDialog.lrsConsumerUpdated === true,
+    state.addLRSProviderDialog.lrsProviderUpdated === true,
+  ]);
 
   const handleToggleAddLrsConsumer = (lrsConsumerUpdated = null, message) => {
     setState((prevState) => ({
@@ -87,33 +103,17 @@ const ManageLrs = () => {
     }
   };
 
-  const handleToggleDelete = (lrsConsumerId = "") => {
+  const handleToggleAddLrsProvider = (lrsProviderUpdated = null, message) => {
     setState((prevState) => ({
       ...prevState,
-      deleteLrsConsumerDialog: {
-        ...prevState.deleteLrsConsumerDialog,
-        open: !prevState.deleteLrsConsumerDialog.open,
-        lrsConsumerId: lrsConsumerId,
+      addLRSProviderDialog: {
+        ...prevState.addLRSProviderDialog,
+        open: !prevState.addLRSProviderDialog.open,
+        lrsProviderUpdated: lrsProviderUpdated !== null,
       },
     }));
-  };
-
-  const handleDeleteLrs = async () => {
-    try {
-      await requestDeleteLRSConsumer(
-        api,
-        state.deleteLrsConsumerDialog.lrsConsumerId,
-      ).then((response) => {
-        setState((prevState) => ({
-          ...prevState,
-          addLRSConsumerDialog: {
-            ...prevState.addLRSConsumerDialog,
-            lrsConsumerUpdated: true,
-          },
-        }));
-      });
-    } catch (error) {
-      console.log(error);
+    if (lrsProviderUpdated !== null && message) {
+      enqueueSnackbar(message, { variant: "success" });
     }
   };
 
@@ -142,7 +142,11 @@ const ManageLrs = () => {
                             color="primary"
                             size="small"
                             variant="contained"
-                            onClick={handleToggleAddLrsConsumer}
+                            onClick={
+                              roles.includes(RoleTypes["data provider"])
+                                ? handleToggleAddLrsProvider
+                                : handleToggleAddLrsConsumer
+                            }
                           >
                             New
                           </Button>
@@ -150,6 +154,12 @@ const ManageLrs = () => {
                             <AddLrsConsumer
                               addLrsConsumer={state.addLRSConsumerDialog}
                               toggleOpen={handleToggleAddLrsConsumer}
+                            />
+                          )}
+                          {state.addLRSProviderDialog.open && (
+                            <AddLrsProvider
+                              addLrsProvider={state.addLRSProviderDialog}
+                              toggleOpen={handleToggleAddLrsProvider}
                             />
                           )}
                         </Grid>
@@ -170,68 +180,18 @@ const ManageLrs = () => {
                           />
                         </Grid>
                       ))
-                    ) : state.user.lrsConsumerList.length > 0 ? (
-                      state.user.lrsConsumerList?.map((lrs) => (
-                        <Grid item xs={12} key={lrs.id}>
-                          <Accordion>
-                            <AccordionSummary
-                              expandIcon={<ExpandMoreIcon />}
-                              aria-controls="panel1-content"
-                              id="panel1-header"
-                            >
-                              {lrs.lrsTitle}
-                            </AccordionSummary>
-                            <AccordionDetails>
-                              <Grid container spacing={2}>
-                                <Grid item xs={12}>
-                                  <Grid
-                                    container
-                                    spacing={1}
-                                    alignItems="center"
-                                  >
-                                    <Grid item>
-                                      <Typography>LRS:</Typography>
-                                    </Grid>
-                                    <Grid item>
-                                      <Chip label={lrs.lrsTitle} />
-                                    </Grid>
-                                  </Grid>
-                                </Grid>
-                                <Grid item xs={12}>
-                                  <Grid
-                                    container
-                                    spacing={1}
-                                    alignItems="center"
-                                  >
-                                    <Grid item>
-                                      <Typography>
-                                        Unique Identifier:
-                                      </Typography>
-                                    </Grid>
-                                    <Grid item>
-                                      <Chip label={lrs.uniqueIdentifier} />
-                                    </Grid>
-                                  </Grid>
-                                </Grid>
-                              </Grid>
-                            </AccordionDetails>
-                            <AccordionActions>
-                              <Button
-                                color="error"
-                                onClick={() => handleToggleDelete(lrs.id)}
-                              >
-                                Delete
-                              </Button>
-                              <DeleteDialog
-                                open={state.deleteLrsConsumerDialog.open}
-                                toggleOpen={handleToggleDelete}
-                                message="This will delete the LRS permanently. You cannot undo this action."
-                                handleDelete={handleDeleteLrs}
-                              />
-                            </AccordionActions>
-                          </Accordion>
-                        </Grid>
-                      ))
+                    ) : state.user.lrsConsumerList.length > 0 &&
+                      roles.includes(RoleTypes.user) ? (
+                      <ManageLrsConsumerList
+                        state={state}
+                        setState={setState}
+                      />
+                    ) : state.user.lrsProviderList.length > 0 &&
+                      roles.includes(RoleTypes["data provider"]) ? (
+                      <ManageLrsProviderList
+                        state={state}
+                        setState={setState}
+                      />
                     ) : (
                       <Grid item xs={12}>
                         <Alert severity="info">
