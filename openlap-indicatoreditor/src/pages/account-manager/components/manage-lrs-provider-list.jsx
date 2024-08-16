@@ -64,7 +64,7 @@ const ManageLrsProviderList = ({ state, setState }) => {
         const { lrsId, lrsTitle, statementCount, createdAt, basicAuth } = lrs;
         return (
           <Grid item xs={12} key={lrsId}>
-            <Accordion>
+            <Accordion variant="outlined">
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls="panel1-content"
@@ -82,11 +82,11 @@ const ManageLrsProviderList = ({ state, setState }) => {
                       <Grid item>
                         <Chip label={lrsTitle} />
                       </Grid>
-                      <Grid item>
-                        <IconButton size="small">
-                          <Edit />
-                        </IconButton>
-                      </Grid>
+                      {/*<Grid item>*/}
+                      {/*  <IconButton size="small">*/}
+                      {/*    <Edit />*/}
+                      {/*  </IconButton>*/}
+                      {/*</Grid>*/}
                     </Grid>
                   </Grid>
                   <Grid item xs={12}>

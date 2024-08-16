@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Box,
@@ -15,6 +15,8 @@ import { styled } from "@mui/material/styles";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import menus from "../../../setup/routes-manager/router-config.jsx";
+import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
+import DashboardIcon from "@mui/icons-material/Dashboard";
 
 const drawerWidth = 280;
 export const DrawerHeader = styled("div")(({ theme }) => ({
@@ -26,11 +28,14 @@ export const DrawerHeader = styled("div")(({ theme }) => ({
 }));
 
 const Sidebar = ({ openSidebar }) => {
+  const {
+    user: { roles },
+  } = useContext(AuthContext);
   const [openMenus, setOpenMenus] = useState({
-    isc: true,
-    indicator: true,
-    gqi: true,
-    tools: true,
+    isc: false,
+    indicator: false,
+    gqi: false,
+    tools: false,
     settings: true,
   });
 
@@ -44,30 +49,38 @@ const Sidebar = ({ openSidebar }) => {
     }));
   };
 
-  const MenuList = ({ menu }) => (
-    <List>
-      <ListItemButton onClick={() => handleToggle(menu.key)}>
-        <ListItemIcon>{menu.icon}</ListItemIcon>
-        <ListItemText primary={menu.title} />
-        {openMenus[menu.key] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-      </ListItemButton>
-      <Collapse in={openMenus[menu.key]} timeout={"auto"} unmountOnExit>
-        <List component="div" disablePadding>
-          {menu.items.map((item, index) => (
-            <ListItemButton
-              sx={{ pl: 4 }}
-              onClick={() => navigate(item.navigate)}
-              key={index}
-              selected={location.pathname === item.navigate}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.primary} secondary={item.secondary} />
-            </ListItemButton>
-          ))}
+  const MenuList = ({ menu }) => {
+    if (roles.some((role) => menu.allowedRoles.includes(role))) {
+      return (
+        <List>
+          <ListItemButton onClick={() => handleToggle(menu.key)}>
+            <ListItemIcon>{menu.icon}</ListItemIcon>
+            <ListItemText primary={menu.title} />
+            {openMenus[menu.key] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          </ListItemButton>
+          <Collapse in={openMenus[menu.key]} timeout={"auto"} unmountOnExit>
+            <List component="div" disablePadding>
+              {menu.items.map((item, index) => (
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  onClick={() => navigate(item.navigate)}
+                  key={index}
+                  selected={location.pathname === item.navigate}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText
+                    primary={item.primary}
+                    secondary={item.secondary}
+                  />
+                </ListItemButton>
+              ))}
+            </List>
+          </Collapse>
         </List>
-      </Collapse>
-    </List>
-  );
+      );
+    }
+    return undefined;
+  };
 
   return (
     <Drawer
@@ -98,7 +111,17 @@ const Sidebar = ({ openSidebar }) => {
       </DrawerHeader>
 
       <Divider />
-
+      <List component="div" disablePadding>
+        <ListItemButton
+          onClick={() => navigate("/dashboard")}
+          selected={location.pathname === "/dashboard"}
+        >
+          <ListItemIcon>
+            <DashboardIcon />
+          </ListItemIcon>
+          <ListItemText primary="Dashboard" secondary="Dashboard" />
+        </ListItemButton>
+      </List>
       {menus.map((menu) => (
         <MenuList menu={menu} key={menu.key} />
       ))}

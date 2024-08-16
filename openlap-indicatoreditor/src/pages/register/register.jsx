@@ -1,6 +1,6 @@
-import React, {useContext, useEffect, useState} from "react";
-import {AuthContext} from "../../setup/auth-context-manager/auth-context-manager.jsx";
-import {useNavigate} from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
+import { useNavigate } from "react-router-dom";
 import OpenLAPLogo from "../../assets/brand/openlap-logo.svg";
 import {
   FormControl,
@@ -8,6 +8,7 @@ import {
   FormHelperText,
   FormLabel,
   Grid,
+  IconButton,
   InputLabel,
   Link,
   MenuItem,
@@ -15,15 +16,17 @@ import {
   RadioGroup,
   Select,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import {LoadingButton} from "@mui/lab";
+import { LoadingButton } from "@mui/lab";
 import RoleTypes from "../../common/enums/role-types";
 import UniqueIdentifierTypes from "../../common/enums/unique-identifier-types";
-import {fetchLRSData, register} from "./register-api";
+import { fetchLRSData, register } from "./register-api";
+import { Help } from "@mui/icons-material";
 
 const Register = () => {
-  const {api} = useContext(AuthContext);
+  const { api } = useContext(AuthContext);
   const [formFields, setFormFields] = useState({
     name: "",
     email: "",
@@ -64,7 +67,7 @@ const Register = () => {
   }, [api]);
 
   const handleFormFields = (event) => {
-    const {name, value} = event.target;
+    const { name, value } = event.target;
     setFormFields(() => ({
       ...formFields,
       [name]: value,
@@ -78,7 +81,7 @@ const Register = () => {
   };
 
   const handleLrsConsumerRequest = (event) => {
-    const {name, value} = event.target;
+    const { name, value } = event.target;
     setLrsConsumerRequest(() => ({
       ...lrsConsumerRequest,
       [name]: value,
@@ -92,7 +95,7 @@ const Register = () => {
   };
 
   const handleLrsProviderRequest = (event) => {
-    const {name, value} = event.target;
+    const { name, value } = event.target;
     setLrsProviderRequest(() => ({
       ...lrsProviderRequest,
       [name]: value,
@@ -124,7 +127,7 @@ const Register = () => {
         formFields.confirmPassword,
         formFields.role,
         lrsConsumerRequest,
-        lrsProviderRequest
+        lrsProviderRequest,
       );
 
       if (response.status === 201) {
@@ -158,7 +161,7 @@ const Register = () => {
           item
           xs={12}
           component="img"
-          sx={{height: 50, mb: 3}}
+          sx={{ height: 50, mb: 3 }}
           src={OpenLAPLogo}
           alt="Soco logo"
         />
@@ -237,13 +240,84 @@ const Register = () => {
                   >
                     <FormControlLabel
                       value={RoleTypes.user}
-                      control={<Radio/>}
-                      label="User"
+                      control={<Radio />}
+                      label={
+                        <>
+                          <Grid
+                            container
+                            spacing={1}
+                            alignItems="center"
+                            sx={{ pr: 3 }}
+                          >
+                            <Grid item>
+                              <Typography>User</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Tooltip
+                                title={
+                                  <>
+                                    <Typography>
+                                      As a User, you will be able to:
+                                    </Typography>
+                                    <Typography>
+                                      • Connect to multiple Leaning Record
+                                      Stores (LRS) using your unique identifier
+                                      from your LMSs or MOOC platforms
+                                    </Typography>
+                                    <Typography>
+                                      • Create Indicator Specification Cards
+                                    </Typography>
+                                    <Typography>• Create Indicators</Typography>
+                                    <Typography>
+                                      • Create Goal, Question, and Indicators
+                                    </Typography>
+                                  </>
+                                }
+                              >
+                                <IconButton>
+                                  <Help />
+                                </IconButton>
+                              </Tooltip>
+                            </Grid>
+                          </Grid>
+                        </>
+                      }
                     />
                     <FormControlLabel
                       value={RoleTypes["data provider"]}
-                      control={<Radio/>}
-                      label="Data Provider"
+                      control={<Radio />}
+                      label={
+                        <>
+                          <Grid container spacing={1} alignItems="center">
+                            <Grid item>
+                              <Typography>Data Provider</Typography>
+                            </Grid>
+                            <Grid item>
+                              <Tooltip
+                                title={
+                                  <>
+                                    <Typography>
+                                      As a Data Provider, you will be able to:
+                                    </Typography>
+                                    <Typography>
+                                      • Create multiple Leaning Record Store
+                                      (LRS) instances
+                                    </Typography>
+                                    <Typography>
+                                      • Use Basic Auth token to add data to the
+                                      LRS
+                                    </Typography>
+                                  </>
+                                }
+                              >
+                                <IconButton>
+                                  <Help />
+                                </IconButton>
+                              </Tooltip>
+                            </Grid>
+                          </Grid>
+                        </>
+                      }
                     />
                   </RadioGroup>
                 </FormControl>
@@ -286,7 +360,7 @@ const Register = () => {
                       label="Unique Identifier"
                       placeholder="Unique Identifier"
                       error={Boolean(
-                        errors?.["lrsConsumerRequest.uniqueIdentifier"]
+                        errors?.["lrsConsumerRequest.uniqueIdentifier"],
                       )}
                       helperText={
                         errors?.["lrsConsumerRequest.uniqueIdentifier"]
@@ -329,7 +403,7 @@ const Register = () => {
                                 {key}
                               </MenuItem>
                             );
-                          }
+                          },
                         )}
                       </Select>
                     </FormControl>
@@ -352,7 +426,7 @@ const Register = () => {
                   <Grid item>
                     <Link
                       onClick={() => navigate("/login")}
-                      sx={{cursor: "pointer"}}
+                      sx={{ cursor: "pointer" }}
                       variant="body2"
                     >
                       {"Already have an account? Log in to your account"}
@@ -365,8 +439,7 @@ const Register = () => {
         </Grid>
       </Grid>
     </>
-  )
-    ;
+  );
 };
 
 export default Register;

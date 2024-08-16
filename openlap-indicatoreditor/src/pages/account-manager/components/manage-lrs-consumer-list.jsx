@@ -50,7 +50,7 @@ const ManageLrsConsumerList = ({ state, setState }) => {
     <>
       {state.user.lrsConsumerList?.map((lrs, index) => (
         <Grid item xs={12} key={lrs.id}>
-          <Accordion>
+          <Accordion variant="outlined">
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
               aria-controls="panel1-content"
