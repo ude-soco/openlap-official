@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Monitoring",
+    "description": "Monitoring students' learning activities to improve teaching process",
+    "author": "OpenLAP",
+    "analyticsMethods": null,
+    "active": true
+  },
+  {
+    "name": "Prediction",
+    "description": "Predict students' knowledge and future performance based on his/her current activities and performance",
+    "author": "OpenLAP",
+    "analyticsMethods": null,
+    "active": true
+  },
+  {
+    "name": "Recommendation",
+    "description": "Help students decide what to do next by recommending them learning resources and learners to work with, based on their preferences and activities of other learners with similar preferences",
+    "author": "OpenLAP",
+    "analyticsMethods": null,
+    "active": true
+  },
+  {
+    "name": "Assessment",
+    "description": "Assess students' performance to improve learning process",
+    "author": "OpenLAP",
+    "analyticsMethods": null,
+    "active": true
+  },
+  {
+    "name": "Self-Reflection",
+    "description": "Support students and teachers in comparing data within the same course, across classes, or even across institutions to draw conclusions and reflect on the effectiveness of their learning or teaching practice",
+    "author": "OpenLAP",
+    "analyticsMethods": null,
+    "active": true
+  }
+]

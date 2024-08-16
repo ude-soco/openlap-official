@@ -1,0 +1,12 @@
+.env
+.env.*
+*.csv
+.settings
+.classpath
+.project
+.vscode
+.DS_Store
+.idea/
+/target/
+/ObjectStore/
+/bin/
