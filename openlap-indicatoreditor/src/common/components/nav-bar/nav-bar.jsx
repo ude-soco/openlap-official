@@ -18,6 +18,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import FirstPageIcon from "@mui/icons-material/FirstPage";
 import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
+import SchoolIcon from "@mui/icons-material/School";
 import { useContext, useState } from "react";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import { useNavigate } from "react-router-dom";
@@ -53,6 +54,17 @@ const NavBar = ({ openSidebar, toggleSidebar }) => {
     logout();
     handleLightMode();
   };
+
+  const handleNavigateToAccountSettings = () => {
+    setMenu(null);
+    navigate("/account-settings");
+  };
+
+  const handleNavigateToManageLRS = () => {
+    setMenu(null);
+    navigate("/manage-lrs");
+  };
+
   return (
     <>
       <AppBar
@@ -81,7 +93,7 @@ const NavBar = ({ openSidebar, toggleSidebar }) => {
           <Grid container justifyContent="space-between" alignItems="center">
             <Grid
               item
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/indicator")}
               sx={{
                 cursor: "pointer",
                 height: 40,
@@ -124,7 +136,16 @@ const NavBar = ({ openSidebar, toggleSidebar }) => {
               anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
               transformOrigin={{ vertical: "top", horizontal: "right" }}
             >
-              <MenuItem sx={{ py: 1.5 }}>
+              <MenuItem sx={{ py: 1.5 }} onClick={handleNavigateToManageLRS}>
+                <ListItemText>Manage LRS</ListItemText>
+                <ListItemIcon>
+                  <SchoolIcon color="primary" />
+                </ListItemIcon>
+              </MenuItem>
+              <MenuItem
+                sx={{ py: 1.5 }}
+                onClick={handleNavigateToAccountSettings}
+              >
                 <ListItemText>Account Settings</ListItemText>
                 <ListItemIcon>
                   <PersonIcon color="primary" />

@@ -1,0 +1,37 @@
+export const requestAvailableLRSInOpenLAP = async (api) => {
+  try {
+    const response = await api.get("v1/register/lrs");
+    return response.data.data;
+  } catch (error) {
+    console.error("Failed to fetch list of LRS data", error);
+    throw error; // Re-throw the error to handle it in the component
+  }
+};
+
+export const requestLRSConsumerValidation = async (
+  api,
+  lrsId,
+  uniqueIdentifier,
+) => {
+  try {
+    let requestBody = {
+      lrsId,
+      uniqueIdentifier,
+    };
+    const response = await api.post("v1/users/my/lrs/add", requestBody);
+    return response.data;
+  } catch (error) {
+    throw error; // Re-throw the error to handle it in the component
+  }
+};
+
+export const requestDeleteLRSConsumer = async (api, lrsConsumerId) => {
+  try {
+    const response = await api.delete(
+      `v1/users/my/lrs/${lrsConsumerId}/delete`,
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response.data; // Re-throw the error to handle it in the component
+  }
+};
