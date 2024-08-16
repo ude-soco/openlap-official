@@ -1,0 +1,200 @@
+import StyleIcon from "@mui/icons-material/Style";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import AddchartIcon from "@mui/icons-material/Addchart";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import QuizIcon from "@mui/icons-material/Quiz";
+import ListAltIcon from "@mui/icons-material/ListAlt";
+import ArchitectureIcon from "@mui/icons-material/Architecture";
+import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
+import SettingsIcon from "@mui/icons-material/Settings";
+import SchoolIcon from "@mui/icons-material/School";
+import PersonIcon from "@mui/icons-material/Person";
+import RoleTypes from "../../common/enums/role-types.js";
+import UserProfile from "../../pages/account-manager/user-profile.jsx";
+import ManageLrs from "../../pages/account-manager/manage-lrs.jsx";
+import CsvXapiDashboard from "../../pages/csv-xapi-converter/csv-xapi-dashboard.jsx";
+import GQIPool from "../../pages/gqi-editor/gqi-pool/gqi-pool.jsx";
+import GQIEditor from "../../pages/gqi-editor/gqi-editor/gqi-editor.jsx";
+import GQIDashboard from "../../pages/gqi-editor/dashboard/gqi-dashboard.jsx";
+import IndicatorPool from "../../pages/indicator-editor/indicator-pool/indicator-pool.jsx";
+import IndicatorEditor from "../../pages/indicator-editor/editor/indicator-editor.jsx";
+import IndicatorEditorDashboard from "../../pages/indicator-editor/dashboard/indicator-editor-dashboard.jsx";
+import MultiLevelAnalysisIndicator from "../../pages/indicator-editor/editor/multi-level-analysis-indicator/multi-level-analysis-indicator.jsx";
+import CompositeIndicator from "../../pages/indicator-editor/editor/composite-indicator/composite-indicator.jsx";
+import BasicIndicator from "../../pages/indicator-editor/editor/basic-indicator/basic-indicator.jsx";
+import IndicatorPreview from "../../pages/indicator-editor/dashboard/indicator-preview.jsx";
+import ISCPool from "../../pages/isc-creator/isc-pool/isc-pool.jsx";
+import ISCCreator from "../../pages/isc-creator/creator/isc-creator.jsx";
+import ISCDashboard from "../../pages/isc-creator/dashboard/isc-dashboard.jsx";
+
+const menus = [
+  {
+    key: "isc",
+    title: "Indicator Specification Cards (ISC)",
+    icon: <StyleIcon />,
+    items: [
+      {
+        primary: "ISC Dashboard",
+        secondary: "List of my ISCs",
+        navigate: "/isc",
+        icon: <DashboardIcon />,
+        component: <ISCDashboard />,
+        allowedRoles: [RoleTypes.user],
+      },
+      {
+        primary: "ISC Creator",
+        secondary: "Create a ISC",
+        navigate: "/isc/creator",
+        icon: <AddchartIcon />,
+        component: <ISCCreator />,
+        allowedRoles: [RoleTypes.user],
+      },
+      {
+        primary: "ISC Pool",
+        secondary: "Search for ISCs",
+        navigate: "/isc/pool",
+        icon: <AddchartIcon />,
+        component: <ISCPool />,
+        allowedRoles: [RoleTypes.user],
+      },
+    ],
+  },
+  {
+    key: "indicator",
+    title: "Indicators",
+    icon: <BarChartIcon />,
+    items: [
+      {
+        primary: "Indicator Dashboard",
+        secondary: "List of my Indicators",
+        navigate: "/indicator",
+        icon: <DashboardIcon />,
+        component: <IndicatorEditorDashboard />,
+        allowedRoles: [RoleTypes.user],
+        children: [
+          {
+            primary: "Basic Indicator",
+            secondary: "Create a Basic Indicator",
+            navigate: "/indicator/:id",
+            icon: <AddchartIcon />,
+            component: <IndicatorPreview />,
+            allowedRoles: [RoleTypes.user],
+          },
+        ],
+      },
+      {
+        primary: "Indicator Editor",
+        secondary: "Create an Indicator",
+        navigate: "/indicator/editor",
+        icon: <AddchartIcon />,
+        component: <IndicatorEditor />,
+        allowedRoles: [RoleTypes.user],
+        children: [
+          {
+            primary: "Basic Indicator",
+            secondary: "Create a Basic Indicator",
+            navigate: "/indicator/editor/basic",
+            icon: <AddchartIcon />,
+            component: <BasicIndicator />,
+            allowedRoles: [RoleTypes.user],
+          },
+          {
+            primary: "Indicator Editor",
+            secondary: "Create an Indicator",
+            navigate: "/indicator/editor/composite",
+            icon: <AddchartIcon />,
+            component: <CompositeIndicator />,
+            allowedRoles: [RoleTypes.user],
+          },
+          {
+            primary: "Indicator Editor",
+            secondary: "Create an Indicator",
+            navigate: "/indicator/editor/multi-level-analysis",
+            icon: <AddchartIcon />,
+            component: <MultiLevelAnalysisIndicator />,
+            allowedRoles: [RoleTypes.user],
+          },
+        ],
+      },
+      {
+        primary: "Indicator Pool",
+        secondary: "Search for indicators",
+        navigate: "/indicator/pool",
+        icon: <AddchartIcon />,
+        component: <IndicatorPool />,
+        allowedRoles: [RoleTypes.user],
+      },
+    ],
+  },
+  {
+    key: "gqi",
+    title: "Goal-Question-Indicator",
+    icon: <QuizIcon />,
+    items: [
+      {
+        primary: "GQI Dashboard",
+        secondary: "List of my GQIs",
+        navigate: "/gqi",
+        icon: <DashboardIcon />,
+        component: <GQIDashboard />,
+        allowedRoles: [RoleTypes.user],
+      },
+      {
+        primary: "GQI Editor",
+        secondary: "Create a GQI",
+        navigate: "/gqi/editor",
+        icon: <ListAltIcon />,
+        component: <GQIEditor />,
+        allowedRoles: [RoleTypes.user],
+      },
+      {
+        primary: "GQI Pool",
+        secondary: "Search for GQIs",
+        navigate: "/gqi/pool",
+        icon: <ListAltIcon />,
+        component: <GQIPool />,
+        allowedRoles: [RoleTypes.user],
+      },
+    ],
+  },
+  {
+    key: "tools",
+    title: "Tools",
+    icon: <ArchitectureIcon />,
+    items: [
+      {
+        primary: "CSV-xAPI Converter",
+        secondary: "Convert CSV to xAPI and vice versa",
+        navigate: "/csv-xapi",
+        icon: <ChangeCircleIcon />,
+        component: <CsvXapiDashboard />,
+        allowedRoles: [RoleTypes.user],
+      },
+    ],
+  },
+  {
+    key: "settings",
+    title: "Settings",
+    icon: <SettingsIcon />,
+    items: [
+      {
+        primary: "Manage LRS",
+        secondary: "Add or remove LRS",
+        navigate: "/manage-lrs",
+        icon: <SchoolIcon />,
+        component: <ManageLrs />,
+        allowedRoles: [RoleTypes.user, RoleTypes["data provider"]],
+      },
+      {
+        primary: "Account Settings",
+        secondary: "Update your profile",
+        navigate: "/account-settings",
+        icon: <PersonIcon />,
+        component: <UserProfile />,
+        allowedRoles: [RoleTypes.user, RoleTypes["data provider"]],
+      },
+    ],
+  },
+];
+
+export default menus;

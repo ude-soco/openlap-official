@@ -16,7 +16,7 @@ export const register = async (
   confirmPassword,
   role,
   lrsConsumerRequest,
-  lrsProviderRequest
+  lrsProviderRequest,
 ) => {
   const requestBody = {
     name,
@@ -27,10 +27,8 @@ export const register = async (
     lrsConsumerRequest,
     lrsProviderRequest,
   };
-
   try {
-    const response = await api.post("v1/register", requestBody);
-    return response;
+    return await api.post("v1/register", requestBody);
   } catch (e) {
     throw e.response;
   }
