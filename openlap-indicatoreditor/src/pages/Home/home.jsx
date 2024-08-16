@@ -7,13 +7,13 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
-import { requestUserDetails } from "./account-manager/utils/account-manager-api.js";
-import { AuthContext } from "../setup/auth-context-manager/auth-context-manager.jsx";
+import { requestUserDetails } from "../account-manager/utils/account-manager-api.js";
+import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
 import { ArrowForward } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import RoleTypes from "../common/enums/role-types.js";
+import RoleTypes from "../../common/enums/role-types.js";
 
-const Dashboard = () => {
+const Home = () => {
   const {
     api,
     user: { roles },
@@ -52,7 +52,7 @@ const Dashboard = () => {
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Typography>Dashboard</Typography>
+          <Typography>Home</Typography>
         </Grid>
         <Grid item xs={12}>
           <Divider />
@@ -138,4 +138,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Home;

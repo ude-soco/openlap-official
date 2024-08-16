@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 20.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 350 823" style="enable-background:new 0 0 350 823;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#F2F2F2;}
+	.st1{fill:#A0ACE1;stroke:#FFFFFF;stroke-width:2;}
+	.st2{fill:#DBB080;stroke:#FFFFFF;stroke-width:2;}
+	.st3{fill:#94ABF5;stroke:#FFFFFF;stroke-width:2;}
+	.st4{fill:#8CA5F5;stroke:#FFFFFF;stroke-width:2;}
+	.st5{fill:#F3B259;stroke:#FFFFFF;stroke-width:2;}
+	.st6{fill:#FFB345;stroke:#FFFFFF;stroke-width:2;}
+	.st7{fill:#B8AEBA;stroke:#FFFFFF;stroke-width:2;}
+	.st8{font-family:'Helvetica';}
+	.st9{font-size:14px;}
+	.st10{font-size:16px;}
+	.st11{fill:#C4AFA7;stroke:#FFFFFF;stroke-width:2;}
+	.st12{font-family:'Helvetica-Bold';}
+	.st13{fill:none;stroke:#FF0000;}
+	.st14{fill:url(#SVGID_1_);}
+	.st15{fill:none;stroke:#000000;stroke-width:1.5;}
+	.st16{fill:#8CA5F5;}
+	.st17{fill:#A0ACE1;}
+	.st18{fill:#C4AFA7;}
+	.st19{fill:#FFB345;}
+	.st20{fill:#DBB080;}
+</style>
+<g id="Layer_1">
+</g>
+<g id="Layer_2">
+	<rect x="13.4" y="10.7" class="st0" width="323.2" height="26.7"/>
+	<rect x="115.8" y="131.4" class="st1" width="72.4" height="72.4"/>
+	<rect x="188.3" y="131.4" class="st2" width="72.4" height="72.4"/>
+	<rect x="115.8" y="203.8" class="st2" width="72.4" height="72.4"/>
+	<rect x="188.3" y="203.8" class="st3" width="72.4" height="72.4"/>
+	<rect x="260.7" y="131.4" class="st4" width="72.4" height="72.4"/>
+	<rect x="260.7" y="203.8" class="st5" width="72.4" height="72.4"/>
+	<rect x="115.8" y="276.3" class="st6" width="72.4" height="72.4"/>
+	<rect x="188.3" y="276.3" class="st7" width="72.4" height="72.4"/>
+	<rect x="260.7" y="276.3" class="st2" width="72.4" height="72.4"/>
+	<text transform="matrix(1 0 0 1 147.5 123.0551)" class="st8 st9">A</text>
+	<text transform="matrix(1 0 0 1 219.5 123.0551)" class="st8 st9">B</text>
+	<text transform="matrix(1 0 0 1 289.5 123.0553)" class="st8 st9">C</text>
+	<text transform="matrix(1 0 0 1 95.9644 173.0552)" class="st8 st9">D</text>
+	<text transform="matrix(1 0 0 1 96.3506 243.0552)" class="st8 st9">E</text>
+	<text transform="matrix(1 0 0 1 96.7437 321.0552)" class="st8 st9">F</text>
+	<text transform="matrix(1 0 0 1 14.5 242.0552)" class="st8 st10">Rows</text>
+	<text transform="matrix(1 0 0 1 22.8062 533.4296)" class="st8 st9">0 - 20</text>
+	<text transform="matrix(1 0 0 1 86.8062 533.4296)" class="st8 st9">21 - 40</text>
+	<text transform="matrix(1 0 0 1 259.8879 668.8523)" class="st8 st9">Low</text>
+	<text transform="matrix(1 0 0 1 152.8062 533.4296)" class="st8 st9">41 - 60</text>
+	<text transform="matrix(1 0 0 1 220.8062 533.4296)" class="st8 st9">61 - 80</text>
+	<text transform="matrix(1 0 0 1 282.4728 533.4296)" class="st8 st9">81 - 100</text>
+	<text transform="matrix(1 0 0 1 21.5 383.0552)" class="st8 st10">Value scale for determining cell colouring:</text>
+	<text transform="matrix(1 0 0 1 20.8062 478.7629)" class="st8 st10">Alternative value scale broken into ranges:</text>
+	<text transform="matrix(1 0 0 1 230.354 638.8264)" class="st8 st9">Legend / key:</text>
+	<text transform="matrix(1 0 0 1 192.2782 68.1938)" class="st8 st10">Columns</text>
+	<text transform="matrix(1 0 0 1 136.5 174.0552)" class="st8 st10">Cell</text>
+	<text transform="matrix(1 0 0 1 208.5 174.0552)" class="st8 st10">Cell</text>
+	<text transform="matrix(1 0 0 1 280.8333 174.0552)" class="st8 st10">Cell</text>
+	<text transform="matrix(1 0 0 1 136.5 246.0552)" class="st8 st10">Cell</text>
+	<text transform="matrix(1 0 0 1 208.5 246.0552)" class="st8 st10">Cell</text>
+	<text transform="matrix(1 0 0 1 280.8333 246.0552)" class="st8 st10">Cell</text>
+	<text transform="matrix(1 0 0 1 136.5 317.0552)" class="st8 st10">Cell</text>
+	<text transform="matrix(1 0 0 1 208.5 317.0552)" class="st8 st10">Cell</text>
+	<text transform="matrix(1 0 0 1 280.8333 317.0552)" class="st8 st10">Cell</text>
+	<rect x="37.8" y="646" class="st4" width="52.8" height="52.8"/>
+	<rect x="90.5" y="646" class="st6" width="52.8" height="52.8"/>
+	<rect x="37.8" y="698.7" class="st11" width="52.8" height="52.8"/>
+	<rect x="90.5" y="698.7" class="st6" width="52.8" height="52.8"/>
+	<rect x="143.3" y="646" class="st11" width="52.8" height="52.8"/>
+	<rect x="143.3" y="698.7" class="st4" width="52.8" height="52.8"/>
+	<rect x="37.8" y="751.5" class="st6" width="52.8" height="52.8"/>
+	<rect x="90.5" y="751.5" class="st11" width="52.8" height="52.8"/>
+	<rect x="143.3" y="751.5" class="st4" width="52.8" height="52.8"/>
+	<text transform="matrix(1 0 0 1 60.8293 639.1592)" class="st8 st9">A</text>
+	<text transform="matrix(1 0 0 1 112.2898 639.1602)" class="st8 st9">B</text>
+	<text transform="matrix(1 0 0 1 164.2922 639.1602)" class="st8 st9">C</text>
+	<text transform="matrix(1 0 0 1 20.387 677.0488)" class="st8 st9">D</text>
+	<text transform="matrix(1 0 0 1 20.6687 728.0508)" class="st8 st9">E</text>
+	<text transform="matrix(1 0 0 1 20.9553 782.6973)" class="st8 st9">F</text>
+	<text transform="matrix(1 0 0 1 56.3047 29)" class="st12 st10">Heatmap using numerical data:</text>
+	<rect x="13.4" y="572.9" class="st0" width="323.2" height="26.7"/>
+	<text transform="matrix(1 0 0 1 51.8555 591.2369)" class="st12 st10">Heatmap using categorical data:</text>
+	<text transform="matrix(1 0 0 1 15.5 441.8052)" class="st8 st9">0</text>
+	<text transform="matrix(1 0 0 1 168.25 441.8052)" class="st8 st9">50</text>
+	<text transform="matrix(1 0 0 1 316.75 441.8052)" class="st8 st9">100</text>
+	<polyline class="st13" points="90.2,168.6 76,168.6 76,316.5 90.2,316.5 	"/>
+	<line class="st13" x1="60.9" y1="238.1" x2="90.2" y2="238.1"/>
+	<polyline class="st13" points="294.9,106.2 294.9,92 151.6,92 151.6,106.2 	"/>
+	<line class="st13" x1="224.1" y1="76.9" x2="224.1" y2="106.2"/>
+	<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="18.8398" y1="406.5552" x2="330.3272" y2="406.5552">
+		<stop  offset="0" style="stop-color:#849FF5"/>
+		<stop  offset="1" style="stop-color:#FFB345"/>
+	</linearGradient>
+	<rect x="18.8" y="397.1" class="st14" width="311.5" height="19"/>
+	<polyline class="st15" points="19.8,426.2 19.8,416.1 329.5,416.1 329.5,426.2 	"/>
+	<line class="st15" x1="175.1" y1="426.2" x2="175.1" y2="416.1"/>
+	<rect x="14.5" y="495.3" class="st16" width="55.4" height="19"/>
+	<rect x="81.3" y="495.3" class="st17" width="55.4" height="19"/>
+	<rect x="148.1" y="495.3" class="st18" width="55.4" height="19"/>
+	<rect x="231.7" y="654.2" class="st16" width="20" height="20"/>
+	<text transform="matrix(1 0 0 1 259.8879 694.2441)" class="st8 st9">Medium</text>
+	<rect x="231.7" y="679.5" class="st18" width="20" height="20"/>
+	<text transform="matrix(1 0 0 1 259.8879 719.832)" class="st8 st9">High</text>
+	<rect x="231.7" y="705.1" class="st19" width="20" height="20"/>
+	<rect x="214.9" y="495.3" class="st20" width="55.4" height="19"/>
+	<rect x="281.6" y="495.3" class="st19" width="55.4" height="19"/>
+</g>
+</svg>
