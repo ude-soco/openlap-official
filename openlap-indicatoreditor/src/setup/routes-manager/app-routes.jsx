@@ -31,6 +31,7 @@ import CompositeIndicator from "../../pages/indicator-editor/editor/composite-in
 import MultiLevelAnalysisIndicator from "../../pages/indicator-editor/editor/multi-level-analysis-indicator/multi-level-analysis-indicator.jsx";
 import CsvXapiDashboard from "../../pages/csv-xapi-converter/csv-xapi-dashboard.jsx";
 import ManageLrs from "../../pages/account-manager/manage-lrs.jsx";
+import Dashboard from "../../pages/dashboard.jsx";
 
 const drawerWidth = 280;
 
@@ -106,6 +107,18 @@ const AppRoutes = () => {
                         element={
                           <PrivateRoute
                             component={<UserProfile />}
+                            allowedRoles={[
+                              RoleTypes.user,
+                              RoleTypes["data provider"],
+                            ]}
+                          />
+                        }
+                      />
+                      <Route
+                        path="/dashboard"
+                        element={
+                          <PrivateRoute
+                            component={<Dashboard />}
                             allowedRoles={[
                               RoleTypes.user,
                               RoleTypes["data provider"],

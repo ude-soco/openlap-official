@@ -32,6 +32,7 @@ const menus = [
     key: "isc",
     title: "Indicator Specification Cards (ISC)",
     icon: <StyleIcon />,
+    allowedRoles: [RoleTypes.user],
     items: [
       {
         primary: "ISC Dashboard",
@@ -39,7 +40,6 @@ const menus = [
         navigate: "/isc",
         icon: <DashboardIcon />,
         component: <ISCDashboard />,
-        allowedRoles: [RoleTypes.user],
       },
       {
         primary: "ISC Creator",
@@ -47,7 +47,6 @@ const menus = [
         navigate: "/isc/creator",
         icon: <AddchartIcon />,
         component: <ISCCreator />,
-        allowedRoles: [RoleTypes.user],
       },
       {
         primary: "ISC Pool",
@@ -55,7 +54,6 @@ const menus = [
         navigate: "/isc/pool",
         icon: <AddchartIcon />,
         component: <ISCPool />,
-        allowedRoles: [RoleTypes.user],
       },
     ],
   },
@@ -63,6 +61,7 @@ const menus = [
     key: "indicator",
     title: "Indicators",
     icon: <BarChartIcon />,
+    allowedRoles: [RoleTypes.user],
     items: [
       {
         primary: "Indicator Dashboard",
@@ -70,7 +69,6 @@ const menus = [
         navigate: "/indicator",
         icon: <DashboardIcon />,
         component: <IndicatorEditorDashboard />,
-        allowedRoles: [RoleTypes.user],
         children: [
           {
             primary: "Basic Indicator",
@@ -78,7 +76,6 @@ const menus = [
             navigate: "/indicator/:id",
             icon: <AddchartIcon />,
             component: <IndicatorPreview />,
-            allowedRoles: [RoleTypes.user],
           },
         ],
       },
@@ -88,7 +85,6 @@ const menus = [
         navigate: "/indicator/editor",
         icon: <AddchartIcon />,
         component: <IndicatorEditor />,
-        allowedRoles: [RoleTypes.user],
         children: [
           {
             primary: "Basic Indicator",
@@ -96,7 +92,6 @@ const menus = [
             navigate: "/indicator/editor/basic",
             icon: <AddchartIcon />,
             component: <BasicIndicator />,
-            allowedRoles: [RoleTypes.user],
           },
           {
             primary: "Indicator Editor",
@@ -104,7 +99,6 @@ const menus = [
             navigate: "/indicator/editor/composite",
             icon: <AddchartIcon />,
             component: <CompositeIndicator />,
-            allowedRoles: [RoleTypes.user],
           },
           {
             primary: "Indicator Editor",
@@ -112,7 +106,6 @@ const menus = [
             navigate: "/indicator/editor/multi-level-analysis",
             icon: <AddchartIcon />,
             component: <MultiLevelAnalysisIndicator />,
-            allowedRoles: [RoleTypes.user],
           },
         ],
       },
@@ -122,7 +115,6 @@ const menus = [
         navigate: "/indicator/pool",
         icon: <AddchartIcon />,
         component: <IndicatorPool />,
-        allowedRoles: [RoleTypes.user],
       },
     ],
   },
@@ -130,6 +122,7 @@ const menus = [
     key: "gqi",
     title: "Goal-Question-Indicator",
     icon: <QuizIcon />,
+    allowedRoles: [RoleTypes.user],
     items: [
       {
         primary: "GQI Dashboard",
@@ -137,7 +130,6 @@ const menus = [
         navigate: "/gqi",
         icon: <DashboardIcon />,
         component: <GQIDashboard />,
-        allowedRoles: [RoleTypes.user],
       },
       {
         primary: "GQI Editor",
@@ -145,7 +137,6 @@ const menus = [
         navigate: "/gqi/editor",
         icon: <ListAltIcon />,
         component: <GQIEditor />,
-        allowedRoles: [RoleTypes.user],
       },
       {
         primary: "GQI Pool",
@@ -153,7 +144,6 @@ const menus = [
         navigate: "/gqi/pool",
         icon: <ListAltIcon />,
         component: <GQIPool />,
-        allowedRoles: [RoleTypes.user],
       },
     ],
   },
@@ -161,6 +151,7 @@ const menus = [
     key: "tools",
     title: "Tools",
     icon: <ArchitectureIcon />,
+    allowedRoles: [RoleTypes.user],
     items: [
       {
         primary: "CSV-xAPI Converter",
@@ -168,7 +159,6 @@ const menus = [
         navigate: "/csv-xapi",
         icon: <ChangeCircleIcon />,
         component: <CsvXapiDashboard />,
-        allowedRoles: [RoleTypes.user],
       },
     ],
   },
@@ -176,6 +166,7 @@ const menus = [
     key: "settings",
     title: "Settings",
     icon: <SettingsIcon />,
+    allowedRoles: [RoleTypes.user, RoleTypes["data provider"]],
     items: [
       {
         primary: "Manage LRS",
@@ -183,7 +174,6 @@ const menus = [
         navigate: "/manage-lrs",
         icon: <SchoolIcon />,
         component: <ManageLrs />,
-        allowedRoles: [RoleTypes.user, RoleTypes["data provider"]],
       },
       {
         primary: "Account Settings",
@@ -191,7 +181,6 @@ const menus = [
         navigate: "/account-settings",
         icon: <PersonIcon />,
         component: <UserProfile />,
-        allowedRoles: [RoleTypes.user, RoleTypes["data provider"]],
       },
     ],
   },
