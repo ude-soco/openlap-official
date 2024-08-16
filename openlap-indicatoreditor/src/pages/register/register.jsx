@@ -56,14 +56,14 @@ const Register = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const lrsData = await fetchLRSData(api);
-        setLrsList(lrsData);
+        return await fetchLRSData(api);
       } catch (error) {
         console.error("Failed to load LRS list", error);
       }
     };
-
-    loadData();
+    loadData().then((response) => {
+      setLrsList(response);
+    });
   }, [api]);
 
   const handleFormFields = (event) => {

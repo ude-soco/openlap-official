@@ -119,7 +119,7 @@ const Sidebar = ({ openSidebar }) => {
           <ListItemIcon>
             <DashboardIcon />
           </ListItemIcon>
-          <ListItemText primary="Dashboard" secondary="Dashboard" />
+          <ListItemText primary="Home" secondary="Home" />
         </ListItemButton>
       </List>
       {menus.map((menu) => (

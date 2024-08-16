@@ -1,7 +1,7 @@
 import { Divider, Grid, Typography } from "@mui/material";
 import React from "react";
 
-const ISCDashboard = () => {
+const IscDashboard = () => {
   return (
     <>
       <Grid container spacing={2}>
@@ -15,4 +15,4 @@ const ISCDashboard = () => {
     </>
   );
 };
-export default ISCDashboard;
+export default IscDashboard;

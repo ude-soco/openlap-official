@@ -18,7 +18,7 @@ import IndicatorEditorDashboard from "../../pages/indicator-editor/dashboard/ind
 import IndicatorPool from "../../pages/indicator-editor/indicator-pool/indicator-pool.jsx";
 import IndicatorEditor from "../../pages/indicator-editor/editor/indicator-editor.jsx";
 import ISCCreator from "../../pages/isc-creator/creator/isc-creator.jsx";
-import ISCDashboard from "../../pages/isc-creator/dashboard/isc-dashboard.jsx";
+import IscDashboard from "../../pages/isc-creator/dashboard/isc-dashboard.jsx";
 import ISCPool from "../../pages/isc-creator/isc-pool/isc-pool.jsx";
 import GQIDashboard from "../../pages/gqi-editor/dashboard/gqi-dashboard.jsx";
 import GQIEditor from "../../pages/gqi-editor/gqi-editor/gqi-editor.jsx";
@@ -31,7 +31,7 @@ import CompositeIndicator from "../../pages/indicator-editor/editor/composite-in
 import MultiLevelAnalysisIndicator from "../../pages/indicator-editor/editor/multi-level-analysis-indicator/multi-level-analysis-indicator.jsx";
 import CsvXapiDashboard from "../../pages/csv-xapi-converter/csv-xapi-dashboard.jsx";
 import ManageLrs from "../../pages/account-manager/manage-lrs.jsx";
-import Dashboard from "../../pages/dashboard.jsx";
+import Home from "../../pages/Home/home.jsx";
 
 const drawerWidth = 280;
 
@@ -118,7 +118,7 @@ const AppRoutes = () => {
                         path="/dashboard"
                         element={
                           <PrivateRoute
-                            component={<Dashboard />}
+                            component={<Home />}
                             allowedRoles={[
                               RoleTypes.user,
                               RoleTypes["data provider"],
@@ -209,16 +209,7 @@ const AppRoutes = () => {
                         path="/isc"
                         element={
                           <PrivateRoute
-                            component={<ISCDashboard />}
-                            allowedRoles={[RoleTypes.user]}
-                          />
-                        }
-                      />
-                      <Route
-                        path="/isc/creator"
-                        element={
-                          <PrivateRoute
-                            component={<ISCCreator />}
+                            component={<IscDashboard />}
                             allowedRoles={[RoleTypes.user]}
                           />
                         }
