@@ -163,7 +163,6 @@ const MyIndicatorsTable = () => {
   };
 
   const handleCopyCode = () => {
-    console.log("Copy code for indicator:", selectedIndicator);
     const loadIndicatorCode = async (api, indicatorId) => {
       try {
         return await requestIndicatorCode(api, indicatorId);
