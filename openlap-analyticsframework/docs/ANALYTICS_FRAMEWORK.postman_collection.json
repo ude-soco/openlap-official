@@ -1,0 +1,3512 @@
+{
+	"info": {
+		"_postman_id": "e0f9416f-67c7-4723-8d7d-bd2f06273bb8",
+		"name": "ANALYTICS_FRAMEWORK",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "10089317"
+	},
+	"item": [
+		{
+			"name": "USER",
+			"item": [
+				{
+					"name": "DATA PROVIDER",
+					"item": [
+						{
+							"name": "LOGIN DATA PROVIDER Copy",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "userEmail",
+											"value": "dataprovider@gmail.com",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "{{USER_PASS}}",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{URI}}/login",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE LRS",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"New LRS created from OpenLAP 2 New\",\n    \"uniqueIdentifierType\": \"ACCOUNT_NAME\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/lrs/create",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"lrs",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UPDATE LRS",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"New LRS created from OpenLAP 2\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/lrs/66b22282b7fd47eca9bde26c",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"lrs",
+										"66b22282b7fd47eca9bde26c"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CONFIRM UPDATE LRS",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"title\": \"New LRS created from OpenLAP 2 Updated\",\n    \"uniqueIdentifierType\": \"OPENID\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/lrs/66b22580b7fd471c1856fa71/confirm",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"lrs",
+										"66b22580b7fd471c1856fa71",
+										"confirm"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "DELETE LRS",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{URI}}/v1/lrs/66b22282b7fd47eca9bde26c",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"lrs",
+										"66b22282b7fd47eca9bde26c"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CONFIRM DELETE LRS",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{URI}}/v1/lrs/66b1f9a1b7fd47f90b6c9860/confirm",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"lrs",
+										"66b1f9a1b7fd47f90b6c9860",
+										"confirm"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "ADMIN",
+					"item": [
+						{
+							"name": "ADMIN LOGIN",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "userEmail",
+											"value": "{{ADMIN_EMAIL}}",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "{{ADMIN_PASS}}",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{URI}}/login",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "ADD ROLE TO A USER",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBtYWlsLmNvbSIsImV4cCI6MTcyMDI5NTc5NywiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDkwL2FwaS9sb2dpbiIsInJvbGVzIjpbIlJPTEVfU1VQRVJfQURNSU4iXX0.s4Q3NUaB7DeaOGbjG4pHTMVjNdAFjPA6nly0gWycO_Q",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"userEmail\": \"allan@gmail.com\",\n    \"role\": \"ROLE_DATA_PROVIDER\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/roles/add",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"roles",
+										"add"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE NEW ROLE",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBtYWlsLmNvbSIsImV4cCI6MTcyMDI5NTc5NywiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDkwL2FwaS9sb2dpbiIsInJvbGVzIjpbIlJPTEVfU1VQRVJfQURNSU4iXX0.s4Q3NUaB7DeaOGbjG4pHTMVjNdAFjPA6nly0gWycO_Q",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"role\": \"ROLE_NEW_ROLE\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/roles/create",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"roles",
+										"create"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "REGISTER",
+					"item": [
+						{
+							"name": "GET ALL LRS FOR REGISTRATION",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "",
+										"value": "",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"url": {
+									"raw": "{{URI}}/v1/register/lrs",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"register",
+										"lrs"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "VALIDATE LRS AND UNIQUE IDENTIFIER FOR REGISTRATION",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\",\n    \"lrsId\": \"66acfbccb7fd479ac2499f04\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/register/validate",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"register",
+										"validate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE USER WITH ROLE DATA PROVIDER",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"Allan Data Provider\",\r\n    \"password\": \"1234qwer!\",\r\n    \"confirmPassword\": \"1234qwer!\",\r\n    \"email\": \"dataprovider@gmail.com\",\r\n    \"role\": \"ROLE_DATA_PROVIDER\",\r\n    \"lrsProviderRequest\": {\r\n        \"title\": \"OpenLAP LRS from Spring Boot\",\r\n        \"uniqueIdentifierType\": \"ACCOUNT_NAME\"\r\n    }\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/register",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"register"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE USER WITH ROLE USER",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"Allan User\",\r\n    \"password\": \"1234qwer!\",\r\n    \"confirmPassword\": \"1234qwer!\",\r\n    \"email\": \"aliuser@gmail.com\",\r\n    \"role\": \"ROLE_USER\",\r\n    \"lrsConsumerRequest\": {\r\n        \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\",\r\n        \"lrsId\": \"66acfbccb7fd479ac2499f04\"\r\n    }\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/register",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"register"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "LOGIN USER",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "userEmail",
+									"value": "aliuser@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{USER_PASS}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URI}}/login",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET USER DETAILS",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/users/my",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"my"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ADD NEW LRS FOR USER",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n    \"uniqueIdentifier\": \"c0fc991891344228ac2c138cd49d43a0\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/users/my/lrs/add",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"my",
+								"lrs",
+								"add"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "REFRESH TOKEN",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzaG9lYkBnbWFpbC5jb20iLCJleHAiOjE3MjEzODAyNzksImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA5MC9hcGkvbG9naW4ifQ.eEzDdikXkbaq73MiuU13Vy2VyXhuGR2LeMtuQwCzQ8o",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{URI}}/v1/token/refresh",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"token",
+								"refresh"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ENGINE",
+			"item": [
+				{
+					"name": "INITIALIZE DATABASE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/engine/initialize",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"engine",
+								"initialize"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "GOALS",
+			"item": [
+				{
+					"name": "POPULATE GOALS",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/analytics/goals/populate",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"goals",
+								"populate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CREATE A GOAL",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Monitoring 2\",\r\n    \"description\": \"Monitoring students' learning activities to improve teaching process\",\r\n    \"status\": \"ACTIVE\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/analytics/goals/create",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"goals",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET GOAL BY ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/analytics/goals/66894beb05dc67b668e759d6",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"goals",
+								"66894beb05dc67b668e759d6"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ALL GOALS",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/analytics/goals",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"goals"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ACTIVE GOALS",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/analytics/goals/active",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"goals",
+								"active"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE A GOAL",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": \"665ad9303434b20ecc227db1\",\n    \"name\": \"Monitoring\",\n    \"description\": \"Monitoring students' learning activities to improve teaching process\",\n    \"author\": \"OpenLAP\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/analytics/goals",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"goals"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SET A GOAL STATUS",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"goalId\": \"66894beb05dc67b668e759d2\",\n    \"status\": \"ACTIVE\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/analytics/goals/status",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"goals",
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE A GOAL",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/analytics/goals/66894beb05dc67b668e759d6",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"goals",
+								"66894beb05dc67b668e759d6"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ANALYSIS METHODS",
+			"item": [
+				{
+					"name": "CREATE A NEW ANALYTICS METHOD",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"outputs\": \"attribute_2,attribute_1\",\r\n    \"creator\": \"Arham Muslim\",\r\n    \"fileName\": \"./analyticsMethodsJars/AnalyticsMethods-Prototypes-1.0-SNAPSHOT.jar\",\r\n    \"implementingClass\": \"com.openlap.AnalyticsMethods.Prototypes.Clustering.Kmean2NumericRaw\",\r\n    \"name\": \"Create clusters based on two numeric attributes using K-Means\",\r\n    \"description\": \"Generate cluster using two numeric attributes using the K-Means algorithm and return the attributes along with the name of their cluster.\",\r\n    \"type\": \"machine learning\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/analytics/methods/create",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"methods",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ANALYTICS METHOD BY ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/analytics/methods/665ad9303434b20ecc227dbf",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"methods",
+								"665ad9303434b20ecc227dbf"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ALL ANALYTICS METHOD",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/analytics/methods",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"methods"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ANALYTICS METHOD INPUTS BY ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/analytics/methods/inputs/665ad9303434b20ecc227db6",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"methods",
+								"inputs",
+								"665ad9303434b20ecc227db6"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ANALYTICS METHOD OUTPUTS BY ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/analytics/methods/outputs/665ad9303434b20ecc227db6",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"methods",
+								"outputs",
+								"665ad9303434b20ecc227db6"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ANALYTICS METHOD PARAMS BY ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/analytics/methods/params/665ad9303434b20ecc227db6",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"methods",
+								"params",
+								"665ad9303434b20ecc227db6"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "VALIDATE ANALYTICS METHOD MAPPINGS",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"mapping\": [\n        {\n            \"outputPort\": { // These output port are currently generated by the frontend.\n                \"type\": \"Text\",\n                \"id\": \"statement.object.definition.name.en-US\",\n                \"required\": true,\n                \"title\": null,\n                \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n            },\n            \"inputPort\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Items\",\n                \"description\": \"List of items to count\"\n            }\n        },\n        {\n            \"outputPort\": { // These output port are currently generated by the frontend.\n                \"type\": \"Text\",\n                \"id\": \"statement.object.definition.name.en-US\",\n                \"required\": true,\n                \"title\": null,\n                \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n            },\n            \"inputPort\": {\n                \"type\": \"Text\",\n                \"id\": \"users\",\n                \"required\": false,\n                \"title\": \"User\",\n                \"description\": \"List of users for whom items should be counted if [Unique items] count type is selected.\"\n            }\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/analytics/methods/validate/665ad9303434b20ecc227dbf",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"methods",
+								"validate",
+								"665ad9303434b20ecc227dbf"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ALL FILENAMES",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/home/sj/Downloads/ApacheClusteringAnalyticsMethod-1.0-SNAPSHOT-jar-with-dependencies.jar"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URI}}/v1/analytics/methods/files",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"methods",
+								"files"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ALL ANALYTICS TECHNIQUE BY FILENAME",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{URI}}/v1/analytics/methods/files/filename?fileName=AnalyticsMethods-Prototypes-1.0-SNAPSHOT.jar",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"methods",
+								"files",
+								"filename"
+							],
+							"query": [
+								{
+									"key": "fileName",
+									"value": "AnalyticsMethods-Prototypes-1.0-SNAPSHOT.jar"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPLOAD JAR FILE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/home/sj/Downloads/ApacheClusteringAnalyticsMethod-1.0-SNAPSHOT-jar-with-dependencies.jar"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URI}}/v1/analytics/methods/upload",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"methods",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE JAR FILE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/home/sj/Downloads/ApacheClusteringAnalyticsMethod-1.0-SNAPSHOT-jar-with-dependencies.jar"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URI}}/v1/analytics/methods/delete?fileName=ApacheClusteringAnalyticsMethod-1.0-SNAPSHOT-jar-with-dependencies.jar",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"methods",
+								"delete"
+							],
+							"query": [
+								{
+									"key": "fileName",
+									"value": "ApacheClusteringAnalyticsMethod-1.0-SNAPSHOT-jar-with-dependencies.jar"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RELOAD JAR FILE",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/home/sj/Downloads/ApacheClusteringAnalyticsMethod-1.0-SNAPSHOT-jar-with-dependencies.jar"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URI}}/v1/analytics/methods/reload?fileName=AnalyticsMethods-Prototypes-1.0-SNAPSHOT.jar",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"analytics",
+								"methods",
+								"reload"
+							],
+							"query": [
+								{
+									"key": "fileName",
+									"value": "AnalyticsMethods-Prototypes-1.0-SNAPSHOT.jar"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "VISUALIZATION METHOD",
+			"item": [
+				{
+					"name": "Library",
+					"item": [
+						{
+							"name": "GET ALL VIS LIBARIES",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URI}}/v1/visualizations/libraries",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"visualizations",
+										"libraries"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GET VIS LIBRARY BY ID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URI}}/v1/visualizations/libraries/665ad9303434b20ecc227dc3",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"visualizations",
+										"libraries",
+										"665ad9303434b20ecc227dc3"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE LIB LIBRARY (ISSUE)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"Pie Chart\",\r\n    \"implementingClass\": \"openlap.visualizer.C3.Charts.Pie\",\r\n    \"visualizationLibrary\": {\r\n        \"libraryId\": \"66339b34df878b3a544f5f8c\"\r\n    }\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/visualizations/types",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"visualizations",
+										"types"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Type",
+					"item": [
+						{
+							"name": "GET ALL VIS TYPES",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URI}}/v1/visualizations/types",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"visualizations",
+										"types"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GET ALL VIS TYPES BY LIB ID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URI}}/v1/visualizations/libraries/66ad410fb7fd479aab347d4d/types",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"visualizations",
+										"libraries",
+										"66ad410fb7fd479aab347d4d",
+										"types"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GET VIS BY TYPE ID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URI}}/v1/visualizations/types/665ad9303434b20ecc227dc5",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"visualizations",
+										"types",
+										"665ad9303434b20ecc227dc5"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GET VIS INPUTS BY TYPE ID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URI}}/v1/visualizations/types/665ad9303434b20ecc227dcc/inputs",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"visualizations",
+										"types",
+										"665ad9303434b20ecc227dcc",
+										"inputs"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "VALIDATE VIS MAPPING WITH TYPE ID",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"mapping\": [\n        {\n            \"inputPort\": {\n                \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                \"id\": \"xAxisStrings\",\n                \"required\": true,\n                \"title\": \"X-Axis\",\n                \"type\": \"Text\"\n            },\n            \"outputPort\": {\n                \"description\": \"List of top most occurring items in the list\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"type\": \"Text\"\n            }\n        },\n        {\n            \"inputPort\": {\n                \"description\": \"List of items to be displayed on Y-Axis of the graph\",\n                \"id\": \"yAxisValues\",\n                \"required\": true,\n                \"title\": \"Y-Axis\",\n                \"type\": \"Numeric\"\n            },\n            \"outputPort\": {\n                \"description\": \"Number of time each item occurred in the list\",\n                \"id\": \"item_count\",\n                \"required\": true,\n                \"title\": \"Item Count\",\n                \"type\": \"Numeric\"\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/visualizations/types/665ad9303434b20ecc227dc5/validate",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"visualizations",
+										"types",
+										"665ad9303434b20ecc227dc5",
+										"validate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GET VIS OUTPUTS (ISSUE)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URI}}/v1/visualizations/types/665ad9303434b20ecc227dcc/outputs",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"visualizations",
+										"types",
+										"665ad9303434b20ecc227dcc",
+										"outputs"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "GET JAR FILENAMES",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/visualizations/files",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"visualizations",
+								"files"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET JAR FILENAMES Copy",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/visualizations/files/filename?fileName=Visualizer-C3-1.0-SNAPSHOT.jar",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"visualizations",
+								"files",
+								"filename"
+							],
+							"query": [
+								{
+									"key": "fileName",
+									"value": "Visualizer-C3-1.0-SNAPSHOT.jar"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPLOAD JAR FILE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/home/sj/Downloads/ApexCharts-1.0-SNAPSHOT-jar-with-dependencies.jar"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URI}}/v1/visualizations/upload",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"visualizations",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE JAR FILE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/visualizations/delete?fileName=Visualizer-C3-1.0-SNAPSHOT.jar",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"visualizations",
+								"delete"
+							],
+							"query": [
+								{
+									"key": "fileName",
+									"value": "Visualizer-C3-1.0-SNAPSHOT.jar"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RELOAD JAR FILE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/visualizations/reload?fileName=Visualizer-C3-1.0-SNAPSHOT.jar",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"visualizations",
+								"reload"
+							],
+							"query": [
+								{
+									"key": "fileName",
+									"value": "Visualizer-C3-1.0-SNAPSHOT.jar"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "QUESTION",
+			"item": [
+				{
+					"name": "CREATE A QUESTION",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"What are the common challenges faced by students in this course?\",\n    \"goalId\": \"66acfcbcb7fd479ac2499f0b\",\n    \"indicators\": [\n        \"66ad0158b7fd479ac2499f2b\",\n        \"66ad0169b7fd479ac2499f2c\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/questions/create",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"questions",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET QUESTION BY ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/questions/66ae210ab7fd4761f7a24bef",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"questions",
+								"66ae210ab7fd4761f7a24bef"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ALL MY QUESTIONS",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/questions/my?page=2&size=10&sortDirection=asc&sortBy=goalRef",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"questions",
+								"my"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "2"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sortDirection",
+									"value": "asc"
+								},
+								{
+									"key": "sortBy",
+									"value": "goalRef"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ALL AVAILABLE QUESTIONS",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/questions/all?page=0&size=5&sortDirection=dsc&sortBy=analyticsGoalReference",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"questions",
+								"all"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "5"
+								},
+								{
+									"key": "sortDirection",
+									"value": "dsc"
+								},
+								{
+									"key": "sortBy",
+									"value": "analyticsGoalReference"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE A QUESTION BY ID",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": \"665b53ec3434b2be713b7e71\",\n    \"name\": \"Most viewed topic in my class.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/questions",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"questions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE A QUESTION BY ID",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/questions/665b53ec3434b2be713b7e71",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"questions",
+								"665b53ec3434b2be713b7e71"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET IFRAME IQC",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/questions/66ad0187b7fd479ac2499f2d/code",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"questions",
+								"66ad0187b7fd479ac2499f2d",
+								"code"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "INDICATOR",
+			"item": [
+				{
+					"name": "BASIC",
+					"item": [
+						{
+							"name": "ANALYZE BASIC INDICATOR",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"indicatorQuery\": {\n        \"lrsStores\": [\n            {\n                \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n                \"uniqueIdentifier\": \"c0fc991891344228ac2c138cd49d43a0\",\n                \"uniqueIdentifierType\": \"ACCOUNT_NAME\",\n                \"condition\": \"ONLY_ME\"\n            }\n        ],\n        \"platforms\": [\n            \"CourseMapper\"\n        ],\n        \"activityTypes\": [\n            \"http://www.CourseMapper.de/activityType/material\",\n            \"http://www.CourseMapper.de/activityType/channel\",\n            \"http://id.tincanapi.com/activitytype/slide\"\n        ],\n        \"actionOnActivities\": [\n            \"http://id.tincanapi.com/verb/viewed\",\n            \"http://activitystrea.ms/schema/1.0/access\"\n        ],\n        \"activities\": {\n            \"statement.object.definition.name.en-US\": [\n                \"P1-Schumacher\",\n                // \"P2-Ahmad\",\n                // \"P3-Hilliger\",\n                \"P4-Jivet\",\n                \"P5-Jivet\",\n                \"P6-Blazenka\"\n            ]\n        },\n        \"duration\": {\n            \"from\": \"2019-01-01T00:00:00.000Z\",\n            \"until\": \"2024-09-18T13:20:26.261Z\"\n        },\n        \"outputs\": [\n            \"statement.object.definition.name.en-US\"\n        ]\n    },\n    \"analyticsTechniqueId\": \"66acfcbcb7fd479ac2499f16\",\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"count_direction\",\n            \"title\": \"Counting direction\",\n            \"description\": \"Count most occurring items of least occurring items\",\n            \"possibleValues\": \"Most Occurring,Least Occurring\",\n            \"defaultValue\": \"Most Occurring\",\n            \"value\": \"Most Occurring\",\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"return_count\",\n            \"title\": \"Number of items to return (N)\",\n            \"description\": \"Specify the number of items that need to be returned. e.g. 10 will return top 10 items. -1 will return all items.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"search_type\",\n            \"title\": \"Counting type\",\n            \"description\": \"Count all item occurrences per user or only single item per user. For [Unique items] count type, the [User] column is required\",\n            \"possibleValues\": \"All items,Unique items\",\n            \"defaultValue\": \"All items\",\n            \"value\": \"All items\",\n            \"required\": true\n        }\n    ],\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Items\",\n                    \"description\": \"List of items to count\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"users\",\n                    \"required\": false,\n                    \"title\": \"User\",\n                    \"description\": \"List of users for whom items should be counted if [Unique items] count type is selected.\"\n                }\n            }\n        ]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/indicators/basic/analyze",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"basic",
+										"analyze"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "PREVIEW BASIC INDICATOR",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"visualizationLibraryId\": \"66acfcbdb7fd479ac2499f1c\",\n    \"visualizationTypeId\": \"66acfcbdb7fd479ac2499f1e\",\n    \"visualizationParams\": {\n        \"height\": 200,\n        \"width\": 400\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"List of top most occurring items in the list\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Item Names\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Number of time each item occurred in the list\",\n                    \"id\": \"item_count\",\n                    \"required\": true,\n                    \"title\": \"Item Count\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    },\n    \"indicatorQuery\": {\n        \"lrsStores\": [\n            {\n                \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n                \"uniqueIdentifier\": \"c0fc991891344228ac2c138cd49d43a0\",\n                \"uniqueIdentifierType\": \"ACCOUNT_NAME\",\n                \"condition\": \"ONLY_ME\"\n            }\n        ],\n        \"platforms\": [\n            \"CourseMapper\"\n        ],\n        \"activityTypes\": [\n            \"http://www.CourseMapper.de/activityType/material\",\n            \"http://www.CourseMapper.de/activityType/channel\",\n            \"http://id.tincanapi.com/activitytype/slide\"\n        ],\n        \"actionOnActivities\": [\n            \"http://id.tincanapi.com/verb/viewed\",\n            \"http://activitystrea.ms/schema/1.0/access\"\n        ],\n        \"activities\": {\n            \"statement.object.definition.name.en-US\": [\n                \"P1-Schumacher\",\n                // \"P2-Ahmad\",\n                // \"P3-Hilliger\",\n                \"P4-Jivet\",\n                \"P5-Jivet\",\n                \"P6-Blazenka\"\n            ]\n        },\n        \"duration\": {\n            \"from\": \"2019-01-01T00:00:00.000Z\",\n            \"until\": \"2024-09-18T13:20:26.261Z\"\n        },\n        \"outputs\": [\n            \"statement.object.definition.name.en-US\"\n        ]\n    },\n    \"analyticsTechniqueId\": \"66acfcbcb7fd479ac2499f16\",\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"count_direction\",\n            \"title\": \"Counting direction\",\n            \"description\": \"Count most occurring items of least occurring items\",\n            \"possibleValues\": \"Most Occurring,Least Occurring\",\n            \"defaultValue\": \"Most Occurring\",\n            \"value\": \"Most Occurring\",\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"return_count\",\n            \"title\": \"Number of items to return (N)\",\n            \"description\": \"Specify the number of items that need to be returned. e.g. 10 will return top 10 items. -1 will return all items.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"search_type\",\n            \"title\": \"Counting type\",\n            \"description\": \"Count all item occurrences per user or only single item per user. For [Unique items] count type, the [User] column is required\",\n            \"possibleValues\": \"All items,Unique items\",\n            \"defaultValue\": \"All items\",\n            \"value\": \"All items\",\n            \"required\": true\n        }\n    ],\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Items\",\n                    \"description\": \"List of items to count\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"users\",\n                    \"required\": false,\n                    \"title\": \"User\",\n                    \"description\": \"List of users for whom items should be counted if [Unique items] count type is selected.\"\n                }\n            }\n        ]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/indicators/basic/preview",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"basic",
+										"preview"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE BASIC INDICATOR",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Basic indicator 2\",\n    \"indicatorType\": \"BASIC\",\n    \"visualizationLibraryId\": \"66acfcbdb7fd479ac2499f1c\",\n    \"visualizationTypeId\": \"66acfcbdb7fd479ac2499f1e\",\n    \"visualizationParams\": {\n        \"height\": 200,\n        \"width\": 400\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"List of top most occurring items in the list\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Item Names\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Number of time each item occurred in the list\",\n                    \"id\": \"item_count\",\n                    \"required\": true,\n                    \"title\": \"Item Count\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    },\n    \"indicatorQuery\": {\n        \"lrsStores\": [\n            {\n                \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n                \"uniqueIdentifier\": \"c0fc991891344228ac2c138cd49d43a0\",\n                \"uniqueIdentifierType\": \"ACCOUNT_NAME\",\n                \"condition\": \"ONLY_ME\"\n            }\n        ],\n        \"platforms\": [\n            \"CourseMapper\"\n        ],\n        \"activityTypes\": [\n            \"http://www.CourseMapper.de/activityType/material\",\n            \"http://www.CourseMapper.de/activityType/channel\",\n            \"http://id.tincanapi.com/activitytype/slide\"\n        ],\n        \"actionOnActivities\": [\n            \"http://id.tincanapi.com/verb/viewed\",\n            \"http://activitystrea.ms/schema/1.0/access\"\n        ],\n        \"activities\": {\n            \"statement.object.definition.name.en-US\": [\n                // \"P1-Schumacher\",\n                \"P2-Ahmad\",\n                \"P3-Hilliger\",\n                \"P4-Jivet\",\n                // \"P5-Jivet\",\n                \"P6-Blazenka\"\n            ]\n        },\n        \"duration\": {\n            \"from\": \"2019-01-01T00:00:00.000Z\",\n            \"until\": \"2024-09-18T13:20:26.261Z\"\n        },\n        \"outputs\": [\n            \"statement.object.definition.name.en-US\"\n        ]\n    },\n    \"analyticsTechniqueId\": \"66acfcbcb7fd479ac2499f16\",\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"count_direction\",\n            \"title\": \"Counting direction\",\n            \"description\": \"Count most occurring items of least occurring items\",\n            \"possibleValues\": \"Most Occurring,Least Occurring\",\n            \"defaultValue\": \"Most Occurring\",\n            \"value\": \"Most Occurring\",\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"return_count\",\n            \"title\": \"Number of items to return (N)\",\n            \"description\": \"Specify the number of items that need to be returned. e.g. 10 will return top 10 items. -1 will return all items.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"search_type\",\n            \"title\": \"Counting type\",\n            \"description\": \"Count all item occurrences per user or only single item per user. For [Unique items] count type, the [User] column is required\",\n            \"possibleValues\": \"All items,Unique items\",\n            \"defaultValue\": \"All items\",\n            \"value\": \"All items\",\n            \"required\": true\n        }\n    ],\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Items\",\n                    \"description\": \"List of items to count\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"users\",\n                    \"required\": false,\n                    \"title\": \"User\",\n                    \"description\": \"List of users for whom items should be counted if [Unique items] count type is selected.\"\n                }\n            }\n        ]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/indicators/basic/create",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"basic",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UPDATE BASIC INDICATOR",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Basic indicator 1 Updated\",\n    \"indicatorType\": \"BASIC\",\n    \"visualizationLibraryId\": \"66acfcbdb7fd479ac2499f1c\",\n    \"visualizationTypeId\": \"66acfcbdb7fd479ac2499f1e\",\n    \"visualizationParams\": {\n        \"height\": 200,\n        \"width\": 400\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"List of top most occurring items in the list\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Item Names\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Number of time each item occurred in the list\",\n                    \"id\": \"item_count\",\n                    \"required\": true,\n                    \"title\": \"Item Count\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    },\n    \"indicatorQuery\": {\n        \"lrsStores\": [\n            {\n                \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n                \"uniqueIdentifier\": \"c0fc991891344228ac2c138cd49d43a0\",\n                \"uniqueIdentifierType\": \"ACCOUNT_NAME\",\n                \"condition\": \"ONLY_ME\"\n            }\n        ],\n        \"platforms\": [\n            \"CourseMapper\"\n        ],\n        \"activityTypes\": [\n            \"http://www.CourseMapper.de/activityType/material\",\n            \"http://www.CourseMapper.de/activityType/channel\",\n            \"http://id.tincanapi.com/activitytype/slide\"\n        ],\n        \"actionOnActivities\": [\n            \"http://id.tincanapi.com/verb/viewed\",\n            \"http://activitystrea.ms/schema/1.0/access\"\n        ],\n        \"activities\": {\n            \"statement.object.definition.name.en-US\": [\n                // \"P1-Schumacher\",\n                \"P2-Ahmad\",\n                \"P3-Hilliger\",\n                \"P4-Jivet\",\n                // \"P5-Jivet\",\n                \"P6-Blazenka\"\n            ]\n        },\n        \"duration\": {\n            \"from\": \"2019-01-01T00:00:00.000Z\",\n            \"until\": \"2024-09-18T13:20:26.261Z\"\n        },\n        \"outputs\": [\n            \"statement.object.definition.name.en-US\"\n        ]\n    },\n    \"analyticsTechniqueId\": \"66acfcbcb7fd479ac2499f16\",\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"count_direction\",\n            \"title\": \"Counting direction\",\n            \"description\": \"Count most occurring items of least occurring items\",\n            \"possibleValues\": \"Most Occurring,Least Occurring\",\n            \"defaultValue\": \"Most Occurring\",\n            \"value\": \"Most Occurring\",\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"return_count\",\n            \"title\": \"Number of items to return (N)\",\n            \"description\": \"Specify the number of items that need to be returned. e.g. 10 will return top 10 items. -1 will return all items.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"search_type\",\n            \"title\": \"Counting type\",\n            \"description\": \"Count all item occurrences per user or only single item per user. For [Unique items] count type, the [User] column is required\",\n            \"possibleValues\": \"All items,Unique items\",\n            \"defaultValue\": \"All items\",\n            \"value\": \"All items\",\n            \"required\": true\n        }\n    ],\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Items\",\n                    \"description\": \"List of items to count\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"users\",\n                    \"required\": false,\n                    \"title\": \"User\",\n                    \"description\": \"List of users for whom items should be counted if [Unique items] count type is selected.\"\n                }\n            }\n        ]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/indicators/basic/66ad0158b7fd479ac2499f2b/update",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"basic",
+										"66ad0158b7fd479ac2499f2b",
+										"update"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "VALIDATION OF DUPLICATION BASIC INDICATOR",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URI}}/v1/indicators/basic/66ad0158b7fd479ac2499f2b/preview/validate-duplication",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"basic",
+										"66ad0158b7fd479ac2499f2b",
+										"preview",
+										"validate-duplication"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "COMPOSITE",
+					"item": [
+						{
+							"name": "FIND COMPATIBLE BASIC INDICATORS COMPOSITE",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URI}}/v1/indicators/composite/66ad0158b7fd479ac2499f2b/compatible",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"composite",
+										"66ad0158b7fd479ac2499f2b",
+										"compatible"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "MERGE INDICATORS COMPOSITE",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"columnToMerge\": {\n        \"type\": \"Text\",\n        \"id\": \"item_name\",\n        \"required\": true,\n        \"title\": \"Item Names\",\n        \"description\": \"List of top most occurring items in the list\"\n    },\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66ad0158b7fd479ac2499f2b\"\n        },\n        {\n            \"indicatorId\": \"66ad0169b7fd479ac2499f2c\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/indicators/composite/merge",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"composite",
+										"merge"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "PREVIEW COMPOSITE INDICATOR",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"columnToMerge\": {\n        \"type\": \"Text\",\n        \"id\": \"item_name\",\n        \"required\": true,\n        \"title\": \"Item Names\",\n        \"description\": \"List of top most occurring items in the list\"\n    },\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66ad0158b7fd479ac2499f2b\"\n        },\n        {\n            \"indicatorId\": \"66ad0169b7fd479ac2499f2c\"\n        }\n    ],\n    \"visualizationLibraryId\": \"66acfcbdb7fd479ac2499f1c\",\n    \"visualizationTypeId\": \"66acfcbdb7fd479ac2499f21\",\n    \"visualizationParams\": {\n        \"height\": 500,\n        \"width\": 500\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"List of top most occurring items in the list\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Item Names\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Number of time each item occurred in the list\",\n                    \"id\": \"item_count\",\n                    \"required\": true,\n                    \"title\": \"Item Count\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/indicators/composite/preview",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"composite",
+										"preview"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE COMPOSITE INDICATOR",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Composite indicator 1\",\n    \"indicatorType\": \"COMPOSITE\",\n    \"columnToMerge\": {\n        \"type\": \"Text\",\n        \"id\": \"item_name\",\n        \"required\": true,\n        \"title\": \"Item Names\",\n        \"description\": \"List of top most occurring items in the list\"\n    },\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66ad0158b7fd479ac2499f2b\"\n        },\n        {\n            \"indicatorId\": \"66ad0169b7fd479ac2499f2c\"\n        }\n    ],\n    \"visualizationLibraryId\": \"66acfcbdb7fd479ac2499f1c\",\n    \"visualizationTypeId\": \"66acfcbdb7fd479ac2499f21\",\n    \"visualizationParams\": {\n        \"height\": 500,\n        \"width\": 500\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"List of top most occurring items in the list\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Item Names\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Number of time each item occurred in the list\",\n                    \"id\": \"item_count\",\n                    \"required\": true,\n                    \"title\": \"Item Count\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/indicators/composite/create",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"composite",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UPDATE COMPOSITE INDICATOR",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Testing composite UPDATED 2\",\n    \"indicatorType\": \"COMPOSITE\",\n    \"columnToMerge\": {\n        \"description\": \"List of top most occurring items in the list\",\n        \"id\": \"item_name\",\n        \"required\": true,\n        \"title\": \"Item Names\",\n        \"type\": \"Text\"\n    },\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66a267569bc0d1c444d7f97e\"\n        },\n        {\n            \"indicatorId\": \"66a267699bc0d1c444d7f97f\"\n        }\n    ],\n    \"visualizationLibraryId\": \"665ad9303434b20ecc227dc3\",\n    \"visualizationTypeId\": \"665ad9303434b20ecc227dc8\",\n    \"visualizationParams\": {\n        \"height\": 500,\n        \"width\": 500\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"List of top most occurring items in the list\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Item Names\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Number of time each item occurred in the list\",\n                    \"id\": \"item_count\",\n                    \"required\": true,\n                    \"title\": \"Item Count\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/indicators/composite/66a2677f9bc0d1c444d7f980/update",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"composite",
+										"66a2677f9bc0d1c444d7f980",
+										"update"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "MULTI-LEVEL",
+					"item": [
+						{
+							"name": "MERGE INDICATORS MULTI-LEVEL",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66ad0158b7fd479ac2499f2b\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        },\n        {\n            \"indicatorId\": \"66ad0169b7fd479ac2499f2c\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/indicators/multilevel/merge",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"multilevel",
+										"merge"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "ANALYZE INDICATOR MULTI-LEVEL",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66ad0158b7fd479ac2499f2b\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        },\n        {\n            \"indicatorId\": \"66ad0169b7fd479ac2499f2c\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        }\n    ],\n    \"analyticsTechniqueId\": \"66acfcbcb7fd479ac2499f0d\",\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"column_1\",\n                    \"required\": true,\n                    \"title\": \"\",\n                    \"description\": \"\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"attribute_1\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 1\",\n                    \"description\": \"Numeric attribute 1\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"column_2\",\n                    \"required\": true,\n                    \"title\": \"\",\n                    \"description\": \"\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"attribute_2\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 2\",\n                    \"description\": \"Numeric attribute 2\"\n                }\n            }\n        ]\n    },\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"kmean_iterations\",\n            \"title\": \"K-Mean max iterations\",\n            \"description\": \"Specify the maximum iterations for the K-Mean algorithm.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"cluster_count\",\n            \"title\": \"Number of clusterers\",\n            \"description\": \"Specify the number of clusters to generate.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 5,\n            \"value\": 2,\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"kmean_seed\",\n            \"title\": \"K-Mean seed value\",\n            \"description\": \"Specify the seed value for the K-Mean algorithm.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/indicators/multilevel/analyze",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"multilevel",
+										"analyze"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "PREVIEW MULTI-LEVEL INDICATOR",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66ad0158b7fd479ac2499f2b\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        },\n        {\n            \"indicatorId\": \"66ad0169b7fd479ac2499f2c\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        }\n    ],\n    \"analyticsTechniqueId\": \"66acfcbcb7fd479ac2499f0d\",\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"column_1\",\n                    \"required\": true,\n                    \"title\": \"\",\n                    \"description\": \"\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"attribute_1\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 1\",\n                    \"description\": \"Numeric attribute 1\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"column_2\",\n                    \"required\": true,\n                    \"title\": \"\",\n                    \"description\": \"\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"attribute_2\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 2\",\n                    \"description\": \"Numeric attribute 2\"\n                }\n            }\n        ]\n    },\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"kmean_iterations\",\n            \"title\": \"K-Mean max iterations\",\n            \"description\": \"Specify the maximum iterations for the K-Mean algorithm.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"cluster_count\",\n            \"title\": \"Number of clusterers\",\n            \"description\": \"Specify the number of clusters to generate.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 5,\n            \"value\": 2,\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"kmean_seed\",\n            \"title\": \"K-Mean seed value\",\n            \"description\": \"Specify the seed value for the K-Mean algorithm.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        }\n    ],\n    \"visualizationLibraryId\": \"66acfcbdb7fd479ac2499f1c\",\n    \"visualizationTypeId\": \"66acfcbdb7fd479ac2499f25\",\n    \"visualizationParams\": {\n        \"height\": 200,\n        \"width\": 400\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of values which will be used to group values in column Y-Axis\",\n                    \"id\": \"GroupBy\",\n                    \"required\": true,\n                    \"title\": \"Title\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"The cluster id for each item in the format Clutser 1, Cluster 2\",\n                    \"id\": \"cluster_name\",\n                    \"required\": true,\n                    \"title\": \"Clusters\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Numeric attribute 1\",\n                    \"id\": \"attribute_1\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 1\",\n                    \"type\": \"Numeric\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of values to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Numeric attribute 2\",\n                    \"id\": \"attribute_2\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 2\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/indicators/multilevel/preview",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"multilevel",
+										"preview"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CREATE MULTI-LEVEL INDICATOR",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Multi-level analysis indicator 1\",\n    \"indicatorType\": \"MULTI_LEVEL\",\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66ad0158b7fd479ac2499f2b\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        },\n        {\n            \"indicatorId\": \"66ad0169b7fd479ac2499f2c\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        }\n    ],\n    \"analyticsTechniqueId\": \"66acfcbcb7fd479ac2499f0d\",\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"column_1\",\n                    \"required\": true,\n                    \"title\": \"\",\n                    \"description\": \"\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"attribute_1\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 1\",\n                    \"description\": \"Numeric attribute 1\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"column_2\",\n                    \"required\": true,\n                    \"title\": \"\",\n                    \"description\": \"\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"attribute_2\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 2\",\n                    \"description\": \"Numeric attribute 2\"\n                }\n            }\n        ]\n    },\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"kmean_iterations\",\n            \"title\": \"K-Mean max iterations\",\n            \"description\": \"Specify the maximum iterations for the K-Mean algorithm.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"cluster_count\",\n            \"title\": \"Number of clusterers\",\n            \"description\": \"Specify the number of clusters to generate.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 5,\n            \"value\": 2,\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"kmean_seed\",\n            \"title\": \"K-Mean seed value\",\n            \"description\": \"Specify the seed value for the K-Mean algorithm.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        }\n    ],\n    \"visualizationLibraryId\": \"66acfcbdb7fd479ac2499f1c\",\n    \"visualizationTypeId\": \"66acfcbdb7fd479ac2499f25\",\n    \"visualizationParams\": {\n        \"height\": 200,\n        \"width\": 400\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of values which will be used to group values in column Y-Axis\",\n                    \"id\": \"GroupBy\",\n                    \"required\": true,\n                    \"title\": \"Title\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"The cluster id for each item in the format Clutser 1, Cluster 2\",\n                    \"id\": \"cluster_name\",\n                    \"required\": true,\n                    \"title\": \"Clusters\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Numeric attribute 1\",\n                    \"id\": \"attribute_1\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 1\",\n                    \"type\": \"Numeric\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of values to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Numeric attribute 2\",\n                    \"id\": \"attribute_2\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 2\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/indicators/multilevel/create",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"multilevel",
+										"create"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UPDATE MULTI-LEVEL INDICATOR",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Testing multi-level analysis indicator UPDATED\",\n    \"indicatorType\": \"MULTI_LEVEL\",\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66a267569bc0d1c444d7f97e\",\n            \"columnToMerge\": {\n                \"description\": \"List of top most occurring items in the list\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"type\": \"Text\"\n            }\n        },\n        {\n            \"indicatorId\": \"66a267699bc0d1c444d7f97f\",\n            \"columnToMerge\": {\n                \"description\": \"List of top most occurring items in the list\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"type\": \"Text\"\n            }\n        }\n    ],\n    \"analyticsTechniqueId\": \"665ad9303434b20ecc227db6\",\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"column_1\",\n                    \"required\": true,\n                    \"title\": \"\",\n                    \"description\": \"\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"attribute_1\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 1\",\n                    \"description\": \"Numeric attribute 1\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"column_2\",\n                    \"required\": true,\n                    \"title\": \"\",\n                    \"description\": \"\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"attribute_2\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 2\",\n                    \"description\": \"Numeric attribute 2\"\n                }\n            }\n        ]\n    },\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"kmean_iterations\",\n            \"title\": \"K-Mean max iterations\",\n            \"description\": \"Specify the maximum iterations for the K-Mean algorithm.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"cluster_count\",\n            \"title\": \"Number of clusterers\",\n            \"description\": \"Specify the number of clusters to generate.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 5,\n            \"value\": 2,\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"kmean_seed\",\n            \"title\": \"K-Mean seed value\",\n            \"description\": \"Specify the seed value for the K-Mean algorithm.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        }\n    ],\n    \"visualizationLibraryId\": \"665ad9303434b20ecc227dc3\",\n    \"visualizationTypeId\": \"665ad9303434b20ecc227dcc\",\n    \"visualizationParams\": {\n        \"height\": 200,\n        \"width\": 400\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of values which will be used to group values in column Y-Axis\",\n                    \"id\": \"GroupBy\",\n                    \"required\": true,\n                    \"title\": \"Title\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"The cluster id for each item in the format Clutser 1, Cluster 2\",\n                    \"id\": \"cluster_name\",\n                    \"required\": true,\n                    \"title\": \"Clusters\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Numeric attribute 1\",\n                    \"id\": \"attribute_1\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 1\",\n                    \"type\": \"Numeric\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of values to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Numeric attribute 2\",\n                    \"id\": \"attribute_2\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 2\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/indicators/multilevel/66a267909bc0d1c444d7f981/update",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"multilevel",
+										"66a267909bc0d1c444d7f981",
+										"update"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "GET ALL MY INDICATORS",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/indicators/my?page=0&size=10&sortDirection=dsc&sortBy=createdOn",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"indicators",
+								"my"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sortDirection",
+									"value": "dsc"
+								},
+								{
+									"key": "sortBy",
+									"value": "createdOn"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET ALL INDICATORS",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/indicators/all?page=0&size=10&sortDirection=asc&sortBy=createdOn",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"indicators",
+								"all"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sortDirection",
+									"value": "asc"
+								},
+								{
+									"key": "sortBy",
+									"value": "createdOn"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET INDICATOR BY ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/indicators/66ad04e8b7fd471298c412fd",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"indicators",
+								"66ad04e8b7fd471298c412fd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DUPLICATE MY INDICATOR",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/indicators/my/66a79e819bc0d186ce7a4112/duplicate",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"indicators",
+								"my",
+								"66a79e819bc0d186ce7a4112",
+								"duplicate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "VALIDATE INDICATOR DUPLICATION",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/indicators/66ad04e8b7fd471298c412fd/validate-duplicate",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"indicators",
+								"66ad04e8b7fd471298c412fd",
+								"validate-duplicate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DUPLICATE INDICATOR",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/indicators/all/66af9bdeb7fd471df902e5d9/duplicate",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"indicators",
+								"all",
+								"66af9bdeb7fd471df902e5d9",
+								"duplicate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE MY INDICATOR",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/indicators/66a79e819bc0d186ce7a4112/delete",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"indicators",
+								"66a79e819bc0d186ce7a4112",
+								"delete"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET INDICATOR IFRAME CODE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/indicators/66a267569bc0d1c444d7f97e/code",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"indicators",
+								"66a267569bc0d1c444d7f97e",
+								"code"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET IFRAME ICC",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/indicators/66ad0169b7fd479ac2499f2c/code",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"indicators",
+								"66ad0169b7fd479ac2499f2c",
+								"code"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(DEPRECATED) PREVIEW INDICATOR BEFORE SAVE",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    // For BASIC, COMPOSITE, & MULTI\n    // \"name\": \"Testing\",  // For preview this should not be required.\n    \"indicatorType\": \"BASIC\",\n    // \"createdBy\": \"shoeb@gmail.com\", // For preview this should not be required.\n    \"visualizationLibraryId\": \"665ad9303434b20ecc227dc3\",\n    \"visualizationTypeId\": \"665ad9303434b20ecc227dc5\",\n    \"visualizationParams\": {\n        \"height\": 200,\n        \"width\": 400\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"List of top most occurring items in the list\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Item Names\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Number of time each item occurred in the list\",\n                    \"id\": \"item_count\",\n                    \"required\": true,\n                    \"title\": \"Item Count\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    },\n    // Only for BASIC\n    \"indicatorQuery\": {\n        \"parametersToBeReturnedInResult\": {\n            \"statement.object.definition.name.en-US\": 1\n        },\n        \"query\": [\n            {\n                \"$or\": [\n                    {\n                        \"statement.context.platform\": \"CourseMapper\"\n                    }\n                ]\n            },\n            {\n                \"$or\": [\n                    {\n                        \"statement.object.definition.type\": \"http://www.CourseMapper.de/activityType/channel\"\n                    }\n                ]\n            },\n            {\n                \"$or\": [\n                    {\n                        \"statement.verb.id\": \"http://activitystrea.ms/schema/1.0/access\"\n                    }\n                ]\n            },\n            {\n                \"$or\": [\n                    {\n                        \"statement.object.definition.name.en-US\": \"LA Indicators\"\n                    },\n                    {\n                        \"statement.object.definition.name.en-US\": \"Angular Part 1 Lecture\"\n                    }\n                ]\n            }\n        ],\n        \"agg\": null,\n        \"filter\": [\n            {\n                \"statement.stored\": {\n                    \"$gte\": \"2019-01-01T00:00:00.000Z\"\n                }\n            },\n            {\n                \"statement.stored\": {\n                    \"$lte\": \"2024-06-18T13:20:26.261Z\"\n                }\n            }\n        ]\n    },\n    // Only for BASIC & MULTI\n    \"analyticsTechniqueId\": \"665ad9303434b20ecc227dbf\",\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"count_direction\",\n            \"title\": \"Counting direction\",\n            \"description\": \"Count most occurring items of least occurring items\",\n            \"possibleValues\": \"Most Occurring,Least Occurring\",\n            \"defaultValue\": \"Most Occurring\",\n            \"value\": \"Most Occurring\",\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"return_count\",\n            \"title\": \"Number of items to return (N)\",\n            \"description\": \"Specify the number of items that need to be returned. e.g. 10 will return top 10 items. -1 will return all items.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"search_type\",\n            \"title\": \"Counting type\",\n            \"description\": \"Count all item occurrences per user or only single item per user. For [Unique items] count type, the [User] column is required\",\n            \"possibleValues\": \"All items,Unique items\",\n            \"defaultValue\": \"All items\",\n            \"value\": \"All items\",\n            \"required\": true\n        }\n    ],\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Items\",\n                    \"description\": \"List of items to count\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"users\",\n                    \"required\": false,\n                    \"title\": \"User\",\n                    \"description\": \"List of users for whom items should be counted if [Unique items] count type is selected.\"\n                }\n            }\n        ]\n    }\n    // Missing one attribute of type List for COMPOSITE and MULTI_LEVEL\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/indicators/preview",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"indicators",
+								"preview"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(DEPRECATED) CREATE A NEW INDICATOR",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    // For BASIC, COMPOSITE, & MULTI\n    \"name\": \"Testing\",\n    \"indicatorType\": \"BASIC\",\n    \"createdBy\": \"shoeb@gmail.com\", // This has to be retrieved from the JSON web token, not as an attribute\n    \"visualizationLibraryId\": \"665ad9303434b20ecc227dc3\",\n    \"visualizationTypeId\": \"665ad9303434b20ecc227dc5\",\n    \"visualizationParams\": {\n        \"height\": 500,\n        \"width\": 500\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"List of top most occurring items in the list\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Item Names\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Number of time each item occurred in the list\",\n                    \"id\": \"item_count\",\n                    \"required\": true,\n                    \"title\": \"Item Count\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    },\n    // Only for BASIC\n    \"indicatorQuery\": {\n        \"parametersToBeReturnedInResult\": {\n            \"statement.object.definition.name.en-US\": 1\n        },\n        \"query\": [\n            {\n                \"$or\": [\n                    {\n                        \"statement.context.platform\": \"CourseMapper\"\n                    }\n                ]\n            },\n            {\n                \"$or\": [\n                    {\n                        \"statement.object.definition.type\": \"http://www.CourseMapper.de/activityType/channel\"\n                    }\n                ]\n            },\n            {\n                \"$or\": [\n                    {\n                        \"statement.verb.id\": \"http://activitystrea.ms/schema/1.0/access\"\n                    }\n                ]\n            },\n            {\n                \"$or\": [\n                    {\n                        \"statement.object.definition.name.en-US\": \"LA Indicators\"\n                    },\n                    {\n                        \"statement.object.definition.name.en-US\": \"Angular Part 1 Lecture\"\n                    }\n                ]\n            }\n        ],\n        \"agg\": null,\n        \"filter\": [\n            {\n                \"statement.stored\": {\n                    \"$gte\": \"2019-01-01T00:00:00.000Z\"\n                }\n            },\n            {\n                \"statement.stored\": {\n                    \"$lte\": \"2024-06-18T13:20:26.261Z\"\n                }\n            }\n        ]\n    },\n    // Only for BASIC & MULTI\n    \"analyticsTechniqueId\": \"665ad9303434b20ecc227dbf\",\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"count_direction\",\n            \"title\": \"Counting direction\",\n            \"description\": \"Count most occurring items of least occurring items\",\n            \"possibleValues\": \"Most Occurring,Least Occurring\",\n            \"defaultValue\": \"Most Occurring\",\n            \"value\": \"Most Occurring\",\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"return_count\",\n            \"title\": \"Number of items to return (N)\",\n            \"description\": \"Specify the number of items that need to be returned. e.g. 10 will return top 10 items. -1 will return all items.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"search_type\",\n            \"title\": \"Counting type\",\n            \"description\": \"Count all item occurrences per user or only single item per user. For [Unique items] count type, the [User] column is required\",\n            \"possibleValues\": \"All items,Unique items\",\n            \"defaultValue\": \"All items\",\n            \"value\": \"All items\",\n            \"required\": true\n        }\n    ],\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Items\",\n                    \"description\": \"List of items to count\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"users\",\n                    \"required\": false,\n                    \"title\": \"User\",\n                    \"description\": \"List of users for whom items should be counted if [Unique items] count type is selected.\"\n                }\n            }\n        ]\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/indicators/old",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"indicators",
+								"old"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(DEPRECATED) Create a new indicator & triad",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"analyticsTechniqueIds\": {\n        \"0\": \"665ad9303434b20ecc227db6\", // Composite indicators analytics method id\n        \"1\": \"665ad9303434b20ecc227dbf\", // Basic indicator 1 analytics method id\n        \"2\": \"665ad9303434b20ecc227dbf\" // Basic indicator 2 analytics method id\n    },\n    \"indicatorType\": \"COMPOSITE\",\n    \"analyticsTechniqueInputParams\": {\n        \"0\": {\n            \"count_direction\": \"Most Occurring\",\n            \"search_type\": \"All items\",\n            \"return_count\": \"10\"\n        },\n        \"1\": {\n            \"count_direction\": \"Most Occurring\",\n            \"search_type\": \"All items\",\n            \"return_count\": \"10\"\n        },\n        \"2\": {\n            \"count_direction\": \"Most Occurring\",\n            \"search_type\": \"All items\",\n            \"return_count\": \"10\"\n        }\n    },\n    \"visualizationInputParams\": {\n        \"height\": 200,\n        \"width\": 400\n    },\n    \"visualizationLibraryId\": \"665ad9303434b20ecc227dc3\",\n    \"visualizationTypeId\": \"665ad9303434b20ecc227dcc\",\n    \"indicatorName\": \"Testing\",\n    \"queries\": {\n        \"0\": {\n            \"query\": [\n                {\n                    \"$or\": [\n                        {\n                            \"statement.context.platform\": \"CourseMapper\"\n                        }\n                    ]\n                },\n                {\n                    \"$or\": [\n                        {\n                            \"statement.object.definition.type\": \"http://adlnet.gov/expapi/activities/material\"\n                        }\n                    ]\n                },\n                {\n                    \"$or\": [\n                        {\n                            \"statement.verb.id\": \"http://activitystrea.ms/schema/1.0/access\"\n                        },\n                        {\n                            \"statement.verb.id\": \"http://activitystrea.ms/schema/1.0/edit\"\n                        }\n                    ]\n                },\n                {\n                    \"$or\": [\n                        {\n                            \"statement.object.definition.name.en-US\": \"Angular Hands-on Part 1\"\n                        },\n                        {\n                            \"statement.object.definition.name.en-US\": \"Angular Hands-on Part 2\"\n                        },\n                        {\n                            \"statement.object.definition.name.en-US\": \"Node.JS Hands-on\"\n                        },\n                        {\n                            \"statement.object.definition.name.en-US\": \"React Hands-on Part 1\"\n                        },\n                        {\n                            \"statement.object.definition.name.en-US\": \"React Part 1\"\n                        },\n                        {\n                            \"statement.object.definition.name.en-US\": \"Angular Part 1\"\n                        },\n                        {\n                            \"statement.object.definition.name.en-US\": \"Experss.JS Hands-on\"\n                        },\n                        {\n                            \"statement.object.definition.name.en-US\": \"Experss.JS Slides\"\n                        },\n                        {\n                            \"statement.object.definition.name.en-US\": \"Angular Part 2\"\n                        }\n                    ]\n                }\n            ],\n            \"agg\": null,\n            \"parametersToBeReturnedInResult\": {\n                \"statement.object.definition.name.en-US\": 1\n            },\n            \"statementDuration\": [\n                {\n                    \"statement.stored\": {\n                        \"$gte\": \"2019-01-01T00:00:00.000Z\"\n                    }\n                },\n                {\n                    \"statement.stored\": {\n                        \"$lte\": \"2024-06-18T13:20:26.261Z\"\n                    }\n                }\n            ]\n        },\n        \"1\": {\n            \"query\": [\n                {\n                    \"$or\": [\n                        {\n                            \"statement.context.platform\": \"CourseMapper\"\n                        }\n                    ]\n                },\n                {\n                    \"$or\": [\n                        {\n                            \"statement.object.definition.type\": \"http://adlnet.gov/expapi/activities/material\"\n                        }\n                    ]\n                },\n                {\n                    \"$or\": [\n                        {\n                            \"statement.verb.id\": \"http://activitystrea.ms/schema/1.0/access\"\n                        }\n                    ]\n                },\n                {\n                    \"$or\": [\n                        {\n                            \"statement.object.definition.name.en-US\": \"Angular Hands-on Part 1\"\n                        },\n                        {\n                            \"statement.object.definition.name.en-US\": \"Angular Hands-on Part 2\"\n                        },\n                        {\n                            \"statement.object.definition.name.en-US\": \"Angular Part 1\"\n                        },\n                        {\n                            \"statement.object.definition.name.en-US\": \"Angular Part 2\"\n                        },\n                        {\n                            \"statement.object.definition.name.en-US\": \"Experss.JS Hands-on\"\n                        },\n                        {\n                            \"statement.object.definition.name.en-US\": \"Experss.JS Slides\"\n                        }\n                    ]\n                }\n            ],\n            \"agg\": null,\n            \"parametersToBeReturnedInResult\": {\n                \"statement.object.definition.name.en-US\": 1\n            },\n            \"statementDuration\": [\n                {\n                    \"statement.stored\": {\n                        \"$gte\": \"2019-01-01T00:00:00.000Z\"\n                    }\n                },\n                {\n                    \"statement.stored\": {\n                        \"$lte\": \"2024-06-18T13:22:26.214Z\"\n                    }\n                }\n            ]\n        }\n    },\n    \"analyticsTechniqueToVisualizationMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"cluster_name\",\n                    \"required\": true,\n                    \"title\": \"Clusters\",\n                    \"description\": \"The cluster id for each item in the format Clutser 1, Cluster 2\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"GroupBy\",\n                    \"required\": true,\n                    \"title\": \"Title\",\n                    \"description\": \"List of values which will be used to group values in column Y-Axis\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"attribute_1\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 1\",\n                    \"description\": \"Numeric attribute 1\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"attribute_2\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 2\",\n                    \"description\": \"Numeric attribute 2\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"description\": \"List of values to be displayed on Y-Axis of the graph\"\n                }\n            }\n        ]\n    },\n    \"indicatorToAnalyticsTechniqueMapping\": {\n        \"0\": {\n            \"mapping\": [\n                {\n                    \"outputPort\": {\n                        \"type\": \"Numeric\",\n                        \"id\": \"attribute_1\",\n                        \"required\": true,\n                        \"title\": \"Numeric Attribute 1\",\n                        \"description\": \"Numeric attribute 1\"\n                    },\n                    \"inputPort\": {\n                        \"type\": \"Numeric\",\n                        \"id\": \"attribute_1\",\n                        \"required\": true,\n                        \"title\": \"Numeric Attribute 1\",\n                        \"description\": \"Numeric attribute 1\"\n                    }\n                },\n                {\n                    \"outputPort\": {\n                        \"type\": \"Numeric\",\n                        \"id\": \"attribute_2\",\n                        \"required\": true,\n                        \"title\": \"Numeric Attribute 2\",\n                        \"description\": \"Numeric attribute 2\"\n                    },\n                    \"inputPort\": {\n                        \"type\": \"Numeric\",\n                        \"id\": \"attribute_2\",\n                        \"required\": true,\n                        \"title\": \"Numeric Attribute 2\",\n                        \"description\": \"Numeric attribute 2\"\n                    }\n                }\n            ]\n        },\n        \"1\": {\n            \"mapping\": [\n                {\n                    \"outputPort\": {\n                        \"type\": \"Text\",\n                        \"id\": \"statement.object.definition.name.en-US\",\n                        \"required\": true,\n                        \"title\": null,\n                        \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                    },\n                    \"inputPort\": {\n                        \"type\": \"Text\",\n                        \"id\": \"item_name\",\n                        \"required\": true,\n                        \"title\": \"Items\",\n                        \"description\": \"List of items to count\"\n                    }\n                }\n            ]\n        },\n        \"2\": {\n            \"mapping\": [\n                {\n                    \"outputPort\": {\n                        \"type\": \"Text\",\n                        \"id\": \"statement.object.definition.name.en-US\",\n                        \"required\": true,\n                        \"title\": null,\n                        \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                    },\n                    \"inputPort\": {\n                        \"type\": \"Text\",\n                        \"id\": \"item_name\",\n                        \"required\": true,\n                        \"title\": \"Items\",\n                        \"description\": \"List of items to count\"\n                    }\n                }\n            ]\n        }\n    },\n    \"createdBy\": \"shoeb@gmail.com\"  // This has to be retrieved from the JSON web token, not as an attribute\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/indicators",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"indicators"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "STATEMENTS",
+			"item": [
+				{
+					"name": "GET MY LRS",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/users/my/lrs",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"my",
+								"lrs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET UNIQUE PLATFORMS",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"lrsStores\": [\n        {\n            \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n            \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\",\n            \"condition\": \"ONLY_ME\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/statements/platforms",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"statements",
+								"platforms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UNIQUE ACTIVITY TYPES",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"lrsStores\": [\n        {\n            \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n            \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\",\n            \"condition\": \"ONLY_ME\"\n        }\n    ],\n    \"platforms\": [\n        \"CourseMapper\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/statements/activity-types",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"statements",
+								"activity-types"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET UNIQUE ACTIONS ON ACTIVITIES",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"lrsStores\": [\n        {\n            \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n            \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\",\n            \"condition\": \"ONLY_ME\"\n        }\n    ],\n    \"platforms\": [\n        \"CourseMapper\",\n        \"Moodle\"\n    ],\n    \"activityTypes\": [\n        \"http://www.CourseMapper.de/activityType/material\",\n        \"http://www.CourseMapper.de/activityType/channel\",\n        \"http://id.tincanapi.com/activitytype/slide\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/statements/actions",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"statements",
+								"actions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET UNIQUE ACTIVITIES",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"lrsStores\": [\n         {\n            \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n            \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\",\n            \"condition\": \"ONLY_ME\"\n        }\n    ],\n    \"platforms\": [\n        \"CourseMapper\",\n        \"Moodle\"\n    ],\n    \"activityTypes\": [\n        \"http://www.CourseMapper.de/activityType/material\",\n        \"http://www.CourseMapper.de/activityType/channel\",\n        \"http://id.tincanapi.com/activitytype/slide\"\n    ],\n    \"actionOnActivities\": [\n        \"http://id.tincanapi.com/verb/viewed\",\n        \"http://activitystrea.ms/schema/1.0/access\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/statements/activities",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"statements",
+								"activities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET STATEMENTS BY CUSTOM QUERY",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"lrsStores\": [\n        {\n            \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n            \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\",\n            \"condition\": \"ONLY_ME\"\n        }\n    ],\n    \"platforms\": [\n        \"CourseMapper\"\n    ],\n    \"activityTypes\": [\n        \"http://www.CourseMapper.de/activityType/material\",\n        \"http://www.CourseMapper.de/activityType/channel\",\n        \"http://id.tincanapi.com/activitytype/slide\"\n    ],\n    \"actionOnActivities\": [\n        \"http://id.tincanapi.com/verb/viewed\",\n        \"http://activitystrea.ms/schema/1.0/access\"\n    ],\n    \"activities\": {\n        \"statement.object.definition.name.en-US\": [\n            \"P1-Schumacher\",\n            \"P2-Ahmad\",\n            \"P3-Hilliger\",\n            \"P4-Jivet\",\n            \"P5-Jivet\",\n            \"P6-Blazenka\"\n        ]\n        //,\n        //\"statement.object.definition.name.en-UK\": [\"TEST Angular Part 1 Lecture\"]\n    },\n    \"duration\": {\n        \"from\": \"2019-01-01T00:00:00.000Z\",\n        \"until\": \"2024-08-18T13:20:26.261Z\"\n    },\n    \"outputs\": [\n        \"statement.object.definition.name.en-US\"\n    ],\n    \"userQueryRequest\": {\n        \"condition\": \"ONLY_ME\",\n        \"userUniqueIdentifier\": [\n            \"a5c6bbb2010d42e088f211d65092fa75\"\n        ]\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/statements/custom-query",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"statements",
+								"custom-query"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(DEPRECATED) GET ALL PLATFORMS",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v0/statements/platforms",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v0",
+								"statements",
+								"platforms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(DEPRECATED) GET ALL ACTIVITY TYPES FOR A PLATFORM",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"query\": [\n        {\n            \"$or\": [\n                {\n                    \"statement.context.platform\": \"CourseMapper\"\n                },\n                {\n                    \"statement.context.platform\": \"Moodle\"\n                }\n            ]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v0/statements/activity-types",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v0",
+								"statements",
+								"activity-types"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(DEPRECATED) GET ACTIVITIES BASED ON ACTIVITY TYPE",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"query\": [\n        {\n            \"$or\": [\n                {\n                    \"statement.context.platform\": \"CourseMapper\"\n                }\n            ]\n        },\n        {\n            \"$or\": [\n                {\n                    \"statement.object.definition.type\": \"http://www.CourseMapper.de/activityType/material\"\n                },\n                {\n                    \"statement.object.definition.type\": \"http://www.coursemapper.de/activitytype/channel\"\n                },\n                {\n                    \"statement.object.definition.type\": \"http://id.tincanapi.com/activitytype/slide\"\n                }\n            ]\n        },\n        {\n            \"$or\": [\n                {\n                    \"statement.verb.id\": \"http://risc-inc.com/annotator/verbs/annotated\"\n                },\n                {\n                    \"statement.verb.id\": \"http://id.tincanapi.com/verb/viewed\"\n                }\n            ]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v0/statements/activities",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v0",
+								"statements",
+								"activities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(DEPRECATED) GET ALL VERBS",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"query\": [\n        {\n            \"$or\": [\n                {\n                    \"statement.context.platform\": \"CourseMapper\"\n                }\n            ]\n        },\n        {\n            \"$or\": [\n                {\n                    \"statement.object.definition.type\": \"http://www.CourseMapper.de/activityType/material\"\n                },\n                {\n                    \"statement.object.definition.type\": \"http://www.coursemapper.de/activitytype/channel\"\n                },\n                {\n                    \"statement.object.definition.type\": \"http://id.tincanapi.com/activitytype/slide\"\n                }\n            ]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v0/statements/actions",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v0",
+								"statements",
+								"actions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "(DEPRECATED) GET STATEMENTS BY CUSTOM QUERY",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"parametersToBeReturnedInResult\": {\n        \"statement.object.definition.name.en-US\": 1,\n        \"statement.verb.display.en-US\": 1\n    },\n    \"query\": [\n        {\n            \"$or\": [\n                {\n                    \"statement.context.platform\": \"CourseMapper\"\n                },\n                {\n                    \"statement.context.platform\": \"Moodle\"\n                }\n            ]\n        },\n        {\n            \"$or\": [\n                {\n                    \"statement.object.definition.type\": \"http://www.CourseMapper.de/activityType/channel\"\n                },\n                {\n                    \"statement.object.definition.type\": \"http://www.CourseMapper.de/activityType/material\"\n                },\n                {\n                    \"statement.object.definition.type\": \"http://id.tincanapi.com/activitytype/slide\"\n                }\n            ]\n        },\n        {\n            \"$or\": [\n                {\n                    \"statement.verb.id\": \"http://activitystrea.ms/schema/1.0/access\"\n                },\n                {\n                    \"statement.verb.id\": \"http://id.tincanapi.com/verb/viewed\"\n                }\n            ]\n        },\n        {\n            \"$or\": [\n                {\n                    \"statement.object.definition.name.en-US\": \"P6-Blazenka\"\n                },\n                {\n                    \"statement.object.definition.name.en-US\": \"P2-Ahmad\"\n                }\n            ]\n        }\n    ],\n    \"agg\": null,\n    \"filter\": [\n        {\n            \"statement.stored\": {\n                \"$gte\": \"2019-01-01T00:00:00.000Z\"\n            }\n        },\n        {\n            \"statement.stored\": {\n                \"$lte\": \"2024-06-18T13:20:26.261Z\"\n            }\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v0/statements/custom-query",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v0",
+								"statements",
+								"custom-query"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "CODE",
+			"item": [
+				{
+					"name": "GENERATE IFRAME TEMPLATE",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/code/indicator?indicatorId=66ad0607b7fd471298c412fe",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"code",
+								"indicator"
+							],
+							"query": [
+								{
+									"key": "indicatorId",
+									"value": "66ad0607b7fd471298c412fe"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GENERATE IFRAME IQC",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/code/question?questionId=66ad0187b7fd479ac2499f2d",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"code",
+								"question"
+							],
+							"query": [
+								{
+									"key": "questionId",
+									"value": "66ad0187b7fd479ac2499f2d"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "TOKEN",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzaG9lYkBnbWFpbC5jb20iLCJleHAiOjE3MjA4ODQ1NjEsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA5MC9hcGkvbG9naW4iLCJyb2xlcyI6WyJST0xFX1VTRVIiXX0.SDu2jqRoVU2JFq0GwF9078m-ysEVHuiyrl5SA6WvsRA"
+		}
+	]
+}

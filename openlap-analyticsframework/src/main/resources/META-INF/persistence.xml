@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<persistence version="2.1" xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+
+    <!-- Use this for Neo4j -->
+    <!--
+    <persistence-unit name="hikePu" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.ogm.jpa.HibernateOgmPersistence</provider>
+        <properties>
+            <property name="hibernate.ogm.datastore.provider" value="neo4j_embedded" />
+            <property name="hibernate.ogm.datastore.database" value="HikeDB" />
+            <property name="hibernate.ogm.neo4j.database_path" value="target/test_data_dir" />
+        </properties>
+    </persistence-unit>
+    -->
+
+    <!-- Use this for MongoDB -->
+    <persistence-unit name="OpenLAP" transaction-type="JTA">
+        <provider>org.hibernate.ogm.jpa.HibernateOgmPersistence</provider>
+        <class>com.openlap.AnalyticsMethods.model.AnalyticsMethods</class>
+        <class>com.openlap.AnalyticsModules.model.AnalyticsGoal</class>
+        <class>com.openlap.Visualizer.model.VisualizationLibrary</class>
+        <class>com.openlap.Visualizer.model.VisualizationDataTransformerMethod</class>
+        <class>com.openlap.Visualizer.model.VisualizationType</class>
+        <class>com.openlap.AnalyticsEngine.model.OpenLapUser</class>
+
+        <properties>
+            <property name="hibernate.transaction.jta.platform" value="JBossTS"/>
+            <property name="com.arjuna.ats.jta.jtaTMImplementation"
+                      value="com.arjuna.ats.internal.jta.transaction.arjunacore.TransactionManagaerImple"/>
+            <property name="com.arjuna.ats.jta.jtaUTImplementation"
+                      value="com.arjuna.ats.internal.jta.transaction.arjunacore.UserTransactionImple"/>
+            <property name="hibernate.connection.driver_class" value="org.mongodb.jdbc.http.HttpDriver"/>
+            <!--<property name="hibernate.connection.url" value="jdbc:mongodb:http://localhost:27017" />-->
+            <property name="hibernate.ogm.datastore.provider" value="mongodb"/>
+            <property name="hibernate.ogm.datastore.database" value="OpenLAP"/>
+            <property name="hibernate.ogm.mongodb.host" value="localhost"/>
+            <property name="hibernate.ogm.mongodb.port" value="27017"/>
+            <property name="hibernate.ogm.mongodb.username" value=""/>
+            <property name="hibernate.ogm.mongodb.password" value=""/>
+            <property name="hibernate.ogm.mongodb.safe" value="true"/>
+            <property name="spring.jpa.show-sql" value="false"/>
+            <property name="hibernate.ogm.mongodb.connection_timeout" value="5000"/>
+            <property name="hibernate.ogm.datastore.create_database" value="true"/>
+        </properties>
+    </persistence-unit>
+</persistence>
