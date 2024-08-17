@@ -3,6 +3,7 @@ import {
   Divider,
   Grid,
   IconButton,
+  Paper,
   Skeleton,
   Typography,
 } from "@mui/material";
@@ -58,7 +59,7 @@ const IndicatorPreview = () => {
       try {
         const indicatorDetail = await requestIndicatorFullDetail(
           api,
-          indicatorId
+          indicatorId,
         );
         setState((prevState) => ({
           ...prevState,
@@ -111,6 +112,8 @@ const IndicatorPreview = () => {
             ) : (
               <Grid
                 container
+                component={Paper}
+                variant="outlined"
                 justifyContent="center"
                 sx={{ backgroundColor: "white", p: 2, borderRadius: 2 }}
               >

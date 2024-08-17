@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -350,7 +350,14 @@ export default function IscCreator() {
 
   return (
     <>
-      {/* <Grid container justifyContent="center" sx={{ margin: 0, width: "100%" }}> */}
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Typography>ISC Creator</Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Divider />
+        </Grid>
+      </Grid>
       <Grid
         container
         spacing={2}
