@@ -1,38 +1,30 @@
 import BarChart from "../../../../assets/images/isc_charts/bar_graph.svg";
 import BarChartDesc from "../../../../assets/images/isc_charts_description/bar_chart.png";
-import BarChartDesc2 from "../../../../assets/images/isc_charts_description/bar_chart_desc.png";
+import BarChartDescLong from "../../../../assets/images/isc_charts_description/bar_chart_desc.png";
 
 import Scatterplot from "../../../../assets/images/isc_charts/scatterplot.svg";
 import ScatterplotDesc from "../../../../assets/images/isc_charts_description/scatterplot.png";
-import ScatterplotDesc2 from "../../../../assets/images/isc_charts_description/scatterplot_desc.png";
-
-import Histogram from "../../../../assets/images/isc_charts/histogram.svg";
-import HistogramDesc from "../../../../assets/images/isc_charts_description/histogram.png";
-import HistogramDesc2 from "../../../../assets/images/isc_charts_description/histogram_desc.png";
+import ScatterplotDescLong from "../../../../assets/images/isc_charts_description/scatterplot_desc.png";
 
 import LineChart from "../../../../assets/images/isc_charts/line_graph.svg";
 import LineChartDesc from "../../../../assets/images/isc_charts_description/line_graph.png";
-import LineChartDesc2 from "../../../../assets/images/isc_charts_description/line_graph_desc.png";
+import LineChartDescLong from "../../../../assets/images/isc_charts_description/line_graph_desc.png";
 
 import PolarAreaChart from "../../../../assets/images/isc_charts/polar_area_chart.svg";
 import PolarAreaChartDesc from "../../../../assets/images/isc_charts_description/polar_area_chart.svg";
-import PolarAreaChartDesc2 from "../../../../assets/images/isc_charts_description/polar_area_chart_desc.svg";
+import PolarAreaChartDescLong from "../../../../assets/images/isc_charts_description/polar_area_chart_desc.svg";
 
 import PieChart from "../../../../assets/images/isc_charts/pie_chart.svg";
 import PieChartDesc from "../../../../assets/images/isc_charts_description/pie_chart.png";
-import PieChartDesc2 from "../../../../assets/images/isc_charts_description/pie_chart_desc.png";
+import PieChartDescLong from "../../../../assets/images/isc_charts_description/pie_chart_desc.png";
 
 import StackedBarChart from "../../../../assets/images/isc_charts/stacked_bar_graph.svg";
 import StackedBarChartDesc from "../../../../assets/images/isc_charts_description/stacked_bar_graph.png";
-import StackedBarChartDesc2 from "../../../../assets/images/isc_charts_description/stacked_bar_graph_desc.png";
+import StackedBarChartDescLong from "../../../../assets/images/isc_charts_description/stacked_bar_graph_desc.png";
 
 import GroupedBarChart from "../../../../assets/images/isc_charts/grouped_bar_chart.svg";
 import GroupedBarChartDesc from "../../../../assets/images/isc_charts_description/grouped_bar_chart.png";
-import GroupedBarChartDesc2 from "../../../../assets/images/isc_charts_description/grouped_bar_chart_desc.png";
-
-import Heatmap from "../../../../assets/images/isc_charts/heat_map.svg";
-import BoxPlot from "../../../../assets/images/isc_charts/box_plot.svg";
-import Treemap from "../../../../assets/images/isc_charts/treemap.svg";
+import GroupedBarChartDescLong from "../../../../assets/images/isc_charts_description/grouped_bar_chart_desc.png";
 
 const chartTypes = [
   {
@@ -46,9 +38,9 @@ const chartTypes = [
     description:
       'Also known as Bar Graph or Column Graph. \n\n A Bar Chart uses either horizontal or vertical bars (column chart) to show discrete, numerical comparisons across categories. One axis of the chart shows the specific categories being compared and the other axis represents a discrete value scale. \n\n  Bar Charts are distinguished from Histograms, as they do not display continuous developments over an interval. Instead, Bar Chart\'s discrete data is categorical and therefore answers the question of "how many?" in each category.',
     shortDesc:
-      "A bar chart is used to compare values accross a few categories. Use it when the order of categories is not important.",
+      "A bar chart is used to compare values across a few categories. Use it when the order of categories is not important.",
     descImg1: BarChartDesc,
-    descImg2: BarChartDesc2,
+    descImg2: BarChartDescLong,
     link: "https://datavizcatalogue.com/methods/bar_chart.html",
   },
   // {
@@ -69,7 +61,7 @@ const chartTypes = [
     description:
       "A dot chart, also known as a dot plot, dot graph, or dot diagram, is a simple data visualization tool used to display the distribution or frequency of a dataset. It is particularly useful for visualizing categorical or discrete data, such as the distribution of values within a category or the occurrence of specific events. \n\n Dot charts are particularly useful for showing the distribution of data when you want to emphasize individual data points rather than connecting them with lines. They are often used in data analysis, statistics, and data visualization to provide a clear and concise representation of the dataset.",
     descImg1: ScatterplotDesc,
-    descImg2: ScatterplotDesc2,
+    descImg2: ScatterplotDescLong,
     link: "https://datavizcatalogue.com/methods/scatterplot.html",
     shortDesc:
       "A dot chart is a visual representation using dots to show the distribution or frequency of data points in different categories or values.",
@@ -88,7 +80,7 @@ const chartTypes = [
     shortDesc:
       "Grouped bar chart is used to compare values accross a few categories. Use it when the order of categories is not important.",
     descImg1: GroupedBarChartDesc,
-    descImg2: GroupedBarChartDesc2,
+    descImg2: GroupedBarChartDescLong,
     link: "https://datavizcatalogue.com/methods/multiset_barchart.html",
   },
   // {
@@ -133,7 +125,7 @@ const chartTypes = [
     shortDesc:
       "A line chart is used to display trends over time (years, months, and days) or categories when the order is important. Use it when there are many data points and the order is important.",
     descImg1: LineChartDesc,
-    descImg2: LineChartDesc2,
+    descImg2: LineChartDescLong,
     link: "https://datavizcatalogue.com/methods/line_graph.html",
   },
   {
@@ -149,7 +141,7 @@ const chartTypes = [
     shortDesc:
       "The Polar Area chart is similar to a usual pie chart, except sectors are equal angles and differ rather in how far each sector extends from the center of the circle. The polar area diagram is used to plot cyclic phenomena (e.g., count of deaths by month).",
     descImg1: PolarAreaChartDesc,
-    descImg2: PolarAreaChartDesc2,
+    descImg2: PolarAreaChartDescLong,
     link: "https://datavizcatalogue.com/methods/nightingale_rose_chart.html",
   },
   // {
@@ -170,7 +162,7 @@ const chartTypes = [
     shortDesc:
       "A pie chart is used to show proportions of a whole. Use it to show numbers that relate to a larger sum and always equal to 100%. Do not use this chart if it contains many slices as angles are hard to estimate",
     descImg1: PieChartDesc,
-    descImg2: PieChartDesc2,
+    descImg2: PieChartDescLong,
     link: "https://datavizcatalogue.com/methods/pie_chart.html",
   },
   // {
@@ -186,7 +178,7 @@ const chartTypes = [
   //   shortDesc:
   //     "A scatterplot is used to compare at least two sets of values or pairs of data. Use it to show relationships between sets of values",
   //   descImg1: ScatterplotDesc,
-  //   descImg2: ScatterplotDesc2,
+  //   descImg2: ScatterplotDescLong,
   //   link: "https://datavizcatalogue.com/methods/scatterplot.html",
   // },
   {
@@ -202,7 +194,7 @@ const chartTypes = [
     shortDesc:
       "Stacked bar chart is used to compare values accross a few categories. Use it when the order of categories is not important.",
     descImg1: StackedBarChartDesc,
-    descImg2: StackedBarChartDesc2,
+    descImg2: StackedBarChartDescLong,
     link: "https://datavizcatalogue.com/methods/stacked_bar_graph.html",
   },
   // {

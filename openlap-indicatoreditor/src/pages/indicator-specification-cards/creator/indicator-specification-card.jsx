@@ -2,6 +2,8 @@ import React, { createContext, useState } from "react";
 import { Divider, Grid, Typography } from "@mui/material";
 import SpecifyRequirements from "./components/specify-requirements/specify-requirements.jsx";
 import ChoosePath from "./components/choose-path/choose-path.jsx";
+import Visualization from "./components/visualization/visualization.jsx";
+import Dataset from "./components/dataset/dataset.jsx";
 
 export const ISCContext = createContext(undefined);
 
@@ -22,33 +24,48 @@ const IndicatorSpecificationCard = () => {
     ],
   });
 
+  const [visRef, setVisRef] = useState({
+    filter: {
+      type: "",
+    },
+    chart: {
+      type: "",
+    },
+  });
+
   const [lockedStep, setLockedStep] = useState({
     requirements: {
-      locked: false,
       openPanel: true,
+      step: "1",
     },
     path: {
       locked: true,
       openPanel: false,
+      step: "2",
     },
     visualization: {
       locked: true,
       openPanel: false,
+      step: "0",
     },
     dataset: {
       locked: true,
       openPanel: false,
-    },
-    finalize: {
-      locked: true,
-      openPanel: false,
+      step: "0",
     },
   });
 
   return (
     <>
       <ISCContext.Provider
-        value={{ requirements, setRequirements, lockedStep, setLockedStep }}
+        value={{
+          requirements,
+          setRequirements,
+          lockedStep,
+          setLockedStep,
+          visRef,
+          setVisRef,
+        }}
       >
         <Grid container spacing={2}>
           <Grid item xs={12}>
@@ -64,6 +81,26 @@ const IndicatorSpecificationCard = () => {
           <Grid item xs={12}>
             <ChoosePath />
           </Grid>
+          {lockedStep.visualization.step === "3" && (
+            <Grid item xs={12}>
+              <Visualization />
+            </Grid>
+          )}
+          {lockedStep.dataset.step === "4" && (
+            <Grid item xs={12}>
+              <Dataset />
+            </Grid>
+          )}
+          {lockedStep.dataset.step === "3" && (
+            <Grid item xs={12}>
+              <Dataset />
+            </Grid>
+          )}
+          {lockedStep.visualization.step === "4" && (
+            <Grid item xs={12}>
+              <Visualization />
+            </Grid>
+          )}
         </Grid>
       </ISCContext.Provider>
     </>
