@@ -1,11 +1,45 @@
-import React, { useContext } from "react";
-import { Grid, TextField } from "@mui/material";
+import React, { useContext, useState } from "react";
+import {
+  Accordion,
+  AccordionActions,
+  AccordionDetails,
+  AccordionSummary,
+  Button,
+  Chip,
+  FormControlLabel,
+  FormGroup,
+  Grid,
+  Switch,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import GoalList from "./components/goal-list.jsx";
 import DataList from "./components/data-list.jsx";
 
 const SpecifyRequirements = () => {
-  const { requirements, setRequirements } = useContext(ISCContext);
+  const { requirements, setRequirements, lockedStep, setLockedStep } =
+    useContext(ISCContext);
+  const [state, setState] = useState({
+    showSelections: true,
+  });
+
+  const handleTogglePanel = () => {
+    setLockedStep((prevState) => ({
+      ...prevState,
+      requirements: {
+        ...prevState.requirements,
+        openPanel: !prevState.requirements.openPanel,
+      },
+    }));
+  };
+
+  const handleToggleShowSelection = () => {
+    setState((prevState) => ({
+      ...prevState,
+      showSelections: !prevState.showSelections,
+    }));
+  };
 
   const handleFormData = (event) => {
     const { name, value } = event.target;
@@ -15,80 +49,227 @@ const SpecifyRequirements = () => {
     }));
   };
 
+  const handleUnlockPath = () => {
+    handleTogglePanel();
+    setLockedStep((prevState) => ({
+      ...prevState,
+      path: {
+        ...prevState.path,
+        locked: false,
+        openPanel: true,
+      },
+    }));
+  };
+
   return (
     <>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Grid container spacing={2} justifyContent="center">
-            <Grid item xs={12} md={8}>
-              <Grid container spacing={2}>
-                <Grid item xs sm={4}>
-                  <GoalList />
-                </Grid>
-                <Grid item xs={12} sm>
-                  <TextField
-                    fullWidth
-                    required
-                    name="goal"
-                    value={requirements.goal}
-                    label="Describe your goal"
-                    placeholder="e.g., the usage of the learning materials in my course."
-                    onChange={handleFormData}
-                  />
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
-        </Grid>
-
-        <Grid item xs={12}>
-          <Grid container spacing={2} justifyContent="center">
-            <Grid item xs={12} md={8}>
-              <Grid container spacing={2} alignItems="center">
+      <Accordion sx={{ mb: 1 }} expanded={lockedStep.requirements.openPanel}>
+        <AccordionSummary>
+          <Grid container spacing={1}>
+            <Grid item xs={12}>
+              <Grid
+                container
+                alignItems="center"
+                justifyContent="space-between"
+                spacing={1}
+              >
                 <Grid item xs>
-                  <TextField
-                    fullWidth
-                    required
-                    name="question"
-                    value={requirements.question}
-                    label="I am interested in"
-                    placeholder="e.g., knowing how often these learning materials are viewed by my students."
-                    onChange={handleFormData}
-                  />
+                  <Grid container alignItems="center" spacing={1}>
+                    <Grid item>
+                      <Chip label="1" color="primary" />
+                    </Grid>
+                    <Grid item>
+                      <Typography>Specify your ISC requirements</Typography>
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid item>
+                  <Grid container>
+                    {!lockedStep.requirements.openPanel && (
+                      <FormGroup>
+                        <FormControlLabel
+                          control={<Switch checked={state.showSelections} />}
+                          onChange={handleToggleShowSelection}
+                          label="Show selections"
+                        />
+                      </FormGroup>
+                    )}
+                    <Button color="primary" onClick={handleTogglePanel}>
+                      {lockedStep.requirements.openPanel
+                        ? "Close section"
+                        : "CHANGE"}
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Grid>
+            {!lockedStep.requirements.openPanel && state.showSelections ? (
+              <>
+                {requirements.goal !== "" &&
+                  requirements.goalType.name !== "" && (
+                    <Grid item xs={12}>
+                      <Grid container alignItems="center" spacing={1}>
+                        <Grid item>
+                          <Typography>I want to</Typography>
+                        </Grid>
+                        <Grid item>
+                          <Chip label={requirements.goalType.name} />
+                        </Grid>
+                        <Grid item>
+                          <Chip label={requirements.goal} />
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  )}
+                {requirements.question !== "" && (
+                  <Grid item xs={12}>
+                    <Grid container alignItems="center" spacing={1}>
+                      <Grid item>
+                        <Typography>I am interested in</Typography>
+                      </Grid>
+                      <Grid item>
+                        <Chip label={requirements.question} />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                )}
+                {requirements.question !== "" && (
+                  <Grid item xs={12}>
+                    <Grid container alignItems="center" spacing={1}>
+                      <Grid item>
+                        <Typography>I need an indicator showing</Typography>
+                      </Grid>
+                      <Grid item>
+                        <Chip label={requirements.indicatorName} />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                )}
+                {requirements.data.length !== 0 &&
+                  (requirements.data[0].value !== "" ||
+                    requirements.data[1].value !== "") && (
+                    <Grid item xs={12}>
+                      <Grid container alignItems="center" spacing={1}>
+                        <Grid item>
+                          <Typography>I need data</Typography>
+                        </Grid>
+                        {requirements.data.map((item, index) => {
+                          if (item.value !== "") {
+                            return (
+                              <Grid item key={index}>
+                                <Chip label={item.value} />
+                              </Grid>
+                            );
+                          }
+                          return undefined;
+                        })}
+                      </Grid>
+                    </Grid>
+                  )}
+              </>
+            ) : undefined}
+          </Grid>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Grid container spacing={2} justifyContent="center">
+                <Grid item xs={12} md={8}>
+                  <Grid container spacing={2}>
+                    <Grid item xs sm={4}>
+                      <GoalList />
+                    </Grid>
+                    <Grid item xs={12} sm>
+                      <TextField
+                        fullWidth
+                        required
+                        name="goal"
+                        value={requirements.goal}
+                        label="Describe your goal"
+                        placeholder="e.g., the usage of the learning materials in my course."
+                        onChange={handleFormData}
+                      />
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Grid container spacing={2} justifyContent="center">
+                <Grid item xs={12} md={8}>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs>
+                      <TextField
+                        fullWidth
+                        required
+                        name="question"
+                        value={requirements.question}
+                        label="I am interested in"
+                        placeholder="e.g., knowing how often these learning materials are viewed by my students."
+                        onChange={handleFormData}
+                      />
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Grid container spacing={2} justifyContent="center">
+                <Grid item xs={12} md={8}>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs>
+                      <TextField
+                        fullWidth
+                        required
+                        name="indicatorName"
+                        value={requirements.indicatorName}
+                        label="I need an indicator showing"
+                        placeholder="e.g., the number of views of learning materials and sort by the most viewed ones."
+                        onChange={handleFormData}
+                      />
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Grid container spacing={2} justifyContent="center">
+                <Grid item xs={12} md={8}>
+                  <DataList />
                 </Grid>
               </Grid>
             </Grid>
           </Grid>
-        </Grid>
-
-        <Grid item xs={12}>
-          <Grid container spacing={2} justifyContent="center">
-            <Grid item xs={12} md={8}>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs>
-                  <TextField
-                    fullWidth
-                    required
-                    name="indicatorName"
-                    value={requirements.indicatorName}
-                    label="I need an indicator showing"
-                    placeholder="e.g., the number of views of learning materials and sort by the most viewed ones."
-                    onChange={handleFormData}
-                  />
-                </Grid>
+        </AccordionDetails>
+        {/*{lockedStep.path.locked && (*/}
+        <AccordionActions sx={{ py: 2 }}>
+          <Grid item xs={12}>
+            <Grid container spacing={2} justifyContent="center">
+              <Grid item xs={12} md={6}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  disabled={
+                    requirements.goalType.value === null ||
+                    requirements.goalType.value === "" ||
+                    requirements.goal === "" ||
+                    requirements.question === "" ||
+                    requirements.indicatorName === "" ||
+                    requirements.data.some((item) => item.value === "")
+                  }
+                  onClick={handleUnlockPath}
+                >
+                  Next
+                </Button>
               </Grid>
             </Grid>
           </Grid>
-        </Grid>
-
-        <Grid item xs={12}>
-          <Grid container spacing={2} justifyContent="center">
-            <Grid item xs={12} md={8}>
-              <DataList />
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
+        </AccordionActions>
+        {/*)}*/}
+      </Accordion>
     </>
   );
 };
