@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -305,6 +305,14 @@ const IscDashboard = () => {
 
   return (
     <>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Typography>ISC Dashboard</Typography>
+        </Grid>
+        <Grid item xs={12}>
+          <Divider />
+        </Grid>
+      </Grid>
       <Grid
         container
         spacing={2}
@@ -641,7 +649,6 @@ const IscDashboard = () => {
           </Grid>
         </DialogContent>
       </Dialog>
-
       {/* Edit an indicator but something is in progress */}
       <Dialog open={onProgressFromEditDialog.status} fullWidth maxWidth="sm">
         <DialogTitle>Continue Editing or Edit this Indicator</DialogTitle>
@@ -690,7 +697,6 @@ const IscDashboard = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Create new but some things are in progress */}
       <Dialog open={onProgressDialog} fullWidth maxWidth="sm">
         <DialogTitle>Continue Editing or Create a New Indicator</DialogTitle>
@@ -732,7 +738,6 @@ const IscDashboard = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Preview indicator */}
       <Dialog open={previewIndicator.status} fullWidth maxWidth="md">
         <DialogTitle>Indicator Specification Card</DialogTitle>
@@ -819,7 +824,6 @@ const IscDashboard = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Delete an indicator from dashboard */}
       <Dialog open={deleteDialog} fullWidth maxWidth="sm">
         <DialogTitle>

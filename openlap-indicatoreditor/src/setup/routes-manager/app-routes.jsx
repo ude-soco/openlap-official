@@ -32,6 +32,7 @@ import MultiLevelAnalysisIndicator from "../../pages/indicator-editor/editor/mul
 import CsvXapiDashboard from "../../pages/csv-xapi-converter/csv-xapi-dashboard.jsx";
 import ManageLrs from "../../pages/account-manager/manage-lrs.jsx";
 import Home from "../../pages/Home/home.jsx";
+import IndicatorSpecificationCard from "../../pages/indicator-specification-cards/creator/indicator-specification-card.jsx";
 
 const drawerWidth = 280;
 
@@ -215,10 +216,19 @@ const AppRoutes = () => {
                         }
                       />
                       <Route
-                        path="/isc/creator"
+                        path="/isc/creator/old"
                         element={
                           <PrivateRoute
                             component={<ISCCreator />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                      <Route
+                        path="/isc/creator"
+                        element={
+                          <PrivateRoute
+                            component={<IndicatorSpecificationCard />}
                             allowedRoles={[RoleTypes.user]}
                           />
                         }

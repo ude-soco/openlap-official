@@ -26,6 +26,7 @@ import IndicatorPreview from "../../pages/indicator-editor/dashboard/indicator-p
 import ISCPool from "../../pages/isc-creator/isc-pool/isc-pool.jsx";
 import ISCCreator from "../../pages/isc-creator/creator/isc-creator.jsx";
 import IscDashboard from "../../pages/isc-creator/dashboard/isc-dashboard.jsx";
+import IndicatorSpecificationCard from "../../pages/indicator-specification-cards/creator/indicator-specification-card.jsx";
 
 const menus = [
   {
@@ -45,6 +46,13 @@ const menus = [
         primary: "ISC Creator",
         secondary: "Create a ISC",
         navigate: "/isc/creator",
+        icon: <AddchartIcon />,
+        component: <IndicatorSpecificationCard />,
+      },
+      {
+        primary: "ISC Creator Old",
+        secondary: "Create a ISC",
+        navigate: "/isc/creator/old",
         icon: <AddchartIcon />,
         component: <ISCCreator />,
       },

@@ -110,7 +110,7 @@ const Sidebar = ({ openSidebar }) => {
         />
       </DrawerHeader>
 
-      <Divider />
+      <Divider sx={{ mb: 1 }} />
       <List component="div" disablePadding>
         <ListItemButton
           onClick={() => navigate("/dashboard")}
@@ -119,7 +119,7 @@ const Sidebar = ({ openSidebar }) => {
           <ListItemIcon>
             <DashboardIcon />
           </ListItemIcon>
-          <ListItemText primary="Home" secondary="Home" />
+          <ListItemText primary="Home" />
         </ListItemButton>
       </List>
       {menus.map((menu) => (
