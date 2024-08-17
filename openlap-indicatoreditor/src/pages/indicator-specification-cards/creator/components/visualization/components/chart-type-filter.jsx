@@ -48,7 +48,10 @@ const ChartTypeFilter = () => {
                 return (
                   <Grid
                     item
-                    xs={2}
+                    xs={6}
+                    sm={4}
+                    md={2}
+                    xl={1}
                     sx={{ cursor: "pointer" }}
                     onClick={() => handleSelectFilter(filter)}
                   >
@@ -93,7 +96,9 @@ const ChartTypeFilter = () => {
                                 />
                               </Grid>
                               <Grid item>
-                                <Typography>{filter.type}</Typography>
+                                <Typography align="center">
+                                  {filter.type}
+                                </Typography>
                               </Grid>
                             </Grid>
                           </Paper>

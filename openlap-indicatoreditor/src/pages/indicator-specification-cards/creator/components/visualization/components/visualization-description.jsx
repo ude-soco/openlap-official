@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
-import { Box, Button, Chip, Grid, Typography } from "@mui/material";
+import { Button, Chip, Grid, Typography } from "@mui/material";
 
 const VisualizationDescription = () => {
   const { visRef } = useContext(ISCContext);
@@ -12,14 +12,15 @@ const VisualizationDescription = () => {
         </Grid>
         <Grid item xs={12}>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <Box
-                component="img"
-                src={visRef.chart.imageDescription}
-                sx={{ width: "100%", borderRadius: 2 }}
-              />
-            </Grid>
-            <Grid item xs={6}>
+            <Grid
+              item
+              xs={12}
+              md={6}
+              component="img"
+              src={visRef.chart.imageDescription}
+              sx={{ width: "100%", borderRadius: 2 }}
+            />
+            <Grid item xs={12} md={6}>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <Typography gutterBottom>Short description</Typography>
@@ -42,7 +43,7 @@ const VisualizationDescription = () => {
                             return (
                               <Grid item key={type}>
                                 <Chip
-                                  label={`${type.type}: ${type.required}`}
+                                  label={`${type.type.value}: ${type.required}`}
                                 />
                               </Grid>
                             );
@@ -53,7 +54,7 @@ const VisualizationDescription = () => {
                   </Grid>
                 </Grid>
 
-                <Grid item xs={12} sx={{ mt: 3 }}>
+                <Grid item xs={12} md={7} lg={5} sx={{ mt: 3 }}>
                   <Button
                     fullWidth
                     variant="outlined"

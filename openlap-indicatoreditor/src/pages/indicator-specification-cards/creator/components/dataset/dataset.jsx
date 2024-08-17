@@ -2,7 +2,6 @@ import React, { useContext, useState } from "react";
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import {
   Accordion,
-  AccordionActions,
   AccordionDetails,
   AccordionSummary,
   Button,
@@ -15,6 +14,7 @@ import {
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import LockIcon from "@mui/icons-material/Lock";
+import DataTableManager from "./components/data-table-manager.jsx";
 
 const Dataset = () => {
   const { requirements, setRequirements, lockedStep, setLockedStep } =
@@ -111,38 +111,39 @@ const Dataset = () => {
         </AccordionSummary>
         <AccordionDetails>
           <Grid container spacing={2}>
-            <Grid item xs={12}></Grid>
-          </Grid>
-        </AccordionDetails>
-        {/*{lockedStep.path.locked && (*/}
-        <AccordionActions sx={{ py: 2 }}>
-          <Grid item xs={12}>
-            <Grid container spacing={2} justifyContent="center">
-              <Grid item xs={12} md={6}>
-                {lockedStep.dataset.step === "3" && (
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    // disabled={visRef.chart.type === ""}
-                    onClick={handleUnlockVisualization}
-                  >
-                    Next
-                  </Button>
-                )}
-                {lockedStep.dataset.step === "4" && (
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    // disabled={visRef.chart.type === ""}
-                    // onClick={handleUnlockDataset}
-                  >
-                    Save
-                  </Button>
-                )}
-              </Grid>
+            <Grid item xs={12}>
+              <DataTableManager />
             </Grid>
           </Grid>
-        </AccordionActions>
+        </AccordionDetails>
+        {/*<AccordionActions sx={{ py: 2 }}>*/}
+        {/*  <Grid item xs={12}>*/}
+        {/*    <Grid container spacing={2} justifyContent="center">*/}
+        {/*      <Grid item xs={12} md={6}>*/}
+        {/*        {lockedStep.dataset.step === "3" && (*/}
+        {/*          <Button*/}
+        {/*            fullWidth*/}
+        {/*            variant="contained"*/}
+        {/*            // disabled={visRef.chart.type === ""}*/}
+        {/*            onClick={handleUnlockVisualization}*/}
+        {/*          >*/}
+        {/*            Next*/}
+        {/*          </Button>*/}
+        {/*        )}*/}
+        {/*        {lockedStep.dataset.step === "4" && (*/}
+        {/*          <Button*/}
+        {/*            fullWidth*/}
+        {/*            variant="contained"*/}
+        {/*            // disabled={visRef.chart.type === ""}*/}
+        {/*            // onClick={handleUnlockDataset}*/}
+        {/*          >*/}
+        {/*            Save*/}
+        {/*          </Button>*/}
+        {/*        )}*/}
+        {/*      </Grid>*/}
+        {/*    </Grid>*/}
+        {/*  </Grid>*/}
+        {/*</AccordionActions>*/}
         {/*)}*/}
       </Accordion>
     </>

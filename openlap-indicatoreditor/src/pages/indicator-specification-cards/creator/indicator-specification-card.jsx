@@ -24,6 +24,13 @@ const IndicatorSpecificationCard = () => {
     ],
   });
 
+  const [dataset, setDataset] = useState({
+    file: { name: "" },
+    rows: [],
+    columns: [],
+    status: false,
+  });
+
   const [visRef, setVisRef] = useState({
     filter: {
       type: "",
@@ -53,6 +60,11 @@ const IndicatorSpecificationCard = () => {
       openPanel: false,
       step: "0",
     },
+    finalize: {
+      locked: true,
+      openPanel: false,
+      step: "5",
+    },
   });
 
   return (
@@ -65,6 +77,8 @@ const IndicatorSpecificationCard = () => {
           setLockedStep,
           visRef,
           setVisRef,
+          dataset,
+          setDataset,
         }}
       >
         <Grid container spacing={2}>
