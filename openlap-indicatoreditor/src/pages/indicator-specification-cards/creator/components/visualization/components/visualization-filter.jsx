@@ -73,7 +73,9 @@ const VisualizationFilter = () => {
                     return (
                       <Grid
                         item
-                        xs={2}
+                        xs={6}
+                        sm={4}
+                        md={2}
                         sx={{ cursor: "pointer" }}
                         onClick={() => handleSelectVisualization(visualization)}
                       >
@@ -118,7 +120,7 @@ const VisualizationFilter = () => {
                                     />
                                   </Grid>
                                   <Grid item>
-                                    <Typography>
+                                    <Typography align="center">
                                       {visualization.type}
                                     </Typography>
                                   </Grid>

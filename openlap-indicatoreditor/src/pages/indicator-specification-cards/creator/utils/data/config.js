@@ -28,9 +28,24 @@ import PathsImage from "../../../../../assets/images/isc_charts_filter/paths.svg
 import TopologyImage from "../../../../../assets/images/isc_charts_filter/topology.svg";
 
 const DataTypes = {
-  categorical: "Categorical",
-  numerical: "Numerical",
-  catOrdered: "Categorical (ordinal)",
+  categorical: {
+    value: "Categorical",
+    type: "string",
+    description:
+      "Categorical data, also known as nominal data, classifies information into distinct, non-ordered categories. For instance, colors (e.g., red, blue, green) are categorical data, with no inherent hierarchy or order.",
+  },
+  numerical: {
+    value: "Numerical",
+    type: "number",
+    description:
+      "Numerical data means using numbers to describe things like age, height, or income. It's possible to count or measure using this data type.",
+  },
+  catOrdered: {
+    value: "Categorical (ordinal)",
+    type: "string",
+    description:
+      "An 'ordinal' categorical variable has a clear ordering. For example, temperature as a variable with three orderly categories (low, medium and high)",
+  },
 };
 
 const ChartTypes = {
@@ -110,15 +125,15 @@ const visualizations = [
     filters: [ChartTypes.distribution],
     dataTypes: [
       {
-        type: DataTypes.categorical,
+        type: DataTypes.categorical.value,
         required: 1,
       },
       {
-        type: DataTypes.numerical,
+        type: DataTypes.numerical.value,
         required: 1,
       },
       {
-        type: DataTypes.catOrdered,
+        type: DataTypes.catOrdered.value,
         required: 0,
       },
     ],
@@ -137,15 +152,15 @@ const visualizations = [
     filters: [ChartTypes.trends, ChartTypes.outliers],
     dataTypes: [
       {
-        type: DataTypes.categorical,
+        type: DataTypes.categorical.value,
         required: 1,
       },
       {
-        type: DataTypes.numerical,
+        type: DataTypes.numerical.value,
         required: 1,
       },
       {
-        type: DataTypes.catOrdered,
+        type: DataTypes.catOrdered.value,
         required: 0,
       },
     ],
@@ -164,15 +179,15 @@ const visualizations = [
     filters: [ChartTypes.trends, ChartTypes.relationship],
     dataTypes: [
       {
-        type: DataTypes.categorical,
+        type: DataTypes.categorical.value,
         required: 2,
       },
       {
-        type: DataTypes.numerical,
+        type: DataTypes.numerical.value,
         required: 1,
       },
       {
-        type: DataTypes.catOrdered,
+        type: DataTypes.catOrdered.value,
         required: 0,
       },
     ],
@@ -191,15 +206,15 @@ const visualizations = [
     filters: [ChartTypes.trends],
     dataTypes: [
       {
-        type: DataTypes.categorical,
+        type: DataTypes.categorical.value,
         required: 1,
       },
       {
-        type: DataTypes.numerical,
+        type: DataTypes.numerical.value,
         required: 1,
       },
       {
-        type: DataTypes.catOrdered,
+        type: DataTypes.catOrdered.value,
         required: 0,
       },
     ],
@@ -218,15 +233,15 @@ const visualizations = [
     filters: [ChartTypes.relationship],
     dataTypes: [
       {
-        type: DataTypes.categorical,
+        type: DataTypes.categorical.value,
         required: 1,
       },
       {
-        type: DataTypes.numerical,
+        type: DataTypes.numerical.value,
         required: 1,
       },
       {
-        type: DataTypes.catOrdered,
+        type: DataTypes.catOrdered.value,
         required: 0,
       },
     ],
@@ -245,15 +260,15 @@ const visualizations = [
     filters: [ChartTypes.relationship],
     dataTypes: [
       {
-        type: DataTypes.categorical,
+        type: DataTypes.categorical.value,
         required: 1,
       },
       {
-        type: DataTypes.numerical,
+        type: DataTypes.numerical.value,
         required: 1,
       },
       {
-        type: DataTypes.catOrdered,
+        type: DataTypes.catOrdered.value,
         required: 0,
       },
     ],
@@ -272,15 +287,15 @@ const visualizations = [
     filters: [ChartTypes.trends, ChartTypes.relationship],
     dataTypes: [
       {
-        type: DataTypes.categorical,
+        type: DataTypes.categorical.value,
         required: 2,
       },
       {
-        type: DataTypes.numerical,
+        type: DataTypes.numerical.value,
         required: 1,
       },
       {
-        type: DataTypes.catOrdered,
+        type: DataTypes.catOrdered.value,
         required: 0,
       },
     ],
