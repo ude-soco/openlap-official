@@ -63,7 +63,7 @@ const SpecifyRequirements = () => {
 
   return (
     <>
-      <Accordion sx={{ mb: 1 }} expanded={lockedStep.requirements.openPanel}>
+      <Accordion expanded={lockedStep.requirements.openPanel}>
         <AccordionSummary>
           <Grid container spacing={1}>
             <Grid item xs={12}>
@@ -76,7 +76,10 @@ const SpecifyRequirements = () => {
                 <Grid item xs>
                   <Grid container alignItems="center" spacing={1}>
                     <Grid item>
-                      <Chip label="1" color="primary" />
+                      <Chip
+                        label={lockedStep.requirements.step}
+                        color="primary"
+                      />
                     </Grid>
                     <Grid item>
                       <Typography>Specify your ISC requirements</Typography>

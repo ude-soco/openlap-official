@@ -26,43 +26,73 @@ const ChoosePath = () => {
   });
 
   const handleChooseVisualizationPath = () => {
+    let vis = "Visualization";
     handleTogglePanel();
-    setLockedStep((prevState) => ({
-      ...prevState,
-      visualization: {
-        ...prevState.visualization,
-        locked: false,
-        openPanel: !prevState.visualization.openPanel,
-      },
-      dataset: {
-        locked: true,
-        openedPanel: false,
-      },
-    }));
-    setState((prevState) => ({
-      ...prevState,
-      selectedPath: "Visualization",
-    }));
+    if (state.selectedPath !== vis) {
+      setLockedStep((prevState) => ({
+        ...prevState,
+        visualization: {
+          ...prevState.visualization,
+          locked: false,
+          openPanel: true,
+          step: "3",
+        },
+        dataset: {
+          ...prevState.dataset,
+          locked: true,
+          openedPanel: false,
+          step: "0",
+        },
+      }));
+      setState((prevState) => ({
+        ...prevState,
+        selectedPath: vis,
+      }));
+    } else {
+      setLockedStep((prevState) => ({
+        ...prevState,
+        visualization: {
+          ...prevState.visualization,
+          openedPanel: true,
+        },
+      }));
+    }
   };
+
   const handleChooseDatasetPath = () => {
     handleTogglePanel();
-    setLockedStep((prevState) => ({
-      ...prevState,
-      dataset: {
-        ...prevState.dataset,
-        locked: false,
-        openPanel: !prevState.dataset.openPanel,
-      },
-      visualization: {
-        ...prevState.visualization,
-        locked: true,
-        openedPanel: false,
-      },
-    }));
-    setState((prevState) => ({
-      ...prevState,
-      selectedPath: "Dataset",
-    }));
+    let data = "Dataset";
+    if (state.selectedPath !== data) {
+      {
+        setLockedStep((prevState) => ({
+          ...prevState,
+          dataset: {
+            ...prevState.dataset,
+            locked: false,
+            openPanel: true,
+            step: "3",
+          },
+          visualization: {
+            ...prevState.visualization,
+            locked: true,
+            openedPanel: false,
+            step: "0",
+          },
+        }));
+        setState((prevState) => ({
+          ...prevState,
+          selectedPath: "Dataset",
+        }));
+      }
+    } else {
+      setLockedStep((prevState) => ({
+        ...prevState,
+        dataset: {
+          ...prevState.dataset,
+          openedPanel: true,
+        },
+      }));
+    }
   };
 
   const handleTogglePanel = () => {
@@ -104,7 +134,6 @@ const ChoosePath = () => {
   return (
     <>
       <Accordion
-        sx={{ mb: 1 }}
         expanded={lockedStep.path.openPanel}
         disabled={lockedStep.path.locked}
       >
@@ -121,7 +150,7 @@ const ChoosePath = () => {
                   <Grid container alignItems="center" spacing={1}>
                     <Grid item>
                       {!lockedStep.path.locked ? (
-                        <Chip label="2" color="primary" />
+                        <Chip label={lockedStep.path.step} color="primary" />
                       ) : (
                         <IconButton size="small">
                           <LockIcon />
