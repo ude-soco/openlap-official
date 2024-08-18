@@ -6,13 +6,13 @@ import Chart from "react-apexcharts";
 
 const StackedBarChart = () => {
   const { darkMode } = useContext(CustomThemeContext);
-  const { dataset } = useContext(ISCContext);
+  const { dataset, visRef } = useContext(ISCContext);
 
   const [state, setState] = useState({
     series: [],
     options: {
       chart: {
-        type: "bar",
+        type: visRef.chart.code,
         stacked: true,
         width: "100%",
         foreColor: darkMode ? "#ffffff" : "#000000",
@@ -63,6 +63,23 @@ const StackedBarChart = () => {
     },
   });
 
+  // Utility function to find suitable column or default
+  const getAvailableColumn = (currentField, columns) => {
+    const column = columns.find((col) => col.field === currentField);
+    if (column) return column.field;
+
+    const firstAvailable = columns.length > 0 ? columns[0].field : "";
+    return firstAvailable;
+  };
+
+  // Utility function to find the next available column
+  const findNextAvailableColumn = (selectedField, availableColumns) => {
+    return (
+      availableColumns.find((col) => col.field === selectedField)?.field ||
+      (availableColumns.length > 0 ? availableColumns[0].field : "")
+    );
+  };
+
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns) {
       const stringColumns = dataset.columns.filter(
@@ -72,34 +89,45 @@ const StackedBarChart = () => {
         (col) => col.type === "number",
       );
 
-      setState((prevState) => ({
-        ...prevState,
-        options: {
-          ...prevState.options,
-          chart: {
-            ...prevState.options.chart,
-            foreColor: darkMode ? "#ffffff" : "#000000",
+      setState((prevState) => {
+        // Ensure columns are reselected or defaulted if needed
+        const newXAxis = findNextAvailableColumn(
+          prevState.axisOptions.selectedXAxis,
+          stringColumns,
+        );
+        const newBarValue = findNextAvailableColumn(
+          prevState.axisOptions.selectedBarValue,
+          stringColumns,
+        );
+        const newYAxis = findNextAvailableColumn(
+          prevState.axisOptions.selectedYAxis,
+          numberColumns,
+        );
+
+        return {
+          ...prevState,
+          options: {
+            ...prevState.options,
+            chart: {
+              ...prevState.options.chart,
+              type: visRef.chart.code,
+              foreColor: darkMode ? "#ffffff" : "#000000",
+            },
+            tooltip: {
+              ...prevState.options.tooltip,
+              theme: darkMode ? "dark" : "light",
+            },
           },
-          tooltip: {
-            ...prevState.options.tooltip,
-            theme: darkMode ? "dark" : "light",
+          axisOptions: {
+            xAxisOptions: stringColumns,
+            barValueOptions: stringColumns,
+            yAxisOptions: numberColumns,
+            selectedXAxis: newXAxis,
+            selectedBarValue: newBarValue,
+            selectedYAxis: newYAxis,
           },
-        },
-        axisOptions: {
-          xAxisOptions: stringColumns,
-          barValueOptions: stringColumns,
-          yAxisOptions: numberColumns,
-          selectedXAxis:
-            prevState.axisOptions.selectedXAxis ||
-            (stringColumns.length > 0 ? stringColumns[0].field : ""),
-          selectedBarValue:
-            prevState.axisOptions.selectedBarValue ||
-            (stringColumns.length > 0 ? stringColumns[0].field : ""),
-          selectedYAxis:
-            prevState.axisOptions.selectedYAxis ||
-            (numberColumns.length > 0 ? numberColumns[0].field : ""),
-        },
-      }));
+        };
+      });
     }
   }, [dataset, darkMode]);
 
@@ -278,7 +306,7 @@ const StackedBarChart = () => {
           <Chart
             options={state.options}
             series={state.series}
-            type="bar"
+            type={visRef.chart.code}
             height="100%"
           />
         </Grid>
