@@ -357,7 +357,7 @@ const visualizations = [
     dataTypes: [
       {
         type: DataTypes.categorical,
-        required: 1,
+        required: 2,
       },
       {
         type: DataTypes.numerical,

@@ -31,8 +31,10 @@ const TreeMap = () => {
     },
     axisOptions: {
       categoryOptions: [],
+      xValueOptions: [],
       valueOptions: [],
       selectedCategory: "",
+      selectedXValue: "",
       selectedValue: "",
     },
   });
@@ -50,8 +52,10 @@ const TreeMap = () => {
         ...prevState,
         axisOptions: {
           categoryOptions: stringColumns,
+          xValueOptions: stringColumns,
           valueOptions: numberColumns,
           selectedCategory: stringColumns[0]?.field || "",
+          selectedXValue: stringColumns[1]?.field || "",
           selectedValue: numberColumns[0]?.field || "",
         },
       }));
@@ -60,22 +64,31 @@ const TreeMap = () => {
 
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns) {
-      const { selectedCategory, selectedValue } = state.axisOptions;
+      const { selectedCategory, selectedXValue, selectedValue } =
+        state.axisOptions;
 
-      if (!selectedCategory || !selectedValue) return;
+      if (!selectedCategory || !selectedXValue || !selectedValue) return;
 
       // Aggregate data for TreeMap
       const aggregateData = dataset.rows.reduce((acc, row) => {
         const category = row[selectedCategory];
+        const xValue = row[selectedXValue];
         const value = row[selectedValue] || 0;
 
         if (!acc[category]) {
           acc[category] = [];
         }
-        acc[category].push({
-          x: row["481ca5f0-f8fb-484b-aca9-9043758439c3"], // Assuming city name or similar
-          y: value,
-        });
+
+        // Find if xValue already exists
+        const existing = acc[category].find((item) => item.x === xValue);
+        if (existing) {
+          existing.y += value; // Sum the values
+        } else {
+          acc[category].push({
+            x: xValue,
+            y: value,
+          });
+        }
 
         return acc;
       }, {});
@@ -92,7 +105,7 @@ const TreeMap = () => {
         options: {
           ...prevState.options,
           title: {
-            text: `TreeMap of ${dataset.columns.find((col) => col.field === selectedCategory)?.headerName} vs ${dataset.columns.find((col) => col.field === selectedValue)?.headerName}`,
+            text: `TreeMap of ${dataset.columns.find((col) => col.field === selectedCategory)?.headerName} vs ${dataset.columns.find((col) => col.field === selectedXValue)?.headerName} vs ${dataset.columns.find((col) => col.field === selectedValue)?.headerName}`,
           },
         },
       }));
@@ -100,6 +113,7 @@ const TreeMap = () => {
   }, [
     dataset,
     state.axisOptions.selectedCategory,
+    state.axisOptions.selectedXValue,
     state.axisOptions.selectedValue,
     darkMode,
   ]);
@@ -110,6 +124,16 @@ const TreeMap = () => {
       axisOptions: {
         ...prevState.axisOptions,
         selectedCategory: event.target.value,
+      },
+    }));
+  };
+
+  const handleXValueChange = (event) => {
+    setState((prevState) => ({
+      ...prevState,
+      axisOptions: {
+        ...prevState.axisOptions,
+        selectedXValue: event.target.value,
       },
     }));
   };
@@ -129,7 +153,7 @@ const TreeMap = () => {
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid item xs={4}>
               <FormControl fullWidth>
                 <InputLabel id="category-select-label">Category</InputLabel>
                 <Select
@@ -148,7 +172,26 @@ const TreeMap = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={4}>
+              <FormControl fullWidth>
+                <InputLabel id="x-value-select-label">X-Value</InputLabel>
+                <Select
+                  labelId="x-value-select-label"
+                  id="x-value-select"
+                  value={state.axisOptions.selectedXValue}
+                  onChange={handleXValueChange}
+                  label="X-Value"
+                  variant="outlined"
+                >
+                  {state.axisOptions.xValueOptions.map((col) => (
+                    <MenuItem key={col.field} value={col.field}>
+                      {col.headerName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={4}>
               <FormControl fullWidth>
                 <InputLabel id="value-select-label">Value</InputLabel>
                 <Select
