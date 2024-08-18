@@ -31,7 +31,7 @@ const IndicatorSpecificationCard = () => {
     rows: [],
     columns: [],
   });
-
+  console.log(dataset);
   const [visRef, setVisRef] = useState({
     filter: {
       type: "",
@@ -40,8 +40,6 @@ const IndicatorSpecificationCard = () => {
       type: "",
     },
   });
-
-  console.log(dataset);
 
   const [lockedStep, setLockedStep] = useState({
     requirements: {

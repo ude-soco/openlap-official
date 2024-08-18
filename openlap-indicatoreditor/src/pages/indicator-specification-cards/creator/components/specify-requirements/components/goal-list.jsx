@@ -38,6 +38,7 @@ const GoalList = () => {
         <Autocomplete
           value={requirements.goalType || null}
           selectOnFocus
+          disablePortal
           clearOnBlur
           handleHomeEndKeys
           freeSolo

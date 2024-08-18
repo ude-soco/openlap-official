@@ -4,6 +4,7 @@ import { Button, Chip, Grid, Typography } from "@mui/material";
 
 const VisualizationDescription = () => {
   const { visRef } = useContext(ISCContext);
+
   return (
     <>
       <Grid container spacing={2}>
@@ -18,7 +19,11 @@ const VisualizationDescription = () => {
               md={6}
               component="img"
               src={visRef.chart.imageDescription}
-              sx={{ width: "100%", borderRadius: 2 }}
+              sx={{
+                width: "100%",
+                height: "100%",
+                borderRadius: 2,
+              }}
             />
             <Grid item xs={12} md={6}>
               <Grid container spacing={2}>
@@ -38,16 +43,17 @@ const VisualizationDescription = () => {
                     </Grid>
                     <Grid item xs={12}>
                       <Grid container spacing={1}>
-                        {visRef.chart.dataTypes.map((type) => {
+                        {visRef.chart.dataTypes.map((type, index) => {
                           if (type.required !== 0) {
                             return (
-                              <Grid item key={type}>
+                              <Grid item key={index}>
                                 <Chip
                                   label={`${type.type.value}: ${type.required}`}
                                 />
                               </Grid>
                             );
                           }
+                          return undefined;
                         })}
                       </Grid>
                     </Grid>

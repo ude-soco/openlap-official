@@ -146,19 +146,18 @@ const Visualization = () => {
                       </Grid>
                     </Grid>
                   )}
-                {visRef.chart.type !== "" &&
-                  requirements.goalType.name !== "" && (
-                    <Grid item xs={12}>
-                      <Grid container alignItems="center" spacing={1}>
-                        <Grid item>
-                          <Typography>Chart used:</Typography>
-                        </Grid>
-                        <Grid item>
-                          <Chip label={visRef.chart.type} />
-                        </Grid>
+                {visRef.chart.type !== "" && (
+                  <Grid item xs={12}>
+                    <Grid container alignItems="center" spacing={1}>
+                      <Grid item>
+                        <Typography>Chart used:</Typography>
+                      </Grid>
+                      <Grid item>
+                        <Chip label={visRef.chart.type} />
                       </Grid>
                     </Grid>
-                  )}
+                  </Grid>
+                )}
               </>
             ) : undefined}
           </Grid>

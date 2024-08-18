@@ -256,8 +256,7 @@ const SpecifyRequirements = () => {
                   fullWidth
                   variant="contained"
                   disabled={
-                    requirements.goalType.value === null ||
-                    requirements.goalType.value === "" ||
+                    requirements.goalType === null ||
                     requirements.goal === "" ||
                     requirements.question === "" ||
                     requirements.indicatorName === "" ||

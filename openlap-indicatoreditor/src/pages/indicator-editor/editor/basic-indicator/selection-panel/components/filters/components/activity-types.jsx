@@ -1,18 +1,12 @@
-import { useEffect, useContext } from "react";
+import { useContext, useEffect } from "react";
 import {
-  Chip,
-  Grid,
-  Typography,
-  TextField,
   Autocomplete,
+  Chip,
   Divider,
+  Grid,
+  TextField,
   Tooltip,
-  FormHelperText,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Paper,
+  Typography,
 } from "@mui/material";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { fetchActivityTypesList } from "../utils/filters-api.js";

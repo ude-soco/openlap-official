@@ -107,20 +107,29 @@ const DotChart = () => {
     if (dataset && dataset.rows && dataset.columns) {
       const { selectedXAxis, selectedYAxis } = state.axisOptions;
 
+      if (!selectedXAxis || !selectedYAxis) return;
+
+      // Sort data by the selected X-axis column
+      const sortedRows = [...dataset.rows].sort((a, b) => {
+        const aValue = a[selectedXAxis];
+        const bValue = b[selectedXAxis];
+        return aValue.localeCompare(bValue);
+      });
+
       // Generate series data for the scatter plot
       const series = [
         {
           name: "Data Points",
-          data: dataset.rows.map((row) => ({
+          data: sortedRows.map((row) => ({
             x: row[selectedXAxis] || "Unknown",
             y: row[selectedYAxis] || 0,
           })),
         },
       ];
 
-      // Create X-axis categories if needed (for visualization or specific purposes)
+      // Create X-axis categories based on sorted data
       const categories = [
-        ...new Set(dataset.rows.map((row) => row[selectedXAxis] || "Unknown")),
+        ...new Set(sortedRows.map((row) => row[selectedXAxis] || "Unknown")),
       ];
 
       setState((prevState) => ({
