@@ -42,7 +42,12 @@ const ChartTypeFilter = () => {
           Filter chart by types
         </AccordionSummary>
         <AccordionDetails>
-          <Grid container spacing={2} justifyContent="center">
+          <Grid
+            container
+            spacing={2}
+            justifyContent="center"
+            sx={{ display: "flex", alignItems: "stretch" }}
+          >
             {chartFilters.map((filter) => {
               if (filter.enable) {
                 return (
@@ -51,7 +56,6 @@ const ChartTypeFilter = () => {
                     xs={6}
                     sm={4}
                     md={2}
-                    xl={1}
                     sx={{ cursor: "pointer" }}
                     onClick={() => handleSelectFilter(filter)}
                   >

@@ -16,6 +16,8 @@ import PieChartFullDescriptionImage from "../../../../../assets/images/isc_chart
 import StackedBarChartImage from "../../../../../assets/images/isc_charts/stacked_bar_graph.svg";
 import StackedBarChartDescriptionImage from "../../../../../assets/images/isc_charts_description/stacked_bar_graph.png";
 import StackedBarChartFullDescriptionImage from "../../../../../assets/images/isc_charts_description/stacked_bar_graph_desc.png";
+import TreeMapImage from "../../../../../assets/images/isc_charts/treemap.svg";
+import TreeMapDescriptionImage from "../../../../../assets/images/isc_charts_description/treemap.png";
 import GroupedBarChartImage from "../../../../../assets/images/isc_charts/grouped_bar_chart.svg";
 import GroupedBarChartDescriptionImage from "../../../../../assets/images/isc_charts_description/grouped_bar_chart.png";
 import GroupedBarChartFullDescriptionImage from "../../../../../assets/images/isc_charts_description/grouped_bar_chart_desc.png";
@@ -26,6 +28,8 @@ import RelationshipImage from "../../../../../assets/images/isc_charts_filter/re
 import ClusterImage from "../../../../../assets/images/isc_charts_filter/feature.svg";
 import PathsImage from "../../../../../assets/images/isc_charts_filter/paths.svg";
 import TopologyImage from "../../../../../assets/images/isc_charts_filter/topology.svg";
+import RadarImage from "../../../../../assets/images/isc_charts/radar_chart.svg";
+import RadarDescriptionImage from "../../../../../assets/images/isc_charts_description/radar_chart.png";
 
 const DataTypes = {
   categorical: {
@@ -67,6 +71,8 @@ const VisualizationTypes = {
   polar: "Polar Area Chart",
   pie: "Pie Chart",
   stackedBar: "Stacked Bar Chart",
+  treemap: "Tree Map",
+  radar: "Radar Chart",
 };
 
 const chartFilters = [
@@ -341,6 +347,56 @@ const visualizations = [
     imageDescription: StackedBarChartDescriptionImage,
     imageFullDescription: StackedBarChartFullDescriptionImage,
     link: "https://datavizcatalogue.com/methods/stacked_bar_graph.html",
+  },
+  {
+    image: TreeMapImage,
+    enable: true,
+    type: VisualizationTypes.treemap,
+    code: "treemap",
+    filters: [ChartTypes.relationship],
+    dataTypes: [
+      {
+        type: DataTypes.categorical,
+        required: 1,
+      },
+      {
+        type: DataTypes.numerical,
+        required: 1,
+      },
+      {
+        type: DataTypes.catOrdered,
+        required: 0,
+      },
+    ],
+    imageDescription: TreeMapDescriptionImage,
+    description:
+      "A treemap is a data visualization technique that displays hierarchical data through a series of nested rectangles, where the size of each rectangle corresponds to the value of the data it represents, and the structure of these rectangles reflects the hierarchy of the data.",
+    link: "https://datavizcatalogue.com/methods/treemap.html",
+  },
+  {
+    image: RadarImage,
+    enable: true,
+    type: VisualizationTypes.radar,
+    code: "radar",
+    filters: [ChartTypes.distribution],
+    dataTypes: [
+      {
+        type: DataTypes.categorical,
+        required: 1,
+      },
+      {
+        type: DataTypes.numerical,
+        required: 1,
+      },
+      {
+        type: DataTypes.catOrdered,
+        required: 0,
+      },
+    ],
+    imageDescription: RadarDescriptionImage,
+    description:
+      "A radar chart, also known as a spider chart, web chart, polar chart, or star plot, is a graphical method of displaying multivariate data in the form of a two-dimensional chart of three or more quantitative variables represented on axes starting from the same point. The relative position and angle of the axes is typically uninformative, but various heuristics, such as algorithms developed by statisticians, might be applied to optimize the positions (e.g., to minimize overlap).",
+    link: "https://datavizcatalogue.com/methods/treemap.html",
   },
 ];
 

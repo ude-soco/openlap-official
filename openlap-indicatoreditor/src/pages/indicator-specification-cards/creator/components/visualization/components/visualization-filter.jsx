@@ -187,35 +187,35 @@ const VisualizationFilter = () => {
                                           {visualization.type}
                                         </Typography>
                                       </Grid>
+                                      <Grid item xs>
+                                        {checkVisualizationRecommendation(
+                                          visualization,
+                                          columnTypes,
+                                        ) && (
+                                          <Grid
+                                            container
+                                            spacing={1}
+                                            alignItems="center"
+                                            justifyContent="center"
+                                          >
+                                            <Grid item>
+                                              <Recommend color="success" />
+                                            </Grid>
+                                            <Grid item>
+                                              <Typography
+                                                gutterBottom
+                                                align="center"
+                                                variant="body2"
+                                              >
+                                                Recommended
+                                              </Typography>
+                                            </Grid>
+                                          </Grid>
+                                        )}
+                                      </Grid>
                                     </Grid>
                                   </Paper>
                                 </Tooltip>
-                              </Grid>
-                              <Grid item xs={12}>
-                                {checkVisualizationRecommendation(
-                                  visualization,
-                                  columnTypes,
-                                ) && (
-                                  <Grid
-                                    container
-                                    spacing={1}
-                                    alignItems="center"
-                                    justifyContent="center"
-                                  >
-                                    <Grid item>
-                                      <Recommend color="success" />
-                                    </Grid>
-                                    <Grid item>
-                                      <Typography
-                                        gutterBottom
-                                        align="center"
-                                        variant="body2"
-                                      >
-                                        Recommended
-                                      </Typography>
-                                    </Grid>
-                                  </Grid>
-                                )}
                               </Grid>
                             </Grid>
                           </Grid>

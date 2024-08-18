@@ -7,6 +7,7 @@ import PieChart from "../finalize/components/pie-chart.jsx";
 import ScatterPlotChart from "../finalize/components/scatter-plot-chart.jsx";
 import StackedBarChart from "../finalize/components/stacked-bar-chart.jsx";
 import DotChart from "../finalize/components/dot-chart.jsx";
+import TreeMap from "../finalize/components/treemap.jsx";
 
 const VisSelection = () => {
   const { visRef } = useContext(ISCContext);
@@ -26,6 +27,8 @@ const VisSelection = () => {
       return <StackedBarChart />;
     case VisualizationTypes.dot:
       return <DotChart />;
+    case VisualizationTypes.treemap:
+      return <TreeMap />;
     default:
       return <Typography>Visualization not available.</Typography>;
   }

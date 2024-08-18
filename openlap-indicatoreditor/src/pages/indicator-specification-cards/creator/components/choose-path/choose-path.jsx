@@ -80,7 +80,7 @@ const ChoosePath = () => {
         }));
         setRequirements((prevState) => ({
           ...prevState,
-          selectedPath: "Dataset",
+          selectedPath: data,
         }));
       }
     } else {
