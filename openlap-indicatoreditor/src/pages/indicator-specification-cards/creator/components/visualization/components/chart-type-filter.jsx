@@ -48,71 +48,73 @@ const ChartTypeFilter = () => {
             justifyContent="center"
             sx={{ display: "flex", alignItems: "stretch" }}
           >
-            {chartFilters.map((filter) => {
-              if (filter.enable) {
-                return (
-                  <Grid
-                    item
-                    xs={6}
-                    sm={4}
-                    md={2}
-                    sx={{ cursor: "pointer" }}
-                    onClick={() => handleSelectFilter(filter)}
-                  >
-                    <Grid container spacing={2}>
-                      <Grid item xs>
-                        <Tooltip
-                          arrow
-                          title={
-                            <Typography
-                              variant="body2"
-                              sx={{ p: 1, whiteSpace: "pre-line" }}
-                            >
-                              {filter.description}
-                            </Typography>
-                          }
-                        >
-                          <Paper
-                            variant="outlined"
-                            sx={{
-                              pb: 2,
-                              pt: 3,
-                              "&:hover": {
-                                boxShadow: 5,
-                              },
-                              border:
-                                visRef.filter.type === filter.type
-                                  ? "2px solid #F57C00"
-                                  : "",
-                            }}
+            {chartFilters
+              .sort((a, b) => a.type.localeCompare(b.type))
+              .map((filter) => {
+                if (filter.enable) {
+                  return (
+                    <Grid
+                      item
+                      xs={6}
+                      sm={4}
+                      md={2}
+                      sx={{ cursor: "pointer" }}
+                      onClick={() => handleSelectFilter(filter)}
+                    >
+                      <Grid container spacing={2}>
+                        <Grid item xs>
+                          <Tooltip
+                            arrow
+                            title={
+                              <Typography
+                                variant="body2"
+                                sx={{ p: 1, whiteSpace: "pre-line" }}
+                              >
+                                {filter.description}
+                              </Typography>
+                            }
                           >
-                            <Grid
-                              container
-                              direction="column"
-                              alignItems="center"
-                              spacing={2}
+                            <Paper
+                              variant="outlined"
+                              sx={{
+                                pb: 2,
+                                pt: 3,
+                                "&:hover": {
+                                  boxShadow: 5,
+                                },
+                                border:
+                                  visRef.filter.type === filter.type
+                                    ? "2px solid #F57C00"
+                                    : "",
+                              }}
                             >
-                              <Grid item>
-                                <Box
-                                  component="img"
-                                  src={filter.image}
-                                  height="72px"
-                                />
+                              <Grid
+                                container
+                                direction="column"
+                                alignItems="center"
+                                spacing={2}
+                              >
+                                <Grid item>
+                                  <Box
+                                    component="img"
+                                    src={filter.image}
+                                    height="72px"
+                                  />
+                                </Grid>
+                                <Grid item>
+                                  <Typography align="center">
+                                    {filter.type}
+                                  </Typography>
+                                </Grid>
                               </Grid>
-                              <Grid item>
-                                <Typography align="center">
-                                  {filter.type}
-                                </Typography>
-                              </Grid>
-                            </Grid>
-                          </Paper>
-                        </Tooltip>
+                            </Paper>
+                          </Tooltip>
+                        </Grid>
                       </Grid>
                     </Grid>
-                  </Grid>
-                );
-              }
-            })}
+                  );
+                }
+              })}
           </Grid>
         </AccordionDetails>
       </Accordion>

@@ -1,22 +1,30 @@
 import React, { useContext, useEffect, useState } from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
-import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
 import Chart from "react-apexcharts";
+import {
+  FormControl,
+  FormHelperText,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
+import { ISCContext } from "../../../indicator-specification-card.jsx";
 
-const PieChart = () => {
+const RadarChart = () => {
   const { darkMode } = useContext(CustomThemeContext);
   const { dataset, visRef } = useContext(ISCContext);
-
   const [state, setState] = useState({
     series: [],
     options: {
       chart: {
-        type: visRef.chart.code,
+        type: "radar",
         width: "100%",
         foreColor: darkMode ? "#ffffff" : "#000000",
       },
-      labels: [],
+      xaxis: {
+        categories: [],
+      },
       legend: {
         position: "top",
         horizontalAlign: "center",
@@ -25,13 +33,26 @@ const PieChart = () => {
         enabled: true,
         followCursor: true,
         theme: darkMode ? "dark" : "light",
+        onDatasetHover: {
+          highlightDataSeries: true,
+        },
+      },
+      fill: {
+        opacity: 0.4,
+      },
+      stroke: {
+        show: true,
+        width: 2,
+      },
+      markers: {
+        size: 4,
       },
     },
     axisOptions: {
       xAxisOptions: [],
       yAxisOptions: [],
       selectedXAxis: "",
-      selectedYAxis: "",
+      selectedYAxis: [],
     },
   });
 
@@ -44,80 +65,78 @@ const PieChart = () => {
         (col) => col.type === "number",
       );
 
+      const updatedSelectedXAxis = state.axisOptions.selectedXAxis
+        ? stringColumns.find(
+            (col) => col.field === state.axisOptions.selectedXAxis,
+          )?.field || ""
+        : stringColumns.length > 0
+          ? stringColumns[0].field
+          : "";
+
+      const updatedSelectedYAxis = state.axisOptions.selectedYAxis.filter(
+        (field) => numberColumns.find((col) => col.field === field),
+      );
+
       setState((prevState) => ({
         ...prevState,
         axisOptions: {
           xAxisOptions: stringColumns,
           yAxisOptions: numberColumns,
-          selectedXAxis:
-            prevState.axisOptions.selectedXAxis &&
-            stringColumns.some(
-              (col) => col.field === prevState.axisOptions.selectedXAxis,
-            )
-              ? prevState.axisOptions.selectedXAxis
-              : stringColumns.length > 0
-                ? stringColumns[0].field
-                : "",
+          selectedXAxis: updatedSelectedXAxis,
           selectedYAxis:
-            prevState.axisOptions.selectedYAxis &&
-            numberColumns.some(
-              (col) => col.field === prevState.axisOptions.selectedYAxis,
-            )
-              ? prevState.axisOptions.selectedYAxis
-              : numberColumns.length > 0
-                ? numberColumns[0].field
-                : "",
+            updatedSelectedYAxis.length > 0
+              ? updatedSelectedYAxis
+              : numberColumns.map((col) => col.field),
         },
       }));
     }
-  }, [dataset, darkMode, visRef.chart.code]);
+  }, [dataset]);
 
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns) {
       const { selectedXAxis, selectedYAxis } = state.axisOptions;
+      const xAxisColumn = dataset.columns.find(
+        (col) => col.field === selectedXAxis,
+      );
 
-      if (selectedXAxis && selectedYAxis) {
-        const groupedData = {};
+      if (!xAxisColumn || selectedYAxis.length === 0) return;
 
-        dataset.rows.forEach((row) => {
-          const category = row[selectedXAxis];
-          const value = row[selectedYAxis];
-
-          if (groupedData[category]) {
-            groupedData[category] += value;
-          } else {
-            groupedData[category] = value;
-          }
+      // Group data by unique X-axis values and sum Y-axis values
+      const groupedData = dataset.rows.reduce((acc, row) => {
+        const xValue = row[selectedXAxis] || "Unknown";
+        if (!acc[xValue]) acc[xValue] = {};
+        selectedYAxis.forEach((yField) => {
+          if (!acc[xValue][yField]) acc[xValue][yField] = 0;
+          acc[xValue][yField] += row[yField] || 0;
         });
+        return acc;
+      }, {});
 
-        const categories = Object.keys(groupedData);
-        const seriesData = Object.values(groupedData);
+      // Prepare categories and series
+      const categories = Object.keys(groupedData);
+      const series = selectedYAxis.map((yField) => ({
+        name:
+          dataset.columns.find((col) => col.field === yField)?.headerName ||
+          "Default Series",
+        data: categories.map((category) => groupedData[category][yField]),
+      }));
 
-        setState((prevState) => ({
-          ...prevState,
-          series: seriesData,
-          options: {
-            ...prevState.options,
-            labels: categories,
-            chart: {
-              ...prevState.options.chart,
-              type: visRef.chart.code,
-              foreColor: darkMode ? "#ffffff" : "#000000",
-            },
-            tooltip: {
-              ...prevState.options.tooltip,
-              theme: darkMode ? "dark" : "light",
-            },
+      setState((prevState) => ({
+        ...prevState,
+        series: series,
+        options: {
+          ...prevState.options,
+          xaxis: {
+            ...prevState.options.xaxis,
+            categories: categories,
           },
-        }));
-      }
+        },
+      }));
     }
   }, [
     dataset,
     state.axisOptions.selectedXAxis,
     state.axisOptions.selectedYAxis,
-    darkMode,
-    visRef.chart.code,
   ]);
 
   const handleXAxisChange = (event) => {
@@ -131,11 +150,12 @@ const PieChart = () => {
   };
 
   const handleYAxisChange = (event) => {
+    const { value } = event.target;
     setState((prevState) => ({
       ...prevState,
       axisOptions: {
         ...prevState.axisOptions,
-        selectedYAxis: event.target.value,
+        selectedYAxis: typeof value === "string" ? value.split(",") : value,
       },
     }));
   };
@@ -147,13 +167,13 @@ const PieChart = () => {
           <Grid container spacing={2}>
             <Grid item xs={6}>
               <FormControl fullWidth>
-                <InputLabel id="x-axis-select-label">Categories</InputLabel>
+                <InputLabel id="x-axis-select-label">X-Axis</InputLabel>
                 <Select
                   labelId="x-axis-select-label"
                   id="x-axis-select"
                   value={state.axisOptions.selectedXAxis}
                   onChange={handleXAxisChange}
-                  label="Categories"
+                  label="X-Axis"
                   variant="outlined"
                 >
                   {state.axisOptions.xAxisOptions.map((col) => (
@@ -166,14 +186,25 @@ const PieChart = () => {
             </Grid>
             <Grid item xs={6}>
               <FormControl fullWidth>
-                <InputLabel id="y-axis-select-label">Values</InputLabel>
+                <InputLabel id="y-axis-select-label">Y-Axis</InputLabel>
                 <Select
                   labelId="y-axis-select-label"
                   id="y-axis-select"
+                  multiple
                   value={state.axisOptions.selectedYAxis}
                   onChange={handleYAxisChange}
-                  label="Values"
+                  label="Y-Axis"
                   variant="outlined"
+                  renderValue={(selected) =>
+                    selected
+                      .map((value) => {
+                        const column = state.axisOptions.yAxisOptions.find(
+                          (col) => col.field === value,
+                        );
+                        return column ? column.headerName : value;
+                      })
+                      .join(", ")
+                  }
                 >
                   {state.axisOptions.yAxisOptions.map((col) => (
                     <MenuItem key={col.field} value={col.field}>
@@ -181,6 +212,7 @@ const PieChart = () => {
                     </MenuItem>
                   ))}
                 </Select>
+                <FormHelperText>Multi-select possible</FormHelperText>
               </FormControl>
             </Grid>
           </Grid>
@@ -189,7 +221,7 @@ const PieChart = () => {
           <Chart
             options={state.options}
             series={state.series}
-            type={visRef.chart.code}
+            type="radar"
             height="100%"
           />
         </Grid>
@@ -198,4 +230,4 @@ const PieChart = () => {
   );
 };
 
-export default PieChart;
+export default RadarChart;

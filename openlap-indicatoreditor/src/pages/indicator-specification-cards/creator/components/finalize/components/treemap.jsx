@@ -13,29 +13,25 @@ const TreeMap = () => {
     options: {
       chart: {
         type: "treemap",
-        width: "100%",
+        height: 350,
         foreColor: darkMode ? "#ffffff" : "#000000",
       },
-      plotOptions: {
-        treemap: {
-          distributed: true,
-        },
-      },
       title: {
-        text: "TreeMap",
+        text: "TreeMap Visualization",
+        align: "center",
+      },
+      legend: {
+        show: false,
       },
       tooltip: {
         enabled: true,
         followCursor: true,
         theme: darkMode ? "dark" : "light",
       },
-      legend: {
-        show: false,
-      },
     },
     axisOptions: {
-      xAxisOptions: [],
-      yAxisOptions: [],
+      categoryOptions: [],
+      valueOptions: [],
       selectedCategory: "",
       selectedValue: "",
     },
@@ -50,35 +46,15 @@ const TreeMap = () => {
         (col) => col.type === "number",
       );
 
-      setState((prevState) => {
-        const newCategory =
-          prevState.axisOptions.selectedCategory ||
-          (stringColumns.length > 0 ? stringColumns[0].field : "");
-        const newValue =
-          prevState.axisOptions.selectedValue ||
-          (numberColumns.length > 0 ? numberColumns[0].field : "");
-
-        return {
-          ...prevState,
-          options: {
-            ...prevState.options,
-            chart: {
-              ...prevState.options.chart,
-              foreColor: darkMode ? "#ffffff" : "#000000",
-            },
-            tooltip: {
-              ...prevState.options.tooltip,
-              theme: darkMode ? "dark" : "light",
-            },
-          },
-          axisOptions: {
-            xAxisOptions: stringColumns,
-            yAxisOptions: numberColumns,
-            selectedCategory: newCategory,
-            selectedValue: newValue,
-          },
-        };
-      });
+      setState((prevState) => ({
+        ...prevState,
+        axisOptions: {
+          categoryOptions: stringColumns,
+          valueOptions: numberColumns,
+          selectedCategory: stringColumns[0]?.field || "",
+          selectedValue: numberColumns[0]?.field || "",
+        },
+      }));
     }
   }, [dataset, darkMode]);
 
@@ -88,49 +64,38 @@ const TreeMap = () => {
 
       if (!selectedCategory || !selectedValue) return;
 
-      try {
-        // Ensure data is correctly formatted
-        const hierarchicalData = dataset.rows.reduce((acc, row) => {
-          const category = row[selectedCategory] || "Unknown";
-          const value = row[selectedValue] || 0;
+      // Aggregate data for TreeMap
+      const aggregateData = dataset.rows.reduce((acc, row) => {
+        const category = row[selectedCategory];
+        const value = row[selectedValue] || 0;
 
-          if (!acc[category]) {
-            acc[category] = {
-              name: category,
-              data: [],
-            };
-          }
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push({
+          x: row["481ca5f0-f8fb-484b-aca9-9043758439c3"], // Assuming city name or similar
+          y: value,
+        });
 
-          acc[category].data.push({
-            name: row.id || "Unnamed",
-            value: value,
-          });
+        return acc;
+      }, {});
 
-          return acc;
-        }, {});
+      // Convert aggregate data to the format required by TreeMap
+      const series = Object.entries(aggregateData).map(([category, data]) => ({
+        name: category,
+        data: data,
+      }));
 
-        const series = Object.keys(hierarchicalData).map((key) => ({
-          name: key,
-          data: hierarchicalData[key].data,
-        }));
-
-        console.log("Treemap Series:", series); // Debugging output
-
-        setState((prevState) => ({
-          ...prevState,
-          series: series,
-          options: {
-            ...prevState.options,
-            title: {
-              text:
-                dataset.columns.find((col) => col.field === selectedCategory)
-                  ?.headerName || "Category",
-            },
+      setState((prevState) => ({
+        ...prevState,
+        series: series,
+        options: {
+          ...prevState.options,
+          title: {
+            text: `TreeMap of ${dataset.columns.find((col) => col.field === selectedCategory)?.headerName} vs ${dataset.columns.find((col) => col.field === selectedValue)?.headerName}`,
           },
-        }));
-      } catch (error) {
-        console.error("Error processing data for treemap:", error);
-      }
+        },
+      }));
     }
   }, [
     dataset,
@@ -175,7 +140,7 @@ const TreeMap = () => {
                   label="Category"
                   variant="outlined"
                 >
-                  {state.axisOptions.xAxisOptions.map((col) => (
+                  {state.axisOptions.categoryOptions.map((col) => (
                     <MenuItem key={col.field} value={col.field}>
                       {col.headerName}
                     </MenuItem>
@@ -194,7 +159,7 @@ const TreeMap = () => {
                   label="Value"
                   variant="outlined"
                 >
-                  {state.axisOptions.yAxisOptions.map((col) => (
+                  {state.axisOptions.valueOptions.map((col) => (
                     <MenuItem key={col.field} value={col.field}>
                       {col.headerName}
                     </MenuItem>
@@ -205,16 +170,12 @@ const TreeMap = () => {
           </Grid>
         </Grid>
         <Grid item xs={12} sx={{ minHeight: 600 }}>
-          {state.series.length > 0 ? (
-            <Chart
-              options={state.options}
-              series={state.series}
-              type="treemap"
-              height="100%"
-            />
-          ) : (
-            <p>No data available for the selected options.</p>
-          )}
+          <Chart
+            options={state.options}
+            series={state.series}
+            type="treemap"
+            height="100%"
+          />
         </Grid>
       </Grid>
     </>

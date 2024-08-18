@@ -129,101 +129,106 @@ const VisualizationFilter = () => {
                   </Grid>
                 )}
 
-                {state.visualizationList.map((visualization) => {
-                  if (visualization.enable) {
-                    return (
-                      <Grid
-                        item
-                        xs={6}
-                        sm={4}
-                        md={2}
-                        sx={{ cursor: "pointer" }}
-                        onClick={() => handleSelectVisualization(visualization)}
-                      >
-                        <Grid container spacing={2}>
-                          <Grid item xs>
-                            <Grid container spacing={2}>
-                              <Grid item xs={12}>
-                                <Tooltip
-                                  arrow
-                                  title={
-                                    <Typography
-                                      variant="body2"
-                                      sx={{ p: 1, whiteSpace: "pre-line" }}
-                                    >
-                                      {visualization.description}
-                                    </Typography>
-                                  }
-                                >
-                                  <Paper
-                                    variant="outlined"
-                                    sx={{
-                                      pb: 2,
-                                      pt: 3,
-                                      "&:hover": {
-                                        boxShadow: 5,
-                                      },
-                                      border:
-                                        visRef.chart.type === visualization.type
-                                          ? "2px solid #F57C00"
-                                          : "",
-                                    }}
+                {state.visualizationList
+                  .sort((a, b) => a.type.localeCompare(b.type))
+                  .map((visualization) => {
+                    if (visualization.enable) {
+                      return (
+                        <Grid
+                          item
+                          xs={6}
+                          sm={4}
+                          md={2}
+                          sx={{ cursor: "pointer" }}
+                          onClick={() =>
+                            handleSelectVisualization(visualization)
+                          }
+                        >
+                          <Grid container spacing={2}>
+                            <Grid item xs>
+                              <Grid container spacing={2}>
+                                <Grid item xs={12}>
+                                  <Tooltip
+                                    arrow
+                                    title={
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ p: 1, whiteSpace: "pre-line" }}
+                                      >
+                                        {visualization.description}
+                                      </Typography>
+                                    }
                                   >
-                                    <Grid
-                                      container
-                                      direction="column"
-                                      alignItems="center"
-                                      spacing={2}
+                                    <Paper
+                                      variant="outlined"
+                                      sx={{
+                                        pb: 2,
+                                        pt: 3,
+                                        "&:hover": {
+                                          boxShadow: 5,
+                                        },
+                                        border:
+                                          visRef.chart.type ===
+                                          visualization.type
+                                            ? "2px solid #F57C00"
+                                            : "",
+                                      }}
                                     >
-                                      <Grid item>
-                                        <Box
-                                          component="img"
-                                          src={visualization.image}
-                                          height="72px"
-                                        />
-                                      </Grid>
-                                      <Grid item>
-                                        <Typography align="center">
-                                          {visualization.type}
-                                        </Typography>
-                                      </Grid>
-                                      <Grid item xs>
-                                        {checkVisualizationRecommendation(
-                                          visualization,
-                                          columnTypes,
-                                        ) && (
-                                          <Grid
-                                            container
-                                            spacing={1}
-                                            alignItems="center"
-                                            justifyContent="center"
-                                          >
-                                            <Grid item>
-                                              <Recommend color="success" />
+                                      <Grid
+                                        container
+                                        direction="column"
+                                        alignItems="center"
+                                        spacing={2}
+                                      >
+                                        <Grid item>
+                                          <Box
+                                            component="img"
+                                            src={visualization.image}
+                                            height="72px"
+                                          />
+                                        </Grid>
+                                        <Grid item>
+                                          <Typography align="center">
+                                            {visualization.type}
+                                          </Typography>
+                                        </Grid>
+                                        <Grid item xs>
+                                          {checkVisualizationRecommendation(
+                                            visualization,
+                                            columnTypes,
+                                          ) && (
+                                            <Grid
+                                              container
+                                              spacing={1}
+                                              alignItems="center"
+                                              justifyContent="center"
+                                            >
+                                              <Grid item>
+                                                <Recommend color="success" />
+                                              </Grid>
+                                              <Grid item>
+                                                <Typography
+                                                  gutterBottom
+                                                  align="center"
+                                                  variant="body2"
+                                                >
+                                                  Recommended
+                                                </Typography>
+                                              </Grid>
                                             </Grid>
-                                            <Grid item>
-                                              <Typography
-                                                gutterBottom
-                                                align="center"
-                                                variant="body2"
-                                              >
-                                                Recommended
-                                              </Typography>
-                                            </Grid>
-                                          </Grid>
-                                        )}
+                                          )}
+                                        </Grid>
                                       </Grid>
-                                    </Grid>
-                                  </Paper>
-                                </Tooltip>
+                                    </Paper>
+                                  </Tooltip>
+                                </Grid>
                               </Grid>
                             </Grid>
                           </Grid>
                         </Grid>
-                      </Grid>
-                    );
-                  }
-                })}
+                      );
+                    }
+                  })}
                 {state.recommendation && (
                   <Grid item xs={12}>
                     <Grid

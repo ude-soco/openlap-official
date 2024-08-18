@@ -147,7 +147,7 @@ const visualizations = [
     fullDescription:
       'Also known as Bar Graph or Column Graph. \n\n A Bar Chart uses either horizontal or vertical bars (column chart) to show discrete, numerical comparisons across categories. One axis of the chart shows the specific categories being compared and the other axis represents a discrete value scale. \n\n  Bar Charts are distinguished from Histograms, as they do not display continuous developments over an interval. Instead, Bar Chart\'s discrete data is categorical and therefore answers the question of "how many?" in each category.',
     description:
-      "A bar chart uses rectangular bars to compare values across different categories, with bar height or length representing the data's value. \n\n Another variant of bar chart is a grouped bar chart. It compares multiple categories across different groups using clusters of bars for each group.",
+      "A bar chart uses rectangular bars to compare values across different categories, with bar height or length representing the data's value.",
     imageDescription: BarChartDescriptionImage,
     imageFullDescription: BarChartFullDescriptionImage,
     link: "https://datavizcatalogue.com/methods/bar_chart.html",
@@ -165,11 +165,11 @@ const visualizations = [
       },
       {
         type: DataTypes.numerical,
-        required: 2,
+        required: 1,
       },
       {
         type: DataTypes.catOrdered,
-        required: 0,
+        required: 1,
       },
     ],
     fullDescription:
@@ -210,18 +210,18 @@ const visualizations = [
   },
   {
     image: GroupedBarChartImage,
-    enable: false,
+    enable: true,
     type: VisualizationTypes.groupedBar,
     code: "bar",
     filters: [ChartTypes.trends, ChartTypes.relationship],
     dataTypes: [
       {
         type: DataTypes.categorical,
-        required: 2,
+        required: 1,
       },
       {
         type: DataTypes.numerical,
-        required: 1,
+        required: 2,
       },
       {
         type: DataTypes.catOrdered,
@@ -231,7 +231,7 @@ const visualizations = [
     fullDescription:
       "Also known as a Grouped Bar Chart or Clustered Bar Chart. This variation of a Bar Chart can be used when two or more data series need to be plotted all on the same axis and grouped into parent categories. \n\n Like on a Bar Chart, the length of each bar on a Multiset Bar Chart is used to show discrete, numerical comparisons amongst categories. Each bar for a data series is assigned a colour to distinguish them apart. Bars in the same group are placed together and are then spaced apart from other bar groupings. \n\n The use of Multiset Bar Charts is usually to compare across categories that contain the same sub-categorical variables between them. Each bar is a subcategory that is grouped into a larger parent category. \n\n Multiset Bar Charts can also be used to compare mini Histograms to each other, so each bar in the group would represent the significant intervals of a variable. Another use could be to use Multiset Bar Charts to show data changing over time by having, for example, each bar represent a point in time such as a year. \n\n The downside of Multiset Bar Charts is that they become harder to read the more bars you have in one group. Therefore, you should try to limit the number of bars per group.",
     description:
-      "A grouped bar chart compares multiple categories across different groups using clusters of bars for each group.",
+      "Another variant of bar chart is a grouped bar chart. It compares multiple categories across different groups using clusters of bars for each group.",
     imageDescription: GroupedBarChartDescriptionImage,
     imageFullDescription: GroupedBarChartFullDescriptionImage,
     link: "https://datavizcatalogue.com/methods/multiset_barchart.html",

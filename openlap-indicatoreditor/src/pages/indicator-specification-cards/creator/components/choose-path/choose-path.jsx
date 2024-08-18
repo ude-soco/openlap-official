@@ -74,7 +74,7 @@ const ChoosePath = () => {
           visualization: {
             ...prevState.visualization,
             locked: true,
-            openedPanel: false,
+            openPanel: false,
             step: "4",
           },
         }));

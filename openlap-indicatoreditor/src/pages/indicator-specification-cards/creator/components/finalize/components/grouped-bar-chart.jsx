@@ -1,10 +1,17 @@
 import React, { useContext, useEffect, useState } from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import Chart from "react-apexcharts";
-import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
+import {
+  FormControl,
+  FormHelperText,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 
-const BarChart = () => {
+const GroupedBarChart = () => {
   const { darkMode } = useContext(CustomThemeContext);
   const { dataset, visRef } = useContext(ISCContext);
 
@@ -21,12 +28,12 @@ const BarChart = () => {
         bar: {
           borderRadius: 4,
           horizontal: false,
-          grouped: false, // No grouping in a simple bar chart
+          grouped: true,
         },
       },
       xaxis: {
-        name: "",
         categories: [],
+        name: "",
       },
       legend: {
         position: "top",
@@ -45,7 +52,7 @@ const BarChart = () => {
       xAxisOptions: [],
       yAxisOptions: [],
       selectedXAxis: "",
-      selectedYAxis: "", // Single select for Y-axis
+      selectedYAxes: [],
     },
   });
 
@@ -58,6 +65,7 @@ const BarChart = () => {
         (col) => col.type === "number",
       );
 
+      // Update selected X and Y axes
       const updatedSelectedXAxis = state.axisOptions.selectedXAxis
         ? stringColumns.find(
             (col) => col.field === state.axisOptions.selectedXAxis,
@@ -66,53 +74,63 @@ const BarChart = () => {
           ? stringColumns[0].field
           : "";
 
-      const updatedSelectedYAxis = state.axisOptions.selectedYAxis
-        ? numberColumns.find(
-            (col) => col.field === state.axisOptions.selectedYAxis,
-          )?.field || ""
-        : numberColumns.length > 0
-          ? numberColumns[0].field
-          : "";
+      const updatedSelectedYAxes = state.axisOptions.selectedYAxes.filter(
+        (field) => numberColumns.find((col) => col.field === field),
+      );
 
       setState((prevState) => ({
         ...prevState,
+        options: {
+          ...prevState.options,
+          chart: {
+            ...prevState.options.chart,
+            type: visRef.chart.code,
+            foreColor: darkMode ? "#ffffff" : "#000000",
+          },
+          tooltip: {
+            ...prevState.options.tooltip,
+            theme: darkMode ? "dark" : "light",
+          },
+        },
         axisOptions: {
           xAxisOptions: stringColumns,
           yAxisOptions: numberColumns,
           selectedXAxis: updatedSelectedXAxis,
-          selectedYAxis: updatedSelectedYAxis,
+          selectedYAxes:
+            updatedSelectedYAxes.length > 0
+              ? updatedSelectedYAxes
+              : [numberColumns[0]?.field],
         },
       }));
     }
-  }, [dataset]);
+  }, [dataset, darkMode, visRef.chart.code]);
 
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns) {
-      const { selectedXAxis, selectedYAxis } = state.axisOptions;
-      const xAxisColumn = dataset.columns.find(
+      const { selectedXAxis, selectedYAxes } = state.axisOptions;
+      const categoryColumn = dataset.columns.find(
         (col) => col.field === selectedXAxis,
       );
-      const yAxisColumn = dataset.columns.find(
-        (col) => col.field === selectedYAxis,
-      );
 
-      if (!xAxisColumn || !yAxisColumn) return;
+      // Get unique categories for X-axis
+      const categories = categoryColumn
+        ? [...new Set(dataset.rows.map((row) => row[categoryColumn.field]))]
+        : [];
 
-      // Group data by unique X-axis values
-      const groupedData = dataset.rows.reduce((acc, row) => {
-        const xValue = row[selectedXAxis] || "Unknown";
-        acc[xValue] = (acc[xValue] || 0) + (row[selectedYAxis] || 0);
-        return acc;
-      }, {});
+      // Aggregate data based on selected Y-axes and X-axis categories
+      const series = selectedYAxes.map((yField) => {
+        const valueColumn = dataset.columns.find((col) => col.field === yField);
+        const seriesData = categories.map((category) => {
+          return dataset.rows
+            .filter((row) => row[categoryColumn.field] === category)
+            .reduce((acc, row) => acc + (row[valueColumn.field] || 0), 0);
+        });
 
-      // Prepare categories and series
-      const categories = Object.keys(groupedData);
-      const series = [
-        {
-          name: yAxisColumn.headerName || "Default Series",
-          data: categories.map((category) => groupedData[category]),
-        },
-      ];
+        return {
+          name: valueColumn ? valueColumn.headerName : "Default Series",
+          data: seriesData,
+        };
+      });
 
       setState((prevState) => ({
         ...prevState,
@@ -122,7 +140,9 @@ const BarChart = () => {
           xaxis: {
             ...prevState.options.xaxis,
             categories: categories,
-            name: xAxisColumn.headerName,
+            name: categoryColumn
+              ? categoryColumn.headerName
+              : "Default Categories",
           },
         },
       }));
@@ -130,7 +150,7 @@ const BarChart = () => {
   }, [
     dataset,
     state.axisOptions.selectedXAxis,
-    state.axisOptions.selectedYAxis,
+    state.axisOptions.selectedYAxes,
   ]);
 
   const handleXAxisChange = (event) => {
@@ -143,12 +163,13 @@ const BarChart = () => {
     }));
   };
 
-  const handleYAxisChange = (event) => {
+  const handleYAxesChange = (event) => {
+    const { value } = event.target;
     setState((prevState) => ({
       ...prevState,
       axisOptions: {
         ...prevState.axisOptions,
-        selectedYAxis: event.target.value,
+        selectedYAxes: typeof value === "string" ? value.split(",") : value,
       },
     }));
   };
@@ -179,14 +200,25 @@ const BarChart = () => {
             </Grid>
             <Grid item xs={6}>
               <FormControl fullWidth>
-                <InputLabel id="y-axis-select-label">Y-Axis</InputLabel>
+                <InputLabel id="y-axes-select-label">Y-Axes</InputLabel>
                 <Select
-                  labelId="y-axis-select-label"
-                  id="y-axis-select"
-                  value={state.axisOptions.selectedYAxis}
-                  onChange={handleYAxisChange}
-                  label="Y-Axis"
+                  labelId="y-axes-select-label"
+                  id="y-axes-select"
+                  multiple
+                  value={state.axisOptions.selectedYAxes}
+                  onChange={handleYAxesChange}
+                  label="Y-Axes"
                   variant="outlined"
+                  renderValue={(selected) =>
+                    selected
+                      .map((value) => {
+                        const column = state.axisOptions.yAxisOptions.find(
+                          (col) => col.field === value,
+                        );
+                        return column ? column.headerName : value;
+                      })
+                      .join(", ")
+                  }
                 >
                   {state.axisOptions.yAxisOptions.map((col) => (
                     <MenuItem key={col.field} value={col.field}>
@@ -194,6 +226,7 @@ const BarChart = () => {
                     </MenuItem>
                   ))}
                 </Select>
+                <FormHelperText>Multi-select possible</FormHelperText>
               </FormControl>
             </Grid>
           </Grid>
@@ -211,4 +244,4 @@ const BarChart = () => {
   );
 };
 
-export default BarChart;
+export default GroupedBarChart;

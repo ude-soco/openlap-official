@@ -19,7 +19,8 @@ import DataTableManager from "./data-table-manager/data-table-manager.jsx";
 import DataTable from "./components/data-table.jsx";
 
 const Dataset = () => {
-  const { dataset, lockedStep, setLockedStep } = useContext(ISCContext);
+  const { requirements, dataset, lockedStep, setLockedStep } =
+    useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
   });
