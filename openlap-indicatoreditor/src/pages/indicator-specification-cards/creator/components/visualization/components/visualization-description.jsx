@@ -54,7 +54,7 @@ const VisualizationDescription = () => {
                   </Grid>
                 </Grid>
 
-                <Grid item xs={12} md={7} lg={5} sx={{ mt: 3 }}>
+                <Grid item xs={12} sx={{ mt: 3 }}>
                   <Button
                     fullWidth
                     variant="outlined"
