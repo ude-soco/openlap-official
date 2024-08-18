@@ -6,6 +6,7 @@ import { Typography } from "@mui/material";
 import PieChart from "../finalize/components/pie-chart.jsx";
 import ScatterPlotChart from "../finalize/components/scatter-plot-chart.jsx";
 import StackedBarChart from "../finalize/components/stacked-bar-chart.jsx";
+import DotChart from "../finalize/components/dot-chart.jsx";
 
 const VisSelection = () => {
   const { visRef } = useContext(ISCContext);
@@ -23,8 +24,10 @@ const VisSelection = () => {
       return <ScatterPlotChart />;
     case VisualizationTypes.stackedBar:
       return <StackedBarChart />;
+    case VisualizationTypes.dot:
+      return <DotChart />;
     default:
-      return <Typography>Visualization not found</Typography>;
+      return <Typography>Visualization not available.</Typography>;
   }
 };
 

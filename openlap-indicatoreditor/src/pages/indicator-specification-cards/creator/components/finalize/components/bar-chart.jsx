@@ -60,6 +60,19 @@ const BarChart = () => {
         (col) => col.type === "number",
       );
 
+      // Ensure selected axes are in the dataset
+      const updatedSelectedXAxis = state.axisOptions.selectedXAxis
+        ? stringColumns.find(
+            (col) => col.field === state.axisOptions.selectedXAxis,
+          )?.field || ""
+        : stringColumns.length > 0
+          ? stringColumns[0].field
+          : "";
+
+      const updatedSelectedYAxis = state.axisOptions.selectedYAxis.filter(
+        (field) => numberColumns.find((col) => col.field === field),
+      );
+
       setState((prevState) => ({
         ...prevState,
         options: {
@@ -77,12 +90,10 @@ const BarChart = () => {
         axisOptions: {
           xAxisOptions: stringColumns,
           yAxisOptions: numberColumns,
-          selectedXAxis:
-            prevState.axisOptions.selectedXAxis ||
-            (stringColumns.length > 0 ? stringColumns[0].field : ""),
+          selectedXAxis: updatedSelectedXAxis,
           selectedYAxis:
-            prevState.axisOptions.selectedYAxis.length > 0
-              ? prevState.axisOptions.selectedYAxis
+            updatedSelectedYAxis.length > 0
+              ? updatedSelectedYAxis
               : numberColumns.map((col) => col.field),
         },
       }));

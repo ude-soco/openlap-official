@@ -149,6 +149,34 @@ const visualizations = [
   {
     image: ScatterPlotImage,
     enable: true,
+    type: VisualizationTypes.dot,
+    code: "scatter",
+    filters: [ChartTypes.trends],
+    dataTypes: [
+      {
+        type: DataTypes.categorical,
+        required: 0,
+      },
+      {
+        type: DataTypes.numerical,
+        required: 2,
+      },
+      {
+        type: DataTypes.catOrdered,
+        required: 0,
+      },
+    ],
+    fullDescription:
+      "A scatter plot chart, also known as a dot plot, dot graph, or dot diagram, is a simple data visualization tool used to display the distribution or frequency of a dataset. It is particularly useful for visualizing categorical or discrete data, such as the distribution of values within a category or the occurrence of specific events. \n\n Dot charts are particularly useful for showing the distribution of data when you want to emphasize individual data points rather than connecting them with lines. They are often used in data analysis, statistics, and data visualization to provide a clear and concise representation of the dataset.",
+    imageDescription: ScatterPlotDescriptionImage,
+    imageFullDescription: ScatterPlotFullDescriptionImage,
+    link: "https://datavizcatalogue.com/methods/scatterplot.html",
+    description:
+      "A dot plot is a simple, effective data visualization tool that uses dots to represent individual data points, allowing for easy identification of data distributions and trends.",
+  },
+  {
+    image: ScatterPlotImage,
+    enable: true,
     type: VisualizationTypes.scatter,
     code: "scatter",
     filters: [ChartTypes.trends],

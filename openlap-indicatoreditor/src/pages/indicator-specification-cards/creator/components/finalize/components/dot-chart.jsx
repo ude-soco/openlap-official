@@ -1,30 +1,46 @@
 import React, { useContext, useEffect, useState } from "react";
-import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
 import Chart from "react-apexcharts";
+import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 
-const PieChart = () => {
+const DotChart = () => {
   const { darkMode } = useContext(CustomThemeContext);
-  const { dataset, visRef } = useContext(ISCContext);
+  const { dataset } = useContext(ISCContext);
 
   const [state, setState] = useState({
     series: [],
     options: {
       chart: {
-        type: visRef.chart.code,
+        type: "scatter",
         width: "100%",
         foreColor: darkMode ? "#ffffff" : "#000000",
       },
-      labels: [],
-      legend: {
-        position: "top",
-        horizontalAlign: "center",
+      xaxis: {
+        categories: [],
+        title: {
+          text: "X-Axis",
+        },
+        labels: {
+          formatter: (value) => value,
+        },
+      },
+      yaxis: {
+        title: {
+          text: "Y-Axis",
+        },
+        labels: {
+          formatter: (value) => value.toLocaleString(),
+        },
       },
       tooltip: {
         enabled: true,
         followCursor: true,
         theme: darkMode ? "dark" : "light",
+      },
+      legend: {
+        position: "top",
+        horizontalAlign: "center",
       },
     },
     axisOptions: {
@@ -35,6 +51,14 @@ const PieChart = () => {
     },
   });
 
+  // Utility function to find the next available column
+  const findNextAvailableColumn = (selectedField, availableColumns) => {
+    return (
+      availableColumns.find((col) => col.field === selectedField)?.field ||
+      (availableColumns.length > 0 ? availableColumns[0].field : "")
+    );
+  };
+
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns) {
       const stringColumns = dataset.columns.filter(
@@ -44,75 +68,82 @@ const PieChart = () => {
         (col) => col.type === "number",
       );
 
-      // Update xAxisOptions and yAxisOptions
-      setState((prevState) => ({
-        ...prevState,
-        axisOptions: {
-          xAxisOptions: stringColumns,
-          yAxisOptions: numberColumns,
-          selectedXAxis:
-            prevState.axisOptions.selectedXAxis &&
-            stringColumns.some(
-              (col) => col.field === prevState.axisOptions.selectedXAxis,
-            )
-              ? prevState.axisOptions.selectedXAxis
-              : stringColumns.length > 0
-                ? stringColumns[0].field
-                : "",
-          selectedYAxis:
-            prevState.axisOptions.selectedYAxis &&
-            numberColumns.some(
-              (col) => col.field === prevState.axisOptions.selectedYAxis,
-            )
-              ? prevState.axisOptions.selectedYAxis
-              : numberColumns.length > 0
-                ? numberColumns[0].field
-                : "",
-        },
-      }));
+      setState((prevState) => {
+        // Ensure columns are reselected or defaulted if needed
+        const newXAxis = findNextAvailableColumn(
+          prevState.axisOptions.selectedXAxis,
+          stringColumns,
+        );
+        const newYAxis = findNextAvailableColumn(
+          prevState.axisOptions.selectedYAxis,
+          numberColumns,
+        );
+
+        return {
+          ...prevState,
+          options: {
+            ...prevState.options,
+            chart: {
+              ...prevState.options.chart,
+              foreColor: darkMode ? "#ffffff" : "#000000",
+            },
+            tooltip: {
+              ...prevState.options.tooltip,
+              theme: darkMode ? "dark" : "light",
+            },
+          },
+          axisOptions: {
+            xAxisOptions: stringColumns,
+            yAxisOptions: numberColumns,
+            selectedXAxis: newXAxis,
+            selectedYAxis: newYAxis,
+          },
+        };
+      });
     }
-  }, [dataset, darkMode, visRef.chart.code]);
+  }, [dataset, darkMode]);
 
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns) {
       const { selectedXAxis, selectedYAxis } = state.axisOptions;
 
-      const categoryColumn = dataset.columns.find(
-        (col) => col.field === selectedXAxis,
-      );
-      const valueColumn = dataset.columns.find(
-        (col) => col.field === selectedYAxis,
-      );
-
-      const defaultCategories = [
-        "Default Category 1",
-        "Default Category 2",
-        "Default Category 3",
+      // Generate series data for the scatter plot
+      const series = [
+        {
+          name: "Data Points",
+          data: dataset.rows.map((row) => ({
+            x: row[selectedXAxis] || "Unknown",
+            y: row[selectedYAxis] || 0,
+          })),
+        },
       ];
-      const defaultSeriesData = [0, 0, 0];
 
-      const categories = categoryColumn
-        ? dataset.rows.map((row) => row[categoryColumn.field] || "Unknown")
-        : defaultCategories;
-
-      const seriesData = valueColumn
-        ? dataset.rows.map((row) => row[valueColumn.field] || 0)
-        : defaultSeriesData;
+      // Create X-axis categories if needed (for visualization or specific purposes)
+      const categories = [
+        ...new Set(dataset.rows.map((row) => row[selectedXAxis] || "Unknown")),
+      ];
 
       setState((prevState) => ({
         ...prevState,
-        series: seriesData,
+        series: series,
         options: {
           ...prevState.options,
-          labels: categories,
-          chart: {
-            ...prevState.options.chart,
-            type: visRef.chart.code,
-            foreColor: darkMode ? "#ffffff" : "#000000",
+          xaxis: {
+            ...prevState.options.xaxis,
+            categories: categories,
+            title: {
+              text:
+                dataset.columns.find((col) => col.field === selectedXAxis)
+                  ?.headerName || "X-Axis",
+            },
           },
-          tooltip: {
-            ...prevState.options.tooltip,
-            theme: darkMode ? "dark" : "light",
+          yaxis: {
+            ...prevState.options.yaxis,
+            title: {
+              text:
+                dataset.columns.find((col) => col.field === selectedYAxis)
+                  ?.headerName || "Y-Axis",
+            },
           },
         },
       }));
@@ -122,7 +153,6 @@ const PieChart = () => {
     state.axisOptions.selectedXAxis,
     state.axisOptions.selectedYAxis,
     darkMode,
-    visRef.chart.code,
   ]);
 
   const handleXAxisChange = (event) => {
@@ -152,13 +182,13 @@ const PieChart = () => {
           <Grid container spacing={2}>
             <Grid item xs={6}>
               <FormControl fullWidth>
-                <InputLabel id="x-axis-select-label">Categories</InputLabel>
+                <InputLabel id="x-axis-select-label">X-Axis</InputLabel>
                 <Select
                   labelId="x-axis-select-label"
                   id="x-axis-select"
                   value={state.axisOptions.selectedXAxis}
                   onChange={handleXAxisChange}
-                  label="Categories"
+                  label="X-Axis"
                   variant="outlined"
                 >
                   {state.axisOptions.xAxisOptions.map((col) => (
@@ -171,13 +201,13 @@ const PieChart = () => {
             </Grid>
             <Grid item xs={6}>
               <FormControl fullWidth>
-                <InputLabel id="y-axis-select-label">Values</InputLabel>
+                <InputLabel id="y-axis-select-label">Y-Axis</InputLabel>
                 <Select
                   labelId="y-axis-select-label"
                   id="y-axis-select"
                   value={state.axisOptions.selectedYAxis}
                   onChange={handleYAxisChange}
-                  label="Values"
+                  label="Y-Axis"
                   variant="outlined"
                 >
                   {state.axisOptions.yAxisOptions.map((col) => (
@@ -194,7 +224,7 @@ const PieChart = () => {
           <Chart
             options={state.options}
             series={state.series}
-            type={visRef.chart.code}
+            type="scatter"
             height="100%"
           />
         </Grid>
@@ -203,4 +233,4 @@ const PieChart = () => {
   );
 };
 
-export default PieChart;
+export default DotChart;
