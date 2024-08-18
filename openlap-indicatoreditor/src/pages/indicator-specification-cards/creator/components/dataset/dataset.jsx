@@ -110,7 +110,9 @@ const Dataset = () => {
                         </FormGroup>
                       )}
                       <Button color="primary" onClick={handleTogglePanel}>
-                        {lockedStep.path.openPanel ? "Close section" : "CHANGE"}
+                        {lockedStep.dataset.openPanel
+                          ? "Close section"
+                          : "CHANGE"}
                       </Button>
                     </Grid>
                   </Grid>

@@ -7,6 +7,7 @@ import {
   AccordionSummary,
   Button,
   Chip,
+  Divider,
   FormControlLabel,
   FormGroup,
   Grid,
@@ -15,9 +16,10 @@ import {
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import LockIcon from "@mui/icons-material/Lock.js";
+import VisSelection from "../visualization/vis-selection.jsx";
 
 const Finalize = () => {
-  const { dataset, lockedStep, setLockedStep } = useContext(ISCContext);
+  const { visRef, lockedStep, setLockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
   });
@@ -27,7 +29,7 @@ const Finalize = () => {
       ...prevState,
       finalize: {
         ...prevState.finalize,
-        finalize: !prevState.finalize.openPanel,
+        openPanel: !prevState.finalize.openPanel,
       },
     }));
   };
@@ -90,7 +92,9 @@ const Finalize = () => {
                         </FormGroup>
                       )}
                       <Button color="primary" onClick={handleTogglePanel}>
-                        {lockedStep.path.openPanel ? "Close section" : "CHANGE"}
+                        {lockedStep.finalize.openPanel
+                          ? "Close section"
+                          : "CHANGE"}
                       </Button>
                     </Grid>
                   </Grid>
@@ -107,7 +111,10 @@ const Finalize = () => {
         <AccordionDetails>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              {/*  TODO: Component */}
+              <VisSelection />
+            </Grid>
+            <Grid item xs={12}>
+              <Divider />
             </Grid>
           </Grid>
         </AccordionDetails>

@@ -22,13 +22,12 @@ const ChoosePath = () => {
     useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
-    selectedPath: "",
   });
 
   const handleChooseVisualizationPath = () => {
     let vis = "Visualization";
     handleTogglePanel();
-    if (state.selectedPath !== vis) {
+    if (requirements.selectedPath !== vis) {
       setLockedStep((prevState) => ({
         ...prevState,
         visualization: {
@@ -44,7 +43,7 @@ const ChoosePath = () => {
           step: "4",
         },
       }));
-      setState((prevState) => ({
+      setRequirements((prevState) => ({
         ...prevState,
         selectedPath: vis,
       }));
@@ -62,7 +61,7 @@ const ChoosePath = () => {
   const handleChooseDatasetPath = () => {
     handleTogglePanel();
     let data = "Dataset";
-    if (state.selectedPath !== data) {
+    if (requirements.selectedPath !== data) {
       {
         setLockedStep((prevState) => ({
           ...prevState,
@@ -79,7 +78,7 @@ const ChoosePath = () => {
             step: "4",
           },
         }));
-        setState((prevState) => ({
+        setRequirements((prevState) => ({
           ...prevState,
           selectedPath: "Dataset",
         }));
@@ -184,14 +183,14 @@ const ChoosePath = () => {
             </Grid>
             {!lockedStep.path.openPanel && state.showSelections ? (
               <>
-                {state.selectedPath !== "" && (
+                {requirements.selectedPath !== "" && (
                   <Grid item xs={12}>
                     <Grid container alignItems="center" spacing={1}>
                       <Grid item>
                         <Typography>Selected path:</Typography>
                       </Grid>
                       <Grid item>
-                        <Chip label={state.selectedPath} />
+                        <Chip label={requirements.selectedPath} />
                       </Grid>
                     </Grid>
                   </Grid>

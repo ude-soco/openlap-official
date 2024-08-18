@@ -120,7 +120,9 @@ const Visualization = () => {
                         </FormGroup>
                       )}
                       <Button color="primary" onClick={handleTogglePanel}>
-                        {lockedStep.path.openPanel ? "Close section" : "CHANGE"}
+                        {lockedStep.visualization.openPanel
+                          ? "Close section"
+                          : "CHANGE"}
                       </Button>
                     </Grid>
                   </Grid>

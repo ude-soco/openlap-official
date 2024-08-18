@@ -122,6 +122,7 @@ const visualizations = [
     image: BarChartImage,
     enable: true,
     type: VisualizationTypes.bar,
+    code: "bar",
     filters: [ChartTypes.distribution],
     dataTypes: [
       {
@@ -149,7 +150,8 @@ const visualizations = [
     image: ScatterPlotImage,
     enable: true,
     type: VisualizationTypes.dot,
-    filters: [ChartTypes.trends, ChartTypes.outliers],
+    code: "scatter",
+    filters: [ChartTypes.trends],
     dataTypes: [
       {
         type: DataTypes.categorical,
@@ -176,6 +178,7 @@ const visualizations = [
     image: GroupedBarChartImage,
     enable: true,
     type: VisualizationTypes.groupedBar,
+    code: "bar",
     filters: [ChartTypes.trends, ChartTypes.relationship],
     dataTypes: [
       {
@@ -203,11 +206,12 @@ const visualizations = [
     image: LineChartImage,
     enable: true,
     type: VisualizationTypes.line,
+    code: "line",
     filters: [ChartTypes.trends],
     dataTypes: [
       {
         type: DataTypes.categorical,
-        required: 1,
+        required: 0,
       },
       {
         type: DataTypes.numerical,
@@ -215,7 +219,7 @@ const visualizations = [
       },
       {
         type: DataTypes.catOrdered,
-        required: 0,
+        required: 1,
       },
     ],
     fullDescription:
@@ -230,7 +234,8 @@ const visualizations = [
     image: PolarAreaChartImage,
     enable: true,
     type: VisualizationTypes.polar,
-    filters: [ChartTypes.relationship],
+    code: "polarArea",
+    filters: [ChartTypes.distribution],
     dataTypes: [
       {
         type: DataTypes.categorical,
@@ -257,6 +262,7 @@ const visualizations = [
     image: PieChartImage,
     enable: true,
     type: VisualizationTypes.pie,
+    code: "pie",
     filters: [ChartTypes.relationship],
     dataTypes: [
       {
@@ -284,6 +290,7 @@ const visualizations = [
     image: StackedBarChartImage,
     enable: true,
     type: VisualizationTypes.stackedBar,
+    code: "bar",
     filters: [ChartTypes.trends, ChartTypes.relationship],
     dataTypes: [
       {
