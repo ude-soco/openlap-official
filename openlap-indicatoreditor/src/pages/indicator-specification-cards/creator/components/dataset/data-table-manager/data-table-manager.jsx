@@ -7,48 +7,12 @@ import React, {
 } from "react";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
-import {
-  Add as AddIcon,
-  ClearAll as ClearAllIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  MoreVert as MoreVertIcon,
-} from "@mui/icons-material";
-import {
-  Button,
-  ButtonGroup,
-  Divider,
-  Grid,
-  IconButton,
-  List,
-  ListItemIcon,
-  ListItemText,
-  ListSubheader,
-  MenuItem,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import { isNullOrEmpty } from "../../../../../isc-creator/creator/data/utils/functions.js";
-import ImportDialog from "../components/import-dialog.jsx";
+import { ClearAll as ClearAllIcon } from "@mui/icons-material";
+import { Grid } from "@mui/material";
 import Footer from "./components/footer.jsx";
 import NoRowsOverlay from "./components/no-rows-overlay.jsx";
-import TableMenu from "./components/table-menu.jsx";
-
-const gridHeight = 450;
-const style = {
-  dataGrid: {
-    "& .MuiDataGrid-columnHeaders": {
-      cursor: "pointer",
-      fontSize: "17px",
-      textDecorationLine: "underline",
-    },
-    "& .MuiDataGrid-cell:hover": {
-      color: "primary.main",
-    },
-    height: gridHeight,
-  },
-};
+import ColumnMenu from "./column-menu/column-menu.jsx";
+import TableHeaderBar from "./components/table-header-bar.jsx";
 
 const DataTableManager = () => {
   const { dataset, setDataset } = useContext(ISCContext);
@@ -60,8 +24,22 @@ const DataTableManager = () => {
     anchorEl: null,
     page: 1,
     pageSize: 5,
-    gridHeight: gridHeight,
+    gridHeight: 450,
   });
+
+  const style = {
+    dataGrid: {
+      "& .MuiDataGrid-columnHeaders": {
+        cursor: "pointer",
+        fontSize: "17px",
+        textDecorationLine: "underline",
+      },
+      "& .MuiDataGrid-cell:hover": {
+        color: "primary.main",
+      },
+      height: state.gridHeight,
+    },
+  };
 
   useEffect(() => {
     const calculateGridHeight = () => {
@@ -81,13 +59,6 @@ const DataTableManager = () => {
 
   const apiRef = useGridApiRef();
   const popperRef = useRef();
-
-  const handleOpenImportDataset = () => {
-    setState((prevState) => ({
-      ...prevState,
-      openCsvImport: !prevState.openCsvImport,
-    }));
-  };
 
   const handleCellModesModelChange = useCallback((newModel) => {
     setState((prevState) => ({
@@ -181,53 +152,7 @@ const DataTableManager = () => {
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Grid
-            container
-            spacing={2}
-            justifyContent="center"
-            alignItems="center"
-          >
-            <Grid item xs>
-              <ButtonGroup variant="contained" disableElevation>
-                <Button startIcon={<AddIcon />}>Column</Button>
-                <Button startIcon={<AddIcon />}>Rows</Button>
-              </ButtonGroup>
-            </Grid>
-            <Grid item>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item>
-                  <Button onClick={handleOpenImportDataset}>Upload CSV</Button>
-                </Grid>
-                <Grid item>
-                  <Tooltip
-                    arrow
-                    title={
-                      <Typography variant="body2" sx={{ p: 1 }}>
-                        More options
-                      </Typography>
-                    }
-                  >
-                    <IconButton
-                      color="primary"
-                      onClick={(event) =>
-                        setState((prevState) => ({
-                          ...prevState,
-                          anchorEl: event.currentTarget,
-                        }))
-                      }
-                    >
-                      <MoreVertIcon />
-                    </IconButton>
-                  </Tooltip>
-                </Grid>
-              </Grid>
-            </Grid>
-            <ImportDialog
-              open={state.openCsvImport}
-              toggleOpen={handleOpenImportDataset}
-            />
-            <TableMenu state={state} setState={setState} />
-          </Grid>
+          <TableHeaderBar state={state} setState={setState} />
         </Grid>
         <Grid item xs={12}>
           <DataGrid
@@ -254,81 +179,7 @@ const DataTableManager = () => {
             showFooterSelectedRowCount
             slots={{
               noRowsOverlay: () => <NoRowsOverlay />,
-              columnMenu: (props) => {
-                const foundNullEmpty = [...dataset.rows].every((row) =>
-                  isNullOrEmpty(row[props.colDef.field]),
-                );
-                return (
-                  <Stack py={0.5}>
-                    {/* TODO: Make the rename and add row functionalities */}
-                    <List
-                      sx={{ width: "100%", mb: -1 }}
-                      subheader={
-                        <ListSubheader>
-                          Column type:{" "}
-                          {props.colDef.type === "string"
-                            ? "Categorical"
-                            : "Numerical"}
-                        </ListSubheader>
-                      }
-                    />
-                    <Tooltip
-                      arrow
-                      placement="right"
-                      title={
-                        <Typography variant="body2" sx={{ p: 1 }}>
-                          {!foundNullEmpty
-                            ? "Cannot change column type because the column has values. Please delete all the values in this column and try again."
-                            : "Change column type"}
-                        </Typography>
-                      }
-                    >
-                      <span>
-                        <MenuItem
-                          sx={{ py: 1 }}
-                          disabled={!foundNullEmpty}
-                          // onClick={() => {
-                          //   handleOpenChangeColumnType(props.colDef);
-                          //   toggleEditPanel("", false);
-                          // }}
-                        >
-                          <ListItemIcon>
-                            <EditIcon fontSize="small" />
-                          </ListItemIcon>
-                          <ListItemText primary="Change column type" />
-                        </MenuItem>
-                      </span>
-                    </Tooltip>
-
-                    <MenuItem
-                    // onClick={() => {
-                    //   toggleEditPanel("", false);
-                    //   handleOpenRenameColumn(props.colDef);
-                    // }}
-                    >
-                      <ListItemIcon>
-                        <EditIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText primary="Rename column" />
-                    </MenuItem>
-                    <Divider />
-                    <MenuItem
-                    // onClick={() => {
-                    //   setOpenDeleteColumnModal({
-                    //     columnToBeDeleted: props.colDef.field,
-                    //     open: true,
-                    //   });
-                    //   toggleEditPanel("", false);
-                    // }}
-                    >
-                      <ListItemIcon>
-                        <DeleteIcon fontSize="small" color="error" />
-                      </ListItemIcon>
-                      <ListItemText primary="Delete column" />
-                    </MenuItem>
-                  </Stack>
-                );
-              },
+              columnMenu: (props) => <ColumnMenu props={props} />,
               footer: () => <Footer state={state} setState={setState} />,
             }}
             sx={style.dataGrid}

@@ -28,7 +28,6 @@ const IndicatorSpecificationCard = () => {
     file: { name: "" },
     rows: [],
     columns: [],
-    status: false,
   });
 
   const [visRef, setVisRef] = useState({
