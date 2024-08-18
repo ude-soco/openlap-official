@@ -23,6 +23,7 @@ const IndicatorSpecificationCard = () => {
       },
       { value: "", placeholder: "e.g., number of downloads" },
     ],
+    selectedPath: "",
   });
 
   const [dataset, setDataset] = useState({
