@@ -41,6 +41,8 @@ const IndicatorSpecificationCard = () => {
     },
   });
 
+  console.log(dataset);
+
   const [lockedStep, setLockedStep] = useState({
     requirements: {
       openPanel: true,

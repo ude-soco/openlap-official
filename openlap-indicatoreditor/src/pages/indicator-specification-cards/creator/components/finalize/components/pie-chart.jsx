@@ -1,10 +1,10 @@
 import React, { useContext, useEffect, useState } from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
-import Chart from "react-apexcharts";
-import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
+import Chart from "react-apexcharts";
 
-const BarChart = () => {
+const PieChart = () => {
   const { darkMode } = useContext(CustomThemeContext);
   const { dataset, visRef } = useContext(ISCContext);
 
@@ -13,23 +13,10 @@ const BarChart = () => {
     options: {
       chart: {
         type: visRef.chart.code,
-        stacked: false,
         width: "100%",
         foreColor: darkMode ? "#ffffff" : "#000000",
       },
-      plotOptions: {
-        bar: {
-          borderRadius: 4,
-          horizontal: false,
-        },
-      },
-      xaxis: {
-        name: "",
-        categories: [],
-        convertedCatToNumeric: true,
-        field: "categories",
-        unique: false,
-      },
+      labels: [],
       legend: {
         position: "top",
         horizontalAlign: "center",
@@ -38,16 +25,13 @@ const BarChart = () => {
         enabled: true,
         followCursor: true,
         theme: darkMode ? "dark" : "light",
-        onDatasetHover: {
-          highlightDataSeries: true,
-        },
       },
     },
     axisOptions: {
       xAxisOptions: [],
       yAxisOptions: [],
       selectedXAxis: "",
-      selectedYAxis: [],
+      selectedYAxis: "",
     },
   });
 
@@ -62,18 +46,6 @@ const BarChart = () => {
 
       setState((prevState) => ({
         ...prevState,
-        options: {
-          ...prevState.options,
-          chart: {
-            ...prevState.options.chart,
-            type: visRef.chart.code,
-            foreColor: darkMode ? "#ffffff" : "#000000",
-          },
-          tooltip: {
-            ...prevState.options.tooltip,
-            theme: darkMode ? "dark" : "light",
-          },
-        },
         axisOptions: {
           xAxisOptions: stringColumns,
           yAxisOptions: numberColumns,
@@ -81,9 +53,8 @@ const BarChart = () => {
             prevState.axisOptions.selectedXAxis ||
             (stringColumns.length > 0 ? stringColumns[0].field : ""),
           selectedYAxis:
-            prevState.axisOptions.selectedYAxis.length > 0
-              ? prevState.axisOptions.selectedYAxis
-              : numberColumns.map((col) => col.field),
+            prevState.axisOptions.selectedYAxis ||
+            (numberColumns.length > 0 ? numberColumns[0].field : ""),
         },
       }));
     }
@@ -95,36 +66,31 @@ const BarChart = () => {
       const categoryColumn = dataset.columns.find(
         (col) => col.field === selectedXAxis,
       );
+      const valueColumn = dataset.columns.find(
+        (col) => col.field === selectedYAxis,
+      );
+
+      const defaultCategories = [
+        "Default Category 1",
+        "Default Category 2",
+        "Default Category 3",
+      ];
+      const defaultSeriesData = [0, 0, 0];
 
       const categories = categoryColumn
         ? dataset.rows.map((row) => row[categoryColumn.field] || "Unknown")
-        : ["Default Category 1", "Default Category 2", "Default Category 3"];
+        : defaultCategories;
 
-      const series = selectedYAxis.map((yField) => {
-        const valueColumn = dataset.columns.find((col) => col.field === yField);
-        const seriesData = valueColumn
-          ? dataset.rows.map((row) => row[valueColumn.field] || 0)
-          : [0, 0, 0];
-
-        return {
-          name: valueColumn ? valueColumn.headerName : "Default Series",
-          data: seriesData,
-          field: yField,
-        };
-      });
+      const seriesData = valueColumn
+        ? dataset.rows.map((row) => row[valueColumn.field] || 0)
+        : defaultSeriesData;
 
       setState((prevState) => ({
         ...prevState,
-        series: series,
+        series: seriesData,
         options: {
           ...prevState.options,
-          xaxis: {
-            ...prevState.options.xaxis,
-            categories: categories,
-            name: categoryColumn
-              ? categoryColumn.headerName
-              : "Default Categories",
-          },
+          labels: categories,
           chart: {
             ...prevState.options.chart,
             type: visRef.chart.code,
@@ -133,12 +99,6 @@ const BarChart = () => {
           tooltip: {
             ...prevState.options.tooltip,
             theme: darkMode ? "dark" : "light",
-          },
-          plotOptions: {
-            bar: {
-              ...prevState.options.plotOptions.bar,
-              grouped: selectedYAxis.length > 1, // Handle grouping for multiple Y-axes
-            },
           },
         },
       }));
@@ -162,12 +122,11 @@ const BarChart = () => {
   };
 
   const handleYAxisChange = (event) => {
-    const { value } = event.target;
     setState((prevState) => ({
       ...prevState,
       axisOptions: {
         ...prevState.axisOptions,
-        selectedYAxis: typeof value === "string" ? value.split(",") : value,
+        selectedYAxis: event.target.value,
       },
     }));
   };
@@ -179,13 +138,13 @@ const BarChart = () => {
           <Grid container spacing={2}>
             <Grid item xs={6}>
               <FormControl fullWidth>
-                <InputLabel id="x-axis-select-label">X-Axis</InputLabel>
+                <InputLabel id="x-axis-select-label">Categories</InputLabel>
                 <Select
                   labelId="x-axis-select-label"
                   id="x-axis-select"
                   value={state.axisOptions.selectedXAxis}
                   onChange={handleXAxisChange}
-                  label="X-Axis"
+                  label="Categories"
                   variant="outlined"
                 >
                   {state.axisOptions.xAxisOptions.map((col) => (
@@ -198,25 +157,14 @@ const BarChart = () => {
             </Grid>
             <Grid item xs={6}>
               <FormControl fullWidth>
-                <InputLabel id="y-axis-select-label">Y-Axis</InputLabel>
+                <InputLabel id="y-axis-select-label">Values</InputLabel>
                 <Select
                   labelId="y-axis-select-label"
                   id="y-axis-select"
-                  multiple
                   value={state.axisOptions.selectedYAxis}
                   onChange={handleYAxisChange}
-                  label="Y-Axis"
+                  label="Values"
                   variant="outlined"
-                  renderValue={(selected) =>
-                    selected
-                      .map((value) => {
-                        const column = state.axisOptions.yAxisOptions.find(
-                          (col) => col.field === value,
-                        );
-                        return column ? column.headerName : value;
-                      })
-                      .join(", ")
-                  }
                 >
                   {state.axisOptions.yAxisOptions.map((col) => (
                     <MenuItem key={col.field} value={col.field}>
@@ -241,4 +189,4 @@ const BarChart = () => {
   );
 };
 
-export default BarChart;
+export default PieChart;
