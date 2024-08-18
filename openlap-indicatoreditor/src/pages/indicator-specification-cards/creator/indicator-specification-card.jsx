@@ -1,72 +1,134 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useEffect, useRef, useState } from "react";
 import { Divider, Grid, Typography } from "@mui/material";
 import SpecifyRequirements from "./components/specify-requirements/specify-requirements.jsx";
 import ChoosePath from "./components/choose-path/choose-path.jsx";
 import Visualization from "./components/visualization/visualization.jsx";
 import Dataset from "./components/dataset/dataset.jsx";
 import Finalize from "./components/finalize/finalize.jsx";
+import { useSnackbar } from "notistack";
 
 export const ISCContext = createContext(undefined);
 
 const IndicatorSpecificationCard = () => {
-  const [requirements, setRequirements] = useState({
-    goalType: {
-      name: "",
-    },
-    goal: "",
-    question: "",
-    indicatorName: "",
-    data: [
-      {
-        value: "",
-        placeholder: "e.g., name of materials",
-      },
-      { value: "", placeholder: "e.g., number of downloads" },
-    ],
-    selectedPath: "",
+  const { enqueueSnackbar } = useSnackbar();
+  const [requirements, setRequirements] = useState(() => {
+    const savedState = sessionStorage.getItem("session_isc");
+    return savedState
+      ? JSON.parse(savedState).requirements
+      : {
+          goalType: {
+            name: "",
+          },
+          goal: "",
+          question: "",
+          indicatorName: "",
+          data: [
+            {
+              value: "",
+              placeholder: "e.g., name of materials",
+            },
+            { value: "", placeholder: "e.g., number of downloads" },
+          ],
+          selectedPath: "",
+        };
   });
 
-  const [dataset, setDataset] = useState({
-    file: { name: "" },
-    rows: [],
-    columns: [],
-  });
-  console.log(dataset);
-  const [visRef, setVisRef] = useState({
-    filter: {
-      type: "",
-    },
-    chart: {
-      type: "",
-    },
+  const [dataset, setDataset] = useState(() => {
+    const savedState = sessionStorage.getItem("session_isc");
+    return savedState
+      ? JSON.parse(savedState).dataset
+      : {
+          file: { name: "" },
+          rows: [],
+          columns: [],
+        };
   });
 
-  const [lockedStep, setLockedStep] = useState({
-    requirements: {
-      openPanel: true,
-      step: "1",
-    },
-    path: {
-      locked: true,
-      openPanel: false,
-      step: "2",
-    },
-    visualization: {
-      locked: true,
-      openPanel: false,
-      step: "0",
-    },
-    dataset: {
-      locked: true,
-      openPanel: false,
-      step: "0",
-    },
-    finalize: {
-      locked: true,
-      openPanel: false,
-      step: "5",
-    },
+  const [visRef, setVisRef] = useState(() => {
+    const savedState = sessionStorage.getItem("session_isc");
+    return savedState
+      ? JSON.parse(savedState).visRef
+      : {
+          filter: {
+            type: "",
+          },
+          chart: {
+            type: "",
+          },
+        };
   });
+
+  const [lockedStep, setLockedStep] = useState(() => {
+    const savedState = sessionStorage.getItem("session_isc");
+    return savedState
+      ? JSON.parse(savedState).lockedStep
+      : {
+          requirements: {
+            openPanel: true,
+            step: "1",
+          },
+          path: {
+            locked: true,
+            openPanel: false,
+            step: "2",
+          },
+          visualization: {
+            locked: true,
+            openPanel: false,
+            step: "0",
+          },
+          dataset: {
+            locked: true,
+            openPanel: false,
+            step: "0",
+          },
+          finalize: {
+            locked: true,
+            openPanel: false,
+            step: "5",
+          },
+        };
+  });
+
+  const prevDependencies = useRef({
+    requirements,
+    dataset,
+    visRef,
+    lockedStep,
+  });
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      let session_isc = {
+        requirements,
+        dataset,
+        visRef,
+        lockedStep,
+      };
+
+      sessionStorage.setItem("session_isc", JSON.stringify(session_isc));
+
+      // Check if any of the dependencies have changed
+      if (
+        prevDependencies.current.requirements !== requirements ||
+        prevDependencies.current.dataset !== dataset ||
+        prevDependencies.current.visRef !== visRef ||
+        prevDependencies.current.lockedStep !== lockedStep
+      ) {
+        enqueueSnackbar("Autosaved", { variant: "success" });
+      }
+
+      // Update the previous dependencies to the current ones
+      prevDependencies.current = {
+        requirements,
+        dataset,
+        visRef,
+        lockedStep,
+      };
+    }, 4000);
+
+    return () => clearInterval(intervalId);
+  }, [requirements, dataset, visRef, lockedStep]);
 
   return (
     <>
