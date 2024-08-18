@@ -12,6 +12,7 @@ import {
   InsertDriveFile as InsertDriveFileIcon,
 } from "@mui/icons-material";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { Alert } from "@mui/lab";
 
 const CsvImporter = () => {
   const { dataset, setDataset } = useContext(ISCContext);
@@ -36,15 +37,21 @@ const CsvImporter = () => {
     <>
       <Box sx={{ pt: 2 }}>
         {dataset.file.name ? (
-          <Grid container sx={{ height: 50 }} alignItems="center">
-            <Grid item xs>
+          <Grid
+            container
+            sx={{ minHeight: 55 }}
+            spacing={2}
+            alignItems="center"
+          >
+            <Grid item xs={12}>
               <Grid
                 container
+                spacing={2}
                 justifyContent="space-between"
                 alignItems="center"
               >
                 <Grid item xs>
-                  <Grid container alignItems="center">
+                  <Grid container spacing={1} alignItems="center">
                     <Grid item>
                       <InsertDriveFileIcon color="primary" />
                     </Grid>
@@ -56,20 +63,9 @@ const CsvImporter = () => {
                   </Grid>
                 </Grid>
                 <Grid item>
-                  <Grid container alignItems="center">
+                  <Grid container spacing={2} alignItems="center">
                     <Grid item>
-                      <Box
-                        sx={{
-                          borderRadius: 1,
-                          px: 1,
-                          mx: 1.5,
-                          py: 0.5,
-                        }}
-                      >
-                        <Typography variant="body2">
-                          {dataset.file.size} KB
-                        </Typography>
-                      </Box>
+                      <Typography>{dataset.file.size} KB</Typography>
                     </Grid>
                     <Grid item>
                       <Tooltip title="Remove file" arrow>
@@ -85,6 +81,13 @@ const CsvImporter = () => {
                   </Grid>
                 </Grid>
               </Grid>
+            </Grid>
+            <Grid item xs={12}>
+              {(dataset.columns.length > 0 || dataset.rows.length > 0) && (
+                <Alert severity="warning">
+                  Uploading the file will replace the existing dataset
+                </Alert>
+              )}
             </Grid>
           </Grid>
         ) : (
