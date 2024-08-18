@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import LockIcon from "@mui/icons-material/Lock";
-import DataTableManager from "./components/data-table-manager.jsx";
+import DataTableManager from "./data-table-manager/data-table-manager.jsx";
 
 const Dataset = () => {
   const { requirements, setRequirements, lockedStep, setLockedStep } =

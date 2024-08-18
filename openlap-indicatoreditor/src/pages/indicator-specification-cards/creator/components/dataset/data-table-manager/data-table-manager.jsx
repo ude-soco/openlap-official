@@ -18,25 +18,37 @@ import {
   Button,
   ButtonGroup,
   Divider,
-  FormControl,
   Grid,
   IconButton,
-  InputLabel,
   List,
   ListItemIcon,
   ListItemText,
   ListSubheader,
-  Menu,
   MenuItem,
-  Pagination,
-  Select,
   Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
 import { isNullOrEmpty } from "../../../../../isc-creator/creator/data/utils/functions.js";
-import ImportDialog from "./import-dialog.jsx";
-import DeleteDialog from "../../../../../../common/components/delete-dialog/delete-dialog.jsx";
+import ImportDialog from "../components/import-dialog.jsx";
+import Footer from "./components/footer.jsx";
+import NoRowsOverlay from "./components/no-rows-overlay.jsx";
+import TableMenu from "./components/table-menu.jsx";
+
+const gridHeight = 450;
+const style = {
+  dataGrid: {
+    "& .MuiDataGrid-columnHeaders": {
+      cursor: "pointer",
+      fontSize: "17px",
+      textDecorationLine: "underline",
+    },
+    "& .MuiDataGrid-cell:hover": {
+      color: "primary.main",
+    },
+    height: gridHeight,
+  },
+};
 
 const DataTableManager = () => {
   const { dataset, setDataset } = useContext(ISCContext);
@@ -48,7 +60,7 @@ const DataTableManager = () => {
     anchorEl: null,
     page: 1,
     pageSize: 5,
-    gridHeight: 450,
+    gridHeight: gridHeight,
   });
 
   useEffect(() => {
@@ -160,36 +172,6 @@ const DataTableManager = () => {
     }));
   };
 
-  const handleDeleteSelectedRows = () => {
-    const updatedRows = dataset.rows.filter(
-      (row) => !state.selectionModel.includes(row.id),
-    );
-    setDataset((prevState) => ({
-      ...prevState,
-      rows: updatedRows,
-    }));
-    setState((prevState) => ({
-      ...prevState,
-      selectionModel: [],
-    }));
-  };
-
-  const handlePageChange = (event, newPage) => {
-    setState((prevState) => ({
-      ...prevState,
-      page: newPage,
-    }));
-  };
-
-  const handleRowsPerPageChange = (event) => {
-    setState((prevState) => ({
-      ...prevState,
-      pageSize: parseInt(event.target.value, 10),
-      page: 1, // Reset to first page
-    }));
-  };
-
-  const totalPages = Math.ceil(dataset.rows.length / state.pageSize);
   const paginatedRows = dataset.rows.slice(
     (state.page - 1) * state.pageSize,
     state.page * state.pageSize,
@@ -244,81 +226,7 @@ const DataTableManager = () => {
               open={state.openCsvImport}
               toggleOpen={handleOpenImportDataset}
             />
-            <Menu
-              anchorEl={state.anchorEl}
-              open={Boolean(state.anchorEl)}
-              onClose={(event) =>
-                setState((prevState) => ({
-                  ...prevState,
-                  anchorEl: null,
-                }))
-              }
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "right",
-              }}
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-            >
-              <MenuItem
-                onClick={() =>
-                  setState((prevState) => ({
-                    ...prevState,
-                    deleteDialog: true,
-                  }))
-                }
-              >
-                <ListItemIcon>
-                  <DeleteIcon fontSize="small" color="error" />
-                </ListItemIcon>
-                <ListItemText>Delete dataset</ListItemText>
-              </MenuItem>
-            </Menu>
-            <DeleteDialog
-              open={state.deleteDialog}
-              toggleOpen={() =>
-                setState((prevState) => ({
-                  ...prevState,
-                  deleteDialog: false,
-                }))
-              }
-              message={
-                <>
-                  <Typography gutterBottom>
-                    Deleting this dataset will permanently remove all associated
-                    data and cannot be undone. Please consider the following
-                    before proceeding:
-                  </Typography>
-                  <Typography gutterBottom>
-                    <li>
-                      All data contained within this dataset will be lost.
-                    </li>
-                    <li>
-                      Any analyses or reports dependent on this dataset may be
-                      affected.
-                    </li>
-                    <li>
-                      There is no way to recover this dataset once it is
-                      deleted.
-                    </li>
-                  </Typography>
-                  <Typography gutterBottom>
-                    If you are certain about deleting this dataset, please click
-                    the "Delete" button below. Otherwise, click "Cancel" to keep
-                    the dataset intact.
-                  </Typography>
-                </>
-              }
-              handleDelete={() => {
-                setDataset((prevState) => ({
-                  ...prevState,
-                  rows: [],
-                  columns: [],
-                }));
-              }}
-            />
+            <TableMenu state={state} setState={setState} />
           </Grid>
         </Grid>
         <Grid item xs={12}>
@@ -345,24 +253,9 @@ const DataTableManager = () => {
             showFooterRowCount
             showFooterSelectedRowCount
             slots={{
-              noRowsOverlay: () => (
-                <Grid
-                  container
-                  justifyContent="center"
-                  alignItems="center"
-                  sx={{ height: "100%" }}
-                >
-                  <Grid item>
-                    <Typography align="center">No data available.</Typography>
-                    <Typography align="center">
-                      <b>Create a new column</b> to add data to the table
-                    </Typography>
-                  </Grid>
-                </Grid>
-              ),
+              noRowsOverlay: () => <NoRowsOverlay />,
               columnMenu: (props) => {
-                let tempRowData = [...dataset.rows];
-                const foundNullEmpty = tempRowData.every((row) =>
+                const foundNullEmpty = [...dataset.rows].every((row) =>
                   isNullOrEmpty(row[props.colDef.field]),
                 );
                 return (
@@ -436,89 +329,9 @@ const DataTableManager = () => {
                   </Stack>
                 );
               },
-              footer: () => (
-                <>
-                  <Grid container>
-                    <Grid item xs={12}>
-                      <Divider />
-                    </Grid>
-                  </Grid>
-                  <Grid
-                    container
-                    alignItems="center"
-                    justifyContent="space-between"
-                    spacing={2}
-                    px={2}
-                    py={2}
-                  >
-                    <Grid item xs>
-                      <Grid container spacing={2} alignItems="center">
-                        {state.selectionModel.length !== 0 && (
-                          <>
-                            <Grid item>
-                              <Typography variant="body2">
-                                {state.selectionModel.length} row(s) selected
-                              </Typography>
-                            </Grid>
-                            <Grid item>
-                              <Tooltip
-                                arrow
-                                title={
-                                  <Typography>Delete selected rows</Typography>
-                                }
-                              >
-                                <IconButton
-                                  size="small"
-                                  onClick={handleDeleteSelectedRows}
-                                  color="error"
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
-                              </Tooltip>
-                            </Grid>
-                          </>
-                        )}
-                      </Grid>
-                    </Grid>
-
-                    <Grid item>
-                      <Pagination
-                        count={totalPages}
-                        page={state.page}
-                        onChange={handlePageChange}
-                      />
-                    </Grid>
-                    <Grid item xs={2}>
-                      <FormControl fullWidth size="small">
-                        <InputLabel>Page</InputLabel>
-                        <Select
-                          value={state.pageSize}
-                          label="Page size"
-                          onChange={handleRowsPerPageChange}
-                        >
-                          {[5, 10, 25].map((size) => (
-                            <MenuItem key={size} value={size}>
-                              {size} rows per page
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                  </Grid>
-                </>
-              ),
+              footer: () => <Footer state={state} setState={setState} />,
             }}
-            sx={{
-              "& .MuiDataGrid-columnHeaders": {
-                cursor: "pointer",
-                fontSize: "17px",
-                textDecorationLine: "underline",
-              },
-              "& .MuiDataGrid-cell:hover": {
-                color: "primary.main",
-              },
-              height: state.gridHeight,
-            }}
+            sx={style.dataGrid}
             componentsProps={{
               row: {
                 onMouseEnter: handlePopperOpen,
