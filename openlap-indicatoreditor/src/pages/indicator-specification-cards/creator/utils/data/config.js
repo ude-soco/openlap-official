@@ -125,15 +125,15 @@ const visualizations = [
     filters: [ChartTypes.distribution],
     dataTypes: [
       {
-        type: DataTypes.categorical.value,
+        type: DataTypes.categorical,
         required: 1,
       },
       {
-        type: DataTypes.numerical.value,
+        type: DataTypes.numerical,
         required: 1,
       },
       {
-        type: DataTypes.catOrdered.value,
+        type: DataTypes.catOrdered,
         required: 0,
       },
     ],
@@ -152,16 +152,16 @@ const visualizations = [
     filters: [ChartTypes.trends, ChartTypes.outliers],
     dataTypes: [
       {
-        type: DataTypes.categorical.value,
+        type: DataTypes.categorical,
         required: 1,
       },
       {
-        type: DataTypes.numerical.value,
+        type: DataTypes.numerical,
         required: 1,
       },
       {
-        type: DataTypes.catOrdered.value,
-        required: 0,
+        type: DataTypes.catOrdered,
+        required: 1,
       },
     ],
     fullDescription:
@@ -179,15 +179,15 @@ const visualizations = [
     filters: [ChartTypes.trends, ChartTypes.relationship],
     dataTypes: [
       {
-        type: DataTypes.categorical.value,
+        type: DataTypes.categorical,
         required: 2,
       },
       {
-        type: DataTypes.numerical.value,
+        type: DataTypes.numerical,
         required: 1,
       },
       {
-        type: DataTypes.catOrdered.value,
+        type: DataTypes.catOrdered,
         required: 0,
       },
     ],
@@ -206,15 +206,15 @@ const visualizations = [
     filters: [ChartTypes.trends],
     dataTypes: [
       {
-        type: DataTypes.categorical.value,
+        type: DataTypes.categorical,
         required: 1,
       },
       {
-        type: DataTypes.numerical.value,
+        type: DataTypes.numerical,
         required: 1,
       },
       {
-        type: DataTypes.catOrdered.value,
+        type: DataTypes.catOrdered,
         required: 0,
       },
     ],
@@ -233,15 +233,15 @@ const visualizations = [
     filters: [ChartTypes.relationship],
     dataTypes: [
       {
-        type: DataTypes.categorical.value,
+        type: DataTypes.categorical,
         required: 1,
       },
       {
-        type: DataTypes.numerical.value,
+        type: DataTypes.numerical,
         required: 1,
       },
       {
-        type: DataTypes.catOrdered.value,
+        type: DataTypes.catOrdered,
         required: 0,
       },
     ],
@@ -260,15 +260,15 @@ const visualizations = [
     filters: [ChartTypes.relationship],
     dataTypes: [
       {
-        type: DataTypes.categorical.value,
+        type: DataTypes.categorical,
         required: 1,
       },
       {
-        type: DataTypes.numerical.value,
+        type: DataTypes.numerical,
         required: 1,
       },
       {
-        type: DataTypes.catOrdered.value,
+        type: DataTypes.catOrdered,
         required: 0,
       },
     ],
@@ -287,15 +287,15 @@ const visualizations = [
     filters: [ChartTypes.trends, ChartTypes.relationship],
     dataTypes: [
       {
-        type: DataTypes.categorical.value,
+        type: DataTypes.categorical,
         required: 2,
       },
       {
-        type: DataTypes.numerical.value,
+        type: DataTypes.numerical,
         required: 1,
       },
       {
-        type: DataTypes.catOrdered.value,
+        type: DataTypes.catOrdered,
         required: 0,
       },
     ],

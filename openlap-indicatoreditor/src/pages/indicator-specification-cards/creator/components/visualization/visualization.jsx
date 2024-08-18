@@ -61,6 +61,18 @@ const Visualization = () => {
     }));
   };
 
+  const handleUnlockFinalize = () => {
+    handleTogglePanel();
+    setLockedStep((prevState) => ({
+      ...prevState,
+      finalize: {
+        ...prevState.finalize,
+        locked: false,
+        openPanel: true,
+      },
+    }));
+  };
+
   return (
     <>
       <Accordion
@@ -115,7 +127,9 @@ const Visualization = () => {
                 )}
               </Grid>
             </Grid>
-            {!lockedStep.visualization.openPanel && state.showSelections ? (
+            {!lockedStep.visualization.locked &&
+            !lockedStep.visualization.openPanel &&
+            state.showSelections ? (
               <>
                 {visRef.filter.type !== "" &&
                   requirements.goalType.name !== "" && (
@@ -157,36 +171,28 @@ const Visualization = () => {
             </Grid>
           </Grid>
         </AccordionDetails>
-        {/*{lockedStep.path.locked && (*/}
         <AccordionActions sx={{ py: 2 }}>
           <Grid item xs={12}>
             <Grid container spacing={2} justifyContent="center">
               <Grid item xs={12} md={6}>
-                {lockedStep.visualization.step === "3" && (
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    disabled={visRef.chart.type === ""}
-                    onClick={handleUnlockDataset}
-                  >
-                    Next
-                  </Button>
-                )}
-                {lockedStep.visualization.step === "4" && (
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    // disabled={visRef.chart.type === ""}
-                    // onClick={handleUnlockDataset}
-                  >
-                    Save
-                  </Button>
-                )}
+                <Button
+                  fullWidth
+                  variant="contained"
+                  disabled={visRef.chart.type === ""}
+                  onClick={
+                    lockedStep.visualization.step === "3"
+                      ? handleUnlockDataset
+                      : lockedStep.visualization.step === "4"
+                        ? handleUnlockFinalize
+                        : undefined
+                  }
+                >
+                  Next
+                </Button>
               </Grid>
             </Grid>
           </Grid>
         </AccordionActions>
-        {/*)}*/}
       </Accordion>
     </>
   );
