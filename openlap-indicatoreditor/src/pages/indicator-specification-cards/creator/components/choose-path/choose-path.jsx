@@ -41,7 +41,7 @@ const ChoosePath = () => {
           ...prevState.dataset,
           locked: true,
           openedPanel: false,
-          step: "0",
+          step: "4",
         },
       }));
       setState((prevState) => ({
@@ -76,7 +76,7 @@ const ChoosePath = () => {
             ...prevState.visualization,
             locked: true,
             openedPanel: false,
-            step: "0",
+            step: "4",
           },
         }));
         setState((prevState) => ({
@@ -184,19 +184,18 @@ const ChoosePath = () => {
             </Grid>
             {!lockedStep.path.openPanel && state.showSelections ? (
               <>
-                {state.selectedPath !== "" &&
-                  requirements.goalType.name !== "" && (
-                    <Grid item xs={12}>
-                      <Grid container alignItems="center" spacing={1}>
-                        <Grid item>
-                          <Typography>Selected path:</Typography>
-                        </Grid>
-                        <Grid item>
-                          <Chip label={state.selectedPath} />
-                        </Grid>
+                {state.selectedPath !== "" && (
+                  <Grid item xs={12}>
+                    <Grid container alignItems="center" spacing={1}>
+                      <Grid item>
+                        <Typography>Selected path:</Typography>
+                      </Grid>
+                      <Grid item>
+                        <Chip label={state.selectedPath} />
                       </Grid>
                     </Grid>
-                  )}
+                  </Grid>
+                )}
               </>
             ) : undefined}
           </Grid>

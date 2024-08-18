@@ -11,15 +11,17 @@ import {
   Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { visualizations } from "../../../utils/data/config.js";
+import { DataTypes, visualizations } from "../../../utils/data/config.js";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 import VisualizationDescription from "./visualization-description.jsx";
+import { Recommend } from "@mui/icons-material";
 
 const VisualizationFilter = () => {
-  const { visRef, setVisRef } = useContext(ISCContext);
+  const { dataset, visRef, setVisRef } = useContext(ISCContext);
   const [state, setState] = React.useState({
     openFilters: false,
     visualizationList: [],
+    recommendation: false,
   });
 
   const handleSelectVisualization = (chart) => {
@@ -58,6 +60,56 @@ const VisualizationFilter = () => {
     }
   }, [visRef.filter.type]);
 
+  useEffect(() => {
+    setState((prevState) => ({
+      ...prevState,
+      recommendation: checkRecommendation(prevState.visualizationList),
+    }));
+  }, [dataset.columns]);
+
+  const columnTypes = dataset.columns.map((col) => col.type);
+
+  const checkRecommendation = (visualizations) => {
+    for (let viz of visualizations) {
+      if (checkVisualizationRecommendation(viz, columnTypes)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const checkVisualizationRecommendation = (visualization, columnTypes) => {
+    // Count the total required columns for each type
+    let requiredCategorical = 0;
+    let requiredNumerical = 0;
+    let requiredCatOrdered = 0;
+
+    visualization.dataTypes.forEach((dataType) => {
+      if (dataType.type === DataTypes.categorical) {
+        requiredCategorical += dataType.required;
+      } else if (dataType.type === DataTypes.numerical) {
+        requiredNumerical += dataType.required;
+      } else if (dataType.type === DataTypes.catOrdered) {
+        requiredCatOrdered += dataType.required;
+      }
+    });
+
+    // Count the available columns of each type in the dataset
+    const availableStrings = columnTypes.filter(
+      (type) => type === "string",
+    ).length;
+    const availableNumbers = columnTypes.filter(
+      (type) => type === "number",
+    ).length;
+
+    // Check if the dataset meets the visualization requirements
+    const hasRequiredStrings =
+      availableStrings >= requiredCategorical + requiredCatOrdered;
+    const hasRequiredNumbers = availableNumbers >= requiredNumerical;
+
+    return hasRequiredStrings && hasRequiredNumbers;
+  };
+
   return (
     <>
       <Accordion variant="outlined" defaultExpanded>
@@ -68,6 +120,15 @@ const VisualizationFilter = () => {
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <Grid container spacing={2} justifyContent="center">
+                {visRef.filter.type && (
+                  <Grid item xs={12}>
+                    <Typography align="center" variant="body2">
+                      Chart(s) recommended based on chart type:{" "}
+                      <b>{visRef.filter.type}</b>
+                    </Typography>
+                  </Grid>
+                )}
+
                 {state.visualizationList.map((visualization) => {
                   if (visualization.enable) {
                     return (
@@ -81,58 +142,107 @@ const VisualizationFilter = () => {
                       >
                         <Grid container spacing={2}>
                           <Grid item xs>
-                            <Tooltip
-                              arrow
-                              title={
-                                <Typography
-                                  variant="body2"
-                                  sx={{ p: 1, whiteSpace: "pre-line" }}
-                                >
-                                  {visualization.description}
-                                </Typography>
-                              }
-                            >
-                              <Paper
-                                variant="outlined"
-                                sx={{
-                                  pb: 2,
-                                  pt: 3,
-                                  "&:hover": {
-                                    boxShadow: 5,
-                                  },
-                                  border:
-                                    visRef.chart.type === visualization.type
-                                      ? "2px solid #F57C00"
-                                      : "",
-                                }}
-                              >
-                                <Grid
-                                  container
-                                  direction="column"
-                                  alignItems="center"
-                                  spacing={2}
-                                >
-                                  <Grid item>
-                                    <Box
-                                      component="img"
-                                      src={visualization.image}
-                                      height="72px"
-                                    />
-                                  </Grid>
-                                  <Grid item>
-                                    <Typography align="center">
-                                      {visualization.type}
+                            <Grid container spacing={2}>
+                              <Grid item xs={12}>
+                                <Tooltip
+                                  arrow
+                                  title={
+                                    <Typography
+                                      variant="body2"
+                                      sx={{ p: 1, whiteSpace: "pre-line" }}
+                                    >
+                                      {visualization.description}
                                     </Typography>
+                                  }
+                                >
+                                  <Paper
+                                    variant="outlined"
+                                    sx={{
+                                      pb: 2,
+                                      pt: 3,
+                                      "&:hover": {
+                                        boxShadow: 5,
+                                      },
+                                      border:
+                                        visRef.chart.type === visualization.type
+                                          ? "2px solid #F57C00"
+                                          : "",
+                                    }}
+                                  >
+                                    <Grid
+                                      container
+                                      direction="column"
+                                      alignItems="center"
+                                      spacing={2}
+                                    >
+                                      <Grid item>
+                                        <Box
+                                          component="img"
+                                          src={visualization.image}
+                                          height="72px"
+                                        />
+                                      </Grid>
+                                      <Grid item>
+                                        <Typography align="center">
+                                          {visualization.type}
+                                        </Typography>
+                                      </Grid>
+                                    </Grid>
+                                  </Paper>
+                                </Tooltip>
+                              </Grid>
+                              <Grid item xs={12}>
+                                {checkVisualizationRecommendation(
+                                  visualization,
+                                  columnTypes,
+                                ) && (
+                                  <Grid
+                                    container
+                                    spacing={1}
+                                    alignItems="center"
+                                    justifyContent="center"
+                                  >
+                                    <Grid item>
+                                      <Recommend color="success" />
+                                    </Grid>
+                                    <Grid item>
+                                      <Typography
+                                        gutterBottom
+                                        align="center"
+                                        variant="body2"
+                                      >
+                                        Recommended
+                                      </Typography>
+                                    </Grid>
                                   </Grid>
-                                </Grid>
-                              </Paper>
-                            </Tooltip>
+                                )}
+                              </Grid>
+                            </Grid>
                           </Grid>
                         </Grid>
                       </Grid>
                     );
                   }
                 })}
+                {state.recommendation && (
+                  <Grid item xs={12}>
+                    <Grid
+                      container
+                      spacing={1}
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <Grid item>
+                        <Recommend color="success" />
+                      </Grid>
+                      <Grid item>
+                        <Typography gutterBottom variant="body2">
+                          Recommendations are based on your dataset
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                )}
               </Grid>
             </Grid>
             <Grid item xs={12}>

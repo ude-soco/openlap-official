@@ -4,6 +4,7 @@ import SpecifyRequirements from "./components/specify-requirements/specify-requi
 import ChoosePath from "./components/choose-path/choose-path.jsx";
 import Visualization from "./components/visualization/visualization.jsx";
 import Dataset from "./components/dataset/dataset.jsx";
+import Finalize from "./components/finalize/finalize.jsx";
 
 export const ISCContext = createContext(undefined);
 
@@ -114,6 +115,12 @@ const IndicatorSpecificationCard = () => {
               <Visualization />
             </Grid>
           )}
+          {lockedStep.visualization.step !== "0" &&
+            lockedStep.dataset.step !== "0" && (
+              <Grid item xs={12}>
+                <Finalize />
+              </Grid>
+            )}
         </Grid>
       </ISCContext.Provider>
     </>

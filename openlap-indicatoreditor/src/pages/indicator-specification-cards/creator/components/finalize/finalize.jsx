@@ -14,11 +14,9 @@ import {
   Typography,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
-import LockIcon from "@mui/icons-material/Lock";
-import DataTableManager from "./data-table-manager/data-table-manager.jsx";
-import DataTable from "./components/data-table.jsx";
+import LockIcon from "@mui/icons-material/Lock.js";
 
-const Dataset = () => {
+const Finalize = () => {
   const { dataset, lockedStep, setLockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
@@ -27,9 +25,9 @@ const Dataset = () => {
   const handleTogglePanel = () => {
     setLockedStep((prevState) => ({
       ...prevState,
-      dataset: {
-        ...prevState.dataset,
-        openPanel: !prevState.dataset.openPanel,
+      finalize: {
+        ...prevState.finalize,
+        finalize: !prevState.finalize.openPanel,
       },
     }));
   };
@@ -41,36 +39,15 @@ const Dataset = () => {
     }));
   };
 
-  const handleUnlockVisualization = () => {
+  const handleSaveIsc = () => {
     handleTogglePanel();
-    setLockedStep((prevState) => ({
-      ...prevState,
-      visualization: {
-        ...prevState.visualization,
-        locked: false,
-        openPanel: true,
-        step: "4",
-      },
-    }));
-  };
-
-  const handleUnlockFinalize = () => {
-    handleTogglePanel();
-    setLockedStep((prevState) => ({
-      ...prevState,
-      finalize: {
-        ...prevState.finalize,
-        locked: false,
-        openPanel: true,
-      },
-    }));
   };
 
   return (
     <>
       <Accordion
-        expanded={lockedStep.dataset.openPanel}
-        disabled={lockedStep.dataset.locked}
+        expanded={lockedStep.finalize.openPanel}
+        disabled={lockedStep.finalize.locked}
       >
         <AccordionSummary>
           <Grid container spacing={1}>
@@ -84,8 +61,11 @@ const Dataset = () => {
                 <Grid item xs>
                   <Grid container alignItems="center" spacing={1}>
                     <Grid item>
-                      {!lockedStep.dataset.locked ? (
-                        <Chip label={lockedStep.dataset.step} color="primary" />
+                      {!lockedStep.finalize.locked ? (
+                        <Chip
+                          label={lockedStep.finalize.step}
+                          color="primary"
+                        />
                       ) : (
                         <IconButton size="small">
                           <LockIcon />
@@ -93,14 +73,14 @@ const Dataset = () => {
                       )}
                     </Grid>
                     <Grid item>
-                      <Typography>Dataset</Typography>
+                      <Typography>Finalize</Typography>
                     </Grid>
                   </Grid>
                 </Grid>
-                {!lockedStep.dataset.locked && (
+                {!lockedStep.finalize.locked && (
                   <Grid item>
                     <Grid container>
-                      {!lockedStep.dataset.openPanel && (
+                      {!lockedStep.finalize.openPanel && (
                         <FormGroup>
                           <FormControlLabel
                             control={<Switch checked={state.showSelections} />}
@@ -117,23 +97,17 @@ const Dataset = () => {
                 )}
               </Grid>
             </Grid>
-            {!lockedStep.dataset.locked &&
-            !lockedStep.dataset.openPanel &&
+            {!lockedStep.finalize.locked &&
+            !lockedStep.finalize.openPanel &&
             state.showSelections ? (
-              <>
-                {dataset.columns.length > 0 && (
-                  <Grid item xs={12}>
-                    <DataTable rows={dataset.rows} columns={dataset.columns} />
-                  </Grid>
-                )}
-              </>
+              <>{/*  TODO: Summary? */}</>
             ) : undefined}
           </Grid>
         </AccordionSummary>
         <AccordionDetails>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <DataTableManager />
+              {/*  TODO: Component */}
             </Grid>
           </Grid>
         </AccordionDetails>
@@ -144,18 +118,10 @@ const Dataset = () => {
                 <Button
                   fullWidth
                   variant="contained"
-                  disabled={
-                    dataset.rows.length === 0 && dataset.columns.length === 0
-                  }
-                  onClick={
-                    lockedStep.dataset.step === "3"
-                      ? handleUnlockVisualization
-                      : lockedStep.dataset.step === "4"
-                        ? handleUnlockFinalize
-                        : undefined
-                  }
+                  // disabled={visRef.chart.type === ""}
+                  onClick={handleSaveIsc}
                 >
-                  Next
+                  Save indicator
                 </Button>
               </Grid>
             </Grid>
@@ -166,4 +132,4 @@ const Dataset = () => {
   );
 };
 
-export default Dataset;
+export default Finalize;
