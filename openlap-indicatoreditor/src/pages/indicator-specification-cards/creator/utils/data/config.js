@@ -36,19 +36,19 @@ const DataTypes = {
     value: "Categorical",
     type: "string",
     description:
-      "Categorical data, also known as nominal data, classifies information into distinct, non-ordered categories. For instance, colors (e.g., red, blue, green) are categorical data, with no inherent hierarchy or order.",
+      "Categorical data groups information into specific categories or labels without any order or ranking. For example, colors like red, blue, and green are just different categories with no one being higher or lower than the others.",
   },
   numerical: {
     value: "Numerical",
     type: "number",
     description:
-      "Numerical data means using numbers to describe things like age, height, or income. It's possible to count or measure using this data type.",
+      "Numerical data uses numbers to describe things like age, height, or income. This type of data can be counted or measured.",
   },
   catOrdered: {
     value: "Categorical (ordinal)",
     type: "string",
     description:
-      "An 'ordinal' categorical variable has a clear ordering. For example, temperature as a variable with three orderly categories (low, medium and high)",
+      "Ordinal categorical data groups information into categories that have a specific order. For example, temperature can be categorized as low, medium, or high.",
   },
 };
 
@@ -80,45 +80,49 @@ const chartFilters = [
     image: DistributionImage,
     type: ChartTypes.distribution,
     description:
-      "Focuses on visualizing the distribution of data. It helps users understand how data points are spread across different values or categories. \n\n For example, a histogram or a box plot can show the distribution of ages in a population, helping to identify patterns like whether the data is skewed or evenly distributed.",
+      "Distribution shows how data points are spread out across different values or categories, helping to see patterns like whether data is evenly spread or clustered.",
     enable: true,
   },
   {
     image: ClusterImage,
     type: ChartTypes.cluster,
     description:
-      "Aims to  identify and visualize natural groups or clusters within data. It's used to spot patterns and similarities among data points, making it useful for tasks like categorization and finding hidden structures in the data. \n\n Visualizations may employ colors or shapes to differentiate clusters, aiding in data exploration and analysis.",
+      "Clustering groups similar data points together, making it easier to spot patterns and natural groupings within the data.",
     enable: false,
   },
   {
     image: OutliersImage,
     type: ChartTypes.outliers,
     description:
-      "Aims to identify and highlight data points that significantly deviate from the majority. OutliersImage can be extreme values or anomalies that might carry special significance or require further investigation. \n\n Visualizations that emphasize outliers can assist in detecting errors, fraud, or unusual patterns in data.",
+      "Outliers are data points that stand out because they are much different from the rest, possibly indicating errors or unusual patterns.",
     enable: true,
   },
   {
     image: PathsImage,
     type: ChartTypes.paths,
+    description:
+      "Paths trace the route or sequence between different points, showing how they are connected or related to each other.",
     enable: false,
   },
   {
     image: TrendsImage,
     type: ChartTypes.trends,
     description:
-      "Aims to visualize how data changes over time or across some other ordered dimension. \n\n Users can observe patterns, fluctuations, or long-term changes in data by focusing on this target",
+      "Trends show how data changes over time or in a sequence, helping to identify patterns and shifts.",
     enable: true,
   },
   {
     image: RelationshipImage,
     type: ChartTypes.relationship,
     description:
-      "Relationship or Part-to-whole relationship aims to explore the connections between multiple variables or dimensions in data. Visualizations for relationships help users understand how changes in one variable relate to changes in another. \n\n Analyzing relationships can uncover patterns, dependencies, or cause-and-effect relationships in data.",
+      "This shows how different parts contribute to a whole, helping to understand the connections and relationships between variables.",
     enable: true,
   },
   {
     image: TopologyImage,
     type: ChartTypes.topology,
+    description:
+      "Topology describes the overall structure and arrangement of connections or relationships within a set of points or elements, focusing on how they are linked, regardless of distance or direction.",
     enable: false,
   },
 ];

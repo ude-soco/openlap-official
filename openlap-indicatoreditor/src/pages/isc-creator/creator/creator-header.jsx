@@ -408,54 +408,57 @@ const CreatorHeader = ({
                     // Regular option
                     return option.name;
                   }}
-                  renderOption={(props, option, { selected }) => (
-                    <li {...props}>
-                      <Grid container alignItems="center">
-                        <Grid item xs>
-                          {option.description ? (
-                            <Tooltip
-                              arrow
-                              placement="right"
-                              title={
-                                <Typography variant="body2" sx={{ p: 1 }}>
-                                  {option.description}
-                                </Typography>
-                              }
-                            >
-                              {option.name}
-                            </Tooltip>
-                          ) : (
-                            <>{option.name}</>
-                          )}
-                        </Grid>
-                        <Grid item>
-                          {option.custom && (
-                            <Tooltip
-                              title={
-                                <Typography variant="body2" sx={{ p: 1 }}>
-                                  Remove custom goal
-                                </Typography>
-                              }
-                            >
-                              <IconButton
-                                size="small"
-                                onClick={(event) => {
-                                  event.stopPropagation(); // prevent the click from propagating to the parent elements
-                                  setListOfGoals((prevGoals) =>
-                                    prevGoals.filter(
-                                      (goal) => goal.id !== option.id,
-                                    ),
-                                  );
-                                }}
+                  renderOption={(props, option) => {
+                    const { key, ...restProps } = props;
+                    return (
+                      <li {...restProps} key={key}>
+                        <Grid container alignItems="center">
+                          <Grid item xs>
+                            {option.description ? (
+                              <Tooltip
+                                arrow
+                                placement="right"
+                                title={
+                                  <Typography variant="body2" sx={{ p: 1 }}>
+                                    {option.description}
+                                  </Typography>
+                                }
                               >
-                                <CloseIcon />
-                              </IconButton>
-                            </Tooltip>
-                          )}
+                                {option.name}
+                              </Tooltip>
+                            ) : (
+                              <>{option.name}</>
+                            )}
+                          </Grid>
+                          <Grid item>
+                            {option.custom && (
+                              <Tooltip
+                                title={
+                                  <Typography variant="body2" sx={{ p: 1 }}>
+                                    Remove custom goal
+                                  </Typography>
+                                }
+                              >
+                                <IconButton
+                                  size="small"
+                                  onClick={(event) => {
+                                    event.stopPropagation(); // prevent the click from propagating to the parent elements
+                                    setListOfGoals((prevGoals) =>
+                                      prevGoals.filter(
+                                        (goal) => goal.id !== option.id,
+                                      ),
+                                    );
+                                  }}
+                                >
+                                  <CloseIcon />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                          </Grid>
                         </Grid>
-                      </Grid>
-                    </li>
-                  )}
+                      </li>
+                    );
+                  }}
                   freeSolo
                   renderInput={(params) => (
                     <Tooltip

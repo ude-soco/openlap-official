@@ -1,14 +1,29 @@
 import React, { useContext } from "react";
-import { Button, Grid, IconButton, TextField, Typography } from "@mui/material";
+import {
+  Autocomplete,
+  Button,
+  Grid,
+  IconButton,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { Add, Close } from "@mui/icons-material";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { DataTypes } from "../../../utils/data/config.js";
 
 const DataList = () => {
   const { requirements, setRequirements } = useContext(ISCContext);
 
-  const handleChange = (index, event) => {
+  const handleChangeValue = (index, event) => {
+    const { name, value } = event.target;
     const newData = [...requirements.data];
-    newData[index].value = event.target.value;
+    newData[index][name] = value;
+    setRequirements({ ...requirements, data: newData });
+  };
+
+  const handleChangeType = (index, value) => {
+    const newData = [...requirements.data];
+    newData[index].type = value;
     setRequirements({ ...requirements, data: newData });
   };
 
@@ -20,7 +35,6 @@ const DataList = () => {
   };
 
   const handleDeleteDataRow = (indexToRemove) => {
-    console.log(indexToRemove);
     setRequirements((prevState) => ({
       ...prevState,
       data: [...prevState.data].filter((_, index) => index !== indexToRemove),
@@ -41,10 +55,50 @@ const DataList = () => {
                   <TextField
                     fullWidth
                     required
+                    name="value"
                     label="I need data"
                     value={requirement.value}
-                    onChange={(event) => handleChange(index, event)}
+                    onChange={(event) => handleChangeValue(index, event)}
                     placeholder={requirement.placeholder || ""}
+                  />
+                </Grid>
+                <Grid item xs>
+                  <Autocomplete
+                    fullWidth
+                    options={Object.values(DataTypes)}
+                    name="type"
+                    getOptionLabel={(option) => {
+                      return option?.value || "Unknown";
+                    }}
+                    renderOption={(props, option) => {
+                      const { key, ...restProps } = props;
+                      return (
+                        <li key={key} {...restProps}>
+                          <Grid container sx={{ py: 0.5 }}>
+                            <Grid item xs={12}>
+                              <Typography>{option.value}</Typography>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontStyle: "italic" }}
+                              >
+                                {option.description}
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </li>
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        placeholder="Select a column type"
+                      />
+                    )}
+                    onChange={(event, value) => {
+                      if (value) handleChangeType(index, value);
+                    }}
                   />
                 </Grid>
                 {index > 1 && (

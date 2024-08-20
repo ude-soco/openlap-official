@@ -26,8 +26,9 @@ const IndicatorSpecificationCard = () => {
             {
               value: "",
               placeholder: "e.g., name of materials",
+              type: {},
             },
-            { value: "", placeholder: "e.g., number of downloads" },
+            { value: "", placeholder: "e.g., number of downloads", type: {} },
           ],
           selectedPath: "",
         };
@@ -54,6 +55,11 @@ const IndicatorSpecificationCard = () => {
           },
           chart: {
             type: "",
+          },
+          data: {
+            series: [],
+            options: {},
+            axisOptions: {},
           },
         };
   });
@@ -105,7 +111,7 @@ const IndicatorSpecificationCard = () => {
         visRef,
         lockedStep,
       };
-
+      // TODO: Add date to the session
       sessionStorage.setItem("session_isc", JSON.stringify(session_isc));
 
       // Check if any of the dependencies have changed

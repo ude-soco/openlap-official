@@ -8,7 +8,6 @@ import {
   Typography,
 } from "@mui/material";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import { BasicIndicatorContext } from "../../../basic-indicator/basic-indicator.jsx";
 import Tooltip from "@mui/material/Tooltip";
 import { fetchAnalyticsTechnique } from "../utils/analytics-api.js";
 
@@ -84,24 +83,27 @@ const AnalyticsTechnique = ({
             fullWidth
             value={state.autoCompleteValue}
             getOptionLabel={(option) => option.name}
-            renderOption={(props, option) => (
-              <li {...props} key={option.id}>
-                <Grid container sx={{ py: 0.5 }}>
-                  <Grid item xs={12}>
-                    <Typography>{option.name}</Typography>
+            renderOption={(props, option) => {
+              const { key, ...restProps } = props;
+              return (
+                <li {...restProps} key={key}>
+                  <Grid container sx={{ py: 0.5 }}>
+                    <Grid item xs={12}>
+                      <Typography>{option.name}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2" sx={{ fontStyle: "italic" }}>
+                        {option.description}
+                      </Typography>
+                    </Grid>
                   </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="body2" sx={{ fontStyle: "italic" }}>
-                      {option.description}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </li>
-            )}
+                </li>
+              );
+            }}
             renderInput={(params) => (
               <TextField
                 {...params}
-                placeholder="*Search for an Analytics technique"
+                placeholder="*Search for an analytics technique"
               />
             )}
             onChange={(event, value) => {
@@ -113,7 +115,7 @@ const AnalyticsTechnique = ({
         <Grid item xs={12}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>Selected Analytics technique</Typography>
+              <Typography>Selected analytics technique</Typography>
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1}>

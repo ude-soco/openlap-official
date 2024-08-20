@@ -19,13 +19,13 @@ const Footer = ({ state, setState }) => {
   const totalPages = Math.ceil(dataset.rows.length / state.pageSize);
 
   const handleDeleteSelectedRows = () => {
-    const updatedRows = dataset.rows.filter(
-      (row) => !state.selectionModel.includes(row.id),
-    );
     setDataset((prevState) => ({
       ...prevState,
-      rows: updatedRows,
+      rows: prevState.rows.filter(
+        (row) => !state.selectionModel.includes(row.id),
+      ),
     }));
+
     setState((prevState) => ({
       ...prevState,
       selectionModel: [],

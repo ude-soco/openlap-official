@@ -131,10 +131,11 @@ const VisualizationFilter = () => {
 
                 {state.visualizationList
                   .sort((a, b) => a.type.localeCompare(b.type))
-                  .map((visualization) => {
+                  .map((visualization, index) => {
                     if (visualization.enable) {
                       return (
                         <Grid
+                          key={index}
                           item
                           xs={6}
                           sm={4}

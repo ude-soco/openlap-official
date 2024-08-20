@@ -12,14 +12,14 @@ import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const Platform = ({ state, setState }) => {
   const { indicatorQuery, setIndicatorQuery } = useContext(
-    BasicIndicatorContext
+    BasicIndicatorContext,
   );
 
   const handleSelectPlatformList = (selectedPlatform) => {
     setState((prevState) => ({
       ...prevState,
       platformList: prevState.platformList.filter(
-        (item) => item.name !== selectedPlatform.name
+        (item) => item.name !== selectedPlatform.name,
       ),
       selectedPlatformList: [
         ...prevState.selectedPlatformList,
@@ -43,7 +43,7 @@ const Platform = ({ state, setState }) => {
         ...prevState,
         platformList: [...prevState.platformList, selectedPlatform],
         selectedPlatformList: prevState.selectedPlatformList.filter(
-          (item) => item.name !== selectedPlatform.name
+          (item) => item.name !== selectedPlatform.name,
         ),
         autoCompleteValue: null,
       };
@@ -53,7 +53,7 @@ const Platform = ({ state, setState }) => {
       return {
         ...prevState,
         platforms: prevState.platforms.filter(
-          (item) => item !== selectedPlatform.name
+          (item) => item !== selectedPlatform.name,
         ),
       };
     });
@@ -81,17 +81,23 @@ const Platform = ({ state, setState }) => {
           >
             <Autocomplete
               disablePortal
-              disabled={state.selectedLrsList.length === 0 || indicatorQuery.activityTypes.length > 0}
+              disabled={
+                state.selectedLrsList.length === 0 ||
+                indicatorQuery.activityTypes.length > 0
+              }
               id="combo-box-lrs"
               options={state.platformList}
               fullWidth
               getOptionLabel={(option) => option.name}
               value={state.autoCompleteValue}
-              renderOption={(props, option) => (
-                <li {...props} key={option.id}>
-                  {option.name}
-                </li>
-              )}
+              renderOption={(props, option) => {
+                const { key, ...restProps } = props;
+                return (
+                  <li {...restProps} key={key}>
+                    {option.name}
+                  </li>
+                );
+              }}
               renderInput={(params) => (
                 <TextField {...params} placeholder="*Search for platforms" />
               )}

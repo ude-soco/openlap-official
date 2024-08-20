@@ -15,9 +15,6 @@ import { ISCContext } from "../../../indicator-specification-card.jsx";
 
 const ChartTypeFilter = () => {
   const { visRef, setVisRef } = useContext(ISCContext);
-  const [state, setState] = React.useState({
-    openFilters: false,
-  });
 
   const handleSelectFilter = (filter) => {
     if (visRef.filter.type !== filter.type) {
@@ -50,10 +47,11 @@ const ChartTypeFilter = () => {
           >
             {chartFilters
               .sort((a, b) => a.type.localeCompare(b.type))
-              .map((filter) => {
+              .map((filter, index) => {
                 if (filter.enable) {
                   return (
                     <Grid
+                      key={index}
                       item
                       xs={6}
                       sm={4}

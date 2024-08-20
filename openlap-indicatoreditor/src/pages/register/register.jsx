@@ -20,8 +20,8 @@ import {
   Typography,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import RoleTypes from "../../common/enums/role-types";
-import UniqueIdentifierTypes from "../../common/enums/unique-identifier-types";
+import RoleTypes from "../account-manager/utils/enums/role-types";
+import UniqueIdentifierTypes from "../account-manager/utils/enums/unique-identifier-types";
 import { fetchLRSData, register } from "./register-api";
 import { Help } from "@mui/icons-material";
 
@@ -113,13 +113,36 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
     if (formFields.role === RoleTypes.user) {
-      handleRegister(lrsConsumerRequest, null);
-    } else handleRegister(null, lrsProviderRequest);
+      handleRegister(lrsConsumerRequest, null)
+        .then((response) => {
+          if (response.status === 201) {
+            navigate("/login");
+          }
+        })
+        .catch((error) => {
+          if (error.status === 400) {
+            setErrors(() => error.data.errors);
+            setLoading(false);
+          }
+        });
+    } else
+      handleRegister(null, lrsProviderRequest)
+        .then((response) => {
+          if (response.status === 201) {
+            navigate("/login");
+          }
+        })
+        .catch((error) => {
+          if (error.status === 400) {
+            setErrors(() => error.data.errors);
+            setLoading(false);
+          }
+        });
   };
 
   const handleRegister = async (lrsConsumerRequest, lrsProviderRequest) => {
     try {
-      const response = await register(
+      return await register(
         api,
         formFields.name,
         formFields.email,
@@ -129,16 +152,8 @@ const Register = () => {
         lrsConsumerRequest,
         lrsProviderRequest,
       );
-
-      if (response.status === 201) {
-        navigate("/login");
-      }
     } catch (error) {
-      if (error.status === 400) {
-        setErrors(() => error.data.errors);
-        setLoading(false);
-      }
-      console.error("Failed to register", error);
+      throw error;
     }
   };
 
@@ -333,6 +348,7 @@ const Register = () => {
                         Available LRS
                       </InputLabel>
                       <Select
+                        variant="outlined"
                         name="lrsId"
                         value={lrsConsumerRequest.lrsId}
                         label="LRS ID"
@@ -390,6 +406,7 @@ const Register = () => {
                         Unique Identifier Type
                       </InputLabel>
                       <Select
+                        variant="outlined"
                         labelId="unique-type-select-label"
                         name="uniqueIdentifierType"
                         value={lrsProviderRequest.uniqueIdentifierType}

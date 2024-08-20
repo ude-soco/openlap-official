@@ -9,7 +9,7 @@ import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SchoolIcon from "@mui/icons-material/School";
 import PersonIcon from "@mui/icons-material/Person";
-import RoleTypes from "../../common/enums/role-types.js";
+import RoleTypes from "../../pages/account-manager/utils/enums/role-types.js";
 import UserProfile from "../../pages/account-manager/user-profile.jsx";
 import ManageLrs from "../../pages/account-manager/manage-lrs.jsx";
 import CsvXapiDashboard from "../../pages/csv-xapi-converter/csv-xapi-dashboard.jsx";
@@ -25,7 +25,7 @@ import BasicIndicator from "../../pages/indicator-editor/editor/basic-indicator/
 import IndicatorPreview from "../../pages/indicator-editor/dashboard/indicator-preview.jsx";
 import ISCPool from "../../pages/isc-creator/isc-pool/isc-pool.jsx";
 import ISCCreator from "../../pages/isc-creator/creator/isc-creator.jsx";
-import IscDashboard from "../../pages/isc-creator/dashboard/isc-dashboard.jsx";
+import IscDashboard from "../../pages/indicator-specification-cards/dashboard/isc-dashboard.jsx";
 import IndicatorSpecificationCard from "../../pages/indicator-specification-cards/creator/indicator-specification-card.jsx";
 
 const menus = [
@@ -49,13 +49,13 @@ const menus = [
         icon: <AddchartIcon />,
         component: <IndicatorSpecificationCard />,
       },
-      {
-        primary: "ISC Creator Old",
-        secondary: "Create a ISC",
-        navigate: "/isc/creator/old",
-        icon: <AddchartIcon />,
-        component: <ISCCreator />,
-      },
+      // {
+      //   primary: "ISC Creator Old",
+      //   secondary: "Create a ISC",
+      //   navigate: "/isc/creator/old",
+      //   icon: <AddchartIcon />,
+      //   component: <ISCCreator />,
+      // },
       {
         primary: "ISC Pool",
         secondary: "Search for ISCs",

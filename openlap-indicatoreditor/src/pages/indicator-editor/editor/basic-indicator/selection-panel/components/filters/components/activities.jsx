@@ -174,11 +174,14 @@ const Activities = ({ state, setState }) => {
               options={state.activitiesList}
               fullWidth
               getOptionLabel={(option) => option.name}
-              renderOption={(props, option) => (
-                <li {...props} key={option.id}>
-                  {option.name}
-                </li>
-              )}
+              renderOption={(props, option) => {
+                const { key, ...restProps } = props;
+                return (
+                  <li {...restProps} key={key}>
+                    {option.name}
+                  </li>
+                );
+              }}
               renderInput={(params) => (
                 <TextField {...params} placeholder="*Search for Activities" />
               )}

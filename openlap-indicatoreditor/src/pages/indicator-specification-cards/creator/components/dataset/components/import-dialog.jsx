@@ -13,6 +13,7 @@ import CsvImporter from "./csv-importer.jsx";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 import Papa from "papaparse";
 import { v4 as uuidv4 } from "uuid";
+import { DataTypes } from "../../../utils/data/config.js";
 
 const ImportDialog = ({ open, toggleOpen }) => {
   const { dataset, setDataset } = useContext(ISCContext);
@@ -68,6 +69,7 @@ const ImportDialog = ({ open, toggleOpen }) => {
         editable: true,
         width: 200,
         type: isNumeric ? "number" : "string",
+        dataType: isNumeric ? DataTypes.numerical : DataTypes.categorical,
       };
     });
     let newRowData = rowData.map((data) => {

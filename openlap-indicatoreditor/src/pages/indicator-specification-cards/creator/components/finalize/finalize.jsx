@@ -15,13 +15,15 @@ import {
   Typography,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
-import LockIcon from "@mui/icons-material/Lock.js";
-import VisSelection from "../visualization/vis-selection.jsx";
+import LockIcon from "@mui/icons-material/Lock";
+import VisSelection from "../visualization/components/vis-selection.jsx";
+import NameDialog from "./components/name-dialog.jsx";
 
 const Finalize = () => {
-  const { visRef, lockedStep, setLockedStep } = useContext(ISCContext);
+  const { visRef, dataset, lockedStep, setLockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
+    openSaveDialog: false,
   });
 
   const handleTogglePanel = () => {
@@ -41,8 +43,11 @@ const Finalize = () => {
     }));
   };
 
-  const handleSaveIsc = () => {
-    handleTogglePanel();
+  const handleOpenSaveDialog = () => {
+    setState((prevState) => ({
+      ...prevState,
+      openSaveDialog: !prevState.openSaveDialog,
+    }));
   };
 
   return (
@@ -125,14 +130,20 @@ const Finalize = () => {
                 <Button
                   fullWidth
                   variant="contained"
-                  // disabled={visRef.chart.type === ""}
-                  onClick={handleSaveIsc}
+                  disabled={
+                    dataset.rows.length === 0 || dataset.columns.length === 0
+                  }
+                  onClick={handleOpenSaveDialog}
                 >
                   Save indicator
                 </Button>
               </Grid>
             </Grid>
           </Grid>
+          <NameDialog
+            open={state.openSaveDialog}
+            toggleOpen={handleOpenSaveDialog}
+          />
         </AccordionActions>
       </Accordion>
     </>

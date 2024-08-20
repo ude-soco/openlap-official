@@ -16,10 +16,17 @@ import {
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import GoalList from "./components/goal-list.jsx";
 import DataList from "./components/data-list.jsx";
+import { v4 as uuidv4 } from "uuid";
 
 const SpecifyRequirements = () => {
-  const { requirements, setRequirements, lockedStep, setLockedStep } =
-    useContext(ISCContext);
+  const {
+    requirements,
+    setRequirements,
+    lockedStep,
+    setLockedStep,
+    dataset,
+    setDataset,
+  } = useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
   });
@@ -51,6 +58,9 @@ const SpecifyRequirements = () => {
 
   const handleUnlockPath = () => {
     handleTogglePanel();
+    if (lockedStep.path.locked) {
+      addNewColumnsMethod();
+    }
     setLockedStep((prevState) => ({
       ...prevState,
       path: {
@@ -58,6 +68,44 @@ const SpecifyRequirements = () => {
         locked: false,
         openPanel: true,
       },
+    }));
+  };
+
+  const addNewColumnsMethod = () => {
+    let tempColumnData = [];
+    let tempRows = [];
+    requirements.data.forEach((item) => {
+      let fieldUUID = uuidv4();
+      tempColumnData.push({
+        field: fieldUUID,
+        headerName: item.value,
+        sortable: false,
+        editable: true,
+        width: 200,
+        type: item.type.type,
+        dataType: item.type, // Custom field
+      });
+      if (Boolean(tempRows.length)) {
+        tempRows = tempRows.map((row, index) => ({
+          ...row,
+          [fieldUUID]:
+            item.type.type === "string" ? `${item.value} ${index + 1}` : 0,
+        }));
+      } else {
+        for (let i = 0; i < 3; i++) {
+          tempRows.push({
+            id: uuidv4(),
+            [fieldUUID]:
+              item.type.type === "string" ? `${item.value} ${i + 1}` : 0,
+          });
+        }
+      }
+    });
+
+    setDataset((prevState) => ({
+      ...prevState,
+      rows: tempRows,
+      columns: tempColumnData,
     }));
   };
 
@@ -247,7 +295,6 @@ const SpecifyRequirements = () => {
             </Grid>
           </Grid>
         </AccordionDetails>
-        {/*{lockedStep.path.locked && (*/}
         <AccordionActions sx={{ py: 2 }}>
           <Grid item xs={12}>
             <Grid container spacing={2} justifyContent="center">
@@ -260,7 +307,10 @@ const SpecifyRequirements = () => {
                     requirements.goal === "" ||
                     requirements.question === "" ||
                     requirements.indicatorName === "" ||
-                    requirements.data.some((item) => item.value === "")
+                    requirements.data.some((item) => item.value === "") ||
+                    requirements.data.some(
+                      (item) => Object.values(item.type).length === 0,
+                    )
                   }
                   onClick={handleUnlockPath}
                 >

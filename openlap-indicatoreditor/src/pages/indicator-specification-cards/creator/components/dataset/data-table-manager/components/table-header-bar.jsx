@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Button,
   ButtonGroup,
@@ -10,12 +10,34 @@ import {
 import { Add as AddIcon, MoreVert as MoreVertIcon } from "@mui/icons-material";
 import ImportDialog from "../../components/import-dialog.jsx";
 import TableMenu from "./table-menu.jsx";
+import AddColumnDialog from "../../components/add-column-dialog.jsx";
+import AddRowDialog from "../../components/add-row-dialog.jsx";
 
-const TableHeaderBar = ({ state, setState }) => {
+const TableHeaderBar = () => {
+  const [state, setState] = useState({
+    openCsvImport: false,
+    openAddColumn: false,
+    openAddRow: false,
+  });
+
   const handleOpenImportDataset = () => {
     setState((prevState) => ({
       ...prevState,
       openCsvImport: !prevState.openCsvImport,
+    }));
+  };
+
+  const handleOpenAddColumn = () => {
+    setState((prevState) => ({
+      ...prevState,
+      openAddColumn: !prevState.openAddColumn,
+    }));
+  };
+
+  const handleOpenAddRow = () => {
+    setState((prevState) => ({
+      ...prevState,
+      openAddRow: !prevState.openAddRow,
     }));
   };
 
@@ -24,14 +46,20 @@ const TableHeaderBar = ({ state, setState }) => {
       <Grid container spacing={2} justifyContent="center" alignItems="center">
         <Grid item xs>
           <ButtonGroup variant="contained" disableElevation>
-            <Button startIcon={<AddIcon />}>Column</Button>
-            <Button startIcon={<AddIcon />}>Rows</Button>
+            <Button startIcon={<AddIcon />} onClick={handleOpenAddColumn}>
+              Column
+            </Button>
+            <Button startIcon={<AddIcon />} onClick={handleOpenAddRow}>
+              Rows
+            </Button>
           </ButtonGroup>
         </Grid>
         <Grid item>
           <Grid container spacing={2} alignItems="center">
             <Grid item>
-              <Button onClick={handleOpenImportDataset}>Upload CSV</Button>
+              <Button variant="contained" onClick={handleOpenImportDataset}>
+                Upload CSV
+              </Button>
             </Grid>
             <Grid item>
               <Tooltip
@@ -61,6 +89,11 @@ const TableHeaderBar = ({ state, setState }) => {
           open={state.openCsvImport}
           toggleOpen={handleOpenImportDataset}
         />
+        <AddColumnDialog
+          open={state.openAddColumn}
+          toggleOpen={handleOpenAddColumn}
+        />
+        <AddRowDialog open={state.openAddRow} toggleOpen={handleOpenAddRow} />
         <TableMenu state={state} setState={setState} />
       </Grid>
     </>

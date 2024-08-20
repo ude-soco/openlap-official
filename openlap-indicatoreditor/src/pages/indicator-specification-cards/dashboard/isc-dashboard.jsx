@@ -28,6 +28,7 @@ import {
 import {
   Add as AddIcon,
   Close as CloseIcon,
+  Delete,
   Delete as DeleteIcon,
   Edit as EditIcon,
   FilterList as FilterListIcon,
@@ -38,14 +39,18 @@ import {
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
 import Chart from "react-apexcharts";
-import { getLastUpdateDate } from "../utils/utils.js";
+import { getLastUpdateDate } from "../../isc-creator/utils/utils.js";
 import { useNavigate } from "react-router-dom";
-import defaultISCData from "../utils/data/defaultISCData.js";
+import defaultISCData from "../../isc-creator/utils/data/defaultISCData.js";
 import { v4 as uuidv4 } from "uuid";
 
 const IscDashboard = () => {
   const navigate = useNavigate();
 
+  const [indicatorInProgress, setIndicatorInProgress] = useState(() => {
+    const savedState = sessionStorage.getItem("session_isc");
+    return !!savedState;
+  });
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [onProgressDialog, setOnProgressDialog] = useState(false);
   const [openUploadJSONModal, setOpenUploadJSONModal] = useState(false);
@@ -303,6 +308,11 @@ const IscDashboard = () => {
     document.body.removeChild(link);
   };
 
+  const handleClearSession = () => {
+    setIndicatorInProgress((prevState) => !prevState);
+    sessionStorage.removeItem("session_isc");
+  };
+
   return (
     <>
       <Grid container spacing={2}>
@@ -345,7 +355,8 @@ const IscDashboard = () => {
                   color="primary"
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => handleCreateIndicator(false)}
+                  // onClick={() => handleCreateIndicator(false)}
+                  onClick={() => navigate("/isc/creator")}
                 >
                   New
                 </Button>
@@ -540,6 +551,46 @@ const IscDashboard = () => {
             </MenuItem>
           </Menu>
         </Grid>
+
+        {indicatorInProgress && (
+          <Grid item xs={12}>
+            <Paper sx={{ p: 3 }} variant="outlined">
+              <Grid
+                container
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Grid item>
+                  <Typography>
+                    You have an indicator in progress. Would you like to
+                    continue?
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <Grid container spacing={2}>
+                    <Grid item>
+                      <Button
+                        variant="contained"
+                        onClick={() => navigate("/isc/creator")}
+                      >
+                        Continue
+                      </Button>
+                    </Grid>
+                    <Grid item>
+                      <Button
+                        color="error"
+                        onClick={handleClearSession}
+                        startIcon={<Delete />}
+                      >
+                        Discard
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
       </Grid>
       <Dialog open={openUploadJSONModal} fullWidth maxWidth="sm">
         <DialogTitle>

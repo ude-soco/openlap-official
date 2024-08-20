@@ -6,7 +6,7 @@ import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-
 
 const DotChart = () => {
   const { darkMode } = useContext(CustomThemeContext);
-  const { dataset } = useContext(ISCContext);
+  const { dataset, setVisRef } = useContext(ISCContext);
 
   const [state, setState] = useState({
     series: [],
@@ -163,6 +163,18 @@ const DotChart = () => {
     state.axisOptions.selectedYAxis,
     darkMode,
   ]);
+
+  useEffect(() => {
+    setVisRef((prevVisRef) => ({
+      ...prevVisRef,
+      data: {
+        ...prevVisRef.data,
+        series: state.series,
+        options: state.options,
+        axisOptions: state.axisOptions,
+      },
+    }));
+  }, [state.series, state.options, state.axisOptions]);
 
   const handleXAxisChange = (event) => {
     setState((prevState) => ({

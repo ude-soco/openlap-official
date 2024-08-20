@@ -158,18 +158,21 @@ const ActionOnActivities = ({ state, setState }) => {
               options={state.actionsList}
               fullWidth
               getOptionLabel={(option) => option?.name}
-              renderOption={(props, option) => (
-                <li {...props} key={option?.id}>
-                  <Grid container>
-                    <Grid item xs={12}>
-                      <Typography>{option?.name}</Typography>
+              renderOption={(props, option) => {
+                const { key, ...restProps } = props;
+                return (
+                  <li {...restProps} key={key}>
+                    <Grid container>
+                      <Grid item xs={12}>
+                        <Typography>{option?.name}</Typography>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Typography variant="body2">{option?.id}</Typography>
+                      </Grid>
                     </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="body2">{option?.id}</Typography>
-                    </Grid>
-                  </Grid>
-                </li>
-              )}
+                  </li>
+                );
+              }}
               renderInput={(params) => (
                 <TextField {...params} placeholder="*Search for Actions" />
               )}

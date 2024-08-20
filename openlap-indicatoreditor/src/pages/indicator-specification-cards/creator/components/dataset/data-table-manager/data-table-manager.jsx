@@ -17,7 +17,6 @@ import TableHeaderBar from "./components/table-header-bar.jsx";
 const DataTableManager = () => {
   const { dataset, setDataset } = useContext(ISCContext);
   const [state, setState] = useState({
-    openCsvImport: false,
     cellModesModel: {},
     selectionModel: [],
     value: "",
@@ -152,7 +151,7 @@ const DataTableManager = () => {
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <TableHeaderBar state={state} setState={setState} />
+          <TableHeaderBar />
         </Grid>
         <Grid item xs={12}>
           <DataGrid

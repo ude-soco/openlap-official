@@ -6,7 +6,7 @@ import Chart from "react-apexcharts";
 
 const StackedBarChart = () => {
   const { darkMode } = useContext(CustomThemeContext);
-  const { dataset, visRef } = useContext(ISCContext);
+  const { dataset, visRef, setVisRef } = useContext(ISCContext);
 
   const [state, setState] = useState({
     series: [],
@@ -205,6 +205,18 @@ const StackedBarChart = () => {
     state.axisOptions.selectedYAxis,
     darkMode,
   ]);
+
+  useEffect(() => {
+    setVisRef((prevVisRef) => ({
+      ...prevVisRef,
+      data: {
+        ...prevVisRef.data,
+        series: state.series,
+        options: state.options,
+        axisOptions: state.axisOptions,
+      },
+    }));
+  }, [state.series, state.options, state.axisOptions]);
 
   const handleXAxisChange = (event) => {
     setState((prevState) => ({
