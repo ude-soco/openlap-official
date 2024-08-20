@@ -13,7 +13,7 @@ import {
   Select,
   TextField,
 } from "@mui/material";
-import UniqueIdentifierTypes from "../../../common/enums/unique-identifier-types.js";
+import UniqueIdentifierTypes from "../utils/enums/unique-identifier-types.js";
 import { requestCreateLRSProvider } from "../utils/account-manager-api.js";
 
 const AddLrsProvider = ({ addLrsProvider, toggleOpen }) => {

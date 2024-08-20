@@ -1,13 +1,18 @@
 import { useContext, useEffect, useState } from "react";
 import { Box, CssBaseline, Grid, Paper } from "@mui/material";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
 import { styled, ThemeProvider, useTheme } from "@mui/material/styles";
 import PrivateRoute from "./private-routes";
 import UserProfile from "../../pages/account-manager/user-profile";
 import Login from "../../pages/login/login";
 import Register from "../../pages/register/register";
-import RoleTypes from "../../common/enums/role-types.js";
+import RoleTypes from "../../pages/account-manager/utils/enums/role-types.js";
 import { CustomThemeContext } from "../theme-manager/theme-context-manager.jsx";
 import { AuthContext } from "../auth-context-manager/auth-context-manager.jsx";
 import NavBar from "../../common/components/nav-bar/nav-bar.jsx";
@@ -18,7 +23,7 @@ import IndicatorEditorDashboard from "../../pages/indicator-editor/dashboard/ind
 import IndicatorPool from "../../pages/indicator-editor/indicator-pool/indicator-pool.jsx";
 import IndicatorEditor from "../../pages/indicator-editor/editor/indicator-editor.jsx";
 import ISCCreator from "../../pages/isc-creator/creator/isc-creator.jsx";
-import IscDashboard from "../../pages/isc-creator/dashboard/isc-dashboard.jsx";
+import IscDashboard from "../../pages/indicator-specification-cards/dashboard/isc-dashboard.jsx";
 import ISCPool from "../../pages/isc-creator/isc-pool/isc-pool.jsx";
 import GQIDashboard from "../../pages/gqi-editor/dashboard/gqi-dashboard.jsx";
 import GQIEditor from "../../pages/gqi-editor/gqi-editor/gqi-editor.jsx";
@@ -31,7 +36,7 @@ import CompositeIndicator from "../../pages/indicator-editor/editor/composite-in
 import MultiLevelAnalysisIndicator from "../../pages/indicator-editor/editor/multi-level-analysis-indicator/multi-level-analysis-indicator.jsx";
 import CsvXapiDashboard from "../../pages/csv-xapi-converter/csv-xapi-dashboard.jsx";
 import ManageLrs from "../../pages/account-manager/manage-lrs.jsx";
-import Home from "../../pages/Home/home.jsx";
+import Home from "../../pages/home/home.jsx";
 import IndicatorSpecificationCard from "../../pages/indicator-specification-cards/creator/indicator-specification-card.jsx";
 
 const drawerWidth = 280;
@@ -279,6 +284,17 @@ const AppRoutes = () => {
                           />
                         }
                       />
+                      {Boolean(user) ? (
+                        <Route
+                          path="*"
+                          element={<Navigate to={"/dashboard"} replace />}
+                        />
+                      ) : (
+                        <Route
+                          path="*"
+                          element={<Navigate to={"/login"} replace />}
+                        />
+                      )}
                     </Routes>
                   </Paper>
                   <Footer />

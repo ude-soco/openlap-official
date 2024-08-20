@@ -92,20 +92,23 @@ const VisualizationLibrary = ({
             fullWidth
             value={state.autoCompleteValue}
             getOptionLabel={(option) => option.name}
-            renderOption={(props, option) => (
-              <li {...props} key={option.id}>
-                <Grid container sx={{ py: 0.5 }}>
-                  <Grid item xs={12}>
-                    <Typography>{option.name}</Typography>
+            renderOption={(props, option) => {
+              const { key, ...restProps } = props;
+              return (
+                <li {...restProps} key={key}>
+                  <Grid container sx={{ py: 0.5 }}>
+                    <Grid item xs={12}>
+                      <Typography>{option.name}</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2" sx={{ fontStyle: "italic" }}>
+                        {option.description}
+                      </Typography>
+                    </Grid>
                   </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="body2" sx={{ fontStyle: "italic" }}>
-                      {option.description}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </li>
-            )}
+                </li>
+              );
+            }}
             renderInput={(params) => (
               <TextField
                 {...params}

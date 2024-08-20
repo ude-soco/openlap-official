@@ -6,7 +6,7 @@ import Chart from "react-apexcharts";
 
 const TreeMap = () => {
   const { darkMode } = useContext(CustomThemeContext);
-  const { dataset } = useContext(ISCContext);
+  const { dataset, setVisRef } = useContext(ISCContext);
 
   const [state, setState] = useState({
     series: [],
@@ -117,6 +117,18 @@ const TreeMap = () => {
     state.axisOptions.selectedValue,
     darkMode,
   ]);
+
+  useEffect(() => {
+    setVisRef((prevVisRef) => ({
+      ...prevVisRef,
+      data: {
+        ...prevVisRef.data,
+        series: state.series,
+        options: state.options,
+        axisOptions: state.axisOptions,
+      },
+    }));
+  }, [state.series, state.options, state.axisOptions]);
 
   const handleCategoryChange = (event) => {
     setState((prevState) => ({

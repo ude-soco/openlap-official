@@ -13,7 +13,7 @@ import { ISCContext } from "../../../indicator-specification-card.jsx";
 
 const GroupedBarChart = () => {
   const { darkMode } = useContext(CustomThemeContext);
-  const { dataset, visRef } = useContext(ISCContext);
+  const { dataset, visRef, setVisRef } = useContext(ISCContext);
 
   const [state, setState] = useState({
     series: [],
@@ -152,6 +152,18 @@ const GroupedBarChart = () => {
     state.axisOptions.selectedXAxis,
     state.axisOptions.selectedYAxes,
   ]);
+
+  useEffect(() => {
+    setVisRef((prevVisRef) => ({
+      ...prevVisRef,
+      data: {
+        ...prevVisRef.data,
+        series: state.series,
+        options: state.options,
+        axisOptions: state.axisOptions,
+      },
+    }));
+  }, [state.series, state.options, state.axisOptions]);
 
   const handleXAxisChange = (event) => {
     setState((prevState) => ({

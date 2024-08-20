@@ -11,7 +11,9 @@ import { requestUserDetails } from "../account-manager/utils/account-manager-api
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
 import { ArrowForward } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import RoleTypes from "../../common/enums/role-types.js";
+import RoleTypes from "../account-manager/utils/enums/role-types.js";
+import LRSLogo from "../../assets/svg/learning_locker.svg";
+import PrototypeImage from "../../assets/svg/prototype.svg";
 
 const Home = () => {
   const {
@@ -67,15 +69,31 @@ const Home = () => {
 
             <Grid item xs={12} md={4}>
               <Paper variant="outlined" sx={{ p: 4 }}>
+                <Grid container alignItems="center">
+                  <Grid item xs={6}>
+                    <Grid container>
+                      <Grid item xs={12}>
+                        <Typography gutterBottom>
+                          #Learning Record Stores
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Typography variant="h1">2</Typography>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                  <Grid
+                    item
+                    xs={6}
+                    sx={{
+                      height: 120,
+                    }}
+                    component="img"
+                    src={LRSLogo}
+                    alt="LRS Logo"
+                  />
+                </Grid>
                 <Grid container>
-                  <Grid item xs={12}>
-                    <Typography gutterBottom>
-                      #Learning Record Stores
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Typography variant="h1">2</Typography>
-                  </Grid>
                   <Grid item xs={12}>
                     <Button
                       endIcon={<ArrowForward />}
@@ -90,13 +108,29 @@ const Home = () => {
             {roles.includes(RoleTypes.user) ? (
               <Grid item xs={12} md={4}>
                 <Paper variant="outlined" sx={{ p: 4 }}>
+                  <Grid container alignItems="center">
+                    <Grid item xs={6}>
+                      <Grid container>
+                        <Grid item xs={12}>
+                          <Typography gutterBottom>#ISCs created</Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Typography variant="h1">30</Typography>
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                    <Grid
+                      item
+                      xs={6}
+                      sx={{
+                        height: 130,
+                      }}
+                      component="img"
+                      src={PrototypeImage}
+                      alt="LRS Logo"
+                    />
+                  </Grid>
                   <Grid container>
-                    <Grid item xs={12}>
-                      <Typography gutterBottom>#ISCs created</Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="h1">30</Typography>
-                    </Grid>
                     <Grid item xs={12}>
                       <Button
                         endIcon={<ArrowForward />}
@@ -112,13 +146,31 @@ const Home = () => {
             {roles.includes(RoleTypes.user) ? (
               <Grid item xs={12} md={4}>
                 <Paper variant="outlined" sx={{ p: 4 }}>
+                  <Grid container alignItems="center">
+                    <Grid item xs={6}>
+                      <Grid container>
+                        <Grid item xs={12}>
+                          <Typography gutterBottom>
+                            #Indicators created
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Typography variant="h1">51</Typography>
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                    <Grid
+                      item
+                      xs={6}
+                      sx={{
+                        height: 130,
+                      }}
+                      component="img"
+                      src={PrototypeImage}
+                      alt="LRS Logo"
+                    />
+                  </Grid>
                   <Grid container>
-                    <Grid item xs={12}>
-                      <Typography gutterBottom>#Indicators created</Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="h1">51</Typography>
-                    </Grid>
                     <Grid item xs={12}>
                       <Button
                         endIcon={<ArrowForward />}

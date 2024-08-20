@@ -34,8 +34,7 @@ const ColumnMenu = ({ props }) => {
           sx={{ width: "100%", mb: -1 }}
           subheader={
             <ListSubheader>
-              Column type:{" "}
-              {props.colDef.type === "string" ? "Categorical" : "Numerical"}
+              Column type: {props.colDef.dataType.value}
             </ListSubheader>
           }
         />

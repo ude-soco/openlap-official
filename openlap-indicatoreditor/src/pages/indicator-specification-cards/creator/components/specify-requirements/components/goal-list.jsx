@@ -82,21 +82,11 @@ const GoalList = () => {
             }
           }}
           renderInput={(params) => (
-            <Tooltip
-              arrow
-              placement="top"
-              title={
-                <Typography variant="body2" sx={{ p: 1 }}>
-                  Search to select or create a new goal
-                </Typography>
-              }
-            >
-              <TextField
-                {...params}
-                placeholder="e.g., monitor"
-                label="I want to"
-              />
-            </Tooltip>
+            <TextField
+              {...params}
+              placeholder="e.g., monitor"
+              label="I want to"
+            />
           )}
           getOptionLabel={(option) => {
             if (typeof option === "string") {
@@ -122,57 +112,59 @@ const GoalList = () => {
 
             return filtered;
           }}
-          renderOption={(props, option, { selected }) => (
-            <li {...props}>
-              <Grid container alignItems="center">
-                <Grid item xs>
-                  {option.description ? (
-                    <Tooltip
-                      arrow
-                      placement="right"
-                      title={
-                        <Typography variant="body2" sx={{ p: 1 }}>
-                          {option.description}
-                        </Typography>
-                      }
-                    >
-                      <span>{option.name}</span>
-                    </Tooltip>
-                  ) : (
-                    <span>{option.name}</span>
-                  )}
-                </Grid>
-                <Grid item>
-                  {option.custom && (
-                    <Tooltip
-                      title={
-                        <Typography variant="body2" sx={{ p: 1 }}>
-                          Remove custom goal
-                        </Typography>
-                      }
-                    >
-                      <IconButton
-                        size="small"
-                        onClick={(event) => {
-                          // prevent the click from propagating to the parent elements
-                          event.stopPropagation();
-                          setState((prevState) => ({
-                            goalList: prevState.filter(
-                              (goal) => goal.id !== option.id,
-                            ),
-                          }));
-                        }}
+          renderOption={(props, option) => {
+            const { key, ...restProps } = props;
+            return (
+              <li key={key} {...restProps}>
+                <Grid container alignItems="center">
+                  <Grid item xs>
+                    {option.description ? (
+                      <Tooltip
+                        arrow
+                        placement="right"
+                        title={
+                          <Typography variant="body2" sx={{ p: 1 }}>
+                            {option.description}
+                          </Typography>
+                        }
                       >
-                        <CloseIcon />
-                      </IconButton>
-                    </Tooltip>
-                  )}
+                        <span>{option.name}</span>
+                      </Tooltip>
+                    ) : (
+                      <span>{option.name}</span>
+                    )}
+                  </Grid>
+                  <Grid item>
+                    {option.custom && (
+                      <Tooltip
+                        title={
+                          <Typography variant="body2" sx={{ p: 1 }}>
+                            Remove custom goal
+                          </Typography>
+                        }
+                      >
+                        <IconButton
+                          size="small"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setState((prevState) => ({
+                              goalList: prevState.goalList.filter(
+                                (goal) => goal.id !== option.id,
+                              ),
+                            }));
+                          }}
+                        >
+                          <CloseIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Grid>
                 </Grid>
-              </Grid>
-            </li>
-          )}
+              </li>
+            );
+          }}
         />
-        <FormHelperText>Search to select or create a new goal</FormHelperText>
+        <FormHelperText>Select a goal or create a new one</FormHelperText>
       </FormControl>
     </>
   );

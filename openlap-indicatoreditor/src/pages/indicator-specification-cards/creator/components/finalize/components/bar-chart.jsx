@@ -6,7 +6,7 @@ import { ISCContext } from "../../../indicator-specification-card.jsx";
 
 const BarChart = () => {
   const { darkMode } = useContext(CustomThemeContext);
-  const { dataset, visRef } = useContext(ISCContext);
+  const { dataset, visRef, setVisRef } = useContext(ISCContext);
 
   const [state, setState] = useState({
     series: [],
@@ -21,7 +21,7 @@ const BarChart = () => {
         bar: {
           borderRadius: 4,
           horizontal: false,
-          grouped: false, // No grouping in a simple bar chart
+          grouped: false,
         },
       },
       xaxis: {
@@ -45,7 +45,7 @@ const BarChart = () => {
       xAxisOptions: [],
       yAxisOptions: [],
       selectedXAxis: "",
-      selectedYAxis: "", // Single select for Y-axis
+      selectedYAxis: "",
     },
   });
 
@@ -132,6 +132,18 @@ const BarChart = () => {
     state.axisOptions.selectedXAxis,
     state.axisOptions.selectedYAxis,
   ]);
+
+  useEffect(() => {
+    setVisRef((prevVisRef) => ({
+      ...prevVisRef,
+      data: {
+        ...prevVisRef.data,
+        series: state.series,
+        options: state.options,
+        axisOptions: state.axisOptions,
+      },
+    }));
+  }, [state.series, state.options, state.axisOptions]);
 
   const handleXAxisChange = (event) => {
     setState((prevState) => ({

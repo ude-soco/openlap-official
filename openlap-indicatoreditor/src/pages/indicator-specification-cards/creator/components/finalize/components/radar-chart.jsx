@@ -13,7 +13,7 @@ import { ISCContext } from "../../../indicator-specification-card.jsx";
 
 const RadarChart = () => {
   const { darkMode } = useContext(CustomThemeContext);
-  const { dataset, visRef } = useContext(ISCContext);
+  const { dataset, setVisRef } = useContext(ISCContext);
   const [state, setState] = useState({
     series: [],
     options: {
@@ -138,6 +138,18 @@ const RadarChart = () => {
     state.axisOptions.selectedXAxis,
     state.axisOptions.selectedYAxis,
   ]);
+
+  useEffect(() => {
+    setVisRef((prevVisRef) => ({
+      ...prevVisRef,
+      data: {
+        ...prevVisRef.data,
+        series: state.series,
+        options: state.options,
+        axisOptions: state.axisOptions,
+      },
+    }));
+  }, [state.series, state.options, state.axisOptions]);
 
   const handleXAxisChange = (event) => {
     setState((prevState) => ({

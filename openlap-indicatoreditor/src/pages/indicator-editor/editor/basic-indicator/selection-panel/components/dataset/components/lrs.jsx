@@ -1,12 +1,12 @@
-import { useEffect, useContext } from "react";
+import { useContext, useEffect } from "react";
 import {
-  Chip,
-  Grid,
-  Typography,
-  TextField,
   Autocomplete,
+  Chip,
   Divider,
+  Grid,
+  TextField,
   Tooltip,
+  Typography,
 } from "@mui/material";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { fetchPlatformList, fetchUserLRSList } from "../utils/dataset-api.js";
@@ -107,11 +107,14 @@ const LRS = ({ state, setState }) => {
               fullWidth
               getOptionLabel={(option) => option.lrsTitle}
               value={state.autoCompleteValue}
-              renderOption={(props, option) => (
-                <li {...props} key={option.id}>
-                  {option.lrsTitle}
-                </li>
-              )}
+              renderOption={(props, option) => {
+                const { key, ...restProps } = props;
+                return (
+                  <li {...restProps} key={key}>
+                    {option.lrsTitle}
+                  </li>
+                );
+              }}
               renderInput={(params) => (
                 <TextField {...params} placeholder="*Search for LRSs" />
               )}

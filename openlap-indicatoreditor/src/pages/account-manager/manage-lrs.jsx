@@ -14,7 +14,7 @@ import { useSnackbar } from "notistack";
 import { requestUserDetails } from "./utils/account-manager-api.js";
 import ManageLrsConsumerList from "./components/manage-lrs-consumer-list.jsx";
 import ManageLrsProviderList from "./components/manage-lrs-provider-list.jsx";
-import RoleTypes from "../../common/enums/role-types.js";
+import RoleTypes from "./utils/enums/role-types.js";
 import AddLrsProvider from "./components/add-lrs-provider.jsx";
 
 const ManageLrs = () => {

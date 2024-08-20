@@ -135,18 +135,21 @@ const ActivityTypes = ({ state, setState }) => {
               options={state.activityTypesList}
               fullWidth
               getOptionLabel={(option) => option.name}
-              renderOption={(props, option) => (
-                <li {...props} key={option.id}>
-                  <Grid container sx={{ py: 0.5 }}>
-                    <Grid item xs={12}>
-                      <Typography>{option.name}</Typography>
+              renderOption={(props, option) => {
+                const { key, ...restProps } = props;
+                return (
+                  <li {...restProps} key={key}>
+                    <Grid container sx={{ py: 0.5 }}>
+                      <Grid item xs={12}>
+                        <Typography>{option.name}</Typography>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Typography variant="body2">{option.id}</Typography>
+                      </Grid>
                     </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="body2">{option.id}</Typography>
-                    </Grid>
-                  </Grid>
-                </li>
-              )}
+                  </li>
+                );
+              }}
               renderInput={(params) => (
                 <TextField
                   {...params}
