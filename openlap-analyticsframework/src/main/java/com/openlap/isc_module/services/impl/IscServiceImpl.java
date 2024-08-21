@@ -2,6 +2,7 @@ package com.openlap.isc_module.services.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.openlap.analytics_module.exceptions.indicator.IndicatorManipulationNotAllowed;
 import com.openlap.analytics_module.exceptions.indicator.IndicatorNotFoundException;
 import com.openlap.exception.DatabaseOperationException;
 import com.openlap.isc_module.dto.request.IscRequest;
@@ -85,6 +86,26 @@ public class IscServiceImpl implements IscService {
     } catch (Exception e) {
       throw new DatabaseOperationException(
           "Could not access database to find the indicator with id '" + iscId + "'", e);
+    }
+  }
+
+  @Override
+  public void deleteISCbyId(HttpServletRequest request, String iscId) {
+    User userFromToken = tokenService.getUserFromToken(request);
+    Optional<IndicatorSpecificationCard> foundIscId = iscRepository.findById(iscId);
+    try {
+      if (foundIscId.isPresent()) {
+        if (!foundIscId.get().getCreatedBy().getId().equals(userFromToken.getId())) {
+          throw new IndicatorManipulationNotAllowed(
+              "You do not have the permission to delete the ISC");
+        }
+        iscRepository.delete(foundIscId.get());
+        log.info("Successfully deleted an indicator");
+      }
+    } catch (IndicatorManipulationNotAllowed e) {
+      throw e;
+    } catch (Exception e) {
+      throw new DatabaseOperationException("Could not access database to delete the indicator", e);
     }
   }
 

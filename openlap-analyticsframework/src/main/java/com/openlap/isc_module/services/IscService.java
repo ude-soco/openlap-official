@@ -14,4 +14,6 @@ public interface IscService {
       HttpServletRequest request, int page, int size, String sortBy, String sortDirection);
 
   ISCResponse getISCById(String iscId);
+
+  void deleteISCbyId(HttpServletRequest request, String iscId);
 }
