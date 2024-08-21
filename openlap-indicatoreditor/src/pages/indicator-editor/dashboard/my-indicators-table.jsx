@@ -232,7 +232,7 @@ const MyIndicatorsTable = () => {
         </Grid>
         <Grid item xs={12}>
           <TableContainer component={Paper} variant="outlined">
-            <Table stickyHeader size="small">
+            <Table stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell>

@@ -1,12 +1,10 @@
 import React, { useContext, useEffect, useState } from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
 import Chart from "react-apexcharts";
 import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
 
-const ScatterPlotChart = () => {
+const ScatterPlotChart = ({ dataset, visRef, setVisRef, preview = false }) => {
   const { darkMode } = useContext(CustomThemeContext);
-  const { dataset, visRef, setVisRef } = useContext(ISCContext);
 
   const [state, setState] = useState({
     series: [],
@@ -217,67 +215,69 @@ const ScatterPlotChart = () => {
   return (
     <>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Grid container spacing={2}>
-            <Grid item xs={4}>
-              <FormControl fullWidth>
-                <InputLabel id="x-axis-select-label">X Axis</InputLabel>
-                <Select
-                  labelId="x-axis-select-label"
-                  id="x-axis-select"
-                  value={state.axisOptions.selectedXAxis}
-                  onChange={handleXAxisChange}
-                  label="X Axis"
-                  variant="outlined"
-                >
-                  {state.axisOptions.xAxisOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={4}>
-              <FormControl fullWidth>
-                <InputLabel id="y-axis-select-label">Y Axis</InputLabel>
-                <Select
-                  labelId="y-axis-select-label"
-                  id="y-axis-select"
-                  value={state.axisOptions.selectedYAxis}
-                  onChange={handleYAxisChange}
-                  label="Y Axis"
-                  variant="outlined"
-                >
-                  {state.axisOptions.yAxisOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={4}>
-              <FormControl fullWidth>
-                <InputLabel id="label-select-label">Labels</InputLabel>
-                <Select
-                  labelId="label-select-label"
-                  id="label-select"
-                  value={state.axisOptions.selectedLabel}
-                  onChange={handleLabelChange}
-                  label="Labels"
-                  variant="outlined"
-                >
-                  {state.axisOptions.labelOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+        {!preview && (
+          <Grid item xs={12}>
+            <Grid container spacing={2}>
+              <Grid item xs={4}>
+                <FormControl fullWidth>
+                  <InputLabel id="x-axis-select-label">X Axis</InputLabel>
+                  <Select
+                    labelId="x-axis-select-label"
+                    id="x-axis-select"
+                    value={state.axisOptions.selectedXAxis}
+                    onChange={handleXAxisChange}
+                    label="X Axis"
+                    variant="outlined"
+                  >
+                    {state.axisOptions.xAxisOptions.map((col) => (
+                      <MenuItem key={col.field} value={col.field}>
+                        {col.headerName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={4}>
+                <FormControl fullWidth>
+                  <InputLabel id="y-axis-select-label">Y Axis</InputLabel>
+                  <Select
+                    labelId="y-axis-select-label"
+                    id="y-axis-select"
+                    value={state.axisOptions.selectedYAxis}
+                    onChange={handleYAxisChange}
+                    label="Y Axis"
+                    variant="outlined"
+                  >
+                    {state.axisOptions.yAxisOptions.map((col) => (
+                      <MenuItem key={col.field} value={col.field}>
+                        {col.headerName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={4}>
+                <FormControl fullWidth>
+                  <InputLabel id="label-select-label">Labels</InputLabel>
+                  <Select
+                    labelId="label-select-label"
+                    id="label-select"
+                    value={state.axisOptions.selectedLabel}
+                    onChange={handleLabelChange}
+                    label="Labels"
+                    variant="outlined"
+                  >
+                    {state.axisOptions.labelOptions.map((col) => (
+                      <MenuItem key={col.field} value={col.field}>
+                        {col.headerName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
             </Grid>
           </Grid>
-        </Grid>
+        )}
         <Grid item xs={12} sx={{ minHeight: 600 }}>
           <Chart
             options={state.options}

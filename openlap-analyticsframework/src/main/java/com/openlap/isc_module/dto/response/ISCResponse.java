@@ -2,6 +2,8 @@ package com.openlap.isc_module.dto.response;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Data
 @Getter
 @Setter
@@ -14,4 +16,5 @@ public class ISCResponse {
   private String visRef;
   private String lockedStep;
   private String createdBy;
+  private LocalDateTime createdOn;
 }

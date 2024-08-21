@@ -76,7 +76,8 @@ public class IscServiceImpl implements IscService {
             foundIsc.getDataset(),
             foundIsc.getVisRef(),
             foundIsc.getLockedStep(),
-            foundIsc.getCreatedBy().getName());
+            foundIsc.getCreatedBy().getName(),
+            foundIsc.getCreatedOn());
       }
       throw new IndicatorNotFoundException("Indicator with id '" + iscId + "' not found");
     } catch (IndicatorNotFoundException e) {

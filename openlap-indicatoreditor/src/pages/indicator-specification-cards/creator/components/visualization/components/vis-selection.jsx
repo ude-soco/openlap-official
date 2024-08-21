@@ -1,5 +1,4 @@
-import React, { useContext } from "react";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import React from "react";
 import { VisualizationTypes } from "../../../utils/data/config.js";
 import BarChart from "../../finalize/components/bar-chart.jsx";
 import { Typography } from "@mui/material";
@@ -11,30 +10,83 @@ import GroupedBarChart from "../../finalize/components/grouped-bar-chart.jsx";
 import RadarChart from "../../finalize/components/radar-chart.jsx";
 import TreeMap from "../../finalize/components/treemap.jsx";
 
-const VisSelection = () => {
-  const { visRef } = useContext(ISCContext);
-
+const VisSelection = ({ dataset, visRef, setVisRef, preview }) => {
   switch (visRef.chart.type) {
     case VisualizationTypes.bar:
-      return <BarChart />;
+      return (
+        <BarChart
+          dataset={dataset}
+          visRef={visRef}
+          setVisRef={setVisRef}
+          preview={preview}
+        />
+      );
     case VisualizationTypes.line:
-      return <GroupedBarChart />;
+      return (
+        <GroupedBarChart
+          dataset={dataset}
+          visRef={visRef}
+          setVisRef={setVisRef}
+          preview={preview}
+        />
+      );
     case VisualizationTypes.pie:
-      return <PieChart />;
+      return (
+        <PieChart
+          dataset={dataset}
+          visRef={visRef}
+          setVisRef={setVisRef}
+          preview={preview}
+        />
+      );
     case VisualizationTypes.polar:
-      return <PieChart />;
+      return (
+        <PieChart
+          dataset={dataset}
+          visRef={visRef}
+          setVisRef={setVisRef}
+          preview={preview}
+        />
+      );
     case VisualizationTypes.radar:
-      return <RadarChart />;
+      return (
+        <RadarChart dataset={dataset} setVisRef={setVisRef} preview={preview} />
+      );
     case VisualizationTypes.scatter:
-      return <ScatterPlotChart />;
+      return (
+        <ScatterPlotChart
+          dataset={dataset}
+          visRef={visRef}
+          setVisRef={setVisRef}
+          preview={preview}
+        />
+      );
     case VisualizationTypes.stackedBar:
-      return <StackedBarChart />;
+      return (
+        <StackedBarChart
+          dataset={dataset}
+          visRef={visRef}
+          setVisRef={setVisRef}
+          preview={preview}
+        />
+      );
     case VisualizationTypes.dot:
-      return <DotChart />;
+      return (
+        <DotChart dataset={dataset} setVisRef={setVisRef} preview={preview} />
+      );
     case VisualizationTypes.groupedBar:
-      return <GroupedBarChart />;
+      return (
+        <GroupedBarChart
+          dataset={dataset}
+          visRef={visRef}
+          setVisRef={setVisRef}
+          preview={preview}
+        />
+      );
     case VisualizationTypes.treemap:
-      return <TreeMap />;
+      return (
+        <TreeMap dataset={dataset} setVisRef={setVisRef} preview={preview} />
+      );
     default:
       return <Typography>Visualization not available.</Typography>;
   }

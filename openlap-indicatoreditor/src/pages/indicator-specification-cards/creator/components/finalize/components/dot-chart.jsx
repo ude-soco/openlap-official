@@ -1,12 +1,10 @@
 import React, { useContext, useEffect, useState } from "react";
 import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
 import Chart from "react-apexcharts";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 
-const DotChart = () => {
+const DotChart = ({ dataset, setVisRef, preview = false }) => {
   const { darkMode } = useContext(CustomThemeContext);
-  const { dataset, setVisRef } = useContext(ISCContext);
 
   const [state, setState] = useState({
     series: [],
@@ -199,48 +197,50 @@ const DotChart = () => {
   return (
     <>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <FormControl fullWidth>
-                <InputLabel id="x-axis-select-label">X-Axis</InputLabel>
-                <Select
-                  labelId="x-axis-select-label"
-                  id="x-axis-select"
-                  value={state.axisOptions.selectedXAxis}
-                  onChange={handleXAxisChange}
-                  label="X-Axis"
-                  variant="outlined"
-                >
-                  {state.axisOptions.xAxisOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={6}>
-              <FormControl fullWidth>
-                <InputLabel id="y-axis-select-label">Y-Axis</InputLabel>
-                <Select
-                  labelId="y-axis-select-label"
-                  id="y-axis-select"
-                  value={state.axisOptions.selectedYAxis}
-                  onChange={handleYAxisChange}
-                  label="Y-Axis"
-                  variant="outlined"
-                >
-                  {state.axisOptions.yAxisOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+        {!preview && (
+          <Grid item xs={12}>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <FormControl fullWidth>
+                  <InputLabel id="x-axis-select-label">X-Axis</InputLabel>
+                  <Select
+                    labelId="x-axis-select-label"
+                    id="x-axis-select"
+                    value={state.axisOptions.selectedXAxis}
+                    onChange={handleXAxisChange}
+                    label="X-Axis"
+                    variant="outlined"
+                  >
+                    {state.axisOptions.xAxisOptions.map((col) => (
+                      <MenuItem key={col.field} value={col.field}>
+                        {col.headerName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={6}>
+                <FormControl fullWidth>
+                  <InputLabel id="y-axis-select-label">Y-Axis</InputLabel>
+                  <Select
+                    labelId="y-axis-select-label"
+                    id="y-axis-select"
+                    value={state.axisOptions.selectedYAxis}
+                    onChange={handleYAxisChange}
+                    label="Y-Axis"
+                    variant="outlined"
+                  >
+                    {state.axisOptions.yAxisOptions.map((col) => (
+                      <MenuItem key={col.field} value={col.field}>
+                        {col.headerName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
             </Grid>
           </Grid>
-        </Grid>
+        )}
         <Grid item xs={12} sx={{ minHeight: 600 }}>
           <Chart
             options={state.options}

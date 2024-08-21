@@ -1,8 +1,8 @@
 import React, { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
+import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import { requestMyISCs } from "./utils/dashboard-api.js";
+import { requestMyISCs } from "../utils/dashboard-api.js";
 import {
   Button,
   Divider,
@@ -22,7 +22,12 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { MoreVert, Preview } from "@mui/icons-material";
+import {
+  ArrowDownward,
+  ArrowUpward,
+  MoreVert,
+  Preview,
+} from "@mui/icons-material";
 
 const MyIscTable = () => {
   const { api } = useContext(AuthContext);
@@ -45,7 +50,7 @@ const MyIscTable = () => {
   });
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedIndicator, setSelectedIndicator] = useState(null);
-
+  console.log(selectedIndicator);
   const handleMenuOpen = (event, indicator) => {
     setAnchorEl(event.currentTarget);
     setSelectedIndicator(indicator);
@@ -76,6 +81,32 @@ const MyIscTable = () => {
         page: 0,
       },
     }));
+  };
+
+  // Handle sorting
+  const handleSort = (sortBy) => {
+    setState((prevState) => ({
+      ...prevState,
+      params: {
+        ...prevState.params,
+        sortBy,
+        sortDirection:
+          prevState.params.sortBy === sortBy &&
+          prevState.params.sortDirection === "asc"
+            ? "dsc"
+            : "asc",
+        page: 0, // Reset to first page on sort change
+      },
+    }));
+  };
+
+  const renderSortIcon = (column) => {
+    if (state.params.sortBy !== column) return null;
+    return state.params.sortDirection === "asc" ? (
+      <ArrowUpward fontSize="small" />
+    ) : (
+      <ArrowDownward fontSize="small" />
+    );
   };
 
   const handlePreview = () => {
@@ -122,7 +153,7 @@ const MyIscTable = () => {
         </Grid>
         <Grid item xs={12}>
           <TableContainer component={Paper} variant="outlined">
-            <Table stickyHeader size="small">
+            <Table stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell>
@@ -133,12 +164,6 @@ const MyIscTable = () => {
                       >
                         Name
                       </Typography>
-                      {/*<IconButton*/}
-                      {/*  size="small"*/}
-                      {/*  onClick={() => handleSort("name")}*/}
-                      {/*>*/}
-                      {/*  {renderSortIcon("name")}*/}
-                      {/*</IconButton>*/}
                     </Grid>
                   </TableCell>
 
@@ -154,12 +179,12 @@ const MyIscTable = () => {
                       >
                         Created On
                       </Typography>
-                      {/*<IconButton*/}
-                      {/*  size="small"*/}
-                      {/*  onClick={() => handleSort("createdOn")}*/}
-                      {/*>*/}
-                      {/*  {renderSortIcon("createdOn")}*/}
-                      {/*</IconButton>*/}
+                      <IconButton
+                        size="small"
+                        onClick={() => handleSort("createdOn")}
+                      >
+                        {renderSortIcon("createdOn")}
+                      </IconButton>
                     </Grid>
                   </TableCell>
                   <TableCell align="right">
