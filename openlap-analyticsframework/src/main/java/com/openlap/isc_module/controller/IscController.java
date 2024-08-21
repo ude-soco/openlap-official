@@ -1,7 +1,6 @@
 package com.openlap.isc_module.controller;
 
 import com.openlap.isc_module.dto.request.IscRequest;
-import com.openlap.isc_module.dto.response.ISCResponse;
 import com.openlap.isc_module.dto.response.IndicatorSpecificationCardResponse;
 import com.openlap.isc_module.services.IscService;
 import com.openlap.response.ApiSuccess;
@@ -54,9 +53,17 @@ public class IscController {
   }
 
   @GetMapping("/{iscId}")
-  public ResponseEntity<?> getIndicatorById(@PathVariable String iscId) {
+  public ResponseEntity<?> getISCById(@PathVariable String iscId) {
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
         .body(new ApiSuccess(status, "ISC found.", iscService.getISCById(iscId)));
+  }
+
+  @DeleteMapping("/{iscId}")
+  public ResponseEntity<?> deleteISCById(HttpServletRequest request, @PathVariable String iscId) {
+    HttpStatus status = HttpStatus.OK;
+    iscService.deleteISCbyId(request, iscId);
+    return ResponseEntity.status(status)
+        .body(new ApiSuccess(status, "ISC deleted successfully."));
   }
 }
