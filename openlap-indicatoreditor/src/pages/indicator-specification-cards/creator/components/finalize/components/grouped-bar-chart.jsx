@@ -9,11 +9,9 @@ import {
   MenuItem,
   Select,
 } from "@mui/material";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
 
-const GroupedBarChart = () => {
+const GroupedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
   const { darkMode } = useContext(CustomThemeContext);
-  const { dataset, visRef, setVisRef } = useContext(ISCContext);
 
   const [state, setState] = useState({
     series: [],
@@ -189,60 +187,62 @@ const GroupedBarChart = () => {
   return (
     <>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <FormControl fullWidth>
-                <InputLabel id="x-axis-select-label">X-Axis</InputLabel>
-                <Select
-                  labelId="x-axis-select-label"
-                  id="x-axis-select"
-                  value={state.axisOptions.selectedXAxis}
-                  onChange={handleXAxisChange}
-                  label="X-Axis"
-                  variant="outlined"
-                >
-                  {state.axisOptions.xAxisOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={6}>
-              <FormControl fullWidth>
-                <InputLabel id="y-axes-select-label">Y-Axes</InputLabel>
-                <Select
-                  labelId="y-axes-select-label"
-                  id="y-axes-select"
-                  multiple
-                  value={state.axisOptions.selectedYAxes}
-                  onChange={handleYAxesChange}
-                  label="Y-Axes"
-                  variant="outlined"
-                  renderValue={(selected) =>
-                    selected
-                      .map((value) => {
-                        const column = state.axisOptions.yAxisOptions.find(
-                          (col) => col.field === value,
-                        );
-                        return column ? column.headerName : value;
-                      })
-                      .join(", ")
-                  }
-                >
-                  {state.axisOptions.yAxisOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>Multi-select possible</FormHelperText>
-              </FormControl>
+        {!preview && (
+          <Grid item xs={12}>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <FormControl fullWidth>
+                  <InputLabel id="x-axis-select-label">X-Axis</InputLabel>
+                  <Select
+                    labelId="x-axis-select-label"
+                    id="x-axis-select"
+                    value={state.axisOptions.selectedXAxis}
+                    onChange={handleXAxisChange}
+                    label="X-Axis"
+                    variant="outlined"
+                  >
+                    {state.axisOptions.xAxisOptions.map((col) => (
+                      <MenuItem key={col.field} value={col.field}>
+                        {col.headerName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={6}>
+                <FormControl fullWidth>
+                  <InputLabel id="y-axes-select-label">Y-Axes</InputLabel>
+                  <Select
+                    labelId="y-axes-select-label"
+                    id="y-axes-select"
+                    multiple
+                    value={state.axisOptions.selectedYAxes}
+                    onChange={handleYAxesChange}
+                    label="Y-Axes"
+                    variant="outlined"
+                    renderValue={(selected) =>
+                      selected
+                        .map((value) => {
+                          const column = state.axisOptions.yAxisOptions.find(
+                            (col) => col.field === value,
+                          );
+                          return column ? column.headerName : value;
+                        })
+                        .join(", ")
+                    }
+                  >
+                    {state.axisOptions.yAxisOptions.map((col) => (
+                      <MenuItem key={col.field} value={col.field}>
+                        {col.headerName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>Multi-select possible</FormHelperText>
+                </FormControl>
+              </Grid>
             </Grid>
           </Grid>
-        </Grid>
+        )}
         <Grid item xs={12} sx={{ minHeight: 600 }}>
           <Chart
             options={state.options}

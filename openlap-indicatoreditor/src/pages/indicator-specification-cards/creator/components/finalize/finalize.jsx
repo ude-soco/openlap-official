@@ -20,7 +20,8 @@ import VisSelection from "../visualization/components/vis-selection.jsx";
 import NameDialog from "./components/name-dialog.jsx";
 
 const Finalize = () => {
-  const { visRef, dataset, lockedStep, setLockedStep } = useContext(ISCContext);
+  const { visRef, setVisRef, dataset, lockedStep, setLockedStep } =
+    useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
     openSaveDialog: false,
@@ -116,7 +117,11 @@ const Finalize = () => {
         <AccordionDetails>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <VisSelection />
+              <VisSelection
+                dataset={dataset}
+                visRef={visRef}
+                setVisRef={setVisRef}
+              />
             </Grid>
             <Grid item xs={12}>
               <Divider />
