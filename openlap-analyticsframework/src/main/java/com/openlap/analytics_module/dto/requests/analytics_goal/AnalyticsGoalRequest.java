@@ -11,7 +11,10 @@ import lombok.*;
 @NoArgsConstructor
 public class AnalyticsGoalRequest {
   @NotBlank(message = "Goal name is mandatory")
-  private String name;
+  private String category;
+
+  @NotBlank(message = "Goal name is mandatory")
+  private String verb;
 
   @NotBlank(message = "Goal description is mandatory")
   private String description;

@@ -158,7 +158,7 @@ public class QuestionServiceImpl implements QuestionService {
       analyticsQuestionResponse.setCreatedBy(analyticsAnalyticsQuestion.getCreatedBy().getName());
       analyticsQuestionResponse.setIndicators(
           indicatorWithCodeResponseList.isEmpty() ? null : indicatorWithCodeResponseList);
-      analyticsQuestionResponse.setGoal(analyticsAnalyticsQuestion.getGoalRef().getName());
+      analyticsQuestionResponse.setGoal(analyticsAnalyticsQuestion.getGoalRef().getCategory());
       return analyticsQuestionResponse;
     } catch (Exception e) {
       throw new ServiceException("Error generating analytics question response", e);

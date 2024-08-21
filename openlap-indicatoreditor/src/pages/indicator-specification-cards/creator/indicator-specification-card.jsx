@@ -17,7 +17,7 @@ const IndicatorSpecificationCard = () => {
       ? JSON.parse(savedState).requirements
       : {
           goalType: {
-            name: "",
+            verb: "",
           },
           goal: "",
           question: "",
@@ -70,6 +70,7 @@ const IndicatorSpecificationCard = () => {
       ? JSON.parse(savedState).lockedStep
       : {
           requirements: {
+            locked: false,
             openPanel: true,
             step: "1",
           },
@@ -103,6 +104,7 @@ const IndicatorSpecificationCard = () => {
     lockedStep,
   });
 
+  console.log(prevDependencies.current);
   useEffect(() => {
     const intervalId = setInterval(() => {
       let session_isc = {

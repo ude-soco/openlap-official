@@ -1,11 +1,12 @@
 package com.openlap.analytics_module.entities;
 
-import javax.validation.constraints.NotNull;
+import com.openlap.user.entities.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
@@ -15,18 +16,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document("analytics-goal")
 public class AnalyticsGoal {
   @Id private String id;
-
-  @NotNull(message = "'name' attribute is required")
-  private String name;
-
-  @NotNull(message = "'description' attribute of is required")
+  private String category;
+  private String verb;
   private String description;
-
-  @NotNull(message = "'author' attribute is required")
-  private String author;
-
-  @NotNull(message = "'active' attribute is required")
+  private boolean custom;
   private boolean active;
-
-  //  private String analyticsMethods;
 }

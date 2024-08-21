@@ -7,5 +7,5 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 public interface AnalyticsGoalsRepository extends MongoRepository<AnalyticsGoal, String> {
   List<AnalyticsGoal> findAllByActiveTrue();
 
-  boolean existsByName(String name);
+  boolean existsByCategory(String name);
 }

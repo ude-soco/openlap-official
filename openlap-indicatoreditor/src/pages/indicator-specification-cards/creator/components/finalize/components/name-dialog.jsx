@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
   Button,
   Dialog,
@@ -8,8 +8,17 @@ import {
   Grid,
   TextField,
 } from "@mui/material";
+import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
+import { requestCreateISC } from "../utils/finalize-api.js";
+import { useSnackbar } from "notistack";
+import { useNavigate } from "react-router-dom";
 
 const NameDialog = ({ open, toggleOpen }) => {
+  const { api } = useContext(AuthContext);
+  const { requirements, dataset, visRef, lockedStep } = useContext(ISCContext);
+  const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
   const [state, setState] = React.useState({
     indicatorName: "",
   });
@@ -27,7 +36,36 @@ const NameDialog = ({ open, toggleOpen }) => {
   };
 
   const handleSaveIndicator = () => {
+    const createISC = async (
+      api,
+      requirements,
+      dataset,
+      visRef,
+      lockedStep,
+    ) => {
+      try {
+        return await requestCreateISC(
+          api,
+          requirements,
+          dataset,
+          visRef,
+          lockedStep,
+        );
+      } catch (error) {
+        enqueueSnackbar(error.message, { variant: "error" });
+      }
+    };
+    let newRequirements = {
+      ...requirements,
+      indicatorName: state.indicatorName,
+    };
+    createISC(api, newRequirements, dataset, visRef, lockedStep).then(
+      (response) => {
+        enqueueSnackbar(response.message, { variant: "success" });
+      },
+    );
     toggleOpen();
+    navigate("/isc");
   };
 
   return (

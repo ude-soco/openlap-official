@@ -38,6 +38,7 @@ import CsvXapiDashboard from "../../pages/csv-xapi-converter/csv-xapi-dashboard.
 import ManageLrs from "../../pages/account-manager/manage-lrs.jsx";
 import Home from "../../pages/home/home.jsx";
 import IndicatorSpecificationCard from "../../pages/indicator-specification-cards/creator/indicator-specification-card.jsx";
+import IndicatorSpecificationCardDashboard from "../../pages/indicator-specification-cards/dashboard/indicator-specification-card-dashboard.jsx";
 
 const drawerWidth = 280;
 
@@ -215,7 +216,7 @@ const AppRoutes = () => {
                         path="/isc"
                         element={
                           <PrivateRoute
-                            component={<IscDashboard />}
+                            component={<IndicatorSpecificationCardDashboard />}
                             allowedRoles={[RoleTypes.user]}
                           />
                         }
