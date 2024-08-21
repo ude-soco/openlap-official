@@ -4,7 +4,6 @@ import com.openlap.analytics_module.dto.requests.analytics_goal.AnalyticsGoalReq
 import com.openlap.analytics_module.dto.requests.analytics_goal.AnalyticsGoalStatusRequest;
 import com.openlap.analytics_module.services.AnalyticsGoalsService;
 import com.openlap.response.ApiSuccess;
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,14 +20,14 @@ public class AnalyticsGoalsController {
 
   @PostMapping("/create")
   public ResponseEntity<?> createAnalyticsGoal(
-      HttpServletRequest request, @Valid @RequestBody AnalyticsGoalRequest analyticsGoalRequest) {
+      @Valid @RequestBody AnalyticsGoalRequest analyticsGoalRequest) {
     HttpStatus status = HttpStatus.CREATED;
     return ResponseEntity.status(status)
         .body(
             new ApiSuccess(
                 status,
                 "Goal created",
-                analyticsGoalsService.createAnalyticsGoal(request, analyticsGoalRequest)));
+                analyticsGoalsService.createAnalyticsGoal(analyticsGoalRequest)));
   }
 
   @GetMapping("/{goalId}")
@@ -81,7 +80,7 @@ public class AnalyticsGoalsController {
                 analyticsGoalsService.getAllActiveAnalyticsGoals()));
   }
 
-  @GetMapping("/populate")
+  @PostMapping("/populate")
   public ResponseEntity<?> populateAnalyticsGoal() {
     analyticsGoalsService.populateAnalyticsGoal();
     HttpStatus httpStatus = HttpStatus.OK;

@@ -7,7 +7,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
 public interface AnalyticsGoalsService {
-  AnalyticsGoal createAnalyticsGoal(HttpServletRequest request, AnalyticsGoalRequest goal);
+  AnalyticsGoal createAnalyticsGoal( AnalyticsGoalRequest goal);
 
   List<AnalyticsGoal> getAllGoals();
 

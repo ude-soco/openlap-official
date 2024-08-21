@@ -12,13 +12,10 @@ import com.openlap.analytics_module.repositories.AnalyticsGoalsRepository;
 import com.openlap.analytics_module.services.AnalyticsGoalsService;
 import com.openlap.exception.DatabaseOperationException;
 import com.openlap.exception.ServiceException;
-import com.openlap.user.entities.User;
-import com.openlap.user.services.TokenService;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,25 +32,22 @@ public class AnalyticsGoalsServiceImpl implements AnalyticsGoalsService {
   private String analyticsGoalsFile;
 
   private final AnalyticsGoalsRepository analyticsGoalsRepository;
-  private final TokenService tokenService;
 
   @Override
-  public AnalyticsGoal createAnalyticsGoal(
-      HttpServletRequest request, AnalyticsGoalRequest analyticsGoalRequest) {
+  public AnalyticsGoal createAnalyticsGoal(AnalyticsGoalRequest analyticsGoalRequest) {
     try {
-      String goalName = analyticsGoalRequest.getName();
-      boolean goalExists = analyticsGoalsRepository.existsByName(goalName);
-      if (goalExists) {
+      String category = analyticsGoalRequest.getCategory();
+      if (analyticsGoalsRepository.existsByCategory(category)) {
         throw new AnalyticsGoalAlreadyExistsException(
-            "Analytics goal '" + goalName + "' already exists.");
+            "Analytics goal '" + category + "' already exists.");
       }
-      User createdBy = tokenService.getUserFromToken(request);
       return analyticsGoalsRepository.save(
           new AnalyticsGoal(
               null,
-              goalName,
+              category,
+              analyticsGoalRequest.getVerb(),
               analyticsGoalRequest.getDescription(),
-              createdBy.getName(),
+              false,
               analyticsGoalRequest.getStatus().equals(GoalStatus.ACTIVE)));
     } catch (AnalyticsQuestionNotFoundException e) {
       throw e;
@@ -99,11 +93,11 @@ public class AnalyticsGoalsServiceImpl implements AnalyticsGoalsService {
       List<AnalyticsGoal> newGoals = gson.fromJson(sb.toString(), type);
 
       for (AnalyticsGoal goal : newGoals) {
-        if (existingGoals.stream().noneMatch(c -> c.getName().equals(goal.getName()))) {
+        if (existingGoals.stream().noneMatch(c -> c.getCategory().equals(goal.getCategory()))) {
           analyticsGoalsRepository.save(goal);
-          log.warn("New goal saved: {}", goal.getName());
+          log.info("New goal saved: {}", goal.getCategory());
         } else {
-          log.warn("Goal '{}' already exists. Skipped saving...", goal.getName());
+          log.warn("Goal '{}' already exists. Skipped saving...", goal.getCategory());
         }
       }
     } catch (IOException e) {
@@ -120,8 +114,9 @@ public class AnalyticsGoalsServiceImpl implements AnalyticsGoalsService {
         throw new AnalyticsQuestionNotFoundException(
             "Analytics Goal with id '" + goalId + "' not found.");
       }
-      log.info("Analytics Goal found with name: '{}'", analyticsGoalFound.get().getName());
-      analyticsGoalFound.get().setName(analyticsGoalRequest.getName());
+      log.info("Analytics Goal found with name: '{}'", analyticsGoalFound.get().getCategory());
+      analyticsGoalFound.get().setCategory(analyticsGoalRequest.getCategory());
+      analyticsGoalFound.get().setVerb(analyticsGoalRequest.getVerb());
       analyticsGoalFound.get().setDescription(analyticsGoalRequest.getDescription());
       analyticsGoalFound
           .get()
@@ -146,7 +141,7 @@ public class AnalyticsGoalsServiceImpl implements AnalyticsGoalsService {
             "Analytics Goal with id '" + goalId + "' not found.");
       }
       analyticsGoalsRepository.deleteById(analyticsGoalFound.get().getId());
-      log.info("Analytics Goal deleted: '{}'", analyticsGoalFound.get().getName());
+      log.info("Analytics Goal deleted: '{}'", analyticsGoalFound.get().getCategory());
     } catch (AnalyticsQuestionNotFoundException e) {
       throw e;
     } catch (Exception e) {
@@ -164,7 +159,7 @@ public class AnalyticsGoalsServiceImpl implements AnalyticsGoalsService {
         throw new AnalyticsQuestionNotFoundException(
             "Analytics goal with id '" + goalId + "' not found.");
       }
-      log.info("Analytics Goal found: '{}'", foundGoal.get().getName());
+      log.info("Analytics Goal found: '{}'", foundGoal.get().getCategory());
       return foundGoal.get();
     } catch (AnalyticsQuestionNotFoundException e) {
       throw e;

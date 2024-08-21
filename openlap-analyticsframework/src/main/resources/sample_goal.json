@@ -1,37 +1,100 @@
 [
   {
-    "name": "Monitoring",
-    "description": "Monitoring students' learning activities to improve teaching process",
-    "author": "OpenLAP",
-    "analyticsMethods": null,
+    "category": "Assessment",
+    "verb": "assess",
+    "custom": false,
+    "description": "Evaluating and analyzing a situation or performance to gain insights and understanding.",
     "active": true
   },
   {
-    "name": "Prediction",
+    "category": "Awareness",
+    "verb": "be aware of",
+    "custom": false,
+    "description": "Developing a deep understanding of oneself, others, or a particular subject.",
+    "active": true
+  },
+  {
+    "category": "Feedback",
+    "verb": "get feedback",
+    "custom": false,
+    "description": "Providing or receiving constructive comments and information to improve or enhance performance.",
+    "active": true
+  },
+  {
+    "category": "Help seeking",
+    "verb": "seek help",
+    "custom": false,
+    "description": "Actively seeking assistance, advice, or support from others when needed.",
+    "active": true
+  },
+  {
+    "category": "Intervention",
+    "verb": "intervene",
+    "custom": false,
+    "description": "Taking action or implementing measures to address a specific issue or problem.",
+    "active": true
+  },
+  {
+    "category": "Monitoring",
+    "verb": "monitor",
+    "description": "Keeping a close watch on progress or changes in a situation over time.",
+    "custom": false,
+    "active": true
+  },
+  {
+    "category": "Motivation",
+    "verb": "motivate",
+    "custom": false,
+    "description": "Cultivating the drive and enthusiasm to achieve desired outcomes.",
+    "active": true
+  },
+  {
+    "category": "Planning",
+    "verb": "plan",
+    "custom": false,
+    "description": "Developing strategies and organizing steps to achieve specific goals.",
+    "active": true
+  },
+  {
+    "category": "Prediction",
+    "verb": "predict",
+    "custom": false,
     "description": "Predict students' knowledge and future performance based on his/her current activities and performance",
-    "author": "OpenLAP",
-    "analyticsMethods": null,
     "active": true
   },
   {
-    "name": "Recommendation",
+    "category": "Recommendation",
+    "verb": "recommend",
+    "custom": false,
     "description": "Help students decide what to do next by recommending them learning resources and learners to work with, based on their preferences and activities of other learners with similar preferences",
-    "author": "OpenLAP",
-    "analyticsMethods": null,
     "active": true
   },
   {
-    "name": "Assessment",
-    "description": "Assess students' performance to improve learning process",
-    "author": "OpenLAP",
-    "analyticsMethods": null,
+    "category": "Reflection",
+    "verb": "reflect",
+    "custom": false,
+    "description": "Thoughtfully considering and analyzing experiences, actions, or thoughts.",
     "active": true
   },
   {
-    "name": "Self-Reflection",
-    "description": "Support students and teachers in comparing data within the same course, across classes, or even across institutions to draw conclusions and reflect on the effectiveness of their learning or teaching practice",
-    "author": "OpenLAP",
-    "analyticsMethods": null,
+    "category": "Self-evaluation",
+    "verb": "self-evaluate",
+    "custom": false,
+    "description": "Assessing one's own performance, behavior, or progress.",
+    "active": true
+  },
+  {
+    "category": "Self-monitoring",
+    "verb": "self-monitor",
+    "custom": false,
+    "description": "Keeping track of one's own actions, behaviors, or conditions.",
+    "active": true
+  },
+  {
+    "category": "Time management",
+    "verb": "manage time",
+    "custom": false,
+    "description": "Effectively using time to prioritize tasks and activities.",
     "active": true
   }
 ]

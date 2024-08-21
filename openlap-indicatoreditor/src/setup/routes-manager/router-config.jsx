@@ -24,9 +24,8 @@ import CompositeIndicator from "../../pages/indicator-editor/editor/composite-in
 import BasicIndicator from "../../pages/indicator-editor/editor/basic-indicator/basic-indicator.jsx";
 import IndicatorPreview from "../../pages/indicator-editor/dashboard/indicator-preview.jsx";
 import ISCPool from "../../pages/isc-creator/isc-pool/isc-pool.jsx";
-import ISCCreator from "../../pages/isc-creator/creator/isc-creator.jsx";
-import IscDashboard from "../../pages/indicator-specification-cards/dashboard/isc-dashboard.jsx";
 import IndicatorSpecificationCard from "../../pages/indicator-specification-cards/creator/indicator-specification-card.jsx";
+import IndicatorSpecificationCardDashboard from "../../pages/indicator-specification-cards/dashboard/indicator-specification-card-dashboard.jsx";
 
 const menus = [
   {
@@ -40,7 +39,7 @@ const menus = [
         secondary: "List of my ISCs",
         navigate: "/isc",
         icon: <DashboardIcon />,
-        component: <IscDashboard />,
+        component: <IndicatorSpecificationCardDashboard />,
       },
       {
         primary: "ISC Creator",

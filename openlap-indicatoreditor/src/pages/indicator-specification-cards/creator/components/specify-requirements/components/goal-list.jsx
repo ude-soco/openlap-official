@@ -9,27 +9,42 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import goalList from "../../../../../isc-creator/utils/data/goalList.js";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { createFilterOptions } from "@mui/material/Autocomplete";
 import { v4 as uuidv4 } from "uuid";
+import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
+import { requestAllGoals } from "../utils/requirements-api.js";
+import { useSnackbar } from "notistack";
 
 const filter = createFilterOptions();
 
 const GoalList = () => {
+  const { api } = useContext(AuthContext);
+  const { enqueueSnackbar } = useSnackbar();
   const { requirements, setRequirements } = useContext(ISCContext);
   const [state, setState] = useState({
     goalList: [],
   });
 
   useEffect(() => {
-    if (state.goalList.length === 0) {
-      setState((prevState) => ({
-        ...prevState,
-        goalList: goalList.sort((a, b) => a.name.localeCompare(b.name)),
-      }));
-    }
+    const loadGoalList = async (api) => {
+      try {
+        return await requestAllGoals(api);
+      } catch (error) {
+        console.log(error);
+        enqueueSnackbar(error.message, { variant: "error" });
+      }
+    };
+
+    loadGoalList(api).then((response) => {
+      if (state.goalList.length === 0) {
+        setState((prevState) => ({
+          ...prevState,
+          goalList: response.sort((a, b) => a.verb.localeCompare(b.verb)),
+        }));
+      }
+    });
   }, []);
 
   return (
@@ -60,7 +75,7 @@ const GoalList = () => {
               let tempListOfGoals = [...state.goalList];
               let newGoal = {
                 id: uuidv4(),
-                name: newValue.inputValue,
+                verb: newValue.inputValue,
                 custom: true,
               };
               setRequirements((prevState) => ({
@@ -71,7 +86,7 @@ const GoalList = () => {
               setState((prevState) => ({
                 ...prevState,
                 goalList: tempListOfGoals.sort((a, b) =>
-                  a.name.localeCompare(b.name),
+                  a.verb.localeCompare(b.verb),
                 ),
               }));
             } else {
@@ -95,18 +110,18 @@ const GoalList = () => {
             if (option.inputValue) {
               return option.inputValue;
             }
-            return option.name;
+            return option.verb;
           }}
           filterOptions={(options, params) => {
             const filtered = filter(options, params);
             const { inputValue } = params;
             const isExisting = options.some(
-              (option) => inputValue === option.name,
+              (option) => inputValue === option.verb,
             );
             if (inputValue !== "" && !isExisting) {
               filtered.push({
                 inputValue,
-                name: `Add "${inputValue}"`,
+                verb: `Add "${inputValue}"`,
               });
             }
 
@@ -118,21 +133,19 @@ const GoalList = () => {
               <li key={key} {...restProps}>
                 <Grid container alignItems="center">
                   <Grid item xs>
-                    {option.description ? (
-                      <Tooltip
-                        arrow
-                        placement="right"
-                        title={
+                    <Tooltip
+                      arrow
+                      placement="left"
+                      title={
+                        option.description ? (
                           <Typography variant="body2" sx={{ p: 1 }}>
                             {option.description}
                           </Typography>
-                        }
-                      >
-                        <span>{option.name}</span>
-                      </Tooltip>
-                    ) : (
-                      <span>{option.name}</span>
-                    )}
+                        ) : undefined
+                      }
+                    >
+                      <Typography>{option.verb}</Typography>
+                    </Tooltip>
                   </Grid>
                   <Grid item>
                     {option.custom && (

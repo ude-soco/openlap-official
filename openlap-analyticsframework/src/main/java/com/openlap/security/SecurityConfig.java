@@ -53,7 +53,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         .antMatchers("/v1/lrs/**")
         .hasAnyAuthority(RoleType.ROLE_DATA_PROVIDER.toString());
     http.authorizeRequests()
-        .antMatchers("/v1/users/my/lrs/**")
+        .antMatchers("/v1/users/my/lrs/**", "/v1/isc/**")
         .hasAnyAuthority(RoleType.ROLE_USER.toString());
     http.authorizeRequests()
         .antMatchers("/v1/users/my/**")
@@ -65,7 +65,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         .antMatchers("/v1/indicators/**", "/v1/questions/**", "/v1/statements/**")
         .hasAnyAuthority(RoleType.ROLE_USER.toString());
     http.authorizeRequests()
-        .antMatchers(HttpMethod.GET, "/v1/analytics/**", "/v1/visualizations/**")
+        .antMatchers(HttpMethod.GET, "/v1/analytics/**", "/v1/visualizations/**", "/v1/analytics/goals/**")
         .hasAnyAuthority(RoleType.ROLE_USER.toString(), RoleType.ROLE_SUPER_ADMIN.toString());
     http.authorizeRequests()
         .antMatchers("/v1/roles/**", "/v1/engine/**", "/v1/analytics/**", "/v1/visualizations/**")
