@@ -22,6 +22,7 @@ import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager.jsx";
+import { useSnackbar } from "notistack";
 
 const drawerWidth = 280;
 const AppBar = styled(MuiAppBar, {
@@ -47,10 +48,12 @@ const NavBar = ({ openSidebar, toggleSidebar }) => {
     useContext(CustomThemeContext);
   const navigate = useNavigate();
   const [menu, setMenu] = useState(null);
+  const { enqueueSnackbar } = useSnackbar();
 
   const handleSignOut = () => {
     logout();
     handleLightMode();
+    enqueueSnackbar("Logout successful!", { variant: "success" });
   };
 
   return (
