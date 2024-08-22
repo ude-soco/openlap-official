@@ -82,238 +82,230 @@ const AppRoutes = () => {
       <ThemeProvider theme={darkMode ? themeDark : themeLight}>
         <SnackbarProvider maxSnack={3}>
           <CssBaseline />
-          <Router>
-            <Box sx={{ display: "flex" }}>
-              {Boolean(user) && (
-                <NavBar
-                  openSidebar={openSidebar}
-                  toggleSidebar={toggleSidebar}
-                />
-              )}
-              {Boolean(user) && <Sidebar openSidebar={openSidebar} />}
-              <Grid container justifyContent="center">
-                <Main
-                  open={openSidebar}
-                  sx={{ maxWidth: "1920px", width: "100%" }}
+          <Box sx={{ display: "flex" }}>
+            {Boolean(user) && (
+              <NavBar openSidebar={openSidebar} toggleSidebar={toggleSidebar} />
+            )}
+            {Boolean(user) && <Sidebar openSidebar={openSidebar} />}
+            <Grid container justifyContent="center">
+              <Main open={openSidebar} sx={{ maxWidth: 1900, width: "100%" }}>
+                <DrawerHeader />
+                <Paper
+                  elevation={0}
+                  sx={{
+                    minHeight: "100vh",
+                    p: 2,
+                    width: "100%",
+                  }}
                 >
-                  <DrawerHeader />
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      minHeight: "100vh",
-                      p: 2,
-                      width: "100%",
-                    }}
-                  >
-                    <Routes>
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/register" element={<Register />} />
+                  <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
 
+                    <Route
+                      path="/account-settings"
+                      element={
+                        <PrivateRoute
+                          component={<UserProfile />}
+                          allowedRoles={[
+                            RoleTypes.user,
+                            RoleTypes["data provider"],
+                          ]}
+                        />
+                      }
+                    />
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <PrivateRoute
+                          component={<Home />}
+                          allowedRoles={[
+                            RoleTypes.user,
+                            RoleTypes["data provider"],
+                          ]}
+                        />
+                      }
+                    />
+                    <Route
+                      path="/manage-lrs"
+                      element={
+                        <PrivateRoute
+                          component={<ManageLrs />}
+                          allowedRoles={[
+                            RoleTypes.user,
+                            RoleTypes["data provider"],
+                          ]}
+                        />
+                      }
+                    />
+                    <Route path="/indicator/editor">
                       <Route
-                        path="/account-settings"
+                        index
                         element={
                           <PrivateRoute
-                            component={<UserProfile />}
-                            allowedRoles={[
-                              RoleTypes.user,
-                              RoleTypes["data provider"],
-                            ]}
-                          />
-                        }
-                      />
-                      <Route
-                        path="/dashboard"
-                        element={
-                          <PrivateRoute
-                            component={<Home />}
-                            allowedRoles={[
-                              RoleTypes.user,
-                              RoleTypes["data provider"],
-                            ]}
-                          />
-                        }
-                      />
-                      <Route
-                        path="/manage-lrs"
-                        element={
-                          <PrivateRoute
-                            component={<ManageLrs />}
-                            allowedRoles={[
-                              RoleTypes.user,
-                              RoleTypes["data provider"],
-                            ]}
-                          />
-                        }
-                      />
-                      <Route path="/indicator/editor">
-                        <Route
-                          index
-                          element={
-                            <PrivateRoute
-                              component={<IndicatorEditor />}
-                              allowedRoles={[RoleTypes.user]}
-                            />
-                          }
-                        />
-                        <Route
-                          path="basic"
-                          element={
-                            <PrivateRoute
-                              component={<BasicIndicator />}
-                              allowedRoles={[RoleTypes.user]}
-                            />
-                          }
-                        />
-                        <Route
-                          path="composite"
-                          element={
-                            <PrivateRoute
-                              component={<CompositeIndicator />}
-                              allowedRoles={[RoleTypes.user]}
-                            />
-                          }
-                        />
-                        <Route
-                          path="multi-level-analysis"
-                          element={
-                            <PrivateRoute
-                              component={<MultiLevelAnalysisIndicator />}
-                              allowedRoles={[RoleTypes.user]}
-                            />
-                          }
-                        />
-                      </Route>
-                      <Route path="/indicator">
-                        <Route
-                          index
-                          element={
-                            <PrivateRoute
-                              component={<IndicatorEditorDashboard />}
-                              allowedRoles={[RoleTypes.user]}
-                            />
-                          }
-                        />
-                        <Route
-                          path=":id"
-                          element={
-                            <PrivateRoute
-                              component={<IndicatorPreview />}
-                              allowedRoles={[RoleTypes.user]}
-                            />
-                          }
-                        />
-                      </Route>
-                      <Route
-                        path="/indicator/pool"
-                        element={
-                          <PrivateRoute
-                            component={<IndicatorPool />}
-                            allowedRoles={[RoleTypes.user]}
-                          />
-                        }
-                      />
-                      <Route path="/isc">
-                        <Route
-                          index
-                          element={
-                            <PrivateRoute
-                              component={<IscDashboard />}
-                              allowedRoles={[RoleTypes.user]}
-                            />
-                          }
-                        />
-                        <Route
-                          path=":id"
-                          element={
-                            <PrivateRoute
-                              component={<IscPreview />}
-                              allowedRoles={[RoleTypes.user]}
-                            />
-                          }
-                        />
-                      </Route>
-                      <Route
-                        path="/isc/creator/old"
-                        element={
-                          <PrivateRoute
-                            component={<ISCCreator />}
+                            component={<IndicatorEditor />}
                             allowedRoles={[RoleTypes.user]}
                           />
                         }
                       />
                       <Route
-                        path="/isc/creator"
+                        path="basic"
                         element={
                           <PrivateRoute
-                            component={<IndicatorSpecificationCard />}
+                            component={<BasicIndicator />}
                             allowedRoles={[RoleTypes.user]}
                           />
                         }
                       />
                       <Route
-                        path="/isc/pool"
+                        path="composite"
                         element={
                           <PrivateRoute
-                            component={<ISCPool />}
+                            component={<CompositeIndicator />}
                             allowedRoles={[RoleTypes.user]}
                           />
                         }
                       />
+                      <Route
+                        path="multi-level-analysis"
+                        element={
+                          <PrivateRoute
+                            component={<MultiLevelAnalysisIndicator />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                    </Route>
+                    <Route path="/indicator">
+                      <Route
+                        index
+                        element={
+                          <PrivateRoute
+                            component={<IndicatorEditorDashboard />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                      <Route
+                        path=":id"
+                        element={
+                          <PrivateRoute
+                            component={<IndicatorPreview />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                    </Route>
+                    <Route
+                      path="/indicator/pool"
+                      element={
+                        <PrivateRoute
+                          component={<IndicatorPool />}
+                          allowedRoles={[RoleTypes.user]}
+                        />
+                      }
+                    />
+                    <Route path="/isc">
+                      <Route
+                        index
+                        element={
+                          <PrivateRoute
+                            component={<IscDashboard />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                      <Route
+                        path=":id"
+                        element={
+                          <PrivateRoute
+                            component={<IscPreview />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                    </Route>
+                    <Route
+                      path="/isc/creator/old"
+                      element={
+                        <PrivateRoute
+                          component={<ISCCreator />}
+                          allowedRoles={[RoleTypes.user]}
+                        />
+                      }
+                    />
+                    <Route
+                      path="/isc/creator"
+                      element={
+                        <PrivateRoute
+                          component={<IndicatorSpecificationCard />}
+                          allowedRoles={[RoleTypes.user]}
+                        />
+                      }
+                    />
+                    <Route
+                      path="/isc/pool"
+                      element={
+                        <PrivateRoute
+                          component={<ISCPool />}
+                          allowedRoles={[RoleTypes.user]}
+                        />
+                      }
+                    />
 
-                      <Route
-                        path="/gqi"
-                        element={
-                          <PrivateRoute
-                            component={<GQIDashboard />}
-                            allowedRoles={[RoleTypes.user]}
-                          />
-                        }
-                      />
-                      <Route
-                        path="/gqi/editor"
-                        element={
-                          <PrivateRoute
-                            component={<GQIEditor />}
-                            allowedRoles={[RoleTypes.user]}
-                          />
-                        }
-                      />
-                      <Route
-                        path="/gqi/pool"
-                        element={
-                          <PrivateRoute
-                            component={<GQIPool />}
-                            allowedRoles={[RoleTypes.user]}
-                          />
-                        }
-                      />
-                      <Route
-                        path="/csv-xapi"
-                        element={
-                          <PrivateRoute
-                            component={<CsvXapiDashboard />}
-                            allowedRoles={[RoleTypes.user]}
-                          />
-                        }
-                      />
-                      {Boolean(user) ? (
-                        <Route
-                          path="*"
-                          element={<Navigate to={"/dashboard"} replace />}
+                    <Route
+                      path="/gqi"
+                      element={
+                        <PrivateRoute
+                          component={<GQIDashboard />}
+                          allowedRoles={[RoleTypes.user]}
                         />
-                      ) : (
-                        <Route
-                          path="*"
-                          element={<Navigate to={"/login"} replace />}
+                      }
+                    />
+                    <Route
+                      path="/gqi/editor"
+                      element={
+                        <PrivateRoute
+                          component={<GQIEditor />}
+                          allowedRoles={[RoleTypes.user]}
                         />
-                      )}
-                    </Routes>
-                  </Paper>
-                  <Footer />
-                </Main>
-              </Grid>
-            </Box>
-          </Router>
+                      }
+                    />
+                    <Route
+                      path="/gqi/pool"
+                      element={
+                        <PrivateRoute
+                          component={<GQIPool />}
+                          allowedRoles={[RoleTypes.user]}
+                        />
+                      }
+                    />
+                    <Route
+                      path="/csv-xapi"
+                      element={
+                        <PrivateRoute
+                          component={<CsvXapiDashboard />}
+                          allowedRoles={[RoleTypes.user]}
+                        />
+                      }
+                    />
+                    {Boolean(user) ? (
+                      <Route
+                        path="*"
+                        element={<Navigate to={"/dashboard"} replace />}
+                      />
+                    ) : (
+                      <Route
+                        path="*"
+                        element={<Navigate to={"/login"} replace />}
+                      />
+                    )}
+                  </Routes>
+                </Paper>
+                <Footer />
+              </Main>
+            </Grid>
+          </Box>
         </SnackbarProvider>
       </ThemeProvider>
     </>

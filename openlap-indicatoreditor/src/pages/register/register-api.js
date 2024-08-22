@@ -1,10 +1,9 @@
-export const fetchLRSData = async (api) => {
+export const requestAvailableLrsList = async (api) => {
   try {
     const response = await api.get("v1/register/lrs");
     return response.data.data;
   } catch (error) {
-    console.error("Failed to fetch user data", error);
-    throw error; // Re-throw the error to handle it in the component
+    throw error;
   }
 };
 
@@ -18,18 +17,17 @@ export const register = async (
   lrsConsumerRequest,
   lrsProviderRequest,
 ) => {
-  const requestBody = {
-    name,
-    email,
-    password,
-    confirmPassword,
-    role,
-    lrsConsumerRequest,
-    lrsProviderRequest,
-  };
   try {
-    return await api.post("v1/register", requestBody);
-  } catch (e) {
-    throw e.response;
+    return await api.post("v1/register", {
+      name,
+      email,
+      password,
+      confirmPassword,
+      role,
+      lrsConsumerRequest,
+      lrsProviderRequest,
+    });
+  } catch (error) {
+    throw error.response;
   }
 };
