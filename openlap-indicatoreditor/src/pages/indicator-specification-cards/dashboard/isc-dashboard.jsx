@@ -2,8 +2,12 @@ import React, { useState } from "react";
 import { Button, Divider, Grid, Paper, Typography } from "@mui/material";
 import MyIscTable from "./components/my-isc-table.jsx";
 import { Delete } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import { useSnackbar } from "notistack";
 
 const IscDashboard = () => {
+  const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
   const [indicatorInProgress, setIndicatorInProgress] = useState(() => {
     const savedState = sessionStorage.getItem("session_isc");
     return !!savedState;
@@ -12,6 +16,11 @@ const IscDashboard = () => {
   const handleClearSession = () => {
     setIndicatorInProgress((prevState) => !prevState);
     sessionStorage.removeItem("session_isc");
+  };
+
+  const handleContinueEditing = () => {
+    navigate("/isc/creator");
+    enqueueSnackbar("Loading indicator...", { variant: "info" });
   };
 
   return (
@@ -47,7 +56,7 @@ const IscDashboard = () => {
                     <Grid item>
                       <Button
                         variant="contained"
-                        onClick={() => navigate("/isc/creator")}
+                        onClick={handleContinueEditing}
                       >
                         Continue
                       </Button>

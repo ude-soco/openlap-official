@@ -256,6 +256,7 @@ const Analysis = ({
                 setState={setState}
                 analysisRef={analysisRef}
                 setAnalysisRef={setAnalysisRef}
+                setLockedStep={setLockedStep}
               />
             </Grid>
             {analysisRef.analyticsTechniqueId.length !== 0 && (

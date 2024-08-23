@@ -154,6 +154,7 @@ const ActionOnActivities = ({ state, setState }) => {
             <Autocomplete
               disabled={Object.entries(indicatorQuery.activities).length === 0}
               disablePortal
+              disableCloseOnSelect
               id="combo-box-lrs"
               options={state.actionsList}
               fullWidth

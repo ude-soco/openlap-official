@@ -81,6 +81,7 @@ const Platform = ({ state, setState }) => {
           >
             <Autocomplete
               disablePortal
+              disableCloseOnSelect
               disabled={
                 state.selectedLrsList.length === 0 ||
                 indicatorQuery.activityTypes.length > 0

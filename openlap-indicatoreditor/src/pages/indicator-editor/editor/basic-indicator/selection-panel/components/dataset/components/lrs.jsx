@@ -102,6 +102,7 @@ const LRS = ({ state, setState }) => {
               disabled={indicatorQuery.platforms.length > 0}
               autoFocus
               disablePortal
+              disableCloseOnSelect
               id="combo-box-lrs"
               options={state.lrsList}
               fullWidth
