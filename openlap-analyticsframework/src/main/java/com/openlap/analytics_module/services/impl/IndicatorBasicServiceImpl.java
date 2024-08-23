@@ -7,11 +7,13 @@ import com.openlap.analytics_module.dto.requests.indicator.IndicatorBasicPreview
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorBasicRequest;
 import com.openlap.analytics_module.entities.Indicator;
 import com.openlap.analytics_module.entities.IndicatorAnalysisCache;
+import com.openlap.analytics_module.entities.IndicatorCache;
 import com.openlap.analytics_module.entities.utility_entities.AnalyticsTechniqueReference;
 import com.openlap.analytics_module.entities.utility_entities.IndicatorAnalysisTechnique;
 import com.openlap.analytics_module.entities.utility_entities.IndicatorReference;
 import com.openlap.analytics_module.exceptions.indicator.PreviewNotPossibleException;
 import com.openlap.analytics_module.repositories.IndicatorAnalysisCacheRepository;
+import com.openlap.analytics_module.repositories.IndicatorCacheRepository;
 import com.openlap.analytics_module.services.IndicatorBasicService;
 import com.openlap.analytics_module.services.IndicatorUtilityService;
 import com.openlap.analytics_statements.dtos.request.LrsStoresStatementRequest;
@@ -45,7 +47,7 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
   private final StatementService statementService;
   private final IndicatorUtilityService indicatorUtilityService;
   private final TokenService tokenService;
-  private final IndicatorAnalysisCacheRepository indicatorAnalysisCacheRepository;
+  private final IndicatorCacheRepository indicatorCacheRepository;
 
   @Override
   public OpenLAPDataSet analyzeIndicator(IndicatorAnalysisRequest indicatorAnalysisRequest) {
@@ -94,18 +96,15 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
   @Override
   public OpenLAPDataSet analyzeIndicatorByIndicatorId(String indicatorId) {
     Gson gson = new Gson();
-//    Optional<IndicatorAnalysisCache> foundIndicatorAnalysisCache =
-//        indicatorAnalysisCacheRepository.findById(indicatorId);
-//    if (foundIndicatorAnalysisCache.isPresent()) {
-//      IndicatorAnalysisCache indicatorAnalysisCache = foundIndicatorAnalysisCache.get();
-//      LocalDateTime createdOn = indicatorAnalysisCache.getCreatedOn();
-//      // ? The analyzed indicator data is stored in cache for 60 minutes. If the cache is older than
-//      // ? 60 minutes, the indicator will be re-analyzed
-//      if (createdOn != null && Duration.between(createdOn, LocalDateTime.now()).toMinutes() < 60) {
-//        log.info("Fetching analyzed indicator from cache...");
-//        return gson.fromJson(indicatorAnalysisCache.getAnalyzedData(), OpenLAPDataSet.class);
-//      }
-//    }
+    Optional<IndicatorCache> indicatorCache = indicatorCacheRepository.findById(indicatorId);
+    if (indicatorCache.isPresent()) {
+      IndicatorCache cache = indicatorCache.get();
+      LocalDateTime createdOn = cache.getCreatedOn();
+      // Check if the indicator code is 60 minutes old
+      if (createdOn != null && Duration.between(createdOn, LocalDateTime.now()).toMinutes() < 60) {
+        return gson.fromJson(cache.getAnalyzedDataset(), OpenLAPDataSet.class);
+      }
+    }
 
     log.info("Attempting to analyze the data of a basic indicator with id '{}'...", indicatorId);
     Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
@@ -137,9 +136,9 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
     try {
       analyticsMethod.initialize(statements, analyticsTechniquePortMapping, transformedParams);
       analyzedDataSet = analyticsMethod.execute();
-//      indicatorAnalysisCacheRepository.save(
-//          new IndicatorAnalysisCache(
-//              foundIndicator.getId(), gson.toJson(analyzedDataSet), LocalDateTime.now()));
+      //      indicatorAnalysisCacheRepository.save(
+      //          new IndicatorAnalysisCache(
+      //              foundIndicator.getId(), gson.toJson(analyzedDataSet), LocalDateTime.now()));
     } catch (AnalyticsMethodInitializationException e) {
       throw new ServiceException("Could not initialize analytics method");
     }
