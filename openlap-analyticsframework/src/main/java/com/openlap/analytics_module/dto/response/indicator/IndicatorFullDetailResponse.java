@@ -8,6 +8,8 @@ import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.dynamicparam.OpenLAPDynamicParam;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,6 +24,7 @@ public class IndicatorFullDetailResponse {
   private IndicatorType type;
   private String createdBy;
   private LocalDate createdOn;
+  private Set<String> platforms;
 
   // Visualization
   private String visualizationLibrary;

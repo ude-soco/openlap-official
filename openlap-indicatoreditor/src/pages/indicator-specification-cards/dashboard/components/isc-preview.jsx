@@ -4,14 +4,16 @@ import { CustomThemeContext } from "../../../../setup/theme-manager/theme-contex
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  Button,
   Chip,
   Divider,
   Grid,
   IconButton,
+  Paper,
   Skeleton,
   Typography,
 } from "@mui/material";
-import { ArrowBack } from "@mui/icons-material";
+import { ArrowBack, Edit } from "@mui/icons-material";
 import VisSelection from "../../creator/components/visualization/components/vis-selection.jsx";
 
 const IscPreview = () => {
@@ -69,120 +71,106 @@ const IscPreview = () => {
                 <ArrowBack />
               </IconButton>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item>
               <Typography>Back</Typography>
             </Grid>
-          </Grid>
-        </Grid>
-        <Grid item xs={12}>
-          <Divider />
-        </Grid>
-        <Grid item xs={6}>
-          {state.loading ? (
-            <Skeleton variant="rounded" height={500} />
-          ) : (
-            Object.values(visRef).length > 0 && (
-              <VisSelection
-                dataset={dataset}
-                visRef={visRef}
-                setVisRef={setVisRef}
-                preview={true}
-              />
-            )
-          )}
-        </Grid>
-        <Grid item xs={6}>
-          <Grid container spacing={1}>
-            <Grid item xs={12}>
-              <Typography variant="h5" gutterBottom>
-                {state.loading ? <Skeleton /> : `${requirements.indicatorName}`}
+            <Grid item xs>
+              <Typography align="center">
+                Indicator Specification Card
               </Typography>
             </Grid>
-            <Grid item xs={12}>
+          </Grid>
+        </Grid>
+        <Grid item xs={12}>
+          <Divider />
+        </Grid>
+        <Grid item xs={12} sx={{ mt: 2 }}>
+          <Grid container justifyContent="center" spacing={2}>
+            <Grid item xs={12} lg={7}>
+              <Grid container justifyContent="flex-end" spacing={1}>
+                <Button
+                  disabled
+                  variant="contained"
+                  color="primary"
+                  startIcon={<Edit />}
+                >
+                  Edit
+                </Button>
+              </Grid>
+            </Grid>
+            <Grid item xs={12} lg={7}>
               {state.loading ? (
-                <Skeleton />
+                <Skeleton variant="rounded" height={500} />
               ) : (
-                <Grid container spacing={1} alignItems="center">
-                  <Grid item>
-                    <Typography>Goal:</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Grid container spacing={1} alignItems="center">
-                      <Grid item>
-                        <Chip label={requirements.goalType?.verb} />
-                      </Grid>
-                      <Grid item>
-                        <Chip label={requirements.goal} />
+                <Paper variant="outlined" sx={{ p: 2 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <Typography variant="h5" gutterBottom>
+                        {requirements.indicatorName}
+                      </Typography>
+                      <Typography gutterBottom variant="body2">
+                        Created on: {state.createdOn.split("T")[0]}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Divider />
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Typography variant="overline">Goal</Typography>
+                      <Grid item xs={12}>
+                        <Chip label={requirements.goalType?.category} />
                       </Grid>
                     </Grid>
-                  </Grid>
-                </Grid>
-              )}
-            </Grid>
-            <Grid item xs={12}>
-              {state.loading ? (
-                <Skeleton />
-              ) : (
-                <Grid container spacing={1} alignItems="center">
-                  <Grid item>
-                    <Typography>Question:</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Chip label={requirements.question} />
-                  </Grid>
-                </Grid>
-              )}
-            </Grid>
-            <Grid item xs={12}>
-              {state.loading ? (
-                <Skeleton />
-              ) : (
-                <Grid container spacing={1} alignItems="center">
-                  <Grid item>
-                    <Typography>Indicator name:</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Chip label={requirements.indicatorName} />
-                  </Grid>
-                </Grid>
-              )}
-            </Grid>
-            <Grid item xs={12}>
-              {state.loading ? (
-                <Skeleton />
-              ) : (
-                <Grid container spacing={1} alignItems="center">
-                  <Grid item>
-                    <Typography>Data:</Typography>
-                  </Grid>
-                  {dataset.columns?.map((column, index) => (
-                    <Grid item key={index}>
-                      <Chip label={column.headerName} />
+                    <Grid item xs={8}>
+                      <Typography variant="overline">Question</Typography>
+                      <Grid item xs={12}>
+                        <Chip label={requirements.question} />
+                      </Grid>
                     </Grid>
-                  ))}
-                </Grid>
-              )}
-            </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="overline">Indicator Name</Typography>
+                      <Grid item xs={12}>
+                        <Chip label={requirements.indicatorName} />
+                      </Grid>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Divider />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="overline">Data</Typography>
+                      <Grid container spacing={1}>
+                        {dataset.columns?.map((column, index) => (
+                          <Grid item key={index}>
+                            <Chip label={column.headerName} />
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="overline">Idiom</Typography>
+                      <Grid item xs={12}>
+                        <Chip label={visRef.chart?.type} />
+                      </Grid>
+                    </Grid>
 
-            <Grid item xs={12}>
-              {state.loading ? (
-                <Skeleton />
-              ) : (
-                <Grid container spacing={1} alignItems="center">
-                  <Grid item>
-                    <Typography>Idiom:</Typography>
+                    <Grid item xs={12}>
+                      <Divider />
+                    </Grid>
+                    <Grid item xs={12}>
+                      {Object.values(visRef).length > 0 && (
+                        <VisSelection
+                          dataset={dataset}
+                          visRef={visRef}
+                          setVisRef={setVisRef}
+                          preview={true}
+                        />
+                      )}
+                    </Grid>
                   </Grid>
-                  <Grid item>
-                    <Chip label={visRef.chart?.type} />
-                  </Grid>
-                </Grid>
+                </Paper>
               )}
             </Grid>
           </Grid>
-        </Grid>
-
-        <Grid item xs={12}>
-          <Divider />
         </Grid>
       </Grid>
     </>

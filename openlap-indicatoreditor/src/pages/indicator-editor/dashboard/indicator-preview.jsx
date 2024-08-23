@@ -1,4 +1,5 @@
 import {
+  Button,
   Chip,
   Divider,
   Grid,
@@ -7,8 +8,8 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
-import { ArrowBack } from "@mui/icons-material";
-import { useContext, useEffect, useState } from "react";
+import { ArrowBack, Edit } from "@mui/icons-material";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { requestIndicatorFullDetail } from "./utils/indicator-dashboard";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
@@ -54,27 +55,26 @@ const IndicatorPreview = () => {
 
   useEffect(() => {
     const loadIndicatorDetail = async (api, indicatorId) => {
-      setState((prevState) => ({
-        ...prevState,
-        loading: true,
-      }));
       try {
-        const indicatorDetail = await requestIndicatorFullDetail(
-          api,
-          indicatorId,
-        );
-        setState((prevState) => ({
-          ...prevState,
-          ...indicatorDetail,
-          loading: false,
-        }));
+        return await requestIndicatorFullDetail(api, indicatorId);
       } catch (error) {
         console.log("Error requesting my indicators");
       }
     };
-
-    loadIndicatorDetail(api, params.id);
+    setState((prevState) => ({
+      ...prevState,
+      loading: true,
+    }));
+    loadIndicatorDetail(api, params.id).then((response) => {
+      setState((prevState) => ({
+        ...prevState,
+        ...response,
+        loading: false,
+      }));
+    });
   }, []);
+
+  console.log(state);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -98,127 +98,204 @@ const IndicatorPreview = () => {
               <ArrowBack />
             </IconButton>
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid item>
             <Typography>Back</Typography>
+          </Grid>
+          <Grid item xs>
+            <Typography align="center">Indicator</Typography>
           </Grid>
         </Grid>
       </Grid>
       <Grid item xs={12}>
         <Divider />
       </Grid>
-      <Grid item xs={12}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} lg={5}>
-            <Grid container spacing={1}>
-              {state.loading ? (
-                <Skeleton variant="rounded" height={500} />
-              ) : (
-                <>
-                  <Grid item xs={12}>
-                    <Grid
-                      container
-                      component={Paper}
-                      variant="outlined"
-                      justifyContent="center"
-                      sx={{ backgroundColor: "white", p: 2, borderRadius: 2 }}
-                    >
-                      <Grid item>{state.indicatorCode.displayCode}</Grid>
-                    </Grid>
-                  </Grid>
-                  {darkMode && (
-                    <Grid item xs>
-                      <Typography
-                        variant="caption"
-                        color="inherit"
-                        sx={{ fontStyle: "italic" }}
-                      >
-                        Note: If you are unable to view the label, switch to
-                        light mode
-                      </Typography>
-                    </Grid>
-                  )}
-                </>
-              )}
+      <Grid item xs={12} sx={{ mt: 2 }}>
+        <Grid container justifyContent="center" spacing={2}>
+          <Grid item xs={12} lg={7}>
+            <Grid container justifyContent="flex-end" spacing={1}>
+              <Grid item>
+                <Button disabled variant="contained" color="primary">
+                  Copy Code
+                </Button>
+              </Grid>
+              <Grid item>
+                <Button
+                  disabled
+                  variant="contained"
+                  color="primary"
+                  startIcon={<Edit />}
+                >
+                  Edit
+                </Button>
+              </Grid>
             </Grid>
           </Grid>
           <Grid item xs={12} lg={7}>
-            <Grid container spacing={1}>
-              <Grid item xs={12}>
-                <Typography variant="h5" gutterBottom>
-                  {state.loading ? <Skeleton /> : `${state.name}`}
-                </Typography>
-              </Grid>
-              <Grid item xs={12}>
-                {state.loading ? (
-                  <Skeleton />
-                ) : (
-                  <Grid container spacing={1} alignItems="center">
-                    <Grid item>
-                      <Typography>Indicator type:</Typography>
-                    </Grid>
-                    <Grid item>
-                      <Chip label={handleDisplayType(state.type)} />
+            {state.loading ? (
+              <Skeleton variant="rounded" height={850} />
+            ) : (
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12}>
+                        <Typography variant="h5" gutterBottom>
+                          {state.name}
+                        </Typography>
+                        <Grid container spacing={1} alignItems="center">
+                          <Grid item>
+                            <Chip label={handleDisplayType(state.type)} />
+                          </Grid>
+                          <Grid item>
+                            <Typography variant="body2">
+                              Created on: {state.createdOn}
+                            </Typography>
+                          </Grid>
+                        </Grid>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Divider />
+                      </Grid>
+
+                      {state.type === "BASIC" && (
+                        <>
+                          {Object.values(state.statementResponse.platforms)
+                            .length > 0 && (
+                            <Grid item xs={6}>
+                              <Typography variant="overline">
+                                Platform
+                              </Typography>
+                              <Grid container spacing={1}>
+                                {state.statementResponse.platforms.map(
+                                  (platform, index) => (
+                                    <Grid item key={index}>
+                                      <Chip label={platform} />
+                                    </Grid>
+                                  ),
+                                )}
+                              </Grid>
+                            </Grid>
+                          )}
+                          {Object.values(state.statementResponse.activityTypes)
+                            .length > 0 && (
+                            <Grid item xs={6}>
+                              <Typography variant="overline">
+                                Activity types
+                              </Typography>
+                              <Grid container spacing={1}>
+                                {state.statementResponse.activityTypes.map(
+                                  (activityType, index) => (
+                                    <Grid item key={index}>
+                                      <Chip label={activityType} />
+                                    </Grid>
+                                  ),
+                                )}
+                              </Grid>
+                            </Grid>
+                          )}
+
+                          {Object.values(
+                            state.statementResponse.actionOnActivities,
+                          ).length > 0 && (
+                            <>
+                              <Grid item xs={12}>
+                                <Typography variant="overline">
+                                  Actions
+                                </Typography>
+                                <Grid container spacing={1}>
+                                  {state.statementResponse.actionOnActivities.map(
+                                    (action, index) => (
+                                      <Grid item key={index}>
+                                        <Chip label={action} />
+                                      </Grid>
+                                    ),
+                                  )}
+                                </Grid>
+                              </Grid>
+                            </>
+                          )}
+                          <Grid item xs={12}>
+                            <Divider />
+                          </Grid>
+                        </>
+                      )}
+
+                      {(state.type === "COMPOSITE" ||
+                        state.type === "MULTI_LEVEL") && (
+                        <>
+                          <Grid item xs={12}>
+                            <Typography variant="overline">
+                              Basic Indicators used
+                            </Typography>
+                            <Grid container spacing={1}>
+                              {state.indicators.map((indicator, index) => (
+                                <Grid item key={index}>
+                                  <Chip label={indicator} />
+                                </Grid>
+                              ))}
+                            </Grid>
+                          </Grid>
+
+                          <Grid item xs={12}>
+                            <Divider />
+                          </Grid>
+                        </>
+                      )}
+
+                      {(state.type === "BASIC" ||
+                        state.type === "MULTI_LEVEL") && (
+                        <Grid item xs={6}>
+                          <Typography variant="overline">Analysis</Typography>
+                          <Grid item xs={12}>
+                            <Chip label={state.analyticsTechnique} />
+                          </Grid>
+                        </Grid>
+                      )}
+
+                      <Grid item xs={6}>
+                        <Typography variant="overline">Idiom</Typography>
+                        <Grid item xs={12}>
+                          <Chip label={state.visualizationType} />
+                        </Grid>
+                      </Grid>
+
+                      <Grid item xs={12}>
+                        <Divider />
+                      </Grid>
                     </Grid>
                   </Grid>
-                )}
-              </Grid>
-              <Grid item xs={12}>
-                {state.loading ? (
-                  <Skeleton />
-                ) : (
-                  <Grid container spacing={1} alignItems="center">
-                    <Grid item>
-                      <Typography>Created by:</Typography>
-                    </Grid>
-                    <Grid item>
-                      <Chip label={state.createdBy} />
-                    </Grid>
-                  </Grid>
-                )}
-              </Grid>
-              <Grid item xs={12}>
-                {state.loading ? (
-                  <Skeleton />
-                ) : (
-                  <Grid container spacing={1} alignItems="center">
-                    <Grid item>
-                      <Typography>Created on:</Typography>
-                    </Grid>
-                    <Grid item>
-                      <Chip label={state.createdOn} />
-                    </Grid>
-                  </Grid>
-                )}
-              </Grid>
-              <Grid item xs={12}>
-                {state.loading ? (
-                  <Skeleton />
-                ) : (
-                  <Grid container spacing={1} alignItems="center">
-                    <Grid item>
-                      <Typography>Analysis:</Typography>
-                    </Grid>
-                    <Grid item>
-                      <Chip label={state.analyticsTechnique} />
+                  <Grid item xs={12}>
+                    <Grid container spacing={1}>
+                      <Grid item xs={12}>
+                        <Grid
+                          container
+                          justifyContent="center"
+                          sx={{
+                            backgroundColor: "white",
+                            p: 2,
+                            borderRadius: 2,
+                          }}
+                        >
+                          <Grid item>{state.indicatorCode.displayCode}</Grid>
+                        </Grid>
+                      </Grid>
+                      {darkMode && (
+                        <Grid item xs>
+                          <Typography
+                            variant="caption"
+                            color="inherit"
+                            sx={{ fontStyle: "italic" }}
+                          >
+                            Note: If you are unable to view the label, switch to
+                            light mode
+                          </Typography>
+                        </Grid>
+                      )}
                     </Grid>
                   </Grid>
-                )}
-              </Grid>
-              <Grid item xs={12}>
-                {state.loading ? (
-                  <Skeleton />
-                ) : (
-                  <Grid container spacing={1} alignItems="center">
-                    <Grid item>
-                      <Typography>Visualization:</Typography>
-                    </Grid>
-                    <Grid item>
-                      <Chip label={state.visualizationType} />
-                    </Grid>
-                  </Grid>
-                )}
-              </Grid>
-            </Grid>
+                </Grid>
+              </Paper>
+            )}
           </Grid>
         </Grid>
       </Grid>

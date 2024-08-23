@@ -156,6 +156,7 @@ public class IndicatorServiceImpl implements IndicatorService {
     indicatorFullDetailResponse.setCreatedBy(foundIndicator.getCreatedBy().getName());
     indicatorFullDetailResponse.setIndicatorCode(
         generateIndicatorCode(foundIndicator.getId(), true));
+    indicatorFullDetailResponse.setPlatforms(foundIndicator.getPlatforms());
 
     // Visualization
     indicatorFullDetailResponse.setVisualizationLibrary(
@@ -641,6 +642,7 @@ public class IndicatorServiceImpl implements IndicatorService {
                 LocalDate.now(),
                 0,
                 indicator.getGoalRef(),
+                indicator.getPlatforms(),
                 tempStatementRequestStringify.isEmpty() ? null : tempStatementRequestStringify,
                 indicator.getAnalyticsTechniqueReference(),
                 columnToMergeStringify,
@@ -665,6 +667,7 @@ public class IndicatorServiceImpl implements IndicatorService {
             LocalDate.now(),
             0,
             foundIndicator.getGoalRef(),
+            foundIndicator.getPlatforms(),
             statementRequestStringify.isEmpty() ? null : statementRequestStringify,
             foundIndicator.getAnalyticsTechniqueReference(),
             foundIndicator.getColumnToMerge(),

@@ -8,6 +8,7 @@ import com.openlap.analytics_module.exceptions.indicator.IndicatorManipulationNo
 import com.openlap.analytics_module.exceptions.indicator.IndicatorNotFoundException;
 import com.openlap.analytics_module.repositories.IndicatorRepository;
 import com.openlap.analytics_module.services.IndicatorUtilityService;
+import com.openlap.analytics_statements.dtos.request.StatementsRequest;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueResponse;
 import com.openlap.analytics_technique.entities.AnalyticsTechnique;
 import com.openlap.analytics_technique.services.AnalyticsTechniqueService;
@@ -153,12 +154,14 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       indicator.setName(indicatorReference.getName());
       indicator.setIndicatorType(indicatorReference.getIndicatorType());
       indicator.setCreatedOn(LocalDate.now());
-
+      Set<String> uniquePlatforms = new HashSet<>();
       // Indicator creator validation
       indicator.setCreatedBy(tokenService.getUserFromToken(request));
 
       if (indicatorReference.getIndicatorType() == IndicatorType.BASIC) {
+        // TODO: Extract platform information and add it to an attribute
         indicator.setIndicatorQuery(gson.toJson(indicatorReference.getIndicatorQuery()));
+        uniquePlatforms.addAll(indicatorReference.getIndicatorQuery().getPlatforms());
       }
 
       // Analytics Technique
@@ -230,8 +233,17 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       if (indicatorReference.getIndicatorType() == IndicatorType.COMPOSITE
           || indicatorReference.getIndicatorType() == IndicatorType.MULTI_LEVEL) {
         List<IndicatorsToMergeRequest> indicatorsList = indicatorReference.getIndicators();
+        for (IndicatorsToMergeRequest indicatorsToMergeRequest : indicatorsList) {
+          indicatorsToMergeRequest.getIndicatorId();
+          Indicator foundIndicator =
+              fetchIndicatorMethod(indicatorsToMergeRequest.getIndicatorId());
+          StatementsRequest statementsRequest =
+              gson.fromJson(foundIndicator.getIndicatorQuery(), StatementsRequest.class);
+          uniquePlatforms.addAll(statementsRequest.getPlatforms());
+        }
         indicator.setIndicators(new ArrayList<>());
         for (int i = 0; i < indicatorsList.size(); i++) {
+          // TODO: Extract the platform information and add it to the platform attribute
           IndicatorsToMergeRequest existingIndicator = indicatorsList.get(i);
           Indicator foundIndicator = fetchIndicatorMethod(existingIndicator.getIndicatorId());
           if (indicatorReference.getIndicatorType() == IndicatorType.MULTI_LEVEL) {
@@ -246,6 +258,7 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
           }
         }
       }
+      indicator.setPlatforms(uniquePlatforms);
       log.info("An indicator with name '{}' was prepared.", indicator.getName());
     } catch (Exception e) {
       throw new DatabaseOperationException(
