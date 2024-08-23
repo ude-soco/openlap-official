@@ -375,7 +375,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\",\n    \"lrsId\": \"66acfbccb7fd479ac2499f04\"\n}",
+									"raw": "{\n    \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23\",\n    \"lrsId\": \"66acfbccb7fd479ac2499f04\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -430,7 +430,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"name\": \"Allan User\",\r\n    \"password\": \"1234qwer!\",\r\n    \"confirmPassword\": \"1234qwer!\",\r\n    \"email\": \"aliuser@gmail.com\",\r\n    \"role\": \"ROLE_USER\",\r\n    \"lrsConsumerRequest\": {\r\n        \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\",\r\n        \"lrsId\": \"66acfbccb7fd479ac2499f04\"\r\n    }\r\n}",
+									"raw": "{\r\n    \"name\": \"Allan User\",\r\n    \"password\": \"1234qwer!\",\r\n    \"confirmPassword\": \"1234qwer!\",\r\n    \"email\": \"aliuser1@gmail.com\",\r\n    \"role\": \"ROLE_USER\",\r\n    \"lrsConsumerRequest\": {\r\n        \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d11\",\r\n        \"lrsId\": \"66acfbccb7fd479ac2499f04\"\r\n    }\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -462,7 +462,7 @@
 							"urlencoded": [
 								{
 									"key": "userEmail",
-									"value": "aliuser@gmail.com",
+									"value": "shoebuser@gmail.com",
 									"type": "text"
 								},
 								{
@@ -548,6 +548,47 @@
 								"my",
 								"lrs",
 								"add"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE LRS FOR USER",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n    \"uniqueIdentifier\": \"c0fc991891344228ac2c138cd49d43a0\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/users/my/lrs/66bf06c9034edc3233f13074/delete",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"my",
+								"lrs",
+								"66bf06c9034edc3233f13074",
+								"delete"
 							]
 						}
 					},
@@ -641,7 +682,7 @@
 								}
 							]
 						},
-						"method": "GET",
+						"method": "POST",
 						"header": [],
 						"url": {
 							"raw": "{{URI}}/v1/analytics/goals/populate",
@@ -713,7 +754,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{URI}}/v1/analytics/goals/66894beb05dc67b668e759d6",
+							"raw": "{{URI}}/v1/analytics/goals/66c6ff9340411b19f07eb850",
 							"host": [
 								"{{URI}}"
 							],
@@ -721,7 +762,7 @@
 								"v1",
 								"analytics",
 								"goals",
-								"66894beb05dc67b668e759d6"
+								"66c6ff9340411b19f07eb850"
 							]
 						}
 					},
@@ -992,7 +1033,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{URI}}/v1/analytics/methods/inputs/665ad9303434b20ecc227db6",
+							"raw": "{{URI}}/v1/analytics/methods/inputs/66acfcbcb7fd479ac2499f16",
 							"host": [
 								"{{URI}}"
 							],
@@ -1001,7 +1042,7 @@
 								"analytics",
 								"methods",
 								"inputs",
-								"665ad9303434b20ecc227db6"
+								"66acfcbcb7fd479ac2499f16"
 							]
 						}
 					},
@@ -1054,7 +1095,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{URI}}/v1/analytics/methods/params/665ad9303434b20ecc227db6",
+							"raw": "{{URI}}/v1/analytics/methods/params/66acfcbcb7fd479ac2499f16",
 							"host": [
 								"{{URI}}"
 							],
@@ -1063,7 +1104,7 @@
 								"analytics",
 								"methods",
 								"params",
-								"665ad9303434b20ecc227db6"
+								"66acfcbcb7fd479ac2499f16"
 							]
 						}
 					},
@@ -1537,7 +1578,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{URI}}/v1/visualizations/types/665ad9303434b20ecc227dcc/inputs",
+									"raw": "{{URI}}/v1/visualizations/types/66acfcbdb7fd479ac2499f1e/inputs",
 									"host": [
 										"{{URI}}"
 									],
@@ -1545,7 +1586,7 @@
 										"v1",
 										"visualizations",
 										"types",
-										"665ad9303434b20ecc227dcc",
+										"66acfcbdb7fd479ac2499f1e",
 										"inputs"
 									]
 								}
@@ -2069,7 +2110,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"indicatorQuery\": {\n        \"lrsStores\": [\n            {\n                \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n                \"uniqueIdentifier\": \"c0fc991891344228ac2c138cd49d43a0\",\n                \"uniqueIdentifierType\": \"ACCOUNT_NAME\",\n                \"condition\": \"ONLY_ME\"\n            }\n        ],\n        \"platforms\": [\n            \"CourseMapper\"\n        ],\n        \"activityTypes\": [\n            \"http://www.CourseMapper.de/activityType/material\",\n            \"http://www.CourseMapper.de/activityType/channel\",\n            \"http://id.tincanapi.com/activitytype/slide\"\n        ],\n        \"actionOnActivities\": [\n            \"http://id.tincanapi.com/verb/viewed\",\n            \"http://activitystrea.ms/schema/1.0/access\"\n        ],\n        \"activities\": {\n            \"statement.object.definition.name.en-US\": [\n                \"P1-Schumacher\",\n                // \"P2-Ahmad\",\n                // \"P3-Hilliger\",\n                \"P4-Jivet\",\n                \"P5-Jivet\",\n                \"P6-Blazenka\"\n            ]\n        },\n        \"duration\": {\n            \"from\": \"2019-01-01T00:00:00.000Z\",\n            \"until\": \"2024-09-18T13:20:26.261Z\"\n        },\n        \"outputs\": [\n            \"statement.object.definition.name.en-US\"\n        ]\n    },\n    \"analyticsTechniqueId\": \"66acfcbcb7fd479ac2499f16\",\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"count_direction\",\n            \"title\": \"Counting direction\",\n            \"description\": \"Count most occurring items of least occurring items\",\n            \"possibleValues\": \"Most Occurring,Least Occurring\",\n            \"defaultValue\": \"Most Occurring\",\n            \"value\": \"Most Occurring\",\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"return_count\",\n            \"title\": \"Number of items to return (N)\",\n            \"description\": \"Specify the number of items that need to be returned. e.g. 10 will return top 10 items. -1 will return all items.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"search_type\",\n            \"title\": \"Counting type\",\n            \"description\": \"Count all item occurrences per user or only single item per user. For [Unique items] count type, the [User] column is required\",\n            \"possibleValues\": \"All items,Unique items\",\n            \"defaultValue\": \"All items\",\n            \"value\": \"All items\",\n            \"required\": true\n        }\n    ],\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Items\",\n                    \"description\": \"List of items to count\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"users\",\n                    \"required\": false,\n                    \"title\": \"User\",\n                    \"description\": \"List of users for whom items should be counted if [Unique items] count type is selected.\"\n                }\n            }\n        ]\n    }\n}",
+									"raw": "{\n    \"indicatorQuery\": {\n        \"lrsStores\": [\n            {\n                \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n                \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\"\n                // \"condition\": \"ONLY_ME\"\n            }\n        ],\n        \"platforms\": [\n            \"CourseMapper\"\n        ],\n        \"activityTypes\": [\n            \"http://www.CourseMapper.de/activityType/material\",\n            \"http://www.CourseMapper.de/activityType/channel\",\n            \"http://id.tincanapi.com/activitytype/slide\"\n        ],\n        \"actionOnActivities\": [\n            \"http://id.tincanapi.com/verb/viewed\",\n            \"http://activitystrea.ms/schema/1.0/access\"\n        ],\n        \"activities\": {\n            \"statement.object.definition.name.en-US\": [\n                \"P1-Schumacher\",\n                \"P2-Ahmad\",\n                \"P3-Hilliger\",\n                \"P4-Jivet\",\n                \"P5-Jivet\",\n                \"P6-Blazenka\"\n            ]\n            //,\n            //\"statement.object.definition.name.en-UK\": [\"TEST Angular Part 1 Lecture\"]\n        },\n        \"duration\": {\n            \"from\": \"2019-01-01T00:00:00.000Z\",\n            \"until\": \"2024-08-18T13:20:26.261Z\"\n        },\n        \"outputs\": [\n            \"statement.object.definition.name.en-US\"\n        ],\n        \"userQueryCondition\": \"ONLY_ME\"\n    },\n    \"analyticsTechniqueId\": \"66acfcbcb7fd479ac2499f16\",\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"count_direction\",\n            \"title\": \"Counting direction\",\n            \"description\": \"Count most occurring items of least occurring items\",\n            \"possibleValues\": \"Most Occurring,Least Occurring\",\n            \"defaultValue\": \"Most Occurring\",\n            \"value\": \"Most Occurring\",\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"return_count\",\n            \"title\": \"Number of items to return (N)\",\n            \"description\": \"Specify the number of items that need to be returned. e.g. 10 will return top 10 items. -1 will return all items.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"search_type\",\n            \"title\": \"Counting type\",\n            \"description\": \"Count all item occurrences per user or only single item per user. For [Unique items] count type, the [User] column is required\",\n            \"possibleValues\": \"All items,Unique items\",\n            \"defaultValue\": \"All items\",\n            \"value\": \"All items\",\n            \"required\": true\n        }\n    ],\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Items\",\n                    \"description\": \"List of items to count\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"users\",\n                    \"required\": false,\n                    \"title\": \"User\",\n                    \"description\": \"List of users for whom items should be counted if [Unique items] count type is selected.\"\n                }\n            }\n        ]\n    }\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2108,7 +2149,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"visualizationLibraryId\": \"66acfcbdb7fd479ac2499f1c\",\n    \"visualizationTypeId\": \"66acfcbdb7fd479ac2499f1e\",\n    \"visualizationParams\": {\n        \"height\": 200,\n        \"width\": 400\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"List of top most occurring items in the list\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Item Names\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Number of time each item occurred in the list\",\n                    \"id\": \"item_count\",\n                    \"required\": true,\n                    \"title\": \"Item Count\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    },\n    \"indicatorQuery\": {\n        \"lrsStores\": [\n            {\n                \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n                \"uniqueIdentifier\": \"c0fc991891344228ac2c138cd49d43a0\",\n                \"uniqueIdentifierType\": \"ACCOUNT_NAME\",\n                \"condition\": \"ONLY_ME\"\n            }\n        ],\n        \"platforms\": [\n            \"CourseMapper\"\n        ],\n        \"activityTypes\": [\n            \"http://www.CourseMapper.de/activityType/material\",\n            \"http://www.CourseMapper.de/activityType/channel\",\n            \"http://id.tincanapi.com/activitytype/slide\"\n        ],\n        \"actionOnActivities\": [\n            \"http://id.tincanapi.com/verb/viewed\",\n            \"http://activitystrea.ms/schema/1.0/access\"\n        ],\n        \"activities\": {\n            \"statement.object.definition.name.en-US\": [\n                \"P1-Schumacher\",\n                // \"P2-Ahmad\",\n                // \"P3-Hilliger\",\n                \"P4-Jivet\",\n                \"P5-Jivet\",\n                \"P6-Blazenka\"\n            ]\n        },\n        \"duration\": {\n            \"from\": \"2019-01-01T00:00:00.000Z\",\n            \"until\": \"2024-09-18T13:20:26.261Z\"\n        },\n        \"outputs\": [\n            \"statement.object.definition.name.en-US\"\n        ]\n    },\n    \"analyticsTechniqueId\": \"66acfcbcb7fd479ac2499f16\",\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"count_direction\",\n            \"title\": \"Counting direction\",\n            \"description\": \"Count most occurring items of least occurring items\",\n            \"possibleValues\": \"Most Occurring,Least Occurring\",\n            \"defaultValue\": \"Most Occurring\",\n            \"value\": \"Most Occurring\",\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"return_count\",\n            \"title\": \"Number of items to return (N)\",\n            \"description\": \"Specify the number of items that need to be returned. e.g. 10 will return top 10 items. -1 will return all items.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"search_type\",\n            \"title\": \"Counting type\",\n            \"description\": \"Count all item occurrences per user or only single item per user. For [Unique items] count type, the [User] column is required\",\n            \"possibleValues\": \"All items,Unique items\",\n            \"defaultValue\": \"All items\",\n            \"value\": \"All items\",\n            \"required\": true\n        }\n    ],\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Items\",\n                    \"description\": \"List of items to count\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"users\",\n                    \"required\": false,\n                    \"title\": \"User\",\n                    \"description\": \"List of users for whom items should be counted if [Unique items] count type is selected.\"\n                }\n            }\n        ]\n    }\n}",
+									"raw": "{\n    \"visualizationLibraryId\": \"66acfcbdb7fd479ac2499f1c\",\n    \"visualizationTypeId\": \"66acfcbdb7fd479ac2499f1e\",\n    \"visualizationParams\": {\n        \"height\": 200,\n        \"width\": 400\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"List of top most occurring items in the list\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Item Names\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Number of time each item occurred in the list\",\n                    \"id\": \"item_count\",\n                    \"required\": true,\n                    \"title\": \"Item Count\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    },\n    \"indicatorQuery\": {\n        \"lrsStores\": [\n            {\n                \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n                \"uniqueIdentifier\": \"c0fc991891344228ac2c138cd49d43a0\",\n                \"uniqueIdentifierType\": \"ACCOUNT_NAME\",\n                \"condition\": \"ONLY_ME\"\n            }\n        ],\n        \"platforms\": [\n            \"CourseMapper\"\n        ],\n        \"activityTypes\": [\n            \"http://www.CourseMapper.de/activityType/material\",\n            \"http://www.CourseMapper.de/activityType/channel\",\n            \"http://id.tincanapi.com/activitytype/slide\"\n        ],\n        \"actionOnActivities\": [\n            \"http://id.tincanapi.com/verb/viewed\",\n            \"http://activitystrea.ms/schema/1.0/access\"\n        ],\n        \"activities\": {\n            \"statement.object.definition.name.en-US\": [\n                \"P1-Schumacher\",\n                // \"P2-Ahmad\",\n                // \"P3-Hilliger\",\n                \"P4-Jivet\",\n                \"P5-Jivet\",\n                \"P6-Blazenka\"\n            ]\n        },\n        \"duration\": {\n            \"from\": \"2019-01-01T00:00:00.000Z\",\n            \"until\": \"2024-09-18T13:20:26.261Z\"\n        },\n        \"outputs\": [\n            \"statement.object.definition.name.en-US\"\n        ],\n        \"userQueryCondition\": \"INCLUDE_ME\"\n    },\n    \"analyticsTechniqueId\": \"66acfcbcb7fd479ac2499f16\",\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"count_direction\",\n            \"title\": \"Counting direction\",\n            \"description\": \"Count most occurring items of least occurring items\",\n            \"possibleValues\": \"Most Occurring,Least Occurring\",\n            \"defaultValue\": \"Most Occurring\",\n            \"value\": \"Most Occurring\",\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"return_count\",\n            \"title\": \"Number of items to return (N)\",\n            \"description\": \"Specify the number of items that need to be returned. e.g. 10 will return top 10 items. -1 will return all items.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Choice\",\n            \"dataType\": \"STRING\",\n            \"id\": \"search_type\",\n            \"title\": \"Counting type\",\n            \"description\": \"Count all item occurrences per user or only single item per user. For [Unique items] count type, the [User] column is required\",\n            \"possibleValues\": \"All items,Unique items\",\n            \"defaultValue\": \"All items\",\n            \"value\": \"All items\",\n            \"required\": true\n        }\n    ],\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Items\",\n                    \"description\": \"List of items to count\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"statement.object.definition.name.en-US\",\n                    \"required\": true,\n                    \"title\": null,\n                    \"description\": \"Selected list of all the Activities specified in Activity Filter. E.g. courses that are selected in Activity name section are \\\"Learning Analytics\\\", \\\"Data Mining\\\" etc.\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Text\",\n                    \"id\": \"users\",\n                    \"required\": false,\n                    \"title\": \"User\",\n                    \"description\": \"List of users for whom items should be counted if [Unique items] count type is selected.\"\n                }\n            }\n        ]\n    }\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2262,16 +2303,21 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{URI}}/v1/indicators/composite/66ad0158b7fd479ac2499f2b/compatible",
+									"raw": "{{URI}}/v1/indicators/66bb81de034edc1d2eeb073a/compatible?page=0",
 									"host": [
 										"{{URI}}"
 									],
 									"path": [
 										"v1",
 										"indicators",
-										"composite",
-										"66ad0158b7fd479ac2499f2b",
+										"66bb81de034edc1d2eeb073a",
 										"compatible"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "0"
+										}
 									]
 								}
 							},
@@ -2294,7 +2340,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"columnToMerge\": {\n        \"type\": \"Text\",\n        \"id\": \"item_name\",\n        \"required\": true,\n        \"title\": \"Item Names\",\n        \"description\": \"List of top most occurring items in the list\"\n    },\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66ad0158b7fd479ac2499f2b\"\n        },\n        {\n            \"indicatorId\": \"66ad0169b7fd479ac2499f2c\"\n        }\n    ]\n}",
+									"raw": "{\n    \"columnToMerge\": {\n        \"type\": \"Text\",\n        \"id\": \"item_name\",\n        \"required\": true,\n        \"title\": \"Item Names\",\n        \"description\": \"List of top most occurring items in the list\"\n    },\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66bbd206034edc8263260484\"\n        },\n        {\n            \"indicatorId\": \"66bb82aa034edc1d2eeb073b\"\n        },\n        {\n            \"indicatorId\": \"66bb81de034edc1d2eeb073a\"\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2333,7 +2379,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"columnToMerge\": {\n        \"type\": \"Text\",\n        \"id\": \"item_name\",\n        \"required\": true,\n        \"title\": \"Item Names\",\n        \"description\": \"List of top most occurring items in the list\"\n    },\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66ad0158b7fd479ac2499f2b\"\n        },\n        {\n            \"indicatorId\": \"66ad0169b7fd479ac2499f2c\"\n        }\n    ],\n    \"visualizationLibraryId\": \"66acfcbdb7fd479ac2499f1c\",\n    \"visualizationTypeId\": \"66acfcbdb7fd479ac2499f21\",\n    \"visualizationParams\": {\n        \"height\": 500,\n        \"width\": 500\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"List of top most occurring items in the list\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Item Names\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Number of time each item occurred in the list\",\n                    \"id\": \"item_count\",\n                    \"required\": true,\n                    \"title\": \"Item Count\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    }\n}",
+									"raw": "{\n    \"columnToMerge\": {\n        \"type\": \"Text\",\n        \"id\": \"item_name\",\n        \"required\": true,\n        \"title\": \"Item Names\",\n        \"description\": \"List of top most occurring items in the list\"\n    },\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66bb81de034edc1d2eeb073a\"\n        },\n        {\n            \"indicatorId\": \"66bbd206034edc8263260484\"\n        }\n    ],\n    \"visualizationLibraryId\": \"66acfcbdb7fd479ac2499f1c\",\n    \"visualizationTypeId\": \"66acfcbdb7fd479ac2499f21\",\n    \"visualizationParams\": {\n        \"height\": 500,\n        \"width\": 500\n    },\n    \"visualizationMapping\": {\n        \"mapping\": [\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on X-Axis of the graph\",\n                    \"id\": \"xAxisStrings\",\n                    \"required\": true,\n                    \"title\": \"X-Axis\",\n                    \"type\": \"Text\"\n                },\n                \"outputPort\": {\n                    \"description\": \"List of top most occurring items in the list\",\n                    \"id\": \"item_name\",\n                    \"required\": true,\n                    \"title\": \"Item Names\",\n                    \"type\": \"Text\"\n                }\n            },\n            {\n                \"inputPort\": {\n                    \"description\": \"List of items to be displayed on Y-Axis of the graph\",\n                    \"id\": \"yAxisValues\",\n                    \"required\": true,\n                    \"title\": \"Y-Axis\",\n                    \"type\": \"Numeric\"\n                },\n                \"outputPort\": {\n                    \"description\": \"Number of time each item occurred in the list\",\n                    \"id\": \"item_count\",\n                    \"required\": true,\n                    \"title\": \"Item Count\",\n                    \"type\": \"Numeric\"\n                }\n            }\n        ]\n    }\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2440,6 +2486,45 @@
 					"name": "MULTI-LEVEL",
 					"item": [
 						{
+							"name": "COMPATIBLE INDICATOR COLUMNS TO MERGE",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT_TOKEN}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66bbd206034edc8263260484\"\n        },\n        {\n            \"indicatorId\": \"66bb82aa034edc1d2eeb073b\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URI}}/v1/indicators/multilevel/compatible",
+									"host": [
+										"{{URI}}"
+									],
+									"path": [
+										"v1",
+										"indicators",
+										"multilevel",
+										"compatible"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "MERGE INDICATORS MULTI-LEVEL",
 							"request": {
 								"auth": {
@@ -2456,7 +2541,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66ad0158b7fd479ac2499f2b\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        },\n        {\n            \"indicatorId\": \"66ad0169b7fd479ac2499f2c\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        }\n    ]\n}",
+									"raw": "{\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66bbd206034edc8263260484\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        },\n        {\n            \"indicatorId\": \"66bb82aa034edc1d2eeb073b\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2495,7 +2580,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66ad0158b7fd479ac2499f2b\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        },\n        {\n            \"indicatorId\": \"66ad0169b7fd479ac2499f2c\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        }\n    ],\n    \"analyticsTechniqueId\": \"66acfcbcb7fd479ac2499f0d\",\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"column_1\",\n                    \"required\": true,\n                    \"title\": \"\",\n                    \"description\": \"\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"attribute_1\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 1\",\n                    \"description\": \"Numeric attribute 1\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"column_2\",\n                    \"required\": true,\n                    \"title\": \"\",\n                    \"description\": \"\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"attribute_2\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 2\",\n                    \"description\": \"Numeric attribute 2\"\n                }\n            }\n        ]\n    },\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"kmean_iterations\",\n            \"title\": \"K-Mean max iterations\",\n            \"description\": \"Specify the maximum iterations for the K-Mean algorithm.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"cluster_count\",\n            \"title\": \"Number of clusterers\",\n            \"description\": \"Specify the number of clusters to generate.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 5,\n            \"value\": 2,\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"kmean_seed\",\n            \"title\": \"K-Mean seed value\",\n            \"description\": \"Specify the seed value for the K-Mean algorithm.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        }\n    ]\n}",
+									"raw": "{\n    \"indicators\": [\n        {\n            \"indicatorId\": \"66bbd206034edc8263260484\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        },\n        {\n            \"indicatorId\": \"66bb82aa034edc1d2eeb073b\",\n            \"columnToMerge\": {\n                \"type\": \"Text\",\n                \"id\": \"item_name\",\n                \"required\": true,\n                \"title\": \"Item Names\",\n                \"description\": \"List of top most occurring items in the list\"\n            }\n        }\n    ],\n    \"analyticsTechniqueId\": \"66acfcbcb7fd479ac2499f0d\",\n    \"analyticsTechniqueMapping\": {\n        \"mapping\": [\n            {\n                \"outputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"column_1\",\n                    \"required\": true,\n                    \"title\": \"\",\n                    \"description\": \"\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"attribute_1\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 1\",\n                    \"description\": \"Numeric attribute 1\"\n                }\n            },\n            {\n                \"outputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"column_2\",\n                    \"required\": true,\n                    \"title\": \"\",\n                    \"description\": \"\"\n                },\n                \"inputPort\": {\n                    \"type\": \"Numeric\",\n                    \"id\": \"attribute_2\",\n                    \"required\": true,\n                    \"title\": \"Numeric Attribute 2\",\n                    \"description\": \"Numeric attribute 2\"\n                }\n            }\n        ]\n    },\n    \"analyticsTechniqueParams\": [\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"kmean_iterations\",\n            \"title\": \"K-Mean max iterations\",\n            \"description\": \"Specify the maximum iterations for the K-Mean algorithm.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"cluster_count\",\n            \"title\": \"Number of clusterers\",\n            \"description\": \"Specify the number of clusters to generate.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 5,\n            \"value\": 2,\n            \"required\": true\n        },\n        {\n            \"type\": \"Textbox\",\n            \"dataType\": \"INTEGER\",\n            \"id\": \"kmean_seed\",\n            \"title\": \"K-Mean seed value\",\n            \"description\": \"Specify the seed value for the K-Mean algorithm.\",\n            \"possibleValues\": \"\",\n            \"defaultValue\": 10,\n            \"value\": 10,\n            \"required\": true\n        }\n    ]\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2685,6 +2770,42 @@
 					"response": []
 				},
 				{
+					"name": "GET ALL MY INDICATORS WITH CODE",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URI}}/v1/indicators/my/indicator-with-code?page=0",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"indicators",
+								"my",
+								"indicator-with-code"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "GET ALL INDICATORS",
 					"request": {
 						"auth": {
@@ -2747,14 +2868,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{URI}}/v1/indicators/66ad04e8b7fd471298c412fd",
+							"raw": "{{URI}}/v1/indicators/66ad0169b7fd479ac2499f2c",
 							"host": [
 								"{{URI}}"
 							],
 							"path": [
 								"v1",
 								"indicators",
-								"66ad04e8b7fd471298c412fd"
+								"66ad0169b7fd479ac2499f2c"
 							]
 						}
 					},
@@ -2928,14 +3049,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{URI}}/v1/indicators/66ad0169b7fd479ac2499f2c/code",
+							"raw": "{{URI}}/v1/indicators/66b8737e034edc3c9292c5b5/code",
 							"host": [
 								"{{URI}}"
 							],
 							"path": [
 								"v1",
 								"indicators",
-								"66ad0169b7fd479ac2499f2c",
+								"66b8737e034edc3c9292c5b5",
 								"code"
 							]
 						}
@@ -3139,44 +3260,6 @@
 					"response": []
 				},
 				{
-					"name": "GET UNIQUE ACTIONS ON ACTIVITIES",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{JWT_TOKEN}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"lrsStores\": [\n        {\n            \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n            \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\",\n            \"condition\": \"ONLY_ME\"\n        }\n    ],\n    \"platforms\": [\n        \"CourseMapper\",\n        \"Moodle\"\n    ],\n    \"activityTypes\": [\n        \"http://www.CourseMapper.de/activityType/material\",\n        \"http://www.CourseMapper.de/activityType/channel\",\n        \"http://id.tincanapi.com/activitytype/slide\"\n    ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{URI}}/v1/statements/actions",
-							"host": [
-								"{{URI}}"
-							],
-							"path": [
-								"v1",
-								"statements",
-								"actions"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "GET UNIQUE ACTIVITIES",
 					"request": {
 						"auth": {
@@ -3193,7 +3276,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"lrsStores\": [\n         {\n            \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n            \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\",\n            \"condition\": \"ONLY_ME\"\n        }\n    ],\n    \"platforms\": [\n        \"CourseMapper\",\n        \"Moodle\"\n    ],\n    \"activityTypes\": [\n        \"http://www.CourseMapper.de/activityType/material\",\n        \"http://www.CourseMapper.de/activityType/channel\",\n        \"http://id.tincanapi.com/activitytype/slide\"\n    ],\n    \"actionOnActivities\": [\n        \"http://id.tincanapi.com/verb/viewed\",\n        \"http://activitystrea.ms/schema/1.0/access\"\n    ]\n}",
+							"raw": "{\n    \"lrsStores\": [\n        {\n            \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n            \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\",\n            \"condition\": \"ONLY_ME\"\n        }\n    ],\n    \"platforms\": [\n        \"CourseMapper\",\n        \"Moodle\"\n    ],\n    \"activityTypes\": [\n        \"http://www.CourseMapper.de/activityType/material\",\n        \"http://www.CourseMapper.de/activityType/channel\",\n        \"http://id.tincanapi.com/activitytype/slide\"\n    ]\n    // ,\n    // \"actionOnActivities\": [\n    //     \"http://id.tincanapi.com/verb/viewed\",\n    //     \"http://activitystrea.ms/schema/1.0/access\"\n    // ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -3209,6 +3292,44 @@
 								"v1",
 								"statements",
 								"activities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET UNIQUE ACTIONS ON ACTIVITIES",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"lrsStores\": [\n        {\n            \"id\": \"f16c82c0-b7a8-4eb8-8380-0722e7639990\",\n            \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n            \"lrsTitle\": \"OpenLAP LRS from Spring Boot\",\n            \"uniqueIdentifier\": \"c0fc991891344228ac2c138cd49d43a0\"\n        }\n    ],\n    \"platforms\": [\n        \"CourseMapper\"\n    ],\n    \"activityTypes\": [\n        \"http://www.CourseMapper.de/activityType/material\"\n    ],\n    \"activities\": {\n        \"statement.object.definition.name.en-US\": [\n            \"P3-Hilliger\",\n            \"P2-Ahmad\",\n            \"P1-Schumacher\",\n            \"P4-Jivet\",\n            \"P5-Jivet\",\n            \"P6-Blazenka\"\n        ]\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/statements/actions",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"statements",
+								"actions"
 							]
 						}
 					},
@@ -3231,7 +3352,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"lrsStores\": [\n        {\n            \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n            \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\",\n            \"condition\": \"ONLY_ME\"\n        }\n    ],\n    \"platforms\": [\n        \"CourseMapper\"\n    ],\n    \"activityTypes\": [\n        \"http://www.CourseMapper.de/activityType/material\",\n        \"http://www.CourseMapper.de/activityType/channel\",\n        \"http://id.tincanapi.com/activitytype/slide\"\n    ],\n    \"actionOnActivities\": [\n        \"http://id.tincanapi.com/verb/viewed\",\n        \"http://activitystrea.ms/schema/1.0/access\"\n    ],\n    \"activities\": {\n        \"statement.object.definition.name.en-US\": [\n            \"P1-Schumacher\",\n            \"P2-Ahmad\",\n            \"P3-Hilliger\",\n            \"P4-Jivet\",\n            \"P5-Jivet\",\n            \"P6-Blazenka\"\n        ]\n        //,\n        //\"statement.object.definition.name.en-UK\": [\"TEST Angular Part 1 Lecture\"]\n    },\n    \"duration\": {\n        \"from\": \"2019-01-01T00:00:00.000Z\",\n        \"until\": \"2024-08-18T13:20:26.261Z\"\n    },\n    \"outputs\": [\n        \"statement.object.definition.name.en-US\"\n    ],\n    \"userQueryRequest\": {\n        \"condition\": \"ONLY_ME\",\n        \"userUniqueIdentifier\": [\n            \"a5c6bbb2010d42e088f211d65092fa75\"\n        ]\n    }\n}",
+							"raw": "{\n    \"lrsStores\": [\n        {\n            \"lrsId\": \"66acfbccb7fd479ac2499f04\",\n            \"uniqueIdentifier\": \"156f093f7602412183679bd21256b23d\"\n            // \"condition\": \"ONLY_ME\"\n        }\n    ],\n    \"platforms\": [\n        \"CourseMapper\"\n    ],\n    \"activityTypes\": [\n        \"http://www.CourseMapper.de/activityType/material\",\n        \"http://www.CourseMapper.de/activityType/channel\",\n        \"http://id.tincanapi.com/activitytype/slide\"\n    ],\n    \"actionOnActivities\": [\n        \"http://id.tincanapi.com/verb/viewed\",\n        \"http://activitystrea.ms/schema/1.0/access\"\n    ],\n    \"activities\": {\n        \"statement.object.definition.name.en-US\": [\n            \"P1-Schumacher\",\n            \"P2-Ahmad\",\n            \"P3-Hilliger\",\n            \"P4-Jivet\",\n            \"P5-Jivet\",\n            \"P6-Blazenka\"\n        ]\n        //,\n        //\"statement.object.definition.name.en-UK\": [\"TEST Angular Part 1 Lecture\"]\n    },\n    \"duration\": {\n        \"from\": \"2019-01-01T00:00:00.000Z\",\n        \"until\": \"2024-08-18T13:20:26.261Z\"\n    },\n    \"outputs\": [\n        \"statement.object.definition.name.en-US\"\n    ],\n    \"userQueryCondition\": \"ONLY_ME\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -3456,7 +3577,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{URI}}/v1/code/indicator?indicatorId=66ad0607b7fd471298c412fe",
+							"raw": "{{URI}}/v1/code/indicator?indicatorId=66b8737e034edc3c9292c5b5",
 							"host": [
 								"{{URI}}"
 							],
@@ -3468,7 +3589,7 @@
 							"query": [
 								{
 									"key": "indicatorId",
-									"value": "66ad0607b7fd471298c412fe"
+									"value": "66b8737e034edc3c9292c5b5"
 								}
 							]
 						}
@@ -3495,6 +3616,39 @@
 									"key": "questionId",
 									"value": "66ad0187b7fd479ac2499f2d"
 								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ISC CREATOR",
+			"item": [
+				{
+					"name": "New Request",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"requirements\": {\n        \"goalType\": {\n            \"verb\": \"\"\n        },\n        \"goal\": \"\",\n        \"question\": \"\",\n        \"indicatorName\": \"\",\n        \"data\": [\n            {\n                \"value\": \"\",\n                \"type\": \"\"\n            },\n            {\n                \"value\": \"\",\n                \"type\": \"\"\n            }\n        ],\n        \"selectedPath\": \"\"\n    },\n    \"dataset\": {\n        \"rows\": [],\n        \"columns\": []\n    },\n    \"visRef\": {\n        \"filter\": {\n            \"type\": \"\"\n        },\n        \"chart\": {\n            \"type\": \"\"\n        },\n        \"data\": {\n            \"series\": [],\n            \"options\": {},\n            \"axisOptions\": {}\n        }\n    },\n    \"lockedStep\": {\n        \"requirements\": {\n            \"locked\": false,\n            \"openPanel\": false,\n            \"step\": \"1\"\n        },\n        \"path\": {\n            \"locked\": false,\n            \"openPanel\": false,\n            \"step\": \"2\"\n        },\n        \"visualization\": {\n            \"locked\": false,\n            \"openPanel\": false,\n            \"step\": \"3\"\n        },\n        \"dataset\": {\n            \"locked\": false,\n            \"openPanel\": false,\n            \"step\": \"4\"\n        },\n        \"finalize\": {\n            \"locked\": false,\n            \"openPanel\": true,\n            \"step\": \"5\"\n        }\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URI}}/v1/isc/create",
+							"host": [
+								"{{URI}}"
+							],
+							"path": [
+								"v1",
+								"isc",
+								"create"
 							]
 						}
 					},
