@@ -53,7 +53,10 @@ const ColumnMerge = () => {
       }
     };
 
-    if (indicatorRef.indicators.length > 1) {
+    if (
+      indicatorRef.indicators.length > 1 &&
+      Object.entries(indicatorRef.analyzedData).length === 0
+    ) {
       loadIndicatorsToAnalyze(api, indicatorRef.indicators).then((response) => {
         setState((prevState) => ({
           ...prevState,

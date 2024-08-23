@@ -60,11 +60,7 @@ const IndicatorList = ({ state, setState }) => {
       }));
       setIndicatorRef((prevState) => ({
         ...prevState,
-        indicators: [
-          {
-            indicatorId: indicator.id,
-          },
-        ],
+        indicators: [{ indicatorId: indicator.id }],
       }));
     } else {
       setState((prevState) => ({
