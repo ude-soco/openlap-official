@@ -7,6 +7,8 @@ import com.openlap.analytics_module.entities.utility_entities.VisualizationTechn
 import com.openlap.user.entities.User;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,6 +32,7 @@ public class Indicator {
   private LocalDate createdOn;
   private Integer timesExecuted;
   @DBRef private AnalyticsGoal goalRef;
+  private Set<String> platforms;
 
   // Only for BASIC
   private String indicatorQuery;
