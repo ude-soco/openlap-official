@@ -16,6 +16,7 @@ const AnalyticsTechnique = ({
   setState,
   analysisRef,
   setAnalysisRef,
+  setLockedStep,
 }) => {
   const { api } = useContext(AuthContext);
 
@@ -68,6 +69,13 @@ const AnalyticsTechnique = ({
     setState((prevState) => ({
       ...prevState,
       previewDisabled: true,
+    }));
+    setLockedStep((prevState) => ({
+      ...prevState,
+      visualization: {
+        locked: true,
+        openPanel: false,
+      },
     }));
   };
 

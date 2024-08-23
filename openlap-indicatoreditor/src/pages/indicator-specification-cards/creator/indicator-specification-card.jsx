@@ -104,7 +104,6 @@ const IndicatorSpecificationCard = () => {
     lockedStep,
   });
 
-  console.log(prevDependencies.current);
   useEffect(() => {
     const intervalId = setInterval(() => {
       let session_isc = {

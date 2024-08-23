@@ -131,6 +131,7 @@ const ActivityTypes = ({ state, setState }) => {
                 state.selectedActivitiesList.length > 0
               }
               disablePortal
+              disableCloseOnSelect
               id="combo-box-lrs"
               options={state.activityTypesList}
               fullWidth
