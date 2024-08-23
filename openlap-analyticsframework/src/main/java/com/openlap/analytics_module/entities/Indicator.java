@@ -6,6 +6,7 @@ import com.openlap.analytics_module.entities.utility_entities.IndicatorsToMerge;
 import com.openlap.analytics_module.entities.utility_entities.VisualizationTechniqueReference;
 import com.openlap.user.entities.User;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +30,7 @@ public class Indicator {
   private IndicatorType indicatorType;
   @DBRef private User createdBy;
   private VisualizationTechniqueReference visualizationTechniqueReference;
-  private LocalDate createdOn;
+  private LocalDateTime createdOn;
   private Integer timesExecuted;
   @DBRef private AnalyticsGoal goalRef;
   private Set<String> platforms;

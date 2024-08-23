@@ -271,7 +271,7 @@ public class IndicatorServiceImpl implements IndicatorService {
     indicator.setCreatedBy(createdBy);
     indicator.setVisualizationTechniqueReference(
         foundIndicator.getVisualizationTechniqueReference());
-    indicator.setCreatedOn(LocalDate.now());
+    indicator.setCreatedOn(LocalDateTime.now());
     indicator.setTimesExecuted(0);
     try {
       switch (foundIndicator.getIndicatorType()) {
@@ -639,7 +639,7 @@ public class IndicatorServiceImpl implements IndicatorService {
                 indicator.getIndicatorType(),
                 foundUser,
                 indicator.getVisualizationTechniqueReference(),
-                LocalDate.now(),
+                LocalDateTime.now(),
                 0,
                 indicator.getGoalRef(),
                 indicator.getPlatforms(),
@@ -664,7 +664,7 @@ public class IndicatorServiceImpl implements IndicatorService {
             foundIndicator.getIndicatorType(),
             foundUser,
             foundIndicator.getVisualizationTechniqueReference(),
-            LocalDate.now(),
+            LocalDateTime.now(),
             0,
             foundIndicator.getGoalRef(),
             foundIndicator.getPlatforms(),

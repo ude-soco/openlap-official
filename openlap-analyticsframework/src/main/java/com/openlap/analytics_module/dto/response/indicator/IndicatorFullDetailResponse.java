@@ -7,6 +7,7 @@ import com.openlap.dataset.OpenLAPColumnConfigData;
 import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.dynamicparam.OpenLAPDynamicParam;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -23,7 +24,7 @@ public class IndicatorFullDetailResponse {
   private String name;
   private IndicatorType type;
   private String createdBy;
-  private LocalDate createdOn;
+  private LocalDateTime createdOn;
   private Set<String> platforms;
 
   // Visualization
