@@ -115,13 +115,13 @@ const IscPreview = () => {
                     <Grid item xs={12}>
                       <Divider />
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} md={4}>
                       <Typography variant="overline">Goal</Typography>
                       <Grid item xs={12}>
                         <Chip label={requirements.goalType?.category} />
                       </Grid>
                     </Grid>
-                    <Grid item xs={8}>
+                    <Grid item xs={12} md={8}>
                       <Typography variant="overline">Question</Typography>
                       <Grid item xs={12}>
                         <Chip label={requirements.question} />
@@ -136,7 +136,7 @@ const IscPreview = () => {
                     <Grid item xs={12}>
                       <Divider />
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid item xs={12} md={6}>
                       <Typography variant="overline">Data</Typography>
                       <Grid container spacing={1}>
                         {dataset.columns?.map((column, index) => (
@@ -146,7 +146,7 @@ const IscPreview = () => {
                         ))}
                       </Grid>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid item xs={12} md={6}>
                       <Typography variant="overline">Idiom</Typography>
                       <Grid item xs={12}>
                         <Chip label={visRef.chart?.type} />

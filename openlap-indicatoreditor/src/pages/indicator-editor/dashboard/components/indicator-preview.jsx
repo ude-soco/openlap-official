@@ -11,10 +11,10 @@ import {
 import { ArrowBack, Edit } from "@mui/icons-material";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { requestIndicatorFullDetail } from "./utils/indicator-dashboard";
-import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
-import { handleDisplayType } from "./utils/utils";
-import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager.jsx";
+import { requestIndicatorFullDetail } from "../utils/indicator-dashboard.js";
+import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
+import { handleDisplayType } from "../utils/utils.js";
+import { CustomThemeContext } from "../../../../setup/theme-manager/theme-context-manager.jsx";
 
 const IndicatorPreview = () => {
   const { darkMode } = useContext(CustomThemeContext);
@@ -161,7 +161,7 @@ const IndicatorPreview = () => {
                         <>
                           {Object.values(state.statementResponse.platforms)
                             .length > 0 && (
-                            <Grid item xs={6}>
+                            <Grid item xs={12} md={6}>
                               <Typography variant="overline">
                                 Platform
                               </Typography>
@@ -178,7 +178,7 @@ const IndicatorPreview = () => {
                           )}
                           {Object.values(state.statementResponse.activityTypes)
                             .length > 0 && (
-                            <Grid item xs={6}>
+                            <Grid item xs={12} md={6}>
                               <Typography variant="overline">
                                 Activity types
                               </Typography>
@@ -223,7 +223,17 @@ const IndicatorPreview = () => {
                       {(state.type === "COMPOSITE" ||
                         state.type === "MULTI_LEVEL") && (
                         <>
-                          <Grid item xs={12}>
+                          <Grid item xs={12} md={4}>
+                            <Typography variant="overline">Platform</Typography>
+                            <Grid container spacing={1}>
+                              {state.platforms.map((platform, index) => (
+                                <Grid item key={index}>
+                                  <Chip label={platform} />
+                                </Grid>
+                              ))}
+                            </Grid>
+                          </Grid>
+                          <Grid item xs={12} md={8}>
                             <Typography variant="overline">
                               Basic Indicators used
                             </Typography>
@@ -244,7 +254,7 @@ const IndicatorPreview = () => {
 
                       {(state.type === "BASIC" ||
                         state.type === "MULTI_LEVEL") && (
-                        <Grid item xs={6}>
+                        <Grid item xs={12} md={6}>
                           <Typography variant="overline">Analysis</Typography>
                           <Grid item xs={12}>
                             <Chip label={state.analyticsTechnique} />
@@ -252,7 +262,7 @@ const IndicatorPreview = () => {
                         </Grid>
                       )}
 
-                      <Grid item xs={6}>
+                      <Grid item xs={12} md={6}>
                         <Typography variant="overline">Idiom</Typography>
                         <Grid item xs={12}>
                           <Chip label={state.visualizationType} />
