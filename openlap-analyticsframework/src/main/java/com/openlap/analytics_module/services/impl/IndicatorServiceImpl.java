@@ -495,7 +495,7 @@ public class IndicatorServiceImpl implements IndicatorService {
             uriCode);
 
     indicatorCacheRepository.save(
-        new IndicatorCache(indicatorId, indicatorCode, LocalDateTime.now()));
+        new IndicatorCache(indicatorId, indicatorCode, gson.toJson(analyzedDataSet), LocalDateTime.now()));
     return indicatorCode;
   }
 

@@ -1,6 +1,8 @@
 package com.openlap.analytics_module.entities;
 
 import java.time.LocalDateTime;
+
+import com.openlap.dataset.OpenLAPDataSet;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,5 +18,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class IndicatorCache {
   @Id private String id;
   private String indicatorCode;
+  private String analyzedDataset;
   private LocalDateTime createdOn;
 }
