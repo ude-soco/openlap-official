@@ -11,7 +11,7 @@ import {
 import { ArrowBack, Edit } from "@mui/icons-material";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { requestIndicatorFullDetail } from "../utils/indicator-dashboard.js";
+import { requestIndicatorFullDetail } from "../utils/indicator-dashboard-api.js";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { handleDisplayType } from "../utils/utils.js";
 import { CustomThemeContext } from "../../../../setup/theme-manager/theme-context-manager.jsx";
