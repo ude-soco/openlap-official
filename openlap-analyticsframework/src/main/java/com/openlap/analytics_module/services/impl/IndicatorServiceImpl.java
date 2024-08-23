@@ -134,8 +134,7 @@ public class IndicatorServiceImpl implements IndicatorService {
                 indicator.getCreatedBy().getName(),
                 indicator.getName(),
                 indicator.getCreatedOn(),
-                generateIndicatorCode(indicator.getId(), false),
-                indicatorBasicService.analyzeIndicatorByIndicatorId(indicator.getId())));
+                generateIndicatorCode(indicator.getId(), false)));
       }
       return indicatorResponses;
     } catch (IndicatorNotFoundException e) {
@@ -433,10 +432,6 @@ public class IndicatorServiceImpl implements IndicatorService {
       Page<Indicator> foundIndicatorPage, Boolean code) {
     List<IndicatorWithCodeResponse> indicatorWithCodeResponses = new ArrayList<>();
     for (Indicator indicator : foundIndicatorPage.getContent()) {
-      OpenLAPDataSet analyzedDataset = null;
-      if (code) {
-        analyzedDataset = indicatorBasicService.analyzeIndicatorByIndicatorId(indicator.getId());
-      }
       indicatorWithCodeResponses.add(
           new IndicatorWithCodeResponse(
               indicator.getId(),
@@ -444,8 +439,7 @@ public class IndicatorServiceImpl implements IndicatorService {
               indicator.getCreatedBy().getName(),
               indicator.getName(),
               indicator.getCreatedOn(),
-              generateIndicatorCode(indicator.getId(), true),
-              analyzedDataset));
+              generateIndicatorCode(indicator.getId(), true)));
     }
     return indicatorWithCodeResponses;
   }
