@@ -148,7 +148,7 @@ const IndicatorPreview = () => {
                           </Grid>
                           <Grid item>
                             <Typography variant="body2">
-                              Created on: {state.createdOn}
+                              Created on: {state.createdOn.split("T")[0]}
                             </Typography>
                           </Grid>
                         </Grid>

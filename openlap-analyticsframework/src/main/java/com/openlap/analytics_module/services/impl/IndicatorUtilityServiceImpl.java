@@ -31,6 +31,7 @@ import com.openlap.visualization_methods.entities.VisLibrary;
 import com.openlap.visualization_methods.entities.VisType;
 import com.openlap.visualization_methods.services.VisualizationMethodUtilityService;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
@@ -153,7 +154,7 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       // Indicator Metadata
       indicator.setName(indicatorReference.getName());
       indicator.setIndicatorType(indicatorReference.getIndicatorType());
-      indicator.setCreatedOn(LocalDate.now());
+      indicator.setCreatedOn(LocalDateTime.now());
       Set<String> uniquePlatforms = new HashSet<>();
       // Indicator creator validation
       indicator.setCreatedBy(tokenService.getUserFromToken(request));

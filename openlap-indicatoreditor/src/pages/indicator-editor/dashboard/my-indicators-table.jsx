@@ -300,7 +300,9 @@ const MyIndicatorsTable = () => {
                   <TableRow key={indicator.id}>
                     <TableCell>{indicator.name}</TableCell>
                     <TableCell>{handleDisplayType(indicator.type)}</TableCell>
-                    <TableCell align="right">{indicator.createdOn}</TableCell>
+                    <TableCell align="right">
+                      {indicator.createdOn.split("T")[0]}
+                    </TableCell>
                     <TableCell align="right">
                       <IconButton
                         size="small"
