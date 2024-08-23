@@ -18,5 +18,4 @@ public class IndicatorWithCodeResponse {
   private String name;
   private LocalDate createdOn;
   private String indicatorCode;
-  private OpenLAPDataSet analyzedDataset;
 }
