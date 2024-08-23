@@ -62,19 +62,18 @@ const MergedDataTable = ({ state }) => {
                     {Object.entries(analyzedData).map(([key, value]) => {
                       if (key !== indicatorRef.columnToMerge.id) {
                         let title = value.configurationData.title;
-                        let tempSelected = [
-                          state.selectedIndicator[0],
-                          ...state.selectedCompatibleIndicators,
-                        ];
                         return value.data.map((_, index) => {
                           return (
                             <TableCell key={`${key}-${index}`}>
-                              <Typography
-                                variant="caption"
-                                sx={{ fontStyle: "italic" }}
-                              >
-                                {tempSelected[index].name}
-                              </Typography>
+                              {/*<Typography*/}
+                              {/*  variant="caption"*/}
+                              {/*  sx={{ fontStyle: "italic" }}*/}
+                              {/*>*/}
+                              {/*  {*/}
+                              {/*    state.indicatorsToAnalyze.indicators[index]*/}
+                              {/*      .name*/}
+                              {/*  }*/}
+                              {/*</Typography>*/}
                               <Typography variant="body2">{title}</Typography>
                             </TableCell>
                           );

@@ -27,7 +27,6 @@ const CompatibleIndicatorList = ({ state, setState }) => {
         }));
       }
     };
-
     if (state.selectedIndicator.length !== 0) {
       setState((prevState) => ({
         ...prevState,
@@ -44,18 +43,6 @@ const CompatibleIndicatorList = ({ state, setState }) => {
           compatibleIndicators: {
             ...response,
           },
-          selectedAnalyticsOutput:
-            response.content[0].analyticsOutputs.length === 1
-              ? response.content[0].analyticsOutputs[0]
-              : {},
-        }));
-
-        setIndicatorRef((prevState) => ({
-          ...prevState,
-          columnToMerge:
-            response.content[0].analyticsOutputs.length === 1
-              ? response.content[0].analyticsOutputs[0]
-              : {},
         }));
       });
     }

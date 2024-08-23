@@ -10,5 +10,6 @@ import lombok.*;
 @NoArgsConstructor
 public class IndicatorsAnalyzed {
 	private String id;
+	private String name;
 	private OpenLAPDataSet analyzedDataset;
 }
