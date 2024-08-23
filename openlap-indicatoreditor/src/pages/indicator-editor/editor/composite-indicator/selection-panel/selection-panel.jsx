@@ -4,6 +4,7 @@ import Visualization from "../../components/visualization/visualization.jsx";
 import { AuthContext } from "../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { CompositeIndicatorContext } from "../composite-indicator.jsx";
 import { requestCompositeIndicatorPreview } from "../../components/visualization/utils/visualization-api.js";
+import ColumnMerge from "./components/column-merge.jsx";
 
 const SelectionPanel = () => {
   const { api } = useContext(AuthContext);
@@ -28,6 +29,7 @@ const SelectionPanel = () => {
   return (
     <>
       <SelectIndicator />
+      <ColumnMerge />
       <Visualization
         lockedStep={lockedStep}
         setLockedStep={setLockedStep}

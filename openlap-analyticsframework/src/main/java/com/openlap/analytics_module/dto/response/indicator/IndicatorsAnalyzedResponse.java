@@ -1,6 +1,7 @@
 package com.openlap.analytics_module.dto.response.indicator;
 
 
+import com.openlap.dataset.OpenLAPColumnConfigData;
 import lombok.*;
 
 import java.util.List;
@@ -12,5 +13,6 @@ import java.util.List;
 @NoArgsConstructor
 public class IndicatorsAnalyzedResponse {
 	private List<IndicatorsAnalyzed> indicators;
+	private List<OpenLAPColumnConfigData> analyticsOutputs;
 }
 

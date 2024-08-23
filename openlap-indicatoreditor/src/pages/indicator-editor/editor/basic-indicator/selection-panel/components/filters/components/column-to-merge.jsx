@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import {
   Chip,
   FormControl,
@@ -16,19 +16,14 @@ const ColumnToMerge = ({ state, setState }) => {
 
   const handleSelectColumnToMerge = (event) => {
     const { value } = event.target;
-
-    console.log("value", value);
-    const selectedOutput =
-      state.compatibleIndicators.content[0].analyticsOutputs.find(
-        (item) => item.id === value,
-      );
-
+    const selectedOutput = state.indicatorsToAnalyze.analyticsOutputs.find(
+      (item) => item.id === value,
+    );
     if (selectedOutput) {
       setState((prevState) => ({
         ...prevState,
         selectedAnalyticsOutput: selectedOutput,
       }));
-
       setIndicatorRef((prevState) => ({
         ...prevState,
         columnToMerge: selectedOutput,
@@ -50,7 +45,7 @@ const ColumnToMerge = ({ state, setState }) => {
               defaultValue={state.selectedAnalyticsOutput.id || undefined}
               onChange={handleSelectColumnToMerge}
             >
-              {state.compatibleIndicators.content[0].analyticsOutputs.map(
+              {state.indicatorsToAnalyze.analyticsOutputs.map(
                 (output, index) => (
                   <FormControlLabel
                     key={index}
@@ -61,8 +56,8 @@ const ColumnToMerge = ({ state, setState }) => {
                         <Grid item>
                           <Typography>{output.title}</Typography>
                         </Grid>
-                        {state.compatibleIndicators.content[0].analyticsOutputs
-                          .length === 1 && (
+                        {state.indicatorsToAnalyze.analyticsOutputs.length ===
+                          1 && (
                           <Grid item>
                             <Tooltip
                               title={
