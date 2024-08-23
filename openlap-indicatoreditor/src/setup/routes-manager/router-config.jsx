@@ -22,7 +22,7 @@ import IndicatorEditorDashboard from "../../pages/indicator-editor/dashboard/ind
 import MultiLevelAnalysisIndicator from "../../pages/indicator-editor/editor/multi-level-analysis-indicator/multi-level-analysis-indicator.jsx";
 import CompositeIndicator from "../../pages/indicator-editor/editor/composite-indicator/composite-indicator.jsx";
 import BasicIndicator from "../../pages/indicator-editor/editor/basic-indicator/basic-indicator.jsx";
-import IndicatorPreview from "../../pages/indicator-editor/dashboard/indicator-preview.jsx";
+import IndicatorPreview from "../../pages/indicator-editor/dashboard/components/indicator-preview.jsx";
 import ISCPool from "../../pages/isc-creator/isc-pool/isc-pool.jsx";
 import IndicatorSpecificationCard from "../../pages/indicator-specification-cards/creator/indicator-specification-card.jsx";
 import IscDashboard from "../../pages/indicator-specification-cards/dashboard/isc-dashboard.jsx";

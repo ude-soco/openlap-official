@@ -22,8 +22,8 @@ import {
   requestIndicatorCode,
   requestIndicatorDeletion,
   requestMyIndicators,
-} from "./utils/indicator-dashboard";
-import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
+} from "../utils/indicator-dashboard.js";
+import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import {
   ArrowDownward,
   ArrowUpward,
@@ -36,8 +36,8 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import { handleDisplayType } from "./utils/utils";
-import DeleteDialog from "../../../common/components/delete-dialog/delete-dialog.jsx";
+import { handleDisplayType } from "../utils/utils.js";
+import DeleteDialog from "../../../../common/components/delete-dialog/delete-dialog.jsx";
 
 const MyIndicatorsTable = () => {
   const { api } = useContext(AuthContext);
@@ -232,7 +232,7 @@ const MyIndicatorsTable = () => {
         </Grid>
         <Grid item xs={12}>
           <TableContainer component={Paper} variant="outlined">
-            <Table stickyHeader>
+            <Table stickyHeader size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>
