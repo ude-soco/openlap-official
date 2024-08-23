@@ -22,7 +22,7 @@ import {
   requestIndicatorCode,
   requestIndicatorDeletion,
   requestMyIndicators,
-} from "../utils/indicator-dashboard.js";
+} from "../utils/indicator-dashboard-api.js";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import {
   ArrowDownward,
