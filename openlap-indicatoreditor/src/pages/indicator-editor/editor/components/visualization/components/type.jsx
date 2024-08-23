@@ -78,6 +78,7 @@ const VisualizationType = ({ state, setState, visRef, setVisRef }) => {
                         component="img"
                         src={imgUrl.image}
                         alt={imgUrl.imageCode}
+                        loading="lazy"
                         sx={{
                           width: "80%",
                           height: "80%",

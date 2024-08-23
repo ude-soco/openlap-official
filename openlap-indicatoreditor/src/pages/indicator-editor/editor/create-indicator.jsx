@@ -17,30 +17,35 @@ const CreateIndicator = ({ handleClearSession }) => {
           <Typography>Create a new indicator</Typography>
         </Grid>
         <Grid item xs={12}>
-          <Grid container spacing={4}>
+          <Grid container spacing={2}>
             {images.map((image, index) => {
               return (
-                <Grid item xs={4} lg={3} key={index}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <Button
-                        fullWidth
-                        color="primary"
-                        onClick={() =>
-                          handleStartIndicatorCreationProcess(image)
-                        }
-                      >
-                        <Paper
-                          component="img"
-                          src={image.image}
-                          alt={image.imageCode}
-                          sx={{
-                            width: "100%",
-                            height: "100%",
-                            backgroundColor: "white",
-                          }}
-                        />
-                      </Button>
+                <Grid item xs={4} key={index}>
+                  <Grid
+                    container
+                    component={Paper}
+                    onClick={() => handleStartIndicatorCreationProcess(image)}
+                    sx={{
+                      p: 3,
+                      "&:hover": {
+                        boxShadow: 5,
+                      },
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Grid item xs={12} sx={{ pb: 2 }}>
+                      <Paper
+                        elevation={0}
+                        component="img"
+                        src={image.image}
+                        alt={image.imageCode}
+                        loading="lazy"
+                        sx={{
+                          width: "100%",
+                          height: "100%",
+                          backgroundColor: "white",
+                        }}
+                      />
                     </Grid>
                     <Grid item xs={12}>
                       <Typography>{image.name}</Typography>

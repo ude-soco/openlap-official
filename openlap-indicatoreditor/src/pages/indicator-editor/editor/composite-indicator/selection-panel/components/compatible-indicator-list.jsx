@@ -107,7 +107,9 @@ const CompatibleIndicatorList = ({ state, setState }) => {
         ) ? (
           <>
             <Grid item xs={12}>
-              <Typography>Combine compatible indicators</Typography>
+              <Typography sx={{ fontWeight: "bold" }}>
+                Combine compatible indicators
+              </Typography>
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1} alignItems="center">

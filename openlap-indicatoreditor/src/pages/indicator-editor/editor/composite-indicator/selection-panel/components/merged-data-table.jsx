@@ -65,15 +65,15 @@ const MergedDataTable = ({ state }) => {
                         return value.data.map((_, index) => {
                           return (
                             <TableCell key={`${key}-${index}`}>
-                              {/*<Typography*/}
-                              {/*  variant="caption"*/}
-                              {/*  sx={{ fontStyle: "italic" }}*/}
-                              {/*>*/}
-                              {/*  {*/}
-                              {/*    state.indicatorsToAnalyze.indicators[index]*/}
-                              {/*      .name*/}
-                              {/*  }*/}
-                              {/*</Typography>*/}
+                              <Typography
+                                variant="caption"
+                                sx={{ fontStyle: "italic" }}
+                              >
+                                {
+                                  state.indicatorsToAnalyze.indicators[index]
+                                    .name
+                                }
+                              </Typography>
                               <Typography variant="body2">{title}</Typography>
                             </TableCell>
                           );
