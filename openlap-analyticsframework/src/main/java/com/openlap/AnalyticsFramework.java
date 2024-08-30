@@ -1,5 +1,6 @@
 package com.openlap;
 
+import com.openlap.analytics_engine.services.EngineService;
 import com.openlap.user.dto.request.RoleRequest;
 import com.openlap.user.dto.request.UserRequest;
 import com.openlap.user.entities.RoleType;
@@ -45,7 +46,10 @@ public class AnalyticsFramework {
   }
 
   @Bean
-  CommandLineRunner run(UserRegisterService userRegisterService, UserRoleService userRoleService) {
+  CommandLineRunner run(
+      UserRegisterService userRegisterService,
+      UserRoleService userRoleService,
+      EngineService engineService) {
     return args -> {
       userRoleService.saveRole(new RoleRequest(RoleType.ROLE_USER));
       userRoleService.saveRole(new RoleRequest(RoleType.ROLE_SUPER_ADMIN));
@@ -59,6 +63,7 @@ public class AnalyticsFramework {
         adminUserRequest.setConfirmPassword(adminPassword);
         adminUserRequest.setRole(RoleType.ROLE_SUPER_ADMIN);
         userRegisterService.createAdmin(adminUserRequest);
+        engineService.initializeDatabase();
       } catch (EmailAlreadyTakenException e) {
         log.warn("Skipping Admin user creation...");
       }
