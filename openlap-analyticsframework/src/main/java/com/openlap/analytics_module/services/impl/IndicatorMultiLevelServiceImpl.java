@@ -143,8 +143,8 @@ public class IndicatorMultiLevelServiceImpl implements IndicatorMultiLevelServic
           } else if (value instanceof Integer) {
             mergedMap.put(itemNames.get(j), value);
           } else if (value instanceof Double) {
-            Number number = (Number) entry.getValue().get(i);
-            mergedMap.put(itemNames.get(i), number.intValue());
+            Number number = (Number) entry.getValue().get(j);
+            mergedMap.put(itemNames.get(j), number.intValue());
           } else {
             // Handle other data types if necessary
             mergedMap.put(itemNames.get(j), value.toString());
