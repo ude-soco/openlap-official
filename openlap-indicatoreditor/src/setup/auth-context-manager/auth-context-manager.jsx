@@ -62,12 +62,13 @@ const AuthProvider = ({ children }) => {
       navigate("/login");
     }
     try {
+      localStorage.removeItem("authTokens");
       const response = await axios.get(BackendURL + "v1/token/refresh", {
         headers: {
           Authorization: `Bearer ${tokens.refresh_token}`,
         },
       });
-      const newTokens = response.data;
+      const newTokens = response.data.data;
       setAuthTokens(newTokens);
       setUser(jwtDecode(newTokens.access_token));
       localStorage.setItem("authTokens", JSON.stringify(newTokens));
@@ -75,7 +76,7 @@ const AuthProvider = ({ children }) => {
     } catch (error) {
       logout(); // If refresh token fails, log out the user
       navigate("/login");
-      console.error("Failed to refresh token", error);
+      console.error("Session expired", error);
     }
   };
 
@@ -107,7 +108,9 @@ const AuthProvider = ({ children }) => {
   );
 
   return (
-    <AuthContext.Provider value={{ authTokens, user, login, logout, api }}>
+    <AuthContext.Provider
+      value={{ authTokens, user, login, logout, refreshAccessToken, api }}
+    >
       {children}
     </AuthContext.Provider>
   );

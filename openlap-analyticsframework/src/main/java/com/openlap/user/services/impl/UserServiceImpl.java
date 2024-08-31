@@ -17,6 +17,7 @@ import com.openlap.user.entities.utility_entities.LrsProvider;
 import com.openlap.user.exception.user.*;
 import com.openlap.user.repositories.UserRepository;
 import com.openlap.user.services.TokenService;
+import com.openlap.user.services.UserRoleService;
 import com.openlap.user.services.UserService;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,6 +42,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
   private final TokenService tokenService;
   private final LrsService lrsService;
   private final StatementService statementService;
+  private final UserRoleService userRoleService;
 
   @Override
   public UserDetails loadUserByUsername(String userEmail) {
@@ -147,7 +149,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
     TokenRequest tokenRequest = tokenService.verifyToken(request);
     User foundUser = getUserByEmail(tokenRequest.getUserEmail());
-    // TODO: Validation whether user belong to the LRS and with that ID
+    if (foundUser.getLrsConsumerList().isEmpty()) {
+      userRoleService.removeRoleFromUser(foundUser, RoleType.ROLE_USER_WITHOUT_LRS);
+      userRoleService.addRoleToUser(foundUser, RoleType.ROLE_USER);
+    }
     foundUser
         .getLrsConsumerList()
         .add(
@@ -169,6 +174,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     if (!removed) {
       throw new InvalidLrsUserException("LRS not found.");
     }
-    userRepository.save(foundUser);
+    User savedUser = userRepository.save(foundUser);
+    if (savedUser.getLrsConsumerList().isEmpty()) {
+      userRoleService.removeRoleFromUser(savedUser, RoleType.ROLE_USER);
+      userRoleService.addRoleToUser(savedUser, RoleType.ROLE_USER_WITHOUT_LRS);
+    }
   }
 }

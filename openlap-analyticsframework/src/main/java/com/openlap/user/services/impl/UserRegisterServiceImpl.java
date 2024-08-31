@@ -50,7 +50,7 @@ public class UserRegisterServiceImpl implements UserRegisterService {
       newUser.setPassword(passwordEncoder.encode(user.getPassword()));
       userRepository.save(newUser);
       log.info("Admin created with email '{}'", newUser.getEmail());
-      userRoleService.addRoleToUser(newUser.getEmail(), user.getRole());
+      userRoleService.addRoleToUser(newUser, user.getRole());
     } catch (Exception e) {
       throw new ServiceException("Error saving admin", e);
     }
@@ -87,7 +87,7 @@ public class UserRegisterServiceImpl implements UserRegisterService {
       }
       userRepository.save(newUser);
       log.info("User created with email '{}'.", newUser.getEmail());
-      userRoleService.addRoleToUser(newUser.getEmail(), userRequest.getRole());
+      userRoleService.addRoleToUser(newUser, userRequest.getRole());
     } catch (InvalidUserDetailsException
         | PasswordsDoNotMatchException
         | EmailAlreadyTakenException

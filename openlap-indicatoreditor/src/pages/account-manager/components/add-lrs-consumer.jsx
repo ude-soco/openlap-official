@@ -14,13 +14,14 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
+import { Alert } from "@mui/material";
+import { useSnackbar } from "notistack";
 import {
   requestAvailableLrsInOpenLAP,
   requestLrsConsumerValidation,
 } from "../utils/account-manager-api.js";
-import { useSnackbar } from "notistack";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
-import { Alert, LoadingButton } from "@mui/lab";
 
 const AddLrsConsumer = ({ addLrsConsumer, toggleOpen }) => {
   const { api } = useContext(AuthContext);

@@ -8,7 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
-import { Alert } from "@mui/lab";
+import { Alert } from "@mui/material";
 import AddLrsConsumer from "./components/add-lrs-consumer.jsx";
 import { useSnackbar } from "notistack";
 import { requestUserDetails } from "./utils/account-manager-api.js";
@@ -20,6 +20,7 @@ import AddLrsProvider from "./components/add-lrs-provider.jsx";
 const ManageLrs = () => {
   const {
     api,
+    refreshAccessToken,
     user: { roles },
   } = useContext(AuthContext);
   const [state, setState] = useState({
@@ -57,6 +58,15 @@ const ManageLrs = () => {
         console.error("Failed to load user data", error);
       }
     };
+    const refreshTokenIfUserRoleChange = async (lrsConsumerList) => {
+      if (
+        (roles.includes(RoleTypes.userWithoutLRS) &&
+          lrsConsumerList.length > 0) ||
+        (roles.includes(RoleTypes.user) && lrsConsumerList.length === 0)
+      ) {
+        await refreshAccessToken();
+      }
+    };
     if (
       state.addLRSConsumerDialog.lrsConsumerUpdated ||
       state.addLRSProviderDialog.lrsProviderUpdated
@@ -65,24 +75,30 @@ const ManageLrs = () => {
         ...prevState,
         loading: true,
       }));
-      loadData().then((response) => {
-        setState((prevState) => ({
-          ...prevState,
-          user: {
-            ...prevState.user,
-            ...response,
-          },
-          loading: false,
-          addLRSConsumerDialog: {
-            ...prevState.addLRSConsumerDialog,
-            lrsConsumerUpdated: false,
-          },
-          addLRSProviderDialog: {
-            ...prevState.addLRSProviderDialog,
-            lrsProviderUpdated: false,
-          },
-        }));
-      });
+      loadData()
+        .then((response) => {
+          console.log(response.lrsConsumerList);
+          setState((prevState) => ({
+            ...prevState,
+            user: {
+              ...prevState.user,
+              ...response,
+            },
+            loading: false,
+            addLRSConsumerDialog: {
+              ...prevState.addLRSConsumerDialog,
+              lrsConsumerUpdated: false,
+            },
+            addLRSProviderDialog: {
+              ...prevState.addLRSProviderDialog,
+              lrsProviderUpdated: false,
+            },
+          }));
+          return response.lrsConsumerList;
+        })
+        .then((lrsConsumerList) =>
+          refreshTokenIfUserRoleChange(lrsConsumerList),
+        );
     }
   }, [
     state.addLRSConsumerDialog.lrsConsumerUpdated === true,
@@ -181,7 +197,8 @@ const ManageLrs = () => {
                         </Grid>
                       ))
                     ) : state.user.lrsConsumerList.length > 0 &&
-                      roles.includes(RoleTypes.user) ? (
+                      (roles.includes(RoleTypes.user) ||
+                        roles.includes(RoleTypes.userWithoutLRS)) ? (
                       <ManageLrsConsumerList
                         state={state}
                         setState={setState}
