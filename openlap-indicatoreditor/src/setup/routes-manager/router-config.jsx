@@ -32,7 +32,8 @@ const menus = [
     key: "isc",
     title: "Indicator Specification Cards (ISC)",
     icon: <StyleIcon />,
-    allowedRoles: [RoleTypes.user],
+    allowedRoles: [RoleTypes.user, RoleTypes.userWithoutLRS],
+    disabledRoles: [],
     items: [
       {
         primary: "ISC Dashboard",
@@ -68,7 +69,8 @@ const menus = [
     key: "indicator",
     title: "Indicators",
     icon: <BarChartIcon />,
-    allowedRoles: [RoleTypes.user],
+    allowedRoles: [RoleTypes.user, RoleTypes.userWithoutLRS],
+    disabledRoles: [RoleTypes.userWithoutLRS],
     items: [
       {
         primary: "Indicator Dashboard",
@@ -129,7 +131,8 @@ const menus = [
     key: "gqi",
     title: "Goal-Question-Indicator",
     icon: <QuizIcon />,
-    allowedRoles: [RoleTypes.user],
+    allowedRoles: [RoleTypes.user, RoleTypes.userWithoutLRS],
+    disabledRoles: [RoleTypes.userWithoutLRS],
     items: [
       {
         primary: "GQI Dashboard",
@@ -158,7 +161,8 @@ const menus = [
     key: "tools",
     title: "Tools",
     icon: <ArchitectureIcon />,
-    allowedRoles: [RoleTypes.user],
+    allowedRoles: [RoleTypes.user, RoleTypes.userWithoutLRS],
+    disabledRoles: [RoleTypes.userWithoutLRS],
     items: [
       {
         primary: "CSV-xAPI Converter",
@@ -173,7 +177,12 @@ const menus = [
     key: "settings",
     title: "Settings",
     icon: <SettingsIcon />,
-    allowedRoles: [RoleTypes.user, RoleTypes["data provider"]],
+    allowedRoles: [
+      RoleTypes.user,
+      RoleTypes.userWithoutLRS,
+      RoleTypes["data provider"],
+    ],
+    disabledRoles: [],
     items: [
       {
         primary: "Manage LRS",

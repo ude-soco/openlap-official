@@ -9,7 +9,7 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore.js";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteDialog from "../../../common/components/delete-dialog/delete-dialog.jsx";
 import { requestDeleteLrsConsumer } from "../utils/account-manager-api.js";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
@@ -32,7 +32,7 @@ const ManageLrsConsumerList = ({ state, setState }) => {
       await requestDeleteLrsConsumer(
         api,
         state.deleteLrsConsumerDialog.lrsConsumerId,
-      ).then((response) => {
+      ).then(() => {
         setState((prevState) => ({
           ...prevState,
           addLRSConsumerDialog: {

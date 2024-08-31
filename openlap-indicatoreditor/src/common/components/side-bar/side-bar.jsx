@@ -9,6 +9,8 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { styled } from "@mui/material/styles";
@@ -17,6 +19,7 @@ import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import menus from "../../../setup/routes-manager/router-config.jsx";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import LockIcon from "@mui/icons-material/Lock.js";
 
 const drawerWidth = 280;
 export const DrawerHeader = styled("div")(({ theme }) => ({
@@ -51,32 +54,58 @@ const Sidebar = ({ openSidebar }) => {
 
   const MenuList = ({ menu }) => {
     if (roles.some((role) => menu.allowedRoles.includes(role))) {
+      let disabled = roles.some((role) => menu.disabledRoles.includes(role));
       return (
-        <List>
-          <ListItemButton onClick={() => handleToggle(menu.key)}>
-            <ListItemIcon>{menu.icon}</ListItemIcon>
-            <ListItemText primary={menu.title} />
-            {openMenus[menu.key] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </ListItemButton>
-          <Collapse in={openMenus[menu.key]} timeout={"auto"} unmountOnExit>
-            <List component="div" disablePadding>
-              {menu.items.map((item, index) => (
-                <ListItemButton
-                  sx={{ pl: 4 }}
-                  onClick={() => navigate(item.navigate)}
-                  key={index}
-                  selected={location.pathname === item.navigate}
-                >
-                  <ListItemIcon>{item.icon}</ListItemIcon>
-                  <ListItemText
-                    primary={item.primary}
-                    secondary={item.secondary}
-                  />
-                </ListItemButton>
-              ))}
+        <>
+          <Tooltip
+            arrow
+            placement="right"
+            title={
+              disabled ? (
+                <>
+                  <Typography variant="body2" gutterBottom>
+                    "{menu.title}" option is locked.
+                  </Typography>
+                  <Typography variant="body2">
+                    To unlock, go to "Manage LRS" under "Settings" to add an LRS
+                    to your account.
+                  </Typography>
+                </>
+              ) : undefined
+            }
+          >
+            <List>
+              <ListItemButton
+                onClick={() => handleToggle(menu.key)}
+                disabled={disabled}
+              >
+                <ListItemIcon>
+                  {disabled ? <LockIcon /> : menu.icon}
+                </ListItemIcon>
+                <ListItemText primary={menu.title} />
+                {openMenus[menu.key] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </ListItemButton>
+              <Collapse in={openMenus[menu.key]} timeout={"auto"} unmountOnExit>
+                <List component="div" disablePadding>
+                  {menu.items.map((item, index) => (
+                    <ListItemButton
+                      sx={{ pl: 4 }}
+                      onClick={() => navigate(item.navigate)}
+                      key={index}
+                      selected={location.pathname === item.navigate}
+                    >
+                      <ListItemIcon>{item.icon}</ListItemIcon>
+                      <ListItemText
+                        primary={item.primary}
+                        secondary={item.secondary}
+                      />
+                    </ListItemButton>
+                  ))}
+                </List>
+              </Collapse>
             </List>
-          </Collapse>
-        </List>
+          </Tooltip>
+        </>
       );
     }
     return undefined;

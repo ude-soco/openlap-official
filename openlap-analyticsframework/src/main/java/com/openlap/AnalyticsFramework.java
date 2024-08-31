@@ -54,6 +54,7 @@ public class AnalyticsFramework {
       userRoleService.saveRole(new RoleRequest(RoleType.ROLE_USER));
       userRoleService.saveRole(new RoleRequest(RoleType.ROLE_SUPER_ADMIN));
       userRoleService.saveRole(new RoleRequest(RoleType.ROLE_DATA_PROVIDER));
+      userRoleService.saveRole(new RoleRequest(RoleType.ROLE_USER_WITHOUT_LRS));
 
       try {
         UserRequest adminUserRequest = new UserRequest();
