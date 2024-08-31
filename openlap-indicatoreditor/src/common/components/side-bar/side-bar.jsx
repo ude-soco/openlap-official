@@ -91,10 +91,13 @@ const Sidebar = ({ openSidebar }) => {
                     <ListItemButton
                       sx={{ pl: 4 }}
                       onClick={() => navigate(item.navigate)}
+                      disabled={disabled}
                       key={index}
                       selected={location.pathname === item.navigate}
                     >
-                      <ListItemIcon>{item.icon}</ListItemIcon>
+                      <ListItemIcon>
+                        {disabled ? <LockIcon /> : item.icon}
+                      </ListItemIcon>
                       <ListItemText
                         primary={item.primary}
                         secondary={item.secondary}
