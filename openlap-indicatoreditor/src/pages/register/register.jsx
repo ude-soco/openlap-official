@@ -5,6 +5,7 @@ import OpenLAPLogo from "../../assets/brand/openlap-logo.svg";
 import {
   FormControl,
   FormControlLabel,
+  FormGroup,
   FormHelperText,
   FormLabel,
   Grid,
@@ -15,6 +16,7 @@ import {
   Radio,
   RadioGroup,
   Select,
+  Switch,
   TextField,
   Tooltip,
   Typography,
@@ -33,7 +35,7 @@ const Register = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    role: RoleTypes.user,
+    role: RoleTypes.userWithoutLRS,
   });
   const [lrsProviderRequest, setLrsProviderRequest] = useState({
     title: "",
@@ -45,6 +47,7 @@ const Register = () => {
   });
   const [lrsList, setLrsList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [lrsConnect, setLrsConnect] = useState(false);
   const [errors, setErrors] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
@@ -145,6 +148,14 @@ const Register = () => {
     }
   };
 
+  const handleSkipRole = (event) => {
+    setFormFields((prevState) => ({
+      ...prevState,
+      role: event.target.checked ? RoleTypes.user : RoleTypes.userWithoutLRS,
+    }));
+    setLrsConnect(event.target.checked);
+  };
+
   return (
     <>
       <Grid container justifyContent="center">
@@ -230,194 +241,234 @@ const Register = () => {
                     />
                   </Grid>
                   <Grid item xs={12}>
-                    <FormControl>
-                      <FormLabel id="role-label">Choose role</FormLabel>
-                      <RadioGroup
-                        row
-                        aria-labelledby="radio-buttons-group-role-label"
-                        name="role"
-                        value={formFields.role}
-                        onChange={handleFormFields}
-                      >
-                        <FormControlLabel
-                          value={RoleTypes.user}
-                          control={<Radio />}
-                          label={
-                            <>
-                              <Grid
-                                container
-                                spacing={1}
-                                alignItems="center"
-                                sx={{ pr: 3 }}
-                              >
-                                <Grid item>
-                                  <Typography>User</Typography>
-                                </Grid>
-                                <Grid item>
-                                  <Tooltip
-                                    title={
-                                      <>
-                                        <Typography>
-                                          As a User, you will be able to:
-                                        </Typography>
-                                        <Typography>
-                                          • Connect to multiple Leaning Record
-                                          Stores (LRS) using your unique
-                                          identifier from your LMSs or MOOC
-                                          platforms
-                                        </Typography>
-                                        <Typography>
-                                          • Create Indicator Specification Cards
-                                        </Typography>
-                                        <Typography>
-                                          • Create Indicators
-                                        </Typography>
-                                        <Typography>
-                                          • Create Goal, Question, and
-                                          Indicators
-                                        </Typography>
-                                      </>
-                                    }
-                                  >
-                                    <IconButton>
-                                      <Help />
-                                    </IconButton>
-                                  </Tooltip>
-                                </Grid>
-                              </Grid>
-                            </>
-                          }
+                    <Grid
+                      container
+                      spacing={2}
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
+                      <Grid item xs>
+                        <Typography>Connect to an LRS?</Typography>
+                      </Grid>
+                      <Grid item>
+                        <Switch
+                          checked={lrsConnect}
+                          onChange={handleSkipRole}
+                          inputProps={{ "aria-label": "controlled" }}
                         />
-                        <FormControlLabel
-                          value={RoleTypes["data provider"]}
-                          control={<Radio />}
-                          label={
-                            <>
-                              <Grid container spacing={1} alignItems="center">
-                                <Grid item>
-                                  <Typography>Data Provider</Typography>
-                                </Grid>
-                                <Grid item>
-                                  <Tooltip
-                                    title={
-                                      <>
-                                        <Typography>
-                                          As a Data Provider, you will be able
-                                          to:
-                                        </Typography>
-                                        <Typography>
-                                          • Create multiple Leaning Record Store
-                                          (LRS) instances
-                                        </Typography>
-                                        <Typography>
-                                          • Use Basic Auth token to add data to
-                                          the LRS
-                                        </Typography>
-                                      </>
-                                    }
-                                  >
-                                    <IconButton>
-                                      <Help />
-                                    </IconButton>
-                                  </Tooltip>
-                                </Grid>
-                              </Grid>
-                            </>
-                          }
-                        />
-                      </RadioGroup>
-                    </FormControl>
+                      </Grid>
+                    </Grid>
                   </Grid>
-                  {formFields.role === RoleTypes.user && (
+                  {lrsConnect && (
                     <>
                       <Grid item xs={12}>
-                        <FormControl
-                          fullWidth
-                          error={Boolean(errors?.["lrsConsumerRequest.lrsId"])}
-                        >
-                          <InputLabel id="lrs-select-label">
-                            Available LRS
-                          </InputLabel>
-                          <Select
-                            variant="outlined"
-                            name="lrsId"
-                            value={lrsConsumerRequest.lrsId}
-                            label="LRS ID"
-                            onChange={handleLrsConsumerRequest}
+                        <FormControl>
+                          <FormLabel id="role-label">Choose role</FormLabel>
+                          <RadioGroup
+                            row
+                            aria-labelledby="radio-buttons-group-role-label"
+                            name="role"
+                            value={formFields.role}
+                            onChange={handleFormFields}
                           >
-                            {lrsList.length > 0
-                              ? lrsList.map((lrs) => {
-                                  return (
-                                    <MenuItem key={lrs.lrsId} value={lrs.lrsId}>
-                                      {lrs.title}
-                                    </MenuItem>
-                                  );
-                                })
-                              : undefined}
-                          </Select>
-                          {Boolean(errors?.["lrsConsumerRequest.lrsId"]) && (
-                            <FormHelperText color="error">
-                              {errors?.["lrsConsumerRequest.lrsId"]}
-                            </FormHelperText>
-                          )}
+                            <FormControlLabel
+                              value={RoleTypes.user}
+                              control={<Radio />}
+                              label={
+                                <>
+                                  <Grid
+                                    container
+                                    spacing={1}
+                                    alignItems="center"
+                                    sx={{ pr: 3 }}
+                                  >
+                                    <Grid item>
+                                      <Typography>User</Typography>
+                                    </Grid>
+                                    <Grid item>
+                                      <Tooltip
+                                        title={
+                                          <>
+                                            <Typography>
+                                              As a User, you will be able to:
+                                            </Typography>
+                                            <Typography>
+                                              • Connect to multiple Leaning
+                                              Record Stores (LRS) using your
+                                              unique identifier from your LMSs
+                                              or MOOC platforms
+                                            </Typography>
+                                            <Typography>
+                                              • Create Indicator Specification
+                                              Cards
+                                            </Typography>
+                                            <Typography>
+                                              • Create Indicators
+                                            </Typography>
+                                            <Typography>
+                                              • Create Goal, Question, and
+                                              Indicators
+                                            </Typography>
+                                          </>
+                                        }
+                                      >
+                                        <IconButton>
+                                          <Help />
+                                        </IconButton>
+                                      </Tooltip>
+                                    </Grid>
+                                  </Grid>
+                                </>
+                              }
+                            />
+                            <FormControlLabel
+                              value={RoleTypes["data provider"]}
+                              control={<Radio />}
+                              label={
+                                <>
+                                  <Grid
+                                    container
+                                    spacing={1}
+                                    alignItems="center"
+                                  >
+                                    <Grid item>
+                                      <Typography>Data Provider</Typography>
+                                    </Grid>
+                                    <Grid item>
+                                      <Tooltip
+                                        title={
+                                          <>
+                                            <Typography>
+                                              As a Data Provider, you will be
+                                              able to:
+                                            </Typography>
+                                            <Typography>
+                                              • Create multiple Leaning Record
+                                              Store (LRS) instances
+                                            </Typography>
+                                            <Typography>
+                                              • Use Basic Auth token to add data
+                                              to the LRS
+                                            </Typography>
+                                          </>
+                                        }
+                                      >
+                                        <IconButton>
+                                          <Help />
+                                        </IconButton>
+                                      </Tooltip>
+                                    </Grid>
+                                  </Grid>
+                                </>
+                              }
+                            />
+                          </RadioGroup>
                         </FormControl>
                       </Grid>
-                      <Grid item xs={12}>
-                        <TextField
-                          fullWidth
-                          name="uniqueIdentifier"
-                          label="Unique Identifier"
-                          placeholder="Unique Identifier"
-                          error={Boolean(
-                            errors?.["lrsConsumerRequest.uniqueIdentifier"],
-                          )}
-                          helperText={
-                            errors?.["lrsConsumerRequest.uniqueIdentifier"]
-                          }
-                          onChange={handleLrsConsumerRequest}
-                        />
-                      </Grid>
-                    </>
-                  )}
+                      {formFields.role === RoleTypes.user && (
+                        <>
+                          <Grid item xs={12}>
+                            <FormControl
+                              fullWidth
+                              error={Boolean(
+                                errors?.["lrsConsumerRequest.lrsId"],
+                              )}
+                            >
+                              <InputLabel id="lrs-select-label">
+                                Available LRS
+                              </InputLabel>
+                              <Select
+                                variant="outlined"
+                                name="lrsId"
+                                value={lrsConsumerRequest.lrsId}
+                                label="LRS ID"
+                                onChange={handleLrsConsumerRequest}
+                              >
+                                {lrsList.length > 0
+                                  ? lrsList.map((lrs) => {
+                                      return (
+                                        <MenuItem
+                                          key={lrs.lrsId}
+                                          value={lrs.lrsId}
+                                        >
+                                          {lrs.title}
+                                        </MenuItem>
+                                      );
+                                    })
+                                  : undefined}
+                              </Select>
+                              {Boolean(
+                                errors?.["lrsConsumerRequest.lrsId"],
+                              ) && (
+                                <FormHelperText color="error">
+                                  {errors?.["lrsConsumerRequest.lrsId"]}
+                                </FormHelperText>
+                              )}
+                            </FormControl>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <TextField
+                              fullWidth
+                              name="uniqueIdentifier"
+                              label="Unique Identifier"
+                              placeholder="Unique Identifier"
+                              error={Boolean(
+                                errors?.["lrsConsumerRequest.uniqueIdentifier"],
+                              )}
+                              helperText={
+                                errors?.["lrsConsumerRequest.uniqueIdentifier"]
+                              }
+                              onChange={handleLrsConsumerRequest}
+                            />
+                          </Grid>
+                        </>
+                      )}
 
-                  {formFields.role === RoleTypes["data provider"] && (
-                    <>
-                      <Grid item xs={12}>
-                        <TextField
-                          fullWidth
-                          name="title"
-                          label="LRS name"
-                          placeholder="Name your LRS"
-                          error={Boolean(errors?.["lrsProviderRequest.title"])}
-                          helperText={errors?.["lrsProviderRequest.title"]}
-                          onChange={handleLrsProviderRequest}
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <FormControl fullWidth>
-                          <InputLabel id="unique-type-select-label">
-                            Unique Identifier Type
-                          </InputLabel>
-                          <Select
-                            variant="outlined"
-                            labelId="unique-type-select-label"
-                            name="uniqueIdentifierType"
-                            value={lrsProviderRequest.uniqueIdentifierType}
-                            label="Unique Identifier Type"
-                            onChange={handleLrsProviderRequest}
-                          >
-                            {Object.entries(UniqueIdentifierTypes).map(
-                              ([key, value]) => {
-                                return (
-                                  <MenuItem key={key} value={value}>
-                                    {key}
-                                  </MenuItem>
-                                );
-                              },
-                            )}
-                          </Select>
-                        </FormControl>
-                      </Grid>
+                      {formFields.role === RoleTypes["data provider"] && (
+                        <>
+                          <Grid item xs={12}>
+                            <Typography>Create an LRS</Typography>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <TextField
+                              fullWidth
+                              name="title"
+                              label="LRS name"
+                              placeholder="Name your LRS"
+                              error={Boolean(
+                                errors?.["lrsProviderRequest.title"],
+                              )}
+                              helperText={errors?.["lrsProviderRequest.title"]}
+                              onChange={handleLrsProviderRequest}
+                            />
+                          </Grid>
+                          <Grid item xs={12}>
+                            <FormControl fullWidth>
+                              <InputLabel id="unique-type-select-label">
+                                Unique Identifier Type
+                              </InputLabel>
+                              <Select
+                                variant="outlined"
+                                labelId="unique-type-select-label"
+                                name="uniqueIdentifierType"
+                                value={lrsProviderRequest.uniqueIdentifierType}
+                                label="Unique Identifier Type"
+                                onChange={handleLrsProviderRequest}
+                              >
+                                {Object.entries(UniqueIdentifierTypes).map(
+                                  ([key, value]) => {
+                                    return (
+                                      <MenuItem key={key} value={value}>
+                                        {key}
+                                      </MenuItem>
+                                    );
+                                  },
+                                )}
+                              </Select>
+                            </FormControl>
+                          </Grid>
+                        </>
+                      )}
                     </>
                   )}
 

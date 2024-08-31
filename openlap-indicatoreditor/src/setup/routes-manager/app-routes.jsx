@@ -1,12 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { Box, CssBaseline, Grid, Paper } from "@mui/material";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import {
-  BrowserRouter as Router,
-  Navigate,
-  Route,
-  Routes,
-} from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { styled, ThemeProvider, useTheme } from "@mui/material/styles";
 import PrivateRoute from "./private-routes";
 import UserProfile from "../../pages/account-manager/user-profile";
@@ -109,6 +104,7 @@ const AppRoutes = () => {
                           component={<UserProfile />}
                           allowedRoles={[
                             RoleTypes.user,
+                            RoleTypes.userWithoutLRS,
                             RoleTypes["data provider"],
                           ]}
                         />
@@ -121,6 +117,7 @@ const AppRoutes = () => {
                           component={<Home />}
                           allowedRoles={[
                             RoleTypes.user,
+                            RoleTypes.userWithoutLRS,
                             RoleTypes["data provider"],
                           ]}
                         />
@@ -133,6 +130,7 @@ const AppRoutes = () => {
                           component={<ManageLrs />}
                           allowedRoles={[
                             RoleTypes.user,
+                            RoleTypes.userWithoutLRS,
                             RoleTypes["data provider"],
                           ]}
                         />
@@ -211,7 +209,10 @@ const AppRoutes = () => {
                         element={
                           <PrivateRoute
                             component={<IscDashboard />}
-                            allowedRoles={[RoleTypes.user]}
+                            allowedRoles={[
+                              RoleTypes.user,
+                              RoleTypes.userWithoutLRS,
+                            ]}
                           />
                         }
                       />
@@ -220,7 +221,10 @@ const AppRoutes = () => {
                         element={
                           <PrivateRoute
                             component={<IscPreview />}
-                            allowedRoles={[RoleTypes.user]}
+                            allowedRoles={[
+                              RoleTypes.user,
+                              RoleTypes.userWithoutLRS,
+                            ]}
                           />
                         }
                       />
@@ -230,7 +234,10 @@ const AppRoutes = () => {
                       element={
                         <PrivateRoute
                           component={<ISCCreator />}
-                          allowedRoles={[RoleTypes.user]}
+                          allowedRoles={[
+                            RoleTypes.user,
+                            RoleTypes.userWithoutLRS,
+                          ]}
                         />
                       }
                     />
@@ -239,7 +246,10 @@ const AppRoutes = () => {
                       element={
                         <PrivateRoute
                           component={<IndicatorSpecificationCard />}
-                          allowedRoles={[RoleTypes.user]}
+                          allowedRoles={[
+                            RoleTypes.user,
+                            RoleTypes.userWithoutLRS,
+                          ]}
                         />
                       }
                     />
@@ -248,7 +258,10 @@ const AppRoutes = () => {
                       element={
                         <PrivateRoute
                           component={<ISCPool />}
-                          allowedRoles={[RoleTypes.user]}
+                          allowedRoles={[
+                            RoleTypes.user,
+                            RoleTypes.userWithoutLRS,
+                          ]}
                         />
                       }
                     />

@@ -10,7 +10,7 @@ import com.openlap.user.exception.user.UserNotFoundException;
 import com.openlap.user.repositories.RoleRepository;
 import com.openlap.user.repositories.UserRepository;
 import com.openlap.user.services.UserRoleService;
-import com.openlap.user.services.UserService;
+
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 public class UserRoleServiceImpl implements UserRoleService {
   private final RoleRepository roleRepository;
   private final UserRepository userRepository;
-  private final UserService userService;
 
   @Override
   public void saveRole(RoleRequest role) {
@@ -42,28 +41,50 @@ public class UserRoleServiceImpl implements UserRoleService {
   }
 
   @Override
-  public void addRoleToUser(String userEmail, RoleType roleName) {
-    log.info("Adding a role '{}' to user with email '{}'", roleName, userEmail);
+  public void addRoleToUser(User user, RoleType roleName) {
+    modifyUserRole(user, roleName, true);
+  }
+
+  @Override
+  public void removeRoleFromUser(User user, RoleType roleName) {
+    modifyUserRole(user, roleName, false);
+  }
+
+  private void modifyUserRole(User user, RoleType roleName, boolean addRole) {
+    String action = addRole ? "Adding" : "Removing";
+    log.info("{} a role '{}' to/from user with email '{}'", action, roleName, user.getEmail());
     try {
-      User user = userService.getUserByEmail(userEmail);
       if (user.getRoles() != null) {
         Role role = roleRepository.findByName(roleName);
         if (role == null) {
           log.warn("Role '{}' not found", roleName);
           throw new RoleNotFoundException("Role '" + roleName + "' not found");
         }
-        if (!user.getRoles().contains(role)) {
+
+        boolean roleExists = user.getRoles().contains(role);
+
+        if (addRole && !roleExists) {
           user.getRoles().add(role);
           userRepository.save(user);
-          log.info("User with email '{}' received a new role {}", userEmail, roleName);
+          log.info("User with email '{}' received a new role '{}'", user.getEmail(), roleName);
+        } else if (!addRole && roleExists) {
+          user.getRoles().remove(role);
+          userRepository.save(user);
+          log.info("User with email '{}' had the role '{}' removed", user.getEmail(), roleName);
         } else {
-          log.info("User with email '{}' already has the role {}", userEmail, roleName);
+          log.info(
+              "User with email '{}' {} has the role '{}'",
+              user.getEmail(),
+              addRole ? "already" : "does not",
+              roleName);
         }
+      } else {
+        log.warn("User with email '{}' has no roles assigned", user.getEmail());
       }
     } catch (UserNotFoundException | RoleNotFoundException e) {
       throw e;
     } catch (Exception e) {
-      throw new ServiceException("Error adding role to user", e);
+      throw new ServiceException("Error modifying role for user", e);
     }
   }
 }
