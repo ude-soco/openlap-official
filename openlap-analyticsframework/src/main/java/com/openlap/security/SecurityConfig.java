@@ -53,7 +53,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         .antMatchers("/v1/lrs/**")
         .hasAnyAuthority(RoleType.ROLE_DATA_PROVIDER.toString());
     http.authorizeRequests()
-        .antMatchers("/v1/users/my/lrs/**", "/v1/isc/**")
+        .antMatchers("/v1/users/my/lrs/**", "/v1/isc/**", "/v1/analytics/goals/**")
         .hasAnyAuthority(RoleType.ROLE_USER.toString(), RoleType.ROLE_USER_WITHOUT_LRS.toString());
     http.authorizeRequests()
         .antMatchers("/v1/users/my/**")
