@@ -77,7 +77,6 @@ const ManageLrs = () => {
       }));
       loadData()
         .then((response) => {
-          console.log(response.lrsConsumerList);
           setState((prevState) => ({
             ...prevState,
             user: {

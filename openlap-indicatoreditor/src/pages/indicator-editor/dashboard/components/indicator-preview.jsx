@@ -74,8 +74,6 @@ const IndicatorPreview = () => {
     });
   }, []);
 
-  console.log(state);
-
   useEffect(() => {
     const script = document.createElement("script");
     script.innerHTML = state.indicatorCode.scriptData;

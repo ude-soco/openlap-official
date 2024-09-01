@@ -31,7 +31,7 @@ const IndicatorEditor = () => {
         route: route,
       }));
     }
-  });
+  }, []);
 
   const handleContinueDraft = () => {
     navigate(state.route);

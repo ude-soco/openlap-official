@@ -316,7 +316,7 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
   @Override
   public String getIndicatorCodeMethod(
       OpenLAPDataSet analyzedDataSet,
-      String visLibrayId,
+      String visLibraryId,
       String visTypeId,
       OpenLAPPortConfig visMapping,
       Object visParams,
@@ -324,7 +324,7 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
     // Visualization Method
     // // Metadata
     VisLibrary foundVisualizationLibrary =
-        visualizationMethodUtilityService.fetchVisualizationLibraryMethod(visLibrayId);
+        visualizationMethodUtilityService.fetchVisualizationLibraryMethod(visLibraryId);
     VisType foundVisualizationType =
         visualizationMethodUtilityService.fetchVisualizationTypeMethod(visTypeId);
 
