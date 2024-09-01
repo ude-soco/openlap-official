@@ -11,10 +11,14 @@ import {
 import { ArrowBack, Edit } from "@mui/icons-material";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { requestIndicatorFullDetail } from "../utils/indicator-dashboard-api.js";
+import {
+  requestIndicatorCode,
+  requestIndicatorFullDetail,
+} from "../utils/indicator-dashboard-api.js";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { handleDisplayType } from "../utils/utils.js";
 import { CustomThemeContext } from "../../../../setup/theme-manager/theme-context-manager.jsx";
+import { useSnackbar } from "notistack";
 
 const IndicatorPreview = () => {
   const { darkMode } = useContext(CustomThemeContext);
@@ -52,6 +56,7 @@ const IndicatorPreview = () => {
       scriptData: [],
     },
   });
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     const loadIndicatorDetail = async (api, indicatorId) => {
@@ -87,6 +92,24 @@ const IndicatorPreview = () => {
     navigate(-1);
   };
 
+  const handleCopyCode = () => {
+    const loadIndicatorCode = async (api, indicatorId) => {
+      try {
+        return await requestIndicatorCode(api, indicatorId);
+      } catch (error) {
+        enqueueSnackbar(error.response.data.message, { variant: "error" });
+        console.error("Error requesting my indicators");
+      }
+    };
+
+    loadIndicatorCode(api, state.id).then((response) => {
+      navigator.clipboard
+        .writeText(response.data)
+        .then(() => setCopiedCode(!copiedCode));
+      enqueueSnackbar(response.message, { variant: "success" });
+    });
+  };
+
   return (
     <Grid container spacing={2}>
       <Grid item xs={12}>
@@ -112,7 +135,11 @@ const IndicatorPreview = () => {
           <Grid item xs={12} lg={7}>
             <Grid container justifyContent="flex-end" spacing={1}>
               <Grid item>
-                <Button disabled variant="contained" color="primary">
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleCopyCode}
+                >
                   Copy Code
                 </Button>
               </Grid>
