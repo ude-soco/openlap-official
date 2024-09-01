@@ -329,7 +329,8 @@ public class IndicatorServiceImpl implements IndicatorService {
   @Override
   public String getInteractiveIndicatorTemplate(String indicatorId, Model model) {
     Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
-    model.addAttribute("indicatorCode", generateIndicatorCode(foundIndicator.getId(), false));
+    String indicatorCode = generateIndicatorCode(foundIndicator.getId(), false);
+    model.addAttribute("indicatorCode", Utils.decodeURIComponent(indicatorCode) );
     model.addAttribute("indicatorName", foundIndicator.getName());
     return "indicator";
   }
