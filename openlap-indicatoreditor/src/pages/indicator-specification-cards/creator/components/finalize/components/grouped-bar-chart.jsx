@@ -57,23 +57,23 @@ const GroupedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns) {
       const stringColumns = dataset.columns.filter(
-        (col) => col.type === "string",
+        (col) => col.type === "string"
       );
       const numberColumns = dataset.columns.filter(
-        (col) => col.type === "number",
+        (col) => col.type === "number"
       );
 
       // Update selected X and Y axes
       const updatedSelectedXAxis = state.axisOptions.selectedXAxis
         ? stringColumns.find(
-            (col) => col.field === state.axisOptions.selectedXAxis,
+            (col) => col.field === state.axisOptions.selectedXAxis
           )?.field || ""
         : stringColumns.length > 0
-          ? stringColumns[0].field
-          : "";
+        ? stringColumns[0].field
+        : "";
 
       const updatedSelectedYAxes = state.axisOptions.selectedYAxes.filter(
-        (field) => numberColumns.find((col) => col.field === field),
+        (field) => numberColumns.find((col) => col.field === field)
       );
 
       setState((prevState) => ({
@@ -101,13 +101,14 @@ const GroupedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
         },
       }));
     }
+    console.log(state);
   }, [dataset, darkMode, visRef.chart.code]);
 
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns) {
       const { selectedXAxis, selectedYAxes } = state.axisOptions;
       const categoryColumn = dataset.columns.find(
-        (col) => col.field === selectedXAxis,
+        (col) => col.field === selectedXAxis
       );
 
       // Get unique categories for X-axis
@@ -224,7 +225,7 @@ const GroupedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
                       selected
                         .map((value) => {
                           const column = state.axisOptions.yAxisOptions.find(
-                            (col) => col.field === value,
+                            (col) => col.field === value
                           );
                           return column ? column.headerName : value;
                         })

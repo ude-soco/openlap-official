@@ -125,7 +125,7 @@ const Register = () => {
         formFields.role === RoleTypes.user ? lrsConsumerRequest : null,
         formFields.role === RoleTypes["data provider"]
           ? lrsProviderRequest
-          : null,
+          : null
       );
       if (response.status === 201) {
         enqueueSnackbar("Account created successfully!", {
@@ -371,7 +371,7 @@ const Register = () => {
                             <FormControl
                               fullWidth
                               error={Boolean(
-                                errors?.["lrsConsumerRequest.lrsId"],
+                                errors?.["lrsConsumerRequest.lrsId"]
                               )}
                             >
                               <InputLabel id="lrs-select-label">
@@ -398,7 +398,7 @@ const Register = () => {
                                   : undefined}
                               </Select>
                               {Boolean(
-                                errors?.["lrsConsumerRequest.lrsId"],
+                                errors?.["lrsConsumerRequest.lrsId"]
                               ) && (
                                 <FormHelperText color="error">
                                   {errors?.["lrsConsumerRequest.lrsId"]}
@@ -413,7 +413,7 @@ const Register = () => {
                               label="Unique Identifier"
                               placeholder="Unique Identifier"
                               error={Boolean(
-                                errors?.["lrsConsumerRequest.uniqueIdentifier"],
+                                errors?.["lrsConsumerRequest.uniqueIdentifier"]
                               )}
                               helperText={
                                 errors?.["lrsConsumerRequest.uniqueIdentifier"]
@@ -436,7 +436,7 @@ const Register = () => {
                               label="LRS name"
                               placeholder="Name your LRS"
                               error={Boolean(
-                                errors?.["lrsProviderRequest.title"],
+                                errors?.["lrsProviderRequest.title"]
                               )}
                               helperText={errors?.["lrsProviderRequest.title"]}
                               onChange={handleLrsProviderRequest}
@@ -462,7 +462,7 @@ const Register = () => {
                                         {key}
                                       </MenuItem>
                                     );
-                                  },
+                                  }
                                 )}
                               </Select>
                             </FormControl>
