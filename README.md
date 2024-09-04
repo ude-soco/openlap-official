@@ -52,7 +52,7 @@ Download and install the following software:
 - Click the play button in the top right corner to run the `OpenLAPAnalyticsFrameworkApplication` class to start the server.
 - Open the Postman software and import the file `ANALYTICS_FRAMEWORK.postman_collection.json` found under `docs` folder
 
-#### Step 3: Installation Guide for CourseMapper webapp
+#### Step 3: Installation Guide for OpenLAP Indicator Editor
 
 - Open the project `openlap-indicatoreditor` using IntelliJ.
 
