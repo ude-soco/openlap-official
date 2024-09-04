@@ -61,7 +61,7 @@ Download and install the following software:
 	npm ci
 	```
 	- If you get an error, try typing the `npm install` or `npm install --force` command.
-- Make a copy of the `.env.example` file, located inside the `openlap-indicatorengine` folder, and rename it to `.env`.
+- Make a copy of the `.env.example` file, located inside the `openlap-indicatoreditor` folder, and rename it to `.env`.
 - Run the following command in the terminal to start the server.
 	```bash
 	npm run dev
