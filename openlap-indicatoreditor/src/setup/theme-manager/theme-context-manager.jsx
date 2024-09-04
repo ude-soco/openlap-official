@@ -1,10 +1,10 @@
 import { createTheme } from "@mui/material";
 import { createContext, useState } from "react";
 
-const CustomThemeContext = createContext();
+const CustomThemeContext = createContext(undefined);
 
 const CustomThemeProvider = ({ children }) => {
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
 
   const toggleDarkMode = () => {
     setDarkMode((prevState) => !prevState);

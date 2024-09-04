@@ -330,7 +330,7 @@ public class IndicatorServiceImpl implements IndicatorService {
   public String getInteractiveIndicatorTemplate(String indicatorId, Model model) {
     Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
     String indicatorCode = generateIndicatorCode(foundIndicator.getId(), false);
-    model.addAttribute("indicatorCode", Utils.decodeURIComponent(indicatorCode) );
+    model.addAttribute("indicatorCode", Utils.decodeURIComponent(indicatorCode));
     model.addAttribute("indicatorName", foundIndicator.getName());
     return "indicator";
   }
@@ -453,8 +453,9 @@ public class IndicatorServiceImpl implements IndicatorService {
       IndicatorCache cache = indicatorCache.get();
       LocalDateTime createdOn = cache.getCreatedOn();
 
-      // Check if the indicator code is 60 minutes old
-      if (createdOn != null && Duration.between(createdOn, LocalDateTime.now()).toMinutes() < 60) {
+      // Check if the indicator code is 8 hours old
+      if (createdOn != null
+          && Duration.between(createdOn, LocalDateTime.now()).toMinutes() < (60 * 8)) {
         return cache.getIndicatorCode();
       }
     }
@@ -496,7 +497,8 @@ public class IndicatorServiceImpl implements IndicatorService {
             uriCode);
 
     indicatorCacheRepository.save(
-        new IndicatorCache(indicatorId, indicatorCode, gson.toJson(analyzedDataSet), LocalDateTime.now()));
+        new IndicatorCache(
+            indicatorId, indicatorCode, gson.toJson(analyzedDataSet), LocalDateTime.now()));
     return indicatorCode;
   }
 

@@ -14,7 +14,7 @@ const CreateIndicator = ({ handleClearSession }) => {
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Typography>Create a new indicator</Typography>
+          <Typography>Choose a type of indicator</Typography>
         </Grid>
         <Grid item xs={12}>
           <Grid container spacing={2}>
@@ -48,10 +48,17 @@ const CreateIndicator = ({ handleClearSession }) => {
                       />
                     </Grid>
                     <Grid item xs={12}>
-                      <Typography>{image.name}</Typography>
-                      <Typography variant="caption">
+                      <Typography variant="h6" gutterBottom>
+                        Create a {image.name}
+                      </Typography>
+                      <Typography variant="body1" gutterBottom>
                         {image.description}
                       </Typography>
+                      {image.condition && (
+                        <Typography variant="body2">
+                          <b>Condition:</b> {image.condition}
+                        </Typography>
+                      )}
                     </Grid>
                   </Grid>
                 </Grid>

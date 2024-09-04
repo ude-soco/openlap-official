@@ -78,7 +78,7 @@ const Home = () => {
                         </Typography>
                       </Grid>
                       <Grid item xs={12}>
-                        <Typography variant="h1">2</Typography>
+                        <Typography variant="h1">1</Typography>
                       </Grid>
                     </Grid>
                   </Grid>
@@ -115,7 +115,7 @@ const Home = () => {
                           <Typography gutterBottom>#ISCs created</Typography>
                         </Grid>
                         <Grid item xs={12}>
-                          <Typography variant="h1">30</Typography>
+                          <Typography variant="h1">1</Typography>
                         </Grid>
                       </Grid>
                     </Grid>
@@ -134,7 +134,7 @@ const Home = () => {
                     <Grid item xs={12}>
                       <Button
                         endIcon={<ArrowForward />}
-                        onClick={() => navigate("/isc/editor")}
+                        onClick={() => navigate("/isc/creator")}
                       >
                         Create ISCs
                       </Button>
@@ -155,7 +155,7 @@ const Home = () => {
                           </Typography>
                         </Grid>
                         <Grid item xs={12}>
-                          <Typography variant="h1">51</Typography>
+                          <Typography variant="h1">5</Typography>
                         </Grid>
                       </Grid>
                     </Grid>

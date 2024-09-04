@@ -100,8 +100,9 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
     if (indicatorCache.isPresent()) {
       IndicatorCache cache = indicatorCache.get();
       LocalDateTime createdOn = cache.getCreatedOn();
-      // Check if the indicator code is 60 minutes old
-      if (createdOn != null && Duration.between(createdOn, LocalDateTime.now()).toMinutes() < 60) {
+      // Check if the indicator code is 8 hours old
+      if (createdOn != null
+          && Duration.between(createdOn, LocalDateTime.now()).toMinutes() < (60 * 8)) {
         return gson.fromJson(cache.getAnalyzedDataset(), OpenLAPDataSet.class);
       }
     }
