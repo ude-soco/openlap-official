@@ -1,0 +1,6 @@
+name: openlap-official
+
+include:
+- ./learninglocker/compose.yaml
+- ./openlap-analyticsframework/compose.yaml
+- ./openlap-indicatoreditor/compose.yaml
