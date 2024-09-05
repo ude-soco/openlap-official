@@ -88,12 +88,12 @@ export const StylesBar = () => {
 
           <Stack direction="row" spacing={1}>
             <Typography style={{ marginTop: "5px" }} variant="body">
-              {state.series[0].name}
+              {state.series[0]?.name}
             </Typography>
             <Box mb={0} height="30px" width="30px">
               <input
                 type="color"
-                value={state.series[0].color}
+                value={state.series[0]?.color}
                 onChange={handleColorChange}
                 style={{
                   cursor: "pointer",

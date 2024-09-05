@@ -1,14 +1,23 @@
 import { Box, Tab } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ElementsBar } from "./elements-bar";
 import { StylesBar } from "./styles-bar";
 import { FiltersBar } from "./filters-bar";
 
 const BarChartCustomization = () => {
-  const [value, setvalue] = useState("1");
+  const tabValue = localStorage.getItem("tabValue");
+  const [value, setvalue] = useState(tabValue ? tabValue : "1");
+
+  useEffect(() => {
+    const tabValue = localStorage.getItem("tabValue");
+    if (tabValue) {
+      setvalue(tabValue);
+    }
+  }, []);
 
   const handleChange = (e, newValue) => {
+    localStorage.setItem("tabValue", newValue);
     setvalue(newValue);
   };
 

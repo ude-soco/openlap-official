@@ -12,32 +12,62 @@ import {
   Box,
   FormGroup,
 } from "@mui/material";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import ApexCharts from "apexcharts";
 import { StateContext } from "../bar-chart";
 
 export const FiltersBar = () => {
   const { state, setState, chartRef } = useContext(StateContext);
-  const [checkSeries, setcheckSeries] = useState(true);
-  const [tempcategories, settempcategories] = useState([]);
-  const [tempSeries, settempSeries] = useState([]);
+  const [checkSeries, setcheckSeries] = useState(
+    JSON.parse(localStorage.getItem("checked")) !== null || undefined
+      ? JSON.parse(localStorage.getItem("checked"))
+      : true
+  );
+  const [tempcategories, settempcategories] = useState(
+    JSON.parse(localStorage.getItem("categories"))?.length > 0
+      ? JSON.parse(localStorage.getItem("categories"))
+      : state.options.xaxis.categories.map((category) => ({
+          name: category,
+          checked: true,
+        }))
+  );
+  const [tempSeries, settempSeries] = useState(
+    JSON.parse(localStorage.getItem("series"))?.length > 0
+      ? JSON.parse(localStorage.getItem("series"))
+      : state.series[0].data.map((data) => ({
+          name: data,
+          checked: true,
+        }))
+  );
+  const [sort, setsort] = useState(localStorage.getItem("sort") || "");
+  const [originalState, setOriginalState] = useState(null);
+  const [filteredCats, setfilteredCats] = useState([]);
+  const [filteredSeries, setfilteredSeries] = useState([]);
+
+  console.log(state);
+
+  // console.log(state);
 
   useEffect(() => {
-    const newArray = state.options.xaxis.categories.map((category) => ({
-      name: category,
-      checked: true,
-    }));
-    settempcategories(newArray);
-
-    const newArray2 = state.series[0].data.map((data) => ({
-      name: data,
-      checked: true,
-    }));
-    settempSeries(newArray2);
+    if (checkSeries && state.series[0]) {
+      ApexCharts.exec(
+        state.options.chart.id,
+        "showSeries",
+        state.series[0].name
+      );
+    } else if (!checkSeries && state.series[0]) {
+      ApexCharts.exec(
+        state.options.chart.id,
+        "hideSeries",
+        state.series[0]?.name
+      );
+    }
+    // setOriginalState(state);
   }, []);
 
   function handleSeriesChecked(e) {
     setcheckSeries(e.target.checked);
+    localStorage.setItem("checked", JSON.stringify(e.target.checked));
     ApexCharts.exec(
       state.options.chart.id,
       "toggleSeries",
@@ -46,28 +76,8 @@ export const FiltersBar = () => {
   }
 
   useEffect(() => {
-    const newCategories = tempcategories
-      .filter((cat) => cat.checked === true)
-      .map((prevc) => prevc.name);
-    const newSeries = tempSeries
-      .filter((series) => series.checked === true)
-      .map((prevs) => prevs.name);
-
-    const updatedSeries = state.series.map((item, index) =>
-      index === 0 ? { ...item, data: newSeries } : item
-    );
-
-    setState((prevState) => ({
-      ...prevState,
-      series: updatedSeries,
-      options: {
-        ...prevState.options,
-        xaxis: {
-          ...prevState.options.xaxis,
-          categories: newCategories,
-        },
-      },
-    }));
+    localStorage.setItem("categories", JSON.stringify(tempcategories));
+    localStorage.setItem("series", JSON.stringify(tempSeries));
   }, [tempcategories, tempSeries]);
 
   function handleCategoryChecked(index) {
@@ -78,8 +88,101 @@ export const FiltersBar = () => {
     const updatedSeries = tempSeries.map((series, i) =>
       i === index ? { ...series, checked: !series.checked } : series
     );
+
     settempcategories(updatedCategories);
     settempSeries(updatedSeries);
+
+    const newCategories = updatedCategories
+      .filter((cat) => cat.checked === true)
+      .map((prevc) => prevc.name);
+    const newSeries = updatedSeries
+      .filter((series) => series.checked === true)
+      .map((prevs) => prevs.name);
+
+    setState((prevState) => ({
+      ...prevState,
+      series: [
+        {
+          ...prevState.series[0],
+          data: newSeries,
+        },
+      ],
+      options: {
+        ...prevState.options,
+        xaxis: {
+          ...prevState.options.xaxis,
+          categories: newCategories,
+        },
+      },
+    }));
+
+    setsort("");
+    localStorage.setItem("sort", "");
+  }
+
+  function handleSortChange(e, sort) {
+    const value = e ? e.target.value : sort;
+    setsort(value);
+    localStorage.setItem("sort", value);
+    if (value === "asc") {
+      const combinedArray = state.series[0].data.map((dataPoint, index) => ({
+        data: dataPoint,
+        category: state.options.xaxis.categories[index],
+      }));
+
+      combinedArray.sort((a, b) => a.data - b.data);
+
+      const sortedData = combinedArray.map((item) => item.data);
+      const sortedCategories = combinedArray.map((item) => item.category);
+      setState((prevState) => ({
+        ...prevState,
+        series: [
+          {
+            ...prevState.series[0],
+            data: sortedData,
+          },
+        ],
+        options: {
+          ...prevState.options,
+          xaxis: {
+            ...prevState.options.xaxis,
+            categories: sortedCategories,
+          },
+        },
+      }));
+    } else if (value === "desc") {
+      const combinedArray = state.series[0].data.map((dataPoint, index) => ({
+        data: dataPoint,
+        category: state.options.xaxis.categories[index],
+      }));
+
+      combinedArray.sort((a, b) => b.data - a.data);
+
+      const sortedData = combinedArray.map((item) => item.data);
+      const sortedCategories = combinedArray.map((item) => item.category);
+
+      setState((prevState) => ({
+        ...prevState,
+        series: [
+          {
+            ...prevState.series[0],
+            data: sortedData,
+          },
+        ],
+        options: {
+          ...prevState.options,
+          xaxis: {
+            ...prevState.options.xaxis,
+            categories: sortedCategories,
+          },
+        },
+      }));
+    } else {
+      const combinedArray = state.series[0].data.map((dataPoint, index) => ({
+        data: dataPoint,
+        category: state.options.xaxis.categories[index],
+      }));
+    }
   }
 
   return (
@@ -91,7 +194,7 @@ export const FiltersBar = () => {
           </Typography>
 
           <FormControlLabel
-            label={state.series[0].name}
+            label={state.series[0]?.name}
             control={
               <Checkbox onChange={handleSeriesChecked} checked={checkSeries} />
             }
@@ -115,6 +218,24 @@ export const FiltersBar = () => {
               }
             ></FormControlLabel>
           ))}
+        </Stack>
+
+        <Stack mb={1} spacing={1}>
+          <Typography variant="h6" fontSize="small" fontWeight="800">
+            DATA SORTING
+          </Typography>
+          <FormControl>
+            <RadioGroup value={sort} onChange={handleSortChange} row>
+              <FormControlLabel
+                label="Ascending"
+                control={<Radio value="asc" />}
+              ></FormControlLabel>
+              <FormControlLabel
+                label="Descending"
+                control={<Radio value="desc" />}
+              ></FormControlLabel>
+            </RadioGroup>
+          </FormControl>
         </Stack>
       </Stack>
     </>
