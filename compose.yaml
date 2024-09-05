@@ -1,0 +1,9 @@
+name: openlap-official
+
+include:
+- ./openlap-analyticsframework/compose.yaml
+- ./openlap-indicatoreditor/compose.yaml
+
+services:
+  learninglocker:
+    image: socialcomputing/learninglocker
