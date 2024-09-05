@@ -53,7 +53,7 @@ const AuthProvider = ({ children }) => {
     setAuthTokens(null);
     setUser(null);
     localStorage.removeItem("authTokens");
-    navigate("/login");
+    window.location.reload();
   };
 
   const refreshAccessToken = async () => {
@@ -75,7 +75,6 @@ const AuthProvider = ({ children }) => {
       return newTokens;
     } catch (error) {
       logout(); // If refresh token fails, log out the user
-      navigate("/login");
       console.error("Session expired", error);
     }
   };
