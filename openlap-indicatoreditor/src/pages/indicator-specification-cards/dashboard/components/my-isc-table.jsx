@@ -47,10 +47,11 @@ const MyIscTable = () => {
       sortBy: "createdOn",
     },
     openDeleteDialog: false,
+    loadingIndicators: false,
   });
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedIndicator, setSelectedIndicator] = useState(null);
-  console.log(selectedIndicator);
+
   const handleMenuOpen = (event, indicator) => {
     setAnchorEl(event.currentTarget);
     setSelectedIndicator(indicator);
@@ -119,15 +120,23 @@ const MyIscTable = () => {
       try {
         return await requestMyISCs(api, params);
       } catch (error) {
-        console.log("Error requesting my indicators");
+        console.log("Error requesting my indicators", error);
+        enqueueSnackbar("Error requesting my indicators", {
+          variant: "error",
+        });
       }
     };
+    setState((prevState) => ({
+      ...prevState,
+      loadingIndicators: true,
+    }));
     loadMyISCList(api, state.params).then((response) => {
       setState((prevState) => ({
         ...prevState,
         myISCList: response.content,
         pageable: response.pageable,
         totalElements: response.totalElements,
+        loadingIndicators: false,
       }));
     });
   }, [api, state.params]);
@@ -195,53 +204,46 @@ const MyIscTable = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {state.myISCList.map((indicator) => (
-                  <TableRow key={indicator.id}>
-                    <TableCell>{indicator.indicatorName}</TableCell>
-                    <TableCell align="right">
-                      {indicator.createdOn.split("T")[0]}
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        onClick={(event) => handleMenuOpen(event, indicator)}
-                      >
-                        <MoreVert />
-                      </IconButton>
-                      <Menu
-                        anchorEl={anchorEl}
-                        open={Boolean(anchorEl)}
-                        onClose={handleMenuClose}
-                      >
-                        <MenuItem onClick={handlePreview}>
-                          <ListItemIcon>
-                            <Preview fontSize="small" color="primary" />
-                          </ListItemIcon>
-                          <ListItemText primary="Preview Indicator" />
-                        </MenuItem>
-                        <Divider />
-                        {/*<MenuItem onClick={handleEdit} disabled>*/}
-                        {/*  <ListItemIcon>*/}
-                        {/*    <Edit fontSize="small" color="primary" />*/}
-                        {/*  </ListItemIcon>*/}
-                        {/*  <ListItemText primary="Edit Indicator" />*/}
-                        {/*</MenuItem>*/}
-                        {/*<MenuItem onClick={handleDuplicate} disabled>*/}
-                        {/*  <ListItemIcon>*/}
-                        {/*    <ContentCopy fontSize="small" color="primary" />*/}
-                        {/*  </ListItemIcon>*/}
-                        {/*  <ListItemText primary="Duplicate Indicator" />*/}
-                        {/*</MenuItem>*/}
-                        {/*<MenuItem onClick={confirmDeleteIndicator}>*/}
-                        {/*  <ListItemIcon>*/}
-                        {/*    <Delete fontSize="small" color="error" />*/}
-                        {/*  </ListItemIcon>*/}
-                        {/*  <ListItemText primary="Delete Indicator" />*/}
-                        {/*</MenuItem>*/}
-                      </Menu>
+                {state.myISCList.length > 0 ? (
+                  state.myISCList.map((indicator) => (
+                    <TableRow key={indicator.id}>
+                      <TableCell>{indicator.indicatorName}</TableCell>
+                      <TableCell align="right">
+                        {indicator.createdOn.split("T")[0]}
+                      </TableCell>
+                      <TableCell align="right">
+                        <IconButton
+                          size="small"
+                          onClick={(event) => handleMenuOpen(event, indicator)}
+                        >
+                          <MoreVert />
+                        </IconButton>
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={Boolean(anchorEl)}
+                          onClose={handleMenuClose}
+                        >
+                          <MenuItem onClick={handlePreview}>
+                            <ListItemIcon>
+                              <Preview fontSize="small" color="primary" />
+                            </ListItemIcon>
+                            <ListItemText primary="Preview Indicator" />
+                          </MenuItem>
+                          <Divider />
+                          {/* Uncommented menu items */}
+                        </Menu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3}>
+                      {state.loadingIndicators
+                        ? "Loading your indicators..."
+                        : "No indicators found"}
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
             <TablePagination
