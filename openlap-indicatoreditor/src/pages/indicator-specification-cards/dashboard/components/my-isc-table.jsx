@@ -5,6 +5,7 @@ import { useSnackbar } from "notistack";
 import { requestMyISCs } from "../utils/dashboard-api.js";
 import {
   Button,
+  CircularProgress,
   Divider,
   Grid,
   IconButton,
@@ -238,9 +239,22 @@ const MyIscTable = () => {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={3}>
-                      {state.loadingIndicators
-                        ? "Loading your indicators..."
-                        : "No indicators found"}
+                      {state.loadingIndicators ? (
+                        <>
+                          <Grid container alignItems="center" spacing={1}>
+                            <Grid item>
+                              <CircularProgress size={18} />
+                            </Grid>
+                            <Grid item>
+                              <Typography variant="body2" gutterBottom>
+                                Loading your indicators ...
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </>
+                      ) : (
+                        "No indicators found"
+                      )}
                     </TableCell>
                   </TableRow>
                 )}
