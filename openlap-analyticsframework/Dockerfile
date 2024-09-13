@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.5
-FROM maven:3-jdk-11 as build
+FROM maven:3-jdk-14 as build
 
 WORKDIR /opt/app
 ENV MAVEN_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
