@@ -130,7 +130,7 @@ const SpecifyRequirements = () => {
                       />
                     </Grid>
                     <Grid item>
-                      <Typography>Specify your ISC requirements</Typography>
+                      <Typography>Specify your goal and question</Typography>
                     </Grid>
                   </Grid>
                 </Grid>
@@ -164,7 +164,7 @@ const SpecifyRequirements = () => {
                           <Typography>I want to</Typography>
                         </Grid>
                         <Grid item>
-                          <Chip label={requirements.goalType.name} />
+                          <Chip label={requirements.goalType.verb} />
                         </Grid>
                         <Grid item>
                           <Chip label={requirements.goal} />

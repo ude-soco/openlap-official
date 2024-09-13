@@ -65,6 +65,7 @@ const NameDialog = ({ open, toggleOpen }) => {
       },
     );
     toggleOpen();
+    sessionStorage.removeItem("session_isc");
     navigate("/isc");
   };
 

@@ -122,7 +122,10 @@ const IndicatorSpecificationCard = () => {
         prevDependencies.current.visRef !== visRef ||
         prevDependencies.current.lockedStep !== lockedStep
       ) {
-        enqueueSnackbar("Autosaved", { variant: "success" });
+        enqueueSnackbar(
+          "Progress saved temporarily. Your changes will remain until you close or refresh the browser.",
+          { variant: "success" },
+        );
       }
 
       // Update the previous dependencies to the current ones
@@ -132,7 +135,7 @@ const IndicatorSpecificationCard = () => {
         visRef,
         lockedStep,
       };
-    }, 4000);
+    }, 6000);
 
     return () => clearInterval(intervalId);
   }, [requirements, dataset, visRef, lockedStep]);
