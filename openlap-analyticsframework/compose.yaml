@@ -1,0 +1,31 @@
+services:
+  openlap-analyticsframework:
+    build: .
+    environment:
+      ADMIN_EMAIL: admin@mail.com
+      ADMIN_NAME: admin
+      ADMIN_PASSWORD: 1234qweR
+      JWT_SECRET_KEY: secret
+      LRS_MONGODB_DB: learninglocker_v2
+      MONGODB_PRIMARY_URI: mongodb://mongo:27017
+      MONGODB_SECONDARY_URI: mongodb://mongo:27017
+      OPENLAP_MONGODB_DB: openlap
+      PORT: 8090
+      WEBAPP_URL: http://localhost:5173
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  mongo:
+    image: mongo:7.0
+    command: mongod --wiredTigerCacheSizeGB 0.25 --quiet --logpath /dev/null
+    volumes:
+    - mongo:/data/db
+    restart: always
+    healthcheck:
+      test: "mongosh --nodb --eval 'disableTelemetry()'; echo 'db.runCommand({ping: 1}).ok' | mongosh localhost:27017/test --quiet"
+      start_period: 2s
+      interval: 10s
+
+volumes:
+  mongo:

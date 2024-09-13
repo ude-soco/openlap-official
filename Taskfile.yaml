@@ -1,0 +1,51 @@
+version: '3'
+
+vars:
+  COMPOSE: docker compose -f compose.yaml
+
+tasks:
+  all:
+    desc: Clean, build and run
+    cmds:
+    - task: clean
+    - task: build
+    - task: run
+
+  start:
+    aliases: [run, up]
+    desc: Start all services using prod config (containers containing sources)
+    cmds:
+    - task: stop
+    - "{{.COMPOSE}} up --force-recreate"
+
+  stop:
+    aliases: [stop]
+    desc: Stop all services
+    cmds:
+    - "{{.COMPOSE}} down --remove-orphans"
+
+  clean:
+    desc: Remove services, volumes, and locally built images
+    cmds:
+    - "{{.COMPOSE}} down --volumes --remove-orphans --rmi local"
+
+  cleanall:
+    desc: Remove services, volumes, and all images
+    cmds:
+    - "{{.COMPOSE}} down --volumes --remove-orphans --rmi all"
+
+  build:
+    desc: Build all container images
+    cmds:
+    - "{{.COMPOSE}} build"
+
+  push:
+    desc: Push container images to remote registry
+    cmds:
+    - docker compose push
+
+  tilt:
+    desc: Start all services for development using Tilt for live container updates
+    cmds:
+    - "tilt up"
+    # - defer: { task: stop }

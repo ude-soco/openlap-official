@@ -1,0 +1,6 @@
+name: openlap-official
+
+include:
+- ./openlap-analyticsframework/compose.yaml
+- ./openlap-indicatoreditor/compose.yaml
+#- https://raw.githubusercontent.com/ude-soco/learninglocker/master/compose.yaml

@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namePrefix: openlap-official-
+
+resources:
+- https://github.com/ude-soco/learninglocker.git//.k8s/base?ref=1-add-kubernetes-manifests

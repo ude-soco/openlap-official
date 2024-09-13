@@ -1,0 +1,20 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:   [ main ]
+  pull_request:
+    branches:   [ main ]
+
+jobs:
+  images:
+    name: Build container images
+    uses: ./.github/workflows/build.yml
+    with:
+      project_desc:    ${{ github.event.repository.name }}
+      base_image_name: ${{ github.repository }}-
+      push:            ${{ github.event_name != 'pull_request' }}
+      services:        '[ "openlap-analyticsframework", "openlap-indicatoreditor" ]'
+    secrets:
+      registry_user:   ${{ secrets.DOCKERHUB_USERNAME }}
+      registry_token:  ${{ secrets.DOCKERHUB_TOKEN }}

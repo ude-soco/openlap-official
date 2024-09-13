@@ -1,0 +1,44 @@
+version: 2
+updates:
+- package-ecosystem: "github-actions"
+  directory: "/"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "docker"
+  directory: "/openlap-analyticsframework"
+  schedule:
+    interval: "weekly"
+  labels:
+  - "dependencies"
+  - "docker"
+  - "openlap-analyticsframework"
+
+- package-ecosystem: "maven"
+  directory: "/openlap-analyticsframework"
+  schedule:
+    interval: "daily"
+  open-pull-requests-limit: 10
+  labels:
+  - "dependencies"
+  - "java"
+  - "openlap-analyticsframework"
+
+- package-ecosystem: "docker"
+  directory: "/openlap-indicatoreditor"
+  schedule:
+    interval: "weekly"
+  labels:
+  - "dependencies"
+  - "docker"
+  - "openlap-indicatoreditor"
+
+- package-ecosystem: "npm"
+  directory: "/openlap-indicatoreditor"
+  schedule:
+    interval: "daily"
+  open-pull-requests-limit: 10
+  labels:
+  - "dependencies"
+  - "javascript"
+  - "openlap-indicatoreditor"
