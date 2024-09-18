@@ -1,0 +1,5 @@
+services:
+  openlap-indicatoreditor:
+    build: .
+    environment:
+      VITE_BACKEND_URL: http://localhost:8090/api/
