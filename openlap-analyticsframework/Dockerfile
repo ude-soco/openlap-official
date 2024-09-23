@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/root/.m2 \
   mvn package
 
 
-FROM amazoncorretto:11
+FROM amazoncorretto:23
 
 WORKDIR /opt/app
 COPY --from=build /opt/app/target/*.jar .
