@@ -15,7 +15,7 @@ import {
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import { blue, orange } from "@mui/material/colors";
 import IconButton from "@mui/material/IconButton";
-import LockIcon from "@mui/icons-material/Lock.js";
+import LockIcon from "@mui/icons-material/Lock";
 
 const ChoosePath = () => {
   const { requirements, setRequirements, lockedStep, setLockedStep } =

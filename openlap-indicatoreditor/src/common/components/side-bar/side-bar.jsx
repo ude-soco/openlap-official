@@ -19,7 +19,7 @@ import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import menus from "../../../setup/routes-manager/router-config.jsx";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import LockIcon from "@mui/icons-material/Lock.js";
+import LockIcon from "@mui/icons-material/Lock";
 
 const drawerWidth = 280;
 export const DrawerHeader = styled("div")(({ theme }) => ({

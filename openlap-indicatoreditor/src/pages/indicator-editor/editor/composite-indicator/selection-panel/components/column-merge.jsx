@@ -17,7 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
-import LockIcon from "@mui/icons-material/Lock.js";
+import LockIcon from "@mui/icons-material/Lock";
 import { CompositeIndicatorContext } from "../../composite-indicator.jsx";
 import { LoadingButton } from "@mui/lab";
 import ColumnToMerge from "../../../basic-indicator/selection-panel/components/filters/components/column-to-merge.jsx";
