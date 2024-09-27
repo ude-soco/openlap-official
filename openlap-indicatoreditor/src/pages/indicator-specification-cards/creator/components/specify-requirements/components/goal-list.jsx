@@ -25,6 +25,7 @@ const GoalList = () => {
   const { requirements, setRequirements } = useContext(ISCContext);
   const [state, setState] = useState({
     goalList: [],
+    message: "Loading...",
   });
 
   useEffect(() => {
@@ -34,6 +35,10 @@ const GoalList = () => {
       } catch (error) {
         console.log(error);
         enqueueSnackbar(error.message, { variant: "error" });
+        setState((prevState) => ({
+          ...prevState,
+          message: "No goals found",
+        }));
       }
     };
 
@@ -42,6 +47,7 @@ const GoalList = () => {
         setState((prevState) => ({
           ...prevState,
           goalList: response.sort((a, b) => a.verb.localeCompare(b.verb)),
+          message: "I want to",
         }));
       }
     });
@@ -99,8 +105,10 @@ const GoalList = () => {
           renderInput={(params) => (
             <TextField
               {...params}
-              placeholder="e.g., monitor"
-              label="I want to"
+              placeholder={
+                state.goalList.length > 0 ? "e.g., monitor" : undefined
+              }
+              label={state.message}
             />
           )}
           getOptionLabel={(option) => {
