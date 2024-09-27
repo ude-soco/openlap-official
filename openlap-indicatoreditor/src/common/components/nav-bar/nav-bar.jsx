@@ -84,7 +84,7 @@ const NavBar = ({ openSidebar, toggleSidebar }) => {
           <Grid container justifyContent="space-between" alignItems="center">
             <Grid
               item
-              onClick={() => navigate("/indicator")}
+              onClick={() => navigate("/dashboard")}
               sx={{
                 cursor: "pointer",
                 height: 40,

@@ -136,7 +136,7 @@ const Sidebar = ({ openSidebar }) => {
             cursor: "pointer",
             ...(!openSidebar && { display: "none" }),
           }}
-          onClick={() => navigate("/indicator")}
+          onClick={() => navigate("/dashboard")}
           src={OpenLAPLogo}
           alt="Soco logo"
         />
