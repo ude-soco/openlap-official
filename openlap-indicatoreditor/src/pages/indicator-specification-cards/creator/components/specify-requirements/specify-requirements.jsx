@@ -101,12 +101,16 @@ const SpecifyRequirements = () => {
         }
       }
     });
-
-    setDataset((prevState) => ({
-      ...prevState,
-      rows: tempRows,
-      columns: tempColumnData,
-    }));
+    if (
+      requirements.data.some((item) => Object.values(item.type).length !== 0) &&
+      requirements.data.some((item) => item.value !== "")
+    ) {
+      setDataset((prevState) => ({
+        ...prevState,
+        rows: tempRows,
+        columns: tempColumnData,
+      }));
+    }
   };
 
   return (
@@ -303,14 +307,10 @@ const SpecifyRequirements = () => {
                   fullWidth
                   variant="contained"
                   disabled={
-                    requirements.goalType === null ||
+                    requirements.goalType.verb === "" ||
                     requirements.goal === "" ||
                     requirements.question === "" ||
-                    requirements.indicatorName === "" ||
-                    requirements.data.some((item) => item.value === "") ||
-                    requirements.data.some(
-                      (item) => Object.values(item.type).length === 0,
-                    )
+                    requirements.indicatorName === ""
                   }
                   onClick={handleUnlockPath}
                 >

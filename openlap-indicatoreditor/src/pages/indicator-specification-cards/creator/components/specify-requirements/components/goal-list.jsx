@@ -69,7 +69,9 @@ const GoalList = () => {
               // Handle clear action
               setRequirements((prevState) => ({
                 ...prevState,
-                goalType: null,
+                goalType: {
+                  verb: "",
+                },
               }));
             } else if (typeof newValue === "string") {
               setRequirements((prevState) => ({
