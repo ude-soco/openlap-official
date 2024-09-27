@@ -122,10 +122,10 @@ const IndicatorSpecificationCard = () => {
         prevDependencies.current.visRef !== visRef ||
         prevDependencies.current.lockedStep !== lockedStep
       ) {
-        enqueueSnackbar(
-          "Progress saved temporarily. Your changes will remain until you close or refresh the browser.",
-          { variant: "success" },
-        );
+        enqueueSnackbar("Indicator progress saved", {
+          variant: "success",
+          autoHideDuration: 2000,
+        });
       }
 
       // Update the previous dependencies to the current ones
