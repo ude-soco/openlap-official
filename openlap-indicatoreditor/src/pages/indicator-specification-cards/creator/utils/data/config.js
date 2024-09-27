@@ -36,19 +36,19 @@ const DataTypes = {
     value: "Categorical",
     type: "string",
     description:
-      "Categorical data groups information into specific categories or labels without any order or ranking. For example, colors like red, blue, and green are just different categories with no one being higher or lower than the others.",
+      "Groups information into specific categories or labels without any order or ranking. For example, colors like red, blue, and green are categories.",
   },
   numerical: {
     value: "Numerical",
     type: "number",
     description:
-      "Numerical data uses numbers to describe things like age, height, or income. This type of data can be counted or measured.",
+      "Uses numbers to describe things like age, height, or income that can be counted or measured.",
   },
   catOrdered: {
     value: "Categorical (ordinal)",
     type: "string",
     description:
-      "Ordinal categorical data groups information into categories that have a specific order. For example, temperature can be categorized as low, medium, or high.",
+      "Groups information into categories that have a specific order. For example, temperature can be categorized as low, medium, or high.",
   },
 };
 
