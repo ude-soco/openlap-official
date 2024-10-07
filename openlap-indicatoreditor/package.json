@@ -22,7 +22,7 @@
     "apexcharts": "^3.53.0",
     "axios": "^1.7.7",
     "dayjs": "^1.11.13",
-    "html-react-parser": "^5.1.16",
+    "html-react-parser": "^5.1.18",
     "jwt-decode": "^4.0.0",
     "notistack": "^3.0.1",
     "papaparse": "^5.4.1",
