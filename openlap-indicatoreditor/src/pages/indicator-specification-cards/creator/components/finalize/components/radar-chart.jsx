@@ -10,7 +10,7 @@ import {
   Select,
 } from "@mui/material";
 
-const RadarChart = ({ dataset, setVisRef, preview = false }) => {
+const RadarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
   const { darkMode } = useContext(CustomThemeContext);
   const [state, setState] = useState({
     series: [],
@@ -55,7 +55,18 @@ const RadarChart = ({ dataset, setVisRef, preview = false }) => {
   });
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns) {
+    if (preview) {
+      setState((prevState) => ({
+        ...prevState,
+        series: visRef.data.series,
+        options: visRef.data.options,
+        axisOptions: visRef.data.axisOptions,
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (dataset && dataset.rows && dataset.columns && !preview) {
       const stringColumns = dataset.columns.filter(
         (col) => col.type === "string",
       );
@@ -91,7 +102,7 @@ const RadarChart = ({ dataset, setVisRef, preview = false }) => {
   }, [dataset]);
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns) {
+    if (dataset && dataset.rows && dataset.columns && !preview) {
       const { selectedXAxis, selectedYAxis } = state.axisOptions;
       const xAxisColumn = dataset.columns.find(
         (col) => col.field === selectedXAxis,

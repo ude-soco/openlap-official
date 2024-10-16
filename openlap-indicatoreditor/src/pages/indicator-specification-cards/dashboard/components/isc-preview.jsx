@@ -55,12 +55,11 @@ const IscPreview = () => {
     });
   }, []);
 
-  console.log(visRef);
-
   const handleGoBack = () => {
     navigate(-1);
   };
 
+  console.log(visRef.data);
   return (
     <>
       <Grid container spacing={2}>
@@ -86,18 +85,18 @@ const IscPreview = () => {
         </Grid>
         <Grid item xs={12} sx={{ mt: 2 }}>
           <Grid container justifyContent="center" spacing={2}>
-            <Grid item xs={12} lg={7}>
-              <Grid container justifyContent="flex-end" spacing={1}>
-                <Button
-                  disabled
-                  variant="contained"
-                  color="primary"
-                  startIcon={<Edit />}
-                >
-                  Edit
-                </Button>
-              </Grid>
-            </Grid>
+            {/*<Grid item xs={12} lg={7}>*/}
+            {/*  <Grid container justifyContent="flex-end" spacing={1}>*/}
+            {/*    <Button*/}
+            {/*      disabled*/}
+            {/*      variant="contained"*/}
+            {/*      color="primary"*/}
+            {/*      startIcon={<Edit />}*/}
+            {/*    >*/}
+            {/*      Edit*/}
+            {/*    </Button>*/}
+            {/*  </Grid>*/}
+            {/*</Grid>*/}
             <Grid item xs={12} lg={7}>
               {state.loading ? (
                 <Skeleton variant="rounded" height={500} />

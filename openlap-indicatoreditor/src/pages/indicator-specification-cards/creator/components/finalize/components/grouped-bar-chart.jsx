@@ -55,7 +55,18 @@ const GroupedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
   });
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns) {
+    if (preview) {
+      setState((prevState) => ({
+        ...prevState,
+        series: visRef.data.series,
+        options: visRef.data.options,
+        axisOptions: visRef.data.axisOptions,
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (dataset && dataset.rows && dataset.columns && !preview) {
       const stringColumns = dataset.columns.filter(
         (col) => col.type === "string",
       );
@@ -104,7 +115,7 @@ const GroupedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
   }, [dataset, darkMode, visRef.chart.code]);
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns) {
+    if (dataset && dataset.rows && dataset.columns && !preview) {
       const { selectedXAxis, selectedYAxes } = state.axisOptions;
       const categoryColumn = dataset.columns.find(
         (col) => col.field === selectedXAxis,

@@ -61,6 +61,17 @@ const StackedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
     },
   });
 
+  useEffect(() => {
+    if (preview) {
+      setState((prevState) => ({
+        ...prevState,
+        series: visRef.data.series,
+        options: visRef.data.options,
+        axisOptions: visRef.data.axisOptions,
+      }));
+    }
+  }, []);
+
   // Utility function to find suitable column or default
   const getAvailableColumn = (currentField, columns) => {
     const column = columns.find((col) => col.field === currentField);
@@ -79,7 +90,7 @@ const StackedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
   };
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns) {
+    if (dataset && dataset.rows && dataset.columns && !preview) {
       const stringColumns = dataset.columns.filter(
         (col) => col.type === "string",
       );
@@ -130,7 +141,7 @@ const StackedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
   }, [dataset, darkMode]);
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns) {
+    if (dataset && dataset.rows && dataset.columns && !preview) {
       const { selectedXAxis, selectedBarValue, selectedYAxis } =
         state.axisOptions;
 

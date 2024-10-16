@@ -2,9 +2,14 @@ import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import { requestDeleteISC, requestMyISCs } from "../utils/dashboard-api.js";
+import {
+  requestDeleteISC,
+  requestISCDetails,
+  requestMyISCs,
+} from "../utils/dashboard-api.js";
 import {
   Button,
+  Backdrop,
   CircularProgress,
   Divider,
   Grid,
@@ -29,6 +34,7 @@ import {
   MoreVert,
   Preview,
   Delete,
+  Edit,
 } from "@mui/icons-material";
 import DeleteDialog from "../../../../common/components/delete-dialog/delete-dialog.jsx";
 
@@ -52,6 +58,7 @@ const MyIscTable = () => {
     },
     openDeleteDialog: false,
     loadingIndicators: false,
+    loadingEditIndicator: false,
   });
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedIndicator, setSelectedIndicator] = useState(null);
@@ -124,6 +131,43 @@ const MyIscTable = () => {
   const handlePreview = () => {
     handleMenuClose();
     navigate(`/isc/${selectedIndicator.id}`);
+  };
+
+  const handleEditIndicator = () => {
+    const loadISCDetail = async (api, iscId) => {
+      try {
+        return await requestISCDetails(api, iscId);
+      } catch (error) {
+        console.log("Error requesting my indicators");
+      }
+    };
+    setState((prevState) => ({
+      ...prevState,
+      loadingEditIndicator: true,
+    }));
+    loadISCDetail(api, selectedIndicator.id)
+      .then((responseData) => {
+        let parsedData = JSON.parse(JSON.stringify(responseData));
+        parsedData.requirements = JSON.parse(parsedData.requirements);
+        parsedData.dataset = JSON.parse(parsedData.dataset);
+        parsedData.visRef = JSON.parse(parsedData.visRef);
+        parsedData.lockedStep = JSON.parse(parsedData.lockedStep);
+        sessionStorage.setItem("session_isc", JSON.stringify(parsedData));
+      })
+      .then(() => {
+        setState((prevState) => ({
+          ...prevState,
+          loadingEditIndicator: false,
+        }));
+        navigate(`/isc/creator`);
+      })
+      .catch((error) => {
+        setState((prevState) => ({
+          ...prevState,
+          loadingEditIndicator: false,
+        }));
+        console.error(error);
+      });
   };
 
   const handleDeleteIndicator = async () => {
@@ -255,8 +299,33 @@ const MyIscTable = () => {
                             <ListItemIcon>
                               <Preview fontSize="small" color="primary" />
                             </ListItemIcon>
-                            <ListItemText primary="Preview Indicator" />
+                            <ListItemText primary="Preview" />
                           </MenuItem>
+                          <MenuItem onClick={handleEditIndicator}>
+                            <ListItemIcon>
+                              <Edit fontSize="small" color="primary" />
+                            </ListItemIcon>
+                            <ListItemText primary="Edit" />
+                          </MenuItem>
+                          <Backdrop
+                            sx={(theme) => ({
+                              color: "#fff",
+                              zIndex: theme.zIndex.drawer + 1,
+                            })}
+                            open={state.loadingEditIndicator}
+                          >
+                            <Grid
+                              container
+                              direction="column"
+                              alignItems="center"
+                              spacing={2}
+                            >
+                              <CircularProgress color="inherit" />
+                              <Typography sx={{ mt: 2 }}>
+                                Loading Indicator
+                              </Typography>
+                            </Grid>
+                          </Backdrop>
                           <Divider />
 
                           <MenuItem onClick={handleToggleDelete}>

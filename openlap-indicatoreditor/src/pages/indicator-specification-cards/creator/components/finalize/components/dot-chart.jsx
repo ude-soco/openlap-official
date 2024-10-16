@@ -49,6 +49,17 @@ const DotChart = ({ dataset, setVisRef, preview = false }) => {
     },
   });
 
+  useEffect(() => {
+    if (preview) {
+      setState((prevState) => ({
+        ...prevState,
+        series: visRef.data.series,
+        options: visRef.data.options,
+        axisOptions: visRef.data.axisOptions,
+      }));
+    }
+  }, []);
+
   // Utility function to find the next available column
   const findNextAvailableColumn = (selectedField, availableColumns) => {
     return (
@@ -58,7 +69,7 @@ const DotChart = ({ dataset, setVisRef, preview = false }) => {
   };
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns) {
+    if (dataset && dataset.rows && dataset.columns && !preview) {
       const stringColumns = dataset.columns.filter(
         (col) => col.type === "string",
       );
@@ -102,7 +113,7 @@ const DotChart = ({ dataset, setVisRef, preview = false }) => {
   }, [dataset, darkMode]);
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns) {
+    if (dataset && dataset.rows && dataset.columns && !preview) {
       const { selectedXAxis, selectedYAxis } = state.axisOptions;
 
       if (!selectedXAxis || !selectedYAxis) return;

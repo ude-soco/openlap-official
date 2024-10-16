@@ -50,7 +50,12 @@ const VisSelection = ({ dataset, visRef, setVisRef, preview }) => {
       );
     case VisualizationTypes.radar:
       return (
-        <RadarChart dataset={dataset} setVisRef={setVisRef} preview={preview} />
+        <RadarChart
+          dataset={dataset}
+          visRef={visRef}
+          setVisRef={setVisRef}
+          preview={preview}
+        />
       );
     case VisualizationTypes.scatter:
       return (
@@ -72,7 +77,12 @@ const VisSelection = ({ dataset, visRef, setVisRef, preview }) => {
       );
     case VisualizationTypes.dot:
       return (
-        <DotChart dataset={dataset} setVisRef={setVisRef} preview={preview} />
+        <DotChart
+          dataset={dataset}
+          visRef={visRef}
+          setVisRef={setVisRef}
+          preview={preview}
+        />
       );
     case VisualizationTypes.groupedBar:
       return (
@@ -85,7 +95,12 @@ const VisSelection = ({ dataset, visRef, setVisRef, preview }) => {
       );
     case VisualizationTypes.treemap:
       return (
-        <TreeMap dataset={dataset} setVisRef={setVisRef} preview={preview} />
+        <TreeMap
+          dataset={dataset}
+          visRef={visRef}
+          setVisRef={setVisRef}
+          preview={preview}
+        />
       );
     default:
       return <Typography>Visualization not available.</Typography>;

@@ -109,6 +109,23 @@ public class IscServiceImpl implements IscService {
     }
   }
 
+  @Override
+  public void updateIsc(String iscId, IscRequest isc) {
+    Optional<IndicatorSpecificationCard> foundIscId = iscRepository.findById(iscId);
+    if (foundIscId.isPresent()) {
+      IndicatorSpecificationCard foundIsc = foundIscId.get();
+      foundIsc.setRequirements(isc.getRequirements());
+      foundIsc.setDataset(isc.getDataset());
+      foundIsc.setVisRef(isc.getVisRef());
+      foundIsc.setLockedStep(isc.getLockedStep());
+      foundIsc.setCreatedBy(foundIscId.get().getCreatedBy());
+      foundIsc.setCreatedOn(LocalDateTime.now());
+      iscRepository.save(foundIsc);
+    } else {
+      throw new IndicatorNotFoundException("Indicator with id '" + iscId + "' not found");
+    }
+  }
+
   private List<IndicatorSpecificationCardResponse> getISCResponses(
       Page<IndicatorSpecificationCard> foundISCPage) {
     Gson gson = new Gson();

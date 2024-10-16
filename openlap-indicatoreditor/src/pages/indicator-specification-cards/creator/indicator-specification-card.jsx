@@ -11,6 +11,15 @@ export const ISCContext = createContext(undefined);
 
 const IndicatorSpecificationCard = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const [id, setId] = useState(() => {
+    const savedState = sessionStorage.getItem("session_isc");
+    return savedState
+      ? JSON.parse(savedState).id
+        ? JSON.parse(savedState).id
+        : null
+      : null;
+  });
+
   const [requirements, setRequirements] = useState(() => {
     const savedState = sessionStorage.getItem("session_isc");
     return savedState
@@ -107,6 +116,7 @@ const IndicatorSpecificationCard = () => {
   useEffect(() => {
     const intervalId = setInterval(() => {
       let session_isc = {
+        id,
         requirements,
         dataset,
         visRef,
@@ -123,7 +133,7 @@ const IndicatorSpecificationCard = () => {
         prevDependencies.current.lockedStep !== lockedStep
       ) {
         enqueueSnackbar("Indicator progress saved", {
-          variant: "success",
+          variant: "info",
           autoHideDuration: 2000,
         });
       }
@@ -144,6 +154,7 @@ const IndicatorSpecificationCard = () => {
     <>
       <ISCContext.Provider
         value={{
+          id,
           requirements,
           setRequirements,
           lockedStep,

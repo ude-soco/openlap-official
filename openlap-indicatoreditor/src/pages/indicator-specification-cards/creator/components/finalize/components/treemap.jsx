@@ -3,7 +3,7 @@ import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-
 import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
 import Chart from "react-apexcharts";
 
-const TreeMap = ({ dataset, setVisRef, preview = false }) => {
+const TreeMap = ({ dataset, visRef, setVisRef, preview = false }) => {
   const { darkMode } = useContext(CustomThemeContext);
 
   const [state, setState] = useState({
@@ -38,7 +38,18 @@ const TreeMap = ({ dataset, setVisRef, preview = false }) => {
   });
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns) {
+    if (preview) {
+      setState((prevState) => ({
+        ...prevState,
+        series: visRef.data.series,
+        options: visRef.data.options,
+        axisOptions: visRef.data.axisOptions,
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (dataset && dataset.rows && dataset.columns && !preview) {
       const stringColumns = dataset.columns.filter(
         (col) => col.type === "string",
       );
@@ -61,7 +72,7 @@ const TreeMap = ({ dataset, setVisRef, preview = false }) => {
   }, [dataset, darkMode]);
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns) {
+    if (dataset && dataset.rows && dataset.columns && !preview) {
       const { selectedCategory, selectedXValue, selectedValue } =
         state.axisOptions;
 
