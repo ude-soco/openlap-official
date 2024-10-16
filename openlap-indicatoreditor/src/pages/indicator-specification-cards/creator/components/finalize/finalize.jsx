@@ -18,6 +18,7 @@ import IconButton from "@mui/material/IconButton";
 import LockIcon from "@mui/icons-material/Lock";
 import VisSelection from "../visualization/components/vis-selection.jsx";
 import NameDialog from "./components/name-dialog.jsx";
+import PaletteIcon from "@mui/icons-material/Palette";
 
 const Finalize = () => {
   const { visRef, setVisRef, dataset, lockedStep, setLockedStep } =
@@ -26,6 +27,8 @@ const Finalize = () => {
     showSelections: true,
     openSaveDialog: false,
   });
+
+  const [showCustomize, setShowCustomize] = useState(false);
 
   const handleTogglePanel = () => {
     setLockedStep((prevState) => ({
@@ -50,6 +53,10 @@ const Finalize = () => {
       openSaveDialog: !prevState.openSaveDialog,
     }));
   };
+
+  const handleCustomize = () => {
+    setShowCustomize(!showCustomize);
+  }
 
   return (
     <>
@@ -103,6 +110,17 @@ const Finalize = () => {
                           : "CHANGE"}
                       </Button>
                     </Grid>
+                    <Grid item xs={12}>
+                      {showCustomize && ( <Button onClick={handleCustomize} color="primary">
+                        Close customization
+                      </Button>)}
+                      {!showCustomize && (
+                          <Button onClick={handleCustomize} color="primary" endIcon={<PaletteIcon />}>
+                            Customize
+                          </Button>
+                      )}
+
+                    </Grid>
                   </Grid>
                 )}
               </Grid>
@@ -121,6 +139,8 @@ const Finalize = () => {
                 dataset={dataset}
                 visRef={visRef}
                 setVisRef={setVisRef}
+                customize={showCustomize}
+                setCustomize={setShowCustomize}
               />
             </Grid>
             <Grid item xs={12}>

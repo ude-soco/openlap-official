@@ -25,6 +25,9 @@ const VisualizationFilter = () => {
   });
 
   const handleSelectVisualization = (chart) => {
+    // TODO: Recheck this
+    localStorage.removeItem("categories");
+    localStorage.removeItem("series");
     if (visRef.chart.type !== chart.type) {
       setVisRef((prevState) => ({
         ...prevState,
@@ -96,10 +99,10 @@ const VisualizationFilter = () => {
 
     // Count the available columns of each type in the dataset
     const availableStrings = columnTypes.filter(
-      (type) => type === "string",
+      (type) => type === "string"
     ).length;
     const availableNumbers = columnTypes.filter(
-      (type) => type === "number",
+      (type) => type === "number"
     ).length;
 
     // Check if the dataset meets the visualization requirements
@@ -196,7 +199,7 @@ const VisualizationFilter = () => {
                                         <Grid item xs>
                                           {checkVisualizationRecommendation(
                                             visualization,
-                                            columnTypes,
+                                            columnTypes
                                           ) && (
                                             <Grid
                                               container
