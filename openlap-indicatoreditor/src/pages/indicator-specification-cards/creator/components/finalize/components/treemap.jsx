@@ -1,10 +1,26 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
 import Chart from "react-apexcharts";
+import TreeMapCustomizations from "./tree-map-chart-customizations/tree-map-customizations.jsx";
 
-const TreeMap = ({ dataset, setVisRef, preview = false }) => {
+export let StateContext = createContext();
+
+const TreeMap = ({
+  dataset,
+  setVisRef,
+  preview = false,
+  customize,
+  setCustomize,
+}) => {
   const { darkMode } = useContext(CustomThemeContext);
+  const chartRef = useRef(null);
 
   const [state, setState] = useState({
     series: [],
@@ -13,13 +29,51 @@ const TreeMap = ({ dataset, setVisRef, preview = false }) => {
         type: "treemap",
         height: 350,
         foreColor: darkMode ? "#ffffff" : "#000000",
+        toolbar: {
+          show: false,
+        },
       },
       title: {
-        text: "TreeMap Visualization",
-        align: "center",
+        text: "",
+        align: "left",
+        style: {
+          fontSize: 18,
+          cssClass: "x-y-axis-hide-title",
+        },
+      },
+      subtitle: {
+        text: "",
+        align: "left",
+        margin: 15,
       },
       legend: {
-        show: false,
+        show: true,
+        showForSingleSeries: true,
+        position: "bottom",
+        horizontalAlign: "center",
+        labels: {
+          colors: undefined,
+          useSeriesColors: false,
+        },
+        onItemClick: {
+          toggleDataSeries: false,
+        },
+      },
+      colors: [],
+      dataLabels: {
+        enabled: true,
+        style: {
+          colors: ["#000000"],
+          fontWeight: 400,
+        },
+        background: {
+          enabled: true,
+          foreColor: "#ffffff",
+          padding: 10,
+          borderRadius: 2,
+          borderWidth: 1,
+          borderColor: "#ffffff",
+        },
       },
       tooltip: {
         enabled: true,
@@ -40,10 +94,10 @@ const TreeMap = ({ dataset, setVisRef, preview = false }) => {
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns) {
       const stringColumns = dataset.columns.filter(
-        (col) => col.type === "string",
+        (col) => col.type === "string"
       );
       const numberColumns = dataset.columns.filter(
-        (col) => col.type === "number",
+        (col) => col.type === "number"
       );
 
       setState((prevState) => ({
@@ -103,7 +157,17 @@ const TreeMap = ({ dataset, setVisRef, preview = false }) => {
         options: {
           ...prevState.options,
           title: {
-            text: `TreeMap of ${dataset.columns.find((col) => col.field === selectedCategory)?.headerName} vs ${dataset.columns.find((col) => col.field === selectedXValue)?.headerName} vs ${dataset.columns.find((col) => col.field === selectedValue)?.headerName}`,
+            align: "left",
+            text: `TreeMap of ${
+              dataset.columns.find((col) => col.field === selectedCategory)
+                ?.headerName
+            } vs ${
+              dataset.columns.find((col) => col.field === selectedXValue)
+                ?.headerName
+            } vs ${
+              dataset.columns.find((col) => col.field === selectedValue)
+                ?.headerName
+            }`,
           },
         },
       }));
@@ -224,14 +288,29 @@ const TreeMap = ({ dataset, setVisRef, preview = false }) => {
             </Grid>
           </Grid>
         )}
-        <Grid item xs={12} sx={{ minHeight: 600 }}>
+        <Grid
+          item
+          xs={12}
+          lg={customize ? 8 : 12}
+          md={customize ? 8 : 12}
+          xl={customize ? 8 : 12}
+          sx={{ minHeight: 600, transition: "all 0.5s ease" }}
+        >
           <Chart
+            ref={chartRef}
             options={state.options}
             series={state.series}
             type="treemap"
             height="100%"
           />
         </Grid>
+        {customize && (
+          <Grid item xs={12} lg={4} md={4} xl={4} sx={{ minHeight: 600 }}>
+            <StateContext.Provider value={{ state, setState, chartRef }}>
+              <TreeMapCustomizations />
+            </StateContext.Provider>
+          </Grid>
+        )}
       </Grid>
     </>
   );
