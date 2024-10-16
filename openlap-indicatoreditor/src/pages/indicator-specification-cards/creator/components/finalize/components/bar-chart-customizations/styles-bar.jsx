@@ -1,16 +1,11 @@
 import {
-  Stack,
-  Typography,
-  FormControlLabel,
-  Switch,
-  RadioGroup,
-  Radio,
-  Button,
-  FormControl,
-  TextField,
-  Checkbox,
   Box,
-  FormGroup,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Grid,
+  Switch,
+  Typography,
 } from "@mui/material";
 import { useContext, useEffect } from "react";
 import ApexCharts from "apexcharts";
@@ -19,7 +14,7 @@ import { StateContext } from "../bar-chart";
 export const StylesBar = () => {
   const { state, setState, chartRef } = useContext(StateContext);
 
-  function handleColorChange(e) {
+  const handleColorChange = (e) => {
     const updatedSeries = state.series.map((item, index) =>
       index === 0 ? { ...item, color: e.target.value } : item
     );
@@ -28,9 +23,9 @@ export const StylesBar = () => {
       ...prevState,
       series: updatedSeries,
     }));
-  }
+  };
 
-  function handleUseSeriesColors(e) {
+  const handleUseSeriesColors = (e) => {
     setState((prevState) => ({
       ...prevState,
       options: {
@@ -44,9 +39,9 @@ export const StylesBar = () => {
         },
       },
     }));
-  }
+  };
 
-  function handleDataLabelsColor(e) {
+  const handleDataLabelsColor = (e) => {
     setState((prevState) => ({
       ...prevState,
       options: {
@@ -60,9 +55,9 @@ export const StylesBar = () => {
         },
       },
     }));
-  }
+  };
 
-  function handleDataLabelsBgColor(e) {
+  const handleDataLabelsBgColor = (e) => {
     setState((prevState) => ({
       ...prevState,
       options: {
@@ -76,102 +71,127 @@ export const StylesBar = () => {
         },
       },
     }));
-  }
+  };
 
   return (
     <>
-      <Stack>
-        <Stack mb={1} spacing={2}>
-          <Typography variant="h6" fontSize="small" fontWeight="800">
-            DATA COLORS
-          </Typography>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Grid container sx={{ mt: 1 }}>
+            <FormControl>
+              <FormLabel sx={{ mb: 1 }} id="role-label">
+                Data Colors
+              </FormLabel>
+              <Grid container spacing={1} item>
+                <Grid item>
+                  <Box sx={{ mb: 0, height: 30, width: 30 }}>
+                    <input
+                      type="color"
+                      value={state.series[0]?.color}
+                      onChange={handleColorChange}
+                      style={{
+                        cursor: "pointer",
+                        width: "100%",
+                        height: "100%",
+                        outline: "none",
+                        background: "none",
+                        border: "none",
+                        borderRadius: "5px",
+                      }}
+                    />
+                  </Box>
+                </Grid>
+                <Grid item>
+                  <Typography style={{ marginTop: "5px" }} variant="body">
+                    {state.series[0]?.name}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </FormControl>
+          </Grid>
+        </Grid>
 
-          <Stack direction="row" spacing={1}>
-            <Typography style={{ marginTop: "5px" }} variant="body">
-              {state.series[0]?.name}
-            </Typography>
-            <Box mb={0} height="30px" width="30px">
-              <input
-                type="color"
-                value={state.series[0]?.color}
-                onChange={handleColorChange}
-                style={{
-                  cursor: "pointer",
-                  width: "100%",
-                  height: "100%",
-                  border: "none",
-                  borderRadius: "5px",
-                }}
-              />
-            </Box>
-          </Stack>
-        </Stack>
+        <Grid item xs={12}>
+          <FormControl>
+            <FormLabel id="role-label">Legend Text Color</FormLabel>
+          </FormControl>
+          <Grid item>
+            <FormControlLabel
+              label="Use series colors"
+              control={
+                <Switch
+                  checked={state.options.legend.labels.useSeriesColors}
+                  onChange={handleUseSeriesColors}
+                  color="primary"
+                />
+              }
+            />
+          </Grid>
+        </Grid>
 
-        <Stack mb={1} spacing={1}>
-          <Typography variant="h6" fontSize="small" fontWeight="800">
-            LEGEND COLOR
-          </Typography>
-          <FormControlLabel
-            label="Use series colors"
-            control={
-              <Switch
-                checked={state.options.legend.labels.useSeriesColors}
-                onChange={handleUseSeriesColors}
-                size="small"
-                color="primary"
-              />
-            }
-          />
-        </Stack>
+        <Grid item xs={12}>
+          <Grid container>
+            <FormControl>
+              <FormLabel sx={{ mb: 1 }} id="role-label">
+                Data Labels
+              </FormLabel>
+              <Grid container spacing={1}>
+                <Grid item>
+                  <Box sx={{ mb: 0, height: 30, width: 30 }}>
+                    <input
+                      type="color"
+                      value={state.options.dataLabels.style.colors[0]}
+                      onChange={handleDataLabelsColor}
+                      style={{
+                        cursor: "pointer",
+                        width: "100%",
+                        height: "100%",
+                        outline: "none",
+                        background: "none",
+                        border: "none",
+                        borderRadius: "5px",
+                      }}
+                    />
+                  </Box>
+                </Grid>
+                <Grid item>
+                  <Typography style={{ marginTop: "5px" }} variant="body">
+                    Data labels color
+                  </Typography>
+                </Grid>
+              </Grid>
 
-        <Stack mb={1} spacing={2}>
-          <Typography variant="h6" fontSize="small" fontWeight="800">
-            DATA LABELS
-          </Typography>
-
-          <Stack direction="row" spacing={1}>
-            <Typography style={{ marginTop: "5px" }} variant="body">
-              Data labels color
-            </Typography>
-            <Box mb={0} height="30px" width="30px">
-              <input
-                type="color"
-                value={state.options.dataLabels.style.colors[0]}
-                onChange={handleDataLabelsColor}
-                style={{
-                  cursor: "pointer",
-                  width: "100%",
-                  height: "100%",
-                  border: "none",
-                  borderRadius: "5px",
-                }}
-              />
-            </Box>
-          </Stack>
-
-          <Stack direction="row" spacing={1}>
-            <Typography style={{ marginTop: "5px" }} variant="body">
-              Data labels fore color
-              <br />
-              (when background activated)
-            </Typography>
-            <Box mb={0} height="30px" width="30px">
-              <input
-                type="color"
-                value={state.options.dataLabels.foreColor}
-                onChange={handleDataLabelsBgColor}
-                style={{
-                  cursor: "pointer",
-                  width: "100%",
-                  height: "100%",
-                  border: "none",
-                  borderRadius: "5px",
-                }}
-              />
-            </Box>
-          </Stack>
-        </Stack>
-      </Stack>
+              <Grid container spacing={1}>
+                <Grid item>
+                  <Box sx={{ mb: 0, height: 30, width: 30 }}>
+                    <input
+                      type="color"
+                      value={state.options.dataLabels.background.foreColor}
+                      onChange={handleDataLabelsBgColor}
+                      style={{
+                        cursor: "pointer",
+                        width: "100%",
+                        height: "100%",
+                        outline: "none",
+                        background: "none",
+                        border: "none",
+                        borderRadius: "5px",
+                      }}
+                    />
+                  </Box>
+                </Grid>
+                <Grid item>
+                  <Typography style={{ marginTop: "5px" }} variant="body">
+                    Data labels fore color
+                    <br />
+                    (when background activated)
+                  </Typography>
+                </Grid>
+              </Grid>
+            </FormControl>
+          </Grid>
+        </Grid>
+      </Grid>
     </>
   );
 };

@@ -6,20 +6,22 @@ import {
   RadioGroup,
   Radio,
   Button,
+  FormLabel,
   FormControl,
   TextField,
   Checkbox,
   Box,
+  Grid,
   FormGroup,
 } from "@mui/material";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import ApexCharts from "apexcharts";
 import { StateContext } from "../bar-chart";
 
 export const ElementsBar = () => {
   const { state, setState, chartRef } = useContext(StateContext);
 
-  function handleLegendSwitch(e) {
+  const handleLegendSwitch = (e) => {
     setState((prevState) => ({
       ...prevState,
       options: {
@@ -30,9 +32,9 @@ export const ElementsBar = () => {
         },
       },
     }));
-  }
+  };
 
-  function handleLegendPosition(e) {
+  const handleLegendPosition = (e) => {
     setState((prevState) => ({
       ...prevState,
       options: {
@@ -43,9 +45,9 @@ export const ElementsBar = () => {
         },
       },
     }));
-  }
+  };
 
-  function handleXaxisChange(e) {
+  const handleXaxisChange = (e) => {
     setState((prevState) => ({
       ...prevState,
       options: {
@@ -59,9 +61,9 @@ export const ElementsBar = () => {
         },
       },
     }));
-  }
+  };
 
-  function handleYaxisChange(e) {
+  const handleYaxisChange = (e) => {
     setState((prevState) => ({
       ...prevState,
       options: {
@@ -75,9 +77,9 @@ export const ElementsBar = () => {
         },
       },
     }));
-  }
+  };
 
-  function handleshowYaxisTitle(e) {
+  const handleshowYaxisTitle = (e) => {
     if (e.target.checked) {
       setState((prevState) => ({
         ...prevState,
@@ -113,9 +115,9 @@ export const ElementsBar = () => {
         },
       }));
     }
-  }
+  };
 
-  function handleshowXaxisTitle(e) {
+  const handleshowXaxisTitle = (e) => {
     if (e.target.checked) {
       setState((prevState) => ({
         ...prevState,
@@ -151,9 +153,9 @@ export const ElementsBar = () => {
         },
       }));
     }
-  }
+  };
 
-  function handleChartTitle(e) {
+  const handleChartTitle = (e) => {
     setState((prevState) => ({
       ...prevState,
       options: {
@@ -164,9 +166,9 @@ export const ElementsBar = () => {
         },
       },
     }));
-  }
+  };
 
-  function handleTitlePosition(e) {
+  const handleTitlePosition = (e) => {
     setState((prevState) => ({
       ...prevState,
       options: {
@@ -177,9 +179,9 @@ export const ElementsBar = () => {
         },
       },
     }));
-  }
+  };
 
-  function handleChartSubTitle(e) {
+  const handleChartSubTitle = (e) => {
     setState((prevState) => ({
       ...prevState,
       options: {
@@ -190,22 +192,9 @@ export const ElementsBar = () => {
         },
       },
     }));
-  }
+  };
 
-  function handleSubtitlePosition(e) {
-    setState((prevState) => ({
-      ...prevState,
-      options: {
-        ...prevState.options,
-        subtitle: {
-          ...prevState.options.subtitle,
-          align: e.target.value,
-        },
-      },
-    }));
-  }
-
-  function handleDataLabelsSwitch(e) {
+  const handleDataLabelsSwitch = (e) => {
     setState((prevState) => ({
       ...prevState,
       options: {
@@ -216,9 +205,9 @@ export const ElementsBar = () => {
         },
       },
     }));
-  }
+  };
 
-  function handleDataLabelsBgSwitch(e) {
+  const handleDataLabelsBgSwitch = (e) => {
     setState((prevState) => ({
       ...prevState,
       options: {
@@ -232,9 +221,9 @@ export const ElementsBar = () => {
         },
       },
     }));
-  }
+  };
 
-  function handleLabelsPosition(e) {
+  const handleLabelsPosition = (e) => {
     setState((prevState) => ({
       ...prevState,
       options: {
@@ -251,84 +240,51 @@ export const ElementsBar = () => {
         },
       },
     }));
-  }
-
-  //   function handleZoomIn() {
-  //     const chart = chartRef.current.chart;
-  //     const xAxisMin = chart.w.globals.minX;
-  //     const xAxisMax = chart.w.globals.maxX;
-  //     const newMin = xAxisMin + (xAxisMax - xAxisMin) * 0.1;
-  //     const newMax = xAxisMax - (xAxisMax - xAxisMin) * 0.1;
-
-  //     ApexCharts.exec(state.options.chart.id, "zoomX", newMin, newMax);
-  //   }
-
-  //   function handleZoomOut() {
-  //     const chart = chartRef.current.chart;
-  //     const xAxisMin = chart.w.globals.minX;
-  //     const xAxisMax = chart.w.globals.maxX;
-  //     const newMin = xAxisMin - (xAxisMax - xAxisMin) * 0.1;
-  //     const newMax = xAxisMax + (xAxisMax - xAxisMin) * 0.1;
-
-  //     ApexCharts.exec(state.options.chart.id, "zoomX", newMin, newMax);
-  //   }
+  };
 
   //   Beginning of JSX
   return (
     <>
-      <Stack>
-        <Stack mb={1} spacing={1}>
-          <Typography variant="h6" fontSize="small" fontWeight="800">
-            LEGEND
-          </Typography>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
           <FormControlLabel
+            sx={{ mt: 1 }}
             label="Show legend"
             control={
               <Switch
                 checked={state.options.legend.show}
                 onChange={handleLegendSwitch}
-                size="small"
                 color="primary"
               />
             }
           />
-        </Stack>
+        </Grid>
 
-        <Stack mb={1} spacing={1}>
-          <Typography variant="body" fontSize="small">
-            LEGEND POSITION
-          </Typography>
+        <Grid item xs={12}>
           <FormControl>
+            <FormLabel id="role-label">Legend Position</FormLabel>
             <RadioGroup
               value={state.options.legend.position}
               onChange={handleLegendPosition}
               row
             >
-              <FormControlLabel
-                label="Top"
-                control={<Radio value="top" />}
-              ></FormControlLabel>
+              <FormControlLabel label="Top" control={<Radio value="top" />} />
               <FormControlLabel
                 label="Right"
                 control={<Radio value="right" />}
-              ></FormControlLabel>
+              />
               <FormControlLabel
                 label="Bottom"
                 control={<Radio value="bottom" />}
-              ></FormControlLabel>
-              <FormControlLabel
-                label="Left"
-                control={<Radio value="left" />}
-              ></FormControlLabel>
+              />
+              <FormControlLabel label="Left" control={<Radio value="left" />} />
             </RadioGroup>
           </FormControl>
-        </Stack>
+        </Grid>
 
-        <Stack mb={1} spacing={1}>
-          <Typography variant="h6" fontSize="small" fontWeight="800">
-            AXES
-          </Typography>
+        <Grid item xs={12}>
           <FormControl>
+            <FormLabel id="role-label">Axes</FormLabel>
             <FormGroup row>
               <FormControlLabel
                 label="Vertical"
@@ -350,13 +306,11 @@ export const ElementsBar = () => {
               ></FormControlLabel>
             </FormGroup>
           </FormControl>
-        </Stack>
+        </Grid>
 
-        <Stack mb={1} spacing={1}>
-          <Typography variant="body" fontSize="small">
-            AXES TITLES
-          </Typography>
+        <Grid item xs={12}>
           <FormControl>
+            <FormLabel id="role-label">Axes Titles</FormLabel>
             <FormGroup row>
               <FormControlLabel
                 label="Vertical"
@@ -388,112 +342,83 @@ export const ElementsBar = () => {
               ></FormControlLabel>
             </FormGroup>
           </FormControl>
-        </Stack>
+        </Grid>
 
-        <Stack mb={1} spacing={2}>
-          <Typography variant="h6" fontSize="small" fontWeight="800">
-            CHART TITLE
-          </Typography>
-          <TextField
-            label="Chart title"
-            variant="outlined"
-            size="small"
-            value={state.options.title.text}
-            onChange={handleChartTitle}
-          />
+        <Grid item xs={12}>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                label="Chart title"
+                variant="outlined"
+                size="small"
+                value={state.options.title.text}
+                onChange={handleChartTitle}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Chart subtitle"
+                variant="outlined"
+                size="small"
+                value={state.options.subtitle.text}
+                onChange={handleChartSubTitle}
+              />
+            </Grid>
+          </Grid>
+        </Grid>
 
-          <Typography variant="body" fontSize="small">
-            TITLE POSITION
-          </Typography>
+        <Grid item xs={12}>
           <FormControl>
+            <FormLabel>Title and Subtitle Position</FormLabel>
             <RadioGroup
               value={state.options.title.align}
               onChange={handleTitlePosition}
               row
             >
-              <FormControlLabel
-                label="Left"
-                control={<Radio value="left" />}
-              ></FormControlLabel>
+              <FormControlLabel label="Left" control={<Radio value="left" />} />
               <FormControlLabel
                 label="Center"
                 control={<Radio value="center" />}
-              ></FormControlLabel>
+              />
               <FormControlLabel
                 label="Right"
                 control={<Radio value="right" />}
-              ></FormControlLabel>
+              />
             </RadioGroup>
           </FormControl>
-        </Stack>
+        </Grid>
 
-        <Stack mb={1} spacing={2}>
-          <Typography variant="h6" fontSize="small" fontWeight="800">
-            CHART SUBTITLE
-          </Typography>
-          <TextField
-            label="Chart subtitle"
-            variant="outlined"
-            size="small"
-            value={state.options.subtitle.text}
-            onChange={handleChartSubTitle}
-          />
-
-          <Typography variant="body" fontSize="small">
-            SUBTITLE POSITION
-          </Typography>
+        <Grid item xs={12}>
           <FormControl>
-            <RadioGroup
-              value={state.options.subtitle.align}
-              onChange={handleSubtitlePosition}
-              row
-            >
+            <FormLabel>Data Labels</FormLabel>
+            <FormGroup>
               <FormControlLabel
-                label="Left"
-                control={<Radio value="left" />}
-              ></FormControlLabel>
+                sx={{ mt: 1 }}
+                label="Show labels"
+                control={
+                  <Switch
+                    color="primary"
+                    checked={state.options.dataLabels.enabled}
+                    onChange={handleDataLabelsSwitch}
+                  />
+                }
+              />
               <FormControlLabel
-                label="Center"
-                control={<Radio value="center" />}
-              ></FormControlLabel>
-              <FormControlLabel
-                label="Right"
-                control={<Radio value="right" />}
-              ></FormControlLabel>
-            </RadioGroup>
+                label="Show labels background"
+                control={
+                  <Switch
+                    color="primary"
+                    checked={state.options.dataLabels.background.enabled}
+                    onChange={handleDataLabelsBgSwitch}
+                  />
+                }
+              />
+            </FormGroup>
           </FormControl>
-        </Stack>
-
-        <Stack mb={1} spacing={2}>
-          <Typography variant="h6" fontSize="small" fontWeight="800">
-            DATA LABELS
-          </Typography>
-          <FormControlLabel
-            label="Show labels"
-            control={
-              <Switch
-                size="small"
-                color="primary"
-                checked={state.options.dataLabels.enabled}
-                onChange={handleDataLabelsSwitch}
-              />
-            }
-          />
-          <FormControlLabel
-            label="Show labels background"
-            control={
-              <Switch
-                size="small"
-                color="primary"
-                checked={state.options.dataLabels.background.enabled}
-                onChange={handleDataLabelsBgSwitch}
-              />
-            }
-          />
-          <Typography variant="body" fontSize="small">
-            LABELS POSITION
-          </Typography>
+        </Grid>
+        <Grid item xs={12}>
           <FormControl>
+            <FormLabel>Labels Position</FormLabel>
             <RadioGroup
               value={state.options.plotOptions.bar.dataLabels.position}
               onChange={handleLabelsPosition}
@@ -509,39 +434,8 @@ export const ElementsBar = () => {
               ></FormControlLabel>
             </RadioGroup>
           </FormControl>
-        </Stack>
-
-        {/* <Stack mb={1} spacing={2}>
-          <Typography variant="h6" fontSize="small" fontWeight="800">
-            ZOOM
-          </Typography>
-
-          <Stack direction="row" spacing={1}>
-            <Box width="50%">
-              <Button
-                variant="contained"
-                color="primary"
-                size="small"
-                onClick={handleZoomIn}
-                style={{ width: "100%" }}
-              >
-                Zoom in
-              </Button>
-            </Box>
-            <Box width="50%">
-              <Button
-                onClick={handleZoomOut}
-                variant="contained"
-                color="primary"
-                size="small"
-                style={{ width: "100%" }}
-              >
-                Zoom out
-              </Button>
-            </Box>
-          </Stack>
-        </Stack> */}
-      </Stack>
+        </Grid>
+      </Grid>
     </>
   );
 };

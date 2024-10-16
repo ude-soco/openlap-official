@@ -1,16 +1,14 @@
 import {
-  Stack,
-  Typography,
+  Autocomplete,
+  Checkbox,
+  Chip,
+  FormControl,
   FormControlLabel,
-  Switch,
+  FormLabel,
   RadioGroup,
   Radio,
-  Button,
-  FormControl,
+  Grid,
   TextField,
-  Checkbox,
-  Box,
-  FormGroup,
 } from "@mui/material";
 import { useContext, useEffect, useState, useRef } from "react";
 import ApexCharts from "apexcharts";
@@ -34,93 +32,20 @@ export const FiltersBar = () => {
   const [tempSeries, settempSeries] = useState(
     JSON.parse(localStorage.getItem("series"))?.length > 0
       ? JSON.parse(localStorage.getItem("series"))
-      : state.series[0].data.map((data) => ({
-          name: data,
+      : state.series.map((data) => ({
+          data: data,
           checked: true,
         }))
   );
   const [sort, setsort] = useState(localStorage.getItem("sort") || "");
-  const [originalState, setOriginalState] = useState(null);
-  const [filteredCats, setfilteredCats] = useState([]);
-  const [filteredSeries, setfilteredSeries] = useState([]);
-
-  console.log(state);
-
-  // console.log(state);
-
-  useEffect(() => {
-    if (checkSeries && state.series[0]) {
-      ApexCharts.exec(
-        state.options.chart.id,
-        "showSeries",
-        state.series[0].name
-      );
-    } else if (!checkSeries && state.series[0]) {
-      ApexCharts.exec(
-        state.options.chart.id,
-        "hideSeries",
-        state.series[0]?.name
-      );
-    }
-    // setOriginalState(state);
-  }, []);
-
-  function handleSeriesChecked(e) {
-    setcheckSeries(e.target.checked);
-    localStorage.setItem("checked", JSON.stringify(e.target.checked));
-    ApexCharts.exec(
-      state.options.chart.id,
-      "toggleSeries",
-      state.series[0].name
-    );
-  }
+  const [count, setcount] = useState(tempcategories.length);
 
   useEffect(() => {
     localStorage.setItem("categories", JSON.stringify(tempcategories));
     localStorage.setItem("series", JSON.stringify(tempSeries));
   }, [tempcategories, tempSeries]);
 
-  function handleCategoryChecked(index) {
-    const updatedCategories = tempcategories.map((cat, i) =>
-      i === index ? { ...cat, checked: !cat.checked } : cat
-    );
-
-    const updatedSeries = tempSeries.map((series, i) =>
-      i === index ? { ...series, checked: !series.checked } : series
-    );
-
-    settempcategories(updatedCategories);
-    settempSeries(updatedSeries);
-
-    const newCategories = updatedCategories
-      .filter((cat) => cat.checked === true)
-      .map((prevc) => prevc.name);
-    const newSeries = updatedSeries
-      .filter((series) => series.checked === true)
-      .map((prevs) => prevs.name);
-
-    setState((prevState) => ({
-      ...prevState,
-      series: [
-        {
-          ...prevState.series[0],
-          data: newSeries,
-        },
-      ],
-      options: {
-        ...prevState.options,
-        xaxis: {
-          ...prevState.options.xaxis,
-          categories: newCategories,
-        },
-      },
-    }));
-
-    setsort("");
-    localStorage.setItem("sort", "");
-  }
-
-  function handleSortChange(e, sort) {
+  const handleSortChange = (e, sort) => {
     const value = e ? e.target.value : sort;
     setsort(value);
     localStorage.setItem("sort", value);
@@ -177,67 +102,113 @@ export const FiltersBar = () => {
           },
         },
       }));
-    } else {
-      const combinedArray = state.series[0].data.map((dataPoint, index) => ({
-        data: dataPoint,
-        category: state.options.xaxis.categories[index],
-      }));
     }
-  }
+  };
 
   return (
     <>
-      <Stack>
-        <Stack mb={1} spacing={2}>
-          <Typography variant="h6" fontSize="small" fontWeight="800">
-            SERIES FILTER
-          </Typography>
-
-          <FormControlLabel
-            label={state.series[0]?.name}
-            control={
-              <Checkbox onChange={handleSeriesChecked} checked={checkSeries} />
-            }
-          ></FormControlLabel>
-        </Stack>
-
-        <Stack mb={1} spacing={2}>
-          <Typography variant="h6" fontSize="small" fontWeight="800">
-            CATEGORIES FILTER
-          </Typography>
-
-          {tempcategories.map((cat, index) => (
-            <FormControlLabel
-              key={index}
-              label={cat.name}
-              control={
-                <Checkbox
-                  onChange={() => handleCategoryChecked(index)}
-                  checked={cat.checked}
-                />
-              }
-            ></FormControlLabel>
-          ))}
-        </Stack>
-
-        <Stack mb={1} spacing={1}>
-          <Typography variant="h6" fontSize="small" fontWeight="800">
-            DATA SORTING
-          </Typography>
+      <Grid item xs={12}>
+        <Grid container sx={{ mt: 1 }}>
           <FormControl>
-            <RadioGroup value={sort} onChange={handleSortChange} row>
-              <FormControlLabel
-                label="Ascending"
-                control={<Radio value="asc" />}
-              ></FormControlLabel>
-              <FormControlLabel
-                label="Descending"
-                control={<Radio value="desc" />}
-              ></FormControlLabel>
-            </RadioGroup>
+            <Autocomplete
+              multiple
+              disableCloseOnSelect
+              disableClearable
+              limitTags={2}
+              options={tempcategories}
+              getOptionLabel={(option) => option.name}
+              value={tempcategories.filter((cat) => cat.checked)}
+              onChange={(event, newValue) => {
+                const updatedCategories = tempcategories.map((cat) => ({
+                  ...cat,
+                  checked: newValue.some(
+                    (selected) => selected.name === cat.name
+                  ),
+                }));
+
+                const checkedCount = updatedCategories.filter(
+                  (item) => item.checked
+                ).length;
+
+                setcount(checkedCount);
+                settempcategories(updatedCategories);
+
+                const newCategories = updatedCategories
+                  .filter((cat) => cat.checked === true)
+                  .map((prevc) => prevc.name);
+                const newSeries = tempSeries.map((item) => ({
+                  ...item.data,
+                  data: item.data.data.filter(
+                    (value, index) => updatedCategories[index].checked
+                  ),
+                }));
+
+                setState((prevState) => ({
+                  ...prevState,
+                  series: newSeries,
+                  options: {
+                    ...prevState.options,
+                    xaxis: {
+                      ...prevState.options.xaxis,
+                      categories: newCategories,
+                    },
+                  },
+                }));
+                setsort("");
+                localStorage.setItem("sort", "");
+              }}
+              renderOption={(props, option, { selected }) => (
+                <li
+                  {...props}
+                  key={option.name}
+                  style={{
+                    pointerEvents: count === 1 && selected ? "none" : "auto",
+                  }}
+                >
+                  <Checkbox
+                    key={option.name}
+                    checked={selected}
+                    disabled={count === 1 && selected}
+                    style={{ marginRight: 8 }}
+                  />
+                  {option.name}
+                </li>
+              )}
+              renderTags={(tagValue, getTagProps) =>
+                tagValue.map((option, index) => (
+                  <Chip
+                    key={option.name}
+                    label={option.name}
+                    {...getTagProps({ index })}
+                    disabled={count === 1}
+                  />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField {...params} label="Categories Filter" />
+              )}
+            />
           </FormControl>
-        </Stack>
-      </Stack>
+        </Grid>
+
+        <Grid item xs={12} mt={2}>
+          <FormControl>
+            <FormLabel id="role-label">Data Sorting</FormLabel>
+            <FormControl>
+              <RadioGroup value={sort} onChange={handleSortChange} row>
+                <FormControlLabel
+                  label="Ascending"
+                  control={<Radio value="asc" />}
+                ></FormControlLabel>
+                <FormControlLabel
+                  label="Descending"
+                  control={<Radio value="desc" />}
+                ></FormControlLabel>
+              </RadioGroup>
+            </FormControl>
+          </FormControl>
+        </Grid>
+      </Grid>
     </>
   );
 };

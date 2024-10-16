@@ -1,9 +1,9 @@
 import React, {
+  createContext,
   useContext,
   useEffect,
-  useState,
-  createContext,
   useRef,
+  useState,
 } from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import Chart from "react-apexcharts";
@@ -12,7 +12,14 @@ import BarChartCustomization from "./bar-chart-customizations/bar-chart-customiz
 
 export let StateContext = createContext();
 
-const BarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
+const BarChart = ({
+  dataset,
+  visRef,
+  setVisRef,
+  preview = false,
+  customize,
+  setCustomize,
+}) => {
   const { darkMode } = useContext(CustomThemeContext);
   const chartRef = useRef(null);
 
@@ -20,7 +27,7 @@ const BarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
     series: [],
     options: {
       chart: {
-        id: "bar-chart",
+        id: visRef.chart.code,
         type: visRef.chart.code,
         stacked: false,
         width: "100%",
@@ -64,11 +71,11 @@ const BarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
         },
         background: {
           enabled: false,
-          foreColor: "#fff",
+          foreColor: "#ffffff",
           padding: 10,
           borderRadius: 2,
           borderWidth: 1,
-          borderColor: "#fff",
+          borderColor: "#ffffff",
         },
       },
       xaxis: {
@@ -322,7 +329,14 @@ const BarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
           </Grid>
         )}
 
-        <Grid item xs={12} lg={8} md={8} xl={8} sx={{ minHeight: 600 }}>
+        <Grid
+          item
+          xs={12}
+          lg={customize ? 8 : 12}
+          md={customize ? 8 : 12}
+          xl={customize ? 8 : 12}
+          sx={{ minHeight: 600, transition: "all 0.5s ease" }}
+        >
           <Chart
             ref={chartRef}
             options={state.options}
@@ -331,11 +345,20 @@ const BarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
             height="100%"
           />
         </Grid>
-        <Grid item xs={12} lg={4} md={4} xl={4} sx={{ minHeight: 600 }}>
-          <StateContext.Provider value={{ state, setState, chartRef }}>
-            <BarChartCustomization />
-          </StateContext.Provider>
-        </Grid>
+        {customize && (
+          <Grid
+            item
+            xs={12}
+            lg={4}
+            md={4}
+            xl={4}
+            sx={{ minHeight: 600, transition: "all 0.5s ease" }}
+          >
+            <StateContext.Provider value={{ state, setState, chartRef }}>
+              <BarChartCustomization />
+            </StateContext.Provider>
+          </Grid>
+        )}
       </Grid>
     </>
   );
