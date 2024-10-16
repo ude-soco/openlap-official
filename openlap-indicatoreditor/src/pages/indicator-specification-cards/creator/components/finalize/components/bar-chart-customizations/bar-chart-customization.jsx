@@ -6,24 +6,24 @@ import { StylesBar } from "./styles-bar";
 import { FiltersBar } from "./filters-bar";
 
 const BarChartCustomization = () => {
-  const tabValue = localStorage.getItem("tabValue");
-  const [value, setvalue] = useState(tabValue ? tabValue : "1");
-
-  useEffect(() => {
-    const tabValue = localStorage.getItem("tabValue");
-    if (tabValue) {
-      setvalue(tabValue);
-    }
-  }, []);
+  const [value, setvalue] = useState("1");
 
   const handleChange = (e, newValue) => {
-    localStorage.setItem("tabValue", newValue);
     setvalue(newValue);
   };
 
+  useEffect(() => {
+    return () => {
+      localStorage.removeItem("checked");
+      localStorage.removeItem("categories");
+      localStorage.removeItem("series");
+      localStorage.removeItem("sort");
+    };
+  }, []);
+
   return (
     <>
-      <Box height="600px" sx={{ border: "1px solid grey", borderRadius: 2 }}>
+      <Box height="600px" sx={{ border: "1px solid #f0f0f0", borderRadius: 2 }}>
         <TabContext value={value}>
           <Box sx={{ borderBottom: 1, borderColor: "divider", width: "100%" }}>
             <TabList
@@ -33,7 +33,7 @@ const BarChartCustomization = () => {
               onChange={handleChange}
               sx={{ width: "100%" }} // Set width to 100%
             >
-              <Tab label="ELENENTS" value="1" />
+              <Tab label="ELEMENTS" value="1" />
               <Tab label="STYLES" value="2" />
               <Tab label="FILTERS" value="3" />
             </TabList>
