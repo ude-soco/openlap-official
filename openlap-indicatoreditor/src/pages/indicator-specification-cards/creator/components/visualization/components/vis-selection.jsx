@@ -10,7 +10,14 @@ import GroupedBarChart from "../../finalize/components/grouped-bar-chart.jsx";
 import RadarChart from "../../finalize/components/radar-chart.jsx";
 import TreeMap from "../../finalize/components/treemap.jsx";
 
-const VisSelection = ({ dataset, visRef, setVisRef, preview }) => {
+const VisSelection = ({
+  dataset,
+  visRef,
+  setVisRef,
+  preview,
+  customize,
+  setCustomize,
+}) => {
   switch (visRef.chart.type) {
     case VisualizationTypes.bar:
       return (
@@ -19,6 +26,8 @@ const VisSelection = ({ dataset, visRef, setVisRef, preview }) => {
           visRef={visRef}
           setVisRef={setVisRef}
           preview={preview}
+          customize={customize}
+          setCustomize={setCustomize}
         />
       );
     case VisualizationTypes.line:
@@ -28,6 +37,8 @@ const VisSelection = ({ dataset, visRef, setVisRef, preview }) => {
           visRef={visRef}
           setVisRef={setVisRef}
           preview={preview}
+          customize={customize}
+          setCustomize={setCustomize}
         />
       );
     case VisualizationTypes.pie:
@@ -37,6 +48,8 @@ const VisSelection = ({ dataset, visRef, setVisRef, preview }) => {
           visRef={visRef}
           setVisRef={setVisRef}
           preview={preview}
+          customize={customize}
+          setCustomize={setCustomize}
         />
       );
     case VisualizationTypes.polar:
@@ -46,11 +59,19 @@ const VisSelection = ({ dataset, visRef, setVisRef, preview }) => {
           visRef={visRef}
           setVisRef={setVisRef}
           preview={preview}
+          customize={customize}
+          setCustomize={setCustomize}
         />
       );
     case VisualizationTypes.radar:
       return (
-        <RadarChart dataset={dataset} setVisRef={setVisRef} preview={preview} />
+        <RadarChart
+          dataset={dataset}
+          setVisRef={setVisRef}
+          customize={customize}
+          setCustomize={setCustomize}
+          preview={preview}
+        />
       );
     case VisualizationTypes.scatter:
       return (
@@ -59,6 +80,8 @@ const VisSelection = ({ dataset, visRef, setVisRef, preview }) => {
           visRef={visRef}
           setVisRef={setVisRef}
           preview={preview}
+          customize={customize}
+          setCustomize={setCustomize}
         />
       );
     case VisualizationTypes.stackedBar:
@@ -68,11 +91,19 @@ const VisSelection = ({ dataset, visRef, setVisRef, preview }) => {
           visRef={visRef}
           setVisRef={setVisRef}
           preview={preview}
+          customize={customize}
+          setCustomize={setCustomize}
         />
       );
     case VisualizationTypes.dot:
       return (
-        <DotChart dataset={dataset} setVisRef={setVisRef} preview={preview} />
+        <DotChart
+          dataset={dataset}
+          setVisRef={setVisRef}
+          customize={customize}
+          setCustomize={setCustomize}
+          preview={preview}
+        />
       );
     case VisualizationTypes.groupedBar:
       return (
@@ -81,11 +112,19 @@ const VisSelection = ({ dataset, visRef, setVisRef, preview }) => {
           visRef={visRef}
           setVisRef={setVisRef}
           preview={preview}
+          customize={customize}
+          setCustomize={setCustomize}
         />
       );
     case VisualizationTypes.treemap:
       return (
-        <TreeMap dataset={dataset} setVisRef={setVisRef} preview={preview} />
+        <TreeMap
+          dataset={dataset}
+          setVisRef={setVisRef}
+          customize={customize}
+          setCustomize={setCustomize}
+          preview={preview}
+        />
       );
     default:
       return <Typography>Visualization not available.</Typography>;
