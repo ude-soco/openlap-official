@@ -20,7 +20,10 @@ const IscDashboard = () => {
 
   const handleContinueEditing = () => {
     navigate("/isc/creator");
-    enqueueSnackbar("Loading indicator...", { variant: "info" });
+    enqueueSnackbar("Indicator progress restored", {
+      variant: "info",
+      autoHideDuration: 2000,
+    });
   };
 
   return (
