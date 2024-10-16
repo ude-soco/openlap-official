@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useState, useContext } from "react";
 import {
   Button,
   Dialog,
@@ -8,6 +8,7 @@ import {
   Grid,
   TextField,
 } from "@mui/material";
+import LoadingButton from "@mui/lab/LoadingButton";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { requestCreateISC } from "../utils/finalize-api.js";
@@ -19,8 +20,9 @@ const NameDialog = ({ open, toggleOpen }) => {
   const { requirements, dataset, visRef, lockedStep } = useContext(ISCContext);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
-  const [state, setState] = React.useState({
+  const [state, setState] = useState({
     indicatorName: "",
+    loading: false,
   });
 
   const handleChangeName = (event) => {
@@ -55,18 +57,32 @@ const NameDialog = ({ open, toggleOpen }) => {
         enqueueSnackbar(error.message, { variant: "error" });
       }
     };
+    setState((prevState) => ({
+      prevState,
+      loading: true,
+    }));
     let newRequirements = {
       ...requirements,
       indicatorName: state.indicatorName,
     };
-    createISC(api, newRequirements, dataset, visRef, lockedStep).then(
-      (response) => {
+    createISC(api, newRequirements, dataset, visRef, lockedStep)
+      .then((response) => {
         enqueueSnackbar(response.message, { variant: "success" });
-      },
-    );
-    toggleOpen();
-    sessionStorage.removeItem("session_isc");
-    navigate("/isc");
+        toggleOpen();
+        sessionStorage.removeItem("session_isc");
+        navigate("/isc");
+        setState((prevState) => ({
+          prevState,
+          loading: false,
+        }));
+      })
+      .catch((error) => {
+        setState((prevState) => ({
+          prevState,
+          loading: false,
+        }));
+        console.error(error);
+      });
   };
 
   return (
@@ -95,14 +111,16 @@ const NameDialog = ({ open, toggleOpen }) => {
           <Button fullWidth color="primary" onClick={handleCloseDialog}>
             Cancel
           </Button>
-          <Button
+          <LoadingButton
+            loading={state.loading}
+            loadingPosition="start"
             fullWidth
             disabled={state.name === ""}
             onClick={handleSaveIndicator}
             variant="contained"
           >
             Save
-          </Button>
+          </LoadingButton>
         </DialogActions>
       </Dialog>
     </>

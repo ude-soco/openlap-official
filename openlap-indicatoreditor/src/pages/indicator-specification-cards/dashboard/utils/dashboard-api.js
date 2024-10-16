@@ -16,3 +16,12 @@ export const requestISCDetails = async (api, iscId) => {
     throw error;
   }
 };
+
+export const requestDeleteISC = async (api, iscId) => {
+  try {
+    const response = await api.delete(`v1/isc/${iscId}`);
+    return response.data.message;
+  } catch (error) {
+    throw error;
+  }
+};

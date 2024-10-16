@@ -63,7 +63,7 @@ const AppRoutes = () => {
   const isMatch = useMediaQuery(theme.breakpoints.down("lg"));
 
   useEffect(() => {
-    if (isMatch && openSidebar) {
+    if (isMatch && openSidebar && Boolean(user)) {
       setOpenSidebar(false);
     }
   }, [isMatch]);
