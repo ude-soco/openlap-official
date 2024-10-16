@@ -184,7 +184,6 @@ const GroupedBarChart = ({
         },
       }));
     }
-    console.log(state);
   }, [dataset, darkMode, visRef.chart.code]);
 
   useEffect(() => {
