@@ -1,8 +1,8 @@
 import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import { requestMyISCs } from "../utils/dashboard-api.js";
+import { requestDeleteISC, requestMyISCs } from "../utils/dashboard-api.js";
 import {
   Button,
   CircularProgress,
@@ -28,11 +28,14 @@ import {
   ArrowUpward,
   MoreVert,
   Preview,
+  Delete,
 } from "@mui/icons-material";
+import DeleteDialog from "../../../../common/components/delete-dialog/delete-dialog.jsx";
 
 const MyIscTable = () => {
   const { api } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
   const [state, setState] = useState({
     myISCList: [],
@@ -111,9 +114,33 @@ const MyIscTable = () => {
     );
   };
 
+  const handleToggleDelete = () => {
+    setState((prevState) => ({
+      ...prevState,
+      openDeleteDialog: !prevState.openDeleteDialog,
+    }));
+  };
+
   const handlePreview = () => {
     handleMenuClose();
     navigate(`/isc/${selectedIndicator.id}`);
+  };
+
+  const handleDeleteIndicator = async () => {
+    await requestDeleteISC(api, selectedIndicator.id)
+      .then(() => {
+        handleMenuClose();
+        setState((prevState) => ({
+          ...prevState,
+          myISCList: prevState.myISCList.filter(
+            (item) => item.id !== selectedIndicator.id,
+          ),
+        }));
+        enqueueSnackbar("Indicator deleted successfully", {
+          variant: "success",
+        });
+      })
+      .catch((error) => console.error(error));
   };
 
   useEffect(() => {
@@ -140,7 +167,7 @@ const MyIscTable = () => {
         loadingIndicators: false,
       }));
     });
-  }, [api, state.params]);
+  }, [api, state.params, location]);
 
   return (
     <>
@@ -231,6 +258,24 @@ const MyIscTable = () => {
                             <ListItemText primary="Preview Indicator" />
                           </MenuItem>
                           <Divider />
+
+                          <MenuItem onClick={handleToggleDelete}>
+                            <ListItemIcon>
+                              <Delete fontSize="small" color="error" />
+                            </ListItemIcon>
+                            <ListItemText primary="Delete" />
+                          </MenuItem>
+                          <DeleteDialog
+                            open={state.openDeleteDialog}
+                            toggleOpen={handleToggleDelete}
+                            message={
+                              <Typography>
+                                This will delete the indicator permanently. Are
+                                you sure?
+                              </Typography>
+                            }
+                            handleDelete={handleDeleteIndicator}
+                          />
                           {/* Uncommented menu items */}
                         </Menu>
                       </TableCell>
