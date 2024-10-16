@@ -1,4 +1,10 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import Chart from "react-apexcharts";
 import {
@@ -10,8 +16,20 @@ import {
   Select,
 } from "@mui/material";
 
-const RadarChart = ({ dataset, setVisRef, preview = false }) => {
+import RadarChartCustomizations from "./radar-chart-customizations/radar-chart-customizations.jsx";
+
+export let StateContext = createContext();
+
+const RadarChart = ({
+  dataset,
+  setVisRef,
+  preview = false,
+  customize,
+  setCustomize,
+}) => {
   const { darkMode } = useContext(CustomThemeContext);
+  const chartRef = useRef(null);
+
   const [state, setState] = useState({
     series: [],
     options: {
@@ -19,13 +37,55 @@ const RadarChart = ({ dataset, setVisRef, preview = false }) => {
         type: "radar",
         width: "100%",
         foreColor: darkMode ? "#ffffff" : "#000000",
+        toolbar: {
+          show: false,
+        },
+      },
+      colors: [],
+      title: {
+        text: "",
+        align: "left",
+        margin: 15,
+        style: {
+          fontSize: 30,
+          cssClass: "x-y-axis-hide-title",
+        },
+      },
+      subtitle: {
+        text: "",
+        align: "left",
+        margin: 15,
       },
       xaxis: {
         categories: [],
       },
+      dataLabels: {
+        enabled: true,
+        style: {
+          colors: ["#000000"],
+          fontWeight: 400,
+        },
+        background: {
+          enabled: false,
+          foreColor: "#ffffff",
+          padding: 10,
+          borderRadius: 2,
+          borderWidth: 1,
+          borderColor: "#ffffff",
+        },
+      },
       legend: {
-        position: "top",
+        show: true,
+        showForSingleSeries: true,
+        position: "bottom",
         horizontalAlign: "center",
+        labels: {
+          colors: undefined,
+          useSeriesColors: false,
+        },
+        onItemClick: {
+          toggleDataSeries: false,
+        },
       },
       tooltip: {
         enabled: true,
@@ -57,22 +117,22 @@ const RadarChart = ({ dataset, setVisRef, preview = false }) => {
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns) {
       const stringColumns = dataset.columns.filter(
-        (col) => col.type === "string",
+        (col) => col.type === "string"
       );
       const numberColumns = dataset.columns.filter(
-        (col) => col.type === "number",
+        (col) => col.type === "number"
       );
 
       const updatedSelectedXAxis = state.axisOptions.selectedXAxis
         ? stringColumns.find(
-            (col) => col.field === state.axisOptions.selectedXAxis,
+            (col) => col.field === state.axisOptions.selectedXAxis
           )?.field || ""
         : stringColumns.length > 0
-          ? stringColumns[0].field
-          : "";
+        ? stringColumns[0].field
+        : "";
 
       const updatedSelectedYAxis = state.axisOptions.selectedYAxis.filter(
-        (field) => numberColumns.find((col) => col.field === field),
+        (field) => numberColumns.find((col) => col.field === field)
       );
 
       setState((prevState) => ({
@@ -94,7 +154,7 @@ const RadarChart = ({ dataset, setVisRef, preview = false }) => {
     if (dataset && dataset.rows && dataset.columns) {
       const { selectedXAxis, selectedYAxis } = state.axisOptions;
       const xAxisColumn = dataset.columns.find(
-        (col) => col.field === selectedXAxis,
+        (col) => col.field === selectedXAxis
       );
 
       if (!xAxisColumn || selectedYAxis.length === 0) return;
@@ -210,7 +270,7 @@ const RadarChart = ({ dataset, setVisRef, preview = false }) => {
                       selected
                         .map((value) => {
                           const column = state.axisOptions.yAxisOptions.find(
-                            (col) => col.field === value,
+                            (col) => col.field === value
                           );
                           return column ? column.headerName : value;
                         })
@@ -229,14 +289,29 @@ const RadarChart = ({ dataset, setVisRef, preview = false }) => {
             </Grid>
           </Grid>
         )}
-        <Grid item xs={12} sx={{ minHeight: 600 }}>
+        <Grid
+          item
+          xs={12}
+          lg={customize ? 8 : 12}
+          md={customize ? 8 : 12}
+          xl={customize ? 8 : 12}
+          sx={{ minHeight: 600, transition: "all 0.5s ease" }}
+        >
           <Chart
+            ref={chartRef}
             options={state.options}
             series={state.series}
             type="radar"
             height="100%"
           />
         </Grid>
+        {customize && (
+          <Grid item xs={12} lg={4} md={4} xl={4} sx={{ minHeight: 600 }}>
+            <StateContext.Provider value={{ state, setState, chartRef }}>
+              <RadarChartCustomizations />
+            </StateContext.Provider>
+          </Grid>
+        )}
       </Grid>
     </>
   );
