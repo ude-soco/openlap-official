@@ -54,11 +54,21 @@ const DotChart = ({ dataset, setVisRef, preview = false }) => {
       setState((prevState) => ({
         ...prevState,
         series: visRef.data.series,
-        options: visRef.data.options,
+        options: {
+          ...visRef.data.options,
+          chart: {
+            ...visRef.data.options.chart,
+            foreColor: darkMode ? "#ffffff" : "#000000",
+          },
+          tooltip: {
+            ...visRef.data.options.tooltip,
+            theme: darkMode ? "dark" : "light",
+          },
+        },
         axisOptions: visRef.data.axisOptions,
       }));
     }
-  }, []);
+  }, [preview, darkMode]);
 
   // Utility function to find the next available column
   const findNextAvailableColumn = (selectedField, availableColumns) => {

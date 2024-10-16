@@ -59,7 +59,6 @@ const IscPreview = () => {
     navigate(-1);
   };
 
-  console.log(visRef.data);
   return (
     <>
       <Grid container spacing={2}>

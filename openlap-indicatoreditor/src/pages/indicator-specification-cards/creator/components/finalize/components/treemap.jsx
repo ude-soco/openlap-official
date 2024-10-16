@@ -42,11 +42,21 @@ const TreeMap = ({ dataset, visRef, setVisRef, preview = false }) => {
       setState((prevState) => ({
         ...prevState,
         series: visRef.data.series,
-        options: visRef.data.options,
+        options: {
+          ...visRef.data.options,
+          chart: {
+            ...visRef.data.options.chart,
+            foreColor: darkMode ? "#ffffff" : "#000000",
+          },
+          tooltip: {
+            ...visRef.data.options.tooltip,
+            theme: darkMode ? "dark" : "light",
+          },
+        },
         axisOptions: visRef.data.axisOptions,
       }));
     }
-  }, []);
+  }, [preview, darkMode]);
 
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns && !preview) {
