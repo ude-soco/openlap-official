@@ -108,11 +108,10 @@ export default function LineChart({
             let tempOptionsUnique = sessionOptions.xaxis.unique;
             let tempCategories = rowData.map(
               (row, index) =>
-                row[tempOptionsField] ||
-                `${tempOptionsHeaderName} ${index + 1}`,
+                row[tempOptionsField] || `${tempOptionsHeaderName} ${index + 1}`
             );
             let foundOptionsField = columnData.find(
-              (item) => item.field === tempOptionsField,
+              (item) => item.field === tempOptionsField
             );
             if (foundOptionsField) {
               tempOptionsHeaderName = foundOptionsField.headerName;
@@ -150,7 +149,7 @@ export default function LineChart({
                 let numericalColumnName = sessionSeries[i].name;
                 let numericalColumnField = sessionSeries[i].field;
                 let foundSeriesField = columnData.find(
-                  (item) => item.field === numericalColumnField,
+                  (item) => item.field === numericalColumnField
                 );
                 // if (foundSeriesField) {
                 //   tempSeriesNameArray.push(foundSeriesField.headerName);
@@ -159,7 +158,7 @@ export default function LineChart({
                   rowData,
                   tempOptionsField,
                   numericalColumnField,
-                  tempOptions.xaxis.categories,
+                  tempOptions.xaxis.categories
                 );
                 if (numericalColumnField === "Count") {
                   // Check whether to put tempSeriesArray or tempSeries
@@ -178,7 +177,7 @@ export default function LineChart({
                   });
                 } else {
                   const numericalColumnDataArray = rowData.map(
-                    (row) => row[numericalColumnField] || 0,
+                    (row) => row[numericalColumnField] || 0
                   );
                   if (foundSeriesField) {
                     tempSeriesArray.push({
@@ -192,13 +191,13 @@ export default function LineChart({
               // tempOptions.headerNameSeries = tempSeriesNameArray;
               sessionStorage.setItem(
                 "chart-series",
-                JSON.stringify(tempSeriesArray),
+                JSON.stringify(tempSeriesArray)
               );
               return tempSeriesArray;
             });
             sessionStorage.setItem(
               "chart-options",
-              JSON.stringify(tempOptions),
+              JSON.stringify(tempOptions)
             );
 
             return tempOptions;
@@ -236,7 +235,7 @@ export default function LineChart({
   const handleNameColumn = (
     columnName,
     columnType = "string",
-    numberOfRows,
+    numberOfRows
   ) => {
     let tempUUIDField = uuidv4();
     let currentRow = [];
@@ -394,11 +393,11 @@ export default function LineChart({
       let iscData = JSON.parse(sessionStorage.getItem("openlap-isc-data"));
       let iscDataRowData = iscData.indicatorData.rowData;
       const rowIndex = iscDataRowData.findIndex(
-        (row) => row.id === updatedRow.id,
+        (row) => row.id === updatedRow.id
       );
       let updatedRows;
       const rowDataFieldExists = iscDataRowData.some((item) =>
-        item.hasOwnProperty(tempColumnData.field),
+        item.hasOwnProperty(tempColumnData.field)
       );
       if (!rowDataFieldExists) {
         updatedRows = iscDataRowData.map((item) => {
@@ -436,7 +435,7 @@ export default function LineChart({
         handleSetCategoricalOptions(
           tempColumnData.field,
           tempColumnData.headerName,
-          tempArrayRows,
+          tempArrayRows
         );
       }
       if (openEditor.type === "number") {
@@ -444,7 +443,7 @@ export default function LineChart({
           tempColumnData.field,
           tempColumnData.headerName,
           tempArrayRows,
-          true,
+          true
         );
       }
     }
@@ -470,7 +469,7 @@ export default function LineChart({
     categoricalColumnField,
     categoricalColumnName,
     categoricalColumnDataArray,
-    unique = false,
+    unique = false
   ) => {
     let sessionOptions = JSON.parse(sessionStorage.getItem("chart-options"));
     let sessionSeries = JSON.parse(sessionStorage.getItem("chart-series"));
@@ -514,7 +513,7 @@ export default function LineChart({
             rowData,
             categoricalColumnField,
             numericalColumnField,
-            categoricalColumnDataArray,
+            categoricalColumnDataArray
           );
 
           tempSeriesArray.push({
@@ -553,7 +552,7 @@ export default function LineChart({
         if (numericalColumnField !== "Count") {
           // tempSeriesNameArray.push(prevStateOptions.headerNameSeries[i]);
           const numericalColumnDataArray = rowData.map(
-            (row) => row[numericalColumnField],
+            (row) => row[numericalColumnField]
           );
           tempSeriesArray.push({
             name: numericalColumnName,
@@ -606,7 +605,7 @@ export default function LineChart({
     numericalColumnField,
     numericalColumnName,
     numericalColumnDataArray,
-    update,
+    update
   ) => {
     let sessionOptions = JSON.parse(sessionStorage.getItem("chart-options"));
     let sessionSeries = JSON.parse(sessionStorage.getItem("chart-series"));
@@ -648,7 +647,7 @@ export default function LineChart({
         rowData,
         categoricalColumnOptionField,
         numericalColumnField,
-        sessionOptions.xaxis.categories,
+        sessionOptions.xaxis.categories
       );
       setSeries(() => {
         let tempData = [
@@ -673,7 +672,7 @@ export default function LineChart({
             finalSeriesArray.push(tempSeriesArray[i]);
           } else {
             let foundHeaderName = columnData.find(
-              (item) => item.field === tempSeriesArray[i].field,
+              (item) => item.field === tempSeriesArray[i].field
             );
             if (Boolean(foundHeaderName)) {
               // tempSeriesNameArray.push(foundHeaderName.field);
@@ -694,7 +693,7 @@ export default function LineChart({
         // });
         sessionStorage.setItem(
           "chart-series",
-          JSON.stringify(finalSeriesArray),
+          JSON.stringify(finalSeriesArray)
         );
         return finalSeriesArray;
       });
@@ -704,7 +703,7 @@ export default function LineChart({
     if (update) {
       let tempSeriesArray = [...sessionSeries];
       let findIndexSeries = tempSeriesArray.findIndex(
-        (series) => series.field === numericalColumnField,
+        (series) => series.field === numericalColumnField
       );
       tempSeriesArray[findIndexSeries] = {
         name: numericalColumnName,
@@ -740,7 +739,7 @@ export default function LineChart({
           finalSeriesArray.push(tempSeriesArray[i]);
         } else {
           let foundHeaderName = columnData.find(
-            (item) => item.field === tempSeriesArray[i].field,
+            (item) => item.field === tempSeriesArray[i].field
           );
           if (Boolean(foundHeaderName)) {
             // tempSeriesNameArray.push(foundHeaderName.headerName);
@@ -767,15 +766,15 @@ export default function LineChart({
     rowData,
     categoricalColumnOptionField,
     numericalColumnName,
-    categoricalColumnDataArray,
+    categoricalColumnDataArray
   ) {
     return categoricalColumnDataArray.map((categoryArray) => {
       const filteredArray = rowData.filter(
-        (row) => row[categoricalColumnOptionField] === categoryArray,
+        (row) => row[categoricalColumnOptionField] === categoryArray
       );
       const sum = filteredArray.reduce(
         (total, row) => total + row[numericalColumnName],
-        0,
+        0
       );
       return Number.isNaN(sum) ? 0 : sum;
     });
@@ -793,7 +792,7 @@ export default function LineChart({
     categoricalColumnField,
     categoricalColumnName,
     uniqueColumnDataArray,
-    uniqueColumnDataCountArray,
+    uniqueColumnDataCountArray
   ) => {
     setOptions((prevState) => {
       let tempOptions = {
