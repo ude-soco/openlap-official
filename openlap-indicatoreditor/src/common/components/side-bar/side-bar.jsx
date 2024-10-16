@@ -35,7 +35,7 @@ const Sidebar = ({ openSidebar }) => {
     user: { roles },
   } = useContext(AuthContext);
   const [openMenus, setOpenMenus] = useState({
-    isc: false,
+    isc: true,
     indicator: false,
     gqi: false,
     tools: false,
