@@ -184,8 +184,8 @@ const Visualization = () => {
                     lockedStep.visualization.step === "3"
                       ? handleUnlockDataset
                       : lockedStep.visualization.step === "4"
-                        ? handleUnlockFinalize
-                        : undefined
+                      ? handleUnlockFinalize
+                      : undefined
                   }
                 >
                   Next
