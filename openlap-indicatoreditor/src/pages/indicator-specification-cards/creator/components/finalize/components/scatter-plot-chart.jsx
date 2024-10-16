@@ -1,30 +1,105 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import Chart from "react-apexcharts";
 import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
+import ScatterChartCustomizations from "./scatter-chart-customizations/scatter-chart-customizations.jsx";
 
-const ScatterPlotChart = ({ dataset, visRef, setVisRef, preview = false }) => {
+export let StateContext = createContext();
+
+const ScatterPlotChart = ({
+  dataset,
+  visRef,
+  setVisRef,
+  preview = false,
+  customize,
+  setCustomize,
+}) => {
   const { darkMode } = useContext(CustomThemeContext);
+  const chartRef = useRef(null);
 
   const [state, setState] = useState({
     series: [],
     options: {
       chart: {
         type: visRef.chart.code,
+        toolbar: {
+          show: false,
+        },
         zoom: {
           type: "xy",
         },
         foreColor: darkMode ? "#ffffff" : "#000000",
       },
+      title: {
+        text: "",
+        align: "left",
+        margin: 15,
+        style: {
+          fontSize: 30,
+          cssClass: "x-y-axis-hide-title",
+        },
+      },
+      subtitle: {
+        text: "",
+        align: "left",
+        margin: 15,
+      },
+      dataLabels: {
+        enabled: true,
+        style: {
+          colors: ["#000000"],
+          fontWeight: 400,
+        },
+        background: {
+          enabled: false,
+          foreColor: "#ffffff",
+          padding: 10,
+          borderRadius: 2,
+          borderWidth: 1,
+          borderColor: "#ffffff",
+        },
+      },
+      markers: {
+        size: 8,
+        colors: ["#008ffb"],
+      },
+      colors: ["#008ffb"],
+      legend: {
+        show: true,
+        showForSingleSeries: true,
+        position: "bottom",
+        horizontalAlign: "center",
+        labels: {
+          colors: undefined,
+          useSeriesColors: false,
+        },
+        onItemClick: {
+          toggleDataSeries: false,
+        },
+      },
       xaxis: {
         title: {
           text: "X Axis",
+        },
+        labels: {
+          show: true,
+          formatter: (value) => value.toLocaleString(),
         },
         categories: [],
       },
       yaxis: {
         title: {
           text: "Y Axis",
+        },
+        labels: {
+          show: true,
+          formatter: (value) => value.toLocaleString(),
         },
       },
       tooltip: {
@@ -61,10 +136,10 @@ const ScatterPlotChart = ({ dataset, visRef, setVisRef, preview = false }) => {
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns) {
       const stringColumns = dataset.columns.filter(
-        (col) => col.type === "string",
+        (col) => col.type === "string"
       );
       const numberColumns = dataset.columns.filter(
-        (col) => col.type === "number",
+        (col) => col.type === "number"
       );
 
       setState((prevState) => ({
@@ -93,13 +168,13 @@ const ScatterPlotChart = ({ dataset, visRef, setVisRef, preview = false }) => {
     if (dataset && dataset.rows && dataset.columns) {
       const { selectedXAxis, selectedYAxis, selectedLabel } = state.axisOptions;
       const xColumn = dataset.columns.find(
-        (col) => col.field === selectedXAxis,
+        (col) => col.field === selectedXAxis
       );
       const yColumn = dataset.columns.find(
-        (col) => col.field === selectedYAxis,
+        (col) => col.field === selectedYAxis
       );
       const labelColumn = dataset.columns.find(
-        (col) => col.field === selectedLabel,
+        (col) => col.field === selectedLabel
       );
 
       const defaultData = [{ x: 0, y: 0, label: "Default Point" }];
@@ -139,6 +214,7 @@ const ScatterPlotChart = ({ dataset, visRef, setVisRef, preview = false }) => {
             min: minX, // Minimum value on the x-axis
             max: maxX, // Maximum value on the x-axis
             labels: {
+              show: true,
               formatter: function (val) {
                 return parseFloat(val).toFixed(2); // Format the labels with 2 decimal points
               },
@@ -148,6 +224,10 @@ const ScatterPlotChart = ({ dataset, visRef, setVisRef, preview = false }) => {
             ...prevState.options.yaxis,
             title: {
               text: yColumn ? yColumn.headerName : "Y Axis",
+            },
+            labels: {
+              show: true,
+              formatter: (value) => value.toLocaleString(),
             },
           },
           chart: {
@@ -278,7 +358,14 @@ const ScatterPlotChart = ({ dataset, visRef, setVisRef, preview = false }) => {
             </Grid>
           </Grid>
         )}
-        <Grid item xs={12} sx={{ minHeight: 600 }}>
+        <Grid
+          item
+          xs={12}
+          lg={customize ? 8 : 12}
+          md={customize ? 8 : 12}
+          xl={customize ? 8 : 12}
+          sx={{ minHeight: 600, transition: "all 0.5s ease" }}
+        >
           <Chart
             options={state.options}
             series={state.series}
@@ -286,6 +373,13 @@ const ScatterPlotChart = ({ dataset, visRef, setVisRef, preview = false }) => {
             height="100%"
           />
         </Grid>
+        {customize && (
+          <Grid item xs={12} lg={4} md={4} xl={4} sx={{ minHeight: 600 }}>
+            <StateContext.Provider value={{ state, setState, chartRef }}>
+              <ScatterChartCustomizations />
+            </StateContext.Provider>
+          </Grid>
+        )}
       </Grid>
     </>
   );
