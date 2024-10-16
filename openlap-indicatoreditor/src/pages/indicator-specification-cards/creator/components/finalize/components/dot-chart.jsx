@@ -38,7 +38,7 @@ const DotChart = ({
         align: "left",
         margin: 15,
         style: {
-          fontSize: 30,
+          fontSize: 18,
           cssClass: "x-y-axis-hide-title",
         },
       },

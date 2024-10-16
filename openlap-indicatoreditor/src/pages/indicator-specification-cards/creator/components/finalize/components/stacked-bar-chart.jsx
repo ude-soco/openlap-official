@@ -41,7 +41,7 @@ const StackedBarChart = ({
         text: "",
         align: "left",
         style: {
-          fontSize: 30,
+          fontSize: 18,
           cssClass: "x-y-axis-hide-title",
         },
       },
