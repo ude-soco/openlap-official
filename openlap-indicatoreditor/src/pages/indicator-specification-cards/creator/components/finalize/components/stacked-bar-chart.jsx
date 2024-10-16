@@ -1,10 +1,27 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
 import Chart from "react-apexcharts";
+import StackedChartCustomizations from "./stacked-chart-customizations/stacked-chart-customizations.jsx";
 
-const StackedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
+export let StateContext = createContext();
+
+const StackedBarChart = ({
+  dataset,
+  visRef,
+  setVisRef,
+  preview = false,
+  customize,
+  setCustomize,
+}) => {
   const { darkMode } = useContext(CustomThemeContext);
+  const chartRef = useRef(null);
 
   const [state, setState] = useState({
     series: [],
@@ -14,6 +31,24 @@ const StackedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
         stacked: true,
         width: "100%",
         foreColor: darkMode ? "#ffffff" : "#000000",
+        toolbar: {
+          show: false,
+          autoSelected: "zoom",
+        },
+      },
+      labels: [],
+      title: {
+        text: "",
+        align: "left",
+        style: {
+          fontSize: 30,
+          cssClass: "x-y-axis-hide-title",
+        },
+      },
+      subtitle: {
+        text: "",
+        align: "left",
+        margin: 15,
       },
       plotOptions: {
         bar: {
@@ -28,19 +63,60 @@ const StackedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
         categories: [],
         title: {
           text: "Group By",
+          style: {
+            cssClass: "x-y-axis-show-title",
+          },
+        },
+        style: {
+          cssClass: "x-y-axis-show-title",
+        },
+        labels: {
+          show: true,
         },
       },
       yaxis: {
         title: {
           text: "Counts",
+          style: {
+            cssClass: "x-y-axis-show-title",
+          },
+        },
+        style: {
+          cssClass: "x-y-axis-show-title",
         },
         labels: {
+          show: true,
           formatter: (value) => value.toLocaleString(),
         },
       },
       legend: {
-        position: "top",
+        show: true,
+        showForSingleSeries: true,
+        position: "bottom",
         horizontalAlign: "center",
+        labels: {
+          colors: undefined,
+          useSeriesColors: false,
+        },
+        onItemClick: {
+          toggleDataSeries: false,
+        },
+      },
+      colors: [],
+      dataLabels: {
+        enabled: true,
+        style: {
+          colors: ["#000000"],
+          fontWeight: 400,
+        },
+        background: {
+          enabled: false,
+          foreColor: "#ffffff",
+          padding: 10,
+          borderRadius: 2,
+          borderWidth: 1,
+          borderColor: "#ffffff",
+        },
       },
       tooltip: {
         enabled: true,
@@ -81,25 +157,25 @@ const StackedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns) {
       const stringColumns = dataset.columns.filter(
-        (col) => col.type === "string",
+        (col) => col.type === "string"
       );
       const numberColumns = dataset.columns.filter(
-        (col) => col.type === "number",
+        (col) => col.type === "number"
       );
 
       setState((prevState) => {
         // Ensure columns are reselected or defaulted if needed
         const newXAxis = findNextAvailableColumn(
           prevState.axisOptions.selectedXAxis,
-          stringColumns,
+          stringColumns
         );
         const newBarValue = findNextAvailableColumn(
           prevState.axisOptions.selectedBarValue,
-          stringColumns,
+          stringColumns
         );
         const newYAxis = findNextAvailableColumn(
           prevState.axisOptions.selectedYAxis,
-          numberColumns,
+          numberColumns
         );
 
         return {
@@ -154,13 +230,13 @@ const StackedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
 
       const categories = Object.keys(aggregatedData);
       const barLabels = Array.from(
-        new Set(dataset.rows.map((row) => row[selectedBarValue] || "Unknown")),
+        new Set(dataset.rows.map((row) => row[selectedBarValue] || "Unknown"))
       );
 
       const series = barLabels.map((barLabel) => ({
         name: barLabel,
         data: categories.map(
-          (category) => aggregatedData[category].data[barLabel] || 0,
+          (category) => aggregatedData[category].data[barLabel] || 0
         ),
       }));
 
@@ -173,6 +249,9 @@ const StackedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
             ...prevState.options.xaxis,
             categories: categories,
             title: {
+              style: {
+                cssClass: "x-y-axis-show-title",
+              },
               text:
                 dataset.columns.find((col) => col.field === selectedXAxis)
                   ?.headerName || "Group By",
@@ -181,6 +260,9 @@ const StackedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
           yaxis: {
             ...prevState.options.yaxis,
             title: {
+              style: {
+                cssClass: "x-y-axis-show-title",
+              },
               text:
                 dataset.columns.find((col) => col.field === selectedYAxis)
                   ?.headerName || "Counts",
@@ -314,14 +396,29 @@ const StackedBarChart = ({ dataset, visRef, setVisRef, preview = false }) => {
             </Grid>
           </Grid>
         )}
-        <Grid item xs={12} sx={{ minHeight: 600 }}>
+        <Grid
+          item
+          xs={12}
+          lg={customize ? 8 : 12}
+          md={customize ? 8 : 12}
+          xl={customize ? 8 : 12}
+          sx={{ minHeight: 600, transition: "all 0.5s ease" }}
+        >
           <Chart
+            ref={chartRef}
             options={state.options}
             series={state.series}
             type={visRef.chart.code}
             height="100%"
           />
         </Grid>
+        {customize && (
+          <Grid item xs={12} lg={4} md={4} xl={4} sx={{ minHeight: 600 }}>
+            <StateContext.Provider value={{ state, setState, chartRef }}>
+              <StackedChartCustomizations />
+            </StateContext.Provider>
+          </Grid>
+        )}
       </Grid>
     </>
   );
