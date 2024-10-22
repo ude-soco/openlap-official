@@ -16,4 +16,6 @@ public interface IscService {
   ISCResponse getISCById(String iscId);
 
   void deleteISCbyId(HttpServletRequest request, String iscId);
+
+  void updateIsc(String iscId, @Valid IscRequest isc);
 }

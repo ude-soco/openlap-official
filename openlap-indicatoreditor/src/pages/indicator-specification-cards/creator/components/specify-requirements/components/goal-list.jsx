@@ -145,7 +145,6 @@ const GoalList = () => {
                   <Grid item xs>
                     <Tooltip
                       arrow
-                      placement="left"
                       title={
                         option.description ? (
                           <Typography variant="body2" sx={{ p: 1 }}>

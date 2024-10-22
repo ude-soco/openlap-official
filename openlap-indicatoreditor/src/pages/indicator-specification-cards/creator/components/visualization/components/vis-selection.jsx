@@ -67,10 +67,11 @@ const VisSelection = ({
       return (
         <RadarChart
           dataset={dataset}
+          visRef={visRef}
           setVisRef={setVisRef}
+          preview={preview}
           customize={customize}
           setCustomize={setCustomize}
-          preview={preview}
         />
       );
     case VisualizationTypes.scatter:
@@ -99,10 +100,11 @@ const VisSelection = ({
       return (
         <DotChart
           dataset={dataset}
+          visRef={visRef}
           setVisRef={setVisRef}
+          preview={preview}
           customize={customize}
           setCustomize={setCustomize}
-          preview={preview}
         />
       );
     case VisualizationTypes.groupedBar:
@@ -120,10 +122,11 @@ const VisSelection = ({
       return (
         <TreeMap
           dataset={dataset}
+          visRef={visRef}
           setVisRef={setVisRef}
+          preview={preview}
           customize={customize}
           setCustomize={setCustomize}
-          preview={preview}
         />
       );
     default:

@@ -134,7 +134,28 @@ const ScatterPlotChart = ({
   });
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns) {
+    if (preview) {
+      setState((prevState) => ({
+        ...prevState,
+        series: visRef.data.series,
+        options: {
+          ...visRef.data.options,
+          chart: {
+            ...visRef.data.options.chart,
+            foreColor: darkMode ? "#ffffff" : "#000000",
+          },
+          tooltip: {
+            ...visRef.data.options.tooltip,
+            theme: darkMode ? "dark" : "light",
+          },
+        },
+        axisOptions: visRef.data.axisOptions,
+      }));
+    }
+  }, [preview, darkMode]);
+
+  useEffect(() => {
+    if (dataset && dataset.rows && dataset.columns && !preview) {
       const stringColumns = dataset.columns.filter(
         (col) => col.type === "string"
       );
@@ -165,7 +186,7 @@ const ScatterPlotChart = ({
   }, [dataset, darkMode, visRef.chart.code]);
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns) {
+    if (dataset && dataset.rows && dataset.columns && !preview) {
       const { selectedXAxis, selectedYAxis, selectedLabel } = state.axisOptions;
       const xColumn = dataset.columns.find(
         (col) => col.field === selectedXAxis

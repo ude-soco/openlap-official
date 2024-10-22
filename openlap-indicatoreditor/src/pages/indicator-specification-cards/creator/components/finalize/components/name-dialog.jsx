@@ -11,13 +11,14 @@ import {
 import LoadingButton from "@mui/lab/LoadingButton";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import { requestCreateISC } from "../utils/finalize-api.js";
+import { requestCreateISC, requestUpdateISC } from "../utils/finalize-api.js";
 import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 
 const NameDialog = ({ open, toggleOpen }) => {
   const { api } = useContext(AuthContext);
-  const { requirements, dataset, visRef, lockedStep } = useContext(ISCContext);
+  const { id, requirements, dataset, visRef, lockedStep } =
+    useContext(ISCContext);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const [state, setState] = useState({
@@ -57,6 +58,28 @@ const NameDialog = ({ open, toggleOpen }) => {
         enqueueSnackbar(error.message, { variant: "error" });
       }
     };
+    const updateISC = async (
+      api,
+      id,
+      requirements,
+      dataset,
+      visRef,
+      lockedStep,
+    ) => {
+      try {
+        return await requestUpdateISC(
+          api,
+          id,
+          requirements,
+          dataset,
+          visRef,
+          lockedStep,
+        );
+      } catch (error) {
+        enqueueSnackbar(error.message, { variant: "error" });
+      }
+    };
+
     setState((prevState) => ({
       prevState,
       loading: true,
@@ -65,24 +88,45 @@ const NameDialog = ({ open, toggleOpen }) => {
       ...requirements,
       indicatorName: state.indicatorName,
     };
-    createISC(api, newRequirements, dataset, visRef, lockedStep)
-      .then((response) => {
-        enqueueSnackbar(response.message, { variant: "success" });
-        toggleOpen();
-        sessionStorage.removeItem("session_isc");
-        navigate("/isc");
-        setState((prevState) => ({
-          prevState,
-          loading: false,
-        }));
-      })
-      .catch((error) => {
-        setState((prevState) => ({
-          prevState,
-          loading: false,
-        }));
-        console.error(error);
-      });
+    if (Boolean(id)) {
+      updateISC(api, id, newRequirements, dataset, visRef, lockedStep)
+        .then((response) => {
+          enqueueSnackbar(response.message, { variant: "success" });
+          toggleOpen();
+          sessionStorage.removeItem("session_isc");
+          navigate("/isc");
+          setState((prevState) => ({
+            prevState,
+            loading: false,
+          }));
+        })
+        .catch((error) => {
+          setState((prevState) => ({
+            prevState,
+            loading: false,
+          }));
+          console.error(error);
+        });
+    } else {
+      createISC(api, newRequirements, dataset, visRef, lockedStep)
+        .then((response) => {
+          enqueueSnackbar(response.message, { variant: "success" });
+          toggleOpen();
+          sessionStorage.removeItem("session_isc");
+          navigate("/isc");
+          setState((prevState) => ({
+            prevState,
+            loading: false,
+          }));
+        })
+        .catch((error) => {
+          setState((prevState) => ({
+            prevState,
+            loading: false,
+          }));
+          console.error(error);
+        });
+    }
   };
 
   return (

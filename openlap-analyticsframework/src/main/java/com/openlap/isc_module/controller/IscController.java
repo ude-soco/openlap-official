@@ -28,6 +28,14 @@ public class IscController {
     return ResponseEntity.status(status).body(new ApiSuccess(status, "ISC created successfully."));
   }
 
+  @PutMapping("/{iscId}")
+  public ResponseEntity<?> updateIsc(
+      @PathVariable String iscId, @RequestBody @Valid IscRequest isc) {
+    iscService.updateIsc(iscId, isc);
+    HttpStatus status = HttpStatus.CREATED;
+    return ResponseEntity.status(status).body(new ApiSuccess(status, "ISC updated successfully."));
+  }
+
   @GetMapping("/my")
   public ResponseEntity<?> getAllMyISCs(
       HttpServletRequest request,
@@ -63,7 +71,6 @@ public class IscController {
   public ResponseEntity<?> deleteISCById(HttpServletRequest request, @PathVariable String iscId) {
     HttpStatus status = HttpStatus.OK;
     iscService.deleteISCbyId(request, iscId);
-    return ResponseEntity.status(status)
-        .body(new ApiSuccess(status, "ISC deleted successfully."));
+    return ResponseEntity.status(status).body(new ApiSuccess(status, "ISC deleted successfully."));
   }
 }
