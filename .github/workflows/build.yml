@@ -24,11 +24,13 @@ on:
       project_desc:
         type: string
         required: true
-    secrets:
       registry_host:
+        type: string
         required: true
       registry_user:
+        type: string
         required: true
+    secrets:
       registry_token:
         required: true
 

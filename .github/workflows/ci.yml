@@ -15,7 +15,7 @@ jobs:
       base_image_name: ${{ github.repository }}-
       push:            ${{ github.event_name != 'pull_request' }}
       services:        '[ "openlap-analyticsframework", "openlap-indicatoreditor" ]'
-    secrets:
       registry_host:   ghcr.io
       registry_user:   ${{ github.actor }}
+    secrets:
       registry_token:  ${{ secrets.GITHUB_TOKEN }}
