@@ -61,8 +61,8 @@ jobs:
       if:   ${{ inputs.push }}
       uses: docker/login-action@v3
       with:
-        registry: ${{ secrets.registry_host }}
-        username: ${{ secrets.registry_user }}
+        registry: ${{ inputs.registry_host }}
+        username: ${{ inputs.registry_user }}
         password: ${{ secrets.registry_token }}
 
     - name: Determine latest semver tag
