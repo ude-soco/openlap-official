@@ -17,4 +17,4 @@ FROM amazoncorretto:11
 
 WORKDIR /opt/app
 COPY --from=build /opt/app/target/*.jar .
-RUN java -jar *.jar
+CMD [ "java", "-jar", "*.jar" ]
