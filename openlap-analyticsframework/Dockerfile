@@ -17,4 +17,8 @@ FROM amazoncorretto:11
 
 WORKDIR /opt/app
 COPY --from=build /opt/app/target/*.jar .
+
+ENV DATA_DIR="/opt/app/data"
+COPY ./jars ${DATA_DIR}/jars
+
 CMD [ "java", "-jar", "*.jar" ]
