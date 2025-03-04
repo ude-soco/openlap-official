@@ -41,7 +41,7 @@
     "eslint": "^9.21.0",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.12",
+    "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
     "rollup": "^4.34.8",
     "vite": "^6.2.0"
