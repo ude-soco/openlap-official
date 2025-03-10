@@ -10,7 +10,7 @@ RUN --mount=type=cache,target=/root/.m2 \
 
 ADD . .
 RUN --mount=type=cache,target=/root/.m2 \
-  mvn package
+  mvn package -DfinalName=openlap-analyticsframework
 
 
 FROM amazoncorretto:11
@@ -21,4 +21,4 @@ COPY --from=build /opt/app/target/*.jar .
 ENV DATA_DIR="/opt/app/data"
 COPY ./jars ${DATA_DIR}/jars
 
-CMD [ "java", "-jar", "*.jar" ]
+CMD [ "java", "-jar", "openlap-analyticsframework.jar" ]
