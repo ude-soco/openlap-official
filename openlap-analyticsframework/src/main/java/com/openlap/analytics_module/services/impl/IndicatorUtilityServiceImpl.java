@@ -344,7 +344,9 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       OpenLAPPortConfig visualizationMappings,
       Object visualizationParams,
       Boolean encodeURI) {
+
     log.info("Preparing to create indicator code...");
+    log.info("Visualization Params: {}", visualizationParams);
     String indicatorCode = "";
     VisualizationCodeGenerator visualizationCodeGenerator =
         visualizationMethodUtilityService.loadVisTypeInstance(visType.getId());
