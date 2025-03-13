@@ -17,6 +17,7 @@ const VisualizationLibrary = ({
   visRef,
   setVisRef,
   setIndicator,
+  setGenerate,
 }) => {
   const { api } = useContext(AuthContext);
   useEffect(() => {
@@ -68,12 +69,13 @@ const VisualizationLibrary = ({
       typeList: [],
       previewDisabled: true,
     }));
+    setGenerate(false);
     setIndicator((prevState) => ({
       ...prevState,
       previewData: {
         ...prevState.previewData,
-        displayCode: "",
-        scriptData: [],
+        displayCode: [],
+        scriptData: "",
       },
     }));
   };
@@ -87,7 +89,7 @@ const VisualizationLibrary = ({
             disablePortal
             id="combo-box-lrs"
             options={state.libraryList.sort((a, b) =>
-              a.name.localeCompare(b.name),
+              a.name.localeCompare(b.name)
             )}
             fullWidth
             value={state.autoCompleteValue}
