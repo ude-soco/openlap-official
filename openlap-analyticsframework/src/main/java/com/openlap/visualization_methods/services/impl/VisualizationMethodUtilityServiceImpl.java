@@ -181,6 +181,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
     newVizType.setName(visualizationType.getName());
     newVizType.setImplementingClass(className);
     newVizType.setVisualizationLib(library);
+    newVizType.setChartConfiguration(visualizationType.getConfiguration());
     return newVizType;
   }
 
