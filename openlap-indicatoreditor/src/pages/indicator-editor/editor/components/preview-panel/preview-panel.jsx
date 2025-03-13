@@ -1,5 +1,13 @@
-import { Box, Button, Grid, Paper, TextField, Typography } from "@mui/material";
-import { useContext, useEffect } from "react";
+import {
+  Box,
+  Button,
+  Grid,
+  Paper,
+  TextField,
+  Typography,
+  LinearProgress,
+} from "@mui/material";
+import { useContext, useEffect, useRef } from "react";
 import EmptyPreview from "../../../../../assets/images/vis-empty-state/no-indicator-preview.svg";
 import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";
 
@@ -7,15 +15,31 @@ const PreviewPanel = ({
   indicator,
   changeIndicatorName,
   handleSaveIndicator,
+  loading,
 }) => {
   const { darkMode } = useContext(CustomThemeContext);
+  const scriptRef = useRef(null);
 
   useEffect(() => {
-    const script = document.createElement("script");
-    script.innerHTML = indicator.previewData.scriptData;
-    document.getElementById("root").appendChild(script);
+    console.log(
+      "indicator.previewData.scriptData",
+      indicator.previewData.scriptData
+    );
+
+    if (!scriptRef.current) {
+      const script = document.createElement("script");
+      script.innerHTML = indicator.previewData.scriptData;
+      document.getElementById("root").appendChild(script);
+      scriptRef.current = script;
+    } else {
+      scriptRef.current.innerHTML = indicator.previewData.scriptData;
+    }
+
     return () => {
-      document.getElementById("root").removeChild(script);
+      if (scriptRef.current) {
+        document.getElementById("root").removeChild(scriptRef.current);
+        scriptRef.current = null;
+      }
     };
   }, [indicator.previewData.scriptData]);
 
@@ -56,8 +80,16 @@ const PreviewPanel = ({
                   p: 2,
                 }}
               >
-                {indicator.previewData.displayCode.length !== 0 ? (
-                  indicator.previewData.displayCode
+                {loading ? (
+                  <Box width="100%">
+                    <LinearProgress />
+                    <Typography variant="body1" mt={2} align="center">
+                      Loading...
+                    </Typography>
+                  </Box>
+                ) : !loading &&
+                  indicator.previewData.displayCode.length !== 0 ? (
+                  indicator.previewData.displayCode[0]
                 ) : (
                   <Box
                     component="img"
