@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-catch */
 import parse from "html-react-parser";
 
 export const fetchVisualizationLibrary = async (api) => {
@@ -69,8 +70,9 @@ export const requestBasicIndicatorPreview = async (
         mapping: visRef.visualizationMapping.mapping,
       },
     };
+    
     const response = await api.post("v1/indicators/basic/preview", requestBody);
-
+    
     const unescapedVizCode = decodeURIComponent(response.data.data);
     let displayCode = parse(unescapedVizCode);
     let scriptData;
