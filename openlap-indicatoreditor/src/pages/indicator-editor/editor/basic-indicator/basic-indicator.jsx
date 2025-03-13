@@ -23,6 +23,7 @@ import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 import { requestCreateBasicIndicator } from "../components/preview-panel/utils/preview-api.js";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
+import BarChartCustomization from "../components/preview-panel/customizations/bar-chart-customizations/bar-chart-customs.jsx";
 
 export const BasicIndicatorContext = createContext(undefined);
 
@@ -32,20 +33,24 @@ const BasicIndicator = () => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("lg"));
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+  const [generate, setGenerate] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [chartConfiguration, setChartConfiguration] = useState(null);
   const [indicator, setIndicator] = useState(() => {
     const savedState = sessionStorage.getItem("session");
+
     return savedState
       ? {
           ...JSON.parse(savedState).indicator,
           previewData: {
-            displayCode: "",
-            scriptData: [],
+            displayCode: [],
+            scriptData: "",
           },
         }
       : {
           previewData: {
-            displayCode: "",
-            scriptData: [],
+            displayCode: [],
+            scriptData: "",
           },
           indicatorName: "",
           type: "BASIC",
@@ -93,8 +98,8 @@ const BasicIndicator = () => {
           visualizationLibraryId: "",
           visualizationTypeId: "",
           visualizationParams: {
-            height: 400,
-            width: 400,
+            height: 500,
+            width: 500,
           },
           visualizationMapping: {
             mapping: [],
@@ -242,7 +247,7 @@ const BasicIndicator = () => {
       indicatorQuery,
       analysisRef,
       visRef,
-      indicator,
+      indicator
     ) => {
       try {
         return await requestCreateBasicIndicator(
@@ -250,7 +255,7 @@ const BasicIndicator = () => {
           indicatorQuery,
           analysisRef,
           visRef,
-          indicator,
+          indicator
         );
       } catch (error) {
         console.log("Error analyzing the data");
@@ -262,7 +267,7 @@ const BasicIndicator = () => {
       indicatorQuery,
       analysisRef,
       visRef,
-      indicator,
+      indicator
     ).then((response) => {
       enqueueSnackbar(response.message, {
         variant: "success",
@@ -289,12 +294,15 @@ const BasicIndicator = () => {
         analysisInputMenu,
         visRef,
         indicator,
+        chartConfiguration,
         setIndicatorQuery,
         setLockedStep,
         setAnalysisRef,
         setAnalysisInputMenu,
         setVisRef,
         setIndicator,
+        setGenerate,
+        setChartConfiguration,
       }}
     >
       <Grid container spacing={2}>
@@ -334,29 +342,53 @@ const BasicIndicator = () => {
         </Grid>
         {isSmallScreen ? (
           <>
-            <Grid item xs={12} lg={8}>
+            <Grid item xs={12} lg={12}>
               <SelectionPanel />
             </Grid>
-            <Grid item xs={12} lg={4}>
+            <Grid item xs={12} lg={12}>
               <PreviewPanel
                 indicator={indicator}
                 changeIndicatorName={handleChangeIndicatorName}
                 handleSaveIndicator={handleSaveNewBasicIndicator}
+                setVisRef={setVisRef}
               />
             </Grid>
           </>
         ) : (
           <>
-            <Grid item xs={12} lg={4}>
+            <Grid item xs={12} lg={12}>
+              <SelectionPanel />
+            </Grid>
+
+            <Grid item xs={12} lg={generate ? 8 : 12}>
               <PreviewPanel
                 indicator={indicator}
                 changeIndicatorName={handleChangeIndicatorName}
                 handleSaveIndicator={handleSaveNewBasicIndicator}
+                setVisRef={setVisRef}
+                api={api}
+                indicatorQuery={indicatorQuery}
+                analysisRef={analysisRef}
+                setIndicator={setIndicator}
+                visRef={visRef}
+                loading={loading}
               />
             </Grid>
-            <Grid item xs={12} lg={8}>
-              <SelectionPanel />
-            </Grid>
+            {generate && (
+              <Grid item xs={12} lg={4}>
+                <BarChartCustomization
+                  indicator={indicator}
+                  setVisRef={setVisRef}
+                  api={api}
+                  indicatorQuery={indicatorQuery}
+                  analysisRef={analysisRef}
+                  chartConfiguration={chartConfiguration}
+                  setIndicator={setIndicator}
+                  visRef={visRef}
+                  setLoading={setLoading}
+                />
+              </Grid>
+            )}
           </>
         )}
       </Grid>
