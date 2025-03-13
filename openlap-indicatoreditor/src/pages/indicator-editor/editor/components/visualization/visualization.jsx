@@ -24,9 +24,11 @@ const Visualization = ({
   lockedStep,
   setLockedStep,
   visRef,
+  setChartConfiguration,
   setVisRef,
   analyzedData,
   setIndicator,
+  setGenerate,
   handlePreview,
 }) => {
   const [state, setState] = useState(() => {
@@ -66,6 +68,7 @@ const Visualization = ({
   };
 
   const handleGeneratePreview = () => {
+    setGenerate(false);
     setState((prevState) => ({
       ...prevState,
       loadingPreview: true,
@@ -73,33 +76,40 @@ const Visualization = ({
     setIndicator((prevState) => ({
       ...prevState,
       previewData: {
-        displayCode: "",
-        scriptData: [],
+        displayCode: [],
+        scriptData: "",
       },
     }));
-    handlePreview()
-      .then((previewResponse) => {
-        setIndicator((prevState) => ({
-          ...prevState,
-          previewData: {
-            ...prevState.previewData,
-            displayCode: previewResponse.displayCode,
-            scriptData: previewResponse.scriptData,
-          },
-        }));
-        setState((prevState) => ({
-          ...prevState,
-          loadingPreview: false,
-        }));
-        enqueueSnackbar(previewResponse.message, { variant: "success" });
-      })
-      .catch((error) => {
-        enqueueSnackbar(error.response.data.message, { variant: "error" });
-        setState((prevState) => ({
-          ...prevState,
-          loadingPreview: false,
-        }));
-      });
+    setState((prevState) => ({
+      ...prevState,
+      loadingPreview: false,
+    }));
+    setTimeout(() => {
+      setGenerate(true);
+    }, 2000);
+    // handlePreview()
+    //   .then((previewResponse) => {
+    //     setIndicator((prevState) => ({
+    //       ...prevState,
+    //       previewData: {
+    //         ...prevState.previewData,
+    //         displayCode: previewResponse.displayCode,
+    //         scriptData: previewResponse.scriptData,
+    //       },
+    //     }));
+    //     setState((prevState) => ({
+    //       ...prevState,
+    //       loadingPreview: false,
+    //     }));
+    //     enqueueSnackbar(previewResponse.message, { variant: "success" });
+    //   })
+    //   .catch((error) => {
+    //     enqueueSnackbar(error.response.data.message, { variant: "error" });
+    //     setState((prevState) => ({
+    //       ...prevState,
+    //       loadingPreview: false,
+    //     }));
+    //   });
   };
 
   return (
@@ -223,7 +233,7 @@ const Visualization = ({
                                   label={`${mapping.inputPort.title}: ${mapping.outputPort.title}`}
                                 />
                               </Grid>
-                            ),
+                            )
                           )}
                         </Grid>
                       </Grid>
@@ -243,6 +253,7 @@ const Visualization = ({
                 visRef={visRef}
                 setVisRef={setVisRef}
                 setIndicator={setIndicator}
+                setGenerate={setGenerate}
               />
             </Grid>
             {visRef.visualizationLibraryId.length > 0 && (
@@ -252,6 +263,9 @@ const Visualization = ({
                   setState={setState}
                   visRef={visRef}
                   setVisRef={setVisRef}
+                  setIndicator={setIndicator}
+                  setGenerate={setGenerate}
+                  setChartConfiguration={setChartConfiguration}
                 />
               </Grid>
             )}
