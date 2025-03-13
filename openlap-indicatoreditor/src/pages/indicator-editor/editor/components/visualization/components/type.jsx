@@ -5,7 +5,15 @@ import { fetchVisualizationTypeByLibraryId } from "../utils/visualization-api.js
 import images from "../config/images.js";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 
-const VisualizationType = ({ state, setState, visRef, setVisRef }) => {
+const VisualizationType = ({
+  state,
+  setState,
+  visRef,
+  setVisRef,
+  setIndicator,
+  setGenerate,
+  setChartConfiguration,
+}) => {
   const { darkMode } = useContext(CustomThemeContext);
   const { api } = useContext(AuthContext);
 
@@ -21,16 +29,23 @@ const VisualizationType = ({ state, setState, visRef, setVisRef }) => {
     if (state.typeList.length === 0) {
       loadVisualizationTypeData(visRef.visualizationLibraryId).then(
         (response) => {
+          console.log(response);
+
           setState((prevState) => ({
             ...prevState,
             typeList: response,
           }));
-        },
+        }
       );
     }
   }, [state.typeList.length]);
 
   const handleSelectVisualizationType = (value) => {
+    console.log(value);
+    console.log(value.chartConfiguration);
+
+    setChartConfiguration(value.chartConfiguration);
+
     setVisRef((prevState) => ({
       ...prevState,
       visualizationTypeId: value.id,
@@ -39,6 +54,18 @@ const VisualizationType = ({ state, setState, visRef, setVisRef }) => {
         mapping: [],
       },
     }));
+
+    setIndicator((prevState) => ({
+      ...prevState,
+      previewData: {
+        ...prevState.previewData,
+        displayCode: [],
+        scriptData: "",
+      },
+    }));
+
+    setGenerate(false);
+
     setState((prevState) => ({
       ...prevState,
       previewDisabled: false,
@@ -59,7 +86,7 @@ const VisualizationType = ({ state, setState, visRef, setVisRef }) => {
               .sort((a, b) => a.name.localeCompare(b.name))
               .map((type) => {
                 let imgUrl = images.find(
-                  (image) => image.imageCode === type.imageCode,
+                  (image) => image.imageCode === type.imageCode
                 );
                 return (
                   <Grid item key={type.id}>
