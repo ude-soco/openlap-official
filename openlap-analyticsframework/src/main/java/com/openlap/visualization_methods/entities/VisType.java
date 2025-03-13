@@ -1,6 +1,8 @@
 package com.openlap.visualization_methods.entities;
 
 import javax.validation.constraints.NotNull;
+
+import com.openlap.template.model.ChartConfiguration;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
@@ -18,6 +20,8 @@ public class VisType {
 
   @NotNull(message = "'name' attribute is required")
   private String name;
+
+  private ChartConfiguration chartConfiguration;
 
   @NotNull(message = "'implementingClass' attribute is required")
   private String implementingClass;
