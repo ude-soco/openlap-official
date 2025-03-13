@@ -16,24 +16,27 @@ const SelectionPanel = () => {
     indicatorQuery,
     analysisRef,
     visRef,
+    chartConfiguration,
     setLockedStep,
     setAnalysisRef,
     setVisRef,
     setIndicator,
+    setGenerate,
+    setChartConfiguration,
   } = useContext(BasicIndicatorContext);
 
   const loadPreviewVisualization = async (
     api,
     indicatorQuery,
     analysisRef,
-    visRef,
+    visRef
   ) => {
     try {
       return await requestBasicIndicatorPreview(
         api,
         indicatorQuery,
         analysisRef,
-        visRef,
+        visRef
       );
     } catch (error) {
       console.log("Error analyzing the data");
@@ -70,6 +73,8 @@ const SelectionPanel = () => {
         setVisRef={setVisRef}
         analyzedData={analysisRef.analyzedData}
         setIndicator={setIndicator}
+        setGenerate={setGenerate}
+        setChartConfiguration={setChartConfiguration}
         handlePreview={() =>
           loadPreviewVisualization(api, indicatorQuery, analysisRef, visRef)
         }
