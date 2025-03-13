@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import ApexCharts from "apexcharts";
-import { StateContext } from "../bar-chart";
+import { StateContext } from "../../../../../../indicator-specification-cards/creator/components/finalize/components/bar-chart";
 
 export const ElementsBar = () => {
   const { state, setState, chartRef } = useContext(StateContext);
