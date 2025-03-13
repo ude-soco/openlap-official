@@ -127,6 +127,7 @@ public class VisualizationTypeServiceImpl implements VisualizationTypeService {
       visualizationTypeResponse.setName(visType.getName());
       String[] imageCodeStringList = visType.getImplementingClass().split("\\.");
       visualizationTypeResponse.setImageCode(imageCodeStringList[imageCodeStringList.length - 1]);
+      visualizationTypeResponse.setChartConfiguration(visType.getChartConfiguration());
       return visualizationTypeResponse;
     } catch (Exception e) {
       throw new ServiceException("Error in generating vis type response.", e);
