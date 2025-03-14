@@ -24,11 +24,15 @@ on:
       project_desc:
         type: string
         required: true
-    secrets:
+      registry_host:
+        type: string
+        required: true
       registry_user:
-        required: false
+        type: string
+        required: true
+    secrets:
       registry_token:
-        required: false
+        required: true
 
 jobs:
   build:
@@ -57,7 +61,8 @@ jobs:
       if:   ${{ inputs.push }}
       uses: docker/login-action@v3
       with:
-        username: ${{ secrets.registry_user }}
+        registry: ${{ inputs.registry_host }}
+        username: ${{ inputs.registry_user }}
         password: ${{ secrets.registry_token }}
 
     - name: Determine latest semver tag
