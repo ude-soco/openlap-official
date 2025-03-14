@@ -117,7 +117,11 @@ export const RadarStyles = () => {
                     </Box>
                   </Grid>
                   <Grid item>
-                    <Typography style={{ marginTop: "5px" }} variant="body">
+                    <Typography
+                      sx={{ mt: 0.5 }}
+                      style={{ marginTop: "5px" }}
+                      variant="body"
+                    >
                       {label.label}
                     </Typography>
                   </Grid>
@@ -170,7 +174,7 @@ export const RadarStyles = () => {
                     />
                   </Box>
                 </Grid>
-                <Grid item>
+                <Grid sx={{ mt: 0.5 }} item>
                   <Typography style={{ marginTop: "5px" }} variant="body">
                     Data labels color
                   </Typography>
@@ -196,7 +200,7 @@ export const RadarStyles = () => {
                     />
                   </Box>
                 </Grid>
-                <Grid item>
+                <Grid sx={{ mt: 0.5 }} item>
                   <Typography style={{ marginTop: "5px" }} variant="body">
                     Data labels fore color
                     <br />
