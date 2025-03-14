@@ -114,7 +114,7 @@ export const StylesPie = () => {
                       />
                     </Box>
                   </Grid>
-                  <Grid item>
+                  <Grid sx={{ mt: 0.5 }} item>
                     <Typography style={{ marginTop: "5px" }} variant="body">
                       {label.label}
                     </Typography>
@@ -168,7 +168,7 @@ export const StylesPie = () => {
                     />
                   </Box>
                 </Grid>
-                <Grid item>
+                <Grid sx={{ mt: 0.5 }} item>
                   <Typography style={{ marginTop: "5px" }} variant="body">
                     Data labels color
                   </Typography>
@@ -194,7 +194,7 @@ export const StylesPie = () => {
                     />
                   </Box>
                 </Grid>
-                <Grid item>
+                <Grid sx={{ mt: 0.5 }} item>
                   <Typography style={{ marginTop: "5px" }} variant="body">
                     Data labels fore color
                     <br />
