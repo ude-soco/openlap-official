@@ -104,7 +104,7 @@ export const StylesDot = () => {
                     />
                   </Box>
                 </Grid>
-                <Grid item>
+                <Grid sx={{ mt: 0.5 }} item>
                   <Typography style={{ marginTop: "5px" }} variant="body">
                     {state.series[0]?.name}
                   </Typography>
@@ -157,7 +157,7 @@ export const StylesDot = () => {
                     />
                   </Box>
                 </Grid>
-                <Grid item>
+                <Grid sx={{ mt: 0.5 }} item>
                   <Typography style={{ marginTop: "5px" }} variant="body">
                     Data labels color
                   </Typography>
@@ -183,7 +183,7 @@ export const StylesDot = () => {
                     />
                   </Box>
                 </Grid>
-                <Grid item>
+                <Grid sx={{ mt: 0.5 }} item>
                   <Typography style={{ marginTop: "5px" }} variant="body">
                     Data labels fore color
                     <br />
