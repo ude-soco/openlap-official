@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import { useContext, useEffect } from "react";
 import ApexCharts from "apexcharts";
-import { StateContext } from "../bar-chart";
+import { StateContext } from "../../../../../../indicator-specification-cards/creator/components/finalize/components/bar-chart";
 
 export const StylesBar = () => {
   const { state, setState, chartRef } = useContext(StateContext);
@@ -101,7 +101,7 @@ export const StylesBar = () => {
                     />
                   </Box>
                 </Grid>
-                <Grid item>
+                <Grid sx={{ mt: 0.5 }} item>
                   <Typography style={{ marginTop: "5px" }} variant="body">
                     {state.series[0]?.name}
                   </Typography>
@@ -154,7 +154,7 @@ export const StylesBar = () => {
                     />
                   </Box>
                 </Grid>
-                <Grid item>
+                <Grid sx={{ mt: 0.5 }} item>
                   <Typography style={{ marginTop: "5px" }} variant="body">
                     Data labels color
                   </Typography>
@@ -180,7 +180,7 @@ export const StylesBar = () => {
                     />
                   </Box>
                 </Grid>
-                <Grid item>
+                <Grid sx={{ mt: 0.5 }} item>
                   <Typography style={{ marginTop: "5px" }} variant="body">
                     Data labels fore color
                     <br />
