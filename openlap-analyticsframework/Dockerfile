@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/root/.m2 \
   mvn package -DfinalName=openlap-analyticsframework
 
 
-FROM amazoncorretto:11
+FROM amazoncorretto:24
 
 WORKDIR /opt/app
 COPY --from=build /opt/app/target/*.jar .
