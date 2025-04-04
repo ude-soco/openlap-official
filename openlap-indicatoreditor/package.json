@@ -18,7 +18,7 @@
     "@mui/material": "^6.4.8",
     "@mui/styled-engine-sc": "^6.4.6",
     "@mui/x-data-grid": "^7.28.3",
-    "@mui/x-date-pickers": "^7.28.2",
+    "@mui/x-date-pickers": "^7.28.3",
     "apexcharts": "^4.5.0",
     "axios": "^1.8.4",
     "dayjs": "^1.11.13",
