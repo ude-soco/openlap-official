@@ -31,7 +31,7 @@
     "react-apexcharts": "^1.4.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.3.0",
-    "styled-components": "^6.1.15",
+    "styled-components": "^6.1.17",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
