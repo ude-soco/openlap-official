@@ -9,19 +9,14 @@ export const requestAvailableLrsInOpenLAP = async (api) => {
 };
 
 export const requestUserDetails = async (api) => {
-  try {
-    const response = await api.get("v1/users/my");
-    return response.data.data;
-  } catch (error) {
-    console.error("Failed to fetch user data", error);
-    throw error; // Re-throw the error to handle it in the component
-  }
+  const response = await api.get("v1/users/my");
+  return response.data.data;
 };
 
 export const requestLrsConsumerValidation = async (
   api,
   lrsId,
-  uniqueIdentifier,
+  uniqueIdentifier
 ) => {
   try {
     let requestBody = {
@@ -38,7 +33,7 @@ export const requestLrsConsumerValidation = async (
 export const requestDeleteLrsConsumer = async (api, lrsConsumerId) => {
   try {
     const response = await api.delete(
-      `v1/users/my/lrs/${lrsConsumerId}/delete`,
+      `v1/users/my/lrs/${lrsConsumerId}/delete`
     );
     return response.data;
   } catch (error) {
@@ -58,7 +53,7 @@ export const requestDeleteLRSProvider = async (api, lrsId) => {
 export const requestCreateLRSProvider = async (
   api,
   title,
-  uniqueIdentifierType,
+  uniqueIdentifierType
 ) => {
   try {
     let requestBody = {
