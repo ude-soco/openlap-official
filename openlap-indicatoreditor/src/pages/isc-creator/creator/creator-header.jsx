@@ -61,16 +61,18 @@ const CreatorHeader = ({
 
   const [indicatorGoal, setIndicatorGoal] = useState(
     JSON.parse(sessionStorage.getItem("openlap-isc-data"))?.indicatorGoal ||
-      null,
+      null
   );
+  console.log(indicatorGoal);
+  
   const [listOfGoals, setListOfGoals] = useState(sortGoalList(goalList));
   const [indicatorGoalText, setIndicatorGoalText] = useState(
     JSON.parse(sessionStorage.getItem("openlap-isc-data"))?.indicatorGoalText ||
-      "",
+      ""
   );
   const [indicatorQuestion, setIndicatorQuestion] = useState(() => {
     let name = JSON.parse(
-      sessionStorage.getItem("openlap-isc-data"),
+      sessionStorage.getItem("openlap-isc-data")
     )?.indicatorQuestion;
     if (name) {
       return lowercaseFirstLetter(name);
@@ -80,7 +82,7 @@ const CreatorHeader = ({
   });
   const [indicatorName, setIndicatorName] = useState(() => {
     let name = JSON.parse(
-      sessionStorage.getItem("openlap-isc-data"),
+      sessionStorage.getItem("openlap-isc-data")
     )?.indicatorName;
     if (name) {
       return lowercaseFirstLetter(name);
@@ -93,7 +95,7 @@ const CreatorHeader = ({
       ?.indicatorDataArray || [
       { value: "", placeholder: "e.g., the number of views" },
       { value: "", placeholder: "e.g., name of materials" },
-    ],
+    ]
   );
 
   const [deleteDialog, setDeleteDialog] = useState(false);
@@ -381,7 +383,7 @@ const CreatorHeader = ({
                     const { inputValue } = params;
                     // Suggest the creation of a new value
                     const isExisting = options.some(
-                      (option) => inputValue === option.name,
+                      (option) => inputValue === option.name
                     );
                     if (inputValue !== "" && !isExisting) {
                       filtered.push({
@@ -445,8 +447,8 @@ const CreatorHeader = ({
                                     event.stopPropagation(); // prevent the click from propagating to the parent elements
                                     setListOfGoals((prevGoals) =>
                                       prevGoals.filter(
-                                        (goal) => goal.id !== option.id,
-                                      ),
+                                        (goal) => goal.id !== option.id
+                                      )
                                     );
                                   }}
                                 >
@@ -482,6 +484,7 @@ const CreatorHeader = ({
                   placeholder="e.g., the usage of the learning materials in my course."
                   value={indicatorGoalText}
                   onChange={handleIndicatorGoalText}
+                  disabled={indicatorGoal === null}
                 />
               </Grid>
             </Grid>

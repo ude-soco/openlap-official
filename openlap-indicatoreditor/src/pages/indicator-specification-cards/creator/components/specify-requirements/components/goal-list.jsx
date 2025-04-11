@@ -60,6 +60,7 @@ const GoalList = () => {
           value={requirements.goalType || null}
           selectOnFocus
           disablePortal
+          disableClearable
           clearOnBlur
           handleHomeEndKeys
           freeSolo
@@ -94,7 +95,7 @@ const GoalList = () => {
               setState((prevState) => ({
                 ...prevState,
                 goalList: tempListOfGoals.sort((a, b) =>
-                  a.verb.localeCompare(b.verb),
+                  a.verb.localeCompare(b.verb)
                 ),
               }));
             } else {
@@ -126,7 +127,7 @@ const GoalList = () => {
             const filtered = filter(options, params);
             const { inputValue } = params;
             const isExisting = options.some(
-              (option) => inputValue === option.verb,
+              (option) => inputValue === option.verb
             );
             if (inputValue !== "" && !isExisting) {
               filtered.push({
@@ -171,7 +172,7 @@ const GoalList = () => {
                             event.stopPropagation();
                             setState((prevState) => ({
                               goalList: prevState.goalList.filter(
-                                (goal) => goal.id !== option.id,
+                                (goal) => goal.id !== option.id
                               ),
                             }));
                           }}
@@ -186,7 +187,11 @@ const GoalList = () => {
             );
           }}
         />
-        <FormHelperText>Select a goal or create a new one</FormHelperText>
+        {requirements.goalType.verb === "" && (
+          <FormHelperText sx={{ color: "#b71c1c" }}>
+            Select a goal or create a new one
+          </FormHelperText>
+        )}
       </FormControl>
     </>
   );
