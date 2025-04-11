@@ -177,7 +177,7 @@ const MyIscTable = () => {
         setState((prevState) => ({
           ...prevState,
           myISCList: prevState.myISCList.filter(
-            (item) => item.id !== selectedIndicator.id,
+            (item) => item.id !== selectedIndicator.id
           ),
         }));
         enqueueSnackbar("Indicator deleted successfully", {
@@ -234,7 +234,7 @@ const MyIscTable = () => {
         </Grid>
         <Grid item xs={12}>
           <TableContainer component={Paper} variant="outlined">
-            <Table stickyHeader>
+            <Table stickyHeader size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>
@@ -352,7 +352,7 @@ const MyIscTable = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={3}>
+                    <TableCell colSpan={3} sx={{ py: 1.5 }}>
                       {state.loadingIndicators ? (
                         <>
                           <Grid container alignItems="center" spacing={1}>

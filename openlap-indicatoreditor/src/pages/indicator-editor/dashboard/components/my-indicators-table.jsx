@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import {
   Button,
+  CircularProgress,
   Divider,
   Grid,
   IconButton,
@@ -55,6 +56,7 @@ const MyIndicatorsTable = () => {
       sortBy: "createdOn",
     },
     openDeleteDialog: false,
+    loadingIndicators: false,
   });
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -87,13 +89,17 @@ const MyIndicatorsTable = () => {
         console.log("Error requesting my indicators");
       }
     };
-
+    setState((prevState) => ({
+      ...prevState,
+      loadingIndicators: true,
+    }));
     loadMyIndicators(api, state.params).then((response) => {
       setState((prevState) => ({
         ...prevState,
         myIndicators: response.content,
         pageable: response.pageable,
         totalElements: response.totalElements,
+        loadingIndicators: false,
       }));
     });
   }, [api, state.params]);
@@ -203,7 +209,7 @@ const MyIndicatorsTable = () => {
         setState((prevState) => ({
           ...prevState,
           myIndicators: prevState.myIndicators.filter(
-            (indicator) => indicator.id !== selectedIndicator.id,
+            (indicator) => indicator.id !== selectedIndicator.id
           ),
         }));
       });
@@ -296,60 +302,83 @@ const MyIndicatorsTable = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {state.myIndicators.map((indicator) => (
-                  <TableRow key={indicator.id}>
-                    <TableCell>{indicator.name}</TableCell>
-                    <TableCell>{handleDisplayType(indicator.type)}</TableCell>
-                    <TableCell align="right">
-                      {indicator.createdOn.split("T")[0]}
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        onClick={(event) => handleMenuOpen(event, indicator)}
-                      >
-                        <MoreVert />
-                      </IconButton>
-                      <Menu
-                        anchorEl={anchorEl}
-                        open={Boolean(anchorEl)}
-                        onClose={handleMenuClose}
-                      >
-                        <MenuItem onClick={handlePreview}>
-                          <ListItemIcon>
-                            <Preview fontSize="small" color="primary" />
-                          </ListItemIcon>
-                          <ListItemText primary="Preview Indicator" />
-                        </MenuItem>
-                        <MenuItem onClick={handleCopyCode}>
-                          <ListItemIcon>
-                            <Link fontSize="small" color="primary" />
-                          </ListItemIcon>
-                          <ListItemText primary="Copy Code" />
-                        </MenuItem>
-                        <Divider />
-                        <MenuItem onClick={handleEdit} disabled>
-                          <ListItemIcon>
-                            <Edit fontSize="small" color="primary" />
-                          </ListItemIcon>
-                          <ListItemText primary="Edit Indicator" />
-                        </MenuItem>
-                        <MenuItem onClick={handleDuplicate} disabled>
-                          <ListItemIcon>
-                            <ContentCopy fontSize="small" color="primary" />
-                          </ListItemIcon>
-                          <ListItemText primary="Duplicate Indicator" />
-                        </MenuItem>
-                        <MenuItem onClick={confirmDeleteIndicator}>
-                          <ListItemIcon>
-                            <Delete fontSize="small" color="error" />
-                          </ListItemIcon>
-                          <ListItemText primary="Delete Indicator" />
-                        </MenuItem>
-                      </Menu>
+                {state.myIndicators.length > 0 ? (
+                  state.myIndicators.map((indicator) => (
+                    <TableRow key={indicator.id}>
+                      <TableCell>{indicator.name}</TableCell>
+                      <TableCell>{handleDisplayType(indicator.type)}</TableCell>
+                      <TableCell align="right">
+                        {indicator.createdOn.split("T")[0]}
+                      </TableCell>
+                      <TableCell align="right">
+                        <IconButton
+                          size="small"
+                          onClick={(event) => handleMenuOpen(event, indicator)}
+                        >
+                          <MoreVert />
+                        </IconButton>
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={Boolean(anchorEl)}
+                          onClose={handleMenuClose}
+                        >
+                          <MenuItem onClick={handlePreview}>
+                            <ListItemIcon>
+                              <Preview fontSize="small" color="primary" />
+                            </ListItemIcon>
+                            <ListItemText primary="Preview Indicator" />
+                          </MenuItem>
+                          <MenuItem onClick={handleCopyCode}>
+                            <ListItemIcon>
+                              <Link fontSize="small" color="primary" />
+                            </ListItemIcon>
+                            <ListItemText primary="Copy Code" />
+                          </MenuItem>
+                          <Divider />
+                          <MenuItem onClick={handleEdit} disabled>
+                            <ListItemIcon>
+                              <Edit fontSize="small" color="primary" />
+                            </ListItemIcon>
+                            <ListItemText primary="Edit Indicator" />
+                          </MenuItem>
+                          <MenuItem onClick={handleDuplicate} disabled>
+                            <ListItemIcon>
+                              <ContentCopy fontSize="small" color="primary" />
+                            </ListItemIcon>
+                            <ListItemText primary="Duplicate Indicator" />
+                          </MenuItem>
+                          <MenuItem onClick={confirmDeleteIndicator}>
+                            <ListItemIcon>
+                              <Delete fontSize="small" color="error" />
+                            </ListItemIcon>
+                            <ListItemText primary="Delete Indicator" />
+                          </MenuItem>
+                        </Menu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} sx={{ py: 1.5 }}>
+                      {state.loadingIndicators ? (
+                        <>
+                          <Grid container alignItems="center" spacing={1}>
+                            <Grid item>
+                              <CircularProgress size={18} />
+                            </Grid>
+                            <Grid item>
+                              <Typography variant="body2" gutterBottom>
+                                Loading your indicators ...
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </>
+                      ) : (
+                        "No indicators found"
+                      )}
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
             <TablePagination
