@@ -81,7 +81,7 @@ const AppRoutes = () => {
             {Boolean(user) && (
               <NavBar openSidebar={openSidebar} toggleSidebar={toggleSidebar} />
             )}
-            {Boolean(user) && <Sidebar openSidebar={openSidebar} />}
+            {Boolean(user) ? <Sidebar openSidebar={openSidebar} /> : undefined}
             <Grid container justifyContent="center">
               <Main open={openSidebar} sx={{ maxWidth: 1900, width: "100%" }}>
                 <DrawerHeader />
