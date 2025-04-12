@@ -115,7 +115,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={handleToggleCustomizePanel}
+          handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.treemap:
