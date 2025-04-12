@@ -18,7 +18,6 @@ import IconButton from "@mui/material/IconButton";
 import LockIcon from "@mui/icons-material/Lock";
 import VisSelection from "../visualization/components/vis-selection.jsx";
 import NameDialog from "./components/name-dialog.jsx";
-import PaletteIcon from "@mui/icons-material/Palette";
 
 const Finalize = () => {
   const { visRef, setVisRef, dataset, lockedStep, setLockedStep } =
@@ -109,25 +108,6 @@ const Finalize = () => {
                           ? "Close section"
                           : "CHANGE"}
                       </Button>
-                    </Grid>
-                    <Grid item xs={12}>
-                      {showCustomize && (
-                        <Button
-                          onClick={handleToggleCustomizePanel}
-                          color="primary"
-                        >
-                          Close customization
-                        </Button>
-                      )}
-                      {!showCustomize && (
-                        <Button
-                          onClick={handleToggleCustomizePanel}
-                          color="primary"
-                          endIcon={<PaletteIcon />}
-                        >
-                          Customize
-                        </Button>
-                      )}
                     </Grid>
                   </Grid>
                 )}
