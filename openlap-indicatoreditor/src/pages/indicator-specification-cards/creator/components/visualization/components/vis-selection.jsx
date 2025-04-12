@@ -38,7 +38,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={handleToggleCustomizePanel}
+          handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.pie:
@@ -49,7 +49,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={handleToggleCustomizePanel}
+          handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.polar:
@@ -60,7 +60,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={handleToggleCustomizePanel}
+          handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.radar:
@@ -71,7 +71,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={handleToggleCustomizePanel}
+          handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.scatter:
@@ -82,7 +82,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={handleToggleCustomizePanel}
+          handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.stackedBar:
@@ -93,7 +93,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={handleToggleCustomizePanel}
+          handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.dot:
@@ -126,7 +126,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={handleToggleCustomizePanel}
+          handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
       );
     default:
