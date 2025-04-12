@@ -6,8 +6,18 @@ import React, {
   useState,
 } from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
-import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
+import {
+  Button,
+  FormControl,
+  Grow,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
 import Chart from "react-apexcharts";
+import Grid from "@mui/material/Grid2";
+import PaletteIcon from "@mui/icons-material/Palette";
+import CloseIcon from "@mui/icons-material/Close";
 import TreeMapCustomizations from "./tree-map-chart-customizations/tree-map-customizations.jsx";
 
 export let StateContext = createContext();
@@ -18,7 +28,7 @@ const TreeMap = ({
   setVisRef,
   preview = false,
   customize,
-  setCustomize,
+  handleToggleCustomizePanel,
 }) => {
   const { darkMode } = useContext(CustomThemeContext);
   const chartRef = useRef(null);
@@ -248,90 +258,112 @@ const TreeMap = ({
     <>
       <Grid container spacing={2}>
         {!preview && (
-          <Grid item xs={12}>
-            <Grid container spacing={2}>
-              <Grid item xs={4}>
-                <FormControl fullWidth>
-                  <InputLabel id="category-select-label">Category</InputLabel>
-                  <Select
-                    labelId="category-select-label"
-                    id="category-select"
-                    value={state.axisOptions.selectedCategory}
-                    onChange={handleCategoryChange}
-                    label="Category"
-                    variant="outlined"
-                  >
-                    {state.axisOptions.categoryOptions.map((col) => (
-                      <MenuItem key={col.field} value={col.field}>
-                        {col.headerName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={4}>
-                <FormControl fullWidth>
-                  <InputLabel id="x-value-select-label">X-Value</InputLabel>
-                  <Select
-                    labelId="x-value-select-label"
-                    id="x-value-select"
-                    value={state.axisOptions.selectedXValue}
-                    onChange={handleXValueChange}
-                    label="X-Value"
-                    variant="outlined"
-                  >
-                    {state.axisOptions.xValueOptions.map((col) => (
-                      <MenuItem key={col.field} value={col.field}>
-                        {col.headerName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={4}>
-                <FormControl fullWidth>
-                  <InputLabel id="value-select-label">Value</InputLabel>
-                  <Select
-                    labelId="value-select-label"
-                    id="value-select"
-                    value={state.axisOptions.selectedValue}
-                    onChange={handleValueChange}
-                    label="Value"
-                    variant="outlined"
-                  >
-                    {state.axisOptions.valueOptions.map((col) => (
-                      <MenuItem key={col.field} value={col.field}>
-                        {col.headerName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+          <>
+            <Grid size={{ xs: 6 }}>
+              <FormControl fullWidth>
+                <InputLabel id="category-select-label">Category</InputLabel>
+                <Select
+                  labelId="category-select-label"
+                  id="category-select"
+                  value={state.axisOptions.selectedCategory}
+                  onChange={handleCategoryChange}
+                  label="Category"
+                  variant="outlined"
+                >
+                  {state.axisOptions.categoryOptions.map((col) => (
+                    <MenuItem key={col.field} value={col.field}>
+                      {col.headerName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 6 }}>
+              <FormControl fullWidth>
+                <InputLabel id="x-value-select-label">X-Value</InputLabel>
+                <Select
+                  labelId="x-value-select-label"
+                  id="x-value-select"
+                  value={state.axisOptions.selectedXValue}
+                  onChange={handleXValueChange}
+                  label="X-Value"
+                  variant="outlined"
+                >
+                  {state.axisOptions.xValueOptions.map((col) => (
+                    <MenuItem key={col.field} value={col.field}>
+                      {col.headerName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 6 }}>
+              <FormControl fullWidth>
+                <InputLabel id="value-select-label">Value</InputLabel>
+                <Select
+                  labelId="value-select-label"
+                  id="value-select"
+                  value={state.axisOptions.selectedValue}
+                  onChange={handleValueChange}
+                  label="Value"
+                  variant="outlined"
+                >
+                  {state.axisOptions.valueOptions.map((col) => (
+                    <MenuItem key={col.field} value={col.field}>
+                      {col.headerName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Grid container spacing={2} justifyContent="flex-end">
+                <Button
+                  startIcon={customize ? undefined : <PaletteIcon />}
+                  endIcon={customize ? <CloseIcon /> : undefined}
+                  variant={customize ? undefined : "contained"}
+                  onClick={handleToggleCustomizePanel}
+                >
+                  {!customize ? "Customize" : "Close customization"}
+                </Button>
               </Grid>
             </Grid>
-          </Grid>
+          </>
         )}
-        <Grid
-          item
-          xs={12}
-          lg={customize ? 8 : 12}
-          md={customize ? 8 : 12}
-          xl={customize ? 8 : 12}
-          sx={{ minHeight: 600, transition: "all 0.5s ease" }}
-        >
-          <Chart
-            ref={chartRef}
-            options={state.options}
-            series={state.series}
-            type="treemap"
-            height="100%"
-          />
-        </Grid>
+        {!customize && (
+          <Grow in={!customize} timeout={300}>
+            <Grid size={{ xs: 12 }} sx={{ minHeight: 600 }}>
+              <Chart
+                ref={chartRef}
+                options={state.options}
+                series={state.series}
+                type="treemap"
+                height="100%"
+              />
+            </Grid>
+          </Grow>
+        )}
         {customize && (
-          <Grid item xs={12} lg={4} md={4} xl={4} sx={{ minHeight: 600 }}>
-            <StateContext.Provider value={{ state, setState, chartRef }}>
-              <TreeMapCustomizations />
-            </StateContext.Provider>
-          </Grid>
+          <>
+            <Grow in={customize} timeout={300}>
+              <Grid size={{ xs: 12, md: 8 }} sx={{ minHeight: 600 }}>
+                <Chart
+                  ref={chartRef}
+                  options={state.options}
+                  series={state.series}
+                  type="treemap"
+                  height="100%"
+                />
+              </Grid>
+            </Grow>
+            <Grow in={customize} timeout={300}>
+              <Grid size={{ xs: 12, md: 4 }} sx={{ minHeight: 600 }}>
+                <StateContext.Provider value={{ state, setState, chartRef }}>
+                  <TreeMapCustomizations />
+                </StateContext.Provider>
+              </Grid>
+            </Grow>
+          </>
         )}
       </Grid>
     </>
