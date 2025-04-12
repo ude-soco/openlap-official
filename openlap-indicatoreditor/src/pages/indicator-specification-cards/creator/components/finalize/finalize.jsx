@@ -54,9 +54,9 @@ const Finalize = () => {
     }));
   };
 
-  const handleCustomize = () => {
+  const handleToggleCustomizePanel = () => {
     setShowCustomize(!showCustomize);
-  }
+  };
 
   return (
     <>
@@ -111,15 +111,23 @@ const Finalize = () => {
                       </Button>
                     </Grid>
                     <Grid item xs={12}>
-                      {showCustomize && ( <Button onClick={handleCustomize} color="primary">
-                        Close customization
-                      </Button>)}
-                      {!showCustomize && (
-                          <Button onClick={handleCustomize} color="primary" endIcon={<PaletteIcon />}>
-                            Customize
-                          </Button>
+                      {showCustomize && (
+                        <Button
+                          onClick={handleToggleCustomizePanel}
+                          color="primary"
+                        >
+                          Close customization
+                        </Button>
                       )}
-
+                      {!showCustomize && (
+                        <Button
+                          onClick={handleToggleCustomizePanel}
+                          color="primary"
+                          endIcon={<PaletteIcon />}
+                        >
+                          Customize
+                        </Button>
+                      )}
                     </Grid>
                   </Grid>
                 )}
@@ -140,7 +148,7 @@ const Finalize = () => {
                 visRef={visRef}
                 setVisRef={setVisRef}
                 customize={showCustomize}
-                setCustomize={setShowCustomize}
+                handleToggleCustomizePanel={handleToggleCustomizePanel}
               />
             </Grid>
             <Grid item xs={12}>

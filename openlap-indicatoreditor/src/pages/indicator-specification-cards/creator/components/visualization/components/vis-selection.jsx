@@ -16,7 +16,7 @@ const VisSelection = ({
   setVisRef,
   preview,
   customize,
-  setCustomize,
+  handleToggleCustomizePanel,
 }) => {
   switch (visRef.chart.type) {
     case VisualizationTypes.bar:
@@ -27,7 +27,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={setCustomize}
+          handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.line:
@@ -38,7 +38,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={setCustomize}
+          setCustomize={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.pie:
@@ -49,7 +49,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={setCustomize}
+          setCustomize={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.polar:
@@ -60,7 +60,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={setCustomize}
+          setCustomize={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.radar:
@@ -71,7 +71,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={setCustomize}
+          setCustomize={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.scatter:
@@ -82,7 +82,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={setCustomize}
+          setCustomize={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.stackedBar:
@@ -93,7 +93,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={setCustomize}
+          setCustomize={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.dot:
@@ -104,7 +104,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={setCustomize}
+          setCustomize={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.groupedBar:
@@ -115,7 +115,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={setCustomize}
+          setCustomize={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.treemap:
@@ -126,7 +126,7 @@ const VisSelection = ({
           setVisRef={setVisRef}
           preview={preview}
           customize={customize}
-          setCustomize={setCustomize}
+          setCustomize={handleToggleCustomizePanel}
         />
       );
     default:
