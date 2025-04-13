@@ -11,9 +11,12 @@ import {
   Button,
   FormControl,
   Grow,
+  IconButton,
   InputLabel,
   MenuItem,
   Select,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
@@ -27,7 +30,7 @@ const ScatterPlotChart = ({
   visRef,
   setVisRef,
   preview = false,
-  customize,
+  customize = false,
   handleToggleCustomizePanel,
 }) => {
   const { darkMode } = useContext(CustomThemeContext);
@@ -385,18 +388,19 @@ const ScatterPlotChart = ({
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12 }}>
-              <Grid container spacing={2} justifyContent="flex-end">
-                <Button
-                  startIcon={customize ? undefined : <PaletteIcon />}
-                  endIcon={customize ? <CloseIcon /> : undefined}
-                  variant={customize ? undefined : "contained"}
-                  onClick={handleToggleCustomizePanel}
-                >
-                  {!customize ? "Customize" : "Close customization"}
-                </Button>
+            {!customize && (
+              <Grid size={{ xs: 12 }}>
+                <Grid container spacing={2} justifyContent="flex-end">
+                  <Button
+                    startIcon={<PaletteIcon />}
+                    variant="contained"
+                    onClick={handleToggleCustomizePanel}
+                  >
+                    Customize
+                  </Button>
+                </Grid>
               </Grid>
-            </Grid>
+            )}
           </>
         )}
 
@@ -424,6 +428,19 @@ const ScatterPlotChart = ({
         </Grow>
         <Grow in={customize} timeout={300}>
           <Grid size={{ xs: 12, md: 4 }} sx={{ minHeight: 600 }}>
+            <Grid
+              container
+              spacing={2}
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Typography>Customization panel</Typography>
+              <Tooltip title="Close">
+                <IconButton onClick={handleToggleCustomizePanel}>
+                  <CloseIcon color="primary" />
+                </IconButton>
+              </Tooltip>
+            </Grid>
             <StateContext.Provider value={{ state, setState, chartRef }}>
               <ScatterChartCustomizations />
             </StateContext.Provider>
