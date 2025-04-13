@@ -195,7 +195,7 @@ const ColumnMerge = () => {
                           />
                         </FormGroup>
                       )}
-                      <Button color="primary" onClick={handleTogglePanel}>
+                      <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
                         {lockedStep.columnMerge.openPanel
                           ? "Close section"
                           : "CHANGE"}

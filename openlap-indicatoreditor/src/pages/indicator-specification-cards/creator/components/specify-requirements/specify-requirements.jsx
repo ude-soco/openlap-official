@@ -149,7 +149,12 @@ const SpecifyRequirements = () => {
                         />
                       </FormGroup>
                     )}
-                    <Button color="primary" onClick={handleTogglePanel}>
+                    <Button
+                      color="primary"
+                      variant="outlined"
+                      size="small"
+                      onClick={handleTogglePanel}
+                    >
                       {lockedStep.requirements.openPanel
                         ? "Close section"
                         : "CHANGE"}
@@ -158,6 +163,7 @@ const SpecifyRequirements = () => {
                 </Grid>
               </Grid>
             </Grid>
+
             {!lockedStep.requirements.openPanel && state.showSelections ? (
               <>
                 {requirements.goal !== "" &&

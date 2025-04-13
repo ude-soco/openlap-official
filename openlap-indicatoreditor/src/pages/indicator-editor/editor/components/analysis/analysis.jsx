@@ -149,7 +149,7 @@ const Analysis = ({
                           />
                         </FormGroup>
                       )}
-                      <Button color="primary" onClick={handleTogglePanel}>
+                      <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
                         {lockedStep.analysis.openPanel
                           ? "Close section"
                           : "CHANGE"}

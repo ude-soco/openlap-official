@@ -123,7 +123,7 @@ const Filters = () => {
                           />
                         </FormGroup>
                       )}
-                      <Button color="primary" onClick={handleTogglePanel}>
+                      <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
                         {lockedStep.filter.openPanel
                           ? "Close section"
                           : "CHANGE"}
