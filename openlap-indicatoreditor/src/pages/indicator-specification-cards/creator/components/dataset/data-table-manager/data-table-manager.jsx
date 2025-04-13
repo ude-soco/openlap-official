@@ -161,7 +161,7 @@ const DataTableManager = () => {
             columnMenuClearIcon={<ClearAllIcon />}
             cellModesModel={state.cellModesModel}
             checkboxSelection
-            disableRowSelectionOnClick={false}
+            disableRowSelectionOnClick={true}
             disableColumnMenu={false}
             onColumnHeaderClick={(params) => handleColumnHeaderClick(params)}
             onCellModesModelChange={handleCellModesModelChange}
