@@ -347,40 +347,36 @@ const DotChart = ({
             </Grid>
           </>
         )}
-        {!customize && (
-          <Grow in={!customize} timeout={300}>
-            <Grid size={{ xs: 12 }} sx={{ minHeight: 600 }}>
-              <Chart
-                ref={chartRef}
-                options={state.options}
-                series={state.series}
-                type={visRef.chart.code}
-                height="100%"
-              />
-            </Grid>
-          </Grow>
-        )}
-        {customize && (
-          <>
-            <Grow in={customize} timeout={300}>
-              <Grid size={{ xs: 12, md: 8 }} sx={{ minHeight: 600 }}>
-                <Chart
-                  options={state.options}
-                  series={state.series}
-                  type="scatter"
-                  height="100%"
-                />
-              </Grid>
-            </Grow>
-            <Grow in={customize} timeout={300}>
-              <Grid size={{ xs: 12, md: 4 }} sx={{ minHeight: 600 }}>
-                <StateContext.Provider value={{ state, setState, chartRef }}>
-                  <DotChartCustomizations />
-                </StateContext.Provider>
-              </Grid>
-            </Grow>
-          </>
-        )}
+
+        <Grow in={!customize} timeout={300} unmountOnExit>
+          <Grid size={{ xs: 12 }} sx={{ minHeight: 600 }}>
+            <Chart
+              ref={chartRef}
+              options={state.options}
+              series={state.series}
+              type={visRef.chart.code}
+              height="100%"
+            />
+          </Grid>
+        </Grow>
+
+        <Grow in={customize} timeout={300} unmountOnExit>
+          <Grid size={{ xs: 12, md: 8 }} sx={{ minHeight: 600 }}>
+            <Chart
+              options={state.options}
+              series={state.series}
+              type="scatter"
+              height="100%"
+            />
+          </Grid>
+        </Grow>
+        <Grow in={customize} timeout={300} unmountOnExit>
+          <Grid size={{ xs: 12, md: 4 }} sx={{ minHeight: 600 }}>
+            <StateContext.Provider value={{ state, setState, chartRef }}>
+              <DotChartCustomizations />
+            </StateContext.Provider>
+          </Grid>
+        </Grow>
       </Grid>
     </>
   );
