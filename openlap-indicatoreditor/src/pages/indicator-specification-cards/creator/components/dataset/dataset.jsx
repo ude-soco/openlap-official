@@ -7,9 +7,11 @@ import {
   AccordionSummary,
   Button,
   Chip,
+  Fade,
   FormControlLabel,
   FormGroup,
   Grid,
+  Grow,
   Switch,
   Typography,
 } from "@mui/material";
@@ -124,17 +126,21 @@ const Dataset = () => {
                 )}
               </Grid>
             </Grid>
-            {!lockedStep.dataset.locked &&
-            !lockedStep.dataset.openPanel &&
-            state.showSelections ? (
-              <>
-                {dataset.columns.length > 0 && (
-                  <Grid item xs={12}>
-                    <DataTable rows={dataset.rows} columns={dataset.columns} />
-                  </Grid>
-                )}
-              </>
-            ) : undefined}
+            <Grow
+              in={
+                !lockedStep.dataset.locked &&
+                !lockedStep.dataset.openPanel &&
+                state.showSelections
+              }
+              timeout={350}
+              unmountOnExit
+            >
+              {dataset.columns.length > 0 && (
+                <Grid item xs={12}>
+                  <DataTable rows={dataset.rows} columns={dataset.columns} />
+                </Grid>
+              )}
+            </Grow>
           </Grid>
         </AccordionSummary>
         <AccordionDetails>
@@ -158,8 +164,8 @@ const Dataset = () => {
                     lockedStep.dataset.step === "3"
                       ? handleUnlockVisualization
                       : lockedStep.dataset.step === "4"
-                        ? handleUnlockFinalize
-                        : undefined
+                      ? handleUnlockFinalize
+                      : undefined
                   }
                 >
                   Next
