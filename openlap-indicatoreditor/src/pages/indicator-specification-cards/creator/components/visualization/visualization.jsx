@@ -114,7 +114,7 @@ const Visualization = () => {
                           <Tooltip
                             title={
                               !state.showSelections
-                                ? "Show selections"
+                                ? "Preview selections"
                                 : "Hide selections"
                             }
                           >
@@ -159,33 +159,35 @@ const Visualization = () => {
               timeout={350}
               unmountOnExit
             >
-              <div>
-                {visRef.filter.type !== "" &&
-                  requirements.goalType.name !== "" && (
+              <Grid item xs={12}>
+                <Grid container spacing={1}>
+                  {visRef.filter.type !== "" &&
+                    requirements.goalType.name !== "" && (
+                      <Grid item xs={12}>
+                        <Grid container alignItems="center" spacing={1}>
+                          <Grid item>
+                            <Typography>Filter applied:</Typography>
+                          </Grid>
+                          <Grid item>
+                            <Chip label={visRef.filter.type} />
+                          </Grid>
+                        </Grid>
+                      </Grid>
+                    )}
+                  {visRef.chart.type !== "" && (
                     <Grid item xs={12}>
                       <Grid container alignItems="center" spacing={1}>
                         <Grid item>
-                          <Typography>Filter applied:</Typography>
+                          <Typography>Chart used:</Typography>
                         </Grid>
                         <Grid item>
-                          <Chip label={visRef.filter.type} />
+                          <Chip label={visRef.chart.type} />
                         </Grid>
                       </Grid>
                     </Grid>
                   )}
-                {visRef.chart.type !== "" && (
-                  <Grid item xs={12}>
-                    <Grid container alignItems="center" spacing={1}>
-                      <Grid item>
-                        <Typography>Chart used:</Typography>
-                      </Grid>
-                      <Grid item>
-                        <Chip label={visRef.chart.type} />
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                )}
-              </div>
+                </Grid>
+              </Grid>
             </Grow>
           </Grid>
         </AccordionSummary>

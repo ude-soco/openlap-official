@@ -141,7 +141,9 @@ const SpecifyRequirements = () => {
                       />
                     </Grid>
                     <Grid item>
-                      <Typography>Specify your goal, question, and indicator</Typography>
+                      <Typography>
+                        Specify your goal, question, and indicator
+                      </Typography>
                     </Grid>
                     <Grid item>
                       {!lockedStep.requirements.openPanel && (
@@ -149,7 +151,7 @@ const SpecifyRequirements = () => {
                           <Tooltip
                             title={
                               !state.showSelections
-                                ? "Show selections"
+                                ? "Preview selections"
                                 : "Hide selections"
                             }
                           >
@@ -191,68 +193,70 @@ const SpecifyRequirements = () => {
               timeout={350}
               unmountOnExit
             >
-              <Grid container spacing={1}>
-                {requirements.goal !== "" &&
-                  requirements.goalType.name !== "" && (
+              <Grid item xs={12}>
+                <Grid container spacing={1}>
+                  {requirements.goal !== "" &&
+                    requirements.goalType.name !== "" && (
+                      <Grid item xs={12}>
+                        <Grid container alignItems="center" spacing={1}>
+                          <Grid item>
+                            <Typography>I want to</Typography>
+                          </Grid>
+                          <Grid item>
+                            <Chip label={requirements.goalType.verb} />
+                          </Grid>
+                          <Grid item>
+                            <Chip label={requirements.goal} />
+                          </Grid>
+                        </Grid>
+                      </Grid>
+                    )}
+                  {requirements.question !== "" && (
                     <Grid item xs={12}>
                       <Grid container alignItems="center" spacing={1}>
                         <Grid item>
-                          <Typography>I want to</Typography>
+                          <Typography>I am interested in</Typography>
                         </Grid>
                         <Grid item>
-                          <Chip label={requirements.goalType.verb} />
-                        </Grid>
-                        <Grid item>
-                          <Chip label={requirements.goal} />
+                          <Chip label={requirements.question} />
                         </Grid>
                       </Grid>
                     </Grid>
                   )}
-                {requirements.question !== "" && (
-                  <Grid item xs={12}>
-                    <Grid container alignItems="center" spacing={1}>
-                      <Grid item>
-                        <Typography>I am interested in</Typography>
-                      </Grid>
-                      <Grid item>
-                        <Chip label={requirements.question} />
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                )}
-                {requirements.question !== "" && (
-                  <Grid item xs={12}>
-                    <Grid container alignItems="center" spacing={1}>
-                      <Grid item>
-                        <Typography>I need an indicator showing</Typography>
-                      </Grid>
-                      <Grid item>
-                        <Chip label={requirements.indicatorName} />
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                )}
-                {requirements.data.length !== 0 &&
-                  (requirements.data[0].value !== "" ||
-                    requirements.data[1].value !== "") && (
+                  {requirements.question !== "" && (
                     <Grid item xs={12}>
                       <Grid container alignItems="center" spacing={1}>
                         <Grid item>
-                          <Typography>I need the following data</Typography>
+                          <Typography>I need an indicator showing</Typography>
                         </Grid>
-                        {requirements.data.map((item, index) => {
-                          if (item.value !== "") {
-                            return (
-                              <Grid item key={index}>
-                                <Chip label={item.value} />
-                              </Grid>
-                            );
-                          }
-                          return undefined;
-                        })}
+                        <Grid item>
+                          <Chip label={requirements.indicatorName} />
+                        </Grid>
                       </Grid>
                     </Grid>
                   )}
+                  {requirements.data.length !== 0 &&
+                    (requirements.data[0].value !== "" ||
+                      requirements.data[1].value !== "") && (
+                      <Grid item xs={12}>
+                        <Grid container alignItems="center" spacing={1}>
+                          <Grid item>
+                            <Typography>I need the following data</Typography>
+                          </Grid>
+                          {requirements.data.map((item, index) => {
+                            if (item.value !== "") {
+                              return (
+                                <Grid item key={index}>
+                                  <Chip label={item.value} />
+                                </Grid>
+                              );
+                            }
+                            return undefined;
+                          })}
+                        </Grid>
+                      </Grid>
+                    )}
+                </Grid>
               </Grid>
             </Grow>
           </Grid>

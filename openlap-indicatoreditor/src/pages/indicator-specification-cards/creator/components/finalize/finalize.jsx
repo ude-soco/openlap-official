@@ -8,17 +8,16 @@ import {
   Button,
   Chip,
   Divider,
-  FormControlLabel,
-  FormGroup,
   Grid,
-  Grow,
-  Switch,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import LockIcon from "@mui/icons-material/Lock";
 import VisSelection from "../visualization/components/vis-selection.jsx";
 import NameDialog from "./components/name-dialog.jsx";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 const Finalize = () => {
   const { visRef, setVisRef, dataset, lockedStep, setLockedStep } =
@@ -88,9 +87,26 @@ const Finalize = () => {
                       )}
                     </Grid>
                     <Grid item>
-                      <Typography>Finalize</Typography>
+                      <Typography>Preview & Finalize</Typography>
                     </Grid>
                   </Grid>
+                </Grid>
+                <Grid item>
+                  <Tooltip
+                    title={
+                      lockedStep.finalize.openPanel
+                        ? "Close panel"
+                        : "Open preview & finalize panel"
+                    }
+                  >
+                    <IconButton onClick={handleTogglePanel}>
+                      {lockedStep.finalize.openPanel ? (
+                        <KeyboardArrowUpIcon color="primary" />
+                      ) : (
+                        <KeyboardArrowDownIcon color="primary" />
+                      )}
+                    </IconButton>
+                  </Tooltip>
                 </Grid>
               </Grid>
             </Grid>

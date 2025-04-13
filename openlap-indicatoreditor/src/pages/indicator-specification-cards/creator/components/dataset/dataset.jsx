@@ -107,8 +107,8 @@ const Dataset = () => {
                           <Tooltip
                             title={
                               !state.showSelections
-                                ? "Show selections"
-                                : "Hide selections"
+                                ? "Preview dataset"
+                                : "Hide dataset"
                             }
                           >
                             <IconButton onClick={handleToggleShowSelection}>

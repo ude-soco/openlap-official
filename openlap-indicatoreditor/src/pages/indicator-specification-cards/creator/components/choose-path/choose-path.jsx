@@ -171,8 +171,8 @@ const ChoosePath = () => {
                           <Tooltip
                             title={
                               !state.showSelections
-                                ? "Show selections"
-                                : "Hide selections"
+                                ? "Preview selection"
+                                : "Hide selection"
                             }
                           >
                             <IconButton onClick={handleToggleShowSelection}>
@@ -212,7 +212,7 @@ const ChoosePath = () => {
               timeout={350}
               unmountOnExit
             >
-              <div>
+              <Grid item xs={12}>
                 {requirements.selectedPath !== "" && (
                   <Grid item xs={12}>
                     <Grid container alignItems="center" spacing={1}>
@@ -225,7 +225,7 @@ const ChoosePath = () => {
                     </Grid>
                   </Grid>
                 )}
-              </div>
+              </Grid>
             </Grow>
           </Grid>
         </AccordionSummary>
