@@ -152,7 +152,7 @@ const Analysis = ({
                       <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
                         {lockedStep.analysis.openPanel
                           ? "Close section"
-                          : "CHANGE"}
+                          : "Change selections"}
                       </Button>
                     </Grid>
                   </Grid>

@@ -50,7 +50,7 @@ const DatasetSummary = ({
                     </FormGroup>
                   )}
                   <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
-                    {state.openPanel ? "Close section" : "CHANGE"}
+                    {state.openPanel ? "Close section" : "Change selections"}
                   </Button>
                 </Grid>
               </Grid>

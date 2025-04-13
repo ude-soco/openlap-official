@@ -119,7 +119,7 @@ const Dataset = () => {
                       >
                         {lockedStep.dataset.openPanel
                           ? "Close section"
-                          : "CHANGE"}
+                          : "Change selections"}
                       </Button>
                     </Grid>
                   </Grid>

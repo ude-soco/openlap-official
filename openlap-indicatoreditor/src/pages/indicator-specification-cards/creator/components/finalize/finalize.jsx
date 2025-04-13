@@ -11,6 +11,7 @@ import {
   FormControlLabel,
   FormGroup,
   Grid,
+  Grow,
   Switch,
   Typography,
 } from "@mui/material";
@@ -99,25 +100,43 @@ const Finalize = () => {
                           <FormControlLabel
                             control={<Switch checked={state.showSelections} />}
                             onChange={handleToggleShowSelection}
-                            label="Show selections"
+                            label="Show preview"
                           />
                         </FormGroup>
                       )}
-                      <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
+                      <Button
+                        color="primary"
+                        variant="outlined"
+                        size="small"
+                        onClick={handleTogglePanel}
+                      >
                         {lockedStep.finalize.openPanel
                           ? "Close section"
-                          : "CHANGE"}
+                          : "Change selections"}
                       </Button>
                     </Grid>
                   </Grid>
                 )}
               </Grid>
             </Grid>
-            {!lockedStep.finalize.locked &&
-            !lockedStep.finalize.openPanel &&
-            state.showSelections ? (
-              <>{/*  TODO: Summary? */}</>
-            ) : undefined}
+            <Grow
+              in={
+                !lockedStep.finalize.locked &&
+                !lockedStep.finalize.openPanel &&
+                state.showSelections
+              }
+              timeout={350}
+              unmountOnExit
+            >
+              <Grid item xs={12}>
+                <VisSelection
+                  dataset={dataset}
+                  visRef={visRef}
+                  setVisRef={setVisRef}
+                  preview={true}
+                />
+              </Grid>
+            </Grow>
           </Grid>
         </AccordionSummary>
         <AccordionDetails>
@@ -127,6 +146,7 @@ const Finalize = () => {
                 dataset={dataset}
                 visRef={visRef}
                 setVisRef={setVisRef}
+                preview={false}
                 customize={showCustomize}
                 handleToggleCustomizePanel={handleToggleCustomizePanel}
               />

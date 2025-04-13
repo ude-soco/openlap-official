@@ -9,6 +9,7 @@ import {
   FormControlLabel,
   FormGroup,
   Grid,
+  Grow,
   Switch,
   Typography,
 } from "@mui/material";
@@ -119,20 +120,31 @@ const Visualization = () => {
                           />
                         </FormGroup>
                       )}
-                      <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
+                      <Button
+                        color="primary"
+                        variant="outlined"
+                        size="small"
+                        onClick={handleTogglePanel}
+                      >
                         {lockedStep.visualization.openPanel
                           ? "Close section"
-                          : "CHANGE"}
+                          : "Change selections"}
                       </Button>
                     </Grid>
                   </Grid>
                 )}
               </Grid>
             </Grid>
-            {!lockedStep.visualization.locked &&
-            !lockedStep.visualization.openPanel &&
-            state.showSelections ? (
-              <>
+            <Grow
+              in={
+                !lockedStep.visualization.locked &&
+                !lockedStep.visualization.openPanel &&
+                state.showSelections
+              }
+              timeout={350}
+              unmountOnExit
+            >
+              <div>
                 {visRef.filter.type !== "" &&
                   requirements.goalType.name !== "" && (
                     <Grid item xs={12}>
@@ -158,8 +170,8 @@ const Visualization = () => {
                     </Grid>
                   </Grid>
                 )}
-              </>
-            ) : undefined}
+              </div>
+            </Grow>
           </Grid>
         </AccordionSummary>
         <AccordionDetails>

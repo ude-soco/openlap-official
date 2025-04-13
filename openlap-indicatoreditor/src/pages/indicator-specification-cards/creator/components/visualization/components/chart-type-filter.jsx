@@ -36,7 +36,7 @@ const ChartTypeFilter = () => {
     <>
       <Accordion variant="outlined" defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          Filter chart by types
+          <Typography><b>Filter chart by types</b></Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Grid
@@ -75,8 +75,8 @@ const ChartTypeFilter = () => {
                             <Paper
                               variant="outlined"
                               sx={{
-                                pb: 2,
-                                pt: 3,
+                                pb: 1,
+                                pt: 2,
                                 "&:hover": {
                                   boxShadow: 5,
                                 },
@@ -90,17 +90,17 @@ const ChartTypeFilter = () => {
                                 container
                                 direction="column"
                                 alignItems="center"
-                                spacing={2}
+                                
                               >
                                 <Grid item>
                                   <Box
                                     component="img"
                                     src={filter.image}
-                                    height="72px"
+                                    height="48px"
                                   />
                                 </Grid>
                                 <Grid item>
-                                  <Typography align="center">
+                                  <Typography align="center" variant="body2">
                                     {filter.type}
                                   </Typography>
                                 </Grid>

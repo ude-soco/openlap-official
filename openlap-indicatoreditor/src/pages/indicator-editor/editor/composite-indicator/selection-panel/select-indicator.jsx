@@ -111,7 +111,7 @@ const SelectIndicator = () => {
                     <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
                       {lockedStep.indicators.openPanel
                         ? "Close section"
-                        : "CHANGE"}
+                        : "Change selections"}
                     </Button>
                   </Grid>
                 </Grid>

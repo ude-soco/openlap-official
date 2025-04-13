@@ -214,7 +214,7 @@ const ColumnMerge = () => {
                       <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
                         {lockedStep.columnMerge.openPanel
                           ? "Close section"
-                          : "CHANGE"}
+                          : "Change selections"}
                       </Button>
                     </Grid>
                   </Grid>

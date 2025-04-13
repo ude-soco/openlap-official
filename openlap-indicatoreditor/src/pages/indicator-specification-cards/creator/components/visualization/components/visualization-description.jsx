@@ -9,7 +9,9 @@ const VisualizationDescription = () => {
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Typography>Example preview</Typography>
+          <Typography>
+            <b>Example preview</b>
+          </Typography>
         </Grid>
         <Grid item xs={12}>
           <Grid container spacing={2}>
@@ -28,7 +30,7 @@ const VisualizationDescription = () => {
             <Grid item xs={12} md={6}>
               <Grid container spacing={2}>
                 <Grid item xs={12}>
-                  <Typography gutterBottom>Short description</Typography>
+                  <Typography gutterBottom><b>Short description</b></Typography>
                   <Typography gutterBottom>
                     {visRef.chart.description}
                   </Typography>
@@ -38,7 +40,7 @@ const VisualizationDescription = () => {
                   <Grid container>
                     <Grid item xs={12}>
                       <Typography gutterBottom>
-                        Types of data required
+                        <b>Types of data required</b>
                       </Typography>
                     </Grid>
                     <Grid item xs={12}>
@@ -48,6 +50,7 @@ const VisualizationDescription = () => {
                             return (
                               <Grid item key={index}>
                                 <Chip
+                                color="success"
                                   label={`${type.type.value}: ${type.required}`}
                                 />
                               </Grid>

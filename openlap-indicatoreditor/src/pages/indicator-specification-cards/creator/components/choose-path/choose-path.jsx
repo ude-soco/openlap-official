@@ -8,6 +8,7 @@ import {
   FormControlLabel,
   FormGroup,
   Grid,
+  Grow,
   Paper,
   Switch,
   Typography,
@@ -173,16 +174,25 @@ const ChoosePath = () => {
                           />
                         </FormGroup>
                       )}
-                      <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
-                        {lockedStep.path.openPanel ? "Close section" : "CHANGE"}
+                      <Button
+                        color="primary"
+                        variant="outlined"
+                        size="small"
+                        onClick={handleTogglePanel}
+                      >
+                        {lockedStep.path.openPanel ? "Close section" : "Change selections"}
                       </Button>
                     </Grid>
                   </Grid>
                 )}
               </Grid>
             </Grid>
-            {!lockedStep.path.openPanel && state.showSelections ? (
-              <>
+            <Grow
+              in={!lockedStep.path.openPanel && state.showSelections}
+              timeout={350}
+              unmountOnExit
+            >
+              <div>
                 {requirements.selectedPath !== "" && (
                   <Grid item xs={12}>
                     <Grid container alignItems="center" spacing={1}>
@@ -195,8 +205,8 @@ const ChoosePath = () => {
                     </Grid>
                   </Grid>
                 )}
-              </>
-            ) : undefined}
+              </div>
+            </Grow>
           </Grid>
         </AccordionSummary>
         <AccordionDetails>

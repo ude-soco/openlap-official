@@ -9,6 +9,7 @@ import {
   FormControlLabel,
   FormGroup,
   Grid,
+  Grow,
   Switch,
   TextField,
   Typography,
@@ -157,15 +158,19 @@ const SpecifyRequirements = () => {
                     >
                       {lockedStep.requirements.openPanel
                         ? "Close section"
-                        : "CHANGE"}
+                        : "Change selections"}
                     </Button>
                   </Grid>
                 </Grid>
               </Grid>
             </Grid>
 
-            {!lockedStep.requirements.openPanel && state.showSelections ? (
-              <>
+            <Grow
+              in={!lockedStep.requirements.openPanel && state.showSelections}
+              timeout={350}
+              unmountOnExit
+            >
+              <Grid container spacing={1}>
                 {requirements.goal !== "" &&
                   requirements.goalType.name !== "" && (
                     <Grid item xs={12}>
@@ -227,8 +232,8 @@ const SpecifyRequirements = () => {
                       </Grid>
                     </Grid>
                   )}
-              </>
-            ) : undefined}
+              </Grid>
+            </Grow>
           </Grid>
         </AccordionSummary>
         <AccordionDetails>
