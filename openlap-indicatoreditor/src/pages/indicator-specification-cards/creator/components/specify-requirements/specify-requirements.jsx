@@ -217,7 +217,7 @@ const SpecifyRequirements = () => {
                     <Grid item xs={12}>
                       <Grid container alignItems="center" spacing={1}>
                         <Grid item>
-                          <Typography>I need data</Typography>
+                          <Typography>I need the following data</Typography>
                         </Grid>
                         {requirements.data.map((item, index) => {
                           if (item.value !== "") {
@@ -331,7 +331,6 @@ const SpecifyRequirements = () => {
             </Grid>
           </Grid>
         </AccordionActions>
-        {/*)}*/}
       </Accordion>
     </>
   );

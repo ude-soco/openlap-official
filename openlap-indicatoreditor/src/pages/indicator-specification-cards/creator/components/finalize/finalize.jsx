@@ -92,51 +92,8 @@ const Finalize = () => {
                     </Grid>
                   </Grid>
                 </Grid>
-                {!lockedStep.finalize.locked && (
-                  <Grid item>
-                    <Grid container>
-                      {!lockedStep.finalize.openPanel && (
-                        <FormGroup>
-                          <FormControlLabel
-                            control={<Switch checked={state.showSelections} />}
-                            onChange={handleToggleShowSelection}
-                            label="Show preview"
-                          />
-                        </FormGroup>
-                      )}
-                      <Button
-                        color="primary"
-                        variant="outlined"
-                        size="small"
-                        onClick={handleTogglePanel}
-                      >
-                        {lockedStep.finalize.openPanel
-                          ? "Close section"
-                          : "Change selections"}
-                      </Button>
-                    </Grid>
-                  </Grid>
-                )}
               </Grid>
             </Grid>
-            <Grow
-              in={
-                !lockedStep.finalize.locked &&
-                !lockedStep.finalize.openPanel &&
-                state.showSelections
-              }
-              timeout={350}
-              unmountOnExit
-            >
-              <Grid item xs={12}>
-                <VisSelection
-                  dataset={dataset}
-                  visRef={visRef}
-                  setVisRef={setVisRef}
-                  preview={true}
-                />
-              </Grid>
-            </Grow>
           </Grid>
         </AccordionSummary>
         <AccordionDetails>
