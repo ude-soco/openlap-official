@@ -31,7 +31,7 @@ const GroupedBarChart = ({
   visRef,
   setVisRef,
   preview = false,
-  customize,
+  customize = false,
   handleToggleCustomizePanel,
 }) => {
   const { darkMode } = useContext(CustomThemeContext);
@@ -140,7 +140,7 @@ const GroupedBarChart = ({
       xAxisOptions: [],
       yAxisOptions: [],
       selectedXAxis: "",
-      selectedYAxes: [],
+      selectedYAxis: [],
     },
   });
 
@@ -183,9 +183,16 @@ const GroupedBarChart = ({
         ? stringColumns[0].field
         : "";
 
-      const updatedSelectedYAxes = state.axisOptions.selectedYAxes.filter(
-        (field) => numberColumns.find((col) => col.field === field)
-      );
+      // const updatedselectedYAxis = state.axisOptions.selectedYAxis.filter(
+      //   (field) => numberColumns.find((col) => col.field === field)
+      // );
+      const updatedSelectedYAxis = state.axisOptions.selectedYAxis
+        ? numberColumns.find(
+            (col) => col.field === state.axisOptions.selectedYAxis
+          )?.field || ""
+        : numberColumns.length > 0
+        ? numberColumns[0].field
+        : "";
 
       setState((prevState) => ({
         ...prevState,
@@ -205,18 +212,18 @@ const GroupedBarChart = ({
           xAxisOptions: stringColumns,
           yAxisOptions: numberColumns,
           selectedXAxis: updatedSelectedXAxis,
-          selectedYAxes:
-            updatedSelectedYAxes.length > 0
-              ? updatedSelectedYAxes
+          selectedYAxis:
+            updatedSelectedYAxis.length > 0
+              ? updatedSelectedYAxis
               : [numberColumns[0]?.field],
         },
       }));
     }
-  }, [dataset, darkMode, visRef.chart.code]);
+  }, []);
 
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns && !preview) {
-      const { selectedXAxis, selectedYAxes } = state.axisOptions;
+      const { selectedXAxis, selectedYAxis } = state.axisOptions;
       const categoryColumn = dataset.columns.find(
         (col) => col.field === selectedXAxis
       );
@@ -227,7 +234,7 @@ const GroupedBarChart = ({
         : [];
 
       // Aggregate data based on selected Y-axes and X-axis categories
-      const series = selectedYAxes.map((yField) => {
+      const series = selectedYAxis.map((yField) => {
         const valueColumn = dataset.columns.find((col) => col.field === yField);
         const seriesData = categories.map((category) => {
           return dataset.rows
@@ -246,6 +253,15 @@ const GroupedBarChart = ({
         series: series,
         options: {
           ...prevState.options,
+          chart: {
+            ...prevState.options.chart,
+            type: visRef.chart.code,
+            foreColor: darkMode ? "#ffffff" : "#000000",
+          },
+          tooltip: {
+            ...prevState.options.tooltip,
+            theme: darkMode ? "dark" : "light",
+          },
           xaxis: {
             ...prevState.options.xaxis,
             categories: categories,
@@ -255,24 +271,22 @@ const GroupedBarChart = ({
           },
         },
       }));
+      setVisRef((prevVisRef) => ({
+        ...prevVisRef,
+        data: {
+          ...prevVisRef.data,
+          series: state.series,
+          options: state.options,
+          axisOptions: state.axisOptions,
+        },
+      }));
     }
   }, [
     dataset,
     state.axisOptions.selectedXAxis,
-    state.axisOptions.selectedYAxes,
+    state.axisOptions.selectedYAxis,
+    darkMode,
   ]);
-
-  useEffect(() => {
-    setVisRef((prevVisRef) => ({
-      ...prevVisRef,
-      data: {
-        ...prevVisRef.data,
-        series: state.series,
-        options: state.options,
-        axisOptions: state.axisOptions,
-      },
-    }));
-  }, [state.series, state.options, state.axisOptions]);
 
   const handleXAxisChange = (event) => {
     setState((prevState) => ({
@@ -290,7 +304,7 @@ const GroupedBarChart = ({
       ...prevState,
       axisOptions: {
         ...prevState.axisOptions,
-        selectedYAxes: typeof value === "string" ? value.split(",") : value,
+        selectedYAxis: typeof value === "string" ? value.split(",") : value,
       },
     }));
     localStorage.removeItem("series");
@@ -327,7 +341,7 @@ const GroupedBarChart = ({
                   labelId="y-axes-select-label"
                   id="y-axes-select"
                   multiple
-                  value={state.axisOptions.selectedYAxes}
+                  value={state.axisOptions.selectedYAxis}
                   onChange={handleYAxesChange}
                   label="Y-Axes"
                   variant="outlined"
@@ -390,7 +404,7 @@ const GroupedBarChart = ({
             />
           </Grid>
         </Grow>
-        <Grow in={customize} timeout={300}>
+        <Grow in={customize} timeout={300} unmountOnExit>
           <Grid size={{ xs: 12, md: 4 }} sx={{ minHeight: 600 }}>
             <Grid
               container

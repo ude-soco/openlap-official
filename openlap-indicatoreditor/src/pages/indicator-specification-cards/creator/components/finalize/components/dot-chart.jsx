@@ -148,14 +148,6 @@ const DotChart = ({
     }
   }, [preview, darkMode]);
 
-  // Utility function to find the next available column
-  const findNextAvailableColumn = (selectedField, availableColumns) => {
-    return (
-      availableColumns.find((col) => col.field === selectedField)?.field ||
-      (availableColumns.length > 0 ? availableColumns[0].field : "")
-    );
-  };
-
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns && !preview) {
       const stringColumns = dataset.columns.filter(
@@ -165,40 +157,44 @@ const DotChart = ({
         (col) => col.type === "number"
       );
 
-      setState((prevState) => {
-        // Ensure columns are reselected or defaulted if needed
-        const newXAxis = findNextAvailableColumn(
-          prevState.axisOptions.selectedXAxis,
-          stringColumns
-        );
-        const newYAxis = findNextAvailableColumn(
-          prevState.axisOptions.selectedYAxis,
-          numberColumns
-        );
+      const updatedSelectedXAxis = state.axisOptions.selectedXAxis
+        ? stringColumns.find(
+            (col) => col.field === state.axisOptions.selectedXAxis
+          )?.field || ""
+        : stringColumns.length > 0
+        ? stringColumns[0].field
+        : "";
 
-        return {
-          ...prevState,
-          options: {
-            ...prevState.options,
-            chart: {
-              ...prevState.options.chart,
-              foreColor: darkMode ? "#ffffff" : "#000000",
-            },
-            tooltip: {
-              ...prevState.options.tooltip,
-              theme: darkMode ? "dark" : "light",
-            },
+      const updatedSelectedYAxis = state.axisOptions.selectedYAxis
+        ? numberColumns.find(
+            (col) => col.field === state.axisOptions.selectedYAxis
+          )?.field || ""
+        : numberColumns.length > 0
+        ? numberColumns[0].field
+        : "";
+
+      setState((prevState) => ({
+        ...prevState,
+        options: {
+          ...prevState.options,
+          chart: {
+            ...prevState.options.chart,
+            foreColor: darkMode ? "#ffffff" : "#000000",
           },
-          axisOptions: {
-            xAxisOptions: stringColumns,
-            yAxisOptions: numberColumns,
-            selectedXAxis: newXAxis,
-            selectedYAxis: newYAxis,
+          tooltip: {
+            ...prevState.options.tooltip,
+            theme: darkMode ? "dark" : "light",
           },
-        };
-      });
+        },
+        axisOptions: {
+          xAxisOptions: stringColumns,
+          yAxisOptions: numberColumns,
+          selectedXAxis: updatedSelectedXAxis,
+          selectedYAxis: updatedSelectedYAxis,
+        },
+      }));
     }
-  }, [dataset, darkMode]);
+  }, []);
 
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns && !preview) {
@@ -253,6 +249,15 @@ const DotChart = ({
           },
         },
       }));
+      setVisRef((prevVisRef) => ({
+        ...prevVisRef,
+        data: {
+          ...prevVisRef.data,
+          series: state.series,
+          options: state.options,
+          axisOptions: state.axisOptions,
+        },
+      }));
     }
   }, [
     dataset,
@@ -260,18 +265,6 @@ const DotChart = ({
     state.axisOptions.selectedYAxis,
     darkMode,
   ]);
-
-  useEffect(() => {
-    setVisRef((prevVisRef) => ({
-      ...prevVisRef,
-      data: {
-        ...prevVisRef.data,
-        series: state.series,
-        options: state.options,
-        axisOptions: state.axisOptions,
-      },
-    }));
-  }, [state.series, state.options, state.axisOptions]);
 
   const handleXAxisChange = (event) => {
     setState((prevState) => ({

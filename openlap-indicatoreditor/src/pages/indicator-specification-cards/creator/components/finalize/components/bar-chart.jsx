@@ -145,6 +145,7 @@ const BarChart = ({
     },
   });
 
+  // ? This effect is used to set the initial state of the chart when previewing
   useEffect(() => {
     if (preview) {
       setState((prevState) => ({
@@ -166,6 +167,9 @@ const BarChart = ({
     }
   }, [preview, darkMode]);
 
+  // ? This effect is used to set the initial state of the chart when the dataset changes
+  // ? It sets the xAxis and yAxis options based on the dataset columns
+  // ? It also sets the selectedXAxis and selectedYAxis based on the dataset columns
   useEffect(() => {
     if (dataset && dataset.rows && dataset.columns && !preview) {
       const stringColumns = dataset.columns.filter(
@@ -193,6 +197,17 @@ const BarChart = ({
 
       setState((prevState) => ({
         ...prevState,
+        options: {
+          ...prevState.options,
+          chart: {
+            ...prevState.options.chart,
+            foreColor: darkMode ? "#ffffff" : "#000000",
+          },
+          tooltip: {
+            ...prevState.options.tooltip,
+            theme: darkMode ? "dark" : "light",
+          },
+        },
         axisOptions: {
           xAxisOptions: stringColumns,
           yAxisOptions: numberColumns,
@@ -201,10 +216,10 @@ const BarChart = ({
         },
       }));
     }
-  }, [dataset]);
+  }, []);
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns && !preview) {
+    if (!preview) {
       const { selectedXAxis, selectedYAxis } = state.axisOptions;
       const xAxisColumn = dataset.columns.find(
         (col) => col.field === selectedXAxis
@@ -237,6 +252,14 @@ const BarChart = ({
         series: series,
         options: {
           ...prevState.options,
+          chart: {
+            ...prevState.options.chart,
+            foreColor: darkMode ? "#ffffff" : "#000000",
+          },
+          tooltip: {
+            ...prevState.options.tooltip,
+            theme: darkMode ? "dark" : "light",
+          },
           xaxis: {
             ...prevState.options.xaxis,
             categories: categories,
@@ -256,24 +279,22 @@ const BarChart = ({
           },
         },
       }));
+      setVisRef((prevVisRef) => ({
+        ...prevVisRef,
+        data: {
+          ...prevVisRef.data,
+          series: state.series,
+          options: state.options,
+          axisOptions: state.axisOptions,
+        },
+      }));
     }
   }, [
     dataset,
     state.axisOptions.selectedXAxis,
     state.axisOptions.selectedYAxis,
+    darkMode,
   ]);
-
-  useEffect(() => {
-    setVisRef((prevVisRef) => ({
-      ...prevVisRef,
-      data: {
-        ...prevVisRef.data,
-        series: state.series,
-        options: state.options,
-        axisOptions: state.axisOptions,
-      },
-    }));
-  }, [state.series, state.options, state.axisOptions]);
 
   const handleXAxisChange = (event) => {
     setState((prevState) => ({
