@@ -166,7 +166,7 @@ const Visualization = () => {
                       <Grid item xs={12}>
                         <Grid container alignItems="center" spacing={1}>
                           <Grid item>
-                            <Typography>Filter applied:</Typography>
+                            <Typography>Filter applied</Typography>
                           </Grid>
                           <Grid item>
                             <Chip label={visRef.filter.type} />
@@ -178,7 +178,7 @@ const Visualization = () => {
                     <Grid item xs={12}>
                       <Grid container alignItems="center" spacing={1}>
                         <Grid item>
-                          <Typography>Chart used:</Typography>
+                          <Typography>Chart selected</Typography>
                         </Grid>
                         <Grid item>
                           <Chip label={visRef.chart.type} />
