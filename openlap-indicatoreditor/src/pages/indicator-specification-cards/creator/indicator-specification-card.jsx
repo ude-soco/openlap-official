@@ -1,5 +1,6 @@
 import React, { createContext, useEffect, useRef, useState } from "react";
-import { Divider, Grid, Typography } from "@mui/material";
+import { Divider, Typography } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import SpecifyRequirements from "./components/specify-requirements/specify-requirements.jsx";
 import ChoosePath from "./components/choose-path/choose-path.jsx";
 import Visualization from "./components/visualization/visualization.jsx";
@@ -83,11 +84,7 @@ const IndicatorSpecificationCard = () => {
             openPanel: true,
             step: "1",
           },
-          path: {
-            locked: true,
-            openPanel: false,
-            step: "2",
-          },
+          path: { locked: true, openPanel: false, step: "2" },
           visualization: {
             locked: true,
             openPanel: false,
@@ -145,7 +142,7 @@ const IndicatorSpecificationCard = () => {
         visRef,
         lockedStep,
       };
-    }, 6000);
+    }, 10000);
 
     return () => clearInterval(intervalId);
   }, [requirements, dataset, visRef, lockedStep]);
@@ -166,42 +163,41 @@ const IndicatorSpecificationCard = () => {
         }}
       >
         <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <Typography>ISC Creator</Typography>
-          </Grid>
-          <Grid item xs={12} sx={{ mb: 2 }}>
+          <Typography>ISC Creator</Typography>
+
+          <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
             <Divider />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <SpecifyRequirements />
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <ChoosePath />
           </Grid>
           {lockedStep.visualization.step === "3" && (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Visualization />
             </Grid>
           )}
           {lockedStep.dataset.step === "4" && (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Dataset />
             </Grid>
           )}
           {lockedStep.dataset.step === "3" && (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Dataset />
             </Grid>
           )}
           {lockedStep.visualization.step === "4" && (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Visualization />
             </Grid>
           )}
           {lockedStep.visualization.step !== "0" &&
             lockedStep.dataset.step !== "0" && (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Finalize />
               </Grid>
             )}
