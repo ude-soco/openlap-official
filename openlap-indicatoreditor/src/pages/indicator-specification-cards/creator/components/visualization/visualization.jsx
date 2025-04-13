@@ -6,18 +6,20 @@ import {
   AccordionSummary,
   Button,
   Chip,
-  FormControlLabel,
-  FormGroup,
   Grid,
   Grow,
-  Switch,
+  IconButton,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { ISCContext } from "../../indicator-specification-card.jsx";
-import IconButton from "@mui/material/IconButton";
 import LockIcon from "@mui/icons-material/Lock";
 import ChartTypeFilter from "./components/chart-type-filter.jsx";
 import VisualizationFilter from "./components/visualization-filter.jsx";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 const Visualization = () => {
   const {
@@ -106,33 +108,46 @@ const Visualization = () => {
                     <Grid item>
                       <Typography>Visualization</Typography>
                     </Grid>
-                  </Grid>
-                </Grid>
-                {!lockedStep.visualization.locked && (
-                  <Grid item>
-                    <Grid container>
+                    <Grid item>
                       {!lockedStep.visualization.openPanel && (
-                        <FormGroup>
-                          <FormControlLabel
-                            control={<Switch checked={state.showSelections} />}
-                            onChange={handleToggleShowSelection}
-                            label="Show selections"
-                          />
-                        </FormGroup>
+                        <>
+                          <Tooltip
+                            title={
+                              !state.showSelections
+                                ? "Show selections"
+                                : "Hide selections"
+                            }
+                          >
+                            <IconButton onClick={handleToggleShowSelection}>
+                              {!state.showSelections ? (
+                                <VisibilityIcon color="primary" />
+                              ) : (
+                                <VisibilityOffIcon color="primary" />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                        </>
                       )}
-                      <Button
-                        color="primary"
-                        variant="outlined"
-                        size="small"
-                        onClick={handleTogglePanel}
-                      >
-                        {lockedStep.visualization.openPanel
-                          ? "Close section"
-                          : "Change selections"}
-                      </Button>
                     </Grid>
                   </Grid>
-                )}
+                </Grid>
+                <Grid item>
+                  <Tooltip
+                    title={
+                      lockedStep.visualization.openPanel
+                        ? "Close panel"
+                        : "Open visualization panel"
+                    }
+                  >
+                    <IconButton onClick={handleTogglePanel}>
+                      {lockedStep.visualization.openPanel ? (
+                        <KeyboardArrowUpIcon color="primary" />
+                      ) : (
+                        <KeyboardArrowDownIcon color="primary" />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
               </Grid>
             </Grid>
             <Grow

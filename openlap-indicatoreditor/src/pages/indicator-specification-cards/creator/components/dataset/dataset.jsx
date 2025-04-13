@@ -7,18 +7,22 @@ import {
   AccordionSummary,
   Button,
   Chip,
-  Fade,
   FormControlLabel,
   FormGroup,
   Grid,
   Grow,
+  IconButton,
   Switch,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import IconButton from "@mui/material/IconButton";
 import LockIcon from "@mui/icons-material/Lock";
 import DataTableManager from "./data-table-manager/data-table-manager.jsx";
 import DataTable from "./components/data-table.jsx";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 const Dataset = () => {
   const { dataset, lockedStep, setLockedStep } = useContext(ISCContext);
@@ -97,33 +101,46 @@ const Dataset = () => {
                     <Grid item>
                       <Typography>Dataset</Typography>
                     </Grid>
-                  </Grid>
-                </Grid>
-                {!lockedStep.dataset.locked && (
-                  <Grid item>
-                    <Grid container>
+                    <Grid item>
                       {!lockedStep.dataset.openPanel && (
-                        <FormGroup>
-                          <FormControlLabel
-                            control={<Switch checked={state.showSelections} />}
-                            onChange={handleToggleShowSelection}
-                            label="Show selections"
-                          />
-                        </FormGroup>
+                        <>
+                          <Tooltip
+                            title={
+                              !state.showSelections
+                                ? "Show selections"
+                                : "Hide selections"
+                            }
+                          >
+                            <IconButton onClick={handleToggleShowSelection}>
+                              {!state.showSelections ? (
+                                <VisibilityIcon color="primary" />
+                              ) : (
+                                <VisibilityOffIcon color="primary" />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                        </>
                       )}
-                      <Button
-                        color="primary"
-                        variant="outlined"
-                        size="small"
-                        onClick={handleTogglePanel}
-                      >
-                        {lockedStep.dataset.openPanel
-                          ? "Close section"
-                          : "Change selections"}
-                      </Button>
                     </Grid>
                   </Grid>
-                )}
+                </Grid>
+                <Grid item>
+                  <Tooltip
+                    title={
+                      lockedStep.dataset.openPanel
+                        ? "Close panel"
+                        : "Open dataset panel"
+                    }
+                  >
+                    <IconButton onClick={handleTogglePanel}>
+                      {lockedStep.dataset.openPanel ? (
+                        <KeyboardArrowUpIcon color="primary" />
+                      ) : (
+                        <KeyboardArrowDownIcon color="primary" />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
               </Grid>
             </Grid>
             <Grow

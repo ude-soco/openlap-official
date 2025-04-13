@@ -10,14 +10,20 @@ import {
   FormGroup,
   Grid,
   Grow,
+  IconButton,
   Switch,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import GoalList from "./components/goal-list.jsx";
 import DataList from "./components/data-list.jsx";
 import { v4 as uuidv4 } from "uuid";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 const SpecifyRequirements = () => {
   const {
@@ -135,32 +141,47 @@ const SpecifyRequirements = () => {
                       />
                     </Grid>
                     <Grid item>
-                      <Typography>Specify your goal and question</Typography>
+                      <Typography>Specify your goal, question, and indicator</Typography>
+                    </Grid>
+                    <Grid item>
+                      {!lockedStep.requirements.openPanel && (
+                        <>
+                          <Tooltip
+                            title={
+                              !state.showSelections
+                                ? "Show selections"
+                                : "Hide selections"
+                            }
+                          >
+                            <IconButton onClick={handleToggleShowSelection}>
+                              {!state.showSelections ? (
+                                <VisibilityIcon color="primary" />
+                              ) : (
+                                <VisibilityOffIcon color="primary" />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                        </>
+                      )}
                     </Grid>
                   </Grid>
                 </Grid>
                 <Grid item>
-                  <Grid container>
-                    {!lockedStep.requirements.openPanel && (
-                      <FormGroup>
-                        <FormControlLabel
-                          control={<Switch checked={state.showSelections} />}
-                          onChange={handleToggleShowSelection}
-                          label="Show selections"
-                        />
-                      </FormGroup>
-                    )}
-                    <Button
-                      color="primary"
-                      variant="outlined"
-                      size="small"
-                      onClick={handleTogglePanel}
-                    >
-                      {lockedStep.requirements.openPanel
-                        ? "Close section"
-                        : "Change selections"}
-                    </Button>
-                  </Grid>
+                  <Tooltip
+                    title={
+                      lockedStep.requirements.openPanel
+                        ? "Close panel"
+                        : "Open goal, question, and indicator panel"
+                    }
+                  >
+                    <IconButton onClick={handleTogglePanel}>
+                      {lockedStep.requirements.openPanel ? (
+                        <KeyboardArrowUpIcon color="primary" />
+                      ) : (
+                        <KeyboardArrowDownIcon color="primary" />
+                      )}
+                    </IconButton>
+                  </Tooltip>
                 </Grid>
               </Grid>
             </Grid>
@@ -241,6 +262,13 @@ const SpecifyRequirements = () => {
             <Grid item xs={12}>
               <Grid container spacing={2} justifyContent="center">
                 <Grid item xs={12} md={8}>
+                  <Typography variant="body2">Specify your goal</Typography>
+                </Grid>
+              </Grid>
+            </Grid>
+            <Grid item xs={12}>
+              <Grid container spacing={2} justifyContent="center">
+                <Grid item xs={12} md={8}>
                   <Grid container spacing={2}>
                     <Grid item xs sm={4}>
                       <GoalList />
@@ -263,6 +291,15 @@ const SpecifyRequirements = () => {
 
             <Grid item xs={12}>
               <Grid container spacing={2} justifyContent="center">
+                <Grid item xs={12}>
+                  <Grid container spacing={2} justifyContent="center">
+                    <Grid item xs={12} md={8}>
+                      <Typography variant="body2">
+                        Specify your question
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Grid>
                 <Grid item xs={12} md={8}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs>
@@ -283,6 +320,15 @@ const SpecifyRequirements = () => {
 
             <Grid item xs={12}>
               <Grid container spacing={2} justifyContent="center">
+                <Grid item xs={12}>
+                  <Grid container spacing={2} justifyContent="center">
+                    <Grid item xs={12} md={8}>
+                      <Typography variant="body2">
+                        Specify your indicator
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Grid>
                 <Grid item xs={12} md={8}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs>

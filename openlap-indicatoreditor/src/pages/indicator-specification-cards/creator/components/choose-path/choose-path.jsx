@@ -9,14 +9,19 @@ import {
   FormGroup,
   Grid,
   Grow,
+  IconButton,
   Paper,
   Switch,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import { blue, orange } from "@mui/material/colors";
-import IconButton from "@mui/material/IconButton";
 import LockIcon from "@mui/icons-material/Lock";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 const ChoosePath = () => {
   const { requirements, setRequirements, lockedStep, setLockedStep } =
@@ -160,31 +165,46 @@ const ChoosePath = () => {
                     <Grid item>
                       <Typography>How would you like to start?</Typography>
                     </Grid>
-                  </Grid>
-                </Grid>
-                {!lockedStep.path.locked && (
-                  <Grid item>
-                    <Grid container>
+                    <Grid item>
                       {!lockedStep.path.openPanel && (
-                        <FormGroup>
-                          <FormControlLabel
-                            control={<Switch checked={state.showSelections} />}
-                            onChange={handleToggleShowSelection}
-                            label="Show selections"
-                          />
-                        </FormGroup>
+                        <>
+                          <Tooltip
+                            title={
+                              !state.showSelections
+                                ? "Show selections"
+                                : "Hide selections"
+                            }
+                          >
+                            <IconButton onClick={handleToggleShowSelection}>
+                              {!state.showSelections ? (
+                                <VisibilityIcon color="primary" />
+                              ) : (
+                                <VisibilityOffIcon color="primary" />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                        </>
                       )}
-                      <Button
-                        color="primary"
-                        variant="outlined"
-                        size="small"
-                        onClick={handleTogglePanel}
-                      >
-                        {lockedStep.path.openPanel ? "Close section" : "Change selections"}
-                      </Button>
                     </Grid>
                   </Grid>
-                )}
+                </Grid>
+                <Grid item>
+                  <Tooltip
+                    title={
+                      lockedStep.path.openPanel
+                        ? "Close panel"
+                        : "Open path panel"
+                    }
+                  >
+                    <IconButton onClick={handleTogglePanel}>
+                      {lockedStep.path.openPanel ? (
+                        <KeyboardArrowUpIcon color="primary" />
+                      ) : (
+                        <KeyboardArrowDownIcon color="primary" />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
               </Grid>
             </Grid>
             <Grow
