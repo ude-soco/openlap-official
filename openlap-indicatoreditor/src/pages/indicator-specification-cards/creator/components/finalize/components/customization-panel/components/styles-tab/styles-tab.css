@@ -1,0 +1,11 @@
+.color-box {
+    height: 30px;
+    width: 30px
+}
+
+.color-box input {
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    border: none;
+}

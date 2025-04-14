@@ -22,6 +22,7 @@ import { PieChartCustomization } from "./pie-chart-customization/pie-chart-custo
 import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
+import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 
 export let StateContext = createContext();
 
@@ -38,8 +39,44 @@ const PieChart = ({
 
   const [state, setState] = useState({
     series: [],
+    configuration: {
+      isShowHideLegendAvailable: true,
+      isLegendPositionChangeable: true,
+      isLegendPositionBottomAvailable: true,
+      isLegendPositionTopAvailable: true,
+      isLegendPositionLeftAvailable: true,
+      isLegendPositionRightAvailable: true,
+      isShowHideAxesAvailable: false,
+      isShowHideXAxisAvailable: false,
+      isShowHideYAxisAvailable: false,
+      isChartTitleAvailable: true,
+      isChartSubtitleAvailable: true,
+      isTitleAndSubtitlePositionChangeable: true,
+      isTitleAndSubtitlePositionCenterAvailable: true,
+      isTitleAndSubtitlePositionLeftAvailable: true,
+      isTitleAndSubtitlePositionRightAvailable: true,
+      isShowHideLabelsAvailable: true,
+      isShowHideLabelsBackgroundAvailable: true,
+      isLabelsPositionChangeable: false,
+      isLabelsPositionTopAvailable: false,
+      isLabelsPositionCenterAvailable: false,
+      isSeriesColorChangeable: true,
+      isSeriesSingleColor: false,
+      isSeriesMultipleColor: true,
+      isSortingOrderChangeable: false,
+      isLegendTextColorAvailable: true,
+      isDataLabelsColorAvailable: true,
+      isDataLabelsWithBackgroundColorAvailable: true,
+      isShowHideXAxisTitleAvailable: false,
+      isShowHideYAxisTitleAvailable: false,
+      isShowHideAxesTitleAvailable: false,
+      isSortingOrderAscendingAvailable: false,
+      isSortingOrderDescendingAvailable: false,
+      isCategoriesFilteringAvailable: false,
+    },
     options: {
       chart: {
+        id: visRef.chart.code,
         type: visRef.chart.code,
         width: "100%",
         toolbar: {
@@ -48,6 +85,30 @@ const PieChart = ({
         foreColor: darkMode ? "#ffffff" : "#000000",
       },
       labels: [],
+      xaxis: {
+        name: "",
+        title: {
+          text: "",
+          style: {
+            cssClass: "x-y-axis-show-title",
+          },
+        },
+        categories: [],
+        labels: {
+          show: true,
+        },
+      },
+      yaxis: {
+        title: {
+          text: "",
+          style: {
+            cssClass: "x-y-axis-show-title",
+          },
+        },
+        labels: {
+          show: true,
+        },
+      },
       legend: {
         show: true,
         showForSingleSeries: true,
@@ -349,9 +410,7 @@ const PieChart = ({
                 </IconButton>
               </Tooltip>
             </Grid>
-            <StateContext.Provider value={{ state, setState, chartRef }}>
-              <PieChartCustomization />
-            </StateContext.Provider>
+            <CustomizationPanel state={state} setState={setState} />
           </Grid>
         </Grow>
       </Grid>

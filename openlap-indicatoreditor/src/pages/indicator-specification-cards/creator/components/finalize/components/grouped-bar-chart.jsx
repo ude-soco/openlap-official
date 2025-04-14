@@ -23,6 +23,7 @@ import { LinechartCustomization } from "./line-chart-customization/line-chart-cu
 import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
+import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 
 export let StateContext = createContext();
 
@@ -39,6 +40,41 @@ const GroupedBarChart = ({
 
   const [state, setState] = useState({
     series: [],
+    configuration: {
+      isShowHideLegendAvailable: true,
+      isLegendPositionChangeable: true,
+      isLegendPositionBottomAvailable: true,
+      isLegendPositionTopAvailable: true,
+      isLegendPositionLeftAvailable: true,
+      isLegendPositionRightAvailable: true,
+      isShowHideAxesAvailable: true,
+      isShowHideXAxisAvailable: true,
+      isShowHideYAxisAvailable: true,
+      isChartTitleAvailable: true,
+      isChartSubtitleAvailable: true,
+      isTitleAndSubtitlePositionChangeable: true,
+      isTitleAndSubtitlePositionCenterAvailable: true,
+      isTitleAndSubtitlePositionLeftAvailable: true,
+      isTitleAndSubtitlePositionRightAvailable: true,
+      isShowHideLabelsAvailable: true,
+      isShowHideLabelsBackgroundAvailable: true,
+      isLabelsPositionChangeable: false,
+      isLabelsPositionTopAvailable: false,
+      isLabelsPositionCenterAvailable: false,
+      isSeriesColorChangeable: true,
+      isSeriesSingleColor: false,
+      isSeriesMultipleColor: true,
+      isSortingOrderChangeable: false,
+      isLegendTextColorAvailable: true,
+      isDataLabelsColorAvailable: true,
+      isDataLabelsWithBackgroundColorAvailable: true,
+      isShowHideXAxisTitleAvailable: false,
+      isShowHideYAxisTitleAvailable: false,
+      isShowHideAxesTitleAvailable: false,
+      isSortingOrderAscendingAvailable: false,
+      isSortingOrderDescendingAvailable: false,
+      isCategoriesFilteringAvailable: true,
+    },
     options: {
       chart: {
         id: visRef.chart.code,
@@ -217,6 +253,7 @@ const GroupedBarChart = ({
 
   useEffect(() => {
     const { selectedXAxis, selectedYAxis } = state.axisOptions;
+
     const xAxisColumn = dataset.columns.find(
       (col) => col.field === selectedXAxis
     );
@@ -414,9 +451,7 @@ const GroupedBarChart = ({
                 </IconButton>
               </Tooltip>
             </Grid>
-            <StateContext.Provider value={{ state, setState, chartRef }}>
-              <LinechartCustomization />
-            </StateContext.Provider>
+            <CustomizationPanel state={state} setState={setState} />
           </Grid>
         </Grow>
       </Grid>

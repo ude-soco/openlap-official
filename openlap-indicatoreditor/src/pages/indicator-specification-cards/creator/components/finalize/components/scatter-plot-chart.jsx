@@ -22,6 +22,7 @@ import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import ScatterChartCustomizations from "./scatter-chart-customizations/scatter-chart-customizations.jsx";
+import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 
 export let StateContext = createContext();
 
@@ -38,9 +39,46 @@ const ScatterPlotChart = ({
 
   const [state, setState] = useState({
     series: [],
+    configuration: {
+      isShowHideLegendAvailable: true,
+      isLegendPositionChangeable: true,
+      isLegendPositionBottomAvailable: true,
+      isLegendPositionTopAvailable: true,
+      isLegendPositionLeftAvailable: true,
+      isLegendPositionRightAvailable: true,
+      isShowHideAxesAvailable: true,
+      isShowHideXAxisAvailable: true,
+      isShowHideYAxisAvailable: true,
+      isChartTitleAvailable: true,
+      isChartSubtitleAvailable: true,
+      isTitleAndSubtitlePositionChangeable: true,
+      isTitleAndSubtitlePositionCenterAvailable: true,
+      isTitleAndSubtitlePositionLeftAvailable: true,
+      isTitleAndSubtitlePositionRightAvailable: true,
+      isShowHideLabelsAvailable: true,
+      isShowHideLabelsBackgroundAvailable: true,
+      isLabelsPositionChangeable: false,
+      isLabelsPositionTopAvailable: false,
+      isLabelsPositionCenterAvailable: false,
+      isSeriesColorChangeable: true,
+      isSeriesSingleColor: true,
+      isSeriesMultipleColor: false,
+      isSortingOrderChangeable: false,
+      isLegendTextColorAvailable: true,
+      isDataLabelsColorAvailable: true,
+      isDataLabelsWithBackgroundColorAvailable: true,
+      isShowHideXAxisTitleAvailable: false,
+      isShowHideYAxisTitleAvailable: false,
+      isShowHideAxesTitleAvailable: false,
+      isSortingOrderAscendingAvailable: false,
+      isSortingOrderDescendingAvailable: false,
+      isCategoriesFilteringAvailable: false,
+    },
     options: {
       chart: {
         type: visRef.chart.code,
+        id: visRef.chart.code,
+        width: "100%",
         toolbar: {
           show: false,
         },
@@ -467,9 +505,7 @@ const ScatterPlotChart = ({
                 </IconButton>
               </Tooltip>
             </Grid>
-            <StateContext.Provider value={{ state, setState, chartRef }}>
-              <ScatterChartCustomizations />
-            </StateContext.Provider>
+            <CustomizationPanel state={state} setState={setState} />
           </Grid>
         </Grow>
       </Grid>

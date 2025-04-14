@@ -22,6 +22,7 @@ import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import TreeMapCustomizations from "./tree-map-chart-customizations/tree-map-customizations.jsx";
+import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 
 export let StateContext = createContext();
 
@@ -38,9 +39,45 @@ const TreeMap = ({
 
   const [state, setState] = useState({
     series: [],
+    configuration: {
+      isShowHideLegendAvailable: true,
+      isLegendPositionChangeable: true,
+      isLegendPositionBottomAvailable: true,
+      isLegendPositionTopAvailable: true,
+      isLegendPositionLeftAvailable: true,
+      isLegendPositionRightAvailable: true,
+      isShowHideAxesAvailable: false,
+      isShowHideXAxisAvailable: false,
+      isShowHideYAxisAvailable: false,
+      isChartTitleAvailable: true,
+      isChartSubtitleAvailable: true,
+      isTitleAndSubtitlePositionChangeable: true,
+      isTitleAndSubtitlePositionCenterAvailable: true,
+      isTitleAndSubtitlePositionLeftAvailable: true,
+      isTitleAndSubtitlePositionRightAvailable: true,
+      isShowHideLabelsAvailable: true,
+      isShowHideLabelsBackgroundAvailable: false,
+      isLabelsPositionChangeable: false,
+      isLabelsPositionTopAvailable: false,
+      isLabelsPositionCenterAvailable: false,
+      isSeriesColorChangeable: true,
+      isSeriesSingleColor: false,
+      isSeriesMultipleColor: true,
+      isSortingOrderChangeable: false,
+      isLegendTextColorAvailable: true,
+      isDataLabelsColorAvailable: true,
+      isDataLabelsWithBackgroundColorAvailable: false,
+      isShowHideXAxisTitleAvailable: false,
+      isShowHideYAxisTitleAvailable: false,
+      isShowHideAxesTitleAvailable: false,
+      isSortingOrderAscendingAvailable: false,
+      isSortingOrderDescendingAvailable: false,
+      isCategoriesFilteringAvailable: false,
+    },
     options: {
       chart: {
         type: "treemap",
+        id: "treemap",
         height: 350,
         foreColor: darkMode ? "#ffffff" : "#000000",
         toolbar: {
@@ -74,6 +111,36 @@ const TreeMap = ({
         },
       },
       colors: [],
+      xaxis: {
+        categories: [],
+        title: {
+          text: "Group By",
+          style: {
+            cssClass: "x-y-axis-show-title",
+          },
+        },
+        style: {
+          cssClass: "x-y-axis-show-title",
+        },
+        labels: {
+          show: true,
+        },
+      },
+      yaxis: {
+        title: {
+          text: "Counts",
+          style: {
+            cssClass: "x-y-axis-show-title",
+          },
+        },
+        style: {
+          cssClass: "x-y-axis-show-title",
+        },
+        labels: {
+          show: true,
+          formatter: (value) => value.toLocaleString(),
+        },
+      },
       dataLabels: {
         enabled: true,
         style: {
@@ -373,9 +440,7 @@ const TreeMap = ({
                 </IconButton>
               </Tooltip>
             </Grid>
-            <StateContext.Provider value={{ state, setState, chartRef }}>
-              <TreeMapCustomizations />
-            </StateContext.Provider>
+            <CustomizationPanel state={state} setState={setState} />
           </Grid>
         </Grow>
       </Grid>

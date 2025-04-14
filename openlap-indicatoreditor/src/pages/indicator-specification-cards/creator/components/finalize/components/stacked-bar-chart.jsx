@@ -22,6 +22,7 @@ import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import StackedChartCustomizations from "./stacked-chart-customizations/stacked-chart-customizations.jsx";
+import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 
 export let StateContext = createContext();
 
@@ -38,9 +39,45 @@ const StackedBarChart = ({
 
   const [state, setState] = useState({
     series: [],
+    configuration: {
+      isShowHideLegendAvailable: true,
+      isLegendPositionChangeable: true,
+      isLegendPositionBottomAvailable: true,
+      isLegendPositionTopAvailable: true,
+      isLegendPositionLeftAvailable: true,
+      isLegendPositionRightAvailable: true,
+      isShowHideAxesAvailable: true,
+      isShowHideXAxisAvailable: true,
+      isShowHideYAxisAvailable: true,
+      isChartTitleAvailable: true,
+      isChartSubtitleAvailable: true,
+      isTitleAndSubtitlePositionChangeable: true,
+      isTitleAndSubtitlePositionCenterAvailable: true,
+      isTitleAndSubtitlePositionLeftAvailable: true,
+      isTitleAndSubtitlePositionRightAvailable: true,
+      isShowHideLabelsAvailable: true,
+      isShowHideLabelsBackgroundAvailable: true,
+      isLabelsPositionChangeable: true,
+      isLabelsPositionTopAvailable: true,
+      isLabelsPositionCenterAvailable: true,
+      isSeriesColorChangeable: true,
+      isSeriesSingleColor: false,
+      isSeriesMultipleColor: true,
+      isSortingOrderChangeable: false,
+      isLegendTextColorAvailable: true,
+      isDataLabelsColorAvailable: true,
+      isDataLabelsWithBackgroundColorAvailable: true,
+      isShowHideXAxisTitleAvailable: true,
+      isShowHideYAxisTitleAvailable: true,
+      isShowHideAxesTitleAvailable: true,
+      isSortingOrderAscendingAvailable: false,
+      isSortingOrderDescendingAvailable: false,
+      isCategoriesFilteringAvailable: true,
+    },
     options: {
       chart: {
         type: visRef.chart.code,
+        id: visRef.chart.code,
         stacked: true,
         width: "100%",
         foreColor: darkMode ? "#ffffff" : "#000000",
@@ -489,9 +526,7 @@ const StackedBarChart = ({
                 </IconButton>
               </Tooltip>
             </Grid>
-            <StateContext.Provider value={{ state, setState, chartRef }}>
-              <StackedChartCustomizations />
-            </StateContext.Provider>
+            <CustomizationPanel state={state} setState={setState} />
           </Grid>
         </Grow>
       </Grid>

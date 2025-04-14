@@ -22,6 +22,7 @@ import BarChartCustomization from "./bar-chart-customizations/bar-chart-customiz
 import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
+import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 
 export let StateContext = createContext();
 
@@ -38,6 +39,41 @@ const BarChart = ({
 
   const [state, setState] = useState({
     series: [],
+    configuration: {
+      isShowHideLegendAvailable: true,
+      isLegendPositionChangeable: true,
+      isLegendPositionBottomAvailable: true,
+      isLegendPositionTopAvailable: true,
+      isLegendPositionLeftAvailable: true,
+      isLegendPositionRightAvailable: true,
+      isShowHideAxesAvailable: true,
+      isShowHideXAxisAvailable: true,
+      isShowHideYAxisAvailable: true,
+      isChartTitleAvailable: true,
+      isChartSubtitleAvailable: true,
+      isTitleAndSubtitlePositionChangeable: true,
+      isTitleAndSubtitlePositionCenterAvailable: true,
+      isTitleAndSubtitlePositionLeftAvailable: true,
+      isTitleAndSubtitlePositionRightAvailable: true,
+      isShowHideLabelsAvailable: true,
+      isShowHideLabelsBackgroundAvailable: true,
+      isLabelsPositionChangeable: true,
+      isLabelsPositionTopAvailable: true,
+      isLabelsPositionCenterAvailable: true,
+      isSeriesColorChangeable: true,
+      isSeriesSingleColor: true,
+      isSeriesMultipleColor: false,
+      isSortingOrderChangeable: true,
+      isLegendTextColorAvailable: true,
+      isDataLabelsColorAvailable: true,
+      isDataLabelsWithBackgroundColorAvailable: true,
+      isShowHideXAxisTitleAvailable: true,
+      isShowHideYAxisTitleAvailable: true,
+      isShowHideAxesTitleAvailable: true,
+      isSortingOrderAscendingAvailable: true,
+      isSortingOrderDescendingAvailable: true,
+      isCategoriesFilteringAvailable: true,
+    },
     options: {
       chart: {
         id: visRef.chart.code,
@@ -434,9 +470,7 @@ const BarChart = ({
                 </IconButton>
               </Tooltip>
             </Grid>
-            <StateContext.Provider value={{ state, setState, chartRef }}>
-              <BarChartCustomization />
-            </StateContext.Provider>
+            <CustomizationPanel state={state} setState={setState} />
           </Grid>
         </Grow>
       </Grid>

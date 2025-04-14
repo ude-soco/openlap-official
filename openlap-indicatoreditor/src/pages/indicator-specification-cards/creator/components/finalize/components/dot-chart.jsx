@@ -22,6 +22,7 @@ import DotChartCustomizations from "./dot-chart-customizations/dot-chart-customi
 import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
+import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 
 export let StateContext = createContext();
 
@@ -38,8 +39,44 @@ const DotChart = ({
 
   const [state, setState] = useState({
     series: [],
+    configuration: {
+      isShowHideLegendAvailable: true,
+      isLegendPositionChangeable: true,
+      isLegendPositionBottomAvailable: true,
+      isLegendPositionTopAvailable: true,
+      isLegendPositionLeftAvailable: true,
+      isLegendPositionRightAvailable: true,
+      isShowHideAxesAvailable: true,
+      isShowHideXAxisAvailable: true,
+      isShowHideYAxisAvailable: true,
+      isChartTitleAvailable: true,
+      isChartSubtitleAvailable: true,
+      isTitleAndSubtitlePositionChangeable: true,
+      isTitleAndSubtitlePositionCenterAvailable: true,
+      isTitleAndSubtitlePositionLeftAvailable: true,
+      isTitleAndSubtitlePositionRightAvailable: true,
+      isShowHideLabelsAvailable: true,
+      isShowHideLabelsBackgroundAvailable: true,
+      isLabelsPositionChangeable: false,
+      isLabelsPositionTopAvailable: false,
+      isLabelsPositionCenterAvailable: false,
+      isSeriesColorChangeable: true,
+      isSeriesSingleColor: true,
+      isSeriesMultipleColor: false,
+      isSortingOrderChangeable: false,
+      isLegendTextColorAvailable: true,
+      isDataLabelsColorAvailable: true,
+      isDataLabelsWithBackgroundColorAvailable: true,
+      isShowHideXAxisTitleAvailable: false,
+      isShowHideYAxisTitleAvailable: false,
+      isShowHideAxesTitleAvailable: false,
+      isSortingOrderAscendingAvailable: false,
+      isSortingOrderDescendingAvailable: false,
+      isCategoriesFilteringAvailable: false,
+    },
     options: {
       chart: {
+        id: visRef.chart.code,
         type: "scatter",
         width: "100%",
         foreColor: darkMode ? "#ffffff" : "#000000",
@@ -126,7 +163,6 @@ const DotChart = ({
       selectedYAxis: "",
     },
   });
-
   // * This effect is used to set the initial state of the chart when previewing
   useEffect(() => {
     if (preview) {
@@ -392,9 +428,7 @@ const DotChart = ({
                 </IconButton>
               </Tooltip>
             </Grid>
-            <StateContext.Provider value={{ state, setState, chartRef }}>
-              <DotChartCustomizations />
-            </StateContext.Provider>
+            <CustomizationPanel state={state} setState={setState} />
           </Grid>
         </Grow>
       </Grid>
