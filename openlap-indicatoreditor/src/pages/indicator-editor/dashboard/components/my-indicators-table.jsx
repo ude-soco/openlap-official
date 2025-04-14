@@ -159,12 +159,10 @@ const MyIndicatorsTable = () => {
   };
 
   const handleEdit = () => {
-    console.log("Edit indicator:", selectedIndicator);
     handleMenuClose();
   };
 
   const handleDuplicate = () => {
-    console.log("Duplicate indicator:", selectedIndicator);
     handleMenuClose();
   };
 

@@ -63,7 +63,7 @@ const ColumnMerge = () => {
             let tempIndicators = [...prevState.indicators];
             for (let indicator of tempIndicators) {
               let correspondingData = response.data.find(
-                (item) => item.indicatorId === indicator.indicatorId,
+                (item) => item.indicatorId === indicator.indicatorId
               );
               if (
                 correspondingData &&
@@ -101,7 +101,6 @@ const ColumnMerge = () => {
       }));
     }
   }, [indicatorRef.indicators.length]);
-  console.log(state.indicatorsToMerge);
 
   const handleTogglePanel = () => {
     setLockedStep((prevState) => ({
@@ -133,7 +132,6 @@ const ColumnMerge = () => {
       ...prevState,
       loadingPreview: true,
     }));
-    console.log(indicatorRef.indicators);
     loadMergePreviewData(api, indicatorRef.indicators)
       .then((response) => {
         setState((prevState) => ({
@@ -211,7 +209,12 @@ const ColumnMerge = () => {
                           />
                         </FormGroup>
                       )}
-                      <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
+                      <Button
+                        color="primary"
+                        variant="outlined"
+                        size="small"
+                        onClick={handleTogglePanel}
+                      >
                         {lockedStep.columnMerge.openPanel
                           ? "Close section"
                           : "Change selections"}
@@ -301,7 +304,7 @@ const ColumnMerge = () => {
                 disabled={
                   state.indicatorsToMerge.length <= 1 ||
                   !indicatorRef.indicators.every((indicator) =>
-                    indicator.hasOwnProperty("columnToMerge"),
+                    indicator.hasOwnProperty("columnToMerge")
                   )
                 }
                 onClick={handlePreviewMergeData}

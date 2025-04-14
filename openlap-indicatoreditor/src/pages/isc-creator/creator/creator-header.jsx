@@ -63,8 +63,7 @@ const CreatorHeader = ({
     JSON.parse(sessionStorage.getItem("openlap-isc-data"))?.indicatorGoal ||
       null
   );
-  console.log(indicatorGoal);
-  
+
   const [listOfGoals, setListOfGoals] = useState(sortGoalList(goalList));
   const [indicatorGoalText, setIndicatorGoalText] = useState(
     JSON.parse(sessionStorage.getItem("openlap-isc-data"))?.indicatorGoalText ||

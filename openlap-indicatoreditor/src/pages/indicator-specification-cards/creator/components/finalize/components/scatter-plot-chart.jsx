@@ -394,7 +394,7 @@ const ScatterPlotChart = ({
       <Grid container spacing={2}>
         {!preview && (
           <>
-            <Grid size={{ xs: 4 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <InputLabel id="x-axis-select-label">X Axis</InputLabel>
                 <Select
@@ -413,7 +413,7 @@ const ScatterPlotChart = ({
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 4 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <InputLabel id="y-axis-select-label">Y Axis</InputLabel>
                 <Select
@@ -432,7 +432,7 @@ const ScatterPlotChart = ({
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 4 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <InputLabel id="label-select-label">Labels</InputLabel>
                 <Select

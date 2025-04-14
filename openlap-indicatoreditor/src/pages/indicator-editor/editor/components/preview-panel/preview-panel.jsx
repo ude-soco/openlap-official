@@ -21,11 +21,6 @@ const PreviewPanel = ({
   const scriptRef = useRef(null);
 
   useEffect(() => {
-    console.log(
-      "indicator.previewData.scriptData",
-      indicator.previewData.scriptData
-    );
-
     if (!scriptRef.current) {
       const script = document.createElement("script");
       script.innerHTML = indicator.previewData.scriptData;

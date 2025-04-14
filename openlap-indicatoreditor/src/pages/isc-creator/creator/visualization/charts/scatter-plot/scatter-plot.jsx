@@ -185,12 +185,12 @@ export default function ScatterPl({
       setSeries(() => {
         let tempSeries = [...sessionSeries];
         let filteredTempSeries = tempSeries.filter(
-          (ser) => ser.name !== columns[0].headerName,
+          (ser) => ser.name !== columns[0].headerName
         );
         if (!Boolean(columnName)) {
           sessionStorage.setItem(
             "chart-series",
-            JSON.stringify(filteredTempSeries),
+            JSON.stringify(filteredTempSeries)
           );
           return filteredTempSeries;
         } else {
@@ -304,8 +304,6 @@ export default function ScatterPl({
     setRows(updatedRows);
     const tempArray = dynamicMap(updatedRows);
 
-    console.log(tempArray);
-
     if (openEditor.axis === "xaxis") {
       handleSetXAxisOptions(columns[0].headerName, tempArray);
     }
@@ -332,7 +330,7 @@ export default function ScatterPl({
 
   const handleSetXAxisOptions = (
     categoricalColumnName,
-    categoricalColumnDataArray,
+    categoricalColumnDataArray
   ) => {
     let sessionOptions = JSON.parse(sessionStorage.getItem("chart-options"));
     let sessionSeries = JSON.parse(sessionStorage.getItem("chart-series"));
@@ -353,12 +351,12 @@ export default function ScatterPl({
     setXAxis(categoricalColumnDataArray);
     if (Boolean(yAxis.length)) {
       yAxis.forEach((y, index) =>
-        tempSeries.push([categoricalColumnDataArray[index], y]),
+        tempSeries.push([categoricalColumnDataArray[index], y])
       );
       setSeries(() => {
         sessionStorage.setItem(
           "chart-series",
-          JSON.stringify([{ name: sessionSeries[0].name, data: tempSeries }]),
+          JSON.stringify([{ name: sessionSeries[0].name, data: tempSeries }])
         );
         return [{ name: sessionSeries[0].name, data: tempSeries }];
       });
@@ -370,7 +368,7 @@ export default function ScatterPl({
     setSeries(() => {
       sessionStorage.setItem(
         "chart-series",
-        JSON.stringify([{ name: sessionSeries[0].name, data: tempSeries }]),
+        JSON.stringify([{ name: sessionSeries[0].name, data: tempSeries }])
       );
       return [{ name: sessionSeries[0].name, data: tempSeries }];
     });
@@ -396,7 +394,7 @@ export default function ScatterPl({
 
   const handleSetYAxisSeries = (
     numericalColumnName,
-    numericalColumnDataArray,
+    numericalColumnDataArray
   ) => {
     let sessionOptions = JSON.parse(sessionStorage.getItem("chart-options"));
     setOptions(() => {
@@ -411,12 +409,12 @@ export default function ScatterPl({
     let tempSeries = [];
     if (Boolean(xAxis.length)) {
       xAxis.forEach((x, index) =>
-        tempSeries.push([x, numericalColumnDataArray[index]]),
+        tempSeries.push([x, numericalColumnDataArray[index]])
       );
       setSeries(() => {
         sessionStorage.setItem(
           "chart-series",
-          JSON.stringify([{ name: numericalColumnName, data: tempSeries }]),
+          JSON.stringify([{ name: numericalColumnName, data: tempSeries }])
         );
         return [{ name: numericalColumnName, data: tempSeries }];
       });
@@ -430,7 +428,7 @@ export default function ScatterPl({
     setSeries(() => {
       sessionStorage.setItem(
         "chart-series",
-        JSON.stringify([{ name: numericalColumnName, data: tempSeries }]),
+        JSON.stringify([{ name: numericalColumnName, data: tempSeries }])
       );
       return [{ name: numericalColumnName, data: tempSeries }];
     });
@@ -445,7 +443,7 @@ export default function ScatterPl({
   const handleSetCountOccurrences = (
     categoricalColumnName,
     uniqueColumnDataArray,
-    uniqueColumnDataCountArray,
+    uniqueColumnDataCountArray
   ) => {
     let sessionOptions = JSON.parse(sessionStorage.getItem("chart-options"));
     let sessionSeries = JSON.parse(sessionStorage.getItem("chart-series"));

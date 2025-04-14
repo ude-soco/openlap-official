@@ -330,7 +330,7 @@ const PieChart = ({
       <Grid container spacing={2}>
         {!preview && (
           <>
-            <Grid size={{ xs: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth>
                 <InputLabel id="x-axis-select-label">Categories</InputLabel>
                 <Select
@@ -349,7 +349,7 @@ const PieChart = ({
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <FormControl fullWidth>
                 <InputLabel id="y-axis-select-label">Values</InputLabel>
                 <Select

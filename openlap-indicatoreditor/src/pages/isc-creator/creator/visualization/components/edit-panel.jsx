@@ -65,7 +65,7 @@ export default function EditPanel({
     if (Boolean(newColumnName)) {
       if (
         columnData.find(
-          (col) => col.headerName.toLowerCase() === tempName.toLowerCase(),
+          (col) => col.headerName.toLowerCase() === tempName.toLowerCase()
         )
       ) {
         if (tempName !== columns[0].headerName && tempName !== "") {
@@ -112,16 +112,16 @@ export default function EditPanel({
                 ...acc2,
                 [field]: { mode: "view" },
               }),
-              {},
+              {}
             ),
           }),
-          {},
+          {}
         ),
         [params.id]: {
           // Revert the mode of other cells in the same row
           ...Object.keys(prevModel[params.id] || {}).reduce(
             (acc, field) => ({ ...acc, [field]: { mode: "view" } }),
-            {},
+            {}
           ),
           [params.field]: { mode: "edit" },
         },
@@ -251,7 +251,6 @@ export default function EditPanel({
           }}
           slots={{
             columnMenu: (props) => {
-              console.log(props.colDef.headerName);
               return (
                 <>
                   <MenuItem onClick={handleOpenRenameColumn} sx={{ p: 2 }}>
@@ -302,7 +301,7 @@ export default function EditPanel({
                 setOpenColumnModal(false);
                 setNewColumnName("");
                 let iscData = JSON.parse(
-                  sessionStorage.getItem("openlap-isc-data"),
+                  sessionStorage.getItem("openlap-isc-data")
                 );
                 let tempISCData = {
                   ...iscData,
@@ -313,7 +312,7 @@ export default function EditPanel({
                 };
                 sessionStorage.setItem(
                   "openlap-isc-data",
-                  JSON.stringify(tempISCData),
+                  JSON.stringify(tempISCData)
                 );
               }}
             >

@@ -294,7 +294,6 @@ export default function IscCreator() {
   const handleAddNewRows = (rowCount) => {
     let iscData = JSON.parse(sessionStorage.getItem("openlap-isc-data"));
     let tempColumnData = iscData.indicatorData.columnData;
-    console.log(tempColumnData);
     const newRows = Array.from({ length: rowCount }, () => {
       const newRow = { id: uuidv4() };
       tempColumnData.forEach((column) => {
@@ -302,7 +301,6 @@ export default function IscCreator() {
       });
       return newRow;
     });
-    console.log(newRows);
     let tempISCData = {
       ...iscData,
       indicatorData: {

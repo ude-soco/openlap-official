@@ -352,7 +352,7 @@ const TreeMap = ({
       <Grid container spacing={2}>
         {!preview && (
           <>
-            <Grid size={{ xs: 6 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <InputLabel id="category-select-label">Category</InputLabel>
                 <Select
@@ -371,7 +371,7 @@ const TreeMap = ({
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 6 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <InputLabel id="x-value-select-label">X-Value</InputLabel>
                 <Select
@@ -390,7 +390,7 @@ const TreeMap = ({
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 6 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
                 <InputLabel id="value-select-label">Value</InputLabel>
                 <Select

@@ -29,8 +29,6 @@ const VisualizationType = ({
     if (state.typeList.length === 0) {
       loadVisualizationTypeData(visRef.visualizationLibraryId).then(
         (response) => {
-          console.log(response);
-
           setState((prevState) => ({
             ...prevState,
             typeList: response,
@@ -41,9 +39,6 @@ const VisualizationType = ({
   }, [state.typeList.length]);
 
   const handleSelectVisualizationType = (value) => {
-    console.log(value);
-    console.log(value.chartConfiguration);
-
     setChartConfiguration(value.chartConfiguration);
 
     setVisRef((prevState) => ({

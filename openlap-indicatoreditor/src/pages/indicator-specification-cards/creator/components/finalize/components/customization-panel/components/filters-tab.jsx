@@ -141,8 +141,6 @@ const FiltersTab = ({ state, setState }) => {
                     ),
                   }));
 
-                  console.log(newSeries);
-
                   setState((prevState) => ({
                     ...prevState,
                     series: newSeries,

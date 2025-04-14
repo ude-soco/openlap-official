@@ -55,8 +55,6 @@ const MultiLevelAnalysisIndicator = () => {
         };
   });
 
-  console.log(indicatorRef.indicators);
-
   const [analysisRef, setAnalysisRef] = useState(() => {
     const savedState = sessionStorage.getItem("session");
     return savedState
@@ -128,7 +126,7 @@ const MultiLevelAnalysisIndicator = () => {
       indicator,
       indicatorRef,
       analysisRef,
-      visRef,
+      visRef
     ) => {
       try {
         return await requestCreateMultiLevelIndicatorIndicator(
@@ -136,7 +134,7 @@ const MultiLevelAnalysisIndicator = () => {
           indicator,
           indicatorRef,
           analysisRef,
-          visRef,
+          visRef
         );
       } catch (error) {
         console.log("Error analyzing the data");
@@ -148,7 +146,7 @@ const MultiLevelAnalysisIndicator = () => {
       indicator,
       indicatorRef,
       analysisRef,
-      visRef,
+      visRef
     ).then((response) => {
       enqueueSnackbar(response.message, {
         variant: "success",
