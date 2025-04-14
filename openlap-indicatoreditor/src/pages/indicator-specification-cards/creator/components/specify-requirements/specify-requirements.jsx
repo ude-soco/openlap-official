@@ -190,7 +190,7 @@ const SpecifyRequirements = () => {
 
             <Grow
               in={!lockedStep.requirements.openPanel && state.showSelections}
-              timeout={350}
+              timeout={{ enter: 500, exit: 0 }}
               unmountOnExit
             >
               <Grid item xs={12}>

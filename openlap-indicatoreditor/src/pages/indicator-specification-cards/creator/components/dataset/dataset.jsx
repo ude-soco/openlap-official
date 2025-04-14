@@ -149,7 +149,7 @@ const Dataset = () => {
                 !lockedStep.dataset.openPanel &&
                 state.showSelections
               }
-              timeout={350}
+              timeout={{ enter: 500, exit: 0 }}
               unmountOnExit
             >
               {dataset.columns.length > 0 && (
