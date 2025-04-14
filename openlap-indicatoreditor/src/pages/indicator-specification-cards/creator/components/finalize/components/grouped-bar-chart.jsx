@@ -165,122 +165,117 @@ const GroupedBarChart = ({
     }
   }, [preview, darkMode]);
 
+  // * Executes only when dataset changes.
+  // * This effect is used to populate the xAxis and yAxis options.
+  // * If new dataset or new column is provided, it will set the xAxis and yAxis options based on the dataset columns.
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns && !preview) {
-      const stringColumns = dataset.columns.filter(
-        (col) => col.type === "string"
-      );
-      const numberColumns = dataset.columns.filter(
-        (col) => col.type === "number"
-      );
+    const stringColumns = dataset.columns.filter(
+      (col) => col.type === "string"
+    );
+    const numberColumns = dataset.columns.filter(
+      (col) => col.type === "number"
+    );
 
-      // Update selected X and Y axes
-      const updatedSelectedXAxis = state.axisOptions.selectedXAxis
-        ? stringColumns.find(
-            (col) => col.field === state.axisOptions.selectedXAxis
-          )?.field || ""
-        : stringColumns.length > 0
-        ? stringColumns[0].field
-        : "";
+    const updatedSelectedXAxis = state.axisOptions.selectedXAxis
+      ? stringColumns.find(
+          (col) => col.field === state.axisOptions.selectedXAxis
+        )?.field || (stringColumns.length > 0 ? stringColumns[0].field : "")
+      : stringColumns.length > 0
+      ? stringColumns[0].field
+      : "";
 
-      // const updatedselectedYAxis = state.axisOptions.selectedYAxis.filter(
-      //   (field) => numberColumns.find((col) => col.field === field)
-      // );
-      const updatedSelectedYAxis = state.axisOptions.selectedYAxis
-        ? numberColumns.find(
-            (col) => col.field === state.axisOptions.selectedYAxis
-          )?.field || ""
-        : numberColumns.length > 0
-        ? numberColumns[0].field
-        : "";
+    const updatedSelectedYAxis = state.axisOptions.selectedYAxis
+      ? numberColumns.find(
+          (col) => col.field === state.axisOptions.selectedYAxis
+        )?.field || (numberColumns.length > 0 ? [numberColumns[0].field] : [])
+      : numberColumns.length > 0
+      ? [numberColumns[0].field]
+      : [];
 
-      setState((prevState) => ({
-        ...prevState,
-        options: {
-          ...prevState.options,
-          chart: {
-            ...prevState.options.chart,
-            type: visRef.chart.code,
-            foreColor: darkMode ? "#ffffff" : "#000000",
-          },
-          tooltip: {
-            ...prevState.options.tooltip,
-            theme: darkMode ? "dark" : "light",
-          },
+    setState((prevState) => ({
+      ...prevState,
+      options: {
+        ...prevState.options,
+        chart: {
+          ...prevState.options.chart,
+          type: visRef.chart.code,
+          foreColor: darkMode ? "#ffffff" : "#000000",
         },
-        axisOptions: {
-          xAxisOptions: stringColumns,
-          yAxisOptions: numberColumns,
-          selectedXAxis: updatedSelectedXAxis,
-          selectedYAxis:
-            updatedSelectedYAxis.length > 0
-              ? updatedSelectedYAxis
-              : [numberColumns[0]?.field],
+        tooltip: {
+          ...prevState.options.tooltip,
+          theme: darkMode ? "dark" : "light",
         },
-      }));
-    }
-  }, []);
+      },
+      axisOptions: {
+        xAxisOptions: stringColumns,
+        yAxisOptions: numberColumns,
+        selectedXAxis: updatedSelectedXAxis,
+        selectedYAxis: updatedSelectedYAxis,
+      },
+    }));
+  }, [dataset.columns.length]);
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns && !preview) {
-      const { selectedXAxis, selectedYAxis } = state.axisOptions;
-      const categoryColumn = dataset.columns.find(
-        (col) => col.field === selectedXAxis
-      );
+    const { selectedXAxis, selectedYAxis } = state.axisOptions;
+    const xAxisColumn = dataset.columns.find(
+      (col) => col.field === selectedXAxis
+    );
+    const yAxisColumns = dataset.columns.filter((col) =>
+      selectedYAxis.includes(col.field)
+    );
 
-      // Get unique categories for X-axis
-      const categories = categoryColumn
-        ? [...new Set(dataset.rows.map((row) => row[categoryColumn.field]))]
-        : [];
+    if (!xAxisColumn || yAxisColumns.length === 0) return;
 
-      // Aggregate data based on selected Y-axes and X-axis categories
-      const series = selectedYAxis.map((yField) => {
-        const valueColumn = dataset.columns.find((col) => col.field === yField);
-        const seriesData = categories.map((category) => {
-          return dataset.rows
-            .filter((row) => row[categoryColumn.field] === category)
-            .reduce((acc, row) => acc + (row[valueColumn.field] || 0), 0);
-        });
+    // Get unique categories for X-axis
+    const categories = xAxisColumn
+      ? [...new Set(dataset.rows.map((row) => row[xAxisColumn.field]))]
+      : [];
 
-        return {
-          name: valueColumn ? valueColumn.headerName : "Default Series",
-          data: seriesData,
-        };
+    // Aggregate data based on selected Y-axis and X-axis categories
+    const series = selectedYAxis.map((yField) => {
+      const valueColumn = dataset.columns.find((col) => col.field === yField);
+      const seriesData = categories.map((category) => {
+        return dataset.rows
+          .filter((row) => row[xAxisColumn.field] === category)
+          .reduce((acc, row) => acc + (row[valueColumn.field] || 0), 0);
       });
 
-      setState((prevState) => ({
-        ...prevState,
-        series: series,
-        options: {
-          ...prevState.options,
-          chart: {
-            ...prevState.options.chart,
-            type: visRef.chart.code,
-            foreColor: darkMode ? "#ffffff" : "#000000",
-          },
-          tooltip: {
-            ...prevState.options.tooltip,
-            theme: darkMode ? "dark" : "light",
-          },
-          xaxis: {
-            ...prevState.options.xaxis,
-            categories: categories,
-            name: categoryColumn
-              ? categoryColumn.headerName
-              : "Default Categories",
-          },
+      return {
+        name: valueColumn ? valueColumn.headerName : "Default Series",
+        data: seriesData,
+      };
+    });
+
+    setState((prevState) => ({
+      ...prevState,
+      series: series,
+      options: {
+        ...prevState.options,
+        chart: {
+          ...prevState.options.chart,
+          type: visRef.chart.code,
+          foreColor: darkMode ? "#ffffff" : "#000000",
         },
-      }));
-      setVisRef((prevVisRef) => ({
-        ...prevVisRef,
-        data: {
-          ...prevVisRef.data,
-          series: state.series,
-          options: state.options,
-          axisOptions: state.axisOptions,
+        tooltip: {
+          ...prevState.options.tooltip,
+          theme: darkMode ? "dark" : "light",
         },
-      }));
-    }
+        xaxis: {
+          ...prevState.options.xaxis,
+          categories: categories,
+          name: xAxisColumn ? xAxisColumn.headerName : "Default Categories",
+        },
+      },
+    }));
+    setVisRef((prevVisRef) => ({
+      ...prevVisRef,
+      data: {
+        ...prevVisRef.data,
+        series: state.series,
+        options: state.options,
+        axisOptions: state.axisOptions,
+      },
+    }));
   }, [
     dataset,
     state.axisOptions.selectedXAxis,

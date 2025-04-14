@@ -146,6 +146,7 @@ const ScatterPlotChart = ({
     },
   });
 
+  // * This effect is used to set the initial state of the chart when previewing
   useEffect(() => {
     if (preview) {
       setState((prevState) => ({
@@ -176,115 +177,133 @@ const ScatterPlotChart = ({
         (col) => col.type === "number"
       );
 
+      const updatedSelectedLabel = state.axisOptions.selectedLabel
+        ? stringColumns.find(
+            (col) => col.field === state.axisOptions.selectedLabel
+          )?.field || (stringColumns.length > 0 ? stringColumns[0].field : "")
+        : stringColumns.length > 0
+        ? stringColumns[0].field
+        : "";
+
+      const updatedSelectedXAxis = state.axisOptions.selectedXAxis
+        ? numberColumns.find(
+            (col) => col.field === state.axisOptions.selectedXAxis
+          )?.field || (numberColumns.length > 0 ? numberColumns[0].field : "")
+        : numberColumns.length > 0
+        ? numberColumns[0].field
+        : "";
+
+      const updatedSelectedYAxis = state.axisOptions.selectedYAxis
+        ? numberColumns.find(
+            (col) => col.field === state.axisOptions.selectedYAxis
+          )?.field ||
+          (numberColumns.length > 0
+            ? numberColumns[1]?.field
+            : numberColumns[0]?.field || "")
+        : numberColumns.length > 0
+        ? numberColumns[1]?.field
+        : numberColumns[0]?.field || "";
+
       setState((prevState) => ({
         ...prevState,
         axisOptions: {
+          ...prevState.axisOptions,
           xAxisOptions: numberColumns,
           yAxisOptions: numberColumns,
           labelOptions: stringColumns,
-          selectedXAxis:
-            prevState.axisOptions.selectedXAxis ||
-            (numberColumns.length > 0 ? numberColumns[0].field : ""),
-          selectedYAxis:
-            prevState.axisOptions.selectedYAxis ||
-            (numberColumns.length > 0
-              ? numberColumns[1]?.field
-              : numberColumns[0]?.field || ""),
-          selectedLabel:
-            prevState.axisOptions.selectedLabel ||
-            (stringColumns.length > 0 ? stringColumns[0].field : ""),
+          selectedXAxis: updatedSelectedXAxis,
+          selectedYAxis: updatedSelectedYAxis,
+          selectedLabel: updatedSelectedLabel,
         },
       }));
     }
-  }, [dataset, darkMode, visRef.chart.code]);
+  }, [dataset.columns.length, visRef.chart.code]);
 
+  // * This effect is used to update the chart when the dataset changes.
+  // * This will also run when the selected X-axis or Y-axis changes.
+  // * It will group the data by unique X-axis values and prepare the series data.
+  // * It will also update the chart options with the new categories and series data.
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns && !preview) {
-      const { selectedXAxis, selectedYAxis, selectedLabel } = state.axisOptions;
-      const xColumn = dataset.columns.find(
-        (col) => col.field === selectedXAxis
-      );
-      const yColumn = dataset.columns.find(
-        (col) => col.field === selectedYAxis
-      );
-      const labelColumn = dataset.columns.find(
-        (col) => col.field === selectedLabel
-      );
+    const { selectedXAxis, selectedYAxis, selectedLabel } = state.axisOptions;
+    const xColumn = dataset.columns.find((col) => col.field === selectedXAxis);
+    const yColumn = dataset.columns.find((col) => col.field === selectedYAxis);
+    const labelColumn = dataset.columns.find(
+      (col) => col.field === selectedLabel
+    );
 
-      const defaultData = [{ x: 0, y: 0, label: "Default Point" }];
+    if (!xColumn || !yColumn || !labelColumn) return;
 
-      const data =
-        dataset.rows.map((row) => ({
-          x: xColumn ? row[xColumn.field] || 0 : 0,
-          y: yColumn ? row[yColumn.field] || 0 : 0,
-          label: labelColumn ? row[labelColumn.field] || "Unknown" : "Unknown",
-        })) || defaultData;
+    const groupedData = {};
+    let count = 1;
 
-      // Calculate min and max for the x-axis for setting the range
-      const xValues = data.map((item) => item.x);
-      const minX = Math.min(...xValues);
-      const maxX = Math.max(...xValues);
+    for (const row of dataset.rows) {
+      const label = row[labelColumn.field] || `Label not provided ${count++}`;
+      const xVal = row[xColumn.field] || 0;
+      const yVal = row[yColumn.field] || 0;
 
-      setState((prevState) => ({
-        ...prevState,
-        series: [
-          {
-            name: "Scatter Series",
-            data: data.map((item) => ({
-              x: item.x,
-              y: item.y,
-              z: item.label,
-            })),
+      if (!groupedData[label]) {
+        groupedData[label] = { x: 0, y: 0, label };
+      }
+      groupedData[label].x += xVal;
+      groupedData[label].y += yVal;
+    }
+
+    const data = Object.values(groupedData);
+
+    // * Calculating the minimum and maximum for the x-axis for setting the range
+    const xValues = data.map((item) => item.x);
+    const minX = Math.min(...xValues);
+    const maxX = Math.max(...xValues);
+
+    setState((prevState) => ({
+      ...prevState,
+      series: [
+        {
+          name: "Scatter Series",
+          data: data.map((item) => ({
+            x: item.x,
+            y: item.y,
+            z: item.label,
+          })),
+        },
+      ],
+      options: {
+        ...prevState.options,
+        xaxis: {
+          ...prevState.options.xaxis,
+          title: {
+            text: xColumn ? xColumn.headerName : "X Axis",
           },
-        ],
-        options: {
-          ...prevState.options,
-          xaxis: {
-            ...prevState.options.xaxis,
-            title: {
-              text: xColumn ? xColumn.headerName : "X Axis",
+          tickAmount: 6, // * Setting the number of ticks (labels) on the x-axis
+          min: minX, // * Setting the minimum value on the x-axis
+          max: maxX, // * Setting the maximum value on the x-axis
+          labels: {
+            show: true,
+            formatter: function (val) {
+              return parseFloat(val).toFixed(2); // * Formatting the labels with 2 decimal points
             },
-            tickAmount: 6, // This sets the number of ticks (labels) on the x-axis
-            min: minX, // Minimum value on the x-axis
-            max: maxX, // Maximum value on the x-axis
-            labels: {
-              show: true,
-              formatter: function (val) {
-                return parseFloat(val).toFixed(2); // Format the labels with 2 decimal points
-              },
-            },
-          },
-          yaxis: {
-            ...prevState.options.yaxis,
-            title: {
-              text: yColumn ? yColumn.headerName : "Y Axis",
-            },
-            labels: {
-              show: true,
-              formatter: (value) => value.toLocaleString(),
-            },
-          },
-          chart: {
-            ...prevState.options.chart,
-            foreColor: darkMode ? "#ffffff" : "#000000",
-          },
-          tooltip: {
-            ...prevState.options.tooltip,
-            theme: darkMode ? "dark" : "light",
           },
         },
-      }));
-    }
-  }, [
-    dataset,
-    state.axisOptions.selectedXAxis,
-    state.axisOptions.selectedYAxis,
-    state.axisOptions.selectedLabel,
-    darkMode,
-    visRef.chart.code,
-  ]);
-
-  useEffect(() => {
+        yaxis: {
+          ...prevState.options.yaxis,
+          title: {
+            text: yColumn ? yColumn.headerName : "Y Axis",
+          },
+          labels: {
+            show: true,
+            formatter: (value) => value.toLocaleString(),
+          },
+        },
+        chart: {
+          ...prevState.options.chart,
+          foreColor: darkMode ? "#ffffff" : "#000000",
+        },
+        tooltip: {
+          ...prevState.options.tooltip,
+          theme: darkMode ? "dark" : "light",
+        },
+      },
+    }));
     setVisRef((prevVisRef) => ({
       ...prevVisRef,
       data: {
@@ -294,7 +313,14 @@ const ScatterPlotChart = ({
         axisOptions: state.axisOptions,
       },
     }));
-  }, [state.series, state.options, state.axisOptions]);
+  }, [
+    dataset,
+    state.axisOptions.selectedXAxis,
+    state.axisOptions.selectedYAxis,
+    state.axisOptions.selectedLabel,
+    darkMode,
+    visRef.chart.code,
+  ]);
 
   const handleXAxisChange = (event) => {
     setState((prevState) => ({
@@ -426,7 +452,7 @@ const ScatterPlotChart = ({
             />
           </Grid>
         </Grow>
-        <Grow in={customize} timeout={300}>
+        <Grow in={customize} timeout={300} unmountOnExit>
           <Grid size={{ xs: 12, md: 4 }} sx={{ minHeight: 600 }}>
             <Grid
               container

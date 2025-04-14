@@ -16,6 +16,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Skeleton,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -121,6 +122,7 @@ const RadarChart = ({
     },
   });
 
+  // * This effect is used to set the initial state of the chart when previewing
   useEffect(() => {
     if (preview) {
       setState((prevState) => ({
@@ -143,89 +145,124 @@ const RadarChart = ({
   }, [preview, darkMode]);
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns && !preview) {
-      const stringColumns = dataset.columns.filter(
-        (col) => col.type === "string"
-      );
-      const numberColumns = dataset.columns.filter(
-        (col) => col.type === "number"
-      );
+    const stringColumns = dataset.columns.filter(
+      (col) => col.type === "string"
+    );
+    const numberColumns = dataset.columns.filter(
+      (col) => col.type === "number"
+    );
 
-      const updatedSelectedXAxis = state.axisOptions.selectedXAxis
-        ? stringColumns.find(
-            (col) => col.field === state.axisOptions.selectedXAxis
-          )?.field || ""
-        : stringColumns.length > 0
-        ? stringColumns[0].field
-        : "";
+    const updatedSelectedXAxis = state.axisOptions.selectedXAxis
+      ? stringColumns.find(
+          (col) => col.field === state.axisOptions.selectedXAxis
+        )?.field || ""
+      : stringColumns.length > 0
+      ? stringColumns[0].field
+      : "";
 
-      const updatedSelectedYAxis = state.axisOptions.selectedYAxis.filter(
-        (field) => numberColumns.find((col) => col.field === field)
-      );
+    const updatedSelectedYAxis = state.axisOptions.selectedYAxis
+      ? numberColumns.find(
+          (col) => col.field === state.axisOptions.selectedYAxis
+        )?.field || (numberColumns.length > 0 ? [numberColumns[0].field] : [])
+      : numberColumns.length > 0
+      ? [numberColumns[0].field]
+      : [];
 
-      setState((prevState) => ({
-        ...prevState,
-        axisOptions: {
-          xAxisOptions: stringColumns,
-          yAxisOptions: numberColumns,
-          selectedXAxis: updatedSelectedXAxis,
-          selectedYAxis:
-            updatedSelectedYAxis.length > 0
-              ? updatedSelectedYAxis
-              : numberColumns.map((col) => col.field),
+    setState((prevState) => ({
+      ...prevState,
+      options: {
+        ...prevState.options,
+        chart: {
+          ...prevState.options.chart,
+          type: visRef.chart.code,
+          foreColor: darkMode ? "#ffffff" : "#000000",
         },
-      }));
-    }
-  }, [dataset]);
+        tooltip: {
+          ...prevState.options.tooltip,
+          theme: darkMode ? "dark" : "light",
+        },
+      },
+      axisOptions: {
+        xAxisOptions: stringColumns,
+        yAxisOptions: numberColumns,
+        selectedXAxis: updatedSelectedXAxis,
+        selectedYAxis: updatedSelectedYAxis,
+      },
+    }));
+  }, [dataset.columns.length]);
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns && !preview) {
-      const { selectedXAxis, selectedYAxis } = state.axisOptions;
-      const xAxisColumn = dataset.columns.find(
-        (col) => col.field === selectedXAxis
-      );
+    const { selectedXAxis, selectedYAxis } = state.axisOptions;
+    const xAxisColumn = dataset.columns.find(
+      (col) => col.field === selectedXAxis
+    );
+    const yAxisColumns = dataset.columns.filter((col) =>
+      selectedYAxis.includes(col.field)
+    );
 
-      if (!xAxisColumn || selectedYAxis.length === 0) return;
+    if (!xAxisColumn || yAxisColumns.length === 0) return;
 
-      // Group data by unique X-axis values and sum Y-axis values
-      const groupedData = dataset.rows.reduce((acc, row) => {
-        const xValue = row[selectedXAxis] || "Unknown";
-        if (!acc[xValue]) acc[xValue] = {};
-        selectedYAxis.forEach((yField) => {
-          if (!acc[xValue][yField]) acc[xValue][yField] = 0;
-          acc[xValue][yField] += row[yField] || 0;
-        });
-        return acc;
-      }, {});
+    // Get unique categories for X-axis
+    const categories = xAxisColumn
+      ? [...new Set(dataset.rows.map((row) => row[xAxisColumn.field]))]
+      : [];
 
-      // Prepare categories and series
-      const categories = Object.keys(groupedData);
-      const series = selectedYAxis.map((yField) => ({
-        name:
-          dataset.columns.find((col) => col.field === yField)?.headerName ||
-          "Default Series",
-        data: categories.map((category) => groupedData[category][yField]),
-      }));
+    // Aggregate data based on selected Y-axis and X-axis categories
+    const series = selectedYAxis.map((yField) => {
+      const valueColumn = dataset.columns.find((col) => col.field === yField);
+      const seriesData = categories.map((category) => {
+        return dataset.rows
+          .filter((row) => row[xAxisColumn.field] === category)
+          .reduce((acc, row) => acc + (row[valueColumn.field] || 0), 0);
+      });
 
-      setState((prevState) => ({
-        ...prevState,
-        series: series,
-        options: {
-          ...prevState.options,
-          xaxis: {
-            ...prevState.options.xaxis,
-            categories: categories,
-          },
+      return {
+        name: valueColumn ? valueColumn.headerName : "Default Series",
+        data: seriesData,
+      };
+    });
+
+    // // Group data by unique X-axis values and sum Y-axis values
+    // const groupedData = dataset.rows.reduce((acc, row) => {
+    //   const xValue = row[selectedXAxis] || "Unknown";
+    //   if (!acc[xValue]) acc[xValue] = {};
+    //   selectedYAxis.forEach((yField) => {
+    //     if (!acc[xValue][yField]) acc[xValue][yField] = 0;
+    //     acc[xValue][yField] += row[yField] || 0;
+    //   });
+    //   return acc;
+    // }, {});
+
+    // // Prepare categories and series
+    // const categories = Object.keys(groupedData);
+    // const series = selectedYAxis.map((yField) => ({
+    //   name:
+    //     dataset.columns.find((col) => col.field === yField)?.headerName ||
+    //     "Default Series",
+    //   data: categories.map((category) => groupedData[category][yField]),
+    // }));
+
+    setState((prevState) => ({
+      ...prevState,
+      series: series,
+      options: {
+        ...prevState.options,
+        chart: {
+          ...prevState.options.chart,
+          type: visRef.chart.code,
+          foreColor: darkMode ? "#ffffff" : "#000000",
         },
-      }));
-    }
-  }, [
-    dataset,
-    state.axisOptions.selectedXAxis,
-    state.axisOptions.selectedYAxis,
-  ]);
-
-  useEffect(() => {
+        tooltip: {
+          ...prevState.options.tooltip,
+          theme: darkMode ? "dark" : "light",
+        },
+        xaxis: {
+          ...prevState.options.xaxis,
+          categories: categories,
+          name: xAxisColumn ? xAxisColumn.headerName : "Default Categories",
+        },
+      },
+    }));
     setVisRef((prevVisRef) => ({
       ...prevVisRef,
       data: {
@@ -235,7 +272,12 @@ const RadarChart = ({
         axisOptions: state.axisOptions,
       },
     }));
-  }, [state.series, state.options, state.axisOptions]);
+  }, [
+    dataset,
+    state.axisOptions.selectedXAxis,
+    state.axisOptions.selectedYAxis,
+    darkMode,
+  ]);
 
   const handleXAxisChange = (event) => {
     setState((prevState) => ({
@@ -258,6 +300,8 @@ const RadarChart = ({
     }));
   };
 
+  console.log(state.options);
+  console.log(state.series);
   return (
     <>
       <Grid container spacing={2}>
@@ -330,28 +374,36 @@ const RadarChart = ({
         )}
         <Grow in={!customize} timeout={300} unmountOnExit>
           <Grid size={{ xs: 12 }} sx={{ minHeight: 600 }}>
-            <Chart
-              ref={chartRef}
-              options={state.options}
-              series={state.series}
-              type="radar"
-              height="100%"
-            />
+            {state.series.length > 0 ? (
+              <Chart
+                ref={chartRef}
+                options={state.options}
+                series={state.series}
+                type="radar"
+                height="100%"
+              />
+            ) : (
+              <Skeleton />
+            )}
           </Grid>
         </Grow>
 
         <Grow in={customize} timeout={300} unmountOnExit>
           <Grid size={{ xs: 12, md: 8 }} sx={{ minHeight: 600 }}>
-            <Chart
-              ref={chartRef}
-              options={state.options}
-              series={state.series}
-              type="radar"
-              height="100%"
-            />
+            {state.series.length > 0 ? (
+              <Chart
+                ref={chartRef}
+                options={state.options}
+                series={state.series}
+                type="radar"
+                height="100%"
+              />
+            ) : (
+              <Skeleton />
+            )}
           </Grid>
         </Grow>
-        <Grow in={customize} timeout={300}>
+        <Grow in={customize} timeout={300} unmountOnExit>
           <Grid size={{ xs: 12, md: 4 }} sx={{ minHeight: 600 }}>
             <Grid
               container

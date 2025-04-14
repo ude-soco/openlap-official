@@ -150,6 +150,7 @@ const StackedBarChart = ({
     },
   });
 
+  // * This effect is used to set the initial state of the chart when previewing
   useEffect(() => {
     if (preview) {
       setState((prevState) => ({
@@ -171,147 +172,155 @@ const StackedBarChart = ({
     }
   }, [preview, darkMode]);
 
-  // Utility function to find suitable column or default
-  const getAvailableColumn = (currentField, columns) => {
-    const column = columns.find((col) => col.field === currentField);
-    if (column) return column.field;
-
-    const firstAvailable = columns.length > 0 ? columns[0].field : "";
-    return firstAvailable;
-  };
-
-  // Utility function to find the next available column
-  const findNextAvailableColumn = (selectedField, availableColumns) => {
-    return (
-      availableColumns.find((col) => col.field === selectedField)?.field ||
-      (availableColumns.length > 0 ? availableColumns[0].field : "")
+  // * Executes only when dataset changes.
+  // * This effect is used to populate the xAxis, yAxis, and groupBy options.
+  // * If new dataset or new column is provided, it will set the xAxis and yAxis options based on the dataset columns.
+  useEffect(() => {
+    const stringColumns = dataset.columns.filter(
+      (col) => col.type === "string"
     );
-  };
+    const numberColumns = dataset.columns.filter(
+      (col) => col.type === "number"
+    );
 
+    const updatedSelectedXAxis = state.axisOptions.selectedXAxis
+      ? stringColumns.find(
+          (col) => col.field === state.axisOptions.selectedXAxis
+        )?.field || (stringColumns.length > 0 ? stringColumns[0].field : "")
+      : stringColumns.length > 0
+      ? stringColumns[0].field
+      : "";
+
+    const updatedSelectedYAxis = state.axisOptions.selectedYAxis
+      ? numberColumns.find(
+          (col) => col.field === state.axisOptions.selectedYAxis
+        )?.field ||
+        (numberColumns.length > 0
+          ? numberColumns[1]?.field
+          : numberColumns[0]?.field || "")
+      : numberColumns.length > 0
+      ? numberColumns[0].field
+      : "";
+
+    const updatedSelectedBarValue = state.axisOptions.selectedBarValue
+      ? stringColumns.find(
+          (col) => col.field === state.axisOptions.selectedBarValue
+        )?.field || (stringColumns.length > 0 ? stringColumns[0].field : "")
+      : stringColumns.length > 0
+      ? stringColumns[1]?.field
+      : stringColumns[0]?.field || "";
+
+    setState((prevState) => ({
+      ...prevState,
+      options: {
+        ...prevState.options,
+        chart: {
+          ...prevState.options.chart,
+          type: visRef.chart.code,
+          foreColor: darkMode ? "#ffffff" : "#000000",
+        },
+        tooltip: {
+          ...prevState.options.tooltip,
+          theme: darkMode ? "dark" : "light",
+        },
+      },
+      axisOptions: {
+        xAxisOptions: stringColumns,
+        barValueOptions: stringColumns,
+        yAxisOptions: numberColumns,
+        selectedXAxis: updatedSelectedXAxis,
+        selectedBarValue: updatedSelectedBarValue,
+        selectedYAxis: updatedSelectedYAxis,
+      },
+    }));
+  }, [dataset.columns.length]);
+
+  // * This effect is used to update the chart when the dataset changes.
+  // * This will also run when the selected X-axis or Y-axis or Stack Label changes.
+  // * It will group the data by unique X-axis values and prepare the series data.
+  // * It will also update the chart options with the new categories and series data.
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns && !preview) {
-      const stringColumns = dataset.columns.filter(
-        (col) => col.type === "string"
-      );
-      const numberColumns = dataset.columns.filter(
-        (col) => col.type === "number"
-      );
+    const { selectedXAxis, selectedBarValue, selectedYAxis } =
+      state.axisOptions;
+    const xAxisColumn = dataset.columns.find(
+      (col) => col.field === selectedXAxis
+    );
+    const yAxisColumn = dataset.columns.find(
+      (col) => col.field === selectedYAxis
+    );
+    const barValueColumn = dataset.columns.find(
+      (col) => col.field === selectedBarValue
+    );
 
-      setState((prevState) => {
-        // Ensure columns are reselected or defaulted if needed
-        const newXAxis = findNextAvailableColumn(
-          prevState.axisOptions.selectedXAxis,
-          stringColumns
-        );
-        const newBarValue = findNextAvailableColumn(
-          prevState.axisOptions.selectedBarValue,
-          stringColumns
-        );
-        const newYAxis = findNextAvailableColumn(
-          prevState.axisOptions.selectedYAxis,
-          numberColumns
-        );
+    if (!xAxisColumn || !yAxisColumn || !barValueColumn) return;
 
-        return {
-          ...prevState,
-          options: {
-            ...prevState.options,
-            chart: {
-              ...prevState.options.chart,
-              type: visRef.chart.code,
-              foreColor: darkMode ? "#ffffff" : "#000000",
+    // Group and sum values by xAxis
+    const aggregatedData = dataset.rows.reduce((acc, row) => {
+      const category = row[selectedXAxis];
+      const value = row[selectedYAxis] || 0;
+
+      if (!acc[category]) {
+        acc[category] = { name: category, data: {} };
+      }
+
+      const barLabel = row[selectedBarValue] || "Unknown";
+      if (!acc[category].data[barLabel]) {
+        acc[category].data[barLabel] = 0;
+      }
+      acc[category].data[barLabel] += value;
+
+      return acc;
+    }, {});
+
+    const categories = Object.keys(aggregatedData);
+    const barLabels = Array.from(
+      new Set(dataset.rows.map((row) => row[selectedBarValue] || "Unknown"))
+    );
+
+    const series = barLabels.map((barLabel) => ({
+      name: barLabel,
+      data: categories.map(
+        (category) => aggregatedData[category].data[barLabel] || 0
+      ),
+    }));
+
+    setState((prevState) => ({
+      ...prevState,
+      series: series,
+      options: {
+        ...prevState.options,
+        xaxis: {
+          ...prevState.options.xaxis,
+          categories: categories,
+          title: {
+            style: {
+              cssClass: "x-y-axis-show-title",
             },
-            tooltip: {
-              ...prevState.options.tooltip,
-              theme: darkMode ? "dark" : "light",
-            },
-          },
-          axisOptions: {
-            xAxisOptions: stringColumns,
-            barValueOptions: stringColumns,
-            yAxisOptions: numberColumns,
-            selectedXAxis: newXAxis,
-            selectedBarValue: newBarValue,
-            selectedYAxis: newYAxis,
-          },
-        };
-      });
-    }
-  }, [dataset, darkMode]);
-
-  useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns && !preview) {
-      const { selectedXAxis, selectedBarValue, selectedYAxis } =
-        state.axisOptions;
-
-      // Group and sum values by xAxis
-      const aggregatedData = dataset.rows.reduce((acc, row) => {
-        const category = row[selectedXAxis];
-        const value = row[selectedYAxis] || 0;
-
-        if (!acc[category]) {
-          acc[category] = { name: category, data: {} };
-        }
-
-        const barLabel = row[selectedBarValue] || "Unknown";
-        if (!acc[category].data[barLabel]) {
-          acc[category].data[barLabel] = 0;
-        }
-        acc[category].data[barLabel] += value;
-
-        return acc;
-      }, {});
-
-      const categories = Object.keys(aggregatedData);
-      const barLabels = Array.from(
-        new Set(dataset.rows.map((row) => row[selectedBarValue] || "Unknown"))
-      );
-
-      const series = barLabels.map((barLabel) => ({
-        name: barLabel,
-        data: categories.map(
-          (category) => aggregatedData[category].data[barLabel] || 0
-        ),
-      }));
-
-      setState((prevState) => ({
-        ...prevState,
-        series: series,
-        options: {
-          ...prevState.options,
-          xaxis: {
-            ...prevState.options.xaxis,
-            categories: categories,
-            title: {
-              style: {
-                cssClass: "x-y-axis-show-title",
-              },
-              text:
-                dataset.columns.find((col) => col.field === selectedXAxis)
-                  ?.headerName || "Group By",
-            },
-          },
-          yaxis: {
-            ...prevState.options.yaxis,
-            title: {
-              style: {
-                cssClass: "x-y-axis-show-title",
-              },
-              text:
-                dataset.columns.find((col) => col.field === selectedYAxis)
-                  ?.headerName || "Counts",
-            },
-          },
-          plotOptions: {
-            ...prevState.options.plotOptions,
-            bar: {
-              ...prevState.options.plotOptions.bar,
-              stacked: true,
-            },
+            text:
+              dataset.columns.find((col) => col.field === selectedXAxis)
+                ?.headerName || "Group By",
           },
         },
-      }));
-    }
+        yaxis: {
+          ...prevState.options.yaxis,
+          title: {
+            style: {
+              cssClass: "x-y-axis-show-title",
+            },
+            text:
+              dataset.columns.find((col) => col.field === selectedYAxis)
+                ?.headerName || "Counts",
+          },
+        },
+        plotOptions: {
+          ...prevState.options.plotOptions,
+          bar: {
+            ...prevState.options.plotOptions.bar,
+            stacked: true,
+          },
+        },
+      },
+    }));
   }, [
     dataset,
     state.axisOptions.selectedXAxis,
@@ -369,13 +378,15 @@ const StackedBarChart = ({
           <>
             <Grid size={{ xs: 4 }}>
               <FormControl fullWidth>
-                <InputLabel id="x-axis-select-label">Group By</InputLabel>
+                <InputLabel id="x-axis-select-label">
+                  X-Axis: Group By
+                </InputLabel>
                 <Select
                   labelId="x-axis-select-label"
                   id="x-axis-select"
                   value={state.axisOptions.selectedXAxis}
                   onChange={handleXAxisChange}
-                  label="Group By"
+                  label="X-Axis: Group By"
                   variant="outlined"
                 >
                   {state.axisOptions.xAxisOptions.map((col) => (
@@ -388,15 +399,13 @@ const StackedBarChart = ({
             </Grid>
             <Grid size={{ xs: 4 }}>
               <FormControl fullWidth>
-                <InputLabel id="bar-value-select-label">
-                  Bar Value Label
-                </InputLabel>
+                <InputLabel id="bar-value-select-label">Stack Label</InputLabel>
                 <Select
                   labelId="bar-value-select-label"
                   id="bar-value-select"
                   value={state.axisOptions.selectedBarValue}
                   onChange={handleBarValueChange}
-                  label="Bar Value Label"
+                  label="Stack Label"
                   variant="outlined"
                 >
                   {state.axisOptions.barValueOptions.map((col) => (
@@ -465,7 +474,7 @@ const StackedBarChart = ({
             />
           </Grid>
         </Grow>
-        <Grow in={customize} timeout={300}>
+        <Grow in={customize} timeout={300} unmountOnExit>
           <Grid size={{ xs: 12, md: 4 }} sx={{ minHeight: 600 }}>
             <Grid
               container
