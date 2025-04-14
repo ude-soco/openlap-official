@@ -18,7 +18,6 @@ import {
   Typography,
 } from "@mui/material";
 import Chart from "react-apexcharts";
-import { PieChartCustomization } from "./pie-chart-customization/pie-chart-customization.jsx";
 import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
@@ -175,6 +174,7 @@ const PieChart = ({
     },
   });
 
+  // * This effect is used to set the initial state of the chart when previewing
   useEffect(() => {
     if (preview) {
       setState((prevState) => ({
@@ -184,6 +184,7 @@ const PieChart = ({
           ...visRef.data.options,
           chart: {
             ...visRef.data.options.chart,
+            type: visRef.chart.code,
             foreColor: darkMode ? "#ffffff" : "#000000",
           },
           tooltip: {
@@ -196,92 +197,97 @@ const PieChart = ({
     }
   }, [preview, darkMode]);
 
+  // * Executes only when dataset changes.
+  // * This effect is used to populate the xAxis and yAxis options.
+  // * If new dataset or new column is provided, it will set the xAxis and yAxis options based on the dataset columns.
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns && !preview) {
-      const stringColumns = dataset.columns.filter(
-        (col) => col.type === "string"
-      );
-      const numberColumns = dataset.columns.filter(
-        (col) => col.type === "number"
-      );
+    const stringColumns = dataset.columns.filter(
+      (col) => col.type === "string"
+    );
+    const numberColumns = dataset.columns.filter(
+      (col) => col.type === "number"
+    );
 
-      setState((prevState) => ({
-        ...prevState,
-        axisOptions: {
-          xAxisOptions: stringColumns,
-          yAxisOptions: numberColumns,
-          selectedXAxis:
-            prevState.axisOptions.selectedXAxis &&
-            stringColumns.some(
-              (col) => col.field === prevState.axisOptions.selectedXAxis
-            )
-              ? prevState.axisOptions.selectedXAxis
-              : stringColumns.length > 0
-              ? stringColumns[0].field
-              : "",
-          selectedYAxis:
-            prevState.axisOptions.selectedYAxis &&
-            numberColumns.some(
-              (col) => col.field === prevState.axisOptions.selectedYAxis
-            )
-              ? prevState.axisOptions.selectedYAxis
-              : numberColumns.length > 0
-              ? numberColumns[0].field
-              : "",
+    const updatedSelectedXAxis = state.axisOptions.selectedXAxis
+      ? stringColumns.find(
+          (col) => col.field === state.axisOptions.selectedXAxis
+        )?.field || (stringColumns.length > 0 ? stringColumns[0].field : "")
+      : stringColumns.length > 0
+      ? stringColumns[0].field
+      : "";
+
+    const updatedSelectedYAxis = state.axisOptions.selectedYAxis
+      ? numberColumns.find(
+          (col) => col.field === state.axisOptions.selectedYAxis
+        )?.field || (numberColumns.length > 0 ? numberColumns[0].field : "")
+      : numberColumns.length > 0
+      ? numberColumns[0].field
+      : "";
+
+    setState((prevState) => ({
+      ...prevState,
+      options: {
+        ...prevState.options,
+        chart: {
+          ...prevState.options.chart,
+          type: visRef.chart.code,
+          foreColor: darkMode ? "#ffffff" : "#000000",
         },
-      }));
-    }
-  }, [dataset, darkMode, visRef.chart.code]);
+        tooltip: {
+          ...prevState.options.tooltip,
+          theme: darkMode ? "dark" : "light",
+        },
+      },
+      axisOptions: {
+        xAxisOptions: stringColumns,
+        yAxisOptions: numberColumns,
+        selectedXAxis: updatedSelectedXAxis,
+        selectedYAxis: updatedSelectedYAxis,
+      },
+    }));
+  }, [dataset.columns.length, visRef.chart.code]);
 
+  // * This effect is used to update the chart when the dataset changes.
+  // * This will also run when the selected X-axis or Y-axis changes.
+  // * It will group the data by unique X-axis values and prepare the series data.
+  // * It will also update the chart options with the new categories and series data.
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns && !preview) {
-      const { selectedXAxis, selectedYAxis } = state.axisOptions;
+    const { selectedXAxis, selectedYAxis } = state.axisOptions;
+    const xAxisColumn = dataset.columns.find(
+      (col) => col.field === selectedXAxis
+    );
+    const yAxisColumn = dataset.columns.find(
+      (col) => col.field === selectedYAxis
+    );
 
-      if (selectedXAxis && selectedYAxis) {
-        const groupedData = {};
+    if (!xAxisColumn || !yAxisColumn) return;
 
-        dataset.rows.forEach((row) => {
-          const category = row[selectedXAxis];
-          const value = row[selectedYAxis];
+    const groupedData = dataset.rows.reduce((acc, row) => {
+      const xValue = row[selectedXAxis] || "Unknown";
+      acc[xValue] = (acc[xValue] || 0) + (row[selectedYAxis] || 0);
+      return acc;
+    }, {});
 
-          if (groupedData[category]) {
-            groupedData[category] += value;
-          } else {
-            groupedData[category] = value;
-          }
-        });
+    const categories = Object.keys(groupedData);
+    const seriesData = Object.values(groupedData);
 
-        const categories = Object.keys(groupedData);
-        const seriesData = Object.values(groupedData);
-
-        setState((prevState) => ({
-          ...prevState,
-          series: seriesData,
-          options: {
-            ...prevState.options,
-            labels: categories,
-            chart: {
-              ...prevState.options.chart,
-              type: visRef.chart.code,
-              foreColor: darkMode ? "#ffffff" : "#000000",
-            },
-            tooltip: {
-              ...prevState.options.tooltip,
-              theme: darkMode ? "dark" : "light",
-            },
-          },
-        }));
-      }
-    }
-  }, [
-    dataset,
-    state.axisOptions.selectedXAxis,
-    state.axisOptions.selectedYAxis,
-    darkMode,
-    visRef.chart.code,
-  ]);
-
-  useEffect(() => {
+    setState((prevState) => ({
+      ...prevState,
+      series: seriesData,
+      options: {
+        ...prevState.options,
+        labels: categories,
+        chart: {
+          ...prevState.options.chart,
+          type: visRef.chart.code,
+          foreColor: darkMode ? "#ffffff" : "#000000",
+        },
+        tooltip: {
+          ...prevState.options.tooltip,
+          theme: darkMode ? "dark" : "light",
+        },
+      },
+    }));
     setVisRef((prevVisRef) => ({
       ...prevVisRef,
       data: {
@@ -291,7 +297,13 @@ const PieChart = ({
         axisOptions: state.axisOptions,
       },
     }));
-  }, [state.series, state.options, state.axisOptions]);
+  }, [
+    dataset,
+    state.axisOptions.selectedXAxis,
+    state.axisOptions.selectedYAxis,
+    darkMode,
+    visRef.chart.code,
+  ]);
 
   const handleXAxisChange = (event) => {
     setState((prevState) => ({
@@ -372,7 +384,7 @@ const PieChart = ({
           </>
         )}
 
-        <Grow in={!customize} timeout={300} unmountOnExit>
+        <Grow in={!customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>
           <Grid size={{ xs: 12 }} sx={{ minHeight: 600 }}>
             <Chart
               ref={chartRef}
@@ -384,7 +396,7 @@ const PieChart = ({
           </Grid>
         </Grow>
 
-        <Grow in={customize} timeout={300} unmountOnExit>
+        <Grow in={customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>
           <Grid size={{ xs: 12, md: 8 }} sx={{ minHeight: 600 }}>
             <Chart
               ref={chartRef}
@@ -395,7 +407,7 @@ const PieChart = ({
             />
           </Grid>
         </Grow>
-        <Grow in={customize} timeout={300}>
+        <Grow in={customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>
           <Grid size={{ xs: 12, md: 4 }} sx={{ minHeight: 600 }}>
             <Grid
               container

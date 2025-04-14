@@ -14,6 +14,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Skeleton,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -21,7 +22,6 @@ import Chart from "react-apexcharts";
 import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
-import TreeMapCustomizations from "./tree-map-chart-customizations/tree-map-customizations.jsx";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 
 export let StateContext = createContext();
@@ -172,6 +172,7 @@ const TreeMap = ({
     },
   });
 
+  // * This effect is used to set the initial state of the chart when previewing
   useEffect(() => {
     if (preview) {
       setState((prevState) => ({
@@ -194,95 +195,111 @@ const TreeMap = ({
   }, [preview, darkMode]);
 
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns && !preview) {
-      const stringColumns = dataset.columns.filter(
-        (col) => col.type === "string"
-      );
-      const numberColumns = dataset.columns.filter(
-        (col) => col.type === "number"
-      );
+    const stringColumns = dataset.columns.filter(
+      (col) => col.type === "string"
+    );
+    const numberColumns = dataset.columns.filter(
+      (col) => col.type === "number"
+    );
 
-      setState((prevState) => ({
-        ...prevState,
-        axisOptions: {
-          categoryOptions: stringColumns,
-          xValueOptions: stringColumns,
-          valueOptions: numberColumns,
-          selectedCategory: stringColumns[0]?.field || "",
-          selectedXValue: stringColumns[1]?.field || "",
-          selectedValue: numberColumns[0]?.field || "",
-        },
-      }));
-    }
-  }, [dataset, darkMode]);
+    const updatedSelectedXAxis = state.axisOptions.selectedXAxis
+      ? stringColumns.find(
+          (col) => col.field === state.axisOptions.selectedXAxis
+        )?.field || (stringColumns.length > 0 ? stringColumns[0].field : "")
+      : stringColumns.length > 0
+      ? stringColumns[0].field
+      : "";
 
+    const updatedSelectedValue = state.axisOptions.selectedValue
+      ? numberColumns.find(
+          (col) => col.field === state.axisOptions.selectedValue
+        )?.field ||
+        (numberColumns.length > 0
+          ? numberColumns[1]?.field
+          : numberColumns[0]?.field || "")
+      : numberColumns.length > 0
+      ? numberColumns[0].field
+      : "";
+
+    const updatedSelectedCategory = state.axisOptions.selectedCategory
+      ? stringColumns.find(
+          (col) => col.field === state.axisOptions.selectedCategory
+        )?.field || (stringColumns.length > 0 ? stringColumns[0].field : "")
+      : stringColumns.length > 0
+      ? stringColumns[1]?.field
+      : stringColumns[0]?.field || "";
+
+    setState((prevState) => ({
+      ...prevState,
+      axisOptions: {
+        categoryOptions: stringColumns,
+        xValueOptions: stringColumns,
+        valueOptions: numberColumns,
+        selectedCategory: updatedSelectedCategory,
+        selectedXValue: updatedSelectedXAxis,
+        selectedValue: updatedSelectedValue,
+      },
+    }));
+  }, [dataset.columns.length]);
+
+  console.log(state.series);
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns && !preview) {
-      const { selectedCategory, selectedXValue, selectedValue } =
-        state.axisOptions;
+    const { selectedCategory, selectedXValue, selectedValue } =
+      state.axisOptions;
 
-      if (!selectedCategory || !selectedXValue || !selectedValue) return;
+    const categoryColumn = dataset.columns.find(
+      (col) => col.field === selectedCategory
+    );
+    const valueColumn = dataset.columns.find(
+      (col) => col.field === selectedValue
+    );
+    const xAxisColumn = dataset.columns.find(
+      (col) => col.field === selectedXValue
+    );
 
-      // Aggregate data for TreeMap
-      const aggregateData = dataset.rows.reduce((acc, row) => {
-        const category = row[selectedCategory];
-        const xValue = row[selectedXValue];
-        const value = row[selectedValue] || 0;
+    if (!categoryColumn || !valueColumn || !xAxisColumn) return;
 
-        if (!acc[category]) {
-          acc[category] = [];
-        }
+    // * Aggregating data for TreeMap
+    const aggregateData = dataset.rows.reduce((acc, row) => {
+      const category = row[selectedCategory];
+      const xValue = row[selectedXValue];
+      const value = row[selectedValue] || 0;
 
-        // Find if xValue already exists
-        const existing = acc[category].find((item) => item.x === xValue);
-        if (existing) {
-          existing.y += value; // Sum the values
-        } else {
-          acc[category].push({
-            x: xValue,
-            y: value,
-          });
-        }
+      if (!acc[category]) {
+        acc[category] = [];
+      }
 
-        return acc;
-      }, {});
+      // * Finding if xValue already exists
+      const existing = acc[category].find((item) => item.x === xValue);
+      if (existing) {
+        existing.y += value; // Sum the values
+      } else {
+        acc[category].push({
+          x: xValue,
+          y: value,
+        });
+      }
 
-      // Convert aggregate data to the format required by TreeMap
-      const series = Object.entries(aggregateData).map(([category, data]) => ({
-        name: category,
-        data: data,
-      }));
+      return acc;
+    }, {});
 
-      setState((prevState) => ({
-        ...prevState,
-        series: series,
-        options: {
-          ...prevState.options,
-          title: {
-            align: "left",
-            text: `TreeMap of ${
-              dataset.columns.find((col) => col.field === selectedCategory)
-                ?.headerName
-            } vs ${
-              dataset.columns.find((col) => col.field === selectedXValue)
-                ?.headerName
-            } vs ${
-              dataset.columns.find((col) => col.field === selectedValue)
-                ?.headerName
-            }`,
-          },
+    // * Converting aggregate data to the format required by TreeMap
+    const series = Object.entries(aggregateData).map(([category, data]) => ({
+      name: category,
+      data: data,
+    }));
+
+    setState((prevState) => ({
+      ...prevState,
+      series: series,
+      options: {
+        ...prevState.options,
+        title: {
+          align: "left",
+          text: `TreeMap of ${categoryColumn?.headerName} vs ${xAxisColumn?.headerName} vs ${valueColumn?.headerName}`,
         },
-      }));
-    }
-  }, [
-    dataset,
-    state.axisOptions.selectedCategory,
-    state.axisOptions.selectedXValue,
-    state.axisOptions.selectedValue,
-    darkMode,
-  ]);
-
-  useEffect(() => {
+      },
+    }));
     setVisRef((prevVisRef) => ({
       ...prevVisRef,
       data: {
@@ -292,7 +309,13 @@ const TreeMap = ({
         axisOptions: state.axisOptions,
       },
     }));
-  }, [state.series, state.options, state.axisOptions]);
+  }, [
+    dataset,
+    state.axisOptions.selectedCategory,
+    state.axisOptions.selectedXValue,
+    state.axisOptions.selectedValue,
+    darkMode,
+  ]);
 
   const handleCategoryChange = (event) => {
     setState((prevState) => ({
@@ -402,30 +425,38 @@ const TreeMap = ({
           </>
         )}
 
-        <Grow in={!customize} timeout={300} unmountOnExit>
+        <Grow in={!customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>
           <Grid size={{ xs: 12 }} sx={{ minHeight: 600 }}>
-            <Chart
-              ref={chartRef}
-              options={state.options}
-              series={state.series}
-              type="treemap"
-              height="100%"
-            />
+            {state.series.length > 0 ? (
+              <Chart
+                ref={chartRef}
+                options={state.options}
+                series={state.series}
+                type="treemap"
+                height="100%"
+              />
+            ) : (
+              <Skeleton />
+            )}
           </Grid>
         </Grow>
 
-        <Grow in={customize} timeout={300} unmountOnExit>
+        <Grow in={customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>
           <Grid size={{ xs: 12, md: 8 }} sx={{ minHeight: 600 }}>
-            <Chart
-              ref={chartRef}
-              options={state.options}
-              series={state.series}
-              type="treemap"
-              height="100%"
-            />
+            {state.series.length > 0 ? (
+              <Chart
+                ref={chartRef}
+                options={state.options}
+                series={state.series}
+                type="treemap"
+                height="100%"
+              />
+            ) : (
+              <Skeleton />
+            )}
           </Grid>
         </Grow>
-        <Grow in={customize} timeout={300}>
+        <Grow in={customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>
           <Grid size={{ xs: 12, md: 4 }} sx={{ minHeight: 600 }}>
             <Grid
               container
