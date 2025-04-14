@@ -22,6 +22,7 @@
         <java.version>11</java.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
+        <finalName>${project.artifactId}-${project.version}</finalName>
     </properties>
 
     <repositories>
@@ -288,6 +289,7 @@
     </dependencies>
 
     <build>
+        <finalName>${finalName}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
