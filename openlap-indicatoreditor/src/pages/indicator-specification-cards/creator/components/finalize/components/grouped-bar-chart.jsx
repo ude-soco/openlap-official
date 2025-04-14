@@ -413,7 +413,7 @@ const GroupedBarChart = ({
           </>
         )}
 
-        <Grow in={!customize} timeout={300} unmountOnExit>
+        <Grow in={!customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>
           <Grid size={{ xs: 12 }} sx={{ minHeight: 600 }}>
             <Chart
               ref={chartRef}
@@ -425,7 +425,7 @@ const GroupedBarChart = ({
           </Grid>
         </Grow>
 
-        <Grow in={customize} timeout={300} unmountOnExit>
+        <Grow in={customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>
           <Grid size={{ xs: 12, md: 8 }} sx={{ minHeight: 600 }}>
             <Chart
               ref={chartRef}
@@ -436,7 +436,7 @@ const GroupedBarChart = ({
             />
           </Grid>
         </Grow>
-        <Grow in={customize} timeout={300} unmountOnExit>
+        <Grow in={customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>
           <Grid size={{ xs: 12, md: 4 }} sx={{ minHeight: 600 }}>
             <Grid
               container
