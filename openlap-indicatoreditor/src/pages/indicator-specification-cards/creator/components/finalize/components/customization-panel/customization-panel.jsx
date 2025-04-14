@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { Paper, Tab, Typography } from "@mui/material";
+import { Grow, Paper, Tab } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import ElementsTab from "./components/elements-tab/elements-tab.jsx";
 import StylesTab from "./components/styles-tab/styles-tab.jsx";
 import FiltersTab from "./components/filters-tab.jsx";
-import Grid from "@mui/material/Grid2";
 
-const CustomizationPanel = ({ state, setState, chartRef }) => {
+const CustomizationPanel = ({ state, setState }) => {
   const tabData =
     (state.configuration.isSortingOrderChangeable ||
       state.configuration.isCategoriesFilteringAvailable) &&
@@ -18,11 +18,12 @@ const CustomizationPanel = ({ state, setState, chartRef }) => {
   const handleChangeTab = (event, newValue) => {
     setTabValue(() => tabData.find((item) => item === newValue));
   };
+
   return (
     <>
       <TabContext value={tabValue}>
         <Grid container component={Paper} variant="outlined">
-          <Grid size={12}>
+          <Grid size={12} sx={{ borderBottom: 1, borderColor: "divider" }}>
             <TabList
               variant="fullWidth"
               textColor="primary"
@@ -34,19 +35,39 @@ const CustomizationPanel = ({ state, setState, chartRef }) => {
               ))}
             </TabList>
           </Grid>
-          <Grid size={12} sx={{ height: 480, overflowY: "scroll" }}>
+          <Grid size={12} sx={{ height: 500, overflowY: "scroll" }}>
             <TabPanel value={tabValue}>
-              {tabValue === tabData[0] && (
-                <ElementsTab state={state} setState={setState} />
-              )}
-              {tabValue === tabData[1] && (
-                <StylesTab state={state} setState={setState} />
-              )}
-              {tabValue === tabData[2] &&
-                (state.configuration.isSortingOrderChangeable ||
-                  state.configuration.isCategoriesFilteringAvailable) && (
+              <Grow
+                in={tabValue === tabData[0]}
+                timeout={{ enter: 500, exit: 0 }}
+                unmountOnExit
+              >
+                <div>
+                  <ElementsTab state={state} setState={setState} />
+                </div>
+              </Grow>
+              <Grow
+                in={tabValue === tabData[1]}
+                timeout={{ enter: 500, exit: 0 }}
+                unmountOnExit
+              >
+                <div>
+                  <StylesTab state={state} setState={setState} />
+                </div>
+              </Grow>
+              <Grow
+                in={
+                  tabValue === tabData[2] &&
+                  (state.configuration.isSortingOrderChangeable ||
+                    state.configuration.isCategoriesFilteringAvailable)
+                }
+                timeout={{ enter: 500, exit: 0 }}
+                unmountOnExit
+              >
+                <div>
                   <FiltersTab state={state} setState={setState} />
-                )}
+                </div>
+              </Grow>
             </TabPanel>
           </Grid>
         </Grid>
