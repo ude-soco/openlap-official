@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openlap-official
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/redirect-entry-point: https
+spec:
+  rules:
+  - host: $(OPENLAP_OFFICIAL_FQDN)
+    http:
+      paths:
+      - pathType: Prefix
+        path: /api
+        backend:
+          service:
+            name: openlap-analyticsframework-web
+            port:
+              name: http
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: openlap-indicatoreditor-web
+            port:
+              name: http
+  tls:
+  - hosts:
+    - $(OPENLAP_OFFICIAL_FQDN)
+    secretName: openlap-official-tls-crt

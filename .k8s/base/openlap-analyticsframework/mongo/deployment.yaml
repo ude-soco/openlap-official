@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    spec:
+      containers:
+      - name: mongo
+        image: mongo
+        args:
+        - --bind_ip
+        - "0.0.0.0"
+        - --wiredTigerCacheSizeGB
+        - "0.25"
+        - --quiet
+        ports:
+        - containerPort: 27017
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /data/db
+          name: mongo
+        livenessProbe:
+          exec:
+            command:
+            - mongo
+            - --disableImplicitSessions
+            - --eval
+            - "db.adminCommand('ping')"
+      volumes:
+      - name: mongo
+        persistentVolumeClaim:
+          claimName: mongo

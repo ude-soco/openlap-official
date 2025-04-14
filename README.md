@@ -11,7 +11,7 @@ The Open Learning Analytics Platform (OpenLAP) lays the foundation for a Do-it-y
 #### Live instances
 
 - Production: [TBA]() (latest [release (TBA)]())
-- Preview: [TBA]() ([branch `main`)](https://github.com/ude-soco/openlap-official/tree/main))
+- Preview: [edge.openlap-official.soco.ude.systems](https://edge.openlap-official.soco.ude.systems/) ([branch `main`)](https://github.com/ude-soco/openlap-official/tree/main)) ![preview status](https://argocd.soco.ude.systems/api/badge?name=openlap-official-edge&revision=false&showAppName=false)
 
 #### Build and run
 
