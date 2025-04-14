@@ -21,7 +21,6 @@ import {
 import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
-import ScatterChartCustomizations from "./scatter-chart-customizations/scatter-chart-customizations.jsx";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 
 export let StateContext = createContext();

@@ -19,7 +19,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { LinechartCustomization } from "./line-chart-customization/line-chart-customization.jsx";
 import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
