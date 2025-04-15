@@ -4,8 +4,10 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
+  Button,
   Divider,
   Grid,
+  Grow,
   Paper,
   Tooltip,
   Typography,
@@ -22,6 +24,7 @@ const VisualizationFilter = () => {
     openFilters: false,
     visualizationList: [],
     recommendation: false,
+    showDescription: false,
   });
 
   const handleSelectVisualization = (chart) => {
@@ -111,6 +114,13 @@ const VisualizationFilter = () => {
     const hasRequiredNumbers = availableNumbers >= requiredNumerical;
 
     return hasRequiredStrings && hasRequiredNumbers;
+  };
+
+  const handleToggleShowDescription = () => {
+    setState((prevState) => ({
+      ...prevState,
+      showDescription: !prevState.showDescription,
+    }));
   };
 
   return (
@@ -245,14 +255,38 @@ const VisualizationFilter = () => {
               </Grid>
             </Grid>
             <Grid item xs={12}>
-              <Divider />
+              {/* // TODO: Complete the show and hide description button for the Visualization module */}
+              {Boolean(visRef.chart.type) && (
+                <>
+                  {!state.showDescription && (
+                    <Grid container justifyContent="flex-end">
+                      <Button
+                        variant="contained"
+                        onClick={handleToggleShowDescription}
+                      >
+                        Show description
+                      </Button>
+                    </Grid>
+                  )}
+                  <Grow
+                    in={state.showDescription}
+                    timeout={{ enter: 500, exit: 0 }}
+                    unmountOnExit
+                  >
+                    <div>
+                      <Grid item xs={12}>
+                        <Divider />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <VisualizationDescription
+                          toggleDescription={handleToggleShowDescription}
+                        />
+                      </Grid>
+                    </div>
+                  </Grow>
+                </>
+              )}
             </Grid>
-
-            {visRef.chart.type !== "" && (
-              <Grid item xs={12}>
-                <VisualizationDescription />
-              </Grid>
-            )}
           </Grid>
         </AccordionDetails>
       </Accordion>

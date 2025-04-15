@@ -6,12 +6,9 @@ import {
   AccordionSummary,
   Button,
   Chip,
-  FormControlLabel,
-  FormGroup,
   Grid,
   Grow,
   IconButton,
-  Switch,
   TextField,
   Tooltip,
   Typography,
@@ -22,8 +19,8 @@ import DataList from "./components/data-list.jsx";
 import { v4 as uuidv4 } from "uuid";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
 
 const SpecifyRequirements = () => {
   const {
@@ -145,14 +142,22 @@ const SpecifyRequirements = () => {
                         Specify your goal, question, and indicator
                       </Typography>
                     </Grid>
-                    <Grid item>
-                      {!lockedStep.requirements.openPanel && (
-                        <>
+                    {!lockedStep.requirements.openPanel && (
+                      <>
+                        <Grid item>
+                          <Tooltip title="Edit requirements">
+                            <IconButton onClick={handleTogglePanel}>
+                              <EditIcon color="primary" />
+                            </IconButton>
+                          </Tooltip>
+                        </Grid>
+
+                        <Grid item>
                           <Tooltip
                             title={
                               !state.showSelections
-                                ? "Preview selections"
-                                : "Hide selections"
+                                ? "Show summary"
+                                : "Hide summary"
                             }
                           >
                             <IconButton onClick={handleToggleShowSelection}>
@@ -163,28 +168,20 @@ const SpecifyRequirements = () => {
                               )}
                             </IconButton>
                           </Tooltip>
-                        </>
-                      )}
-                    </Grid>
+                        </Grid>
+                      </>
+                    )}
                   </Grid>
                 </Grid>
-                <Grid item>
-                  <Tooltip
-                    title={
-                      lockedStep.requirements.openPanel
-                        ? "Close panel"
-                        : "Open goal, question, and indicator panel"
-                    }
-                  >
-                    <IconButton onClick={handleTogglePanel}>
-                      {lockedStep.requirements.openPanel ? (
-                        <KeyboardArrowUpIcon color="primary" />
-                      ) : (
-                        <KeyboardArrowDownIcon color="primary" />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                </Grid>
+                {lockedStep.requirements.openPanel && (
+                  <Grid item>
+                    <Tooltip title="Close panel">
+                      <IconButton onClick={handleTogglePanel}>
+                        <CloseIcon color="primary" />
+                      </IconButton>
+                    </Tooltip>
+                  </Grid>
+                )}
               </Grid>
             </Grid>
 

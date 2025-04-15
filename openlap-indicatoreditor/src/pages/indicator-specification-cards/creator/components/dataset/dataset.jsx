@@ -7,12 +7,9 @@ import {
   AccordionSummary,
   Button,
   Chip,
-  FormControlLabel,
-  FormGroup,
   Grid,
   Grow,
   IconButton,
-  Switch,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -21,8 +18,8 @@ import DataTableManager from "./data-table-manager/data-table-manager.jsx";
 import DataTable from "./components/data-table.jsx";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
 
 const Dataset = () => {
   const { dataset, lockedStep, setLockedStep } = useContext(ISCContext);
@@ -101,14 +98,22 @@ const Dataset = () => {
                     <Grid item>
                       <Typography>Dataset</Typography>
                     </Grid>
-                    <Grid item>
-                      {!lockedStep.dataset.openPanel && (
-                        <>
+                    {!lockedStep.dataset.openPanel && (
+                      <>
+                        <Grid item>
+                          <Tooltip title="Edit dataset">
+                            <IconButton onClick={handleTogglePanel}>
+                              <EditIcon color="primary" />
+                            </IconButton>
+                          </Tooltip>
+                        </Grid>
+
+                        <Grid item>
                           <Tooltip
                             title={
                               !state.showSelections
-                                ? "Preview dataset"
-                                : "Hide dataset"
+                                ? "Show summary"
+                                : "Hide summary"
                             }
                           >
                             <IconButton onClick={handleToggleShowSelection}>
@@ -119,28 +124,20 @@ const Dataset = () => {
                               )}
                             </IconButton>
                           </Tooltip>
-                        </>
-                      )}
-                    </Grid>
+                        </Grid>
+                      </>
+                    )}
                   </Grid>
                 </Grid>
-                <Grid item>
-                  <Tooltip
-                    title={
-                      lockedStep.dataset.openPanel
-                        ? "Close panel"
-                        : "Open dataset panel"
-                    }
-                  >
-                    <IconButton onClick={handleTogglePanel}>
-                      {lockedStep.dataset.openPanel ? (
-                        <KeyboardArrowUpIcon color="primary" />
-                      ) : (
-                        <KeyboardArrowDownIcon color="primary" />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                </Grid>
+                {lockedStep.dataset.openPanel && (
+                  <Grid item>
+                    <Tooltip title="Close panel">
+                      <IconButton onClick={handleTogglePanel}>
+                        <CloseIcon color="primary" />
+                      </IconButton>
+                    </Tooltip>
+                  </Grid>
+                )}
               </Grid>
             </Grid>
             <Grow

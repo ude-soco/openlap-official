@@ -18,8 +18,8 @@ import ChartTypeFilter from "./components/chart-type-filter.jsx";
 import VisualizationFilter from "./components/visualization-filter.jsx";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
 
 const Visualization = () => {
   const {
@@ -108,14 +108,22 @@ const Visualization = () => {
                     <Grid item>
                       <Typography>Visualization</Typography>
                     </Grid>
-                    <Grid item>
-                      {!lockedStep.visualization.openPanel && (
-                        <>
+                    {!lockedStep.visualization.openPanel && (
+                      <>
+                        <Grid item>
+                          <Tooltip title="Edit visualization selection">
+                            <IconButton onClick={handleTogglePanel}>
+                              <EditIcon color="primary" />
+                            </IconButton>
+                          </Tooltip>
+                        </Grid>
+
+                        <Grid item>
                           <Tooltip
                             title={
                               !state.showSelections
-                                ? "Preview selections"
-                                : "Hide selections"
+                                ? "Show summary"
+                                : "Hide summary"
                             }
                           >
                             <IconButton onClick={handleToggleShowSelection}>
@@ -126,28 +134,20 @@ const Visualization = () => {
                               )}
                             </IconButton>
                           </Tooltip>
-                        </>
-                      )}
-                    </Grid>
+                        </Grid>
+                      </>
+                    )}
                   </Grid>
                 </Grid>
-                <Grid item>
-                  <Tooltip
-                    title={
-                      lockedStep.visualization.openPanel
-                        ? "Close panel"
-                        : "Open visualization panel"
-                    }
-                  >
-                    <IconButton onClick={handleTogglePanel}>
-                      {lockedStep.visualization.openPanel ? (
-                        <KeyboardArrowUpIcon color="primary" />
-                      ) : (
-                        <KeyboardArrowDownIcon color="primary" />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                </Grid>
+                {lockedStep.visualization.openPanel && (
+                  <Grid item>
+                    <Tooltip title="Close panel">
+                      <IconButton onClick={handleTogglePanel}>
+                        <CloseIcon color="primary" />
+                      </IconButton>
+                    </Tooltip>
+                  </Grid>
+                )}
               </Grid>
             </Grid>
             <Grow

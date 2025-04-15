@@ -16,8 +16,8 @@ import IconButton from "@mui/material/IconButton";
 import LockIcon from "@mui/icons-material/Lock";
 import VisSelection from "../visualization/components/vis-selection.jsx";
 import NameDialog from "./components/name-dialog.jsx";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
 
 const Finalize = () => {
   const { visRef, setVisRef, dataset, lockedStep, setLockedStep } =
@@ -89,25 +89,26 @@ const Finalize = () => {
                     <Grid item>
                       <Typography>Preview & Finalize</Typography>
                     </Grid>
+                    {!lockedStep.finalize.openPanel && (
+                      <Grid item>
+                        <Tooltip title="Edit and customize visualization">
+                          <IconButton onClick={handleTogglePanel}>
+                            <EditIcon color="primary" />
+                          </IconButton>
+                        </Tooltip>
+                      </Grid>
+                    )}
                   </Grid>
                 </Grid>
-                <Grid item>
-                  <Tooltip
-                    title={
-                      lockedStep.finalize.openPanel
-                        ? "Close panel"
-                        : "Open preview & finalize panel"
-                    }
-                  >
-                    <IconButton onClick={handleTogglePanel}>
-                      {lockedStep.finalize.openPanel ? (
-                        <KeyboardArrowUpIcon color="primary" />
-                      ) : (
-                        <KeyboardArrowDownIcon color="primary" />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                </Grid>
+                {lockedStep.finalize.openPanel && (
+                  <Grid item>
+                    <Tooltip title="Close panel">
+                      <IconButton onClick={handleTogglePanel}>
+                        <CloseIcon color="primary" />
+                      </IconButton>
+                    </Tooltip>
+                  </Grid>
+                )}
               </Grid>
             </Grid>
           </Grid>

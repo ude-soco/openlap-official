@@ -3,15 +3,11 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Button,
   Chip,
-  FormControlLabel,
-  FormGroup,
   Grid,
   Grow,
   IconButton,
   Paper,
-  Switch,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -20,8 +16,8 @@ import { blue, orange } from "@mui/material/colors";
 import LockIcon from "@mui/icons-material/Lock";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
 
 const ChoosePath = () => {
   const { requirements, setRequirements, lockedStep, setLockedStep } =
@@ -165,14 +161,22 @@ const ChoosePath = () => {
                     <Grid item>
                       <Typography>How would you like to start?</Typography>
                     </Grid>
-                    <Grid item>
-                      {!lockedStep.path.openPanel && (
-                        <>
+                    {!lockedStep.path.openPanel && (
+                      <>
+                        <Grid item>
+                          <Tooltip title="Edit path">
+                            <IconButton onClick={handleTogglePanel}>
+                              <EditIcon color="primary" />
+                            </IconButton>
+                          </Tooltip>
+                        </Grid>
+
+                        <Grid item>
                           <Tooltip
                             title={
                               !state.showSelections
-                                ? "Preview selection"
-                                : "Hide selection"
+                                ? "Show summary"
+                                : "Hide summary"
                             }
                           >
                             <IconButton onClick={handleToggleShowSelection}>
@@ -183,28 +187,20 @@ const ChoosePath = () => {
                               )}
                             </IconButton>
                           </Tooltip>
-                        </>
-                      )}
-                    </Grid>
+                        </Grid>
+                      </>
+                    )}
                   </Grid>
                 </Grid>
-                <Grid item>
-                  <Tooltip
-                    title={
-                      lockedStep.path.openPanel
-                        ? "Close panel"
-                        : "Open path panel"
-                    }
-                  >
-                    <IconButton onClick={handleTogglePanel}>
-                      {lockedStep.path.openPanel ? (
-                        <KeyboardArrowUpIcon color="primary" />
-                      ) : (
-                        <KeyboardArrowDownIcon color="primary" />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                </Grid>
+                {lockedStep.path.openPanel && (
+                  <Grid item>
+                    <Tooltip title="Close panel">
+                      <IconButton onClick={handleTogglePanel}>
+                        <CloseIcon color="primary" />
+                      </IconButton>
+                    </Tooltip>
+                  </Grid>
+                )}
               </Grid>
             </Grid>
             <Grow
