@@ -6,14 +6,16 @@ import {
   AccordionSummary,
   Button,
   Chip,
-  FormControlLabel,
-  FormGroup,
   Grid,
-  Switch,
+  IconButton,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
-import IconButton from "@mui/material/IconButton";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
 import AnalyticsTechnique from "./components/analytics-technique.jsx";
 import InputsBasicIndicator from "./components/inputs-basic-indicator.jsx";
 import Params from "./components/params.jsx";
@@ -135,28 +137,48 @@ const Analysis = ({
                     <Grid item>
                       <Typography>Analysis</Typography>
                     </Grid>
+                    {!lockedStep.analysis.locked &&
+                      !lockedStep.analysis.openPanel && (
+                        <>
+                          <Grid item>
+                            <Tooltip title="Edit analysis selection">
+                              <IconButton onClick={handleTogglePanel}>
+                                <EditIcon color="primary" />
+                              </IconButton>
+                            </Tooltip>
+                          </Grid>
+
+                          <Grid item>
+                            <Tooltip
+                              title={
+                                !state.showSelections
+                                  ? "Show summary"
+                                  : "Hide summary"
+                              }
+                            >
+                              <IconButton onClick={handleToggleShowSelection}>
+                                {!state.showSelections ? (
+                                  <VisibilityIcon color="primary" />
+                                ) : (
+                                  <VisibilityOffIcon color="primary" />
+                                )}
+                              </IconButton>
+                            </Tooltip>
+                          </Grid>
+                        </>
+                      )}
                   </Grid>
                 </Grid>
-                {!lockedStep.analysis.locked && (
-                  <Grid item>
-                    <Grid container>
-                      {!lockedStep.analysis.openPanel && (
-                        <FormGroup>
-                          <FormControlLabel
-                            control={<Switch checked={state.showSelections} />}
-                            onChange={handleToggleShowSelection}
-                            label="Show selections"
-                          />
-                        </FormGroup>
-                      )}
-                      <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
-                        {lockedStep.analysis.openPanel
-                          ? "Close section"
-                          : "Change selections"}
-                      </Button>
+                {!lockedStep.analysis.locked &&
+                  lockedStep.analysis.openPanel && (
+                    <Grid item>
+                      <Tooltip title="Close panel">
+                        <IconButton onClick={handleTogglePanel}>
+                          <CloseIcon color="primary" />
+                        </IconButton>
+                      </Tooltip>
                     </Grid>
-                  </Grid>
-                )}
+                  )}
               </Grid>
             </Grid>
             {!lockedStep.analysis.openPanel && state.showSelections && (
@@ -204,7 +226,7 @@ const Analysis = ({
                                   label={`${mapping.inputPort.title}: ${mapping.outputPort.title}`}
                                 />
                               </Grid>
-                            ),
+                            )
                           )}
                         </Grid>
                       </Grid>
@@ -228,7 +250,7 @@ const Analysis = ({
                                   label={`${param.title}: ${param.value}`}
                                 />
                               </Grid>
-                            ),
+                            )
                           )}
                         </Grid>
                       </Grid>

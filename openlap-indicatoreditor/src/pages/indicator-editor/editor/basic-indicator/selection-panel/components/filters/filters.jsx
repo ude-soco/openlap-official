@@ -8,11 +8,13 @@ import {
   AccordionDetails,
   Grid,
   Typography,
-  FormGroup,
-  FormControlLabel,
-  Switch,
+  Tooltip,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
 import IconButton from "@mui/material/IconButton";
 import ActivityTypes from "./components/activity-types.jsx";
 import Activities from "./components/activities.jsx";
@@ -60,7 +62,7 @@ const Filters = () => {
     }));
   };
 
-  const handletoggleShowSelection = () => {
+  const handleToggleShowSelection = () => {
     setState((prevState) => ({
       ...prevState,
       showSelections: !prevState.showSelections,
@@ -109,26 +111,45 @@ const Filters = () => {
                     <Grid item>
                       <Typography>Filters</Typography>
                     </Grid>
+                    {!lockedStep.filter.openPanel &&
+                      !lockedStep.filter.locked && (
+                        <>
+                          <Grid item>
+                            <Tooltip title="Edit filter selection">
+                              <IconButton onClick={handleTogglePanel}>
+                                <EditIcon color="primary" />
+                              </IconButton>
+                            </Tooltip>
+                          </Grid>
+
+                          <Grid item>
+                            <Tooltip
+                              title={
+                                !state.showSelections
+                                  ? "Show summary"
+                                  : "Hide summary"
+                              }
+                            >
+                              <IconButton onClick={handleToggleShowSelection}>
+                                {!state.showSelections ? (
+                                  <VisibilityIcon color="primary" />
+                                ) : (
+                                  <VisibilityOffIcon color="primary" />
+                                )}
+                              </IconButton>
+                            </Tooltip>
+                          </Grid>
+                        </>
+                      )}
                   </Grid>
                 </Grid>
-                {!lockedStep.filter.locked && (
+                {lockedStep.filter.openPanel && !lockedStep.filter.locked && (
                   <Grid item>
-                    <Grid container>
-                      {!lockedStep.filter.openPanel && (
-                        <FormGroup>
-                          <FormControlLabel
-                            control={<Switch checked={state.showSelections} />}
-                            onChange={handletoggleShowSelection}
-                            label="Show selections"
-                          />
-                        </FormGroup>
-                      )}
-                      <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
-                        {lockedStep.filter.openPanel
-                          ? "Close section"
-                          : "Change selections"}
-                      </Button>
-                    </Grid>
+                    <Tooltip title="Close panel">
+                      <IconButton onClick={handleTogglePanel}>
+                        <CloseIcon color="primary" />
+                      </IconButton>
+                    </Tooltip>
                   </Grid>
                 )}
               </Grid>

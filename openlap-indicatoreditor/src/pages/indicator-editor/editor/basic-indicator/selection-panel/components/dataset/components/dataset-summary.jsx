@@ -1,13 +1,15 @@
 import {
   AccordionSummary,
   Chip,
-  Button,
   Grid,
   Typography,
-  FormGroup,
-  FormControlLabel,
-  Switch,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
 import LRSChips from "./lrs-chips.jsx";
 import PlatformChips from "./platform-chips.jsx";
 
@@ -36,24 +38,46 @@ const DatasetSummary = ({
                   <Grid item>
                     <Typography>Dataset</Typography>
                   </Grid>
-                </Grid>
-              </Grid>
-              <Grid item>
-                <Grid container>
                   {!state.openPanel && (
-                    <FormGroup>
-                      <FormControlLabel
-                        control={<Switch checked={state.showSelections} />}
-                        onChange={handleToggleShowSelection}
-                        label="Show selections"
-                      />
-                    </FormGroup>
+                    <>
+                      <Grid item>
+                        <Tooltip title="Edit dataset selection">
+                          <IconButton onClick={handleTogglePanel}>
+                            <EditIcon color="primary" />
+                          </IconButton>
+                        </Tooltip>
+                      </Grid>
+
+                      <Grid item>
+                        <Tooltip
+                          title={
+                            !state.showSelections
+                              ? "Show summary"
+                              : "Hide summary"
+                          }
+                        >
+                          <IconButton onClick={handleToggleShowSelection}>
+                            {!state.showSelections ? (
+                              <VisibilityIcon color="primary" />
+                            ) : (
+                              <VisibilityOffIcon color="primary" />
+                            )}
+                          </IconButton>
+                        </Tooltip>
+                      </Grid>
+                    </>
                   )}
-                  <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
-                    {state.openPanel ? "Close section" : "Change selections"}
-                  </Button>
                 </Grid>
               </Grid>
+              {state.openPanel && (
+                <Grid item>
+                  <Tooltip title="Close panel">
+                    <IconButton onClick={handleTogglePanel}>
+                      <CloseIcon color="primary" />
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
+              )}
             </Grid>
           </Grid>
           {!state.openPanel && state.showSelections && (

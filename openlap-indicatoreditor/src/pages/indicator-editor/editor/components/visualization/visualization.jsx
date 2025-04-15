@@ -9,11 +9,16 @@ import {
   FormControlLabel,
   FormGroup,
   Grid,
+  IconButton,
+  Tooltip,
   Switch,
   Typography,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
-import IconButton from "@mui/material/IconButton";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
 import VisualizationLibrary from "./components/library.jsx";
 import VisualizationType from "./components/type.jsx";
 import Inputs from "./components/inputs.jsx";
@@ -143,9 +148,49 @@ const Visualization = ({
                     <Grid item>
                       <Typography>Visualization</Typography>
                     </Grid>
+                    {!lockedStep.visualization.locked &&
+                      !lockedStep.visualization.openPanel && (
+                        <>
+                          <Grid item>
+                            <Tooltip title="Edit visualization selection">
+                              <IconButton onClick={handleTogglePanel}>
+                                <EditIcon color="primary" />
+                              </IconButton>
+                            </Tooltip>
+                          </Grid>
+
+                          <Grid item>
+                            <Tooltip
+                              title={
+                                !state.showSelections
+                                  ? "Show summary"
+                                  : "Hide summary"
+                              }
+                            >
+                              <IconButton onClick={handleToggleShowSelection}>
+                                {!state.showSelections ? (
+                                  <VisibilityIcon color="primary" />
+                                ) : (
+                                  <VisibilityOffIcon color="primary" />
+                                )}
+                              </IconButton>
+                            </Tooltip>
+                          </Grid>
+                        </>
+                      )}
                   </Grid>
                 </Grid>
-                {!lockedStep.visualization.locked && (
+                {!lockedStep.visualization.locked &&
+                  lockedStep.visualization.openPanel && (
+                    <Grid item>
+                      <Tooltip title="Close panel">
+                        <IconButton onClick={handleTogglePanel}>
+                          <CloseIcon color="primary" />
+                        </IconButton>
+                      </Tooltip>
+                    </Grid>
+                  )}
+                {/* {!lockedStep.visualization.locked && (
                   <Grid item>
                     <Grid container>
                       {!lockedStep.visualization.openPanel && (
@@ -157,14 +202,19 @@ const Visualization = ({
                           />
                         </FormGroup>
                       )}
-                      <Button color="primary" variant="outlined" size="small" onClick={handleTogglePanel}>
+                      <Button
+                        color="primary"
+                        variant="outlined"
+                        size="small"
+                        onClick={handleTogglePanel}
+                      >
                         {lockedStep.visualization.openPanel
                           ? "Close section"
                           : "Change selections"}
                       </Button>
                     </Grid>
                   </Grid>
-                )}
+                )} */}
               </Grid>
             </Grid>
 
