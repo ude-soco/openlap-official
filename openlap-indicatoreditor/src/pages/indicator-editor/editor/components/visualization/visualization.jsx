@@ -190,31 +190,6 @@ const Visualization = ({
                       </Tooltip>
                     </Grid>
                   )}
-                {/* {!lockedStep.visualization.locked && (
-                  <Grid item>
-                    <Grid container>
-                      {!lockedStep.visualization.openPanel && (
-                        <FormGroup>
-                          <FormControlLabel
-                            control={<Switch checked={state.showSelections} />}
-                            onChange={handleToggleShowSelection}
-                            label="Show selections"
-                          />
-                        </FormGroup>
-                      )}
-                      <Button
-                        color="primary"
-                        variant="outlined"
-                        size="small"
-                        onClick={handleTogglePanel}
-                      >
-                        {lockedStep.visualization.openPanel
-                          ? "Close section"
-                          : "Change selections"}
-                      </Button>
-                    </Grid>
-                  </Grid>
-                )} */}
               </Grid>
             </Grid>
 
