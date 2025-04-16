@@ -15,7 +15,7 @@ import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 const LRS = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
   const { indicatorQuery, setIndicatorQuery } = useContext(
-    BasicIndicatorContext,
+    BasicIndicatorContext
   );
 
   const handleSelectLrsList = (selectedLrs) => {
@@ -32,7 +32,7 @@ const LRS = ({ state, setState }) => {
         setState((prevState) => ({
           ...prevState,
           platformList: platformData.filter(
-            (platform) => !indicatorQuery.platforms.includes(platform.name),
+            (platform) => !indicatorQuery.platforms.includes(platform.name)
           ),
         }));
       } catch (e) {
@@ -55,13 +55,13 @@ const LRS = ({ state, setState }) => {
       ...prevState,
       lrsList: [...prevState.lrsList, selectedLrs],
       selectedLrsList: prevState.selectedLrsList.filter(
-        (item) => item.id !== selectedLrs.id,
+        (item) => item.id !== selectedLrs.id
       ),
     }));
     setIndicatorQuery((prevState) => ({
       ...prevState,
       lrsStores: prevState.lrsStores.filter(
-        (item) => item.id !== selectedLrs.id,
+        (item) => item.id !== selectedLrs.id
       ),
     }));
   };
@@ -73,11 +73,11 @@ const LRS = ({ state, setState }) => {
         setState((prevState) => ({
           ...prevState,
           lrsList: lrsData.filter(
-            (lrs) => !indicatorQuery.lrsStores.includes(lrs.lrsTitle),
+            (lrs) => !indicatorQuery.lrsStores.includes(lrs.lrsTitle)
           ),
         }));
       } catch (error) {
-        console.error("Failed to load LRS list", error);
+        console.error("Failed to load Store list", error);
       }
     };
 
@@ -93,7 +93,7 @@ const LRS = ({ state, setState }) => {
             title={
               indicatorQuery.platforms.length > 0 ? (
                 <Typography variant="body2">
-                  Deselect the Platform(s) below in order to remove a LRS.
+                  Deselect the Platform(s) below in order to remove a Store.
                 </Typography>
               ) : undefined
             }
@@ -117,7 +117,7 @@ const LRS = ({ state, setState }) => {
                 );
               }}
               renderInput={(params) => (
-                <TextField {...params} placeholder="*Search for LRSs" />
+                <TextField {...params} placeholder="*Search for Learning Record Stores (LRSs)" />
               )}
               onChange={(event, value) => {
                 if (value) handleSelectLrsList(value);
@@ -128,7 +128,9 @@ const LRS = ({ state, setState }) => {
         <Grid item xs={12}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>Selected LRS(s)</Typography>
+              <Typography>
+                Selected <b>Learning Record Store(s)</b>
+              </Typography>
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1}>
@@ -140,12 +142,13 @@ const LRS = ({ state, setState }) => {
                         indicatorQuery.platforms.length ? (
                           <Typography variant="body2">
                             Deselect the Platform(s) below in order to remove a
-                            LRS.
+                            Learning Record Store (LRS).
                           </Typography>
                         ) : undefined
                       }
                     >
                       <Chip
+                        color="primary"
                         label={lrs.lrsTitle}
                         onDelete={
                           indicatorQuery.platforms.length

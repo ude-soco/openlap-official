@@ -111,7 +111,7 @@ const AnalyticsTechnique = ({
             renderInput={(params) => (
               <TextField
                 {...params}
-                placeholder="*Search for an analytics technique"
+                placeholder="*Search for an Analytics Method"
               />
             )}
             onChange={(event, value) => {
@@ -123,7 +123,9 @@ const AnalyticsTechnique = ({
         <Grid item xs={12}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>Selected analytics technique</Typography>
+              <Typography>
+                Selected <b>Analytics Method</b>
+              </Typography>
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1}>
@@ -139,6 +141,7 @@ const AnalyticsTechnique = ({
                           }
                         >
                           <Chip
+                            color="primary"
                             label={technique.name}
                             onDelete={handleDeselectTechnique}
                           />

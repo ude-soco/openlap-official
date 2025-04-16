@@ -114,7 +114,7 @@ const VisualizationLibrary = ({
             renderInput={(params) => (
               <TextField
                 {...params}
-                placeholder="*Search for an Visualization library"
+                placeholder="*Search for an Visualization Library"
               />
             )}
             onChange={(event, value) => {
@@ -126,7 +126,9 @@ const VisualizationLibrary = ({
         <Grid item xs={12}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>Selected Visualization library</Typography>
+              <Typography>
+                Selected <b>Visualization library</b>
+              </Typography>
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1}>
@@ -140,6 +142,7 @@ const VisualizationLibrary = ({
                           title={<Typography>{library.description}</Typography>}
                         >
                           <Chip
+                            color="primary"
                             label={library.name}
                             onDelete={handleDeselectVisualizationLibrary}
                           />

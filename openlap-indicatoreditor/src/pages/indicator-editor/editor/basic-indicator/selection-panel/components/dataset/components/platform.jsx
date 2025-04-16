@@ -12,14 +12,14 @@ import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 
 const Platform = ({ state, setState }) => {
   const { indicatorQuery, setIndicatorQuery } = useContext(
-    BasicIndicatorContext,
+    BasicIndicatorContext
   );
 
   const handleSelectPlatformList = (selectedPlatform) => {
     setState((prevState) => ({
       ...prevState,
       platformList: prevState.platformList.filter(
-        (item) => item.name !== selectedPlatform.name,
+        (item) => item.name !== selectedPlatform.name
       ),
       selectedPlatformList: [
         ...prevState.selectedPlatformList,
@@ -43,7 +43,7 @@ const Platform = ({ state, setState }) => {
         ...prevState,
         platformList: [...prevState.platformList, selectedPlatform],
         selectedPlatformList: prevState.selectedPlatformList.filter(
-          (item) => item.name !== selectedPlatform.name,
+          (item) => item.name !== selectedPlatform.name
         ),
         autoCompleteValue: null,
       };
@@ -53,7 +53,7 @@ const Platform = ({ state, setState }) => {
       return {
         ...prevState,
         platforms: prevState.platforms.filter(
-          (item) => item !== selectedPlatform.name,
+          (item) => item !== selectedPlatform.name
         ),
       };
     });
@@ -68,8 +68,8 @@ const Platform = ({ state, setState }) => {
             title={
               state.selectedLrsList.length === 0 ? (
                 <Typography variant="body2">
-                  Select at least one LRS from above to view the list of
-                  Platforms.
+                  Select at least one Learning Record Store (LRS) from above to
+                  view the list of Platforms.
                 </Typography>
               ) : indicatorQuery.activityTypes.length ? (
                 <Typography variant="body2">
@@ -100,7 +100,7 @@ const Platform = ({ state, setState }) => {
                 );
               }}
               renderInput={(params) => (
-                <TextField {...params} placeholder="*Search for platforms" />
+                <TextField {...params} placeholder="*Search for Platforms" />
               )}
               onChange={(event, value) => {
                 if (value) handleSelectPlatformList(value);
@@ -112,7 +112,7 @@ const Platform = ({ state, setState }) => {
         <Grid item xs={12}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>Selected Platform(s)</Typography>
+              <Typography>Selected <b>Platform(s)</b></Typography>
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1}>
@@ -130,6 +130,7 @@ const Platform = ({ state, setState }) => {
                       }
                     >
                       <Chip
+                        color="primary"
                         label={platform.name}
                         onDelete={
                           indicatorQuery.activityTypes.length

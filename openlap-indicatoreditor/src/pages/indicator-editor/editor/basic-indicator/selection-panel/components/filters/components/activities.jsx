@@ -28,14 +28,14 @@ const Activities = ({ state, setState }) => {
           api,
           indicatorQuery.lrsStores,
           indicatorQuery.platforms,
-          indicatorQuery.activityTypes,
+          indicatorQuery.activityTypes
         );
         // TODO: why not filtered with selected??
         setState((prevState) => ({
           ...prevState,
           activitiesList: activitiesData.filter(
             (activity) =>
-              !prevState.selectedActivitiesList.includes(activity.id),
+              !prevState.selectedActivitiesList.includes(activity.id)
           ),
         }));
       } catch (error) {
@@ -51,7 +51,7 @@ const Activities = ({ state, setState }) => {
     setState((prevState) => ({
       ...prevState,
       activitiesList: prevState.activitiesList.filter(
-        (item) => item.id !== selectedActivity.id,
+        (item) => item.id !== selectedActivity.id
       ),
       selectedActivitiesList: [
         ...prevState.selectedActivitiesList,
@@ -98,10 +98,10 @@ const Activities = ({ state, setState }) => {
       return {
         ...prevState,
         activitiesList: [...prevState.activitiesList, selectedActivity].sort(
-          (a, b) => a.name.localeCompare(b.name),
+          (a, b) => a.name.localeCompare(b.name)
         ),
         selectedActivitiesList: prevState.selectedActivitiesList.filter(
-          (item) => item.id !== selectedActivity.id,
+          (item) => item.id !== selectedActivity.id
         ),
         autoCompleteValue: null,
       };
@@ -111,7 +111,7 @@ const Activities = ({ state, setState }) => {
       let tempActivities = { ...prevState.activities };
       if (tempActivities[selectedActivity.queryId]) {
         const index = tempActivities[selectedActivity.queryId].indexOf(
-          selectedActivity.name,
+          selectedActivity.name
         );
         if (index !== -1) {
           tempActivities[selectedActivity.queryId].splice(index, 1);
@@ -196,7 +196,7 @@ const Activities = ({ state, setState }) => {
         <Grid item xs={12}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>Selected Activity(ies)</Typography>
+              <Typography>Selected <b>Activity(ies)</b></Typography>
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1}>
@@ -214,6 +214,7 @@ const Activities = ({ state, setState }) => {
                       }
                     >
                       <Chip
+                        color="primary"
                         label={activity.name}
                         onDelete={
                           indicatorQuery.actionOnActivities.length

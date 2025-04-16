@@ -16,7 +16,7 @@ import { BasicIndicatorContext } from "../../../../basic-indicator.jsx";
 const ActivityTypes = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
   const { indicatorQuery, setIndicatorQuery, setAnalysisRef } = useContext(
-    BasicIndicatorContext,
+    BasicIndicatorContext
   );
 
   useEffect(() => {
@@ -25,13 +25,13 @@ const ActivityTypes = ({ state, setState }) => {
         const activityTypesData = await fetchActivityTypesList(
           api,
           indicatorQuery.lrsStores,
-          indicatorQuery.platforms,
+          indicatorQuery.platforms
         );
         setState((prevState) => ({
           ...prevState,
           activityTypesList: activityTypesData.filter(
             (activityType) =>
-              !prevState.selectedActivityTypesList.includes(activityType.id),
+              !prevState.selectedActivityTypesList.includes(activityType.id)
           ),
         }));
       } catch (error) {
@@ -48,7 +48,7 @@ const ActivityTypes = ({ state, setState }) => {
     setState((prevState) => ({
       ...prevState,
       activityTypesList: prevState.activityTypesList.filter(
-        (item) => item.id !== selectedActivityType.id,
+        (item) => item.id !== selectedActivityType.id
       ),
       selectedActivityTypesList: [
         ...prevState.selectedActivityTypesList,
@@ -84,7 +84,7 @@ const ActivityTypes = ({ state, setState }) => {
           selectedActivityType,
         ].sort((a, b) => a.name.localeCompare(b.name)),
         selectedActivityTypesList: prevState.selectedActivityTypesList.filter(
-          (type) => type.id !== selectedActivityType.id,
+          (type) => type.id !== selectedActivityType.id
         ),
         autoCompleteValue: null,
       };
@@ -100,7 +100,7 @@ const ActivityTypes = ({ state, setState }) => {
       return {
         ...prevState,
         activityTypes: prevState.activityTypes.filter(
-          (item) => item !== selectedActivityType.id,
+          (item) => item !== selectedActivityType.id
         ),
       };
     });
@@ -167,7 +167,7 @@ const ActivityTypes = ({ state, setState }) => {
         <Grid item xs={12}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>Selected Activity type(s)</Typography>
+              <Typography>Selected <b>Activity type(s)</b></Typography>
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1}>
@@ -185,6 +185,7 @@ const ActivityTypes = ({ state, setState }) => {
                       }
                     >
                       <Chip
+                        color="primary"
                         label={getLastWordAndCapitalize(activityType.name)}
                         onDelete={
                           Object.keys(indicatorQuery.activities).length

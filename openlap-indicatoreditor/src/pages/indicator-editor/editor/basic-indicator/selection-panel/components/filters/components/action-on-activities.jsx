@@ -30,12 +30,12 @@ const ActionOnActivities = ({ state, setState }) => {
           indicatorQuery.lrsStores,
           indicatorQuery.platforms,
           indicatorQuery.activityTypes,
-          indicatorQuery.activities,
+          indicatorQuery.activities
         );
         setState((prevState) => ({
           ...prevState,
           actionsList: actionsData.filter(
-            (action) => !indicatorQuery.actionOnActivities.includes(action),
+            (action) => !indicatorQuery.actionOnActivities.includes(action)
           ),
         }));
       } catch (error) {
@@ -51,7 +51,7 @@ const ActionOnActivities = ({ state, setState }) => {
     setState((prevState) => ({
       ...prevState,
       actionsList: prevState.actionsList.filter(
-        (item) => item.id !== selectedAction.id,
+        (item) => item.id !== selectedAction.id
       ),
       selectedActionsList: [...prevState.selectedActionsList, selectedAction],
       autoCompleteValue: null,
@@ -93,7 +93,7 @@ const ActionOnActivities = ({ state, setState }) => {
   const handleDeselectActionOnActivity = (selectedAction) => {
     setState((prevState) => {
       let tempSelectedActionList = prevState.selectedActionsList.filter(
-        (item) => item.id !== selectedAction.id,
+        (item) => item.id !== selectedAction.id
       );
 
       // If query is changed
@@ -119,7 +119,7 @@ const ActionOnActivities = ({ state, setState }) => {
       return {
         ...prevState,
         actionsList: [...prevState.actionsList, selectedAction].sort((a, b) =>
-          a.name.localeCompare(b.name),
+          a.name.localeCompare(b.name)
         ),
         selectedActionsList: tempSelectedActionList,
         autoCompleteValue: null,
@@ -130,7 +130,7 @@ const ActionOnActivities = ({ state, setState }) => {
       return {
         ...prevState,
         actionOnActivities: prevState.actionOnActivities.filter(
-          (item) => item !== selectedAction.id,
+          (item) => item !== selectedAction.id
         ),
       };
     });
@@ -187,13 +187,14 @@ const ActionOnActivities = ({ state, setState }) => {
         <Grid item xs={12}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>Selected Action(s)</Typography>
+              <Typography>Selected <b>Action(s)</b></Typography>
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1}>
                 {state.selectedActionsList?.map((action, index) => (
                   <Grid item key={index}>
                     <Chip
+                      color="primary"
                       label={getLastWordAndCapitalize(action.name)}
                       onDelete={() => handleDeselectActionOnActivity(action)}
                     />

@@ -72,11 +72,13 @@ const VisualizationType = ({
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Grid item xs={12}>
-            <Typography>Available chart types</Typography>
+            <Typography>
+              Available <b>Chart Types</b>
+            </Typography>
           </Grid>
         </Grid>
         <Grid item xs={12}>
-          <Grid container spacing={3} justifyContent="center">
+          <Grid container spacing={3}>
             {state.typeList
               .sort((a, b) => a.name.localeCompare(b.name))
               .map((type) => {
@@ -125,9 +127,6 @@ const VisualizationType = ({
                 );
               })}
           </Grid>
-        </Grid>
-        <Grid item xs={12} sx={{ pb: 2 }}>
-          <Divider />
         </Grid>
       </Grid>
     </>

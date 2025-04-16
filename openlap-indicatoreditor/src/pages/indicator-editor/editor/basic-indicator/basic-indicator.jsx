@@ -1,3 +1,10 @@
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Divider,
   Grid,
@@ -10,13 +17,6 @@ import {
 import { ArrowBack } from "@mui/icons-material";
 import PreviewPanel from "../components/preview-panel/preview-panel.jsx";
 import SelectionPanel from "./selection-panel/selection-panel.jsx";
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
 import dayjs from "dayjs";
 import Condition from "./selection-panel/utils/condition.js";
 import { useSnackbar } from "notistack";
@@ -172,6 +172,10 @@ const BasicIndicator = () => {
             openPanel: false,
           },
           visualization: {
+            locked: true,
+            openPanel: false,
+          },
+          previewFinalize: {
             locked: true,
             openPanel: false,
           },
@@ -340,57 +344,41 @@ const BasicIndicator = () => {
         <Grid item xs={12}>
           <Divider />
         </Grid>
-        {isSmallScreen ? (
-          <>
-            <Grid item xs={12} lg={12}>
-              <SelectionPanel />
-            </Grid>
-            <Grid item xs={12} lg={12}>
-              <PreviewPanel
-                indicator={indicator}
-                changeIndicatorName={handleChangeIndicatorName}
-                handleSaveIndicator={handleSaveNewBasicIndicator}
-                setVisRef={setVisRef}
-              />
-            </Grid>
-          </>
-        ) : (
-          <>
-            <Grid item xs={12} lg={12}>
-              <SelectionPanel />
-            </Grid>
+        <Grid item xs={12}>
+          <SelectionPanel />
+        </Grid>
 
-            <Grid item xs={12} lg={generate ? 8 : 12}>
-              <PreviewPanel
-                indicator={indicator}
-                changeIndicatorName={handleChangeIndicatorName}
-                handleSaveIndicator={handleSaveNewBasicIndicator}
-                setVisRef={setVisRef}
-                api={api}
-                indicatorQuery={indicatorQuery}
-                analysisRef={analysisRef}
-                setIndicator={setIndicator}
-                visRef={visRef}
-                loading={loading}
-              />
-            </Grid>
-            {generate && (
-              <Grid item xs={12} lg={4}>
-                <BarChartCustomization
-                  indicator={indicator}
-                  setVisRef={setVisRef}
-                  api={api}
-                  indicatorQuery={indicatorQuery}
-                  analysisRef={analysisRef}
-                  chartConfiguration={chartConfiguration}
-                  setIndicator={setIndicator}
-                  visRef={visRef}
-                  setLoading={setLoading}
-                />
-              </Grid>
-            )}
-          </>
+        <Grid item xs={12} lg={generate ? 8 : 12}>
+          <PreviewPanel
+            indicator={indicator}
+            changeIndicatorName={handleChangeIndicatorName}
+            handleSaveIndicator={handleSaveNewBasicIndicator}
+            setVisRef={setVisRef}
+            api={api}
+            indicatorQuery={indicatorQuery}
+            analysisRef={analysisRef}
+            setIndicator={setIndicator}
+            visRef={visRef}
+            loading={loading}
+          />
+        </Grid>
+        {generate && (
+          <Grid item xs={12} lg={4}>
+            <BarChartCustomization
+              indicator={indicator}
+              setVisRef={setVisRef}
+              api={api}
+              indicatorQuery={indicatorQuery}
+              analysisRef={analysisRef}
+              chartConfiguration={chartConfiguration}
+              setIndicator={setIndicator}
+              visRef={visRef}
+              setLoading={setLoading}
+            />
+          </Grid>
         )}
+        {/* </>
+        )} */}
       </Grid>
     </BasicIndicatorContext.Provider>
   );

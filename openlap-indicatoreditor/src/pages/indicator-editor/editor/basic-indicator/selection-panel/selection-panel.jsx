@@ -7,6 +7,7 @@ import { useContext } from "react";
 import { BasicIndicatorContext } from "../basic-indicator.jsx";
 import { AuthContext } from "../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { fetchAnalyzedData } from "../../components/analysis/utils/analytics-api.js";
+import Grid from "@mui/material/Grid2";
 
 const SelectionPanel = () => {
   const { api } = useContext(AuthContext);
@@ -54,31 +55,41 @@ const SelectionPanel = () => {
 
   return (
     <>
-      <Dataset />
-      <Filters />
-      <Analysis
-        lockedStep={lockedStep}
-        setLockedStep={setLockedStep}
-        indicator={indicator}
-        analysisRef={analysisRef}
-        setAnalysisRef={setAnalysisRef}
-        loadAnalyzedData={() =>
-          loadAnalyzedData(api, indicatorQuery, analysisRef)
-        }
-      />
-      <Visualization
-        lockedStep={lockedStep}
-        setLockedStep={setLockedStep}
-        visRef={visRef}
-        setVisRef={setVisRef}
-        analyzedData={analysisRef.analyzedData}
-        setIndicator={setIndicator}
-        setGenerate={setGenerate}
-        setChartConfiguration={setChartConfiguration}
-        handlePreview={() =>
-          loadPreviewVisualization(api, indicatorQuery, analysisRef, visRef)
-        }
-      />
+      <Grid container spacing={2}>
+        <Grid size={{xs: 12}}>
+          <Dataset />
+        </Grid>
+        <Grid size={{xs: 12}}>
+          <Filters />
+        </Grid>
+        <Grid size={{xs: 12}}>
+          <Analysis
+            lockedStep={lockedStep}
+            setLockedStep={setLockedStep}
+            indicator={indicator}
+            analysisRef={analysisRef}
+            setAnalysisRef={setAnalysisRef}
+            loadAnalyzedData={() =>
+              loadAnalyzedData(api, indicatorQuery, analysisRef)
+            }
+          />
+        </Grid>
+        <Grid size={{xs: 12}}>
+          <Visualization
+            lockedStep={lockedStep}
+            setLockedStep={setLockedStep}
+            visRef={visRef}
+            setVisRef={setVisRef}
+            analyzedData={analysisRef.analyzedData}
+            setIndicator={setIndicator}
+            setGenerate={setGenerate}
+            setChartConfiguration={setChartConfiguration}
+            handlePreview={() =>
+              loadPreviewVisualization(api, indicatorQuery, analysisRef, visRef)
+            }
+          />
+        </Grid>
+      </Grid>
     </>
   );
 };

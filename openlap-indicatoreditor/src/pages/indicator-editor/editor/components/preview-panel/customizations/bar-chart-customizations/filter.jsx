@@ -10,7 +10,7 @@ import {
   Grid,
   TextField,
 } from "@mui/material";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export const FiltersBar = ({
   categories,

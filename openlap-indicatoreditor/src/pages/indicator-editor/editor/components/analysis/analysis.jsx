@@ -109,7 +109,6 @@ const Analysis = ({
   return (
     <>
       <Accordion
-        sx={{ mb: 1 }}
         expanded={lockedStep.analysis.openPanel}
         disabled={lockedStep.analysis.locked}
       >

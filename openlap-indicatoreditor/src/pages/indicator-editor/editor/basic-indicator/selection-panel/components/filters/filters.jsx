@@ -83,7 +83,6 @@ const Filters = () => {
   return (
     <>
       <Accordion
-        sx={{ mb: 1 }}
         expanded={lockedStep.filter.openPanel}
         disabled={lockedStep.filter.locked}
       >
@@ -192,19 +191,21 @@ const Filters = () => {
           </Grid>
         </AccordionDetails>
         <AccordionActions>
-          <Grid container>
-            <Button
-              variant="contained"
-              fullWidth
-              disabled={
-                !indicatorQuery.activityTypes.length ||
-                !Object.entries(indicatorQuery.activities).length ||
-                !indicatorQuery.actionOnActivities.length
-              }
-              onClick={handleUnlockAnalysis}
-            >
-              Next
-            </Button>
+          <Grid container justifyContent="center">
+            <Grid item xs={12} md={6}>
+              <Button
+                variant="contained"
+                fullWidth
+                disabled={
+                  !indicatorQuery.activityTypes.length ||
+                  !Object.entries(indicatorQuery.activities).length ||
+                  !indicatorQuery.actionOnActivities.length
+                }
+                onClick={handleUnlockAnalysis}
+              >
+                Next
+              </Button>
+            </Grid>
           </Grid>
         </AccordionActions>
       </Accordion>

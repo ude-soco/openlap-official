@@ -1,23 +1,16 @@
 import {
-  Stack,
-  Typography,
   FormControlLabel,
   Switch,
   RadioGroup,
   Radio,
-  Button,
   FormLabel,
   FormControl,
   TextField,
   Checkbox,
-  Box,
   Grid,
   FormGroup,
 } from "@mui/material";
-import { useContext, useEffect, useState } from "react";
-import ApexCharts from "apexcharts";
-import { requestBasicIndicatorPreview } from "../../../../components/visualization/utils/visualization-api.js";
-import { useSnackbar } from "notistack";
+import { useEffect, useState } from "react";
 
 export const ElementsBar = ({
   indicator,
@@ -36,11 +29,6 @@ export const ElementsBar = ({
   const [inputSubtitleValue, setInputSubtitleValue] = useState(
     state.chartSubtitle
   );
-
-  useEffect(() => {
-    // This effect will run only once when the component is mounted
-    // Add any initialization logic here if needed
-  }, []);
 
   const handleLegendSwitch = (e) => {
     setState((prevState) => ({
@@ -85,7 +73,7 @@ export const ElementsBar = ({
         ...prevState,
         chartTitle: e.target.value,
       }));
-    }, 1000); // Adjust delay as needed (e.g., 500ms)
+    }, 1000);
 
     setTypingTimeout(timeout);
   };
@@ -112,7 +100,7 @@ export const ElementsBar = ({
         ...prevState,
         chartSubtitle: e.target.value,
       }));
-    }, 1000); // Adjust delay as needed (e.g., 500ms)
+    }, 1000);
 
     setTypingTimeout(timeout);
   };
@@ -138,7 +126,6 @@ export const ElementsBar = ({
     }));
   };
 
-  //   Beginning of JSX
   return (
     <>
       <Grid container spacing={2}>

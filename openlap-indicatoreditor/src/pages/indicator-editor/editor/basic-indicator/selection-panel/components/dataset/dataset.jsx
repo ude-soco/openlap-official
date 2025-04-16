@@ -60,7 +60,7 @@ const Dataset = () => {
 
   return (
     <>
-      <Accordion sx={{ mb: 1 }} expanded={state.openPanel}>
+      <Accordion expanded={state.openPanel}>
         <DatasetSummary
           state={state}
           handleToggleShowSelection={handleToggleShowSelection}
@@ -78,18 +78,20 @@ const Dataset = () => {
           </Grid>
         </AccordionDetails>
         <AccordionActions>
-          <Grid container>
-            <Button
-              variant="contained"
-              fullWidth
-              disabled={
-                !indicatorQuery.lrsStores.length ||
-                !indicatorQuery.platforms.length
-              }
-              onClick={handleUnlockFilters}
-            >
-              Next
-            </Button>
+          <Grid container justifyContent="center">
+            <Grid item xs={12} md={6}>
+              <Button
+                variant="contained"
+                fullWidth
+                disabled={
+                  !indicatorQuery.lrsStores.length ||
+                  !indicatorQuery.platforms.length
+                }
+                onClick={handleUnlockFilters}
+              >
+                Next
+              </Button>
+            </Grid>
           </Grid>
         </AccordionActions>
       </Accordion>

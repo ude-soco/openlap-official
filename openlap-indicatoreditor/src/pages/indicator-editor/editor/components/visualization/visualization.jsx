@@ -120,7 +120,6 @@ const Visualization = ({
   return (
     <>
       <Accordion
-        sx={{ mb: 1 }}
         expanded={lockedStep.visualization.openPanel}
         disabled={lockedStep.visualization.locked}
       >
@@ -308,21 +307,23 @@ const Visualization = ({
           </Grid>
         </AccordionDetails>
         <AccordionActions>
-          <Grid container>
-            <LoadingButton
-              loading={state.loadingPreview}
-              loadingIndicator="Generating…"
-              variant="contained"
-              fullWidth
-              disabled={
-                !visRef.visualizationLibraryId.length ||
-                !visRef.visualizationTypeId.length ||
-                !visRef.visualizationMapping.mapping.length
-              }
-              onClick={handleGeneratePreview}
-            >
-              Generate Preview
-            </LoadingButton>
+          <Grid container justifyContent="center">
+            <Grid item xs={12} md={6}>
+              <LoadingButton
+                loading={state.loadingPreview}
+                loadingIndicator="Generating…"
+                variant="contained"
+                fullWidth
+                disabled={
+                  !visRef.visualizationLibraryId.length ||
+                  !visRef.visualizationTypeId.length ||
+                  !visRef.visualizationMapping.mapping.length
+                }
+                onClick={handleGeneratePreview}
+              >
+                Generate Preview
+              </LoadingButton>
+            </Grid>
           </Grid>
         </AccordionActions>
       </Accordion>

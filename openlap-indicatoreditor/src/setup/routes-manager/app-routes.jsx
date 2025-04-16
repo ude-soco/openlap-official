@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from "react";
-import { Box, CssBaseline, Grid, Paper } from "@mui/material";
+import { Box, CssBaseline, Paper } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { styled, ThemeProvider, useTheme } from "@mui/material/styles";
@@ -52,7 +53,7 @@ const Main = styled("main", { shouldForwardProp: (prop) => prop !== "open" })(
       }),
       marginLeft: 0,
     }),
-  }),
+  })
 );
 
 const AppRoutes = () => {
@@ -63,7 +64,7 @@ const AppRoutes = () => {
   const isMatch = useMediaQuery(theme.breakpoints.down("lg"));
 
   useEffect(() => {
-    if (isMatch && openSidebar && Boolean(user)) {
+    if (isMatch && openSidebar && user) {
       setOpenSidebar(false);
     }
   }, [isMatch]);
@@ -78,10 +79,10 @@ const AppRoutes = () => {
         <SnackbarProvider maxSnack={3}>
           <CssBaseline />
           <Box sx={{ display: "flex" }}>
-            {Boolean(user) && (
+            {user && (
               <NavBar openSidebar={openSidebar} toggleSidebar={toggleSidebar} />
             )}
-            {Boolean(user) ? <Sidebar openSidebar={openSidebar} /> : undefined}
+            {user ? <Sidebar openSidebar={openSidebar} /> : undefined}
             <Grid container justifyContent="center">
               <Main open={openSidebar} sx={{ maxWidth: 1900, width: "100%" }}>
                 <DrawerHeader />
@@ -302,7 +303,7 @@ const AppRoutes = () => {
                         />
                       }
                     />
-                    {Boolean(user) ? (
+                    {user ? (
                       <Route
                         path="*"
                         element={<Navigate to={"/dashboard"} replace />}
