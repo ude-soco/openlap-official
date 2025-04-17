@@ -1,6 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { Box, CssBaseline, Paper } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { Box, CssBaseline, Grid, Paper } from "@mui/material";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { styled, ThemeProvider, useTheme } from "@mui/material/styles";
