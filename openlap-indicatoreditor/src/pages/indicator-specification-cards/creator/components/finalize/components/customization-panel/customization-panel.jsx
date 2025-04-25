@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Grow, Paper, Tab } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import ElementsTab from "./components/elements-tab/elements-tab.jsx";
 import StylesTab from "./components/styles-tab/styles-tab.jsx";
 import FiltersTab from "./components/filters-tab.jsx";
+import { ISCContext } from "../../../../indicator-specification-card.jsx";
 
 const CustomizationPanel = ({ state, setState }) => {
+  const { setVisRef } = useContext(ISCContext);
   const tabData =
     (state.configuration.isSortingOrderChangeable ||
       state.configuration.isCategoriesFilteringAvailable) &&
@@ -18,6 +20,17 @@ const CustomizationPanel = ({ state, setState }) => {
   const handleChangeTab = (event, newValue) => {
     setTabValue(() => tabData.find((item) => item === newValue));
   };
+  useEffect(() => {
+    setVisRef((prevVisRef) => ({
+      ...prevVisRef,
+      data: {
+        ...prevVisRef.data,
+        series: state.series,
+        options: state.options,
+        axisOptions: state.axisOptions,
+      },
+    }));
+  }, [state.series, state.options]);
 
   return (
     <>

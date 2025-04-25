@@ -9,6 +9,7 @@ import DotChart from "../../finalize/components/dot-chart.jsx";
 import GroupedBarChart from "../../finalize/components/grouped-bar-chart.jsx";
 import RadarChart from "../../finalize/components/radar-chart.jsx";
 import TreeMap from "../../finalize/components/treemap.jsx";
+import PolarAreaChart from "../../finalize/components/polar-area-chart.jsx";
 
 const VisSelection = ({
   dataset,
@@ -22,10 +23,6 @@ const VisSelection = ({
     case VisualizationTypes.bar:
       return (
         <BarChart
-          dataset={dataset}
-          visRef={visRef}
-          setVisRef={setVisRef}
-          preview={preview}
           customize={customize}
           handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
@@ -44,21 +41,13 @@ const VisSelection = ({
     case VisualizationTypes.pie:
       return (
         <PieChart
-          dataset={dataset}
-          visRef={visRef}
-          setVisRef={setVisRef}
-          preview={preview}
           customize={customize}
           handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
       );
     case VisualizationTypes.polar:
       return (
-        <PieChart
-          dataset={dataset}
-          visRef={visRef}
-          setVisRef={setVisRef}
-          preview={preview}
+        <PolarAreaChart
           customize={customize}
           handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
@@ -99,10 +88,6 @@ const VisSelection = ({
     case VisualizationTypes.dot:
       return (
         <DotChart
-          dataset={dataset}
-          visRef={visRef}
-          setVisRef={setVisRef}
-          preview={preview}
           customize={customize}
           handleToggleCustomizePanel={handleToggleCustomizePanel}
         />

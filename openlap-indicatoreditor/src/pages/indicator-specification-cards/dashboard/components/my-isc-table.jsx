@@ -152,6 +152,7 @@ const MyIscTable = () => {
         parsedData.dataset = JSON.parse(parsedData.dataset);
         parsedData.visRef = JSON.parse(parsedData.visRef);
         parsedData.lockedStep = JSON.parse(parsedData.lockedStep);
+        parsedData.visRef.edit = true;
         sessionStorage.setItem("session_isc", JSON.stringify(parsedData));
       })
       .then(() => {

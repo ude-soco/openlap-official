@@ -1,10 +1,8 @@
 import React, { useContext, useEffect, useState } from "react";
 import { requestISCDetails } from "../utils/dashboard-api.js";
-import { CustomThemeContext } from "../../../../setup/theme-manager/theme-context-manager.jsx";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Button,
   Chip,
   Divider,
   Grid,
@@ -13,11 +11,10 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
-import { ArrowBack, Edit } from "@mui/icons-material";
-import VisSelection from "../../creator/components/visualization/components/vis-selection.jsx";
+import { ArrowBack } from "@mui/icons-material";
+import PreviewChart from "./preview-chart.jsx";
 
 const IscPreview = () => {
-  const { darkMode } = useContext(CustomThemeContext);
   const { api } = useContext(AuthContext);
   const navigate = useNavigate();
   const params = useParams();
@@ -156,12 +153,7 @@ const IscPreview = () => {
                     </Grid>
                     <Grid item xs={12}>
                       {Object.values(visRef).length > 0 && (
-                        <VisSelection
-                          dataset={dataset}
-                          visRef={visRef}
-                          setVisRef={setVisRef}
-                          preview={true}
-                        />
+                        <PreviewChart dataset={dataset} visRef={visRef} />
                       )}
                     </Grid>
                   </Grid>

@@ -18,7 +18,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 
-const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
+const PolarAreaChart = ({ customize = false, handleToggleCustomizePanel }) => {
   const { darkMode } = useContext(CustomThemeContext);
   const { visRef, setVisRef, dataset } = useContext(ISCContext);
   const chartRef = useRef(null);
@@ -206,18 +206,14 @@ const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
     const stringColumns = visRef.data.axisOptions.xAxisOptions;
     const numberColumns = visRef.data.axisOptions.yAxisOptions;
 
-    const updatedSelectedXAxis = visRef.edit
-      ? selectedXAxis
-      : selectedXAxis
+    const updatedSelectedXAxis = selectedXAxis
       ? stringColumns.find((col) => col.field === selectedXAxis)?.field ||
         (stringColumns.length > 0 ? stringColumns[0].field : "")
       : stringColumns.length > 0
       ? stringColumns[0].field
       : "";
 
-    const updatedSelectedYAxis = visRef.edit
-      ? selectedYAxis
-      : selectedYAxis
+    const updatedSelectedYAxis = selectedYAxis
       ? numberColumns.find((col) => col.field === selectedYAxis)?.field ||
         (numberColumns.length > 0 ? numberColumns[0].field : "")
       : numberColumns.length > 0
@@ -279,8 +275,8 @@ const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
             selectedYAxis: state.axisOptions.selectedYAxis,
           },
         },
-        edit: false,
       }));
+
       return tempState;
     });
   }, [
@@ -410,4 +406,4 @@ const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
   );
 };
 
-export default PieChart;
+export default PolarAreaChart;
