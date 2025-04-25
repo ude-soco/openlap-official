@@ -197,32 +197,58 @@ const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
         yAxisOptions: numberColumns,
       },
     }));
+    setVisRef((prevVisRef) => ({
+      ...prevVisRef,
+      data: {
+        ...prevVisRef.data,
+        axisOptions: {
+          ...prevVisRef.data.axisOptions,
+          xAxisOptions: stringColumns,
+          yAxisOptions: numberColumns,
+        },
+      },
+      edit: false,
+    }));
   }, [dataset.columns.length]);
 
   // * This effect is used to update the chart when the selected X-axis or Y-axis changes.
   useEffect(() => {
-    const selectedXAxis = visRef.data.axisOptions.selectedXAxis;
-    const selectedYAxis = visRef.data.axisOptions.selectedYAxis;
-    const stringColumns = visRef.data.axisOptions.xAxisOptions;
-    const numberColumns = visRef.data.axisOptions.yAxisOptions;
+    const selectedXAxis =
+      visRef.data.axisOptions.selectedXAxis || state.axisOptions.selectedXAxis;
+    const selectedYAxis =
+      visRef.data.axisOptions.selectedYAxis || state.axisOptions.selectedYAxis;
+    const stringColumns =
+      visRef.data.axisOptions.xAxisOptions || state.axisOptions.xAxisOptions;
+    const numberColumns =
+      visRef.data.axisOptions.yAxisOptions || state.axisOptions.yAxisOptions;
 
-    const updatedSelectedXAxis = visRef.edit
-      ? selectedXAxis
-      : selectedXAxis
-      ? stringColumns.find((col) => col.field === selectedXAxis)?.field ||
-        (stringColumns.length > 0 ? stringColumns[0].field : "")
-      : stringColumns.length > 0
-      ? stringColumns[0].field
-      : "";
+    let updatedSelectedXAxis = "";
+    if (visRef.edit) {
+      if (selectedXAxis.length !== 0) {
+        updatedSelectedXAxis = selectedXAxis;
+      }
+    } else if (selectedXAxis.length !== 0) {
+      updatedSelectedXAxis =
+        stringColumns.find((col) => col.field === selectedXAxis)?.field ||
+        (stringColumns.length > 0 ? stringColumns[0].field : "");
+    } else {
+      updatedSelectedXAxis =
+        stringColumns.length > 0 ? stringColumns[0].field : "";
+    }
 
-    const updatedSelectedYAxis = visRef.edit
-      ? selectedYAxis
-      : selectedYAxis
-      ? numberColumns.find((col) => col.field === selectedYAxis)?.field ||
-        (numberColumns.length > 0 ? numberColumns[0].field : "")
-      : numberColumns.length > 0
-      ? numberColumns[0].field
-      : "";
+    let updatedSelectedYAxis = "";
+    if (visRef.edit) {
+      if (selectedYAxis.length !== 0) {
+        updatedSelectedYAxis = selectedYAxis;
+      }
+    } else if (selectedYAxis.length !== 0) {
+      updatedSelectedYAxis =
+        numberColumns.find((col) => col.field === selectedYAxis)?.field ||
+        (numberColumns.length > 0 ? numberColumns[0].field : "");
+    } else {
+      updatedSelectedYAxis =
+        numberColumns.length > 0 ? numberColumns[0].field : "";
+    }
 
     setState((prevState) => ({
       ...prevState,
