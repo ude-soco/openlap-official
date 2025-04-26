@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import {
   Button,
@@ -23,18 +17,11 @@ import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
+import { ISCContext } from "../../../indicator-specification-card.jsx";
 
-export let StateContext = createContext();
-
-const TreeMap = ({
-  dataset,
-  visRef,
-  setVisRef,
-  preview = false,
-  customize = false,
-  handleToggleCustomizePanel,
-}) => {
+const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
   const { darkMode } = useContext(CustomThemeContext);
+  const { visRef, setVisRef, dataset } = useContext(ISCContext);
   const chartRef = useRef(null);
 
   const [state, setState] = useState({
@@ -74,125 +61,123 @@ const TreeMap = ({
       isSortingOrderDescendingAvailable: false,
       isCategoriesFilteringAvailable: false,
     },
-    options: {
-      chart: {
-        type: "treemap",
-        id: "treemap",
-        height: 350,
-        foreColor: darkMode ? "#ffffff" : "#000000",
-        toolbar: {
-          show: false,
-        },
-      },
-      title: {
-        text: "",
-        align: "left",
-        style: {
-          fontSize: 18,
-          cssClass: "x-y-axis-hide-title",
-        },
-      },
-      subtitle: {
-        text: "",
-        align: "left",
-        margin: 15,
-      },
-      legend: {
-        show: true,
-        showForSingleSeries: true,
-        position: "bottom",
-        horizontalAlign: "center",
-        labels: {
-          colors: undefined,
-          useSeriesColors: false,
-        },
-        onItemClick: {
-          toggleDataSeries: false,
-        },
-      },
-      colors: [],
-      xaxis: {
-        categories: [],
-        title: {
-          text: "Group By",
-          style: {
-            cssClass: "x-y-axis-show-title",
+    options: visRef.edit
+      ? visRef.data.options
+      : {
+          chart: {
+            type: "treemap",
+            id: "treemap",
+            height: 350,
+            foreColor: darkMode ? "#ffffff" : "#000000",
+            toolbar: {
+              show: false,
+            },
+          },
+          title: {
+            text: "",
+            align: "left",
+            style: {
+              fontSize: 18,
+              cssClass: "x-y-axis-hide-title",
+            },
+          },
+          subtitle: {
+            text: "",
+            align: "left",
+            margin: 15,
+          },
+          legend: {
+            show: true,
+            showForSingleSeries: true,
+            position: "bottom",
+            horizontalAlign: "center",
+            labels: {
+              colors: undefined,
+              useSeriesColors: false,
+            },
+            onItemClick: {
+              toggleDataSeries: false,
+            },
+          },
+          colors: [],
+          xaxis: {
+            categories: [],
+            title: {
+              text: "Group By",
+              style: {
+                cssClass: "x-y-axis-show-title",
+              },
+            },
+            style: {
+              cssClass: "x-y-axis-show-title",
+            },
+            labels: {
+              show: true,
+            },
+          },
+          yaxis: {
+            title: {
+              text: "Counts",
+              style: {
+                cssClass: "x-y-axis-show-title",
+              },
+            },
+            style: {
+              cssClass: "x-y-axis-show-title",
+            },
+            labels: {
+              show: true,
+              formatter: (value) => value.toLocaleString(),
+            },
+          },
+          dataLabels: {
+            enabled: true,
+            style: {
+              colors: ["#000000"],
+              fontWeight: 400,
+            },
+            background: {
+              enabled: true,
+              foreColor: "#ffffff",
+              padding: 10,
+              borderRadius: 2,
+              borderWidth: 1,
+              borderColor: "#ffffff",
+            },
+          },
+          tooltip: {
+            enabled: true,
+            followCursor: true,
+            theme: darkMode ? "dark" : "light",
           },
         },
-        style: {
-          cssClass: "x-y-axis-show-title",
-        },
-        labels: {
-          show: true,
-        },
-      },
-      yaxis: {
-        title: {
-          text: "Counts",
-          style: {
-            cssClass: "x-y-axis-show-title",
-          },
-        },
-        style: {
-          cssClass: "x-y-axis-show-title",
-        },
-        labels: {
-          show: true,
-          formatter: (value) => value.toLocaleString(),
-        },
-      },
-      dataLabels: {
-        enabled: true,
-        style: {
-          colors: ["#000000"],
-          fontWeight: 400,
-        },
-        background: {
-          enabled: true,
-          foreColor: "#ffffff",
-          padding: 10,
-          borderRadius: 2,
-          borderWidth: 1,
-          borderColor: "#ffffff",
-        },
-      },
-      tooltip: {
-        enabled: true,
-        followCursor: true,
-        theme: darkMode ? "dark" : "light",
-      },
-    },
     axisOptions: {
       categoryOptions: [],
       xValueOptions: [],
       valueOptions: [],
-      selectedCategory: "",
       selectedXValue: "",
+      selectedCategory: "",
       selectedValue: "",
     },
   });
 
-  // * This effect is used to set the initial state of the chart when previewing
+  // * This effect is used to update the chart when the dark mode changes.
   useEffect(() => {
-    if (preview) {
-      setState((prevState) => ({
-        ...prevState,
-        series: visRef.data.series,
-        options: {
-          ...visRef.data.options,
-          chart: {
-            ...visRef.data.options.chart,
-            foreColor: darkMode ? "#ffffff" : "#000000",
-          },
-          tooltip: {
-            ...visRef.data.options.tooltip,
-            theme: darkMode ? "dark" : "light",
-          },
+    setState((prevState) => ({
+      ...prevState,
+      options: {
+        ...prevState.options,
+        chart: {
+          ...prevState.options.chart,
+          foreColor: darkMode ? "#ffffff" : "#000000",
         },
-        axisOptions: visRef.data.axisOptions,
-      }));
-    }
-  }, [preview, darkMode]);
+        tooltip: {
+          ...prevState.options.tooltip,
+          theme: darkMode ? "dark" : "light",
+        },
+      },
+    }));
+  }, [darkMode]);
 
   useEffect(() => {
     const stringColumns = dataset.columns.filter(
@@ -201,52 +186,99 @@ const TreeMap = ({
     const numberColumns = dataset.columns.filter(
       (col) => col.type === "number"
     );
+    setState((prevState) => ({
+      ...prevState,
+      axisOptions: {
+        ...prevState.axisOptions,
+        categoryOptions: stringColumns,
+        xValueOptions: stringColumns,
+        valueOptions: numberColumns,
+      },
+    }));
+    setVisRef((prevVisRef) => ({
+      ...prevVisRef,
+      data: {
+        ...prevVisRef.data,
+        axisOptions: {
+          ...prevVisRef.data.axisOptions,
+          xValueOptions: stringColumns,
+          categoryOptions: stringColumns,
+          valueOptions: numberColumns,
+        },
+      },
+      edit: false,
+    }));
+  }, [dataset.columns.length]);
 
-    const updatedSelectedXAxis = state.axisOptions.selectedXAxis
-      ? stringColumns.find(
-          (col) => col.field === state.axisOptions.selectedXAxis
-        )?.field || (stringColumns.length > 0 ? stringColumns[0].field : "")
-      : stringColumns.length > 0
-      ? stringColumns[0].field
-      : "";
+  useEffect(() => {
+    const selectedXValue =
+      visRef.data.axisOptions.selectedXValue ||
+      state.axisOptions.selectedXValue;
+    const selectedCategory =
+      visRef.data.axisOptions.selectedCategory ||
+      state.axisOptions.selectedCategory;
+    const selectedValue =
+      visRef.data.axisOptions.selectedValue || state.axisOptions.selectedValue;
+    const stringColumns =
+      visRef.data.axisOptions.xValueOptions || state.axisOptions.xValueOptions;
+    const numberColumns =
+      visRef.data.axisOptions.valueOptions || state.axisOptions.valueOptions;
 
-    const updatedSelectedValue = state.axisOptions.selectedValue
-      ? numberColumns.find(
-          (col) => col.field === state.axisOptions.selectedValue
-        )?.field ||
+    let updatedSelectedXValue = "";
+    if (visRef.edit && selectedXValue.length !== 0)
+      updatedSelectedXValue = selectedXValue;
+    else if (selectedXValue.length !== 0)
+      updatedSelectedXValue =
+        stringColumns.find((col) => col.field === selectedXValue)?.field ||
+        (stringColumns.length > 0 ? stringColumns[0].field : "");
+    else
+      updatedSelectedXValue =
+        stringColumns.length > 0 ? stringColumns[0].field : "";
+
+    let updatedSelectedValue = "";
+    if (visRef.edit && selectedValue.length !== 0)
+      updatedSelectedValue = selectedValue;
+    else if (selectedValue.length !== 0)
+      updatedSelectedValue =
+        numberColumns.find((col) => col.field === selectedValue)?.field ||
         (numberColumns.length > 0
           ? numberColumns[1]?.field
-          : numberColumns[0]?.field || "")
-      : numberColumns.length > 0
-      ? numberColumns[0].field
-      : "";
+          : numberColumns[0]?.field || "");
+    else
+      updatedSelectedValue =
+        numberColumns.length > 0 ? numberColumns[0].field : "";
 
-    const updatedSelectedCategory = state.axisOptions.selectedCategory
-      ? stringColumns.find(
-          (col) => col.field === state.axisOptions.selectedCategory
-        )?.field || (stringColumns.length > 0 ? stringColumns[0].field : "")
-      : stringColumns.length > 0
-      ? stringColumns[1]?.field
-      : stringColumns[0]?.field || "";
+    let updatedSelectedCategory = "";
+    if (visRef.edit && selectedCategory.length !== 0)
+      updatedSelectedCategory = selectedCategory;
+    else if (selectedCategory.length !== 0)
+      updatedSelectedCategory =
+        stringColumns.find((col) => col.field === selectedCategory)?.field ||
+        (stringColumns.length > 0 ? stringColumns[0].field : "");
+    else
+      updatedSelectedCategory =
+        stringColumns.length > 0
+          ? stringColumns[1]?.field
+          : stringColumns[0]?.field || "";
 
     setState((prevState) => ({
       ...prevState,
       axisOptions: {
-        categoryOptions: stringColumns,
-        xValueOptions: stringColumns,
-        valueOptions: numberColumns,
+        ...prevState.axisOptions,
+        selectedXValue: updatedSelectedXValue,
         selectedCategory: updatedSelectedCategory,
-        selectedXValue: updatedSelectedXAxis,
         selectedValue: updatedSelectedValue,
       },
     }));
-  }, [dataset.columns.length]);
+  }, [
+    visRef.data.axisOptions.xValueOptions,
+    visRef.data.axisOptions.categoryOptions,
+    visRef.data.axisOptions.valueOptions,
+  ]);
 
-  console.log(state.series);
   useEffect(() => {
     const { selectedCategory, selectedXValue, selectedValue } =
       state.axisOptions;
-
     const categoryColumn = dataset.columns.find(
       (col) => col.field === selectedCategory
     );
@@ -256,7 +288,6 @@ const TreeMap = ({
     const xAxisColumn = dataset.columns.find(
       (col) => col.field === selectedXValue
     );
-
     if (!categoryColumn || !valueColumn || !xAxisColumn) return;
 
     // * Aggregating data for TreeMap
@@ -264,22 +295,17 @@ const TreeMap = ({
       const category = row[selectedCategory];
       const xValue = row[selectedXValue];
       const value = row[selectedValue] || 0;
-
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-
+      if (!acc[category]) acc[category] = [];
       // * Finding if xValue already exists
       const existing = acc[category].find((item) => item.x === xValue);
       if (existing) {
-        existing.y += value; // Sum the values
+        existing.y += value; // * Sum the values
       } else {
         acc[category].push({
           x: xValue,
           y: value,
         });
       }
-
       return acc;
     }, {});
 
@@ -289,32 +315,32 @@ const TreeMap = ({
       data: data,
     }));
 
-    setState((prevState) => ({
-      ...prevState,
-      series: series,
-      options: {
-        ...prevState.options,
-        title: {
-          align: "left",
-          text: `TreeMap of ${categoryColumn?.headerName} vs ${xAxisColumn?.headerName} vs ${valueColumn?.headerName}`,
+    setState((prevState) => {
+      let tempState = {
+        ...prevState,
+        series: series,
+      };
+      setVisRef((prevVisRef) => ({
+        ...prevVisRef,
+        data: {
+          ...prevVisRef.data,
+          series: tempState.series,
+          options: tempState.options,
+          axisOptions: {
+            ...prevVisRef.data.axisOptions,
+            selectedCategory: state.axisOptions.selectedCategory,
+            selectedXValue: state.axisOptions.selectedXValue,
+            selectedValue: state.axisOptions.selectedValue,
+          },
         },
-      },
-    }));
-    setVisRef((prevVisRef) => ({
-      ...prevVisRef,
-      data: {
-        ...prevVisRef.data,
-        series: state.series,
-        options: state.options,
-        axisOptions: state.axisOptions,
-      },
-    }));
+      }));
+      return tempState;
+    });
   }, [
     dataset,
     state.axisOptions.selectedCategory,
     state.axisOptions.selectedXValue,
     state.axisOptions.selectedValue,
-    darkMode,
   ]);
 
   const handleCategoryChange = (event) => {
@@ -350,79 +376,75 @@ const TreeMap = ({
   return (
     <>
       <Grid container spacing={2}>
-        {!preview && (
-          <>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel id="category-select-label">Category</InputLabel>
-                <Select
-                  labelId="category-select-label"
-                  id="category-select"
-                  value={state.axisOptions.selectedCategory}
-                  onChange={handleCategoryChange}
-                  label="Category"
-                  variant="outlined"
-                >
-                  {state.axisOptions.categoryOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <FormControl fullWidth>
+            <InputLabel id="category-select-label">Category</InputLabel>
+            <Select
+              labelId="category-select-label"
+              id="category-select"
+              value={state.axisOptions.selectedCategory}
+              onChange={handleCategoryChange}
+              label="Category"
+              variant="outlined"
+            >
+              {state.axisOptions.categoryOptions.map((col) => (
+                <MenuItem key={col.field} value={col.field}>
+                  {col.headerName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <FormControl fullWidth>
+            <InputLabel id="x-value-select-label">X-Value</InputLabel>
+            <Select
+              labelId="x-value-select-label"
+              id="x-value-select"
+              value={state.axisOptions.selectedXValue}
+              onChange={handleXValueChange}
+              label="X-Value"
+              variant="outlined"
+            >
+              {state.axisOptions.xValueOptions.map((col) => (
+                <MenuItem key={col.field} value={col.field}>
+                  {col.headerName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <FormControl fullWidth>
+            <InputLabel id="value-select-label">Value</InputLabel>
+            <Select
+              labelId="value-select-label"
+              id="value-select"
+              value={state.axisOptions.selectedValue}
+              onChange={handleValueChange}
+              label="Value"
+              variant="outlined"
+            >
+              {state.axisOptions.valueOptions.map((col) => (
+                <MenuItem key={col.field} value={col.field}>
+                  {col.headerName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        {!customize && (
+          <Grid size={{ xs: 12 }}>
+            <Grid container spacing={2} justifyContent="flex-end">
+              <Button
+                startIcon={<PaletteIcon />}
+                variant="contained"
+                onClick={handleToggleCustomizePanel}
+              >
+                Customize
+              </Button>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel id="x-value-select-label">X-Value</InputLabel>
-                <Select
-                  labelId="x-value-select-label"
-                  id="x-value-select"
-                  value={state.axisOptions.selectedXValue}
-                  onChange={handleXValueChange}
-                  label="X-Value"
-                  variant="outlined"
-                >
-                  {state.axisOptions.xValueOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel id="value-select-label">Value</InputLabel>
-                <Select
-                  labelId="value-select-label"
-                  id="value-select"
-                  value={state.axisOptions.selectedValue}
-                  onChange={handleValueChange}
-                  label="Value"
-                  variant="outlined"
-                >
-                  {state.axisOptions.valueOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            {!customize && (
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={2} justifyContent="flex-end">
-                  <Button
-                    startIcon={<PaletteIcon />}
-                    variant="contained"
-                    onClick={handleToggleCustomizePanel}
-                  >
-                    Customize
-                  </Button>
-                </Grid>
-              </Grid>
-            )}
-          </>
+          </Grid>
         )}
 
         <Grow in={!customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>

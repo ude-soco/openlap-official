@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { VisualizationTypes } from "../../../utils/data/config.js";
 import BarChart from "../../finalize/components/bar-chart.jsx";
 import { Typography } from "@mui/material";
@@ -11,15 +11,10 @@ import RadarChart from "../../finalize/components/radar-chart.jsx";
 import TreeMap from "../../finalize/components/treemap.jsx";
 import PolarAreaChart from "../../finalize/components/polar-area-chart.jsx";
 import LineChart from "../../finalize/components/line-chart.jsx";
+import { ISCContext } from "../../../indicator-specification-card.jsx";
 
-const VisSelection = ({
-  dataset,
-  visRef,
-  setVisRef,
-  preview,
-  customize,
-  handleToggleCustomizePanel,
-}) => {
+const VisSelection = ({ customize, handleToggleCustomizePanel }) => {
+  const { visRef } = useContext(ISCContext);
   switch (visRef.chart.type) {
     case VisualizationTypes.bar:
       return (
@@ -87,10 +82,6 @@ const VisSelection = ({
     case VisualizationTypes.treemap:
       return (
         <TreeMap
-          dataset={dataset}
-          visRef={visRef}
-          setVisRef={setVisRef}
-          preview={preview}
           customize={customize}
           handleToggleCustomizePanel={handleToggleCustomizePanel}
         />

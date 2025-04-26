@@ -72,12 +72,18 @@ const IndicatorSpecificationCard = () => {
             axisOptions: {
               selectedXAxis: "",
               selectedYAxis: "",
-              selectedLabel: "",
-              selectedBarValue: "",
+              selectedLabel: "",    // * StackedBar/Line
+              selectedBarValue: "", // * StackedBar/Line
+              selectedCategory: "", // * TreeMap
+              selectedXValue: "",   // * TreeMap
+              selectedValue: "",    // * TreeMap
               xAxisOptions: [],
               yAxisOptions: [],
-              labelOptions: [],
-              barValueOptions: [],
+              labelOptions: [],     // * StackedBar/Line
+              barValueOptions: [],  // * StackedBar/Line
+              categoryOptions: [],  // * TreeMap
+              xValueOptions: [],    // * TreeMap
+              valueOptions: [],     // * TreeMap
             },
           },
           edit: false,

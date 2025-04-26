@@ -117,10 +117,6 @@ const Finalize = () => {
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <VisSelection
-                dataset={dataset}
-                visRef={visRef}
-                setVisRef={setVisRef}
-                preview={false}
                 customize={showCustomize}
                 handleToggleCustomizePanel={handleToggleCustomizePanel}
               />
