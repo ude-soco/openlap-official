@@ -9,7 +9,11 @@ import {
 } from "@mui/material";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import Tooltip from "@mui/material/Tooltip";
-import { fetchAnalyticsTechnique } from "../utils/analytics-api.js";
+import {
+  fetchAnalyticsTechnique,
+  fetchTechniqueInputs,
+  fetchTechniqueParams,
+} from "../utils/analytics-api.js";
 
 const AnalyticsTechnique = ({
   state,
@@ -52,6 +56,47 @@ const AnalyticsTechnique = ({
       ...prevState,
       autoCompleteValue: null,
     }));
+    const loadTechniqueInputs = async (value) => {
+      try {
+        return await fetchTechniqueInputs(api, value);
+      } catch (error) {
+        throw error;
+      }
+    };
+    const loadTechniqueParams = async (techniqueId) => {
+      try {
+        return await fetchTechniqueParams(api, techniqueId);
+      } catch (error) {
+        throw error;
+      }
+    };
+    loadTechniqueInputs(value.id)
+      .then((response) => {
+        setState((prevState) => ({
+          ...prevState,
+          inputs: response,
+        }));
+      })
+      .then(() => {
+        loadTechniqueParams(value.id)
+          .then((response) => {
+            response.forEach((param) => (param.value = param.defaultValue));
+            setAnalysisRef((prevState) => ({
+              ...prevState,
+              analyticsTechniqueParams: response,
+            }));
+            setState((prevState) => ({
+              ...prevState,
+              parameters: response,
+            }));
+          })
+          .catch((error) => {
+            console.log("Error fetching Analytics technique input list", error);
+          });
+      })
+      .catch((error) => {
+        console.log("Error fetching Analytics technique input list", error);
+      });
   };
 
   const handleDeselectTechnique = () => {
@@ -68,6 +113,8 @@ const AnalyticsTechnique = ({
     });
     setState((prevState) => ({
       ...prevState,
+      inputs: [],
+      parameters: [],
       previewDisabled: true,
     }));
     setLockedStep((prevState) => ({
@@ -89,6 +136,13 @@ const AnalyticsTechnique = ({
             id="combo-box-lrs"
             options={state.techniqueList}
             fullWidth
+            slotProps={{
+              listbox: {
+                style: {
+                  maxHeight: "240px",
+                },
+              },
+            }}
             value={state.autoCompleteValue}
             getOptionLabel={(option) => option.name}
             renderOption={(props, option) => {

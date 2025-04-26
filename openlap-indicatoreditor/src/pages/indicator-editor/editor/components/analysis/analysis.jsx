@@ -7,7 +7,9 @@ import {
   Button,
   Chip,
   Grid,
+  Grow,
   IconButton,
+  Skeleton,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -112,7 +114,7 @@ const Analysis = ({
         expanded={lockedStep.analysis.openPanel}
         disabled={lockedStep.analysis.locked}
       >
-        <AccordionSummary aria-controls="panel3-content" id="panel3-header">
+        <AccordionSummary>
           <Grid container spacing={1}>
             {/* Label */}
             <Grid item xs={12}>
@@ -187,7 +189,7 @@ const Analysis = ({
                   <Grid item xs={12}>
                     <Grid container alignItems="center" spacing={1}>
                       <Grid item>
-                        <Typography>Technique:</Typography>
+                        <Typography>Analysis method:</Typography>
                       </Grid>
                       <Grid item xs>
                         <Grid container spacing={1}>
@@ -238,7 +240,7 @@ const Analysis = ({
                   <Grid item xs={12}>
                     <Grid container alignItems="center" spacing={1}>
                       <Grid item>
-                        <Typography>Parameters:</Typography>
+                        <Typography>Additional parameters:</Typography>
                       </Grid>
                       <Grid item xs>
                         <Grid container spacing={1}>
@@ -280,27 +282,43 @@ const Analysis = ({
                 setLockedStep={setLockedStep}
               />
             </Grid>
-            {analysisRef.analyticsTechniqueId.length !== 0 && (
-              <Grid item xs={12}>
-                {indicator.type === "BASIC" && (
-                  <InputsBasicIndicator state={state} setState={setState} />
-                )}
-                {indicator.type === "MULTI_LEVEL" && (
-                  <InputsMultiLevelIndicator
-                    state={state}
-                    setState={setState}
-                  />
-                )}
-              </Grid>
-            )}
-            {analysisRef.analyticsTechniqueId.length !== 0 && (
-              <Grid item xs={12}>
-                <Params
-                  analysisRef={analysisRef}
-                  setAnalysisRef={setAnalysisRef}
-                />
-              </Grid>
-            )}
+            <Grow
+              timeout={{ enter: 500, exit: 0 }}
+              in={analysisRef.analyticsTechniqueId.length !== 0}
+              unmountOnExit
+            >
+              {state.inputs.length > 0 ? (
+                <>
+                  <Grid item xs={12}>
+                    {indicator.type === "BASIC" && (
+                      <InputsBasicIndicator state={state} setState={setState} />
+                    )}
+                    {indicator.type === "MULTI_LEVEL" && (
+                      <InputsMultiLevelIndicator
+                        state={state}
+                        setState={setState}
+                      />
+                    )}
+                  </Grid>
+                  {state.parameters.length > 0 ? (
+                    <Grid item xs={12}>
+                      <Params
+                        analysisRef={analysisRef}
+                        setAnalysisRef={setAnalysisRef}
+                      />
+                    </Grid>
+                  ) : (
+                    <Grid item xs={12}>
+                      <Skeleton variant="rectangular" height={118} />
+                    </Grid>
+                  )}
+                </>
+              ) : (
+                <Grid item xs={12}>
+                  <Skeleton variant="rectangular" height={118} />
+                </Grid>
+              )}
+            </Grow>
             {Object.entries(analysisRef.analyzedData).length !== 0 && (
               <Grid item xs={12}>
                 <AnalyzedDataTable analyzedData={analysisRef.analyzedData} />

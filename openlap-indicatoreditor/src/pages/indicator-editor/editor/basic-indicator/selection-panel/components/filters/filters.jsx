@@ -191,16 +191,22 @@ const Filters = () => {
                 <ActionOnActivities state={state} setState={setState} />
               </Grid>
             </Grow>
-            <Grid item xs={12}>
-              <Grid container spacing={4}>
-                <Grid item xs={12}>
-                  <DateRange />
-                </Grid>
-                <Grid item xs={12}>
-                  <User />
+            <Grow
+              in={indicatorQuery.actionOnActivities.length > 0}
+              timeout={{ enter: 500, exit: 0 }}
+              unmountOnExit
+            >
+              <Grid item xs={12}>
+                <Grid container spacing={4}>
+                  <Grid item xs={12}>
+                    <DateRange />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <User />
+                  </Grid>
                 </Grid>
               </Grid>
-            </Grid>
+            </Grow>
           </Grid>
         </AccordionDetails>
         <AccordionActions>

@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import {
   Divider,
   FormControl,
@@ -10,37 +10,14 @@ import {
   Select,
   Typography,
 } from "@mui/material";
-import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import HelpIcon from "@mui/icons-material/Help";
 import Tooltip from "@mui/material/Tooltip";
-import { fetchTechniqueInputs } from "../utils/analytics-api.js";
 import { BasicIndicatorContext } from "../../../basic-indicator/basic-indicator.jsx";
 
 const InputsBasicIndicator = ({ state, setState }) => {
-  const { api } = useContext(AuthContext);
-  const { analysisInputMenu, setIndicatorQuery, analysisRef, setAnalysisRef } =
-    useContext(BasicIndicatorContext);
-
-  useEffect(() => {
-    const loadTechniqueInputs = async (value) => {
-      try {
-        return await fetchTechniqueInputs(api, value);
-      } catch (error) {
-        throw error;
-      }
-    };
-    if (analysisRef.analyticsTechniqueId !== "")
-      loadTechniqueInputs(analysisRef.analyticsTechniqueId)
-        .then((response) => {
-          setState((prevState) => ({
-            ...prevState,
-            inputs: response,
-          }));
-        })
-        .catch((error) => {
-          console.log("Error fetching Analytics technique input list", error);
-        });
-  }, [analysisRef.analyticsTechniqueId]);
+  const { analysisInputMenu, setIndicatorQuery, setAnalysisRef } = useContext(
+    BasicIndicatorContext
+  );
 
   const handleChangeInputMapping = (event, input) => {
     const { value } = event.target;
@@ -72,7 +49,7 @@ const InputsBasicIndicator = ({ state, setState }) => {
       };
       let updatedMappings = updateMappingsMethod(
         tempInputMappings,
-        prevState.analyticsTechniqueMapping.mapping,
+        prevState.analyticsTechniqueMapping.mapping
       );
       setIndicatorQuery((prevState) => ({
         ...prevState,

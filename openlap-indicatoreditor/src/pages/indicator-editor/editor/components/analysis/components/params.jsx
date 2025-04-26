@@ -1,4 +1,3 @@
-import { useContext, useEffect } from "react";
 import {
   Divider,
   FormControl,
@@ -12,35 +11,8 @@ import {
   Typography,
 } from "@mui/material";
 import HelpIcon from "@mui/icons-material/Help";
-import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import { fetchTechniqueParams } from "../utils/analytics-api.js";
 
 const Params = ({ analysisRef, setAnalysisRef }) => {
-  const { api } = useContext(AuthContext);
-
-  useEffect(() => {
-    const loadTechniqueParams = async (techniqueId) => {
-      try {
-        return await fetchTechniqueParams(api, techniqueId);
-      } catch (error) {
-        throw error;
-      }
-    };
-
-    if (analysisRef.analyticsTechniqueId !== "")
-      loadTechniqueParams(analysisRef.analyticsTechniqueId)
-        .then((response) => {
-          response.forEach((param) => (param.value = param.defaultValue));
-          setAnalysisRef((prevState) => ({
-            ...prevState,
-            analyticsTechniqueParams: response,
-          }));
-        })
-        .catch((error) => {
-          console.log("Error fetching Analytics technique input list", error);
-        });
-  }, [analysisRef.analyticsTechniqueId]);
-
   const handleChangeParam = (event, param) => {
     const { value } = event.target;
     setAnalysisRef((prevState) => {

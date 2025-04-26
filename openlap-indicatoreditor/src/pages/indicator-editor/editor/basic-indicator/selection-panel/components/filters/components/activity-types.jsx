@@ -199,7 +199,7 @@ const ActivityTypes = ({ state, setState }) => {
                 <Typography variant="body2" color="text.secondary">
                   <i>
                     Remove all the <b>Activities</b> below to add/remove
-                    activity types.
+                    activity types
                   </i>
                 </Typography>
               )}

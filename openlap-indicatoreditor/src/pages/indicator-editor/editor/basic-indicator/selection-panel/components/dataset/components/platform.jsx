@@ -141,7 +141,7 @@ const Platform = ({ state, setState }) => {
                 <Typography variant="body2" color="text.secondary">
                   <i>
                     Remove all the <b>Activity types</b> from filters below to
-                    add/remove a platform.
+                    add/remove a platform
                   </i>
                 </Typography>
               )}

@@ -244,7 +244,7 @@ const Activities = ({ state, setState }) => {
                 <Typography variant="body2" color="text.secondary">
                   <i>
                     Remove all the <b>Actions</b> below to add/remove
-                    activities.
+                    activities
                   </i>
                 </Typography>
               )}
