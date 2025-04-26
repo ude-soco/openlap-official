@@ -66,10 +66,6 @@ const VisSelection = ({
     case VisualizationTypes.stackedBar:
       return (
         <StackedBarChart
-          dataset={dataset}
-          visRef={visRef}
-          setVisRef={setVisRef}
-          preview={preview}
           customize={customize}
           handleToggleCustomizePanel={handleToggleCustomizePanel}
         />

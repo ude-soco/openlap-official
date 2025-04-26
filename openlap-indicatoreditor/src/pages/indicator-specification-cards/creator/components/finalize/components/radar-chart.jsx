@@ -20,11 +20,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 
-const RadarChart = ({
-  preview = false,
-  customize = false,
-  handleToggleCustomizePanel,
-}) => {
+const RadarChart = ({ customize = false, handleToggleCustomizePanel }) => {
   const { darkMode } = useContext(CustomThemeContext);
   const { visRef, setVisRef, dataset } = useContext(ISCContext);
   const chartRef = useRef(null);
@@ -66,102 +62,104 @@ const RadarChart = ({
       isSortingOrderDescendingAvailable: false,
       isCategoriesFilteringAvailable: false,
     },
-    options: {
-      chart: {
-        id: "radar",
-        type: "radar",
-        width: "100%",
-        foreColor: darkMode ? "#ffffff" : "#000000",
-        toolbar: {
-          show: false,
-        },
-      },
-      colors: [],
-      title: {
-        text: "",
-        align: "left",
-        margin: 15,
-        style: {
-          fontSize: 18,
-          cssClass: "x-y-axis-hide-title",
-        },
-      },
-      subtitle: {
-        text: "",
-        align: "left",
-        margin: 15,
-      },
-      xaxis: {
-        name: "",
-        title: {
-          text: "",
-          style: {
-            cssClass: "x-y-axis-show-title",
+    options: visRef.edit
+      ? visRef.data.options
+      : {
+          chart: {
+            id: "radar",
+            type: "radar",
+            width: "100%",
+            foreColor: darkMode ? "#ffffff" : "#000000",
+            toolbar: {
+              show: false,
+            },
+          },
+          colors: [],
+          title: {
+            text: "",
+            align: "left",
+            margin: 15,
+            style: {
+              fontSize: 18,
+              cssClass: "x-y-axis-hide-title",
+            },
+          },
+          subtitle: {
+            text: "",
+            align: "left",
+            margin: 15,
+          },
+          xaxis: {
+            name: "",
+            title: {
+              text: "",
+              style: {
+                cssClass: "x-y-axis-show-title",
+              },
+            },
+            categories: [],
+            labels: {
+              show: true,
+            },
+          },
+          yaxis: {
+            title: {
+              text: "",
+              style: {
+                cssClass: "x-y-axis-show-title",
+              },
+            },
+            labels: {
+              show: true,
+            },
+          },
+          dataLabels: {
+            enabled: true,
+            style: {
+              colors: ["#000000"],
+              fontWeight: 400,
+            },
+            background: {
+              enabled: false,
+              foreColor: "#ffffff",
+              padding: 10,
+              borderRadius: 2,
+              borderWidth: 1,
+              borderColor: "#ffffff",
+            },
+          },
+          legend: {
+            show: true,
+            showForSingleSeries: true,
+            position: "bottom",
+            horizontalAlign: "center",
+            labels: {
+              colors: undefined,
+              useSeriesColors: false,
+            },
+            onItemClick: {
+              toggleDataSeries: false,
+            },
+          },
+          tooltip: {
+            enabled: true,
+            followCursor: true,
+            theme: darkMode ? "dark" : "light",
+            onDatasetHover: {
+              highlightDataSeries: true,
+            },
+          },
+          fill: {
+            opacity: 0.4,
+          },
+          stroke: {
+            show: true,
+            width: 2,
+          },
+          markers: {
+            size: 4,
           },
         },
-        categories: [],
-        labels: {
-          show: true,
-        },
-      },
-      yaxis: {
-        title: {
-          text: "",
-          style: {
-            cssClass: "x-y-axis-show-title",
-          },
-        },
-        labels: {
-          show: true,
-        },
-      },
-      dataLabels: {
-        enabled: true,
-        style: {
-          colors: ["#000000"],
-          fontWeight: 400,
-        },
-        background: {
-          enabled: false,
-          foreColor: "#ffffff",
-          padding: 10,
-          borderRadius: 2,
-          borderWidth: 1,
-          borderColor: "#ffffff",
-        },
-      },
-      legend: {
-        show: true,
-        showForSingleSeries: true,
-        position: "bottom",
-        horizontalAlign: "center",
-        labels: {
-          colors: undefined,
-          useSeriesColors: false,
-        },
-        onItemClick: {
-          toggleDataSeries: false,
-        },
-      },
-      tooltip: {
-        enabled: true,
-        followCursor: true,
-        theme: darkMode ? "dark" : "light",
-        onDatasetHover: {
-          highlightDataSeries: true,
-        },
-      },
-      fill: {
-        opacity: 0.4,
-      },
-      stroke: {
-        show: true,
-        width: 2,
-      },
-      markers: {
-        size: 4,
-      },
-    },
     axisOptions: {
       xAxisOptions: [],
       yAxisOptions: [],
