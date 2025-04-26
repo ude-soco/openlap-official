@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Autocomplete,
   Checkbox,
@@ -10,7 +11,6 @@ import {
   Grid,
   TextField,
 } from "@mui/material";
-import { useEffect, useState } from "react";
 
 export const FiltersBar = ({
   categories,

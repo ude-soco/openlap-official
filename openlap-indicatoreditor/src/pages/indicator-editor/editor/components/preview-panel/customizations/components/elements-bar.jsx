@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   FormControlLabel,
   Switch,
@@ -10,20 +11,8 @@ import {
   Grid,
   FormGroup,
 } from "@mui/material";
-import { useEffect, useState } from "react";
 
-export const ElementsBar = ({
-  indicator,
-  setVisRef,
-  api,
-  indicatorQuery,
-  analysisRef,
-  setIndicator,
-  visRef,
-  state,
-  setState,
-  chartConfiguration,
-}) => {
+export const ElementsBar = ({ state, setState, chartConfiguration }) => {
   const [typingTimeout, setTypingTimeout] = useState(null);
   const [inputTitleValue, setInputTitleValue] = useState(state.chartTitle);
   const [inputSubtitleValue, setInputSubtitleValue] = useState(

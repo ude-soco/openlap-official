@@ -1,14 +1,13 @@
 import { Box, Tab } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-import { useEffect, useState, useContext } from "react";
-import { ElementsBar } from "./elements-bar";
-import { StylesBar } from "./styles";
-import { FiltersBar } from "./filter";
-import { requestBasicIndicatorPreview } from "../../../../components/visualization/utils/visualization-api.js";
+import { useEffect, useState } from "react";
+import { ElementsBar } from "./components/elements-bar.jsx";
+import { StylesBar } from "./components/styles.jsx";
+import { FiltersBar } from "./components/filter.jsx";
+import { requestBasicIndicatorPreview } from "../../visualization/utils/visualization-api.js";
 import { useSnackbar } from "notistack";
-import { use } from "react";
 
-const BarChartCustomization = ({
+const ChartCustomization = ({
   indicator,
   setVisRef,
   api,
@@ -52,8 +51,6 @@ const BarChartCustomization = ({
   });
 
   const { enqueueSnackbar } = useSnackbar();
-
-  // const { state, setState } = useContext(StateContextOptions);
 
   const handleChange = (e, newValue) => {
     setvalue(newValue);
@@ -219,4 +216,4 @@ const BarChartCustomization = ({
   );
 };
 
-export default BarChartCustomization;
+export default ChartCustomization;

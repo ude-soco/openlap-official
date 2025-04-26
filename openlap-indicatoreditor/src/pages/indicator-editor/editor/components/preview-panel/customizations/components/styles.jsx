@@ -1,14 +1,5 @@
-import {
-  Box,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
-  Grid,
-  Switch,
-  Typography,
-  TextField,
-} from "@mui/material";
-import { useContext, useEffect, useState } from "react";
+import { useState } from "react";
+import { Box, FormControl, FormLabel, Grid, Typography } from "@mui/material";
 
 export const StylesBar = ({
   categories,
