@@ -10,6 +10,7 @@ import GroupedBarChart from "../../finalize/components/grouped-bar-chart.jsx";
 import RadarChart from "../../finalize/components/radar-chart.jsx";
 import TreeMap from "../../finalize/components/treemap.jsx";
 import PolarAreaChart from "../../finalize/components/polar-area-chart.jsx";
+import LineChart from "../../finalize/components/line-chart.jsx";
 
 const VisSelection = ({
   dataset,
@@ -29,7 +30,7 @@ const VisSelection = ({
       );
     case VisualizationTypes.line:
       return (
-        <GroupedBarChart
+        <LineChart
           customize={customize}
           handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
@@ -51,10 +52,6 @@ const VisSelection = ({
     case VisualizationTypes.radar:
       return (
         <RadarChart
-          dataset={dataset}
-          visRef={visRef}
-          setVisRef={setVisRef}
-          preview={preview}
           customize={customize}
           handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
@@ -87,10 +84,6 @@ const VisSelection = ({
     case VisualizationTypes.groupedBar:
       return (
         <GroupedBarChart
-          dataset={dataset}
-          visRef={visRef}
-          setVisRef={setVisRef}
-          preview={preview}
           customize={customize}
           handleToggleCustomizePanel={handleToggleCustomizePanel}
         />

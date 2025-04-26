@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import Chart from "react-apexcharts";
 import {
@@ -24,18 +18,15 @@ import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
-
-export let StateContext = createContext();
+import { ISCContext } from "../../../indicator-specification-card.jsx";
 
 const RadarChart = ({
-  dataset,
-  visRef,
-  setVisRef,
   preview = false,
   customize = false,
   handleToggleCustomizePanel,
 }) => {
   const { darkMode } = useContext(CustomThemeContext);
+  const { visRef, setVisRef, dataset } = useContext(ISCContext);
   const chartRef = useRef(null);
 
   const [state, setState] = useState({
@@ -179,27 +170,23 @@ const RadarChart = ({
     },
   });
 
-  // * This effect is used to set the initial state of the chart when previewing
+  // * This effect is used to update the chart when the dark mode changes.
   useEffect(() => {
-    if (preview) {
-      setState((prevState) => ({
-        ...prevState,
-        series: visRef.data.series,
-        options: {
-          ...visRef.data.options,
-          chart: {
-            ...visRef.data.options.chart,
-            foreColor: darkMode ? "#ffffff" : "#000000",
-          },
-          tooltip: {
-            ...visRef.data.options.tooltip,
-            theme: darkMode ? "dark" : "light",
-          },
+    setState((prevState) => ({
+      ...prevState,
+      options: {
+        ...prevState.options,
+        chart: {
+          ...prevState.options.chart,
+          foreColor: darkMode ? "#ffffff" : "#000000",
         },
-        axisOptions: visRef.data.axisOptions,
-      }));
-    }
-  }, [preview, darkMode]);
+        tooltip: {
+          ...prevState.options.tooltip,
+          theme: darkMode ? "dark" : "light",
+        },
+      },
+    }));
+  }, [darkMode]);
 
   useEffect(() => {
     const stringColumns = dataset.columns.filter(
@@ -208,45 +195,72 @@ const RadarChart = ({
     const numberColumns = dataset.columns.filter(
       (col) => col.type === "number"
     );
+    setState((prevState) => ({
+      ...prevState,
+      axisOptions: {
+        ...prevState.axisOptions,
+        xAxisOptions: stringColumns,
+        yAxisOptions: numberColumns,
+      },
+    }));
+    setVisRef((prevVisRef) => ({
+      ...prevVisRef,
+      data: {
+        ...prevVisRef.data,
+        axisOptions: {
+          ...prevVisRef.data.axisOptions,
+          xAxisOptions: stringColumns,
+          yAxisOptions: numberColumns,
+        },
+      },
+      edit: false,
+    }));
+  }, [dataset.columns.length]);
 
-    const updatedSelectedXAxis = state.axisOptions.selectedXAxis
-      ? stringColumns.find(
-          (col) => col.field === state.axisOptions.selectedXAxis
-        )?.field || ""
-      : stringColumns.length > 0
-      ? stringColumns[0].field
-      : "";
+  useEffect(() => {
+    const selectedXAxis =
+      visRef.data.axisOptions.selectedXAxis || state.axisOptions.selectedXAxis;
+    const selectedYAxis =
+      visRef.data.axisOptions.selectedYAxis || state.axisOptions.selectedYAxis;
+    const stringColumns =
+      visRef.data.axisOptions.xAxisOptions || state.axisOptions.xAxisOptions;
+    const numberColumns =
+      visRef.data.axisOptions.yAxisOptions || state.axisOptions.yAxisOptions;
 
-    const updatedSelectedYAxis = state.axisOptions.selectedYAxis
-      ? numberColumns.find(
-          (col) => col.field === state.axisOptions.selectedYAxis
-        )?.field || (numberColumns.length > 0 ? [numberColumns[0].field] : [])
-      : numberColumns.length > 0
-      ? [numberColumns[0].field]
-      : [];
+    let updatedSelectedXAxis = "";
+    if (visRef.edit && selectedXAxis.length !== 0)
+      updatedSelectedXAxis = selectedXAxis;
+    else if (selectedXAxis.length !== 0)
+      updatedSelectedXAxis =
+        stringColumns.find((col) => col.field === selectedXAxis)?.field ||
+        (stringColumns.length > 0 ? stringColumns[0].field : "");
+    else
+      updatedSelectedXAxis =
+        stringColumns.length > 0 ? stringColumns[0].field : "";
+
+    let updatedSelectedYAxis = [];
+    if (visRef.edit && selectedYAxis.length !== 0)
+      updatedSelectedYAxis = selectedYAxis;
+    else if (Array.isArray(selectedYAxis))
+      updatedSelectedYAxis =
+        numberColumns.find((col) => col.field === selectedYAxis)?.field ||
+        (numberColumns.length > 0 ? numberColumns.map((col) => col.field) : []);
+    else
+      updatedSelectedYAxis =
+        numberColumns.length > 0 ? numberColumns.map((col) => col.field) : [];
 
     setState((prevState) => ({
       ...prevState,
-      options: {
-        ...prevState.options,
-        chart: {
-          ...prevState.options.chart,
-          type: visRef.chart.code,
-          foreColor: darkMode ? "#ffffff" : "#000000",
-        },
-        tooltip: {
-          ...prevState.options.tooltip,
-          theme: darkMode ? "dark" : "light",
-        },
-      },
       axisOptions: {
-        xAxisOptions: stringColumns,
-        yAxisOptions: numberColumns,
+        ...prevState.axisOptions,
         selectedXAxis: updatedSelectedXAxis,
         selectedYAxis: updatedSelectedYAxis,
       },
     }));
-  }, [dataset.columns.length]);
+  }, [
+    visRef.data.axisOptions.xAxisOptions,
+    visRef.data.axisOptions.yAxisOptions,
+  ]);
 
   useEffect(() => {
     const { selectedXAxis, selectedYAxis } = state.axisOptions;
@@ -256,84 +270,66 @@ const RadarChart = ({
     const yAxisColumns = dataset.columns.filter((col) =>
       selectedYAxis.includes(col.field)
     );
-
     if (!xAxisColumn || yAxisColumns.length === 0) return;
 
-    // Get unique categories for X-axis
+    // * Get unique categories for X-axis
     const categories = xAxisColumn
       ? [...new Set(dataset.rows.map((row) => row[xAxisColumn.field]))]
       : [];
 
-    // Aggregate data based on selected Y-axis and X-axis categories
-    const series = selectedYAxis.map((yField) => {
-      const valueColumn = dataset.columns.find((col) => col.field === yField);
-      const seriesData = categories.map((category) => {
-        return dataset.rows
-          .filter((row) => row[xAxisColumn.field] === category)
-          .reduce((acc, row) => acc + (row[valueColumn.field] || 0), 0);
-      });
+    // * Aggregate data based on selected Y-axis and X-axis categories
+    const series = selectedYAxis
+      .map((yField) => {
+        const valueColumn = dataset.columns.find((col) => col.field === yField);
+        if (!valueColumn) return null; // Skip if no valueColumn
+        const seriesData = categories.map((category) => {
+          return dataset.rows
+            .filter((row) => row[xAxisColumn.field] === category)
+            .reduce((acc, row) => {
+              const value = row[valueColumn.field];
+              return acc + (typeof value === "number" ? value : 0);
+            }, 0);
+        });
+        return {
+          name: valueColumn.headerName,
+          data: seriesData,
+        };
+      })
+      .filter((s) => s !== null);
 
-      return {
-        name: valueColumn ? valueColumn.headerName : "Default Series",
-        data: seriesData,
+    setState((prevState) => {
+      let tempState = {
+        ...prevState,
+        series: series,
+        options: {
+          ...prevState.options,
+          xaxis: {
+            ...prevState.options.xaxis,
+            categories: categories,
+            name: xAxisColumn ? xAxisColumn.headerName : "Default Categories",
+          },
+        },
       };
+      setVisRef((prevVisRef) => ({
+        ...prevVisRef,
+        data: {
+          ...prevVisRef.data,
+          series: tempState.series,
+          options: tempState.options,
+          axisOptions: {
+            ...prevVisRef.data.axisOptions,
+            selectedXAxis: state.axisOptions.selectedXAxis,
+            selectedYAxis: state.axisOptions.selectedYAxis,
+          },
+        },
+        edit: false,
+      }));
+      return tempState;
     });
-
-    // // Group data by unique X-axis values and sum Y-axis values
-    // const groupedData = dataset.rows.reduce((acc, row) => {
-    //   const xValue = row[selectedXAxis] || "Unknown";
-    //   if (!acc[xValue]) acc[xValue] = {};
-    //   selectedYAxis.forEach((yField) => {
-    //     if (!acc[xValue][yField]) acc[xValue][yField] = 0;
-    //     acc[xValue][yField] += row[yField] || 0;
-    //   });
-    //   return acc;
-    // }, {});
-
-    // // Prepare categories and series
-    // const categories = Object.keys(groupedData);
-    // const series = selectedYAxis.map((yField) => ({
-    //   name:
-    //     dataset.columns.find((col) => col.field === yField)?.headerName ||
-    //     "Default Series",
-    //   data: categories.map((category) => groupedData[category][yField]),
-    // }));
-
-    setState((prevState) => ({
-      ...prevState,
-      series: series,
-      options: {
-        ...prevState.options,
-        chart: {
-          ...prevState.options.chart,
-          type: visRef.chart.code,
-          foreColor: darkMode ? "#ffffff" : "#000000",
-        },
-        tooltip: {
-          ...prevState.options.tooltip,
-          theme: darkMode ? "dark" : "light",
-        },
-        xaxis: {
-          ...prevState.options.xaxis,
-          categories: categories,
-          name: xAxisColumn ? xAxisColumn.headerName : "Default Categories",
-        },
-      },
-    }));
-    setVisRef((prevVisRef) => ({
-      ...prevVisRef,
-      data: {
-        ...prevVisRef.data,
-        series: state.series,
-        options: state.options,
-        axisOptions: state.axisOptions,
-      },
-    }));
   }, [
     dataset,
     state.axisOptions.selectedXAxis,
     state.axisOptions.selectedYAxis,
-    darkMode,
   ]);
 
   const handleXAxisChange = (event) => {
@@ -360,72 +356,68 @@ const RadarChart = ({
   return (
     <>
       <Grid container spacing={2}>
-        {!preview && (
-          <>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl fullWidth>
-                <InputLabel id="x-axis-select-label">X-Axis</InputLabel>
-                <Select
-                  labelId="x-axis-select-label"
-                  id="x-axis-select"
-                  value={state.axisOptions.selectedXAxis}
-                  onChange={handleXAxisChange}
-                  label="X-Axis"
-                  variant="outlined"
-                >
-                  {state.axisOptions.xAxisOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <FormControl fullWidth>
+            <InputLabel id="x-axis-select-label">X-Axis</InputLabel>
+            <Select
+              labelId="x-axis-select-label"
+              id="x-axis-select"
+              value={state.axisOptions.selectedXAxis}
+              onChange={handleXAxisChange}
+              label="X-Axis"
+              variant="outlined"
+            >
+              {state.axisOptions.xAxisOptions.map((col) => (
+                <MenuItem key={col.field} value={col.field}>
+                  {col.headerName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <FormControl fullWidth>
+            <InputLabel id="y-axis-select-label">Y-Axis</InputLabel>
+            <Select
+              labelId="y-axis-select-label"
+              id="y-axis-select"
+              multiple
+              value={state.axisOptions.selectedYAxis}
+              onChange={handleYAxisChange}
+              label="Y-Axis"
+              variant="outlined"
+              renderValue={(selected) =>
+                selected
+                  .map((value) => {
+                    const column = state.axisOptions.yAxisOptions.find(
+                      (col) => col.field === value
+                    );
+                    return column ? column.headerName : value;
+                  })
+                  .join(", ")
+              }
+            >
+              {state.axisOptions.yAxisOptions.map((col) => (
+                <MenuItem key={col.field} value={col.field}>
+                  {col.headerName}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>Multi-select possible</FormHelperText>
+          </FormControl>
+        </Grid>
+        {!customize && (
+          <Grid size={{ xs: 12 }}>
+            <Grid container spacing={2} justifyContent="flex-end">
+              <Button
+                startIcon={<PaletteIcon />}
+                variant="contained"
+                onClick={handleToggleCustomizePanel}
+              >
+                Customize
+              </Button>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl fullWidth>
-                <InputLabel id="y-axis-select-label">Y-Axis</InputLabel>
-                <Select
-                  labelId="y-axis-select-label"
-                  id="y-axis-select"
-                  multiple
-                  value={state.axisOptions.selectedYAxis}
-                  onChange={handleYAxisChange}
-                  label="Y-Axis"
-                  variant="outlined"
-                  renderValue={(selected) =>
-                    selected
-                      .map((value) => {
-                        const column = state.axisOptions.yAxisOptions.find(
-                          (col) => col.field === value
-                        );
-                        return column ? column.headerName : value;
-                      })
-                      .join(", ")
-                  }
-                >
-                  {state.axisOptions.yAxisOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>Multi-select possible</FormHelperText>
-              </FormControl>
-            </Grid>
-            {!customize && (
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={2} justifyContent="flex-end">
-                  <Button
-                    startIcon={<PaletteIcon />}
-                    variant="contained"
-                    onClick={handleToggleCustomizePanel}
-                  >
-                    Customize
-                  </Button>
-                </Grid>
-              </Grid>
-            )}
-          </>
+          </Grid>
         )}
         <Grow in={!customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>
           <Grid size={{ xs: 12 }} sx={{ minHeight: 600 }}>

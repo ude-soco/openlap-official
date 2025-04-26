@@ -19,7 +19,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 
-const GroupedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
+const LineChart = ({ customize = false, handleToggleCustomizePanel }) => {
   const { darkMode } = useContext(CustomThemeContext);
   const { visRef, setVisRef, dataset } = useContext(ISCContext);
   const chartRef = useRef(null);
@@ -465,4 +465,4 @@ const GroupedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
   );
 };
 
-export default GroupedBarChart;
+export default LineChart;
