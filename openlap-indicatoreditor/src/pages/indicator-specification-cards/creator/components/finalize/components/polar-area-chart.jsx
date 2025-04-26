@@ -223,11 +223,9 @@ const PolarAreaChart = ({ customize = false, handleToggleCustomizePanel }) => {
       visRef.data.axisOptions.yAxisOptions || state.axisOptions.yAxisOptions;
 
     let updatedSelectedXAxis = "";
-    if (visRef.edit) {
-      if (selectedXAxis.length !== 0) {
-        updatedSelectedXAxis = selectedXAxis;
-      }
-    } else if (selectedXAxis.length !== 0) {
+    if (visRef.edit && selectedXAxis.length !== 0)
+      updatedSelectedXAxis = selectedXAxis;
+    else if (selectedXAxis.length !== 0) {
       updatedSelectedXAxis =
         stringColumns.find((col) => col.field === selectedXAxis)?.field ||
         (stringColumns.length > 0 ? stringColumns[0].field : "");
@@ -237,11 +235,9 @@ const PolarAreaChart = ({ customize = false, handleToggleCustomizePanel }) => {
     }
 
     let updatedSelectedYAxis = "";
-    if (visRef.edit) {
-      if (selectedYAxis.length !== 0) {
-        updatedSelectedYAxis = selectedYAxis;
-      }
-    } else if (selectedYAxis.length !== 0) {
+    if (visRef.edit && selectedYAxis.length !== 0)
+      updatedSelectedYAxis = selectedYAxis;
+    else if (selectedYAxis.length !== 0) {
       updatedSelectedYAxis =
         numberColumns.find((col) => col.field === selectedYAxis)?.field ||
         (numberColumns.length > 0 ? numberColumns[0].field : "");

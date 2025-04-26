@@ -30,10 +30,6 @@ const VisSelection = ({
     case VisualizationTypes.line:
       return (
         <GroupedBarChart
-          dataset={dataset}
-          visRef={visRef}
-          setVisRef={setVisRef}
-          preview={preview}
           customize={customize}
           handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
@@ -66,10 +62,6 @@ const VisSelection = ({
     case VisualizationTypes.scatter:
       return (
         <ScatterPlotChart
-          dataset={dataset}
-          visRef={visRef}
-          setVisRef={setVisRef}
-          preview={preview}
           customize={customize}
           handleToggleCustomizePanel={handleToggleCustomizePanel}
         />
@@ -115,7 +107,7 @@ const VisSelection = ({
         />
       );
     default:
-      return <Typography>Visualization not available.</Typography>;
+      return <Typography>Please select a chart to preview.</Typography>;
   }
 };
 

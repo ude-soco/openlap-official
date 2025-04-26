@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import Chart from "react-apexcharts";
 import {
@@ -22,18 +16,14 @@ import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
-
-export let StateContext = createContext();
+import { ISCContext } from "../../../indicator-specification-card.jsx";
 
 const ScatterPlotChart = ({
-  dataset,
-  visRef,
-  setVisRef,
-  preview = false,
   customize = false,
   handleToggleCustomizePanel,
 }) => {
   const { darkMode } = useContext(CustomThemeContext);
+  const { visRef, setVisRef, dataset } = useContext(ISCContext);
   const chartRef = useRef(null);
 
   const [state, setState] = useState({
@@ -73,106 +63,108 @@ const ScatterPlotChart = ({
       isSortingOrderDescendingAvailable: false,
       isCategoriesFilteringAvailable: false,
     },
-    options: {
-      chart: {
-        type: visRef.chart.code,
-        id: visRef.chart.code,
-        width: "100%",
-        toolbar: {
-          show: false,
-        },
-        zoom: {
-          type: "xy",
-        },
-        foreColor: darkMode ? "#ffffff" : "#000000",
-      },
-      title: {
-        text: "",
-        align: "left",
-        margin: 15,
-        style: {
-          fontSize: 18,
-          cssClass: "x-y-axis-hide-title",
-        },
-      },
-      subtitle: {
-        text: "",
-        align: "left",
-        margin: 15,
-      },
-      dataLabels: {
-        enabled: true,
-        style: {
-          colors: ["#000000"],
-          fontWeight: 400,
-        },
-        background: {
-          enabled: false,
-          foreColor: "#ffffff",
-          padding: 10,
-          borderRadius: 2,
-          borderWidth: 1,
-          borderColor: "#ffffff",
-        },
-      },
-      markers: {
-        size: 8,
-        colors: ["#008ffb"],
-      },
-      colors: ["#008ffb"],
-      legend: {
-        show: true,
-        showForSingleSeries: true,
-        position: "bottom",
-        horizontalAlign: "center",
-        labels: {
-          colors: undefined,
-          useSeriesColors: false,
-        },
-        onItemClick: {
-          toggleDataSeries: false,
-        },
-      },
-      xaxis: {
-        title: {
-          text: "X Axis",
-        },
-        labels: {
-          show: true,
-          formatter: (value) => value.toLocaleString(),
-        },
-        categories: [],
-      },
-      yaxis: {
-        title: {
-          text: "Y Axis",
-        },
-        labels: {
-          show: true,
-          formatter: (value) => value.toLocaleString(),
-        },
-      },
-      tooltip: {
-        enabled: true,
-        followCursor: true,
-        theme: darkMode ? "dark" : "light",
-        x: {
-          formatter: function (val) {
-            return `X: ${val}`;
+    options: visRef.edit
+      ? visRef.data.options
+      : {
+          chart: {
+            type: visRef.chart.code,
+            id: visRef.chart.code,
+            width: "100%",
+            toolbar: {
+              show: false,
+            },
+            zoom: {
+              type: "xy",
+            },
+            foreColor: darkMode ? "#ffffff" : "#000000",
+          },
+          title: {
+            text: "",
+            align: "left",
+            margin: 15,
+            style: {
+              fontSize: 18,
+              cssClass: "x-y-axis-hide-title",
+            },
+          },
+          subtitle: {
+            text: "",
+            align: "left",
+            margin: 15,
+          },
+          dataLabels: {
+            enabled: true,
+            style: {
+              colors: ["#000000"],
+              fontWeight: 400,
+            },
+            background: {
+              enabled: false,
+              foreColor: "#ffffff",
+              padding: 10,
+              borderRadius: 2,
+              borderWidth: 1,
+              borderColor: "#ffffff",
+            },
+          },
+          markers: {
+            size: 8,
+            colors: ["#008ffb"],
+          },
+          colors: ["#008ffb"],
+          legend: {
+            show: true,
+            showForSingleSeries: true,
+            position: "bottom",
+            horizontalAlign: "center",
+            labels: {
+              colors: undefined,
+              useSeriesColors: false,
+            },
+            onItemClick: {
+              toggleDataSeries: false,
+            },
+          },
+          xaxis: {
+            title: {
+              text: "X Axis",
+            },
+            labels: {
+              show: true,
+              formatter: (value) => value.toLocaleString(),
+            },
+            categories: [],
+          },
+          yaxis: {
+            title: {
+              text: "Y Axis",
+            },
+            labels: {
+              show: true,
+              formatter: (value) => value.toLocaleString(),
+            },
+          },
+          tooltip: {
+            enabled: true,
+            followCursor: true,
+            theme: darkMode ? "dark" : "light",
+            x: {
+              formatter: function (val) {
+                return `X: ${val}`;
+              },
+            },
+            y: {
+              formatter: function (val) {
+                return `Y: ${val}`;
+              },
+            },
+            z: {
+              formatter: function (val) {
+                return `Label: ${val}`;
+              },
+            },
           },
         },
-        y: {
-          formatter: function (val) {
-            return `Y: ${val}`;
-          },
-        },
-        z: {
-          formatter: function (val) {
-            return `Label: ${val}`;
-          },
-        },
-      },
-    },
     axisOptions: {
       xAxisOptions: [],
       yAxisOptions: [],
@@ -183,83 +175,126 @@ const ScatterPlotChart = ({
     },
   });
 
-  // * This effect is used to set the initial state of the chart when previewing
+  // * This effect is used to update the chart when the dark mode changes.
   useEffect(() => {
-    if (preview) {
-      setState((prevState) => ({
-        ...prevState,
-        series: visRef.data.series,
-        options: {
-          ...visRef.data.options,
-          chart: {
-            ...visRef.data.options.chart,
-            foreColor: darkMode ? "#ffffff" : "#000000",
-          },
-          tooltip: {
-            ...visRef.data.options.tooltip,
-            theme: darkMode ? "dark" : "light",
-          },
+    setState((prevState) => ({
+      ...prevState,
+      options: {
+        ...prevState.options,
+        chart: {
+          ...prevState.options.chart,
+          foreColor: darkMode ? "#ffffff" : "#000000",
         },
-        axisOptions: visRef.data.axisOptions,
-      }));
-    }
-  }, [preview, darkMode]);
+        tooltip: {
+          ...prevState.options.tooltip,
+          theme: darkMode ? "dark" : "light",
+        },
+      },
+    }));
+  }, [darkMode]);
 
+  // * This effect is used to update the chart when the dataset column changes.
   useEffect(() => {
-    if (dataset && dataset.rows && dataset.columns && !preview) {
-      const stringColumns = dataset.columns.filter(
-        (col) => col.type === "string"
-      );
-      const numberColumns = dataset.columns.filter(
-        (col) => col.type === "number"
-      );
-
-      const updatedSelectedLabel = state.axisOptions.selectedLabel
-        ? stringColumns.find(
-            (col) => col.field === state.axisOptions.selectedLabel
-          )?.field || (stringColumns.length > 0 ? stringColumns[0].field : "")
-        : stringColumns.length > 0
-        ? stringColumns[0].field
-        : "";
-
-      const updatedSelectedXAxis = state.axisOptions.selectedXAxis
-        ? numberColumns.find(
-            (col) => col.field === state.axisOptions.selectedXAxis
-          )?.field || (numberColumns.length > 0 ? numberColumns[0].field : "")
-        : numberColumns.length > 0
-        ? numberColumns[0].field
-        : "";
-
-      const updatedSelectedYAxis = state.axisOptions.selectedYAxis
-        ? numberColumns.find(
-            (col) => col.field === state.axisOptions.selectedYAxis
-          )?.field ||
-          (numberColumns.length > 0
-            ? numberColumns[1]?.field
-            : numberColumns[0]?.field || "")
-        : numberColumns.length > 0
-        ? numberColumns[1]?.field
-        : numberColumns[0]?.field || "";
-
-      setState((prevState) => ({
-        ...prevState,
+    const stringColumns = dataset.columns.filter(
+      (col) => col.type === "string"
+    );
+    const numberColumns = dataset.columns.filter(
+      (col) => col.type === "number"
+    );
+    setState((prevState) => ({
+      ...prevState,
+      axisOptions: {
+        ...prevState.axisOptions,
+        xAxisOptions: numberColumns,
+        yAxisOptions: numberColumns,
+        labelOptions: stringColumns,
+      },
+    }));
+    setVisRef((prevVisRef) => ({
+      ...prevVisRef,
+      data: {
+        ...prevVisRef.data,
         axisOptions: {
-          ...prevState.axisOptions,
+          ...prevVisRef.data.axisOptions,
           xAxisOptions: numberColumns,
           yAxisOptions: numberColumns,
           labelOptions: stringColumns,
-          selectedXAxis: updatedSelectedXAxis,
-          selectedYAxis: updatedSelectedYAxis,
-          selectedLabel: updatedSelectedLabel,
         },
-      }));
-    }
-  }, [dataset.columns.length, visRef.chart.code]);
+      },
+      edit: false,
+    }));
+  }, [dataset.columns.length]);
 
-  // * This effect is used to update the chart when the dataset changes.
-  // * This will also run when the selected X-axis or Y-axis changes.
-  // * It will group the data by unique X-axis values and prepare the series data.
-  // * It will also update the chart options with the new categories and series data.
+  useEffect(() => {
+    const selectedLabel =
+      visRef.data.axisOptions.selectedLabel || state.axisOptions.selectedLabel;
+    const selectedXAxis =
+      visRef.data.axisOptions.selectedXAxis || state.axisOptions.selectedXAxis;
+    const selectedYAxis =
+      visRef.data.axisOptions.selectedYAxis || state.axisOptions.selectedYAxis;
+    const stringColumns =
+      visRef.data.axisOptions.labelOptions || state.axisOptions.labelOptions;
+    const numberColumns =
+      visRef.data.axisOptions.yAxisOptions || state.axisOptions.yAxisOptions;
+
+    let updatedSelectedLabel = "";
+    if (visRef.edit && selectedLabel.length !== 0)
+      updatedSelectedLabel = selectedLabel;
+    else if (selectedLabel.length !== 0) {
+      updatedSelectedLabel =
+        stringColumns.find((col) => col.field === selectedLabel)?.field ||
+        (stringColumns.length > 0 ? stringColumns[0].field : "");
+    } else {
+      updatedSelectedLabel =
+        stringColumns.length > 0 ? stringColumns[0].field : "";
+    }
+
+    let updatedSelectedXAxis = "";
+    if (visRef.edit && selectedXAxis.length !== 0)
+      updatedSelectedXAxis = selectedXAxis;
+    else if (selectedXAxis.length !== 0) {
+      updatedSelectedXAxis =
+        numberColumns.find((col) => col.field === selectedXAxis)?.field ||
+        (numberColumns.length > 0 ? numberColumns[0]?.field : "");
+    } else {
+      updatedSelectedXAxis =
+        numberColumns.length > 0 ? numberColumns[0]?.field : "";
+    }
+
+    let updatedSelectedYAxis = "";
+    if (visRef.edit && selectedYAxis.length !== 0)
+      updatedSelectedYAxis = selectedYAxis;
+    else if (selectedYAxis.length !== 0) {
+      updatedSelectedYAxis =
+        numberColumns.find((col) => col.field === selectedYAxis)?.field ||
+        (numberColumns.length > 0
+          ? numberColumns[1]?.field
+          : numberColumns[0]?.field || "");
+    } else {
+      updatedSelectedYAxis =
+        numberColumns.length > 0
+          ? numberColumns[1]?.field || numberColumns[0]?.field || ""
+          : "";
+    }
+
+    setState((prevState) => ({
+      ...prevState,
+      axisOptions: {
+        ...prevState.axisOptions,
+        xAxisOptions: numberColumns,
+        yAxisOptions: numberColumns,
+        labelOptions: stringColumns,
+        selectedXAxis: updatedSelectedXAxis,
+        selectedYAxis: updatedSelectedYAxis,
+        selectedLabel: updatedSelectedLabel,
+      },
+    }));
+  }, [
+    visRef.data.axisOptions.yAxisOptions,
+    visRef.data.axisOptions.xAxisOptions,
+    visRef.data.axisOptions.labelOptions,
+  ]);
+
   useEffect(() => {
     const { selectedXAxis, selectedYAxis, selectedLabel } = state.axisOptions;
     const xColumn = dataset.columns.find((col) => col.field === selectedXAxis);
@@ -292,71 +327,65 @@ const ScatterPlotChart = ({
     const minX = Math.min(...xValues);
     const maxX = Math.max(...xValues);
 
-    setState((prevState) => ({
-      ...prevState,
-      series: [
-        {
-          name: "Scatter Series",
-          data: data.map((item) => ({
-            x: item.x,
-            y: item.y,
-            z: item.label,
-          })),
-        },
-      ],
-      options: {
-        ...prevState.options,
-        xaxis: {
-          ...prevState.options.xaxis,
-          title: {
-            text: xColumn ? xColumn.headerName : "X Axis",
+    setState((prevState) => {
+      let tempState = {
+        ...prevState,
+        series: [
+          {
+            name: "Scatter Series",
+            data: data.map((item) => ({
+              x: item.x,
+              y: item.y,
+              z: item.label,
+            })),
           },
-          tickAmount: 6, // * Setting the number of ticks (labels) on the x-axis
-          min: minX, // * Setting the minimum value on the x-axis
-          max: maxX, // * Setting the maximum value on the x-axis
-          labels: {
-            show: true,
-            formatter: function (val) {
-              return parseFloat(val).toFixed(2); // * Formatting the labels with 2 decimal points
+        ],
+        options: {
+          ...prevState.options,
+          xaxis: {
+            ...prevState.options.xaxis,
+            title: {
+              text: xColumn ? xColumn.headerName : "X Axis",
+            },
+            tickAmount: 6, // * Setting the number of ticks (labels) on the x-axis
+            min: minX, // * Setting the minimum value on the x-axis
+            max: maxX, // * Setting the maximum value on the x-axis
+            labels: {
+              show: true,
+              formatter: function (val) {
+                return parseFloat(val).toFixed(2); // * Formatting the labels with 2 decimal points
+              },
+            },
+          },
+          yaxis: {
+            ...prevState.options.yaxis,
+            title: {
+              text: yColumn ? yColumn.headerName : "Y Axis",
+            },
+            labels: {
+              show: true,
+              formatter: (value) => value.toLocaleString(),
             },
           },
         },
-        yaxis: {
-          ...prevState.options.yaxis,
-          title: {
-            text: yColumn ? yColumn.headerName : "Y Axis",
-          },
-          labels: {
-            show: true,
-            formatter: (value) => value.toLocaleString(),
-          },
+      };
+      setVisRef((prevVisRef) => ({
+        ...prevVisRef,
+        data: {
+          ...prevVisRef.data,
+          series: tempState.series,
+          options: tempState.options,
+          axisOptions: tempState.axisOptions,
         },
-        chart: {
-          ...prevState.options.chart,
-          foreColor: darkMode ? "#ffffff" : "#000000",
-        },
-        tooltip: {
-          ...prevState.options.tooltip,
-          theme: darkMode ? "dark" : "light",
-        },
-      },
-    }));
-    setVisRef((prevVisRef) => ({
-      ...prevVisRef,
-      data: {
-        ...prevVisRef.data,
-        series: state.series,
-        options: state.options,
-        axisOptions: state.axisOptions,
-      },
-    }));
+        edit: false,
+      }));
+      return tempState;
+    });
   }, [
     dataset,
     state.axisOptions.selectedXAxis,
     state.axisOptions.selectedYAxis,
     state.axisOptions.selectedLabel,
-    darkMode,
-    visRef.chart.code,
   ]);
 
   const handleXAxisChange = (event) => {
@@ -392,79 +421,75 @@ const ScatterPlotChart = ({
   return (
     <>
       <Grid container spacing={2}>
-        {!preview && (
-          <>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel id="x-axis-select-label">X Axis</InputLabel>
-                <Select
-                  labelId="x-axis-select-label"
-                  id="x-axis-select"
-                  value={state.axisOptions.selectedXAxis}
-                  onChange={handleXAxisChange}
-                  label="X Axis"
-                  variant="outlined"
-                >
-                  {state.axisOptions.xAxisOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <FormControl fullWidth>
+            <InputLabel id="x-axis-select-label">X Axis</InputLabel>
+            <Select
+              labelId="x-axis-select-label"
+              id="x-axis-select"
+              value={state.axisOptions.selectedXAxis}
+              onChange={handleXAxisChange}
+              label="X Axis"
+              variant="outlined"
+            >
+              {state.axisOptions.xAxisOptions.map((col) => (
+                <MenuItem key={col.field} value={col.field}>
+                  {col.headerName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <FormControl fullWidth>
+            <InputLabel id="y-axis-select-label">Y Axis</InputLabel>
+            <Select
+              labelId="y-axis-select-label"
+              id="y-axis-select"
+              value={state.axisOptions.selectedYAxis}
+              onChange={handleYAxisChange}
+              label="Y Axis"
+              variant="outlined"
+            >
+              {state.axisOptions.yAxisOptions.map((col) => (
+                <MenuItem key={col.field} value={col.field}>
+                  {col.headerName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <FormControl fullWidth>
+            <InputLabel id="label-select-label">Labels</InputLabel>
+            <Select
+              labelId="label-select-label"
+              id="label-select"
+              value={state.axisOptions.selectedLabel}
+              onChange={handleLabelChange}
+              label="Labels"
+              variant="outlined"
+            >
+              {state.axisOptions.labelOptions.map((col) => (
+                <MenuItem key={col.field} value={col.field}>
+                  {col.headerName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        {!customize && (
+          <Grid size={{ xs: 12 }}>
+            <Grid container spacing={2} justifyContent="flex-end">
+              <Button
+                startIcon={<PaletteIcon />}
+                variant="contained"
+                onClick={handleToggleCustomizePanel}
+              >
+                Customize
+              </Button>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel id="y-axis-select-label">Y Axis</InputLabel>
-                <Select
-                  labelId="y-axis-select-label"
-                  id="y-axis-select"
-                  value={state.axisOptions.selectedYAxis}
-                  onChange={handleYAxisChange}
-                  label="Y Axis"
-                  variant="outlined"
-                >
-                  {state.axisOptions.yAxisOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel id="label-select-label">Labels</InputLabel>
-                <Select
-                  labelId="label-select-label"
-                  id="label-select"
-                  value={state.axisOptions.selectedLabel}
-                  onChange={handleLabelChange}
-                  label="Labels"
-                  variant="outlined"
-                >
-                  {state.axisOptions.labelOptions.map((col) => (
-                    <MenuItem key={col.field} value={col.field}>
-                      {col.headerName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            {!customize && (
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={2} justifyContent="flex-end">
-                  <Button
-                    startIcon={<PaletteIcon />}
-                    variant="contained"
-                    onClick={handleToggleCustomizePanel}
-                  >
-                    Customize
-                  </Button>
-                </Grid>
-              </Grid>
-            )}
-          </>
+          </Grid>
         )}
 
         <Grow in={!customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>

@@ -72,8 +72,10 @@ const IndicatorSpecificationCard = () => {
             axisOptions: {
               selectedXAxis: "",
               selectedYAxis: "",
+              selectedLabel: "",
               xAxisOptions: [],
               yAxisOptions: [],
+              labelOptions: [],
             },
           },
           edit: false,
