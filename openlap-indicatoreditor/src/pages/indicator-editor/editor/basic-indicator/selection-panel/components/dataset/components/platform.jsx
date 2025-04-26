@@ -112,41 +112,41 @@ const Platform = ({ state, setState }) => {
         <Grid item xs={12}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>Selected <b>Platform(s)</b></Typography>
+              <Typography>
+                Selected <b>Platform(s)</b>
+              </Typography>
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1}>
                 {state.selectedPlatformList?.map((platform, index) => (
                   <Grid item key={index}>
-                    <Tooltip
-                      arrow
-                      title={
-                        indicatorQuery.activityTypes.length ? (
-                          <Typography variant="body2">
-                            Deselect the Activity types(s) from filters below in
-                            order to remove a platform.
-                          </Typography>
-                        ) : undefined
+                    <Chip
+                      color="primary"
+                      label={platform.name}
+                      onDelete={
+                        indicatorQuery.activityTypes.length
+                          ? undefined
+                          : () => handleDeselectPlatformList(platform)
                       }
-                    >
-                      <Chip
-                        color="primary"
-                        label={platform.name}
-                        onDelete={
-                          indicatorQuery.activityTypes.length
-                            ? undefined
-                            : () => handleDeselectPlatformList(platform)
-                        }
-                      />
-                    </Tooltip>
+                    />
                   </Grid>
                 ))}
               </Grid>
             </Grid>
+            <Grid item xs={12}>
+              <Divider />
+            </Grid>
+            <Grid item xs={12}>
+              {indicatorQuery.activityTypes.length > 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  <i>
+                    Remove all the <b>Activity types</b> from filters below to
+                    add/remove a platform.
+                  </i>
+                </Typography>
+              )}
+            </Grid>
           </Grid>
-        </Grid>
-        <Grid item xs={12}>
-          <Divider />
         </Grid>
       </Grid>
     </>

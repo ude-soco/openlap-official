@@ -5,6 +5,7 @@ import {
   Button,
   AccordionDetails,
   Grid,
+  Grow,
 } from "@mui/material";
 import Platform from "./components/platform.jsx";
 import LRS from "./components/lrs.jsx";
@@ -71,10 +72,15 @@ const Dataset = () => {
             <Grid item xs={12}>
               <LRS state={state} setState={setState} />
             </Grid>
-
-            <Grid item xs={12} sx={{ mb: 2 }}>
-              <Platform state={state} setState={setState} />
-            </Grid>
+            <Grow
+              in={state.selectedLrsList.length > 0}
+              timeout={{ enter: 500, exit: 0 }}
+              unmountOnExit
+            >
+              <Grid item xs={12}>
+                <Platform state={state} setState={setState} />
+              </Grid>
+            </Grow>
           </Grid>
         </AccordionDetails>
         <AccordionActions>

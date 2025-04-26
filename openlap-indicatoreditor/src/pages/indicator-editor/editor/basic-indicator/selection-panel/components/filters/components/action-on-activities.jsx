@@ -138,7 +138,7 @@ const ActionOnActivities = ({ state, setState }) => {
 
   return (
     <>
-      <Grid container spacing={2}>
+      <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={12}>
           <Tooltip
             arrow
@@ -158,6 +158,13 @@ const ActionOnActivities = ({ state, setState }) => {
               id="combo-box-lrs"
               options={state.actionsList}
               fullWidth
+              slotProps={{
+                listbox: {
+                  style: {
+                    maxHeight: "240px",
+                  },
+                },
+              }}
               getOptionLabel={(option) => option?.name}
               renderOption={(props, option) => {
                 const { key, ...restProps } = props;
@@ -187,7 +194,9 @@ const ActionOnActivities = ({ state, setState }) => {
         <Grid item xs={12}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>Selected <b>Action(s)</b></Typography>
+              <Typography>
+                Selected <b>Action(s)</b>
+              </Typography>
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1}>
@@ -202,11 +211,10 @@ const ActionOnActivities = ({ state, setState }) => {
                 ))}
               </Grid>
             </Grid>
+            <Grid item xs={12}>
+              <Divider />
+            </Grid>
           </Grid>
-        </Grid>
-
-        <Grid item xs={12} sx={{ pb: 2 }}>
-          <Divider />
         </Grid>
       </Grid>
     </>

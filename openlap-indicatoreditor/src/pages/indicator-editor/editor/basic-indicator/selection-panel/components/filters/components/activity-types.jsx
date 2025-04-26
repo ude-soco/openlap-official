@@ -108,7 +108,7 @@ const ActivityTypes = ({ state, setState }) => {
 
   return (
     <>
-      <Grid container spacing={2}>
+      <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={12}>
           <Tooltip
             arrow
@@ -117,10 +117,6 @@ const ActivityTypes = ({ state, setState }) => {
                 <Typography variant="body2">
                   Select at least one Platform from Dataset to view the list of
                   Activity types.
-                </Typography>
-              ) : state.selectedActivitiesList.length > 0 ? (
-                <Typography variant="body2">
-                  Deselect all the Activities below to remove an activity type.
                 </Typography>
               ) : undefined
             }
@@ -135,6 +131,13 @@ const ActivityTypes = ({ state, setState }) => {
               id="combo-box-lrs"
               options={state.activityTypesList}
               fullWidth
+              slotProps={{
+                listbox: {
+                  style: {
+                    maxHeight: "240px",
+                  },
+                },
+              }}
               getOptionLabel={(option) => option.name}
               renderOption={(props, option) => {
                 const { key, ...restProps } = props;
@@ -167,42 +170,41 @@ const ActivityTypes = ({ state, setState }) => {
         <Grid item xs={12}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>Selected <b>Activity type(s)</b></Typography>
+              <Typography>
+                Selected <b>Activity type(s)</b>
+              </Typography>
             </Grid>
             <Grid item xs={12}>
               <Grid container spacing={1}>
                 {state.selectedActivityTypesList?.map((activityType, index) => (
                   <Grid item key={index}>
-                    <Tooltip
-                      arrow
-                      title={
-                        Object.keys(indicatorQuery.activities).length ? (
-                          <Typography variant="body2">
-                            Deselect all the Activities below to remove an
-                            activity type.
-                          </Typography>
-                        ) : undefined
+                    <Chip
+                      color="primary"
+                      label={getLastWordAndCapitalize(activityType.name)}
+                      onDelete={
+                        Object.keys(indicatorQuery.activities).length
+                          ? undefined
+                          : () => handleDeselectActivityTypes(activityType)
                       }
-                    >
-                      <Chip
-                        color="primary"
-                        label={getLastWordAndCapitalize(activityType.name)}
-                        onDelete={
-                          Object.keys(indicatorQuery.activities).length
-                            ? undefined
-                            : () => handleDeselectActivityTypes(activityType)
-                        }
-                      />
-                    </Tooltip>
+                    />
                   </Grid>
                 ))}
               </Grid>
             </Grid>
+            <Grid item xs={12}>
+              <Divider />
+            </Grid>
+            <Grid item xs={12}>
+              {Object.keys(indicatorQuery.activities).length > 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  <i>
+                    Remove all the <b>Activities</b> below to add/remove
+                    activity types.
+                  </i>
+                </Typography>
+              )}
+            </Grid>
           </Grid>
-        </Grid>
-
-        <Grid item xs={12} sx={{ pb: 2 }}>
-          <Divider />
         </Grid>
       </Grid>
     </>

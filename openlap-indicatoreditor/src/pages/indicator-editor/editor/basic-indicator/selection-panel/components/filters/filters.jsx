@@ -9,6 +9,7 @@ import {
   Grid,
   Typography,
   Tooltip,
+  Grow,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -172,12 +173,24 @@ const Filters = () => {
             <Grid item xs={12}>
               <ActivityTypes state={state} setState={setState} />
             </Grid>
-            <Grid item xs={12}>
-              <Activities state={state} setState={setState} />
-            </Grid>
-            <Grid item xs={12}>
-              <ActionOnActivities state={state} setState={setState} />
-            </Grid>
+            <Grow
+              in={indicatorQuery.activityTypes.length > 0}
+              timeout={{ enter: 500, exit: 500 }}
+              unmountOnExit
+            >
+              <Grid item xs={12}>
+                <Activities state={state} setState={setState} />
+              </Grid>
+            </Grow>
+            <Grow
+              in={Object.entries(indicatorQuery.activities).length > 0}
+              timeout={{ enter: 500, exit: 0 }}
+              unmountOnExit
+            >
+              <Grid item xs={12}>
+                <ActionOnActivities state={state} setState={setState} />
+              </Grid>
+            </Grow>
             <Grid item xs={12}>
               <Grid container spacing={4}>
                 <Grid item xs={12}>
