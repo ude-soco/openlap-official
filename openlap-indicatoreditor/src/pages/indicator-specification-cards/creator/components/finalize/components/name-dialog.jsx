@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import {
   Button,
   Dialog,
@@ -17,18 +17,17 @@ import { useNavigate } from "react-router-dom";
 
 const NameDialog = ({ open, toggleOpen }) => {
   const { api } = useContext(AuthContext);
-  const { id, requirements, dataset, visRef, lockedStep } =
+  const { id, requirements, setRequirements, dataset, visRef, lockedStep } =
     useContext(ISCContext);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const [state, setState] = useState({
-    indicatorName: "",
     loading: false,
   });
 
   const handleChangeName = (event) => {
     const { name, value } = event.target;
-    setState((prevState) => ({
+    setRequirements((prevState) => ({
       ...prevState,
       [name]: value,
     }));
@@ -44,7 +43,7 @@ const NameDialog = ({ open, toggleOpen }) => {
       requirements,
       dataset,
       visRef,
-      lockedStep,
+      lockedStep
     ) => {
       try {
         return await requestCreateISC(
@@ -52,7 +51,7 @@ const NameDialog = ({ open, toggleOpen }) => {
           requirements,
           dataset,
           visRef,
-          lockedStep,
+          lockedStep
         );
       } catch (error) {
         enqueueSnackbar(error.message, { variant: "error" });
@@ -64,7 +63,7 @@ const NameDialog = ({ open, toggleOpen }) => {
       requirements,
       dataset,
       visRef,
-      lockedStep,
+      lockedStep
     ) => {
       try {
         return await requestUpdateISC(
@@ -73,7 +72,7 @@ const NameDialog = ({ open, toggleOpen }) => {
           requirements,
           dataset,
           visRef,
-          lockedStep,
+          lockedStep
         );
       } catch (error) {
         enqueueSnackbar(error.message, { variant: "error" });
@@ -84,12 +83,8 @@ const NameDialog = ({ open, toggleOpen }) => {
       prevState,
       loading: true,
     }));
-    let newRequirements = {
-      ...requirements,
-      indicatorName: state.indicatorName,
-    };
     if (Boolean(id)) {
-      updateISC(api, id, newRequirements, dataset, visRef, lockedStep)
+      updateISC(api, id, requirements, dataset, visRef, lockedStep)
         .then((response) => {
           enqueueSnackbar(response.message, { variant: "success" });
           toggleOpen();
@@ -108,7 +103,7 @@ const NameDialog = ({ open, toggleOpen }) => {
           console.error(error);
         });
     } else {
-      createISC(api, newRequirements, dataset, visRef, lockedStep)
+      createISC(api, requirements, dataset, visRef, lockedStep)
         .then((response) => {
           enqueueSnackbar(response.message, { variant: "success" });
           toggleOpen();
@@ -141,7 +136,7 @@ const NameDialog = ({ open, toggleOpen }) => {
                 fullWidth
                 name="indicatorName"
                 label="Indicator name"
-                value={state.name}
+                value={requirements.indicatorName}
                 InputLabelProps={{
                   shrink: true,
                 }}
@@ -159,7 +154,7 @@ const NameDialog = ({ open, toggleOpen }) => {
             loading={state.loading}
             loadingPosition="start"
             fullWidth
-            disabled={state.name === ""}
+            disabled={requirements.indicatorName === ""}
             onClick={handleSaveIndicator}
             variant="contained"
           >
