@@ -10,6 +10,7 @@ import {
 import Tooltip from "@mui/material/Tooltip";
 import { fetchVisualizationLibrary } from "../utils/visualization-api.js";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
+import { fetchVisualizationTypeByLibraryId } from "../utils/visualization-api.js";
 
 const VisualizationLibrary = ({
   state,
@@ -44,12 +45,28 @@ const VisualizationLibrary = ({
       ...prevState,
       visualizationLibraryId: value.id,
     }));
-    setState((prevState) => ({
-      ...prevState,
-      typeList: [],
-      autoCompleteValue: null,
-      loadingPreview: false,
-    }));
+    const loadVisualizationTypeData = async (libraryId) => {
+      try {
+        return await fetchVisualizationTypeByLibraryId(api, libraryId);
+      } catch (error) {
+        console.log("Failed to load the Visualization type list");
+      }
+    };
+    loadVisualizationTypeData(value.id).then((response) => {
+      setState((prevState) => ({
+        ...prevState,
+        typeList: response,
+        autoCompleteValue: null,
+        loadingPreview: false,
+      }));
+    });
+
+    // setState((prevState) => ({
+    //   ...prevState,
+    //   typeList: [],
+    //   autoCompleteValue: null,
+    //   loadingPreview: false,
+    // }));
   };
 
   const handleDeselectVisualizationLibrary = () => {

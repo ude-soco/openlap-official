@@ -4,15 +4,13 @@ import {
   AccordionActions,
   AccordionDetails,
   AccordionSummary,
-  Button,
   Chip,
-  FormControlLabel,
-  FormGroup,
   Grid,
   IconButton,
   Tooltip,
-  Switch,
   Typography,
+  Skeleton,
+  Grow,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -89,9 +87,6 @@ const Visualization = ({
       ...prevState,
       loadingPreview: false,
     }));
-    setTimeout(() => {
-      setGenerate(true);
-    }, 2000);
     // handlePreview()
     //   .then((previewResponse) => {
     //     setIndicator((prevState) => ({
@@ -280,30 +275,42 @@ const Visualization = ({
                 setGenerate={setGenerate}
               />
             </Grid>
-            {visRef.visualizationLibraryId.length > 0 && (
-              <Grid item xs={12}>
-                <VisualizationType
-                  state={state}
-                  setState={setState}
-                  visRef={visRef}
-                  setVisRef={setVisRef}
-                  setIndicator={setIndicator}
-                  setGenerate={setGenerate}
-                  setChartConfiguration={setChartConfiguration}
-                />
-              </Grid>
-            )}
-            {visRef.visualizationTypeId.length > 0 && (
-              <Grid item xs={12}>
-                <Inputs
-                  state={state}
-                  setState={setState}
-                  visRef={visRef}
-                  setVisRef={setVisRef}
-                  analyzedData={analyzedData}
-                />
-              </Grid>
-            )}
+            <Grow in={visRef.visualizationLibraryId.length > 0} unmountOnExit>
+              {state.typeList.length > 0 ? (
+                <Grid item xs={12}>
+                  <VisualizationType
+                    state={state}
+                    setState={setState}
+                    visRef={visRef}
+                    setVisRef={setVisRef}
+                    setIndicator={setIndicator}
+                    setGenerate={setGenerate}
+                    setChartConfiguration={setChartConfiguration}
+                  />
+                </Grid>
+              ) : (
+                <Grid item xs={12}>
+                  <Skeleton variant="rectangular" height={118} />
+                </Grid>
+              )}
+            </Grow>
+            <Grow in={visRef.visualizationTypeId.length > 0} unmountOnExit>
+              {state.inputs.length > 0 ? (
+                <Grid item xs={12}>
+                  <Inputs
+                    state={state}
+                    setState={setState}
+                    visRef={visRef}
+                    setVisRef={setVisRef}
+                    analyzedData={analyzedData}
+                  />
+                </Grid>
+              ) : (
+                <Grid item xs={12}>
+                  <Skeleton variant="rectangular" height={118} />
+                </Grid>
+              )}
+            </Grow>
           </Grid>
         </AccordionDetails>
         <AccordionActions>

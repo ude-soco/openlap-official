@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { useEffect } from "react";
 import {
   FormControl,
   FormHelperText,
@@ -11,33 +11,13 @@ import {
 } from "@mui/material";
 import HelpIcon from "@mui/icons-material/Help";
 import Tooltip from "@mui/material/Tooltip";
-import { fetchVisualizationTypeInputs } from "../utils/visualization-api.js";
-import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 
-const Inputs = ({ state, setState, visRef, setVisRef, analyzedData }) => {
-  const { api } = useContext(AuthContext);
-  useEffect(() => {
-    const loadVisTypeInputs = async (typeId) => {
-      try {
-        return await fetchVisualizationTypeInputs(api, typeId);
-      } catch (error) {
-        console.log("Error fetching visualization library input list");
-      }
-    };
-    if (visRef.visualizationTypeId !== "")
-      loadVisTypeInputs(visRef.visualizationTypeId).then((response) => {
-        setState((prevState) => ({
-          ...prevState,
-          inputs: response,
-        }));
-      });
-  }, [visRef.visualizationTypeId]);
-
+const Inputs = ({ state, setVisRef, analyzedData }) => {
   useEffect(() => {
     // Set default value for each input if only one possible option is available
     state.inputs?.forEach((input) => {
       const filteredValues = Object.values(analyzedData).filter(
-        (value) => input.type === value.configurationData.type,
+        (value) => input.type === value.configurationData.type
       );
 
       if (filteredValues.length === 1) {
@@ -72,7 +52,7 @@ const Inputs = ({ state, setState, visRef, setVisRef, analyzedData }) => {
       };
       let updatedMappings = updateMappingsMethod(
         tempInputMappings,
-        prevState.visualizationMapping.mapping,
+        prevState.visualizationMapping.mapping
       );
       return {
         ...prevState,
@@ -92,7 +72,7 @@ const Inputs = ({ state, setState, visRef, setVisRef, analyzedData }) => {
         </Grid>
         {state.inputs?.map((input, index) => {
           const filteredValues = Object.values(analyzedData).filter(
-            (value) => input.type === value.configurationData.type,
+            (value) => input.type === value.configurationData.type
           );
 
           return (

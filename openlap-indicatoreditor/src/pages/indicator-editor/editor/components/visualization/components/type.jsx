@@ -1,7 +1,7 @@
-import { useContext, useEffect } from "react";
-import { Box, Divider, Grid, ToggleButton, Typography } from "@mui/material";
+import { useContext } from "react";
+import { Box, Grid, ToggleButton, Typography } from "@mui/material";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
-import { fetchVisualizationTypeByLibraryId } from "../utils/visualization-api.js";
+import { fetchVisualizationTypeInputs } from "../utils/visualization-api.js";
 import images from "../config/images.js";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 
@@ -17,30 +17,27 @@ const VisualizationType = ({
   const { darkMode } = useContext(CustomThemeContext);
   const { api } = useContext(AuthContext);
 
-  useEffect(() => {
-    const loadVisualizationTypeData = async (libraryId) => {
-      try {
-        return await fetchVisualizationTypeByLibraryId(api, libraryId);
-      } catch (error) {
-        console.log("Failed to load the Visualization type list");
-      }
-    };
-
-    if (state.typeList.length === 0) {
-      loadVisualizationTypeData(visRef.visualizationLibraryId).then(
-        (response) => {
-          setState((prevState) => ({
-            ...prevState,
-            typeList: response,
-          }));
-        }
-      );
-    }
-  }, [state.typeList.length]);
-
   const handleSelectVisualizationType = (value) => {
     setChartConfiguration(value.chartConfiguration);
-
+    setState((prevState) => ({
+      ...prevState,
+      inputs: [],
+      previewDisabled: true,
+    }));
+    const loadVisTypeInputs = async (typeId) => {
+      try {
+        return await fetchVisualizationTypeInputs(api, typeId);
+      } catch (error) {
+        console.log("Error fetching visualization library input list");
+      }
+    };
+    loadVisTypeInputs(value.id).then((response) => {
+      setState((prevState) => ({
+        ...prevState,
+        inputs: response,
+        previewDisabled: false,
+      }));
+    });
     setVisRef((prevState) => ({
       ...prevState,
       visualizationTypeId: value.id,
@@ -60,11 +57,6 @@ const VisualizationType = ({
     }));
 
     setGenerate(false);
-
-    setState((prevState) => ({
-      ...prevState,
-      previewDisabled: false,
-    }));
   };
 
   return (
