@@ -83,33 +83,37 @@ const Visualization = ({
         scriptData: "",
       },
     }));
-    setState((prevState) => ({
-      ...prevState,
-      loadingPreview: false,
-    }));
-    // handlePreview()
-    //   .then((previewResponse) => {
-    //     setIndicator((prevState) => ({
-    //       ...prevState,
-    //       previewData: {
-    //         ...prevState.previewData,
-    //         displayCode: previewResponse.displayCode,
-    //         scriptData: previewResponse.scriptData,
-    //       },
-    //     }));
-    //     setState((prevState) => ({
-    //       ...prevState,
-    //       loadingPreview: false,
-    //     }));
-    //     enqueueSnackbar(previewResponse.message, { variant: "success" });
-    //   })
-    //   .catch((error) => {
-    //     enqueueSnackbar(error.response.data.message, { variant: "error" });
-    //     setState((prevState) => ({
-    //       ...prevState,
-    //       loadingPreview: false,
-    //     }));
-    //   });
+    handlePreview()
+      .then((previewResponse) => {
+        setIndicator((prevState) => ({
+          ...prevState,
+          previewData: {
+            ...prevState.previewData,
+            displayCode: previewResponse.displayCode,
+            scriptData: previewResponse.scriptData,
+          },
+        }));
+        setState((prevState) => ({
+          ...prevState,
+          loadingPreview: false,
+        }));
+        setLockedStep((prevState) => ({
+          ...prevState,
+          finalize: {
+            ...prevState.finalize,
+            locked: false,
+            openPanel: true,
+          },
+        }));
+        enqueueSnackbar(previewResponse.message, { variant: "success" });
+      })
+      .catch((error) => {
+        enqueueSnackbar(error.response.data.message, { variant: "error" });
+        setState((prevState) => ({
+          ...prevState,
+          loadingPreview: false,
+        }));
+      });
   };
 
   return (

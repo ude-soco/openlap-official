@@ -1,21 +1,35 @@
-import {
-  Box,
-  Button,
-  Grid,
-  Paper,
-  TextField,
-  Typography,
-  LinearProgress,
-} from "@mui/material";
 import { useContext, useEffect, useRef } from "react";
-import EmptyPreview from "../../../../../assets/images/vis-empty-state/no-indicator-preview.svg";
 import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";
+import { BasicIndicatorContext } from "../../basic-indicator/basic-indicator.jsx";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Chip,
+  IconButton,
+  Grid,
+  Skeleton,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import LockIcon from "@mui/icons-material/Lock";
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
+import EmptyPreview from "../../../../../assets/images/vis-empty-state/no-indicator-preview.svg";
+import ChartCustomization from "./customizations/chart-customization.jsx";
 
 const PreviewPanel = ({
+  lockedStep,
   indicator,
-  changeIndicatorName,
-  handleSaveIndicator,
   loading,
+  indicatorQuery,
+  chartConfiguration,
+  analysisRef,
+  setVisRef,
+  setIndicator,
+  setLoading,
+  setLockedStep,
 }) => {
   const { darkMode } = useContext(CustomThemeContext);
   const scriptRef = useRef(null);
@@ -38,30 +52,73 @@ const PreviewPanel = ({
     };
   }, [indicator.previewData.scriptData]);
 
+  const handleTogglePanel = () => {
+    setLockedStep((prevState) => ({
+      ...prevState,
+      finalize: {
+        ...prevState.finalize,
+        openPanel: !prevState.finalize.openPanel,
+      },
+    }));
+  };
+
   return (
-    <Grid container spacing={2}>
-      <Grid item xs={12}>
-        <Paper
-          sx={{ p: 2, border: "1px solid #e0e0e0", minHeight: 600 }}
-          elevation={0}
-        >
-          <Grid container spacing={2}>
-            <Grid item xs={12} sx={{ pb: 2 }}>
-              <TextField
-                autoFocus
-                name="indicatorName"
-                value={indicator.indicatorName}
-                label="Indicator name"
-                placeholder="E.g., Student's performance chart"
-                variant="standard"
-                fullWidth
-                onChange={changeIndicatorName}
-              />
-            </Grid>
+    <>
+      <Accordion
+        expanded={lockedStep.finalize.openPanel}
+        disabled={lockedStep.finalize.locked}
+      >
+        <AccordionSummary>
+          <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>Preview</Typography>
+              <Grid
+                container
+                alignItems="center"
+                justifyContent="space-between"
+                spacing={1}
+              >
+                <Grid item xs>
+                  <Grid container alignItems="center" spacing={1}>
+                    <Grid item>
+                      {!lockedStep.finalize.locked ? (
+                        <Chip label="5" color="primary" />
+                      ) : (
+                        <IconButton size="small">
+                          <LockIcon />
+                        </IconButton>
+                      )}
+                    </Grid>
+                    <Grid item>
+                      <Typography>Preview & Finalize</Typography>
+                    </Grid>
+                    {!lockedStep.finalize.locked &&
+                      !lockedStep.finalize.openPanel && (
+                        <Grid item>
+                          <Tooltip title="Edit and customize visualization">
+                            <IconButton onClick={handleTogglePanel}>
+                              <EditIcon color="primary" />
+                            </IconButton>
+                          </Tooltip>
+                        </Grid>
+                      )}
+                  </Grid>
+                </Grid>
+                {lockedStep.finalize.openPanel && (
+                  <Grid item>
+                    <Tooltip title="Close panel">
+                      <IconButton onClick={handleTogglePanel}>
+                        <CloseIcon color="primary" />
+                      </IconButton>
+                    </Tooltip>
+                  </Grid>
+                )}
+              </Grid>
             </Grid>
-            <Grid item xs={12}>
+          </Grid>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Grid container spacing={2} alignItem="center">
+            <Grid item xs={12} lg={7}>
               <Grid
                 container
                 justifyContent="center"
@@ -77,10 +134,7 @@ const PreviewPanel = ({
               >
                 {loading ? (
                   <Box width="100%">
-                    <LinearProgress />
-                    <Typography variant="body1" mt={2} align="center">
-                      Loading...
-                    </Typography>
+                    <Skeleton variant="rectangular" height={500} width="100%" />
                   </Box>
                 ) : !loading &&
                   indicator.previewData.displayCode.length !== 0 ? (
@@ -91,30 +145,30 @@ const PreviewPanel = ({
                     src={EmptyPreview}
                     sx={{
                       p: 4,
-                      maxWidth: 300,
-                      maxHeight: 300,
+                      maxWidth: 500,
+                      maxHeight: 500,
                       filter: darkMode ? "invert(1)" : undefined,
                     }}
                   />
                 )}
               </Grid>
             </Grid>
+            {chartConfiguration && (
+              <Grid item xs={12} lg={5}>
+                <ChartCustomization
+                  indicatorQuery={indicatorQuery}
+                  analysisRef={analysisRef}
+                  chartConfiguration={chartConfiguration}
+                  setVisRef={setVisRef}
+                  setIndicator={setIndicator}
+                  setLoading={setLoading}
+                />
+              </Grid>
+            )}
           </Grid>
-        </Paper>
-      </Grid>
-      {indicator.previewData.displayCode.length !== 0 ? (
-        <Grid item xs={12}>
-          <Button
-            disabled={indicator.indicatorName.length === 0}
-            variant="contained"
-            fullWidth
-            onClick={handleSaveIndicator}
-          >
-            Save Indicator
-          </Button>
-        </Grid>
-      ) : undefined}
-    </Grid>
+        </AccordionDetails>
+      </Accordion>
+    </>
   );
 };
 

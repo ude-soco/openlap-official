@@ -23,6 +23,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
     setState((prevState) => ({
       ...prevState,
       showLegend: e.target.checked,
+      edited: true,
     }));
   };
 
@@ -30,6 +31,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
     setState((prevState) => ({
       ...prevState,
       legendPosition: e.target.value,
+      edited: true,
     }));
   };
 
@@ -37,6 +39,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
     setState((prevState) => ({
       ...prevState,
       showXAxis: e.target.checked,
+      edited: true,
     }));
   };
 
@@ -44,6 +47,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
     setState((prevState) => ({
       ...prevState,
       showYAxis: e.target.checked,
+      edited: true,
     }));
   };
 
@@ -61,6 +65,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
       setState((prevState) => ({
         ...prevState,
         chartTitle: e.target.value,
+        edited: true,
       }));
     }, 1000);
 
@@ -71,6 +76,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
     setState((prevState) => ({
       ...prevState,
       titleAndSubTitlePosition: e.target.value,
+      edited: true,
     }));
   };
 
@@ -88,6 +94,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
       setState((prevState) => ({
         ...prevState,
         chartSubtitle: e.target.value,
+        edited: true,
       }));
     }, 1000);
 
@@ -98,6 +105,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
     setState((prevState) => ({
       ...prevState,
       showLabels: e.target.checked,
+      edited: true,
     }));
   };
 
@@ -105,6 +113,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
     setState((prevState) => ({
       ...prevState,
       showLabelsBackground: e.target.checked,
+      edited: true,
     }));
   };
 
@@ -112,6 +121,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
     setState((prevState) => ({
       ...prevState,
       labelsPosition: e.target.value,
+      edited: true,
     }));
   };
 

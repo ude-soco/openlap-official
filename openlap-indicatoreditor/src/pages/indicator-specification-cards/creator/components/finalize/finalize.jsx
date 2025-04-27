@@ -8,20 +8,19 @@ import {
   Button,
   Chip,
   Divider,
+  IconButton,
   Grid,
   Tooltip,
   Typography,
 } from "@mui/material";
-import IconButton from "@mui/material/IconButton";
-import LockIcon from "@mui/icons-material/Lock";
 import VisSelection from "../visualization/components/vis-selection.jsx";
 import NameDialog from "./components/name-dialog.jsx";
+import LockIcon from "@mui/icons-material/Lock";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 
 const Finalize = () => {
-  const { visRef, setVisRef, dataset, lockedStep, setLockedStep } =
-    useContext(ISCContext);
+  const { dataset, lockedStep, setLockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
     openSaveDialog: false,

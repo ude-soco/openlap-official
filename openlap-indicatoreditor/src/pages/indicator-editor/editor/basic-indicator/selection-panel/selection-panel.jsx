@@ -8,6 +8,7 @@ import { BasicIndicatorContext } from "../basic-indicator.jsx";
 import { AuthContext } from "../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { fetchAnalyzedData } from "../../components/analysis/utils/analytics-api.js";
 import Grid from "@mui/material/Grid2";
+import PreviewPanel from "../../components/preview-panel/preview-panel.jsx";
 
 const SelectionPanel = () => {
   const { api } = useContext(AuthContext);
@@ -17,12 +18,14 @@ const SelectionPanel = () => {
     indicatorQuery,
     analysisRef,
     visRef,
+    loading,
     chartConfiguration,
     setLockedStep,
     setAnalysisRef,
     setVisRef,
     setIndicator,
     setGenerate,
+    setLoading,
     setChartConfiguration,
   } = useContext(BasicIndicatorContext);
 
@@ -56,13 +59,13 @@ const SelectionPanel = () => {
   return (
     <>
       <Grid container spacing={2}>
-        <Grid size={{xs: 12}}>
+        <Grid size={{ xs: 12 }}>
           <Dataset />
         </Grid>
-        <Grid size={{xs: 12}}>
+        <Grid size={{ xs: 12 }}>
           <Filters />
         </Grid>
-        <Grid size={{xs: 12}}>
+        <Grid size={{ xs: 12 }}>
           <Analysis
             lockedStep={lockedStep}
             setLockedStep={setLockedStep}
@@ -74,7 +77,7 @@ const SelectionPanel = () => {
             }
           />
         </Grid>
-        <Grid size={{xs: 12}}>
+        <Grid size={{ xs: 12 }}>
           <Visualization
             lockedStep={lockedStep}
             setLockedStep={setLockedStep}
@@ -87,6 +90,20 @@ const SelectionPanel = () => {
             handlePreview={() =>
               loadPreviewVisualization(api, indicatorQuery, analysisRef, visRef)
             }
+          />
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <PreviewPanel
+            lockedStep={lockedStep}
+            indicator={indicator}
+            loading={loading}
+            indicatorQuery={indicatorQuery}
+            chartConfiguration={chartConfiguration}
+            analysisRef={analysisRef}
+            setVisRef={setVisRef}
+            setIndicator={setIndicator}
+            setLockedStep={setLockedStep}
+            setLoading={setLoading}
           />
         </Grid>
       </Grid>

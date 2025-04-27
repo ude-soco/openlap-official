@@ -1,23 +1,24 @@
+import { useContext, useEffect, useState } from "react";
 import { Box, Tab } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-import { useEffect, useState } from "react";
 import { ElementsBar } from "./components/elements-bar.jsx";
 import { StylesBar } from "./components/styles.jsx";
 import { FiltersBar } from "./components/filter.jsx";
 import { requestBasicIndicatorPreview } from "../../visualization/utils/visualization-api.js";
 import { useSnackbar } from "notistack";
+import { BasicIndicatorContext } from "../../../basic-indicator/basic-indicator.jsx";
+import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 
 const ChartCustomization = ({
-  indicator,
-  setVisRef,
-  api,
   indicatorQuery,
   analysisRef,
   chartConfiguration,
+  setVisRef,
   setIndicator,
-  visRef,
   setLoading,
 }) => {
+  const { api } = useContext(AuthContext);
+
   const [value, setvalue] = useState("1");
   const [state, setState] = useState({
     showLegend: true,
@@ -48,6 +49,7 @@ const ChartCustomization = ({
     dataLabelsBgColor: "#000000",
     hiddenCategoriesIndexes: [],
     sortingOrder: "desc",
+    edited: false,
   });
 
   const { enqueueSnackbar } = useSnackbar();
@@ -56,11 +58,11 @@ const ChartCustomization = ({
     setvalue(newValue);
   };
 
-  useEffect(() => {
-    return () => {
-      localStorage.removeItem("basic_indic_cats");
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     localStorage.removeItem("basic_indic_cats");
+  //   };
+  // }, []);
 
   const loadPreviewVisualization = async (
     api,
@@ -82,7 +84,7 @@ const ChartCustomization = ({
     }
   };
 
-  useEffect(() => {}, [indicator]);
+  // useEffect(() => {}, [indicator]);
 
   // useEffect(() => {
   //   loadPreviewVisualization(api, indicatorQuery, analysisRef, visRef)
@@ -110,6 +112,9 @@ const ChartCustomization = ({
   // }, [visRef]);
 
   useEffect(() => {
+    if (!state.edited) {
+      return;
+    }
     setLoading(true);
 
     setIndicator((prevState) => ({
@@ -141,8 +146,6 @@ const ChartCustomization = ({
             }));
             setLoading(false);
           }
-
-          enqueueSnackbar(previewResponse.message, { variant: "success" });
         })
         .catch((error) => {
           enqueueSnackbar(error.response.data.message, { variant: "error" });
@@ -150,13 +153,11 @@ const ChartCustomization = ({
         });
       return newVisRef;
     });
-  }, [state]);
-
-  useEffect(() => {
-    return () => {
-      setState(null);
-    };
-  }, []);
+    setState((prevState) => ({
+      ...prevState,
+      edited: false,
+    }));
+  }, [state.edited]);
 
   return (
     <>
@@ -181,13 +182,6 @@ const ChartCustomization = ({
           <Box height="90%" sx={{ overflowY: "scroll" }}>
             <TabPanel value="1">
               <ElementsBar
-                indicator={indicator}
-                setVisRef={setVisRef}
-                api={api}
-                indicatorQuery={indicatorQuery}
-                analysisRef={analysisRef}
-                setIndicator={setIndicator}
-                visRef={visRef}
                 state={state}
                 setState={setState}
                 chartConfiguration={chartConfiguration}

@@ -35,6 +35,7 @@ export const FiltersBar = ({
   const pushtoHiddenCategoriesIndexes = (index) => {
     setState((prevState) => ({
       ...prevState,
+      edited: true,
       hiddenCategoriesIndexes:
         prevState.hiddenCategoriesIndexes.length === 0
           ? [index.toString()]
@@ -52,6 +53,7 @@ export const FiltersBar = ({
     setState((prevState) => ({
       ...prevState,
       sortingOrder: value,
+      edited: true,
     }));
   };
 

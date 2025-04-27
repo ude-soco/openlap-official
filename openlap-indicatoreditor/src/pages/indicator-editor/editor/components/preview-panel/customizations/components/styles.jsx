@@ -33,6 +33,7 @@ export const StylesBar = ({
       setState((prevState) => ({
         ...prevState,
         colorsArray: [e.target.value],
+        edited: true,
       }));
     }, 2000); // Adjust delay as needed (e.g., 500ms)
 
@@ -58,6 +59,7 @@ export const StylesBar = ({
         return {
           ...prevState,
           colorsArray: newColors,
+          edited: true,
         };
       });
     }, 2000); // Adjust delay as needed (e.g., 500ms)
