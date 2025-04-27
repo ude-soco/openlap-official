@@ -27,6 +27,7 @@ const Visualization = ({
   lockedStep,
   setLockedStep,
   visRef,
+  generate,
   setChartConfiguration,
   setVisRef,
   analyzedData,
@@ -71,7 +72,6 @@ const Visualization = ({
   };
 
   const handleGeneratePreview = () => {
-    setGenerate(false);
     setState((prevState) => ({
       ...prevState,
       loadingPreview: true,
@@ -105,6 +105,7 @@ const Visualization = ({
             openPanel: true,
           },
         }));
+        setGenerate(true);
         enqueueSnackbar(previewResponse.message, { variant: "success" });
       })
       .catch((error) => {
@@ -328,7 +329,7 @@ const Visualization = ({
                 disabled={
                   !visRef.visualizationLibraryId.length ||
                   !visRef.visualizationTypeId.length ||
-                  !visRef.visualizationMapping.mapping.length
+                  !visRef.visualizationMapping.mapping.length || generate
                 }
                 onClick={handleGeneratePreview}
               >

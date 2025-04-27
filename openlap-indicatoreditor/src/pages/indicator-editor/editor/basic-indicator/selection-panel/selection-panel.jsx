@@ -19,6 +19,7 @@ const SelectionPanel = () => {
     analysisRef,
     visRef,
     loading,
+    generate,
     chartConfiguration,
     setLockedStep,
     setAnalysisRef,
@@ -83,6 +84,7 @@ const SelectionPanel = () => {
             setLockedStep={setLockedStep}
             visRef={visRef}
             setVisRef={setVisRef}
+            generate={generate}
             analyzedData={analysisRef.analyzedData}
             setIndicator={setIndicator}
             setGenerate={setGenerate}
