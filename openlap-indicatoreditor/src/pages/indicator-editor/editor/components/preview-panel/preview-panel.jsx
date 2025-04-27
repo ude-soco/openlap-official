@@ -1,6 +1,5 @@
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";
-import { BasicIndicatorContext } from "../../basic-indicator/basic-indicator.jsx";
 import {
   Accordion,
   AccordionDetails,
@@ -12,12 +11,15 @@ import {
   Skeleton,
   Tooltip,
   Typography,
+  AccordionActions,
+  Button,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import EmptyPreview from "../../../../../assets/images/vis-empty-state/no-indicator-preview.svg";
 import ChartCustomization from "./customizations/chart-customization.jsx";
+import NameDialog from "./name-dialog.jsx";
 
 const PreviewPanel = ({
   lockedStep,
@@ -30,9 +32,13 @@ const PreviewPanel = ({
   setIndicator,
   setLoading,
   setLockedStep,
+  handleSaveIndicator,
 }) => {
   const { darkMode } = useContext(CustomThemeContext);
   const scriptRef = useRef(null);
+  const [state, setState] = useState({
+    openSaveDialog: false,
+  });
 
   useEffect(() => {
     if (!scriptRef.current) {
@@ -59,6 +65,13 @@ const PreviewPanel = ({
         ...prevState.finalize,
         openPanel: !prevState.finalize.openPanel,
       },
+    }));
+  };
+
+  const handleOpenSaveDialog = () => {
+    setState((prevState) => ({
+      ...prevState,
+      openSaveDialog: !prevState.openSaveDialog,
     }));
   };
 
@@ -167,6 +180,28 @@ const PreviewPanel = ({
             )}
           </Grid>
         </AccordionDetails>
+        <AccordionActions sx={{ py: 2 }}>
+          <Grid item xs={12}>
+            <Grid container spacing={2} justifyContent="center">
+              <Grid item xs={12} md={6}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={handleOpenSaveDialog}
+                >
+                  Save Indicator
+                </Button>
+              </Grid>
+            </Grid>
+          </Grid>
+          <NameDialog
+            open={state.openSaveDialog}
+            toggleOpen={handleOpenSaveDialog}
+            indicator={indicator}
+            setIndicator={setIndicator}
+            handleSaveIndicator={handleSaveIndicator}
+          />
+        </AccordionActions>
       </Accordion>
     </>
   );

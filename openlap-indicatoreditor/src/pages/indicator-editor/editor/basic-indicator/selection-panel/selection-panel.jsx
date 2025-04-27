@@ -28,6 +28,7 @@ const SelectionPanel = () => {
     setGenerate,
     setLoading,
     setChartConfiguration,
+    handleSaveNewBasicIndicator,
   } = useContext(BasicIndicatorContext);
 
   const loadPreviewVisualization = async (
@@ -106,6 +107,7 @@ const SelectionPanel = () => {
             setIndicator={setIndicator}
             setLockedStep={setLockedStep}
             setLoading={setLoading}
+            handleSaveIndicator={handleSaveNewBasicIndicator}
           />
         </Grid>
       </Grid>
