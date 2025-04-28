@@ -47,7 +47,7 @@ const DateRange = () => {
   return (
     <>
       <Typography variant="body2" color="text.secondary" gutterBottom>
-        Select a date range
+        Select a timeframe
       </Typography>
       <Grid container spacing={2}>
         <Grid item>

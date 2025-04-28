@@ -102,6 +102,7 @@ const SelectionPanel = () => {
             loading={loading}
             indicatorQuery={indicatorQuery}
             chartConfiguration={chartConfiguration}
+            visRef={visRef}
             analysisRef={analysisRef}
             setVisRef={setVisRef}
             setIndicator={setIndicator}

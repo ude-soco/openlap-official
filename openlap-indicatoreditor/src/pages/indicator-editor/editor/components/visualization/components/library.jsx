@@ -152,7 +152,7 @@ const VisualizationLibrary = ({
         <Grid item xs={12} md={8}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
                 Selected <b>Visualization library</b>
               </Typography>
             </Grid>

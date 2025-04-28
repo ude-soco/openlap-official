@@ -64,13 +64,13 @@ const VisualizationType = ({
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Grid item xs={12}>
-            <Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
               Available <b>Visualization types</b>
             </Typography>
           </Grid>
         </Grid>
         <Grid item xs={12}>
-          <Grid container spacing={3}>
+          <Grid container spacing={3} justifyContent="center">
             {state.typeList
               .sort((a, b) => a.name.localeCompare(b.name))
               .map((type) => {

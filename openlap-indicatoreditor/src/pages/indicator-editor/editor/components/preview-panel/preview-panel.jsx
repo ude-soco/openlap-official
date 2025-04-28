@@ -13,6 +13,7 @@ import {
   Typography,
   AccordionActions,
   Button,
+  Grow,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import EditIcon from "@mui/icons-material/Edit";
@@ -27,6 +28,7 @@ const PreviewPanel = ({
   loading,
   indicatorQuery,
   chartConfiguration,
+  visRef,
   analysisRef,
   setVisRef,
   setIndicator,
@@ -131,7 +133,18 @@ const PreviewPanel = ({
         </AccordionSummary>
         <AccordionDetails>
           <Grid container spacing={2} alignItem="center">
-            <Grid item xs={12} lg={7}>
+            <Grid
+              item
+              xs={12}
+              lg={
+                !loading && indicator.previewData.displayCode.length === 0
+                  ? chartConfiguration &&
+                    visRef.visualizationLibraryId.length > 0
+                    ? 7
+                    : 12
+                  : 7
+              }
+            >
               <Grid
                 container
                 justifyContent="center"
@@ -145,14 +158,30 @@ const PreviewPanel = ({
                   p: 2,
                 }}
               >
-                {loading ? (
+                <Grow
+                  in={loading}
+                  timeout={{ enter: 500, exit: 0 }}
+                  unmountOnExit
+                >
                   <Box width="100%">
                     <Skeleton variant="rectangular" height={500} width="100%" />
                   </Box>
-                ) : !loading &&
-                  indicator.previewData.displayCode.length !== 0 ? (
-                  indicator.previewData.displayCode[0]
-                ) : (
+                </Grow>
+                <Grow
+                  in={
+                    !loading && indicator.previewData.displayCode.length !== 0
+                  }
+                  timeout={{ enter: 500, exit: 0 }}
+                  unmountOnExit
+                >
+                  <div>{indicator.previewData.displayCode[0]}</div>
+                </Grow>
+                <Grow
+                  in={
+                    !loading && indicator.previewData.displayCode.length === 0
+                  }
+                  unmountOnExit
+                >
                   <Box
                     component="img"
                     src={EmptyPreview}
@@ -163,10 +192,16 @@ const PreviewPanel = ({
                       filter: darkMode ? "invert(1)" : undefined,
                     }}
                   />
-                )}
+                </Grow>
               </Grid>
             </Grid>
-            {chartConfiguration && (
+            <Grow
+              in={
+                chartConfiguration && visRef.visualizationLibraryId.length > 0
+              }
+              timeout={{ enter: 500, exit: 0 }}
+              unmountOnExit
+            >
               <Grid item xs={12} lg={5}>
                 <ChartCustomization
                   indicatorQuery={indicatorQuery}
@@ -177,7 +212,7 @@ const PreviewPanel = ({
                   setLoading={setLoading}
                 />
               </Grid>
-            )}
+            </Grow>
           </Grid>
         </AccordionDetails>
         <AccordionActions sx={{ py: 2 }}>
@@ -187,6 +222,7 @@ const PreviewPanel = ({
                 <Button
                   fullWidth
                   variant="contained"
+                  disabled={indicator.previewData.displayCode.length === 0}
                   onClick={handleOpenSaveDialog}
                 >
                   Save Indicator

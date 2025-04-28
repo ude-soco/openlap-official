@@ -13,7 +13,7 @@ const DateRangeChips = () => {
         <Grid item xs={12}>
           <Grid container alignItems="center" spacing={1}>
             <Grid item>
-              <Typography>Date Range:</Typography>
+              <Typography>Timeframe:</Typography>
             </Grid>
             <Grid item sm>
               <Grid container spacing={1}>

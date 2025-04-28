@@ -76,8 +76,8 @@ const InputsBasicIndicator = ({ state, setState }) => {
               arrow
               title={
                 <Typography>
-                  Choose the data from the Dataset and Filters step to the
-                  inputs of the analysis method
+                  Choose the data from the <b>Dataset</b> and <b>Filters</b>{" "}
+                  step to the inputs of the analysis method
                 </Typography>
               }
             >
