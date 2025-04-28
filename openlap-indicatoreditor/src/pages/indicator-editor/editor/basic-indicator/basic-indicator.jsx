@@ -5,17 +5,8 @@ import React, {
   useRef,
   useState,
 } from "react";
-import {
-  Divider,
-  Grid,
-  IconButton,
-  Tooltip,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
+import { Divider, Grid, IconButton, Tooltip, Typography } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
-import PreviewPanel from "../components/preview-panel/preview-panel.jsx";
 import SelectionPanel from "./selection-panel/selection-panel.jsx";
 import dayjs from "dayjs";
 import Condition from "./selection-panel/utils/condition.js";
@@ -23,14 +14,11 @@ import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 import { requestCreateBasicIndicator } from "../components/preview-panel/utils/preview-api.js";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import BarChartCustomization from "../components/preview-panel/customizations/bar-chart-customizations/bar-chart-customs.jsx";
 
 export const BasicIndicatorContext = createContext(undefined);
 
 const BasicIndicator = () => {
   const { api } = useContext(AuthContext);
-  const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down("lg"));
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const [generate, setGenerate] = useState(false);
@@ -38,7 +26,6 @@ const BasicIndicator = () => {
   const [chartConfiguration, setChartConfiguration] = useState(null);
   const [indicator, setIndicator] = useState(() => {
     const savedState = sessionStorage.getItem("session");
-
     return savedState
       ? {
           ...JSON.parse(savedState).indicator,
@@ -175,7 +162,7 @@ const BasicIndicator = () => {
             locked: true,
             openPanel: false,
           },
-          previewFinalize: {
+          finalize: {
             locked: true,
             openPanel: false,
           },
@@ -237,14 +224,6 @@ const BasicIndicator = () => {
     indicator,
   ]);
 
-  const handleChangeIndicatorName = (event) => {
-    const { name, value } = event.target;
-    setIndicator((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  };
-
   const handleSaveNewBasicIndicator = () => {
     const loadCreateBasicIndicator = async (
       api,
@@ -298,6 +277,8 @@ const BasicIndicator = () => {
         analysisInputMenu,
         visRef,
         indicator,
+        generate,
+        loading,
         chartConfiguration,
         setIndicatorQuery,
         setLockedStep,
@@ -306,7 +287,9 @@ const BasicIndicator = () => {
         setVisRef,
         setIndicator,
         setGenerate,
+        setLoading,
         setChartConfiguration,
+        handleSaveNewBasicIndicator,
       }}
     >
       <Grid container spacing={2}>
@@ -347,38 +330,6 @@ const BasicIndicator = () => {
         <Grid item xs={12}>
           <SelectionPanel />
         </Grid>
-
-        <Grid item xs={12} lg={generate ? 8 : 12}>
-          <PreviewPanel
-            indicator={indicator}
-            changeIndicatorName={handleChangeIndicatorName}
-            handleSaveIndicator={handleSaveNewBasicIndicator}
-            setVisRef={setVisRef}
-            api={api}
-            indicatorQuery={indicatorQuery}
-            analysisRef={analysisRef}
-            setIndicator={setIndicator}
-            visRef={visRef}
-            loading={loading}
-          />
-        </Grid>
-        {generate && (
-          <Grid item xs={12} lg={4}>
-            <BarChartCustomization
-              indicator={indicator}
-              setVisRef={setVisRef}
-              api={api}
-              indicatorQuery={indicatorQuery}
-              analysisRef={analysisRef}
-              chartConfiguration={chartConfiguration}
-              setIndicator={setIndicator}
-              visRef={visRef}
-              setLoading={setLoading}
-            />
-          </Grid>
-        )}
-        {/* </>
-        )} */}
       </Grid>
     </BasicIndicatorContext.Provider>
   );
