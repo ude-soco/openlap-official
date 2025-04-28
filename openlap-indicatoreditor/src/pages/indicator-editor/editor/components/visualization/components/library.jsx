@@ -99,55 +99,68 @@ const VisualizationLibrary = ({
 
   return (
     <>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Autocomplete
-            disabled={visRef.visualizationLibraryId !== ""}
-            disablePortal
-            id="combo-box-lrs"
-            options={state.libraryList.sort((a, b) =>
-              a.name.localeCompare(b.name)
-            )}
-            fullWidth
-            value={state.autoCompleteValue}
-            getOptionLabel={(option) => option.name}
-            renderOption={(props, option) => {
-              const { key, ...restProps } = props;
-              return (
-                <li {...restProps} key={key}>
-                  <Grid container sx={{ py: 0.5 }}>
-                    <Grid item xs={12}>
-                      <Typography>{option.name}</Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="body2" sx={{ fontStyle: "italic" }}>
-                        {option.description}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </li>
-              );
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="*Search for an Visualization Library"
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} md={4}>
+          <Grid container spacing={1}>
+            <Grid item xs={12}>
+              <Typography variant="body2" color="text.secondary">
+                Search for Visualization library
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Autocomplete
+                disabled={visRef.visualizationLibraryId !== ""}
+                disablePortal
+                id="combo-box-lrs"
+                options={state.libraryList.sort((a, b) =>
+                  a.name.localeCompare(b.name)
+                )}
+                fullWidth
+                value={state.autoCompleteValue}
+                getOptionLabel={(option) => option.name}
+                renderOption={(props, option) => {
+                  const { key, ...restProps } = props;
+                  return (
+                    <li {...restProps} key={key}>
+                      <Grid container sx={{ py: 0.5 }}>
+                        <Grid item xs={12}>
+                          <Typography>{option.name}</Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontStyle: "italic" }}
+                          >
+                            {option.description}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </li>
+                  );
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} placeholder="*Visualization Library" />
+                )}
+                onChange={(event, value) => {
+                  if (value) handleSelectVisualizationLibrary(value);
+                }}
               />
-            )}
-            onChange={(event, value) => {
-              if (value) handleSelectVisualizationLibrary(value);
-            }}
-          />
+            </Grid>
+          </Grid>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid item xs={12} md={8}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
               <Typography>
                 Selected <b>Visualization library</b>
               </Typography>
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              item
+              xs={12}
+              sx={{ mt: visRef.visualizationLibraryId.length > 0 ? 1 : 0 }}
+            >
               <Grid container spacing={1}>
                 <Grid item>
                   {state.libraryList?.map((library) => {
@@ -171,7 +184,11 @@ const VisualizationLibrary = ({
                 </Grid>
               </Grid>
             </Grid>
-            <Grid item xs={12} sx={{ pb: 2 }}>
+            <Grid
+              item
+              xs={12}
+              sx={{ mt: visRef.visualizationLibraryId.length > 0 ? 0.5 : 5.5 }}
+            >
               <Divider />
             </Grid>
           </Grid>

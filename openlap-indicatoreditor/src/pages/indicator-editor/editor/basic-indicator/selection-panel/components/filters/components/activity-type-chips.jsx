@@ -21,7 +21,7 @@ const ActivityTypeChips = () => {
         <Grid item xs={12}>
           <Grid container alignItems="center" spacing={1}>
             <Grid item>
-              <Typography>Activity Types:</Typography>
+              <Typography>Activity types:</Typography>
             </Grid>
             <Grid item>
               <Grid container spacing={1} alignItems="center">

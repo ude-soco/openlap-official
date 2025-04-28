@@ -108,73 +108,83 @@ const ActivityTypes = ({ state, setState }) => {
 
   return (
     <>
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12}>
-          <Tooltip
-            arrow
-            title={
-              indicatorQuery.platforms.length === 0 ? (
-                <Typography variant="body2">
-                  Select at least one Platform from Dataset to view the list of
-                  Activity types.
-                </Typography>
-              ) : undefined
-            }
-          >
-            <Autocomplete
-              disabled={
-                indicatorQuery.platforms.length === 0 ||
-                state.selectedActivitiesList.length > 0
-              }
-              disablePortal
-              disableCloseOnSelect
-              id="combo-box-lrs"
-              options={state.activityTypesList}
-              fullWidth
-              slotProps={{
-                listbox: {
-                  style: {
-                    maxHeight: "240px",
-                  },
-                },
-              }}
-              getOptionLabel={(option) => option.name}
-              renderOption={(props, option) => {
-                const { key, ...restProps } = props;
-                return (
-                  <li {...restProps} key={key}>
-                    <Grid container sx={{ py: 0.5 }}>
-                      <Grid item xs={12}>
-                        <Typography>{option.name}</Typography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="body2">{option.id}</Typography>
-                      </Grid>
-                    </Grid>
-                  </li>
-                );
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  placeholder="*Search for Activity types"
-                />
-              )}
-              onChange={(event, value) => {
-                if (value) handleSelectActivityTypes(value);
-              }}
-            />
-          </Tooltip>
-        </Grid>
-
-        <Grid item xs={12}>
+      <Grid container spacing={4} sx={{ mb: 2 }}>
+        <Grid item xs={12} md={4}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>
-                Selected <b>Activity type(s)</b>
+              <Typography variant="body2" color="text.secondary">
+                Search for Activity types
               </Typography>
             </Grid>
             <Grid item xs={12}>
+              <Tooltip
+                arrow
+                title={
+                  indicatorQuery.platforms.length === 0 ? (
+                    <Typography variant="body2">
+                      Select at least one Platform from Dataset to view the list
+                      of Activity types.
+                    </Typography>
+                  ) : undefined
+                }
+              >
+                <Autocomplete
+                  disabled={
+                    indicatorQuery.platforms.length === 0 ||
+                    state.selectedActivitiesList.length > 0
+                  }
+                  disablePortal
+                  disableCloseOnSelect
+                  id="combo-box-lrs"
+                  options={state.activityTypesList}
+                  fullWidth
+                  slotProps={{
+                    listbox: {
+                      style: {
+                        maxHeight: "240px",
+                      },
+                    },
+                  }}
+                  getOptionLabel={(option) => option.name}
+                  renderOption={(props, option) => {
+                    const { key, ...restProps } = props;
+                    return (
+                      <li {...restProps} key={key}>
+                        <Grid container sx={{ py: 0.5 }}>
+                          <Grid item xs={12}>
+                            <Typography>{option.name}</Typography>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Typography variant="body2">{option.id}</Typography>
+                          </Grid>
+                        </Grid>
+                      </li>
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField {...params} placeholder="*Activity types" />
+                  )}
+                  onChange={(event, value) => {
+                    if (value) handleSelectActivityTypes(value);
+                  }}
+                />
+              </Tooltip>
+            </Grid>
+          </Grid>
+        </Grid>
+
+        <Grid item xs={12} md={8}>
+          <Grid container spacing={1}>
+            <Grid item xs={12}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Selected <b>Activity type(s)</b>
+              </Typography>
+            </Grid>
+            <Grid
+              item
+              xs={12}
+              sx={{ mt: state.selectedActivityTypesList.length > 0 ? 1 : 0 }}
+            >
               <Grid container spacing={1}>
                 {state.selectedActivityTypesList?.map((activityType, index) => (
                   <Grid item key={index}>
@@ -191,7 +201,11 @@ const ActivityTypes = ({ state, setState }) => {
                 ))}
               </Grid>
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              item
+              xs={12}
+              sx={{ mt: state.selectedActivityTypesList.length > 0 ? 0.5 : 5.5 }}
+            >
               <Divider />
             </Grid>
             <Grid item xs={12}>

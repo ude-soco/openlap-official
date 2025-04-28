@@ -65,7 +65,7 @@ const VisualizationType = ({
         <Grid item xs={12}>
           <Grid item xs={12}>
             <Typography>
-              Available <b>Chart Types</b>
+              Available <b>Visualization types</b>
             </Typography>
           </Grid>
         </Grid>

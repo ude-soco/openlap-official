@@ -21,7 +21,7 @@ const UserChips = () => {
                     label={
                       indicatorQuery.userQueryCondition === Condition.only_me
                         ? "Use only my data"
-                        : Condition.exclude_me
+                        : indicatorQuery.userQueryCondition === Condition.exclude_me
                         ? "Exclude my data"
                         : "Include all data"
                     }

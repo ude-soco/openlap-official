@@ -29,7 +29,9 @@ const User = () => {
 
   return (
     <>
-      <Typography>Users</Typography>
+      <Typography variant="body2" color="text.secondary" gutterBottom>
+        Select users
+      </Typography>
       <FormControl>
         <RadioGroup
           row

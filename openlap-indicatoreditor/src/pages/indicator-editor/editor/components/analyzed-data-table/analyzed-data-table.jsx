@@ -50,7 +50,7 @@ const AnalyzedDataTable = ({ analyzedData }) => {
             <TableHead>
               <TableRow>
                 {columns.map((column, index) => (
-                  <TableCell key={index}>{column.title}</TableCell>
+                  <TableCell key={index}><b>{column.title}</b></TableCell>
                 ))}
               </TableRow>
             </TableHead>

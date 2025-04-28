@@ -198,7 +198,7 @@ const Filters = () => {
             >
               <Grid item xs={12}>
                 <Grid container spacing={4}>
-                  <Grid item xs={12}>
+                  <Grid item xs={12} sx={{ mb: 2 }}>
                     <DateRange />
                   </Grid>
                   <Grid item xs={12}>

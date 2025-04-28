@@ -138,63 +138,80 @@ const ActionOnActivities = ({ state, setState }) => {
 
   return (
     <>
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12}>
-          <Tooltip
-            arrow
-            title={
-              Object.entries(indicatorQuery.activities).length === 0 ? (
-                <Typography variant="body2">
-                  Select at least one Activity from above to view the list of
-                  Actions.
-                </Typography>
-              ) : undefined
-            }
-          >
-            <Autocomplete
-              disabled={Object.entries(indicatorQuery.activities).length === 0}
-              disablePortal
-              disableCloseOnSelect
-              id="combo-box-lrs"
-              options={state.actionsList}
-              fullWidth
-              slotProps={{
-                listbox: {
-                  style: {
-                    maxHeight: "240px",
-                  },
-                },
-              }}
-              getOptionLabel={(option) => option?.name}
-              renderOption={(props, option) => {
-                const { key, ...restProps } = props;
-                return (
-                  <li {...restProps} key={key}>
-                    <Grid container>
-                      <Grid item xs={12}>
-                        <Typography>{option?.name}</Typography>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Typography variant="body2">{option?.id}</Typography>
-                      </Grid>
-                    </Grid>
-                  </li>
-                );
-              }}
-              renderInput={(params) => (
-                <TextField {...params} placeholder="*Search for Actions" />
-              )}
-              onChange={(event, value) => {
-                if (value) handleSelectActionOnActivity(value);
-              }}
-            />
-          </Tooltip>
-        </Grid>
-
-        <Grid item xs={12}>
+      <Grid container spacing={4} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={4}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>
+              <Typography variant="body2" color="text.secondary">
+                Search for Actions
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Tooltip
+                arrow
+                title={
+                  Object.entries(indicatorQuery.activities).length === 0 ? (
+                    <Typography variant="body2">
+                      Select at least one Activity from above to view the list
+                      of Actions.
+                    </Typography>
+                  ) : undefined
+                }
+              >
+                <Autocomplete
+                  disabled={
+                    Object.entries(indicatorQuery.activities).length === 0
+                  }
+                  disablePortal
+                  disableCloseOnSelect
+                  id="combo-box-lrs"
+                  options={state.actionsList}
+                  fullWidth
+                  slotProps={{
+                    listbox: {
+                      style: {
+                        maxHeight: "240px",
+                      },
+                    },
+                  }}
+                  getOptionLabel={(option) => option?.name}
+                  renderOption={(props, option) => {
+                    const { key, ...restProps } = props;
+                    return (
+                      <li {...restProps} key={key}>
+                        <Grid container>
+                          <Grid item xs={12}>
+                            <Typography>{option?.name}</Typography>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Typography variant="body2">
+                              {option?.id}
+                            </Typography>
+                          </Grid>
+                        </Grid>
+                      </li>
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField {...params} placeholder="*Actions" />
+                  )}
+                  onChange={(event, value) => {
+                    if (value) handleSelectActionOnActivity(value);
+                  }}
+                />
+              </Tooltip>
+            </Grid>
+          </Grid>
+        </Grid>
+
+        <Grid item xs={12} md={8}>
+          <Grid container spacing={1}>
+            <Grid
+              item
+              xs={12}
+              sx={{ mt: state.selectedActionsList.length > 0 ? 1 : 0 }}
+            >
+              <Typography variant="body2" color="text.secondary" gutterBottom>
                 Selected <b>Action(s)</b>
               </Typography>
             </Grid>
@@ -211,7 +228,11 @@ const ActionOnActivities = ({ state, setState }) => {
                 ))}
               </Grid>
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              item
+              xs={12}
+              sx={{ mt: state.selectedActionsList.length > 0 ? 0.5 : 5.5 }}
+            >
               <Divider />
             </Grid>
           </Grid>

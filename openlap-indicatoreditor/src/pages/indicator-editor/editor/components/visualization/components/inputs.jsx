@@ -68,7 +68,22 @@ const Inputs = ({ state, setVisRef, analyzedData }) => {
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Typography>Inputs</Typography>
+          <Grid container alignItems="center">
+            <Typography>Visualization inputs</Typography>
+            <Tooltip
+              arrow
+              title={
+                <Typography>
+                  Assign the columns of data table from the Analysis step to the
+                  inputs of the visualization
+                </Typography>
+              }
+            >
+              <IconButton size="small">
+                <HelpIcon />
+              </IconButton>
+            </Tooltip>
+          </Grid>
         </Grid>
         {state.inputs?.map((input, index) => {
           const filteredValues = Object.values(analyzedData).filter(

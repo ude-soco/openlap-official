@@ -129,66 +129,78 @@ const AnalyticsTechnique = ({
   return (
     <>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Autocomplete
-            disabled={analysisRef.analyticsTechniqueId !== ""}
-            disablePortal
-            id="combo-box-lrs"
-            options={state.techniqueList}
-            fullWidth
-            slotProps={{
-              listbox: {
-                style: {
-                  maxHeight: "240px",
-                },
-              },
-            }}
-            value={state.autoCompleteValue}
-            getOptionLabel={(option) => option.name}
-            renderOption={(props, option) => {
-              const { key, ...restProps } = props;
-              return (
-                <li {...restProps} key={key}>
-                  <Grid container sx={{ py: 0.5 }}>
-                    <Grid item xs={12}>
-                      <Typography>{option.name}</Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="body2" sx={{ fontStyle: "italic" }}>
-                        {option.description}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </li>
-              );
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="*Search for an Analytics Method"
-              />
-            )}
-            onChange={(event, value) => {
-              if (value) handleSelectTechnique(value);
-            }}
-          />
-        </Grid>
-
-        <Grid item xs={12}>
+        <Grid item xs={12} md={4}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>
-                Selected <b>Analytics Method</b>
+              <Typography variant="body2" color="text.secondary">
+                Search for Analytics Method
               </Typography>
             </Grid>
             <Grid item xs={12}>
+              <Autocomplete
+                disabled={analysisRef.analyticsTechniqueId !== ""}
+                disablePortal
+                id="combo-box-lrs"
+                options={state.techniqueList}
+                fullWidth
+                slotProps={{
+                  listbox: {
+                    style: {
+                      maxHeight: "240px",
+                    },
+                  },
+                }}
+                value={state.autoCompleteValue}
+                getOptionLabel={(option) => option.name}
+                renderOption={(props, option) => {
+                  const { key, ...restProps } = props;
+                  return (
+                    <li {...restProps} key={key}>
+                      <Grid container sx={{ py: 0.5 }}>
+                        <Grid item xs={12}>
+                          <Typography>{option.name}</Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontStyle: "italic" }}
+                          >
+                            {option.description}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </li>
+                  );
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} placeholder="*Analytics Method" />
+                )}
+                onChange={(event, value) => {
+                  if (value) handleSelectTechnique(value);
+                }}
+              />
+            </Grid>
+          </Grid>
+        </Grid>
+
+        <Grid item xs={12} md={8}>
+          <Grid container spacing={1}>
+            <Grid item xs={12}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Selected <b>Analytics Method</b>
+              </Typography>
+            </Grid>
+            <Grid
+              item
+              xs={12}
+              sx={{ mt: analysisRef.analyticsTechniqueId.length > 0 ? 0.5 : 0 }}
+            >
               <Grid container spacing={1}>
-                <Grid item>
-                  {state.techniqueList?.map((technique) => {
-                    if (technique.id === analysisRef.analyticsTechniqueId) {
-                      return (
+                {state.techniqueList?.map((technique) => {
+                  if (technique.id === analysisRef.analyticsTechniqueId) {
+                    return (
+                      <Grid item key={technique.id}>
                         <Tooltip
-                          key={technique.id}
                           arrow
                           title={
                             <Typography>{technique.description}</Typography>
@@ -200,14 +212,18 @@ const AnalyticsTechnique = ({
                             onDelete={handleDeselectTechnique}
                           />
                         </Tooltip>
-                      );
-                    }
-                    return undefined;
-                  })}
-                </Grid>
+                      </Grid>
+                    );
+                  }
+                  return undefined;
+                })}
               </Grid>
             </Grid>
-            <Grid item xs={12} sx={{ pb: 2 }}>
+            <Grid
+              item
+              xs={12}
+              sx={{ mt: analysisRef.analyticsTechniqueId.length > 0 ? 0.5 : 5 }}
+            >
               <Divider />
             </Grid>
           </Grid>

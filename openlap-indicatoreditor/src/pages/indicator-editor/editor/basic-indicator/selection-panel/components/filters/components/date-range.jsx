@@ -46,7 +46,9 @@ const DateRange = () => {
 
   return (
     <>
-      <Typography gutterBottom>Date range</Typography>
+      <Typography variant="body2" color="text.secondary" gutterBottom>
+        Select a date range
+      </Typography>
       <Grid container spacing={2}>
         <Grid item>
           <LocalizationProvider dateAdapter={AdapterDayjs}>

@@ -91,45 +91,58 @@ const LRS = ({ state, setState }) => {
 
   return (
     <>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Autocomplete
-            disabled={indicatorQuery.platforms.length > 0}
-            autoFocus
-            disablePortal
-            disableCloseOnSelect
-            id="combo-box-lrs"
-            options={state.lrsList}
-            fullWidth
-            getOptionLabel={(option) => option.lrsTitle}
-            value={state.autoCompleteValue}
-            renderOption={(props, option) => {
-              const { key, ...restProps } = props;
-              return (
-                <li {...restProps} key={key}>
-                  {option.lrsTitle}
-                </li>
-              );
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="*Search for Learning Record Stores (LRSs)"
-              />
-            )}
-            onChange={(event, value) => {
-              if (value) handleSelectLrsList(value);
-            }}
-          />
-        </Grid>
-        <Grid item xs={12}>
+      <Grid container spacing={4} >
+        <Grid item xs={12} md={4}>
           <Grid container spacing={1}>
             <Grid item xs={12}>
-              <Typography>
-                Selected <b>Learning Record Store(s)</b>
+              <Typography variant="body2" color="text.secondary">
+                Search for Learning Record Stores (LRSs)
               </Typography>
             </Grid>
             <Grid item xs={12}>
+              <Autocomplete
+                disabled={indicatorQuery.platforms.length > 0}
+                autoFocus
+                disablePortal
+                disableCloseOnSelect
+                id="combo-box-lrs"
+                options={state.lrsList}
+                fullWidth
+                getOptionLabel={(option) => option.lrsTitle}
+                value={state.autoCompleteValue}
+                renderOption={(props, option) => {
+                  const { key, ...restProps } = props;
+                  return (
+                    <li {...restProps} key={key}>
+                      {option.lrsTitle}
+                    </li>
+                  );
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="*Learning Record Stores (LRSs)"
+                  />
+                )}
+                onChange={(event, value) => {
+                  if (value) handleSelectLrsList(value);
+                }}
+              />
+            </Grid>
+          </Grid>
+        </Grid>
+        <Grid item xs={12} md={8}>
+          <Grid container spacing={1}>
+            <Grid item xs={12}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Selected <b>Learning Record Store(s)</b>
+              </Typography>
+            </Grid>
+            <Grid
+              item
+              xs={12}
+              sx={{ mt: state.selectedLrsList.length > 0 ? 1 : 0 }}
+            >
               <Grid container spacing={1}>
                 {state.selectedLrsList?.map((lrs) => (
                   <Grid item key={lrs.id}>
@@ -146,7 +159,11 @@ const LRS = ({ state, setState }) => {
                 ))}
               </Grid>
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              item
+              xs={12}
+              sx={{ mt: state.selectedLrsList.length > 0 ? 0.5 : 5.5 }}
+            >
               <Divider />
             </Grid>
             <Grid item xs={12} sx={{ mb: 2 }}>

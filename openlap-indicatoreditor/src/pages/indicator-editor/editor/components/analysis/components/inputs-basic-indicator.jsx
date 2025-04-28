@@ -9,9 +9,9 @@ import {
   MenuItem,
   Select,
   Typography,
+  Tooltip,
 } from "@mui/material";
 import HelpIcon from "@mui/icons-material/Help";
-import Tooltip from "@mui/material/Tooltip";
 import { BasicIndicatorContext } from "../../../basic-indicator/basic-indicator.jsx";
 
 const InputsBasicIndicator = ({ state, setState }) => {
@@ -70,7 +70,22 @@ const InputsBasicIndicator = ({ state, setState }) => {
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Typography>Inputs</Typography>
+          <Grid container alignItems="center">
+            <Typography>Analysis method inputs</Typography>
+            <Tooltip
+              arrow
+              title={
+                <Typography>
+                  Choose the data from the Dataset and Filters step to the
+                  inputs of the analysis method
+                </Typography>
+              }
+            >
+              <IconButton size="small">
+                <HelpIcon />
+              </IconButton>
+            </Tooltip>
+          </Grid>
         </Grid>
         {state.inputs?.map((input, index) => (
           <Grid item xs={12} sm={6} key={index}>
