@@ -21,6 +21,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
+import DoneIcon from "@mui/icons-material/Done";
 
 const SpecifyRequirements = () => {
   const {
@@ -115,6 +116,34 @@ const SpecifyRequirements = () => {
         columns: tempColumnData,
       }));
     }
+  };
+
+  const handleToggleGoalEdit = () => {
+    setRequirements((prevState) => ({
+      ...prevState,
+      edit: {
+        ...prevState.edit,
+        goal: !prevState.edit.goal,
+      },
+      show: {
+        ...prevState.show,
+        question: true,
+      },
+    }));
+  };
+
+  const handleToggleQuestionEdit = () => {
+    setRequirements((prevState) => ({
+      ...prevState,
+      edit: {
+        ...prevState.edit,
+        question: !prevState.edit.question,
+      },
+      show: {
+        ...prevState.show,
+        indicatorName: true,
+      },
+    }));
   };
 
   return (
@@ -260,101 +289,203 @@ const SpecifyRequirements = () => {
         </AccordionSummary>
         <AccordionDetails>
           <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Grid container spacing={2} justifyContent="center">
-                <Grid item xs={12} md={8}>
-                  <Typography variant="body2">Specify your goal</Typography>
-                </Grid>
-              </Grid>
-            </Grid>
-            <Grid item xs={12}>
-              <Grid container spacing={2} justifyContent="center">
-                <Grid item xs={12} md={8}>
-                  <Grid container spacing={2}>
-                    <Grid item xs sm={4}>
-                      <GoalList />
-                    </Grid>
-                    <Grid item xs={12} sm>
-                      <TextField
-                        fullWidth
-                        required
-                        name="goal"
-                        value={requirements.goal}
-                        label="Describe your goal"
-                        placeholder="e.g., the usage of the learning materials in my course."
-                        onChange={handleFormData}
-                      />
-                    </Grid>
-                  </Grid>
-                </Grid>
-              </Grid>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Grid container spacing={2} justifyContent="center">
+            {requirements.edit.goal ? (
+              <>
                 <Grid item xs={12}>
                   <Grid container spacing={2} justifyContent="center">
                     <Grid item xs={12} md={8}>
-                      <Typography variant="body2">
-                        Specify your question
-                      </Typography>
+                      <Typography variant="body2">Specify your goal</Typography>
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item xs={12} md={8}>
-                  <Grid container spacing={2} alignItems="center">
-                    <Grid item xs>
-                      <TextField
-                        fullWidth
-                        required
-                        name="question"
-                        value={requirements.question}
-                        label="I am interested in"
-                        placeholder="e.g., knowing how often these learning materials are viewed by my students."
-                        onChange={handleFormData}
-                      />
-                    </Grid>
-                  </Grid>
-                </Grid>
-              </Grid>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Grid container spacing={2} justifyContent="center">
                 <Grid item xs={12}>
                   <Grid container spacing={2} justifyContent="center">
                     <Grid item xs={12} md={8}>
-                      <Typography variant="body2">
-                        Specify your indicator
-                      </Typography>
+                      <Grid container spacing={2}>
+                        <Grid item xs sm={4}>
+                          <GoalList />
+                        </Grid>
+                        <Grid item xs={12} sm>
+                          <Grid container spacing={2} alignItems="center">
+                            <Grid item xs>
+                              <TextField
+                                fullWidth
+                                required
+                                name="goal"
+                                value={requirements.goal}
+                                label="Describe your goal"
+                                placeholder="e.g., the usage of the learning materials in my course."
+                                onChange={handleFormData}
+                              />
+                            </Grid>
+                            <Grid item>
+                              <Tooltip title="Confirm">
+                                <IconButton
+                                  color="primary"
+                                  onClick={handleToggleGoalEdit}
+                                  disabled={
+                                    requirements.goal.length < 1 ||
+                                    requirements.goalType.verb.length < 1
+                                  }
+                                >
+                                  <DoneIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </Grid>
+                          </Grid>
+                        </Grid>
+                      </Grid>
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item xs={12} md={8}>
-                  <Grid container spacing={2} alignItems="center">
-                    <Grid item xs>
-                      <TextField
-                        fullWidth
-                        required
-                        name="indicatorName"
-                        value={requirements.indicatorName}
-                        label="I need an indicator showing"
-                        placeholder="e.g., the number of views of learning materials and sort by the most viewed ones."
-                        onChange={handleFormData}
-                      />
+              </>
+            ) : (
+              <>
+                <Grid item xs={12}>
+                  <Grid container spacing={2} justifyContent="center">
+                    <Grid item xs={12} md={8}>
+                      <Grid container alignItems="center" spacing={1}>
+                        <Grid item>
+                          <Typography>
+                            <i>Your goal:</i> I want to{" "}
+                            <b>{requirements.goalType.verb}</b> the{" "}
+                            <b>{requirements.goal}</b>
+                          </Typography>
+                        </Grid>
+                        <Grid item>
+                          <Tooltip title="Edit your goal">
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={handleToggleGoalEdit}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Grid>
+                      </Grid>
                     </Grid>
                   </Grid>
                 </Grid>
-              </Grid>
-            </Grid>
+              </>
+            )}
 
-            <Grid item xs={12}>
-              <Grid container spacing={2} justifyContent="center">
-                <Grid item xs={12} md={8}>
-                  <DataList />
+            {requirements.show.question && (
+              <>
+                {requirements.edit.question ? (
+                  <>
+                    <Grid item xs={12}>
+                      <Grid container spacing={2} justifyContent="center">
+                        <Grid item xs={12}>
+                          <Grid container spacing={2} justifyContent="center">
+                            <Grid item xs={12} md={8}>
+                              <Typography variant="body2">
+                                Specify your question
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </Grid>
+                        <Grid item xs={12} md={8}>
+                          <Grid container spacing={2} alignItems="center">
+                            <Grid item xs>
+                              <TextField
+                                fullWidth
+                                required
+                                name="question"
+                                value={requirements.question}
+                                label="I am interested in"
+                                placeholder="e.g., knowing how often these learning materials are viewed by my students."
+                                onChange={handleFormData}
+                              />
+                            </Grid>
+                            <Grid item>
+                              <Tooltip title="Confirm">
+                                <IconButton
+                                  color="primary"
+                                  onClick={handleToggleQuestionEdit}
+                                  disabled={requirements.question.length < 1}
+                                >
+                                  <DoneIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </Grid>
+                          </Grid>
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </>
+                ) : (
+                  <>
+                    <Grid item xs={12}>
+                      <Grid container spacing={2} justifyContent="center">
+                        <Grid item xs={12} md={8}>
+                          <Grid container alignItems="center" spacing={1}>
+                            <Grid item>
+                              <Typography>
+                                <i>Your question:</i> I am interested in{" "}
+                                <b>{requirements.question}</b>
+                              </Typography>
+                            </Grid>
+                            <Grid item>
+                              <Tooltip title="Edit your question">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={handleToggleQuestionEdit}
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </Grid>
+                          </Grid>
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </>
+                )}
+              </>
+            )}
+
+            {requirements.show.indicatorName && (
+              <>
+                <Grid item xs={12}>
+                  <Grid container spacing={2} justifyContent="center">
+                    <Grid item xs={12}>
+                      <Grid container spacing={2} justifyContent="center">
+                        <Grid item xs={12} md={8}>
+                          <Typography variant="body2">
+                            Specify your indicator
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                    <Grid item xs={12} md={8}>
+                      <Grid container spacing={2} alignItems="center">
+                        <Grid item xs>
+                          <TextField
+                            fullWidth
+                            required
+                            name="indicatorName"
+                            value={requirements.indicatorName}
+                            label="I need an indicator showing"
+                            placeholder="e.g., the number of views of learning materials and sort by the most viewed ones."
+                            onChange={handleFormData}
+                          />
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </Grid>
                 </Grid>
-              </Grid>
-            </Grid>
+
+                <Grid item xs={12}>
+                  <Grid container spacing={2} justifyContent="center">
+                    <Grid item xs={12} md={8}>
+                      <DataList />
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </>
+            )}
           </Grid>
         </AccordionDetails>
         <AccordionActions sx={{ py: 2 }}>
