@@ -32,6 +32,9 @@ const Analysis = ({
   indicator,
   analysisRef,
   setAnalysisRef,
+  setIndicator,
+  setGenerate,
+  setVisRef,
   loadAnalyzedData,
 }) => {
   const [state, setState] = useState(() => {
@@ -280,6 +283,9 @@ const Analysis = ({
                 analysisRef={analysisRef}
                 setAnalysisRef={setAnalysisRef}
                 setLockedStep={setLockedStep}
+                setGenerate={setGenerate}
+                setIndicator={setIndicator}
+                setVisRef={setVisRef}
               />
             </Grid>
             <Grow

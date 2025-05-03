@@ -74,6 +74,9 @@ const SelectionPanel = () => {
             indicator={indicator}
             analysisRef={analysisRef}
             setAnalysisRef={setAnalysisRef}
+            setIndicator={setIndicator}
+            setGenerate={setGenerate}
+            setVisRef={setVisRef}
             loadAnalyzedData={() =>
               loadAnalyzedData(api, indicatorQuery, analysisRef)
             }

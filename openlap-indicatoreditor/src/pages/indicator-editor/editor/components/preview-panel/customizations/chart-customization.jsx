@@ -191,13 +191,13 @@ const ChartCustomization = ({
               <StylesBar
                 state={state}
                 setState={setState}
-                categories={analysisRef.analyzedData.item_name.data}
+                categories={analysisRef.analyzedData?.item_name?.data}
                 chartConfiguration={chartConfiguration}
               />
             </TabPanel>
             <TabPanel value="3">
               <FiltersBar
-                categories={analysisRef.analyzedData.item_name.data}
+                categories={analysisRef.analyzedData?.item_name?.data}
                 state={state}
                 setState={setState}
                 chartConfiguration={chartConfiguration}

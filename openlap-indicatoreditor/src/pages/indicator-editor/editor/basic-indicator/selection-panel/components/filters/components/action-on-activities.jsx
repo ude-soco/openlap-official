@@ -20,6 +20,10 @@ const ActionOnActivities = ({ state, setState }) => {
     setIndicatorQuery,
     setAnalysisInputMenu,
     setAnalysisRef,
+    setLockedStep,
+    setGenerate,
+    setIndicator,
+    setVisRef,
   } = useContext(BasicIndicatorContext);
 
   useEffect(() => {
@@ -100,6 +104,39 @@ const ActionOnActivities = ({ state, setState }) => {
       setAnalysisRef((prevState) => ({
         ...prevState,
         analyzedData: {},
+      }));
+
+      setVisRef((prevState) => {
+        return {
+          ...prevState,
+          visualizationLibraryId: "",
+          visualizationTypeId: "",
+          visualizationMapping: {
+            ...prevState.visualizationMapping,
+            mapping: [],
+          },
+        };
+      });
+      setGenerate(false);
+      setIndicator((prevState) => ({
+        ...prevState,
+        previewData: {
+          ...prevState.previewData,
+          displayCode: [],
+          scriptData: "",
+        },
+      }));
+      setLockedStep((prevState) => ({
+        ...prevState,
+        visualization: {
+          locked: true,
+          openPanel: false,
+        },
+        finalize: {
+          ...prevState.finalize,
+          locked: true,
+          openPanel: false,
+        },
       }));
 
       setAnalysisInputMenu((prevInputState) => {

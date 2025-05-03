@@ -15,9 +15,15 @@ import HelpIcon from "@mui/icons-material/Help";
 import { BasicIndicatorContext } from "../../../basic-indicator/basic-indicator.jsx";
 
 const InputsBasicIndicator = ({ state, setState }) => {
-  const { analysisInputMenu, setIndicatorQuery, setAnalysisRef } = useContext(
-    BasicIndicatorContext
-  );
+  const {
+    analysisInputMenu,
+    setIndicatorQuery,
+    setAnalysisRef,
+    setLockedStep,
+    setGenerate,
+    setIndicator,
+    setVisRef,
+  } = useContext(BasicIndicatorContext);
 
   const handleChangeInputMapping = (event, input) => {
     const { value } = event.target;
@@ -64,6 +70,39 @@ const InputsBasicIndicator = ({ state, setState }) => {
         analyzedData: {},
       };
     });
+
+    setVisRef((prevState) => {
+      return {
+        ...prevState,
+        visualizationLibraryId: "",
+        visualizationTypeId: "",
+        visualizationMapping: {
+          ...prevState.visualizationMapping,
+          mapping: [],
+        },
+      };
+    });
+    setGenerate(false);
+    setIndicator((prevState) => ({
+      ...prevState,
+      previewData: {
+        ...prevState.previewData,
+        displayCode: [],
+        scriptData: "",
+      },
+    }));
+    setLockedStep((prevState) => ({
+      ...prevState,
+      visualization: {
+        locked: true,
+        openPanel: false,
+      },
+      finalize: {
+        ...prevState.finalize,
+        locked: true,
+        openPanel: false,
+      },
+    }));
   };
 
   return (

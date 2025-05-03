@@ -21,6 +21,9 @@ const AnalyticsTechnique = ({
   analysisRef,
   setAnalysisRef,
   setLockedStep,
+  setGenerate,
+  setIndicator,
+  setVisRef,
 }) => {
   const { api } = useContext(AuthContext);
 
@@ -100,6 +103,26 @@ const AnalyticsTechnique = ({
   };
 
   const handleDeselectTechnique = () => {
+    setVisRef((prevState) => {
+      return {
+        ...prevState,
+        visualizationLibraryId: "",
+        visualizationTypeId: "",
+        visualizationMapping: {
+          ...prevState.visualizationMapping,
+          mapping: [],
+        },
+      };
+    });
+    setGenerate(false);
+    setIndicator((prevState) => ({
+      ...prevState,
+      previewData: {
+        ...prevState.previewData,
+        displayCode: [],
+        scriptData: "",
+      },
+    }));
     setAnalysisRef((prevState) => {
       return {
         ...prevState,
@@ -120,6 +143,11 @@ const AnalyticsTechnique = ({
     setLockedStep((prevState) => ({
       ...prevState,
       visualization: {
+        locked: true,
+        openPanel: false,
+      },
+      finalize: {
+        ...prevState.finalize,
         locked: true,
         openPanel: false,
       },
