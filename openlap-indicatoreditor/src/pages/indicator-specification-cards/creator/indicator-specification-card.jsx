@@ -41,6 +41,16 @@ const IndicatorSpecificationCard = () => {
             { value: "", placeholder: "e.g., number of downloads", type: {} },
           ],
           selectedPath: "",
+          edit: {
+            goal: true,
+            question: true,
+            indicatorName: true,
+          },
+          show: {
+            goal: false,
+            question: false,
+            indicatorName: false,
+          },
         };
   });
 
