@@ -334,7 +334,7 @@ const MyIndicatorsTable = () => {
                             <ListItemText primary="Copy Code" />
                           </MenuItem>
                           <Divider />
-                          <MenuItem onClick={handleEdit} disabled>
+                          {/* <MenuItem onClick={handleEdit} disabled>
                             <ListItemIcon>
                               <Edit fontSize="small" color="primary" />
                             </ListItemIcon>
@@ -345,7 +345,7 @@ const MyIndicatorsTable = () => {
                               <ContentCopy fontSize="small" color="primary" />
                             </ListItemIcon>
                             <ListItemText primary="Duplicate Indicator" />
-                          </MenuItem>
+                          </MenuItem> */}
                           <MenuItem onClick={confirmDeleteIndicator}>
                             <ListItemIcon>
                               <Delete fontSize="small" color="error" />

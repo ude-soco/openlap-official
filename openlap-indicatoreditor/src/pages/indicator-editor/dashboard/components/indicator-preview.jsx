@@ -143,7 +143,7 @@ const IndicatorPreview = () => {
                   Copy Code
                 </Button>
               </Grid>
-              <Grid item>
+              {/* <Grid item>
                 <Button
                   disabled
                   variant="contained"
@@ -152,7 +152,7 @@ const IndicatorPreview = () => {
                 >
                   Edit
                 </Button>
-              </Grid>
+              </Grid> */}
             </Grid>
           </Grid>
           <Grid item xs={12} lg={7}>
@@ -196,7 +196,7 @@ const IndicatorPreview = () => {
                                     <Grid item key={index}>
                                       <Chip label={platform} />
                                     </Grid>
-                                  ),
+                                  )
                                 )}
                               </Grid>
                             </Grid>
@@ -213,14 +213,14 @@ const IndicatorPreview = () => {
                                     <Grid item key={index}>
                                       <Chip label={activityType} />
                                     </Grid>
-                                  ),
+                                  )
                                 )}
                               </Grid>
                             </Grid>
                           )}
 
                           {Object.values(
-                            state.statementResponse.actionOnActivities,
+                            state.statementResponse.actionOnActivities
                           ).length > 0 && (
                             <>
                               <Grid item xs={12}>
@@ -233,7 +233,7 @@ const IndicatorPreview = () => {
                                       <Grid item key={index}>
                                         <Chip label={action} />
                                       </Grid>
-                                    ),
+                                    )
                                   )}
                                 </Grid>
                               </Grid>
