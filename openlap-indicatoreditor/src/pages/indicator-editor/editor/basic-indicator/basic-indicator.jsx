@@ -134,14 +134,14 @@ const BasicIndicator = () => {
             description:
               'Selected list of sources specified in Dataset such as "Moodle" etc.',
           },
-          user: {
-            id: "statement.actor.account.name",
-            type: "Text",
-            required: true,
-            title: "Users",
-            description:
-              "Selected list of the User(s) specified in User Filter",
-          },
+          // user: {
+          //   id: "statement.actor.account.name",
+          //   type: "Text",
+          //   required: true,
+          //   title: "Users",
+          //   description:
+          //     "Selected list of the User(s) specified in User Filter",
+          // },
         };
   });
 

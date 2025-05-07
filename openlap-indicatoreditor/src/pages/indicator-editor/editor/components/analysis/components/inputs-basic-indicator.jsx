@@ -145,8 +145,10 @@ const InputsBasicIndicator = ({ state, setState }) => {
                       </MenuItem>
                     ))}
                   </Select>
-                  {Boolean(input.required) && (
+                  {Boolean(input.required) ? (
                     <FormHelperText>Required</FormHelperText>
+                  ) : (
+                    <FormHelperText>Optional</FormHelperText>
                   )}
                 </FormControl>
               </Grid>
