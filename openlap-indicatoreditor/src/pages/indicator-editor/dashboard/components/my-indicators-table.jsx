@@ -57,6 +57,10 @@ const MyIndicatorsTable = () => {
     },
     openDeleteDialog: false,
     loadingIndicators: false,
+    copyCode: {
+      loading: false,
+      code: "",
+    },
   });
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -167,22 +171,42 @@ const MyIndicatorsTable = () => {
   };
 
   const handleCopyCode = () => {
+    setState((prevState) => ({
+      ...prevState,
+      copyCode: {
+        ...prevState.copyCode,
+        loading: true,
+      },
+    }));
     const loadIndicatorCode = async (api, indicatorId) => {
       try {
         return await requestIndicatorCode(api, indicatorId);
       } catch (error) {
+        setState((prevState) => ({
+          ...prevState,
+          copyCode: {
+            ...prevState.copyCode,
+            loading: false,
+          },
+        }));
         enqueueSnackbar(error.response.data.message, { variant: "error" });
         console.error("Error requesting my indicators");
       }
     };
 
     loadIndicatorCode(api, selectedIndicator.id).then((response) => {
-      navigator.clipboard
-        .writeText(response.data)
-        .then(() => setCopiedCode(!copiedCode));
+      navigator.clipboard.writeText(response.data).then(() =>
+        setState((prevState) => ({
+          ...prevState,
+          copyCode: {
+            code: response.data,
+            loading: false,
+          },
+        }))
+      );
       enqueueSnackbar(response.message, { variant: "success" });
+      handleMenuClose();
     });
-    handleMenuClose();
   };
 
   const confirmDeleteIndicator = () => {
@@ -327,11 +351,25 @@ const MyIndicatorsTable = () => {
                             </ListItemIcon>
                             <ListItemText primary="Preview Indicator" />
                           </MenuItem>
-                          <MenuItem onClick={handleCopyCode}>
-                            <ListItemIcon>
-                              <Link fontSize="small" color="primary" />
-                            </ListItemIcon>
-                            <ListItemText primary="Copy Code" />
+                          <MenuItem
+                            onClick={handleCopyCode}
+                            disabled={state.copyCode.loading}
+                          >
+                            {state.copyCode.loading ? (
+                              <>
+                                <ListItemIcon>
+                                  <CircularProgress size={15} />
+                                </ListItemIcon>
+                                <ListItemText primary="Copying code" />
+                              </>
+                            ) : (
+                              <>
+                                <ListItemIcon>
+                                  <Link fontSize="small" color="primary" />
+                                </ListItemIcon>
+                                <ListItemText primary="Copy Code" />
+                              </>
+                            )}
                           </MenuItem>
                           <Divider />
                           {/* <MenuItem onClick={handleEdit} disabled>
