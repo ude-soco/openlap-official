@@ -193,7 +193,7 @@ const MyIndicatorsTable = () => {
     setAnchorEl(null);
   };
 
-  const handleDeleteIndicator = () => {
+  const handleDeleteIndicator = (callback) => {
     const deleteIndicator = async (api, indicatorId) => {
       try {
         return await requestIndicatorDeletion(api, indicatorId);
@@ -210,6 +210,7 @@ const MyIndicatorsTable = () => {
             (indicator) => indicator.id !== selectedIndicator.id
           ),
         }));
+        callback();
       });
       handleMenuClose();
     }

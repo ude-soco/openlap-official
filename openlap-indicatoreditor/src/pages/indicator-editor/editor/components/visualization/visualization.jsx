@@ -329,7 +329,7 @@ const Visualization = ({
                 disabled={
                   !visRef.visualizationLibraryId.length ||
                   !visRef.visualizationTypeId.length ||
-                  !visRef.visualizationMapping.mapping.length || generate
+                  !visRef.visualizationMapping.mapping.length
                 }
                 onClick={handleGeneratePreview}
               >

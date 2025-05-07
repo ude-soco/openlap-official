@@ -12,9 +12,8 @@ import { useState } from "react";
 const DeleteDialog = ({ open, toggleOpen, message, handleDelete }) => {
   const [loading, setLoading] = useState(false);
   const handleClose = () => {
-    // toggleOpen();
     setLoading(true);
-    handleDelete().then(() => {
+    handleDelete(() => {
       toggleOpen();
       setLoading(false);
     });
