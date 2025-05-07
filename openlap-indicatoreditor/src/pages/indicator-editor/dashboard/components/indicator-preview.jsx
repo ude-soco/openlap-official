@@ -159,198 +159,206 @@ const IndicatorPreview = () => {
       </Grid>
       <Grid item xs={12} sx={{ mt: 2 }}>
         <Grid container justifyContent="center" spacing={2}>
-          <Grid item xs={12} lg={7}>
-            <Grid container justifyContent="flex-end" spacing={1}>
-              <Grid item>
-                <LoadingButton
-                  loading={state.copyCode.loading}
-                  // loadingPosition="start"
-                  variant="contained"
-                  color="primary"
-                  onClick={handleCopyCode}
-                >
-                  Copy Code
-                </LoadingButton>
-              </Grid>
-            </Grid>
-          </Grid>
-          <Grid item xs={12} lg={7}>
-            {state.loading ? (
+          {state.loading && (
+            <Grid item xs={12} lg={7}>
               <Skeleton variant="rounded" height={850} />
-            ) : (
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12}>
-                        <Typography variant="h5" gutterBottom>
-                          {state.name}
-                        </Typography>
-                        <Grid container spacing={1} alignItems="center">
-                          <Grid item>
-                            <Chip label={handleDisplayType(state.type)} />
-                          </Grid>
-                          <Grid item>
-                            <Typography variant="body2">
-                              Created on: {state.createdOn.split("T")[0]}
-                            </Typography>
+            </Grid>
+          )}
+          {!state.loading && (
+            <>
+              <Grid item xs={12} lg={7}>
+                <Grid container justifyContent="flex-end" spacing={1}>
+                  <Grid item>
+                    <LoadingButton
+                      loading={state.copyCode.loading}
+                      // loadingPosition="start"
+                      variant="contained"
+                      color="primary"
+                      onClick={handleCopyCode}
+                    >
+                      Copy Code
+                    </LoadingButton>
+                  </Grid>
+                </Grid>
+              </Grid>
+              <Grid item xs={12} lg={7}>
+                <Paper variant="outlined" sx={{ p: 2 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                          <Typography variant="h5" gutterBottom>
+                            {state.name}
+                          </Typography>
+                          <Grid container spacing={1} alignItems="center">
+                            <Grid item>
+                              <Chip label={handleDisplayType(state.type)} />
+                            </Grid>
+                            <Grid item>
+                              <Typography variant="body2">
+                                Created on: {state.createdOn.split("T")[0]}
+                              </Typography>
+                            </Grid>
                           </Grid>
                         </Grid>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Divider />
-                      </Grid>
+                        <Grid item xs={12}>
+                          <Divider />
+                        </Grid>
 
-                      {state.type === "BASIC" && (
-                        <>
-                          {Object.values(state.statementResponse.platforms)
-                            .length > 0 && (
-                            <Grid item xs={12} md={6}>
-                              <Typography variant="overline">
-                                Platform
-                              </Typography>
-                              <Grid container spacing={1}>
-                                {state.statementResponse.platforms.map(
-                                  (platform, index) => (
-                                    <Grid item key={index}>
-                                      <Chip label={platform} />
-                                    </Grid>
-                                  )
-                                )}
-                              </Grid>
-                            </Grid>
-                          )}
-                          {Object.values(state.statementResponse.activityTypes)
-                            .length > 0 && (
-                            <Grid item xs={12} md={6}>
-                              <Typography variant="overline">
-                                Activity types
-                              </Typography>
-                              <Grid container spacing={1}>
-                                {state.statementResponse.activityTypes.map(
-                                  (activityType, index) => (
-                                    <Grid item key={index}>
-                                      <Chip label={activityType} />
-                                    </Grid>
-                                  )
-                                )}
-                              </Grid>
-                            </Grid>
-                          )}
-
-                          {Object.values(
-                            state.statementResponse.actionOnActivities
-                          ).length > 0 && (
-                            <>
-                              <Grid item xs={12}>
+                        {state.type === "BASIC" && (
+                          <>
+                            {Object.values(state.statementResponse.platforms)
+                              .length > 0 && (
+                              <Grid item xs={12} md={6}>
                                 <Typography variant="overline">
-                                  Actions
+                                  Platform
                                 </Typography>
                                 <Grid container spacing={1}>
-                                  {state.statementResponse.actionOnActivities.map(
-                                    (action, index) => (
+                                  {state.statementResponse.platforms.map(
+                                    (platform, index) => (
                                       <Grid item key={index}>
-                                        <Chip label={action} />
+                                        <Chip label={platform} />
                                       </Grid>
                                     )
                                   )}
                                 </Grid>
                               </Grid>
-                            </>
-                          )}
-                          <Grid item xs={12}>
-                            <Divider />
-                          </Grid>
-                        </>
-                      )}
-
-                      {(state.type === "COMPOSITE" ||
-                        state.type === "MULTI_LEVEL") && (
-                        <>
-                          <Grid item xs={12} md={4}>
-                            <Typography variant="overline">Platform</Typography>
-                            <Grid container spacing={1}>
-                              {state.platforms.map((platform, index) => (
-                                <Grid item key={index}>
-                                  <Chip label={platform} />
+                            )}
+                            {Object.values(
+                              state.statementResponse.activityTypes
+                            ).length > 0 && (
+                              <Grid item xs={12} md={6}>
+                                <Typography variant="overline">
+                                  Activity types
+                                </Typography>
+                                <Grid container spacing={1}>
+                                  {state.statementResponse.activityTypes.map(
+                                    (activityType, index) => (
+                                      <Grid item key={index}>
+                                        <Chip label={activityType} />
+                                      </Grid>
+                                    )
+                                  )}
                                 </Grid>
-                              ))}
+                              </Grid>
+                            )}
+
+                            {Object.values(
+                              state.statementResponse.actionOnActivities
+                            ).length > 0 && (
+                              <>
+                                <Grid item xs={12}>
+                                  <Typography variant="overline">
+                                    Actions
+                                  </Typography>
+                                  <Grid container spacing={1}>
+                                    {state.statementResponse.actionOnActivities.map(
+                                      (action, index) => (
+                                        <Grid item key={index}>
+                                          <Chip label={action} />
+                                        </Grid>
+                                      )
+                                    )}
+                                  </Grid>
+                                </Grid>
+                              </>
+                            )}
+                            <Grid item xs={12}>
+                              <Divider />
+                            </Grid>
+                          </>
+                        )}
+
+                        {(state.type === "COMPOSITE" ||
+                          state.type === "MULTI_LEVEL") && (
+                          <>
+                            <Grid item xs={12} md={4}>
+                              <Typography variant="overline">
+                                Platform
+                              </Typography>
+                              <Grid container spacing={1}>
+                                {state.platforms.map((platform, index) => (
+                                  <Grid item key={index}>
+                                    <Chip label={platform} />
+                                  </Grid>
+                                ))}
+                              </Grid>
+                            </Grid>
+                            <Grid item xs={12} md={8}>
+                              <Typography variant="overline">
+                                Basic Indicators used
+                              </Typography>
+                              <Grid container spacing={1}>
+                                {state.indicators.map((indicator, index) => (
+                                  <Grid item key={index}>
+                                    <Chip label={indicator} />
+                                  </Grid>
+                                ))}
+                              </Grid>
+                            </Grid>
+
+                            <Grid item xs={12}>
+                              <Divider />
+                            </Grid>
+                          </>
+                        )}
+
+                        {(state.type === "BASIC" ||
+                          state.type === "MULTI_LEVEL") && (
+                          <Grid item xs={12} md={6}>
+                            <Typography variant="overline">Analysis</Typography>
+                            <Grid item xs={12}>
+                              <Chip label={state.analyticsTechnique} />
                             </Grid>
                           </Grid>
-                          <Grid item xs={12} md={8}>
-                            <Typography variant="overline">
-                              Basic Indicators used
-                            </Typography>
-                            <Grid container spacing={1}>
-                              {state.indicators.map((indicator, index) => (
-                                <Grid item key={index}>
-                                  <Chip label={indicator} />
-                                </Grid>
-                              ))}
-                            </Grid>
-                          </Grid>
+                        )}
 
-                          <Grid item xs={12}>
-                            <Divider />
-                          </Grid>
-                        </>
-                      )}
-
-                      {(state.type === "BASIC" ||
-                        state.type === "MULTI_LEVEL") && (
                         <Grid item xs={12} md={6}>
-                          <Typography variant="overline">Analysis</Typography>
+                          <Typography variant="overline">Idiom</Typography>
                           <Grid item xs={12}>
-                            <Chip label={state.analyticsTechnique} />
+                            <Chip label={state.visualizationType} />
                           </Grid>
                         </Grid>
-                      )}
 
-                      <Grid item xs={12} md={6}>
-                        <Typography variant="overline">Idiom</Typography>
                         <Grid item xs={12}>
-                          <Chip label={state.visualizationType} />
+                          <Divider />
                         </Grid>
-                      </Grid>
-
-                      <Grid item xs={12}>
-                        <Divider />
                       </Grid>
                     </Grid>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Grid container spacing={1}>
-                      <Grid item xs={12}>
-                        <Grid
-                          container
-                          justifyContent="center"
-                          sx={{
-                            backgroundColor: "white",
-                            p: 2,
-                            borderRadius: 2,
-                          }}
-                        >
-                          <Grid item>{state.indicatorCode.displayCode}</Grid>
-                        </Grid>
-                      </Grid>
-                      {darkMode && (
-                        <Grid item xs>
-                          <Typography
-                            variant="caption"
-                            color="inherit"
-                            sx={{ fontStyle: "italic" }}
+                    <Grid item xs={12}>
+                      <Grid container spacing={1}>
+                        <Grid item xs={12}>
+                          <Grid
+                            container
+                            justifyContent="center"
+                            sx={{
+                              backgroundColor: "white",
+                              p: 2,
+                              borderRadius: 2,
+                            }}
                           >
-                            Note: If you are unable to view the label, switch to
-                            light mode
-                          </Typography>
+                            <Grid item>{state.indicatorCode.displayCode}</Grid>
+                          </Grid>
                         </Grid>
-                      )}
+                        {darkMode && (
+                          <Grid item xs>
+                            <Typography
+                              variant="caption"
+                              color="inherit"
+                              sx={{ fontStyle: "italic" }}
+                            >
+                              Note: If you are unable to view the label, switch
+                              to light mode
+                            </Typography>
+                          </Grid>
+                        )}
+                      </Grid>
                     </Grid>
                   </Grid>
-                </Grid>
-              </Paper>
-            )}
-          </Grid>
+                </Paper>
+              </Grid>
+            </>
+          )}
         </Grid>
       </Grid>
     </Grid>
