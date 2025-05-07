@@ -61,7 +61,7 @@ const IndicatorEditor = () => {
         <Grid item xs={12}>
           <CreateIndicator handleClearSession={handleClearSession} />
         </Grid>
-        {state.route && (
+        {/* {state.route && (
           <Grid item xs={12}>
             <Paper sx={{ p: 3 }} variant="outlined">
               <Grid
@@ -96,7 +96,7 @@ const IndicatorEditor = () => {
               </Grid>
             </Paper>
           </Grid>
-        )}
+        )} */}
       </Grid>
     </>
   );
