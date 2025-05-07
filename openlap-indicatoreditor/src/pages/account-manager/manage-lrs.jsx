@@ -92,11 +92,19 @@ const ManageLrs = () => {
               ...prevState.addLRSProviderDialog,
               lrsProviderUpdated: false,
             },
+            deleteLrsConsumerDialog: {
+              open: false,
+              lrsProviderId: "",
+            },
+            deleteLrsProviderDialog: {
+              open: false,
+              lrsProviderId: "",
+            },
           }));
           return response.lrsConsumerList;
         })
         .then((lrsConsumerList) =>
-          refreshTokenIfUserRoleChange(lrsConsumerList),
+          refreshTokenIfUserRoleChange(lrsConsumerList)
         );
     }
   }, [

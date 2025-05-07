@@ -31,7 +31,7 @@ const ManageLrsConsumerList = ({ state, setState }) => {
     try {
       await requestDeleteLrsConsumer(
         api,
-        state.deleteLrsConsumerDialog.lrsConsumerId,
+        state.deleteLrsConsumerDialog.lrsConsumerId
       ).then(() => {
         setState((prevState) => ({
           ...prevState,
@@ -86,16 +86,16 @@ const ManageLrsConsumerList = ({ state, setState }) => {
               <Button color="error" onClick={() => handleToggleDelete(lrs.id)}>
                 Delete
               </Button>
-              <DeleteDialog
-                open={state.deleteLrsConsumerDialog.open}
-                toggleOpen={handleToggleDelete}
-                message="This will delete the LRS permanently. You cannot undo this action."
-                handleDelete={handleDeleteLrs}
-              />
             </AccordionActions>
           </Accordion>
         </Grid>
       ))}
+      <DeleteDialog
+        open={state.deleteLrsConsumerDialog.open}
+        toggleOpen={handleToggleDelete}
+        message="This will delete the LRS permanently. You cannot undo this action."
+        handleDelete={handleDeleteLrs}
+      />
     </>
   );
 };
