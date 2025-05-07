@@ -19,6 +19,7 @@ import { AuthContext } from "../../../../setup/auth-context-manager/auth-context
 import { handleDisplayType } from "../utils/utils.js";
 import { CustomThemeContext } from "../../../../setup/theme-manager/theme-context-manager.jsx";
 import { useSnackbar } from "notistack";
+import { LoadingButton } from "@mui/lab";
 
 const IndicatorPreview = () => {
   const { darkMode } = useContext(CustomThemeContext);
@@ -54,6 +55,10 @@ const IndicatorPreview = () => {
     indicatorCode: {
       displayCode: "",
       scriptData: [],
+    },
+    copyCode: {
+      loading: false,
+      code: "",
     },
   });
   const { enqueueSnackbar } = useSnackbar();
@@ -93,19 +98,41 @@ const IndicatorPreview = () => {
   };
 
   const handleCopyCode = () => {
+    setState((prevState) => ({
+      ...prevState,
+      copyCode: {
+        ...prevState.copyCode,
+        loading: true,
+      },
+    }));
     const loadIndicatorCode = async (api, indicatorId) => {
       try {
         return await requestIndicatorCode(api, indicatorId);
       } catch (error) {
+        setState((prevState) => ({
+          ...prevState,
+          copyCode: {
+            ...prevState.copyCode,
+            loading: false,
+          },
+        }));
         enqueueSnackbar(error.response.data.message, { variant: "error" });
         console.error("Error requesting my indicators");
       }
     };
 
     loadIndicatorCode(api, state.id).then((response) => {
-      navigator.clipboard
-        .writeText(response.data)
-        .then(() => setCopiedCode(!copiedCode));
+      console.log("response", response);
+      navigator.clipboard.writeText(response.data).then(() =>
+        setState(() => ({
+          ...state,
+          copyCode: {
+            ...state.copyCode,
+            loading: false,
+            code: response.data,
+          },
+        }))
+      );
       enqueueSnackbar(response.message, { variant: "success" });
     });
   };
@@ -135,24 +162,16 @@ const IndicatorPreview = () => {
           <Grid item xs={12} lg={7}>
             <Grid container justifyContent="flex-end" spacing={1}>
               <Grid item>
-                <Button
+                <LoadingButton
+                  loading={state.copyCode.loading}
+                  // loadingPosition="start"
                   variant="contained"
                   color="primary"
                   onClick={handleCopyCode}
                 >
                   Copy Code
-                </Button>
+                </LoadingButton>
               </Grid>
-              {/* <Grid item>
-                <Button
-                  disabled
-                  variant="contained"
-                  color="primary"
-                  startIcon={<Edit />}
-                >
-                  Edit
-                </Button>
-              </Grid> */}
             </Grid>
           </Grid>
           <Grid item xs={12} lg={7}>
