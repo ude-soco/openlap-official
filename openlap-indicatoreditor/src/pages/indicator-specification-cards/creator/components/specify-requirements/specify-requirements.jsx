@@ -6,6 +6,7 @@ import {
   AccordionSummary,
   Button,
   Chip,
+  Fab,
   Grid,
   Grow,
   IconButton,
@@ -320,8 +321,9 @@ const SpecifyRequirements = () => {
                             </Grid>
                             <Grid item>
                               <Tooltip title="Confirm">
-                                <IconButton
+                                <Fab
                                   color="primary"
+                                  size="small"
                                   onClick={handleToggleGoalEdit}
                                   disabled={
                                     requirements.goal.length < 1 ||
@@ -329,7 +331,7 @@ const SpecifyRequirements = () => {
                                   }
                                 >
                                   <DoneIcon />
-                                </IconButton>
+                                </Fab>
                               </Tooltip>
                             </Grid>
                           </Grid>
@@ -400,13 +402,14 @@ const SpecifyRequirements = () => {
                             </Grid>
                             <Grid item>
                               <Tooltip title="Confirm">
-                                <IconButton
+                                <Fab
+                                  size="small"
                                   color="primary"
                                   onClick={handleToggleQuestionEdit}
                                   disabled={requirements.question.length < 1}
                                 >
                                   <DoneIcon />
-                                </IconButton>
+                                </Fab>
                               </Tooltip>
                             </Grid>
                           </Grid>
