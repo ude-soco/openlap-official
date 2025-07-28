@@ -24,6 +24,7 @@ const GoalList = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { requirements, setRequirements } = useContext(ISCContext);
   const [state, setState] = useState({
+    typedGoal: "",
     goalList: [],
     message: "Loading...",
   });
@@ -53,6 +54,107 @@ const GoalList = () => {
     });
   }, []);
 
+  const handleOnChange = (event, newValue) => {
+    if (newValue === null || newValue === "") {
+      // Handle clear action
+      setRequirements((prevState) => ({
+        ...prevState,
+        goalType: {
+          verb: "",
+        },
+      }));
+    } else if (typeof newValue === "string") {
+      setRequirements((prevState) => ({
+        ...prevState,
+        goalType: newValue,
+      }));
+    } else if (newValue && newValue.inputValue) {
+      // Create a new value from the user input
+      let tempListOfGoals = [...state.goalList];
+      let newGoal = {
+        id: uuidv4(),
+        verb: newValue.inputValue,
+        custom: true,
+      };
+      setRequirements((prevState) => ({
+        ...prevState,
+        goalType: newGoal,
+      }));
+      tempListOfGoals.push(newGoal);
+      setState((prevState) => ({
+        ...prevState,
+        goalList: tempListOfGoals.sort((a, b) => a.verb.localeCompare(b.verb)),
+      }));
+    } else {
+      setRequirements((prevState) => ({
+        ...prevState,
+        goalType: newValue,
+      }));
+    }
+  };
+
+  const handleGetOptionLabel = (option) => {
+    if (typeof option === "string") return option;
+    if (option.inputValue) return option.inputValue;
+    return option.verb;
+  };
+
+  const handleFilterOptions = (options, params) => {
+    const filtered = filter(options, params);
+    const { inputValue } = params;
+    const isExisting = options.some((option) => inputValue === option.verb);
+    if (inputValue !== "" && !isExisting) {
+      filtered.unshift({
+        inputValue,
+        verb: `Just use "${inputValue}"`,
+      });
+    }
+
+    return filtered;
+  };
+
+  const handleInputChange = (event, newInputValue, reason) => {
+    if (reason !== "reset")
+      setState((prevState) => ({
+        ...prevState,
+        typedGoal: newInputValue,
+      }));
+  };
+
+  const handleOnClose = () => {
+    if (!state.typedGoal) return;
+    const alreadySelected =
+      typeof requirements.goalType === "object" &&
+      requirements.goalType?.verb === state.typedGoal;
+    if (!alreadySelected) {
+      const existingGoal = state.goalList.find(
+        (goal) => goal.verb === state.typedGoal
+      );
+      if (existingGoal) {
+        setRequirements((prev) => ({
+          ...prev,
+          goalType: existingGoal,
+        }));
+      } else {
+        const newGoal = {
+          id: uuidv4(),
+          verb: state.typedGoal,
+          custom: true,
+        };
+        setRequirements((prev) => ({
+          ...prev,
+          goalType: newGoal,
+        }));
+        setState((prev) => ({
+          ...prev,
+          goalList: [...prev.goalList, newGoal].sort((a, b) =>
+            a.verb.localeCompare(b.verb)
+          ),
+        }));
+      }
+    }
+  };
+
   return (
     <>
       <FormControl fullWidth>
@@ -65,46 +167,11 @@ const GoalList = () => {
           handleHomeEndKeys
           freeSolo
           options={state.goalList}
-          onChange={(event, newValue) => {
-            if (newValue === null || newValue === "") {
-              // Handle clear action
-              setRequirements((prevState) => ({
-                ...prevState,
-                goalType: {
-                  verb: "",
-                },
-              }));
-            } else if (typeof newValue === "string") {
-              setRequirements((prevState) => ({
-                ...prevState,
-                goalType: newValue,
-              }));
-            } else if (newValue && newValue.inputValue) {
-              // Create a new value from the user input
-              let tempListOfGoals = [...state.goalList];
-              let newGoal = {
-                id: uuidv4(),
-                verb: newValue.inputValue,
-                custom: true,
-              };
-              setRequirements((prevState) => ({
-                ...prevState,
-                goalType: newGoal,
-              }));
-              tempListOfGoals.push(newGoal);
-              setState((prevState) => ({
-                ...prevState,
-                goalList: tempListOfGoals.sort((a, b) =>
-                  a.verb.localeCompare(b.verb)
-                ),
-              }));
-            } else {
-              setRequirements((prevState) => ({
-                ...prevState,
-                goalType: newValue,
-              }));
-            }
-          }}
+          onInputChange={(event, newInputValue, reason) =>
+            handleInputChange(event, newInputValue, reason)
+          }
+          onChange={(event, newValue) => handleOnChange(event, newValue)}
+          onClose={handleOnClose}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -114,30 +181,10 @@ const GoalList = () => {
               label={state.message}
             />
           )}
-          getOptionLabel={(option) => {
-            if (typeof option === "string") {
-              return option;
-            }
-            if (option.inputValue) {
-              return option.inputValue;
-            }
-            return option.verb;
-          }}
-          filterOptions={(options, params) => {
-            const filtered = filter(options, params);
-            const { inputValue } = params;
-            const isExisting = options.some(
-              (option) => inputValue === option.verb
-            );
-            if (inputValue !== "" && !isExisting) {
-              filtered.push({
-                inputValue,
-                verb: `Add "${inputValue}"`,
-              });
-            }
-
-            return filtered;
-          }}
+          getOptionLabel={(option) => handleGetOptionLabel(option)}
+          filterOptions={(options, params) =>
+            handleFilterOptions(options, params)
+          }
           renderOption={(props, option) => {
             const { key, ...restProps } = props;
             return (
@@ -146,6 +193,7 @@ const GoalList = () => {
                   <Grid item xs>
                     <Tooltip
                       arrow
+                      placement="right"
                       title={
                         option.description ? (
                           <Typography variant="body2" sx={{ p: 1 }}>
