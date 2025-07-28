@@ -66,13 +66,13 @@ const VisualizationTypes = {
   bar: "Bar chart",
   dot: "Dot chart",
   scatter: "Scatter Plot",
-  groupedBar: "Grouped bar Chart",
+  groupedBar: "Grouped bar chart",
   line: "Line chart",
-  polar: "Polar Area Chart",
-  pie: "Pie Chart",
-  stackedBar: "Stacked Bar Chart",
+  polar: "Polar Area chart",
+  pie: "Pie chart",
+  stackedBar: "Stacked Bar chart",
   treemap: "Tree Map",
-  radar: "Radar Chart",
+  radar: "Radar chart",
 };
 
 const chartFilters = [
