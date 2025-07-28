@@ -24,7 +24,6 @@ const VisualizationFilter = () => {
     openFilters: false,
     visualizationList: [],
     recommendation: false,
-    showDescription: false,
   });
 
   const handleSelectVisualization = (chart) => {
@@ -114,13 +113,6 @@ const VisualizationFilter = () => {
     const hasRequiredNumbers = availableNumbers >= requiredNumerical;
 
     return hasRequiredStrings && hasRequiredNumbers;
-  };
-
-  const handleToggleShowDescription = () => {
-    setState((prevState) => ({
-      ...prevState,
-      showDescription: !prevState.showDescription,
-    }));
   };
 
   return (
@@ -255,37 +247,22 @@ const VisualizationFilter = () => {
               </Grid>
             </Grid>
             <Grid item xs={12}>
-              {/* // TODO: Complete the show and hide description button for the Visualization module */}
-              {Boolean(visRef.chart.type) && (
-                <>
-                  {!state.showDescription && (
-                    <Grid container justifyContent="flex-end">
-                      <Button
-                        variant="contained"
-                        onClick={handleToggleShowDescription}
-                      >
-                        Show description
-                      </Button>
+              <Grow
+                in={Boolean(visRef.chart.type)}
+                timeout={{ enter: 500, exit: 0 }}
+                unmountOnExit
+              >
+                <div>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <Divider />
                     </Grid>
-                  )}
-                  <Grow
-                    in={state.showDescription}
-                    timeout={{ enter: 500, exit: 0 }}
-                    unmountOnExit
-                  >
-                    <div>
-                      <Grid item xs={12}>
-                        <Divider />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <VisualizationDescription
-                          toggleDescription={handleToggleShowDescription}
-                        />
-                      </Grid>
-                    </div>
-                  </Grow>
-                </>
-              )}
+                    <Grid item xs={12}>
+                      <VisualizationDescription />
+                    </Grid>
+                  </Grid>
+                </div>
+              </Grow>
             </Grid>
           </Grid>
         </AccordionDetails>
