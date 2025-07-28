@@ -1,6 +1,7 @@
 import React, { createContext, useEffect, useRef, useState } from "react";
-import { Divider, Typography } from "@mui/material";
+import { Breadcrumbs, Divider, Link, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import { Link as RouterLink } from 'react-router-dom';
 import SpecifyRequirements from "./components/specify-requirements/specify-requirements.jsx";
 import ChoosePath from "./components/choose-path/choose-path.jsx";
 import Visualization from "./components/visualization/visualization.jsx";
@@ -82,18 +83,18 @@ const IndicatorSpecificationCard = () => {
             axisOptions: {
               selectedXAxis: "",
               selectedYAxis: "",
-              selectedLabel: "",    // * StackedBar/Line
+              selectedLabel: "", // * StackedBar/Line
               selectedBarValue: "", // * StackedBar/Line
               selectedCategory: "", // * TreeMap
-              selectedXValue: "",   // * TreeMap
-              selectedValue: "",    // * TreeMap
+              selectedXValue: "", // * TreeMap
+              selectedValue: "", // * TreeMap
               xAxisOptions: [],
               yAxisOptions: [],
-              labelOptions: [],     // * StackedBar/Line
-              barValueOptions: [],  // * StackedBar/Line
-              categoryOptions: [],  // * TreeMap
-              xValueOptions: [],    // * TreeMap
-              valueOptions: [],     // * TreeMap
+              labelOptions: [], // * StackedBar/Line
+              barValueOptions: [], // * StackedBar/Line
+              categoryOptions: [], // * TreeMap
+              xValueOptions: [], // * TreeMap
+              valueOptions: [], // * TreeMap
             },
           },
           edit: false,
@@ -189,7 +190,15 @@ const IndicatorSpecificationCard = () => {
         }}
       >
         <Grid container spacing={2}>
-          <Typography>ISC Creator</Typography>
+          <Breadcrumbs>
+            <Link component={RouterLink} underline="hover" color="inherit" to="/">
+              Home
+            </Link>
+            <Link component={RouterLink} underline="hover" color="inherit" to="/isc">
+              ISC Dashboard
+            </Link>
+            <Typography sx={{ color: 'text.primary' }}>ISC Creator</Typography>
+          </Breadcrumbs>
 
           <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
             <Divider />

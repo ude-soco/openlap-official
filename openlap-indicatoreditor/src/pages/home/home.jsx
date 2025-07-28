@@ -1,5 +1,6 @@
-import React, { useContext, useEffect, useState } from "react";
-import { Paper, Skeleton, Typography } from "@mui/material";
+import { useContext, useEffect, useState } from "react";
+import { Divider, Paper, Skeleton, Typography } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import { requestUserDetails } from "../account-manager/utils/account-manager-api.js";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
 
@@ -7,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 import RoleTypes from "../account-manager/utils/enums/role-types.js";
 import LRSLogo from "../../assets/svg/learning_locker.svg";
 import PrototypeImage from "../../assets/svg/prototype.svg";
-import Grid from "@mui/material/Grid2";
 
 export default function Home() {
   const {
@@ -45,6 +45,12 @@ export default function Home() {
 
   return (
     <>
+      <Grid container spacing={2}>
+        <Typography sx={{ color: "text.primary" }}>Home</Typography>
+        <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
+          <Divider />
+        </Grid>
+      </Grid>
       <Grid container spacing={2}>
         <Grid size={12}>
           <Typography variant="h4">
@@ -114,7 +120,7 @@ export default function Home() {
                   />
                   <Grid size={{ xs: 12 }}>
                     <Typography align="center">
-                    Create an <b>Indicator</b>
+                      Create an <b>Indicator</b>
                     </Typography>
                   </Grid>
                 </Grid>
