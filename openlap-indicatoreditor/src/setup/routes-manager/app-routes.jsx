@@ -18,7 +18,7 @@ import IndicatorEditorDashboard from "../../pages/indicator-editor/dashboard/ind
 import IndicatorPool from "../../pages/indicator-editor/indicator-pool/indicator-pool.jsx";
 import IndicatorEditor from "../../pages/indicator-editor/editor/indicator-editor.jsx";
 import ISCCreator from "../../pages/isc-creator/creator/isc-creator.jsx";
-import ISCPool from "../../pages/isc-creator/isc-pool/isc-pool.jsx";
+import ISCPool from "../../pages/indicator-specification-cards/isc-pool/isc-pool.jsx";
 import GQIDashboard from "../../pages/gqi-editor/dashboard/gqi-dashboard.jsx";
 import GQIEditor from "../../pages/gqi-editor/gqi-editor/gqi-editor.jsx";
 import GQIPool from "../../pages/gqi-editor/gqi-pool/gqi-pool.jsx";

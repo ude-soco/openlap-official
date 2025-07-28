@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { Button, Divider, Grid, Paper, Typography } from "@mui/material";
+import {
+  Breadcrumbs,
+  Button,
+  Divider,
+  Link,
+  Paper,
+  Typography,
+} from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
+import Grid from "@mui/material/Grid2";
 import MyIscTable from "./components/my-isc-table.jsx";
 import { Delete } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -29,51 +38,45 @@ const IscDashboard = () => {
   return (
     <>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Typography>ISC Dashboard</Typography>
-        </Grid>
-        <Grid item xs={12}>
+        <Breadcrumbs>
+          <Link component={RouterLink} underline="hover" color="inherit" to="/">
+            Home
+          </Link>
+          <Typography sx={{ color: "text.primary" }}>ISC Dashboard</Typography>
+        </Breadcrumbs>
+
+        <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
           <Divider />
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
           <MyIscTable />
         </Grid>
 
         {indicatorInProgress && (
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
             <Paper sx={{ p: 3 }} variant="outlined">
               <Grid
                 container
                 justifyContent="space-between"
                 alignItems="center"
               >
-                <Grid item>
-                  <Typography>
-                    You have an indicator in progress. Would you like to
-                    continue?
-                  </Typography>
-                </Grid>
-                <Grid item>
-                  <Grid container spacing={2}>
-                    <Grid item>
-                      <Button
-                        variant="contained"
-                        onClick={handleContinueEditing}
-                      >
-                        Continue
-                      </Button>
-                    </Grid>
-                    <Grid item>
-                      <Button
-                        color="error"
-                        onClick={handleClearSession}
-                        startIcon={<Delete />}
-                      >
-                        Discard
-                      </Button>
-                    </Grid>
-                  </Grid>
+                <Typography>
+                  You have an indicator in progress. Would you like to continue?
+                </Typography>
+
+                <Grid container spacing={2}>
+                  <Button variant="contained" onClick={handleContinueEditing}>
+                    Continue
+                  </Button>
+
+                  <Button
+                    color="error"
+                    onClick={handleClearSession}
+                    startIcon={<Delete />}
+                  >
+                    Discard
+                  </Button>
                 </Grid>
               </Grid>
             </Paper>
