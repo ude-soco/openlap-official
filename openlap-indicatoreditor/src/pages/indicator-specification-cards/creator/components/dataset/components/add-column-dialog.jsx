@@ -168,7 +168,7 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
               fullWidth
               value={state.typeSelected}
               getOptionLabel={(option) => option.value}
-              groupBy={() => "Available column types"}
+              groupBy={() => "Column types"}
               renderOption={(props, option) => {
                 const { key, ...restProps } = props;
                 return (

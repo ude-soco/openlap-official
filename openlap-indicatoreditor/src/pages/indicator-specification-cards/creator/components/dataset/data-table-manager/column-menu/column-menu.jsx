@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import { useContext, useState } from "react";
 import {
   Divider,
   List,
@@ -19,7 +19,7 @@ import DeleteMenuAndDialog from "./components/delete-menu-and-dialog.jsx";
 const ColumnMenu = ({ props }) => {
   const { dataset } = useContext(ISCContext);
   const foundNullEmpty = [...dataset.rows].every((row) =>
-    isNullOrEmpty(row[props.colDef.field]),
+    isNullOrEmpty(row[props.colDef.field])
   );
   const [columnMenu, setColumnMenu] = useState({
     columnRename: false,
@@ -30,14 +30,6 @@ const ColumnMenu = ({ props }) => {
     <>
       <Stack py={0.5}>
         {/* TODO: Make the rename and add row functionalities */}
-        <List
-          sx={{ width: "100%", mb: -1 }}
-          subheader={
-            <ListSubheader>
-              Column type: {props.colDef.dataType.value}
-            </ListSubheader>
-          }
-        />
         <Tooltip
           arrow
           placement="right"
