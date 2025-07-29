@@ -8,6 +8,7 @@ import Visualization from "./components/visualization/visualization.jsx";
 import Dataset from "./components/dataset/dataset.jsx";
 import Finalize from "./components/finalize/finalize.jsx";
 import { useSnackbar } from "notistack";
+import { v4 as uuidv4 } from "uuid";
 
 export const ISCContext = createContext(undefined);
 
@@ -136,6 +137,43 @@ const IndicatorSpecificationCard = () => {
     visRef,
     lockedStep,
   });
+
+    const lastUpdateSource = useRef(null);
+
+  // requirements.data -> dataset.columns
+  useEffect(() => {
+    if (lastUpdateSource.current === "dataset") return;
+    lastUpdateSource.current = "requirements";
+
+    const newColumns = requirements.data.map((item, index) => ({
+      field: item.id || `field_${index}`,
+      headerName: item.value || `Column ${index + 1}`,
+      type: item.type?.type || "string",
+      editable: true,
+      sortable: false,
+      width: 200,
+      dataType: item.type?.type || "string",
+    }));
+
+    const numberOfRows = 3;
+
+    const newRows = [];
+    for (let i = 0; i < numberOfRows; i++) {
+      const row = { id: uuidv4() };
+      newColumns.forEach((col) => {
+        row[col.field] = col.type === "string" 
+          ? `${col.headerName} ${i + 1}`
+          : 0;
+      });
+      newRows.push(row);
+    }
+
+    setDataset((prev) => ({
+      ...prev,
+      columns: newColumns,
+      rows: newRows,
+    }));
+  }, [requirements.data, requirements.numberOfRows]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
