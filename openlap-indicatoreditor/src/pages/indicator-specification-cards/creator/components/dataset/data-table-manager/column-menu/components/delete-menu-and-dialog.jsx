@@ -18,7 +18,7 @@ const DeleteMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {
   const {
     colDef: { field },
   } = props;
-  const { dataset, setDataset } = useContext(ISCContext);
+  const { dataset, setDataset, setRequirements } = useContext(ISCContext);
   const apiRef = useGridApiContext();
 
   const handleToggleColumnDeleteDialog = () => {
@@ -44,6 +44,11 @@ const DeleteMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {
         ...prevState,
         rows: newColumnData.length === 0 ? [] : newRowData,
         columns: newColumnData,
+      }));
+
+      setRequirements((prev) => ({
+        ...prev,
+        data: prev.data.filter((_, i) => i !== index),
       }));
     }
     apiRef.current.hideColumnMenu();
