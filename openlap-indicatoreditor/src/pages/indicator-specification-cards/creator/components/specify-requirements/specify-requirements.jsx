@@ -491,27 +491,37 @@ const SpecifyRequirements = () => {
             )}
           </Grid>
         </AccordionDetails>
-        <AccordionActions sx={{ py: 2 }}>
-          <Grid item xs={12}>
-            <Grid container spacing={2} justifyContent="center">
-              <Grid item xs={12} md={6}>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  disabled={
-                    requirements.goalType.verb === "" ||
-                    requirements.goal === "" ||
-                    requirements.question === "" ||
-                    requirements.indicatorName === ""
-                  }
-                  onClick={handleUnlockPath}
-                >
-                  Next
-                </Button>
+        {requirements.show.indicatorName && (
+          <AccordionActions sx={{ py: 2 }}>
+            <Grid item xs={12}>
+              <Grid container spacing={2} justifyContent="center">
+                <Grid item xs={12} md={6}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    disabled={
+                      requirements.goalType.verb === "" ||
+                      requirements.goal === "" ||
+                      requirements.question === "" ||
+                      requirements.indicatorName === "" ||
+                      requirements.data.some(
+                        (item) =>
+                          typeof item.value !== "string" ||
+                          item.value.trim() === "" ||
+                          !item.type ||
+                          typeof item.type.type !== "string" ||
+                          item.type.type.trim() === ""
+                      )
+                    }
+                    onClick={handleUnlockPath}
+                  >
+                    Next
+                  </Button>
+                </Grid>
               </Grid>
             </Grid>
-          </Grid>
-        </AccordionActions>
+          </AccordionActions>
+        )}
       </Accordion>
     </>
   );
