@@ -92,6 +92,7 @@ const DataList = () => {
                             </li>
                           );
                         }}
+                        groupBy={() => "Available column types"}
                         renderInput={(params) => (
                           <TextField
                             {...params}
