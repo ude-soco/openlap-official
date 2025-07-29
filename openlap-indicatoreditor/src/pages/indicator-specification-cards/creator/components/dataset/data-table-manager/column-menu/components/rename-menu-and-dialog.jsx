@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import { useContext, useState } from "react";
 import {
   Button,
   Dialog,
@@ -17,7 +17,7 @@ import { useGridApiContext } from "@mui/x-data-grid";
 
 const RenameMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {
   const { colDef } = props;
-  const { dataset, setDataset } = useContext(ISCContext);
+  const { dataset, setDataset, setRequirements } = useContext(ISCContext);
   const apiRef = useGridApiContext();
 
   const [column, setColumn] = useState({
@@ -43,7 +43,7 @@ const RenameMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {
     }));
     if (
       dataset.columns.find(
-        (col) => col.headerName.toLowerCase() === value.toLowerCase(),
+        (col) => col.headerName.toLowerCase() === value.toLowerCase()
       )
     ) {
       if (value.toLowerCase() !== colDef.headerName.toLowerCase()) {
@@ -77,25 +77,49 @@ const RenameMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {
     }
   };
 
-  const handleConfirmRenameColumn = (event) => {
-    event.preventDefault();
+  const handleConfirmRenameColumn = (e) => {
+    e.preventDefault();
     apiRef.current.hideColumnMenu();
-    if (column.value !== "") {
-      let tempColumnData = colDef;
-      tempColumnData.headerName = column.value;
-      let columnData = dataset.columns.map((col) => {
-        if (col.field === tempColumnData.field) {
-          col.headerName = tempColumnData.headerName;
-        }
-        return col;
+
+    if (column.value && !column.status.exists) {
+      // 1. Update dataset.columns
+      const updatedCols = dataset.columns.map((c) =>
+        c.field === colDef.field ? { ...c, headerName: column.value } : c
+      );
+      setDataset((p) => ({ ...p, columns: updatedCols }));
+
+      // 2. Update requirements.data
+      setRequirements((prev) => {
+        const updatedData = prev.data.map((item) =>
+          item.value === colDef.headerName
+            ? { ...item, value: column.value }
+            : item
+        );
+        return { ...prev, data: updatedData };
       });
-      setDataset((prevState) => ({
-        ...prevState,
-        columns: columnData,
-      }));
+
       handleToggleColumnRenameDialog();
     }
   };
+  // const handleConfirmRenameColumn = (event) => {
+  //   event.preventDefault();
+  //   apiRef.current.hideColumnMenu();
+  //   if (column.value !== "") {
+  //     let tempColumnData = colDef;
+  //     tempColumnData.headerName = column.value;
+  //     let columnData = dataset.columns.map((col) => {
+  //       if (col.field === tempColumnData.field) {
+  //         col.headerName = tempColumnData.headerName;
+  //       }
+  //       return col;
+  //     });
+  //     setDataset((prevState) => ({
+  //       ...prevState,
+  //       columns: columnData,
+  //     }));
+  //     handleToggleColumnRenameDialog();
+  //   }
+  // };
 
   return (
     <>
