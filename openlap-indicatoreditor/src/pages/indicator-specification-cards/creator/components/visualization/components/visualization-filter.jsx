@@ -1,10 +1,10 @@
-import React, { useContext, useEffect } from "react";
+import { useState, useContext, useEffect } from "react";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Alert,
   Box,
-  Button,
   Divider,
   Grid,
   Grow,
@@ -20,10 +20,14 @@ import { Recommend } from "@mui/icons-material";
 
 const VisualizationFilter = () => {
   const { dataset, visRef, setVisRef } = useContext(ISCContext);
-  const [state, setState] = React.useState({
+  const [state, setState] = useState({
     openFilters: false,
     visualizationList: [],
     recommendation: false,
+  });
+  const [columnError, setColumnError] = useState({
+    hasError: false,
+    errorMessages: [],
   });
 
   const handleSelectVisualization = (chart) => {
@@ -44,6 +48,51 @@ const VisualizationFilter = () => {
       }));
     }
   };
+
+  useEffect(() => {
+    if (!visRef.chart || !visRef.chart.dataTypes || !dataset.columns) return;
+
+    const validTypeValues = new Set(
+      Object.values(DataTypes).map((dt) => dt.value)
+    );
+
+    const requiredTypes = visRef.chart.dataTypes.reduce((acc, dt) => {
+      if (dt.required > 0) acc[dt.type.value] = dt.required;
+      return acc;
+    }, {});
+
+    const availableTypes = dataset.columns.reduce((acc, col) => {
+      const colType = col.dataType.value;
+      if (validTypeValues.has(colType)) acc[colType] = (acc[colType] || 0) + 1;
+      return acc;
+    }, {});
+
+    // console.log("Required column types for chart:", requiredTypes);
+    // console.log("Available column types in dataset:", availableTypes);
+
+    const messages = [];
+
+    Object.entries(requiredTypes).forEach(([type, requiredCount]) => {
+      const availableCount = availableTypes[type] || 0;
+      const sufficient = availableCount >= requiredCount;
+      if (!sufficient) {
+        messages.push(
+          `Missing required <b>${type}</b> column(s): required ${requiredCount}, found ${availableCount}`
+        );
+      }
+    });
+
+    if (messages.length > 0) {
+      messages.push(`
+        Possible fix for using this chart
+          • Make sure to add the required data in the <em>'Specify your goal, question, and indicator'</em> step OR
+          • Make sure to add the required column(s) in the <em>'Dataset'</em> step
+        `);
+      setColumnError({ hasError: true, errorMessages: messages });
+    } else {
+      setColumnError({ hasError: false, errorMessages: [] });
+    }
+  }, [visRef.chart, dataset.columns]);
 
   useEffect(() => {
     if (visRef.filter.type === "") {
@@ -258,7 +307,7 @@ const VisualizationFilter = () => {
                       <Divider />
                     </Grid>
                     <Grid item xs={12}>
-                      <VisualizationDescription />
+                      <VisualizationDescription columnError={columnError} />
                     </Grid>
                   </Grid>
                 </div>
