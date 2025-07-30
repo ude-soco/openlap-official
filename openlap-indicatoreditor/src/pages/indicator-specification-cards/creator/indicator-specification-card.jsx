@@ -1,7 +1,7 @@
 import React, { createContext, useEffect, useRef, useState } from "react";
 import { Breadcrumbs, Divider, Link, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from "react-router-dom";
 import SpecifyRequirements from "./components/specify-requirements/specify-requirements.jsx";
 import ChoosePath from "./components/choose-path/choose-path.jsx";
 import Visualization from "./components/visualization/visualization.jsx";
@@ -138,7 +138,7 @@ const IndicatorSpecificationCard = () => {
     lockedStep,
   });
 
-    const lastUpdateSource = useRef(null);
+  const lastUpdateSource = useRef(null);
 
   // requirements.data -> dataset.columns
   useEffect(() => {
@@ -152,7 +152,15 @@ const IndicatorSpecificationCard = () => {
       editable: true,
       sortable: false,
       width: 200,
-      dataType: item.type?.type || "string",
+      dataType: item.type,
+      align: "left",
+      headerAlign: "left",
+      renderHeader: () => (
+        <span>
+          <Typography>{item.value || `Column ${index + 1}`}</Typography>
+          <Typography variant="caption">{item.type.value}</Typography>
+        </span>
+      ),
     }));
 
     const numberOfRows = 3;
@@ -161,9 +169,8 @@ const IndicatorSpecificationCard = () => {
     for (let i = 0; i < numberOfRows; i++) {
       const row = { id: uuidv4() };
       newColumns.forEach((col) => {
-        row[col.field] = col.type === "string" 
-          ? `${col.headerName} ${i + 1}`
-          : 0;
+        row[col.field] =
+          col.type === "string" ? `${col.headerName} ${i + 1}` : 0;
       });
       newRows.push(row);
     }
@@ -229,13 +236,23 @@ const IndicatorSpecificationCard = () => {
       >
         <Grid container spacing={2}>
           <Breadcrumbs>
-            <Link component={RouterLink} underline="hover" color="inherit" to="/">
+            <Link
+              component={RouterLink}
+              underline="hover"
+              color="inherit"
+              to="/"
+            >
               Home
             </Link>
-            <Link component={RouterLink} underline="hover" color="inherit" to="/isc">
+            <Link
+              component={RouterLink}
+              underline="hover"
+              color="inherit"
+              to="/isc"
+            >
               ISC Dashboard
             </Link>
-            <Typography sx={{ color: 'text.primary' }}>ISC Creator</Typography>
+            <Typography sx={{ color: "text.primary" }}>ISC Creator</Typography>
           </Breadcrumbs>
 
           <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
