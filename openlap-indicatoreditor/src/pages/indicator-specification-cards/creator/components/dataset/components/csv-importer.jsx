@@ -18,6 +18,16 @@ const CsvImporter = () => {
   const { dataset, setDataset } = useContext(ISCContext);
 
   const handleImportFile = (event) => {
+    const files = Array.from(event.target.files || []);
+    const csvFiles = files.filter((file) =>
+      file.name.toLowerCase().endsWith(".csv")
+    );
+
+    if (csvFiles.length !== files.length) {
+      alert("Only CSV files are allowed.");
+      return;
+    }
+
     setDataset((prevState) => ({
       ...prevState,
       file: event.target.files[0],
