@@ -9,6 +9,7 @@ import {
   Grid,
   Grow,
   IconButton,
+  Popover,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -20,6 +21,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
+import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 
 const Visualization = () => {
   const {
@@ -32,6 +34,7 @@ const Visualization = () => {
   } = useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
+    tipAnchor: null,
   });
 
   const handleTogglePanel = () => {
@@ -107,6 +110,68 @@ const Visualization = () => {
                     </Grid>
                     <Grid item>
                       <Typography>Visualization</Typography>
+                    </Grid>
+                    <Grid item>
+                      <Tooltip title="Tips">
+                        <IconButton
+                          onClick={(e) =>
+                            setState((prevState) => ({
+                              ...prevState,
+                              tipAnchor: e.currentTarget,
+                            }))
+                          }
+                        >
+                          <TipsAndUpdatesIcon color="warning" />
+                        </IconButton>
+                      </Tooltip>
+                      <Popover
+                        open={Boolean(state.tipAnchor)}
+                        anchorEl={state.tipAnchor}
+                        onClose={() =>
+                          setState((prevState) => ({
+                            ...prevState,
+                            tipAnchor: null,
+                          }))
+                        }
+                        anchorOrigin={{
+                          vertical: "bottom",
+                          horizontal: "left",
+                        }}
+                        PaperProps={{
+                          sx: {
+                            backgroundColor: "primary.main",
+                            color: "primary.contrastText",
+                            position: "absolute",
+                            p: 1,
+                          },
+                        }}
+                      >
+                        <Typography
+                          sx={{ whiteSpace: "pre-line", p: 2, maxWidth: 400 }}
+                          dangerouslySetInnerHTML={{
+                            __html: `Tip: Choose a chart type that fits your data. 
+                            Make sure the number of columns and their types (e.g. categorical, numerical, and categorical (ordinal)) in the dataset step, match the requirements of the selected chart. 
+                            
+                            Good to know! Charts will be recommended to you if those match your dataset.`,
+                          }}
+                        />
+
+                        <Grid container justifyContent="flex-end">
+                          <Button
+                            size="small"
+                            onClick={() =>
+                              setState((prevState) => ({
+                                ...prevState,
+                                tipAnchor: null,
+                              }))
+                            }
+                            color="text"
+                            variant="outlined"
+                          >
+                            Close
+                          </Button>
+                        </Grid>
+                      </Popover>
                     </Grid>
                     {!lockedStep.visualization.openPanel && (
                       <>

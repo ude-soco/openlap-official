@@ -10,6 +10,7 @@ import {
   Grid,
   Grow,
   IconButton,
+  Popover,
   TextField,
   Tooltip,
   Typography,
@@ -23,6 +24,7 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import DoneIcon from "@mui/icons-material/Done";
+import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 
 const SpecifyRequirements = () => {
   const {
@@ -30,11 +32,11 @@ const SpecifyRequirements = () => {
     setRequirements,
     lockedStep,
     setLockedStep,
-    dataset,
     setDataset,
   } = useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
+    tipAnchor: null,
   });
 
   const handleTogglePanel = () => {
@@ -179,6 +181,64 @@ const SpecifyRequirements = () => {
                       <Typography>
                         Specify your goal, question, and indicator
                       </Typography>
+                    </Grid>
+
+                    <Grid item>
+                      <Tooltip title="Tips">
+                        <IconButton
+                          onClick={(e) =>
+                            setState((prevState) => ({
+                              ...prevState,
+                              tipAnchor: e.currentTarget,
+                            }))
+                          }
+                        >
+                          <TipsAndUpdatesIcon color="warning" />
+                        </IconButton>
+                      </Tooltip>
+                      <Popover
+                        open={Boolean(state.tipAnchor)}
+                        anchorEl={state.tipAnchor}
+                        onClose={() =>
+                          setState((prevState) => ({
+                            ...prevState,
+                            tipAnchor: null,
+                          }))
+                        }
+                        anchorOrigin={{
+                          vertical: "bottom",
+                          horizontal: "left",
+                        }}
+                        PaperProps={{
+                          sx: {
+                            backgroundColor: "primary.main",
+                            color: "primary.contrastText",
+                            position: "absolute",
+                            p: 1,
+                          },
+                        }}
+                      >
+                        <Typography sx={{ p: 2, maxWidth: 350 }}>
+                          Tip: Think about what exactly you want to measure, why
+                          it matters, and what data you need to help you answer
+                          your question.
+                        </Typography>
+                        <Grid container justifyContent="flex-end">
+                          <Button
+                            size="small"
+                            onClick={() =>
+                              setState((prevState) => ({
+                                ...prevState,
+                                tipAnchor: null,
+                              }))
+                            }
+                            color="text"
+                            variant="outlined"
+                          >
+                            Close
+                          </Button>
+                        </Grid>
+                      </Popover>
                     </Grid>
                     {!lockedStep.requirements.openPanel && (
                       <>
@@ -329,17 +389,19 @@ const SpecifyRequirements = () => {
                             </Grid>
                             <Grid item>
                               <Tooltip title="Confirm">
-                                <Fab
-                                  color="primary"
-                                  size="small"
-                                  onClick={handleToggleGoalEdit}
-                                  disabled={
-                                    requirements.goal.length < 1 ||
-                                    requirements.goalType.verb.length < 1
-                                  }
-                                >
-                                  <DoneIcon />
-                                </Fab>
+                                <span>
+                                  <Fab
+                                    color="primary"
+                                    size="small"
+                                    onClick={handleToggleGoalEdit}
+                                    disabled={
+                                      requirements.goal.length < 1 ||
+                                      requirements.goalType.verb.length < 1
+                                    }
+                                  >
+                                    <DoneIcon />
+                                  </Fab>
+                                </span>
                               </Tooltip>
                             </Grid>
                           </Grid>
@@ -410,14 +472,16 @@ const SpecifyRequirements = () => {
                             </Grid>
                             <Grid item>
                               <Tooltip title="Confirm">
-                                <Fab
-                                  size="small"
-                                  color="primary"
-                                  onClick={handleToggleQuestionEdit}
-                                  disabled={requirements.question.length < 1}
-                                >
-                                  <DoneIcon />
-                                </Fab>
+                                <span>
+                                  <Fab
+                                    size="small"
+                                    color="primary"
+                                    onClick={handleToggleQuestionEdit}
+                                    disabled={requirements.question.length < 1}
+                                  >
+                                    <DoneIcon />
+                                  </Fab>
+                                </span>
                               </Tooltip>
                             </Grid>
                           </Grid>

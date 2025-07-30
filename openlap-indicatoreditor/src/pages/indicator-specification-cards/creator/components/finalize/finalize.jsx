@@ -12,18 +12,21 @@ import {
   Grid,
   Tooltip,
   Typography,
+  Popover,
 } from "@mui/material";
 import VisSelection from "../visualization/components/vis-selection.jsx";
 import NameDialog from "./components/name-dialog.jsx";
 import LockIcon from "@mui/icons-material/Lock";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
+import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 
 const Finalize = () => {
   const { dataset, lockedStep, setLockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
     openSaveDialog: false,
+    tipAnchor: null,
   });
 
   const [showCustomize, setShowCustomize] = useState(true);
@@ -87,6 +90,68 @@ const Finalize = () => {
                     </Grid>
                     <Grid item>
                       <Typography>Preview & Finalize</Typography>
+                    </Grid>
+
+                    <Grid item>
+                      <Tooltip title="Tips">
+                        <IconButton
+                          onClick={(e) =>
+                            setState((prevState) => ({
+                              ...prevState,
+                              tipAnchor: e.currentTarget,
+                            }))
+                          }
+                        >
+                          <TipsAndUpdatesIcon color="warning" />
+                        </IconButton>
+                      </Tooltip>
+                      <Popover
+                        open={Boolean(state.tipAnchor)}
+                        anchorEl={state.tipAnchor}
+                        onClose={() =>
+                          setState((prevState) => ({
+                            ...prevState,
+                            tipAnchor: null,
+                          }))
+                        }
+                        anchorOrigin={{
+                          vertical: "bottom",
+                          horizontal: "left",
+                        }}
+                        PaperProps={{
+                          sx: {
+                            backgroundColor: "primary.main",
+                            color: "primary.contrastText",
+                            position: "absolute",
+                            p: 1,
+                          },
+                        }}
+                      >
+                        <Typography
+                          sx={{ whiteSpace: "pre-line", p: 2, maxWidth: 400 }}
+                          dangerouslySetInnerHTML={{
+                            __html: `Tip: Take a final look at your indicator with the chosen data.
+                            Customize the chart by adding a title, subtitle, and choosing colors that highlight your message.
+                            Make sure everything looks clear and meaningful before you finish.`,
+                          }}
+                        />
+
+                        <Grid container justifyContent="flex-end">
+                          <Button
+                            size="small"
+                            onClick={() =>
+                              setState((prevState) => ({
+                                ...prevState,
+                                tipAnchor: null,
+                              }))
+                            }
+                            color="text"
+                            variant="outlined"
+                          >
+                            Close
+                          </Button>
+                        </Grid>
+                      </Popover>
                     </Grid>
                     {!lockedStep.finalize.openPanel && (
                       <Grid item>

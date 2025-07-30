@@ -10,6 +10,7 @@ import {
   Grid,
   Grow,
   IconButton,
+  Popover,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -20,11 +21,13 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
+import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 
 const Dataset = () => {
   const { dataset, lockedStep, setLockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
+    tipAnchor: null,
   });
 
   const handleTogglePanel = () => {
@@ -97,6 +100,67 @@ const Dataset = () => {
                     </Grid>
                     <Grid item>
                       <Typography>Dataset</Typography>
+                    </Grid>
+                    <Grid item>
+                      <Tooltip title="Tips">
+                        <IconButton
+                          onClick={(e) =>
+                            setState((prevState) => ({
+                              ...prevState,
+                              tipAnchor: e.currentTarget,
+                            }))
+                          }
+                        >
+                          <TipsAndUpdatesIcon color="warning" />
+                        </IconButton>
+                      </Tooltip>
+                      <Popover
+                        open={Boolean(state.tipAnchor)}
+                        anchorEl={state.tipAnchor}
+                        onClose={() =>
+                          setState((prevState) => ({
+                            ...prevState,
+                            tipAnchor: null,
+                          }))
+                        }
+                        anchorOrigin={{
+                          vertical: "bottom",
+                          horizontal: "left",
+                        }}
+                        PaperProps={{
+                          sx: {
+                            backgroundColor: "primary.main",
+                            color: "primary.contrastText",
+                            position: "absolute",
+                            p: 1,
+                          },
+                        }}
+                      >
+                        <Typography
+                          sx={{ whiteSpace: "pre-line", p: 2, maxWidth: 400 }}
+                          dangerouslySetInnerHTML={{
+                            __html: `Tip: Add your data by filling in the table or uploading a CSV file. 
+                            Use the rows to enter the values you want to visualize. 
+                            You can always add or remove rows and columns as needed.`,
+                          }}
+                        />
+
+                        <Grid container justifyContent="flex-end">
+                          <Button
+                            size="small"
+                            onClick={() =>
+                              setState((prevState) => ({
+                                ...prevState,
+                                tipAnchor: null,
+                              }))
+                            }
+                            color="text"
+                            variant="outlined"
+                          >
+                            Close
+                          </Button>
+                        </Grid>
+                      </Popover>
                     </Grid>
                     {!lockedStep.dataset.openPanel && (
                       <>
