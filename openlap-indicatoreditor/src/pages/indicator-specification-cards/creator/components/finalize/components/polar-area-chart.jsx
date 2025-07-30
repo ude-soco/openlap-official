@@ -6,6 +6,7 @@ import {
   Grow,
   IconButton,
   InputLabel,
+  ListSubheader,
   MenuItem,
   Select,
   Tooltip,
@@ -18,6 +19,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { DataTypes } from "../../../utils/data/config.js";
+import ChartAxisDropdownFeedback from "./chart-axis-dropdown-feedback.jsx";
 
 const PolarAreaChart = ({ customize = false, handleToggleCustomizePanel }) => {
   const { darkMode } = useContext(CustomThemeContext);
@@ -351,6 +353,11 @@ const PolarAreaChart = ({ customize = false, handleToggleCustomizePanel }) => {
               label="Categories"
               variant="outlined"
             >
+              <ListSubheader>
+                {state.axisOptions.xAxisOptions.length === 0
+                  ? `No ${state.axisOptions.xAxisType.value} column created yet!`
+                  : `${state.axisOptions.xAxisType.value} column(s)`}
+              </ListSubheader>
               {state.axisOptions.xAxisOptions.map((col) => (
                 <MenuItem key={col.field} value={col.field}>
                   {col.headerName}
@@ -379,6 +386,11 @@ const PolarAreaChart = ({ customize = false, handleToggleCustomizePanel }) => {
               label="Values"
               variant="outlined"
             >
+              <ListSubheader>
+                {state.axisOptions.yAxisOptions.length === 0
+                  ? `No ${state.axisOptions.yAxisType.value} column created yet!`
+                  : `${state.axisOptions.yAxisType.value} column(s)`}
+              </ListSubheader>
               {state.axisOptions.yAxisOptions.map((col) => (
                 <MenuItem key={col.field} value={col.field}>
                   {col.headerName}
