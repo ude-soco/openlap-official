@@ -190,7 +190,7 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
                 );
               }}
               renderInput={(params) => (
-                <TextField {...params} placeholder="Select a column type" />
+                <TextField {...params} placeholder="Select a data column type" />
               )}
               onChange={(event, value) => {
                 if (value) handleSelectType(value);
