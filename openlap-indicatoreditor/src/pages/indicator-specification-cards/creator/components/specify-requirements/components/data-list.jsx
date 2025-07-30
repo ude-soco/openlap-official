@@ -102,7 +102,7 @@ const DataList = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        placeholder="Select a column type"
+                        placeholder="Select a data column type"
                       />
                     )}
                     onChange={(event, value) => {
