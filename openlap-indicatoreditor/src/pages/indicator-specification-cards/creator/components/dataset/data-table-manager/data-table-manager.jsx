@@ -1,18 +1,12 @@
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { ClearAll as ClearAllIcon } from "@mui/icons-material";
-import { Grid } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import Footer from "./components/footer.jsx";
 import NoRowsOverlay from "./components/no-rows-overlay.jsx";
 import ColumnMenu from "./column-menu/column-menu.jsx";
-import TableHeaderBar from "./components/table-header-bar.jsx";
+import TableSideBar from "./components/table-side-bar.jsx";
 
 const DataTableManager = () => {
   const { dataset, setDataset } = useContext(ISCContext);
@@ -25,6 +19,18 @@ const DataTableManager = () => {
     pageSize: 10,
     gridHeight: 450,
   });
+
+  const style = {
+    dataGrid: {
+      "& .MuiDataGrid-columnHeaders": {
+        cursor: "pointer",
+      },
+      "& .MuiDataGrid-cell:hover": {
+        color: "primary.main",
+      },
+      height: state.gridHeight,
+    },
+  };
 
   useEffect(() => {
     const calculateGridHeight = () => {
@@ -136,10 +142,10 @@ const DataTableManager = () => {
   return (
     <>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <TableHeaderBar />
+        <Grid size="auto">
+          <TableSideBar />
         </Grid>
-        <Grid item xs={12}>
+        <Grid size="grow">
           <DataGrid
             columns={dataset.columns}
             rows={paginatedRows}
@@ -167,6 +173,7 @@ const DataTableManager = () => {
               columnMenu: (props) => <ColumnMenu props={props} />,
               footer: () => <Footer state={state} setState={setState} />,
             }}
+            sx={style.dataGrid}
             componentsProps={{
               row: {
                 onMouseEnter: handlePopperOpen,
