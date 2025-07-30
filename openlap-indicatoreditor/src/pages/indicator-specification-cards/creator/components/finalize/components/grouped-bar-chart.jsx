@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useRef } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import Chart from "react-apexcharts";
 import {
@@ -18,6 +18,8 @@ import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { DataTypes } from "../../../utils/data/config.js";
+import ChartAxisDropdownFeedback from "./chart-axis-dropdown-feedback.jsx";
 
 const GroupedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
   const { darkMode } = useContext(CustomThemeContext);
@@ -165,6 +167,8 @@ const GroupedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
       yAxisOptions: [],
       selectedXAxis: "",
       selectedYAxis: [],
+      xAxisType: DataTypes.categorical,
+      yAxisType: DataTypes.numerical,
     },
   });
 
@@ -356,7 +360,10 @@ const GroupedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
     <>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={state.axisOptions.selectedXAxis.length === 0}
+          >
             <InputLabel id="x-axis-select-label">X-Axis</InputLabel>
             <Select
               labelId="x-axis-select-label"
@@ -372,18 +379,27 @@ const GroupedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+            {state.axisOptions.selectedXAxis.length === 0 && (
+              <ChartAxisDropdownFeedback
+                axisName="X-Axis"
+                columnTypeValue={state.axisOptions.xAxisType.value}
+              />
+            )}
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <FormControl fullWidth>
-            <InputLabel id="y-axes-select-label">Y-Axes</InputLabel>
+          <FormControl
+            fullWidth
+            error={state.axisOptions.selectedYAxis.length === 0}
+          >
+            <InputLabel id="y-axes-select-label">Y-Axis</InputLabel>
             <Select
               labelId="y-axes-select-label"
               id="y-axes-select"
               multiple
               value={state.axisOptions.selectedYAxis}
               onChange={handleYAxesChange}
-              label="Y-Axes"
+              label="Y-Axis"
               variant="outlined"
               renderValue={(selected) =>
                 selected
@@ -403,6 +419,13 @@ const GroupedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
               ))}
             </Select>
             <FormHelperText>Multi-select possible</FormHelperText>
+
+            {state.axisOptions.selectedYAxis.length === 0 && (
+              <ChartAxisDropdownFeedback
+                axisName="Y-Axis"
+                columnTypeValue={state.axisOptions.yAxisType.value}
+              />
+            )}
           </FormControl>
         </Grid>
         {!customize && (

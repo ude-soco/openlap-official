@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import Chart from "react-apexcharts";
 import {
@@ -17,6 +17,8 @@ import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { DataTypes } from "../../../utils/data/config.js";
+import ChartAxisDropdownFeedback from "./chart-axis-dropdown-feedback.jsx";
 
 const ScatterPlotChart = ({
   customize = false,
@@ -172,6 +174,9 @@ const ScatterPlotChart = ({
       selectedXAxis: "",
       selectedYAxis: "",
       selectedLabel: "",
+      xAxisType: DataTypes.numerical,
+      yAxisType: DataTypes.numerical,
+      labelType: DataTypes.categorical,
     },
   });
 
@@ -422,7 +427,10 @@ const ScatterPlotChart = ({
     <>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 4 }}>
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={state.axisOptions.selectedXAxis.length === 0}
+          >
             <InputLabel id="x-axis-select-label">X Axis</InputLabel>
             <Select
               labelId="x-axis-select-label"
@@ -438,10 +446,20 @@ const ScatterPlotChart = ({
                 </MenuItem>
               ))}
             </Select>
+
+            {state.axisOptions.selectedXAxis.length === 0 && (
+              <ChartAxisDropdownFeedback
+                axisName="X-Axis"
+                columnTypeValue={state.axisOptions.xAxisType.value}
+              />
+            )}
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={state.axisOptions.selectedYAxis.length === 0}
+          >
             <InputLabel id="y-axis-select-label">Y Axis</InputLabel>
             <Select
               labelId="y-axis-select-label"
@@ -457,17 +475,26 @@ const ScatterPlotChart = ({
                 </MenuItem>
               ))}
             </Select>
+            {state.axisOptions.selectedYAxis.length === 0 && (
+              <ChartAxisDropdownFeedback
+                axisName="Y-Axis"
+                columnTypeValue={state.axisOptions.yAxisType.value}
+              />
+            )}
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <FormControl fullWidth>
-            <InputLabel id="label-select-label">Labels</InputLabel>
+          <FormControl
+            fullWidth
+            error={state.axisOptions.selectedLabel.length === 0}
+          >
+            <InputLabel id="label-select-label">Label</InputLabel>
             <Select
               labelId="label-select-label"
               id="label-select"
               value={state.axisOptions.selectedLabel}
               onChange={handleLabelChange}
-              label="Labels"
+              label="Label"
               variant="outlined"
             >
               {state.axisOptions.labelOptions.map((col) => (
@@ -476,6 +503,12 @@ const ScatterPlotChart = ({
                 </MenuItem>
               ))}
             </Select>
+            {state.axisOptions.selectedLabel.length === 0 && (
+              <ChartAxisDropdownFeedback
+                axisName="Label"
+                columnTypeValue={state.axisOptions.labelType.value}
+              />
+            )}
           </FormControl>
         </Grid>
         {!customize && (

@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { Alert, Chip, Link, Typography } from "@mui/material";
+import { Alert, AlertTitle, Chip, Link, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 
@@ -71,17 +71,32 @@ const VisualizationDescription = ({ columnError }) => {
               <Grid size={{ xs: 12 }} sx={{ pt: 2 }}>
                 {/* Show column validation errors */}
                 {columnError.hasError && (
-                  <Alert severity="error">
-                    {columnError.errorMessages.map((msg, i) => (
+                  <Grid container spacing={1}>
+                    <Grid size={{ xs: 12 }}>
+                      <Alert severity="error">
+                        <AlertTitle>Missing data</AlertTitle>
+                        {columnError.errorMessages.map((msg, i) => (
+                          <Typography
+                            key={i}
+                            sx={{ whiteSpace: "pre-line" }}
+                            dangerouslySetInnerHTML={{ __html: msg }}
+                          />
+                        ))}
+                      </Alert>
+                    </Grid>
+                    <Alert severity="info">
+                      <AlertTitle>
+                        Possible fix for using <b>{visRef.chart.type}</b>
+                      </AlertTitle>
                       <Typography
-                        key={i}
                         sx={{ whiteSpace: "pre-line" }}
-                        dangerouslySetInnerHTML={{ __html: msg }}
+                        dangerouslySetInnerHTML={{
+                          __html: `• Make sure to add the required data in the <b>Specify your goal, question, and indicator</b> step <em>OR</em>
+                                    • Make sure to add the required column(s) in the <b>Dataset</b> step`,
+                        }}
                       />
-                        // {msg}
-                      // </Typography>
-                    ))}
-                  </Alert>
+                    </Alert>
+                  </Grid>
                 )}
               </Grid>
             </Grid>

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import {
   Button,
@@ -18,6 +18,8 @@ import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { DataTypes } from "../../../utils/data/config.js";
+import ChartAxisDropdownFeedback from "./chart-axis-dropdown-feedback.jsx";
 
 const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
   const { darkMode } = useContext(CustomThemeContext);
@@ -158,6 +160,9 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
       selectedXValue: "",
       selectedCategory: "",
       selectedValue: "",
+      categoryType: DataTypes.categorical,
+      xValueType: DataTypes.categorical,
+      valueType: DataTypes.numerical,
     },
   });
 
@@ -377,7 +382,10 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
     <>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 4 }}>
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={state.axisOptions.selectedCategory?.length === 0}
+          >
             <InputLabel id="category-select-label">Category</InputLabel>
             <Select
               labelId="category-select-label"
@@ -393,10 +401,19 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+            {state.axisOptions.selectedCategory?.length === 0 && (
+              <ChartAxisDropdownFeedback
+                axisName="Categories"
+                columnTypeValue={state.axisOptions.categoryType.value}
+              />
+            )}
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={state.axisOptions.selectedXValue?.length === 0}
+          >
             <InputLabel id="x-value-select-label">X-Value</InputLabel>
             <Select
               labelId="x-value-select-label"
@@ -412,10 +429,19 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+            {state.axisOptions.selectedXValue.length === 0 && (
+              <ChartAxisDropdownFeedback
+                axisName="Categories"
+                columnTypeValue={state.axisOptions.xValueType.value}
+              />
+            )}
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={state.axisOptions.selectedValue.length === 0}
+          >
             <InputLabel id="value-select-label">Value</InputLabel>
             <Select
               labelId="value-select-label"
@@ -431,6 +457,13 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+
+            {state.axisOptions.selectedValue.length === 0 && (
+              <ChartAxisDropdownFeedback
+                axisName="Categories"
+                columnTypeValue={state.axisOptions.valueType.value}
+              />
+            )}
           </FormControl>
         </Grid>
         {!customize && (

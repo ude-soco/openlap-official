@@ -77,17 +77,12 @@ const VisualizationFilter = () => {
       const sufficient = availableCount >= requiredCount;
       if (!sufficient) {
         messages.push(
-          `Missing required <b>${type}</b> column(s): required ${requiredCount}, found ${availableCount}`
+          `<b>${type}</b> column(s): required <b>${requiredCount}</b>, found <b>${availableCount}</b>`
         );
       }
     });
 
     if (messages.length > 0) {
-      messages.push(`
-        Possible fix for using this chart
-          • Make sure to add the required data in the <em>'Specify your goal, question, and indicator'</em> step OR
-          • Make sure to add the required column(s) in the <em>'Dataset'</em> step
-        `);
       setColumnError({ hasError: true, errorMessages: messages });
     } else {
       setColumnError({ hasError: false, errorMessages: [] });
