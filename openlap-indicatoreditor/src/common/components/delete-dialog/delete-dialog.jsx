@@ -9,7 +9,7 @@ import {
 import LoadingButton from "@mui/lab/LoadingButton";
 import { useState } from "react";
 
-const DeleteDialog = ({ open, toggleOpen, message, handleDelete }) => {
+const DeleteDialog = ({ reset, open, toggleOpen, message, handleDelete }) => {
   const [loading, setLoading] = useState(false);
   const handleClose = () => {
     setLoading(true);
@@ -26,9 +26,7 @@ const DeleteDialog = ({ open, toggleOpen, message, handleDelete }) => {
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">
-          Are you sure?
-        </DialogTitle>
+        <DialogTitle id="alert-dialog-title">Are you sure?</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
             {message}
@@ -47,7 +45,7 @@ const DeleteDialog = ({ open, toggleOpen, message, handleDelete }) => {
             variant="contained"
             color="error"
           >
-            Delete
+            {reset ? "Reset" : "Delete"}
           </LoadingButton>
         </DialogActions>
       </Dialog>
