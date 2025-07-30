@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import {
   Button,
@@ -17,6 +17,8 @@ import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { DataTypes } from "../../../utils/data/config.js";
+import ChartAxisDropdownFeedback from "./chart-axis-dropdown-feedback.jsx";
 
 const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
   const { darkMode } = useContext(CustomThemeContext);
@@ -172,6 +174,9 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
       selectedXAxis: "",
       selectedBarValue: "",
       selectedYAxis: "",
+      xAxisType: DataTypes.categorical,
+      barValueType: DataTypes.categorical,
+      yAxisType: DataTypes.numerical,
     },
   });
 
@@ -438,7 +443,10 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
     <>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 4 }}>
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={state.axisOptions.selectedXAxis.length === 0}
+          >
             <InputLabel id="x-axis-select-label">X-Axis: Group By</InputLabel>
             <Select
               labelId="x-axis-select-label"
@@ -454,10 +462,19 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+            {state.axisOptions.selectedXAxis.length === 0 && (
+              <ChartAxisDropdownFeedback
+                axisName="X-Axis: Group By"
+                columnTypeValue={state.axisOptions.xAxisType.value}
+              />
+            )}
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={state.axisOptions.selectedBarValue.length === 0}
+          >
             <InputLabel id="bar-value-select-label">Stack Label</InputLabel>
             <Select
               labelId="bar-value-select-label"
@@ -473,10 +490,19 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+            {state.axisOptions.selectedBarValue.length === 0 && (
+              <ChartAxisDropdownFeedback
+                axisName="Stack Label"
+                columnTypeValue={state.axisOptions.barValueType.value}
+              />
+            )}
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={state.axisOptions.selectedYAxis.length === 0}
+          >
             <InputLabel id="y-axis-select-label">Y-Axis</InputLabel>
             <Select
               labelId="y-axis-select-label"
@@ -492,6 +518,12 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+            {state.axisOptions.selectedYAxis.length === 0 && (
+              <ChartAxisDropdownFeedback
+                axisName="Y-Axis"
+                columnTypeValue={state.axisOptions.yAxisType.value}
+              />
+            )}
           </FormControl>
         </Grid>
         {!customize && (

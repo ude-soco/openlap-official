@@ -26,7 +26,7 @@ const Finalize = () => {
     openSaveDialog: false,
   });
 
-  const [showCustomize, setShowCustomize] = useState(false);
+  const [showCustomize, setShowCustomize] = useState(true);
 
   const handleTogglePanel = () => {
     setLockedStep((prevState) => ({

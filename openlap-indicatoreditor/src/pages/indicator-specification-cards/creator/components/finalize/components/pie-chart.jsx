@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import {
   Button,
@@ -17,6 +17,8 @@ import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
+import ChartAxisDropdownFeedback from "./chart-axis-dropdown-feedback.jsx";
+import { DataTypes } from "../../../utils/data/config.js";
 
 const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
   const { darkMode } = useContext(CustomThemeContext);
@@ -160,6 +162,8 @@ const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
       yAxisOptions: [],
       selectedXAxis: "",
       selectedYAxis: "",
+      xAxisType: DataTypes.categorical,
+      yAxisType: DataTypes.numerical,
     },
   });
 
@@ -335,7 +339,10 @@ const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
     <>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={state.axisOptions.selectedXAxis.length === 0}
+          >
             <InputLabel id="x-axis-select-label">Categories</InputLabel>
             <Select
               labelId="x-axis-select-label"
@@ -351,10 +358,20 @@ const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+
+            {state.axisOptions.selectedXAxis.length === 0 && (
+              <ChartAxisDropdownFeedback
+                axisName="Categories"
+                columnTypeValue={state.axisOptions.xAxisType.value}
+              />
+            )}
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={state.axisOptions.selectedYAxis.length === 0}
+          >
             <InputLabel id="y-axis-select-label">Values</InputLabel>
             <Select
               labelId="y-axis-select-label"
@@ -370,6 +387,12 @@ const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+            {state.axisOptions.selectedYAxis.length === 0 && (
+              <ChartAxisDropdownFeedback
+                axisName="Values"
+                columnTypeValue={state.axisOptions.yAxisType.value}
+              />
+            )}
           </FormControl>
         </Grid>
         {!customize && (
