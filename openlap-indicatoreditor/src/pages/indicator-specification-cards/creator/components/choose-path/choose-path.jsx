@@ -4,10 +4,12 @@ import {
   AccordionDetails,
   AccordionSummary,
   Chip,
+  Button,
   Grid,
   Grow,
   IconButton,
   Paper,
+  Popover,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -18,12 +20,14 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
+import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 
 const ChoosePath = () => {
   const { requirements, setRequirements, lockedStep, setLockedStep } =
     useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
+    tipAnchor: null,
   });
 
   const handleChooseVisualizationPath = () => {
@@ -160,6 +164,68 @@ const ChoosePath = () => {
                     </Grid>
                     <Grid item>
                       <Typography>How would you like to start?</Typography>
+                    </Grid>
+                    <Grid item>
+                      <Tooltip title="Tips">
+                        <IconButton
+                          onClick={(e) =>
+                            setState((prevState) => ({
+                              ...prevState,
+                              tipAnchor: e.currentTarget,
+                            }))
+                          }
+                        >
+                          <TipsAndUpdatesIcon color="warning" />
+                        </IconButton>
+                      </Tooltip>
+                      <Popover
+                        open={Boolean(state.tipAnchor)}
+                        anchorEl={state.tipAnchor}
+                        onClose={() =>
+                          setState((prevState) => ({
+                            ...prevState,
+                            tipAnchor: null,
+                          }))
+                        }
+                        anchorOrigin={{
+                          vertical: "bottom",
+                          horizontal: "left",
+                        }}
+                        PaperProps={{
+                          sx: {
+                            backgroundColor: "primary.main",
+                            color: "primary.contrastText",
+                            position: "absolute",
+                            p: 1,
+                          },
+                        }}
+                      >
+                        <Typography
+                          sx={{ whiteSpace: "pre-line", p: 2, maxWidth: 400 }}
+                          dangerouslySetInnerHTML={{
+                            __html: `Tip: You can start either with data or visualization.
+                            • If you have an idea what data you want to show in a table, choose Data. 
+                            • If you have a chart in mind, choose Visualization.                             
+                            Don’t worry — you’ll complete both steps either way.`,
+                          }}
+                        />
+
+                        <Grid container justifyContent="flex-end">
+                          <Button
+                            size="small"
+                            onClick={() =>
+                              setState((prevState) => ({
+                                ...prevState,
+                                tipAnchor: null,
+                              }))
+                            }
+                            color="text"
+                            variant="outlined"
+                          >
+                            Close
+                          </Button>
+                        </Grid>
+                      </Popover>
                     </Grid>
                     {!lockedStep.path.openPanel && (
                       <>
