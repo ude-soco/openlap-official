@@ -1,5 +1,6 @@
 import React, { useContext } from "react";
 import {
+  Button,
   Divider,
   FormControl,
   Grid,
@@ -22,7 +23,7 @@ const Footer = ({ state, setState }) => {
     setDataset((prevState) => ({
       ...prevState,
       rows: prevState.rows.filter(
-        (row) => !state.selectionModel.includes(row.id),
+        (row) => !state.selectionModel.includes(row.id)
       ),
     }));
 
@@ -63,7 +64,7 @@ const Footer = ({ state, setState }) => {
         py={2}
       >
         <Grid item xs>
-          <Grid container spacing={2} alignItems="center">
+          <Grid container spacing={1} alignItems="center">
             {state.selectionModel.length !== 0 && (
               <>
                 <Grid item>
@@ -76,13 +77,14 @@ const Footer = ({ state, setState }) => {
                     arrow
                     title={<Typography>Delete selected rows</Typography>}
                   >
-                    <IconButton
+                    <Button
+                      variant="outlined"
                       size="small"
-                      onClick={handleDeleteSelectedRows}
                       color="error"
+                      onClick={handleDeleteSelectedRows}
                     >
-                      <DeleteIcon />
-                    </IconButton>
+                      Delete
+                    </Button>
                   </Tooltip>
                 </Grid>
               </>
@@ -99,7 +101,7 @@ const Footer = ({ state, setState }) => {
         </Grid>
         <Grid item xs={2}>
           <FormControl fullWidth size="small">
-            <InputLabel sx={{backgroundColor: "white", pr: 1}}>Rows per page</InputLabel>
+            <InputLabel sx={{ ml: -0.25 }}>Show rows</InputLabel>
             <Select
               value={state.pageSize}
               label="Page size"
@@ -107,7 +109,7 @@ const Footer = ({ state, setState }) => {
             >
               {[5, 10, 20, 50].map((size) => (
                 <MenuItem key={size} value={size}>
-                  {size} rows
+                  {size} rows per page
                 </MenuItem>
               ))}
             </Select>
