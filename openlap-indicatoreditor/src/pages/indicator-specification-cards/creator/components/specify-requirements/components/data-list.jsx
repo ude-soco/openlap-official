@@ -35,7 +35,7 @@ const DataList = () => {
   const handleAddDataRow = () => {
     setRequirements((prevState) => ({
       ...prevState,
-      data: [...prevState.data, { value: "" }],
+      data: [...prevState.data, { value: "", type: DataTypes.categorical }],
     }));
   };
 
@@ -70,13 +70,12 @@ const DataList = () => {
                 <Grid size={{ xs: "grow", sm: 6 }}>
                   <Autocomplete
                     fullWidth
+                    disableClearable
                     options={Object.values(DataTypes)}
                     name="type"
                     value={
                       Object.values(DataTypes).find(
-                        (dt) =>
-                          dt.value ===
-                          (requirement.type?.value || requirement.type?.type)
+                        (dt) => dt.value === requirement.type?.value
                       ) || null
                     }
                     getOptionLabel={(option) => {
