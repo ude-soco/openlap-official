@@ -7,6 +7,7 @@ import {
   Grow,
   IconButton,
   InputLabel,
+  ListSubheader,
   MenuItem,
   Select,
   Tooltip,
@@ -440,6 +441,11 @@ const ScatterPlotChart = ({
               label="X Axis"
               variant="outlined"
             >
+              <ListSubheader>
+                {state.axisOptions.xAxisOptions.length === 0
+                  ? `No ${state.axisOptions.xAxisType.value} column created yet!`
+                  : `${state.axisOptions.xAxisType.value} column(s)`}
+              </ListSubheader>
               {state.axisOptions.xAxisOptions.map((col) => (
                 <MenuItem key={col.field} value={col.field}>
                   {col.headerName}
@@ -469,6 +475,11 @@ const ScatterPlotChart = ({
               label="Y Axis"
               variant="outlined"
             >
+              <ListSubheader>
+                {state.axisOptions.yAxisOptions.length === 0
+                  ? `No ${state.axisOptions.yAxisType.value} column created yet!`
+                  : `${state.axisOptions.yAxisType.value} column(s)`}
+              </ListSubheader>
               {state.axisOptions.yAxisOptions.map((col) => (
                 <MenuItem key={col.field} value={col.field}>
                   {col.headerName}
@@ -497,6 +508,11 @@ const ScatterPlotChart = ({
               label="Label"
               variant="outlined"
             >
+              <ListSubheader>
+                {state.axisOptions.labelOptions.length === 0
+                  ? `No ${state.axisOptions.labelType.value} column created yet!`
+                  : `${state.axisOptions.labelType.value} column(s)`}
+              </ListSubheader>
               {state.axisOptions.labelOptions.map((col) => (
                 <MenuItem key={col.field} value={col.field}>
                   {col.headerName}

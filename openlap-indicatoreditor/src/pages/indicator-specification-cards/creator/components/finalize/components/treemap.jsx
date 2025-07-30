@@ -6,6 +6,7 @@ import {
   Grow,
   IconButton,
   InputLabel,
+  ListSubheader,
   MenuItem,
   Select,
   Skeleton,
@@ -395,6 +396,11 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
               label="Category"
               variant="outlined"
             >
+              <ListSubheader>
+                {state.axisOptions.categoryOptions.length === 0
+                  ? `No ${state.axisOptions.categoryType.value} column created yet!`
+                  : `${state.axisOptions.categoryType.value} column(s)`}
+              </ListSubheader>
               {state.axisOptions.categoryOptions.map((col) => (
                 <MenuItem key={col.field} value={col.field}>
                   {col.headerName}
@@ -423,6 +429,11 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
               label="X-Value"
               variant="outlined"
             >
+              <ListSubheader>
+                {state.axisOptions.xValueOptions.length === 0
+                  ? `No ${state.axisOptions.xValueType.value} column created yet!`
+                  : `${state.axisOptions.xValueType.value} column(s)`}
+              </ListSubheader>
               {state.axisOptions.xValueOptions.map((col) => (
                 <MenuItem key={col.field} value={col.field}>
                   {col.headerName}
@@ -451,6 +462,11 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
               label="Value"
               variant="outlined"
             >
+              <ListSubheader>
+                {state.axisOptions.valueOptions.length === 0
+                  ? `No ${state.axisOptions.valueType.value} column created yet!`
+                  : `${state.axisOptions.valueType.value} column(s)`}
+              </ListSubheader>
               {state.axisOptions.valueOptions.map((col) => (
                 <MenuItem key={col.field} value={col.field}>
                   {col.headerName}

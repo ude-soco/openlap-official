@@ -5,6 +5,7 @@ import {
   Grow,
   IconButton,
   InputLabel,
+  ListSubheader,
   MenuItem,
   Select,
   Tooltip,
@@ -371,6 +372,11 @@ const DotChart = ({ customize = false, handleToggleCustomizePanel }) => {
               label="X-Axis"
               variant="outlined"
             >
+              <ListSubheader>
+                {state.axisOptions.xAxisOptions.length === 0
+                  ? `No ${state.axisOptions.xAxisType.value} column created yet!`
+                  : `${state.axisOptions.xAxisType.value} column(s)`}
+              </ListSubheader>
               {state.axisOptions.xAxisOptions.map((col) => (
                 <MenuItem key={col.field} value={col.field}>
                   {col.headerName}
@@ -399,6 +405,11 @@ const DotChart = ({ customize = false, handleToggleCustomizePanel }) => {
               label="Y-Axis"
               variant="outlined"
             >
+              <ListSubheader>
+                {state.axisOptions.yAxisOptions.length === 0
+                  ? `No ${state.axisOptions.yAxisType.value} column created yet!`
+                  : `${state.axisOptions.yAxisType.value} column(s)`}
+              </ListSubheader>
               {state.axisOptions.yAxisOptions.map((col) => (
                 <MenuItem key={col.field} value={col.field}>
                   {col.headerName}
