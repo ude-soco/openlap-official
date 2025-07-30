@@ -30,7 +30,7 @@ const ImportDialog = ({ open, toggleOpen }) => {
       const cleanedParsedData = cleanRowData(parsedData);
       const [modifiedColumnData, newRowData] = changeDataType(
         cleanedParsedData,
-        columns,
+        columns
       );
       setDataset((prevState) => ({
         ...prevState,
@@ -70,6 +70,16 @@ const ImportDialog = ({ open, toggleOpen }) => {
         width: 200,
         type: isNumeric ? "number" : "string",
         dataType: isNumeric ? DataTypes.numerical : DataTypes.categorical,
+        align: "left",
+        headerAlign: "left",
+        renderHeader: () => (
+          <span>
+            <Typography>{col}</Typography>
+            <Typography variant="caption">
+              {isNumeric ? DataTypes.numerical : DataTypes.categorical}
+            </Typography>
+          </span>
+        ),
       };
     });
     let newRowData = rowData.map((data) => {

@@ -72,6 +72,16 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
         width: 200,
         type: state.typeSelected.type,
         dataType: state.typeSelected,
+        align: "left",
+        headerAlign: "left",
+        renderHeader: () => (
+          <span>
+            <Typography>{state.columnName.value}</Typography>
+            <Typography variant="caption">
+              {state.typeSelected.value}
+            </Typography>
+          </span>
+        ),
       },
     ];
     let newRows = [];
@@ -190,7 +200,10 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
                 );
               }}
               renderInput={(params) => (
-                <TextField {...params} placeholder="Select a data column type" />
+                <TextField
+                  {...params}
+                  placeholder="Select a data column type"
+                />
               )}
               onChange={(event, value) => {
                 if (value) handleSelectType(value);

@@ -90,6 +90,14 @@ const SpecifyRequirements = () => {
         width: 200,
         type: item.type.type,
         dataType: item.type, // Custom field
+        align: "left",
+        headerAlign: "left",
+        renderHeader: () => (
+          <span>
+            <Typography>{item.value || `Column ${index + 1}`}</Typography>
+            <Typography variant="caption">{item.type.value}</Typography>
+          </span>
+        ),
       });
       if (Boolean(tempRows.length)) {
         tempRows = tempRows.map((row, index) => ({

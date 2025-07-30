@@ -79,16 +79,16 @@ const DataTableManager = () => {
                 ...acc2,
                 [field]: { mode: "view" },
               }),
-              {},
+              {}
             ),
           }),
-          {},
+          {}
         ),
         [params.id]: {
           // Revert the mode of other cells in the same row
           ...Object.keys(prevState.cellModesModel[params.id] || {}).reduce(
             (acc, field) => ({ ...acc, [field]: { mode: "view" } }),
-            {},
+            {}
           ),
           [params.field]: { mode: "edit" },
         },
@@ -144,7 +144,7 @@ const DataTableManager = () => {
 
   const paginatedRows = dataset.rows.slice(
     (state.page - 1) * state.pageSize,
-    state.page * state.pageSize,
+    state.page * state.pageSize
   );
 
   return (
@@ -181,7 +181,6 @@ const DataTableManager = () => {
               columnMenu: (props) => <ColumnMenu props={props} />,
               footer: () => <Footer state={state} setState={setState} />,
             }}
-            sx={style.dataGrid}
             componentsProps={{
               row: {
                 onMouseEnter: handlePopperOpen,
