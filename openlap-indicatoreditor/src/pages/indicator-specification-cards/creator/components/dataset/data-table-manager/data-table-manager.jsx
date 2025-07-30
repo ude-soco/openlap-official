@@ -26,20 +26,6 @@ const DataTableManager = () => {
     gridHeight: 450,
   });
 
-  const style = {
-    dataGrid: {
-      "& .MuiDataGrid-columnHeaders": {
-        cursor: "pointer",
-        fontSize: "17px",
-        textDecorationLine: "underline",
-      },
-      "& .MuiDataGrid-cell:hover": {
-        color: "primary.main",
-      },
-      height: state.gridHeight,
-    },
-  };
-
   useEffect(() => {
     const calculateGridHeight = () => {
       const rowHeight = 50;
