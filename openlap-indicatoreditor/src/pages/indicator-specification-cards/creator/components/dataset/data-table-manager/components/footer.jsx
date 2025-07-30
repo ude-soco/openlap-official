@@ -99,15 +99,15 @@ const Footer = ({ state, setState }) => {
         </Grid>
         <Grid item xs={2}>
           <FormControl fullWidth size="small">
-            <InputLabel>Page</InputLabel>
+            <InputLabel sx={{backgroundColor: "white", pr: 1}}>Rows per page</InputLabel>
             <Select
               value={state.pageSize}
               label="Page size"
               onChange={handleRowsPerPageChange}
             >
-              {[5, 10].map((size) => (
+              {[5, 10, 20, 50].map((size) => (
                 <MenuItem key={size} value={size}>
-                  {size} rows per page
+                  {size} rows
                 </MenuItem>
               ))}
             </Select>

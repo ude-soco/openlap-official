@@ -22,7 +22,7 @@ const DataTableManager = () => {
     value: "",
     anchorEl: null,
     page: 1,
-    pageSize: 5,
+    pageSize: 10,
     gridHeight: 450,
   });
 
