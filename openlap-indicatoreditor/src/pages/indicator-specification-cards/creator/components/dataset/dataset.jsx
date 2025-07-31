@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import { useContext, useState } from "react";
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import {
   Accordion,
@@ -24,7 +24,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 
 const Dataset = () => {
-  const { dataset, lockedStep, setLockedStep } = useContext(ISCContext);
+  const { requirements, dataset, lockedStep, setLockedStep } =
+    useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
     tipAnchor: null,
@@ -213,9 +214,15 @@ const Dataset = () => {
               timeout={{ enter: 500, exit: 0 }}
               unmountOnExit
             >
-              {dataset.columns.length > 0 && (
+              {requirements.data.length > 0 ? (
                 <Grid item xs={12}>
                   <DataTable rows={dataset.rows} columns={dataset.columns} />
+                </Grid>
+              ) : (
+                <Grid item>
+                  <Typography>
+                    <em>No dataset created yet!</em>
+                  </Typography>
                 </Grid>
               )}
             </Grow>
