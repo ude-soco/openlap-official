@@ -62,7 +62,6 @@ const TableSideBar = () => {
       columns: [],
       file: { name: "" },
     }));
-    handleOpenDeleteDialog();
   };
 
   return (
@@ -193,6 +192,7 @@ const TableSideBar = () => {
         reset
         open={state.deleteDialog}
         toggleOpen={handleOpenDeleteDialog}
+        handleDelete={handleDeleteDataset}
         message={
           <>
             <Typography gutterBottom>
@@ -217,7 +217,6 @@ const TableSideBar = () => {
             </Typography>
           </>
         }
-        handleDelete={handleDeleteDataset}
       />
     </>
   );

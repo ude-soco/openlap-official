@@ -528,7 +528,7 @@ const SpecifyRequirements = () => {
                   <Button
                     fullWidth
                     variant="contained"
-                    disabled={() => handleCheckDisabled(requirements)}
+                    disabled={handleCheckDisabled(requirements)}
                     onClick={handleUnlockPath}
                   >
                     Next
