@@ -1,19 +1,26 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import {
   Autocomplete,
   Button,
   IconButton,
+  Popover,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { Add, Close } from "@mui/icons-material";
+import CloseIcon from "@mui/icons-material/Close";
+import WarningIcon from "@mui/icons-material/Warning";
+import AddIcon from "@mui/icons-material/Add";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { DataTypes } from "../../../utils/data/config.js";
 import { v4 as uuidv4 } from "uuid";
 
 const DataList = () => {
-  const { requirements, setRequirements } = useContext(ISCContext);
+  const { lockedStep, requirements, setRequirements } = useContext(ISCContext);
+  const [state, setState] = useState({
+    tipAnchor: null,
+  });
 
   const handleChangeValue = (index, event) => {
     const { name, value } = event.target;
@@ -53,84 +60,188 @@ const DataList = () => {
     }));
   };
 
+  // * Helper functions to find duplicates
+  const valueCounts = requirements.data.reduce((acc, req) => {
+    acc[req.value] = (acc[req.value] || 0) + 1;
+    return acc;
+  }, {});
+
+  const duplicateValues = new Set(
+    Object.keys(valueCounts).filter((key) => valueCounts[key] > 1)
+  );
+
   return (
     <>
       <Grid container spacing={2}>
+        <Typography variant="body2">I need the following data</Typography>
         {requirements.data.map((requirement, index) => {
+          const isDuplicate = duplicateValues.has(requirement.value);
           return (
-            <Grid size={{ xs: 12 }} key={index}>
-              <Grid container spacing={2} alignItems="center">
-                <Grid size="auto">
-                  <Typography>{index + 1}</Typography>
-                </Grid>
-                <Grid size="grow">
-                  <TextField
-                    fullWidth
-                    required
-                    name="value"
-                    label="I need data"
-                    value={requirement.value}
-                    onChange={(event) => handleChangeValue(index, event)}
-                    placeholder={requirement.placeholder || ""}
-                  />
-                </Grid>
-                <Grid size={{ xs: "grow", sm: 6 }}>
-                  <Autocomplete
-                    fullWidth
-                    disableClearable
-                    options={Object.values(DataTypes)}
-                    name="type"
-                    value={
-                      Object.values(DataTypes).find(
-                        (dt) => dt.value === requirement.type?.value
-                      ) || null
-                    }
-                    getOptionLabel={(option) => {
-                      return option?.value || "Unknown";
-                    }}
-                    renderOption={(props, option) => {
-                      const { key, ...restProps } = props;
-                      return (
-                        <li key={key} {...restProps}>
-                          <Grid container sx={{ py: 0.5 }}>
-                            <Typography>{option.value}</Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{ fontStyle: "italic" }}
+            <>
+              <Grid size={{ xs: 12 }} key={index}>
+                <Grid container spacing={1}>
+                  <Grid size="grow">
+                    <TextField
+                      fullWidth
+                      name="value"
+                      label={`${index + 1}. Name of data`}
+                      error={requirement.value === "" || isDuplicate}
+                      value={requirement.value}
+                      onChange={(event) => handleChangeValue(index, event)}
+                      placeholder={requirement.placeholder || ""}
+                      helperText={
+                        requirement.value === ""
+                          ? "Provide a name"
+                          : isDuplicate
+                          ? "Duplicate name detected"
+                          : ""
+                      }
+                    />
+                  </Grid>
+                  <Grid size={{ xs: "grow", sm: 6 }}>
+                    <Grid container alignItems="center" spacing={1}>
+                      <Grid size={{ xs: "grow" }}>
+                        <Autocomplete
+                          fullWidth
+                          disableClearable
+                          options={Object.values(DataTypes)}
+                          value={
+                            Object.values(DataTypes).find(
+                              (dt) => dt.value === requirement.type?.value
+                            ) || null
+                          }
+                          getOptionLabel={(option) => {
+                            return option?.value || "Unknown";
+                          }}
+                          renderOption={(props, option) => {
+                            const { key, ...restProps } = props;
+                            return (
+                              <li key={key} {...restProps}>
+                                <Grid container sx={{ py: 0.5 }}>
+                                  <Typography>{option.value}</Typography>
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ fontStyle: "italic" }}
+                                  >
+                                    {option.description}
+                                  </Typography>
+                                </Grid>
+                              </li>
+                            );
+                          }}
+                          groupBy={() => "Column types"}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              placeholder="Select a data column type"
+                              label="Type of data"
+                            />
+                          )}
+                          onChange={(event, value) => {
+                            if (value) handleChangeType(index, value);
+                          }}
+                        />
+                      </Grid>
+                      <Grid size="auto">
+                        {!lockedStep.dataset.locked && (
+                          <>
+                            <Tooltip
+                              arrow
+                              title={
+                                <Typography>Click to view warning</Typography>
+                              }
                             >
-                              {option.description}
+                              <IconButton
+                                color="warning"
+                                onClick={(e) =>
+                                  setState((prevState) => ({
+                                    ...prevState,
+                                    tipAnchor: e.currentTarget,
+                                  }))
+                                }
+                              >
+                                <WarningIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </>
+                        )}
+                        <Tooltip
+                          arrow
+                          title={
+                            <Typography>
+                              Remove <b>{requirement.value}</b>
                             </Typography>
-                          </Grid>
-                        </li>
-                      );
+                          }
+                        >
+                          <IconButton
+                            color="error"
+                            onClick={() => handleDeleteDataRow(index)}
+                          >
+                            <CloseIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Popover
+                  open={Boolean(state.tipAnchor)}
+                  anchorEl={state.tipAnchor}
+                  onClose={() =>
+                    setState((prevState) => ({
+                      ...prevState,
+                      tipAnchor: null,
+                    }))
+                  }
+                  anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "left",
+                  }}
+                  PaperProps={{
+                    sx: {
+                      backgroundColor: "error.dark",
+                      color: "primary.contrastText",
+                      position: "absolute",
+                      p: 1,
+                    },
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      whiteSpace: "pre-line",
+                      p: 2,
+                      maxWidth: 350,
                     }}
-                    groupBy={() => "Column types"}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        placeholder="Select a data column type"
-                      />
-                    )}
-                    onChange={(event, value) => {
-                      if (value) handleChangeType(index, value);
+                    dangerouslySetInnerHTML={{
+                      __html: `<b>Attention!</b>
+                            Changing the type of this data will reset the data of <b>${requirement.value}</b> column in the <b>Dataset</b> step below.
+                            It will cause the loss of data <b>only</b> in this column! Other columns remain uneffected.
+                            Please proceed with caution!`,
                     }}
                   />
-                </Grid>
 
-                <Grid size="auto">
-                  <IconButton
-                    color="error"
-                    onClick={() => handleDeleteDataRow(index)}
-                  >
-                    <Close />
-                  </IconButton>
-                </Grid>
+                  <Grid container justifyContent="flex-end">
+                    <Button
+                      size="small"
+                      onClick={() =>
+                        setState((prevState) => ({
+                          ...prevState,
+                          tipAnchor: null,
+                        }))
+                      }
+                      color="text"
+                      variant="outlined"
+                    >
+                      Close
+                    </Button>
+                  </Grid>
+                </Popover>
               </Grid>
-            </Grid>
+            </>
           );
         })}
 
-        <Button sx={{ ml: 3.5 }} startIcon={<Add />} onClick={handleAddDataRow}>
+        <Button size="large" startIcon={<AddIcon />} onClick={handleAddDataRow}>
           Add more data
         </Button>
       </Grid>
