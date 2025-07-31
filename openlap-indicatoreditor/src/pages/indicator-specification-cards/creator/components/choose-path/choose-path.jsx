@@ -166,7 +166,7 @@ const ChoosePath = () => {
                       <Typography>How would you like to start?</Typography>
                     </Grid>
                     <Grid item>
-                      <Tooltip title="Tips">
+                      <Tooltip title={<Typography>Tips</Typography>} arrow>
                         <IconButton
                           onClick={(e) =>
                             setState((prevState) => ({
@@ -230,7 +230,7 @@ const ChoosePath = () => {
                     {!lockedStep.path.openPanel && (
                       <>
                         <Grid item>
-                          <Tooltip title="Edit path">
+                          <Tooltip title={<Typography>Edit path</Typography>}>
                             <IconButton onClick={handleTogglePanel}>
                               <EditIcon color="primary" />
                             </IconButton>
@@ -240,9 +240,11 @@ const ChoosePath = () => {
                         <Grid item>
                           <Tooltip
                             title={
-                              !state.showSelections
-                                ? "Show summary"
-                                : "Hide summary"
+                              <Typography>
+                                {!state.showSelections
+                                  ? "Show summary"
+                                  : "Hide summary"}
+                              </Typography>
                             }
                           >
                             <IconButton onClick={handleToggleShowSelection}>
@@ -260,7 +262,7 @@ const ChoosePath = () => {
                 </Grid>
                 {lockedStep.path.openPanel && (
                   <Grid item>
-                    <Tooltip title="Close panel">
+                    <Tooltip title={<Typography>Close panel</Typography>}>
                       <IconButton onClick={handleTogglePanel}>
                         <CloseIcon color="primary" />
                       </IconButton>

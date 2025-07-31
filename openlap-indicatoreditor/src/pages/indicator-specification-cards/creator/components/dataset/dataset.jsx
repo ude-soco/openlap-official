@@ -103,7 +103,7 @@ const Dataset = () => {
                       <Typography>Dataset</Typography>
                     </Grid>
                     <Grid item>
-                      <Tooltip title="Tips">
+                      <Tooltip title={<Typography>Tips</Typography>} arrow>
                         <IconButton
                           onClick={(e) =>
                             setState((prevState) => ({
@@ -166,7 +166,9 @@ const Dataset = () => {
                     {!lockedStep.dataset.openPanel && (
                       <>
                         <Grid item>
-                          <Tooltip title="Edit dataset">
+                          <Tooltip
+                            title={<Typography>Edit dataset</Typography>}
+                          >
                             <IconButton onClick={handleTogglePanel}>
                               <EditIcon color="primary" />
                             </IconButton>
@@ -176,9 +178,11 @@ const Dataset = () => {
                         <Grid item>
                           <Tooltip
                             title={
-                              !state.showSelections
-                                ? "Show summary"
-                                : "Hide summary"
+                              <Typography>
+                                {!state.showSelections
+                                  ? "Show summary"
+                                  : "Hide summary"}
+                              </Typography>
                             }
                           >
                             <IconButton onClick={handleToggleShowSelection}>
@@ -196,7 +200,7 @@ const Dataset = () => {
                 </Grid>
                 {lockedStep.dataset.openPanel && (
                   <Grid item>
-                    <Tooltip title="Close panel">
+                    <Tooltip title={<Typography>Close panel</Typography>}>
                       <IconButton onClick={handleTogglePanel}>
                         <CloseIcon color="primary" />
                       </IconButton>

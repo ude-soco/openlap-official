@@ -112,7 +112,7 @@ const Visualization = () => {
                       <Typography>Visualization</Typography>
                     </Grid>
                     <Grid item>
-                      <Tooltip title="Tips">
+                      <Tooltip title={<Typography>Tips</Typography>} arrow>
                         <IconButton
                           onClick={(e) =>
                             setState((prevState) => ({
@@ -176,7 +176,13 @@ const Visualization = () => {
                     {!lockedStep.visualization.openPanel && (
                       <>
                         <Grid item>
-                          <Tooltip title="Edit visualization selection">
+                          <Tooltip
+                            title={
+                              <Typography>
+                                Edit visualization selection
+                              </Typography>
+                            }
+                          >
                             <IconButton onClick={handleTogglePanel}>
                               <EditIcon color="primary" />
                             </IconButton>
@@ -186,9 +192,11 @@ const Visualization = () => {
                         <Grid item>
                           <Tooltip
                             title={
-                              !state.showSelections
-                                ? "Show summary"
-                                : "Hide summary"
+                              <Typography>
+                                {!state.showSelections
+                                  ? "Show summary"
+                                  : "Hide summary"}
+                              </Typography>
                             }
                           >
                             <IconButton onClick={handleToggleShowSelection}>
@@ -206,7 +214,7 @@ const Visualization = () => {
                 </Grid>
                 {lockedStep.visualization.openPanel && (
                   <Grid item>
-                    <Tooltip title="Close panel">
+                    <Tooltip title={<Typography>Close panel</Typography>}>
                       <IconButton onClick={handleTogglePanel}>
                         <CloseIcon color="primary" />
                       </IconButton>

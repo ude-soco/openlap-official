@@ -93,7 +93,7 @@ const Finalize = () => {
                     </Grid>
 
                     <Grid item>
-                      <Tooltip title="Tips">
+                      <Tooltip title={<Typography>Tips</Typography>} arrow>
                         <IconButton
                           onClick={(e) =>
                             setState((prevState) => ({
@@ -155,7 +155,13 @@ const Finalize = () => {
                     </Grid>
                     {!lockedStep.finalize.openPanel && (
                       <Grid item>
-                        <Tooltip title="Edit and customize visualization">
+                        <Tooltip
+                          title={
+                            <Typography>
+                              Edit and customize visualization
+                            </Typography>
+                          }
+                        >
                           <IconButton onClick={handleTogglePanel}>
                             <EditIcon color="primary" />
                           </IconButton>
@@ -166,7 +172,7 @@ const Finalize = () => {
                 </Grid>
                 {lockedStep.finalize.openPanel && (
                   <Grid item>
-                    <Tooltip title="Close panel">
+                    <Tooltip title={<Typography>Close panel</Typography>}>
                       <IconButton onClick={handleTogglePanel}>
                         <CloseIcon color="primary" />
                       </IconButton>
