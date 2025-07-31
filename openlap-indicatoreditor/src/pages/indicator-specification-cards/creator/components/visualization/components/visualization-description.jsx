@@ -91,8 +91,8 @@ const VisualizationDescription = ({ columnError }) => {
                       <Typography
                         sx={{ whiteSpace: "pre-line" }}
                         dangerouslySetInnerHTML={{
-                          __html: `• Make sure to add the required data in the <b>Specify your goal, question, and indicator</b> step <em>OR</em>
-                                    • Make sure to add the required column(s) in the <b>Dataset</b> step`,
+                          __html: `• Make sure to add the missing type of data in the <b>Specify your goal, question, and indicator</b> step <em>OR</em>
+                                    • Make sure to add the missing column(s) in the <b>Dataset</b> step`,
                         }}
                       />
                     </Alert>

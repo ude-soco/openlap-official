@@ -143,7 +143,7 @@ const SpecifyRequirements = () => {
                     </Grid>
 
                     <Grid item>
-                      <Tooltip title="Tips">
+                      <Tooltip title={<Typography>Tips</Typography>} arrow>
                         <IconButton
                           onClick={(e) =>
                             setState((prevState) => ({
@@ -202,7 +202,9 @@ const SpecifyRequirements = () => {
                     {!lockedStep.requirements.openPanel && (
                       <>
                         <Grid item>
-                          <Tooltip title="Edit requirements">
+                          <Tooltip
+                            title={<Typography>Edit requirements</Typography>}
+                          >
                             <IconButton onClick={handleTogglePanel}>
                               <EditIcon color="primary" />
                             </IconButton>
@@ -212,9 +214,11 @@ const SpecifyRequirements = () => {
                         <Grid item>
                           <Tooltip
                             title={
-                              !state.showSelections
-                                ? "Show summary"
-                                : "Hide summary"
+                              <Typography>
+                                {!state.showSelections
+                                  ? "Show summary"
+                                  : "Hide summary"}
+                              </Typography>
                             }
                           >
                             <IconButton onClick={handleToggleShowSelection}>
@@ -232,7 +236,7 @@ const SpecifyRequirements = () => {
                 </Grid>
                 {lockedStep.requirements.openPanel && (
                   <Grid item>
-                    <Tooltip title="Close panel">
+                    <Tooltip title={<Typography>Close panel</Typography>}>
                       <IconButton onClick={handleTogglePanel}>
                         <CloseIcon color="primary" />
                       </IconButton>

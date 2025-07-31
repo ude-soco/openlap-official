@@ -80,7 +80,7 @@ const TableSideBar = () => {
           <Tooltip
             arrow
             placement="right"
-            title={<Typography>Add a new column to the data table</Typography>}
+            title={<Typography>Add a new column to the dataset</Typography>}
           >
             <Button onClick={handleOpenAddColumn}>
               <Grid container sx={{ py: 1 }}>
@@ -102,7 +102,7 @@ const TableSideBar = () => {
           <Tooltip
             arrow
             placement="right"
-            title={<Typography>Add a new row(s) to the data table</Typography>}
+            title={<Typography>Add a new row(s) to the dataset</Typography>}
           >
             <Button onClick={handleOpenAddRow}>
               <Grid container sx={{ py: 1 }}>
