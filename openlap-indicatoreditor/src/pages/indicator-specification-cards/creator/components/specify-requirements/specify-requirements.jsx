@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import { useContext, useState } from "react";
 import {
   Accordion,
   AccordionActions,
@@ -27,13 +27,8 @@ import DoneIcon from "@mui/icons-material/Done";
 import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 
 const SpecifyRequirements = () => {
-  const {
-    requirements,
-    setRequirements,
-    lockedStep,
-    setLockedStep,
-    setDataset,
-  } = useContext(ISCContext);
+  const { requirements, setRequirements, lockedStep, setLockedStep } =
+    useContext(ISCContext);
   const [state, setState] = useState({
     showSelections: true,
     tipAnchor: null,
@@ -66,9 +61,6 @@ const SpecifyRequirements = () => {
 
   const handleUnlockPath = () => {
     handleTogglePanel();
-    if (lockedStep.path.locked) {
-      addNewColumnsMethod();
-    }
     setLockedStep((prevState) => ({
       ...prevState,
       path: {
@@ -77,56 +69,6 @@ const SpecifyRequirements = () => {
         openPanel: true,
       },
     }));
-  };
-
-  const addNewColumnsMethod = () => {
-    let tempColumnData = [];
-    let tempRows = [];
-    requirements.data.forEach((item) => {
-      let fieldUUID = uuidv4();
-      tempColumnData.push({
-        field: fieldUUID,
-        headerName: item.value,
-        sortable: false,
-        editable: true,
-        width: 200,
-        type: item.type.type,
-        dataType: item.type, // Custom field
-        align: "left",
-        headerAlign: "left",
-        renderHeader: () => (
-          <span>
-            <Typography>{item.value || `Column ${index + 1}`}</Typography>
-            <Typography variant="caption">{item.type.value}</Typography>
-          </span>
-        ),
-      });
-      if (Boolean(tempRows.length)) {
-        tempRows = tempRows.map((row, index) => ({
-          ...row,
-          [fieldUUID]:
-            item.type.type === "string" ? `${item.value} ${index + 1}` : 0,
-        }));
-      } else {
-        for (let i = 0; i < 3; i++) {
-          tempRows.push({
-            id: uuidv4(),
-            [fieldUUID]:
-              item.type.type === "string" ? `${item.value} ${i + 1}` : 0,
-          });
-        }
-      }
-    });
-    if (
-      requirements.data.some((item) => Object.values(item.type).length !== 0) &&
-      requirements.data.some((item) => item.value !== "")
-    ) {
-      setDataset((prevState) => ({
-        ...prevState,
-        rows: tempRows,
-        columns: tempColumnData,
-      }));
-    }
   };
 
   const handleToggleGoalEdit = () => {
@@ -155,6 +97,23 @@ const SpecifyRequirements = () => {
         indicatorName: true,
       },
     }));
+  };
+
+  const handleCheckDisabled = (requirements) => {
+    return (
+      requirements.goalType.verb === "" ||
+      requirements.goal === "" ||
+      requirements.question === "" ||
+      requirements.indicatorName === "" ||
+      requirements.data.some(
+        (item) =>
+          typeof item.value !== "string" ||
+          item.value.trim() === "" ||
+          !item.type ||
+          typeof item.type.type !== "string" ||
+          item.type.type.trim() === ""
+      )
+    );
   };
 
   return (
@@ -330,27 +289,25 @@ const SpecifyRequirements = () => {
                       </Grid>
                     </Grid>
                   )}
-                  {requirements.data.length !== 0 &&
-                    (requirements.data[0].value !== "" ||
-                      requirements.data[1].value !== "") && (
-                      <Grid item xs={12}>
-                        <Grid container alignItems="center" spacing={1}>
-                          <Grid item>
-                            <Typography>I need the following data</Typography>
-                          </Grid>
-                          {requirements.data.map((item, index) => {
-                            if (item.value !== "") {
-                              return (
-                                <Grid item key={index}>
-                                  <Chip label={item.value} />
-                                </Grid>
-                              );
-                            }
-                            return undefined;
-                          })}
+                  {requirements.data.some((d) => d.value) && (
+                    <Grid item xs={12}>
+                      <Grid container alignItems="center" spacing={1}>
+                        <Grid item>
+                          <Typography>I need the following data</Typography>
                         </Grid>
+                        {requirements.data.map((item, index) => {
+                          if (item.value !== "") {
+                            return (
+                              <Grid item key={index}>
+                                <Chip label={item.value} />
+                              </Grid>
+                            );
+                          }
+                          return undefined;
+                        })}
                       </Grid>
-                    )}
+                    </Grid>
+                  )}
                 </Grid>
               </Grid>
             </Grow>
@@ -571,20 +528,7 @@ const SpecifyRequirements = () => {
                   <Button
                     fullWidth
                     variant="contained"
-                    disabled={
-                      requirements.goalType.verb === "" ||
-                      requirements.goal === "" ||
-                      requirements.question === "" ||
-                      requirements.indicatorName === "" ||
-                      requirements.data.some(
-                        (item) =>
-                          typeof item.value !== "string" ||
-                          item.value.trim() === "" ||
-                          !item.type ||
-                          typeof item.type.type !== "string" ||
-                          item.type.type.trim() === ""
-                      )
-                    }
+                    disabled={() => handleCheckDisabled(requirements)}
                     onClick={handleUnlockPath}
                   >
                     Next

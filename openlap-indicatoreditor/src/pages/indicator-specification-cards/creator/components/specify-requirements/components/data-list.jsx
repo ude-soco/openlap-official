@@ -10,6 +10,7 @@ import Grid from "@mui/material/Grid2";
 import { Add, Close } from "@mui/icons-material";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { DataTypes } from "../../../utils/data/config.js";
+import { v4 as uuidv4 } from "uuid";
 
 const DataList = () => {
   const { requirements, setRequirements } = useContext(ISCContext);
@@ -23,8 +24,6 @@ const DataList = () => {
 
   const handleChangeType = (index, value) => {
     const newData = [...requirements.data];
-    // newData[index].type = value;
-    // setRequirements({ ...requirements, data: newData });
     newData[index] = {
       ...newData[index],
       type: value || { type: "" },
@@ -35,7 +34,15 @@ const DataList = () => {
   const handleAddDataRow = () => {
     setRequirements((prevState) => ({
       ...prevState,
-      data: [...prevState.data, { value: "", type: DataTypes.categorical }],
+      data: [
+        ...prevState.data,
+        {
+          id: uuidv4(),
+          value: "",
+          placeholder: undefined,
+          type: DataTypes.categorical,
+        },
+      ],
     }));
   };
 
@@ -110,16 +117,14 @@ const DataList = () => {
                   />
                 </Grid>
 
-                {index > 1 && (
-                  <Grid size="auto">
-                    <IconButton
-                      color="error"
-                      onClick={() => handleDeleteDataRow(index)}
-                    >
-                      <Close />
-                    </IconButton>
-                  </Grid>
-                )}
+                <Grid size="auto">
+                  <IconButton
+                    color="error"
+                    onClick={() => handleDeleteDataRow(index)}
+                  >
+                    <Close />
+                  </IconButton>
+                </Grid>
               </Grid>
             </Grid>
           );

@@ -61,83 +61,21 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
   };
 
   const handleAddNewColumn = () => {
-    let fieldUUID = uuidv4();
-    const newColumnData = [
-      ...dataset.columns,
-      {
-        field: fieldUUID,
-        headerName: state.columnName.value,
-        sortable: false,
-        editable: true,
-        width: 200,
-        type: state.typeSelected.type,
-        dataType: state.typeSelected,
-        align: "left",
-        headerAlign: "left",
-        renderHeader: () => (
-          <span>
-            <Typography>{state.columnName.value}</Typography>
-            <Typography variant="caption">
-              {state.typeSelected.value}
-            </Typography>
-          </span>
-        ),
-      },
-    ];
-    let newRows = [];
-    if (Boolean(dataset.rows.length)) {
-      newRows = dataset.rows.map((row, index) => ({
-        ...row,
-        [fieldUUID]:
-          state.typeSelected.type === "string"
-            ? `${state.columnName.value} ${index + 1}`
-            : 0,
-      }));
-    } else {
-      for (let i = 0; i < state.numberOfRows; i++) {
-        newRows.push({
-          id: uuidv4(),
-          [fieldUUID]:
-            state.typeSelected.type === "string"
-              ? `${state.columnName.value} ${i + 1}`
-              : 0,
-        });
-      }
-    }
-
-    // setState((prevState) => ({
-    //   ...prevState,
-    //   columnName: {
-    //     ...prevState.columnName,
-    //     value: "",
-    //     exists: false,
-    //   },
-    //   typeSelected: {},
-    //   numberOfRows: 0,
-    // }));
     setState({
       columnName: { value: "", exists: false },
       typeSelected: Object.values(DataTypes)[0],
       numberOfRows: dataset.rows.length,
     });
 
-    setDataset((prevState) => ({
-      ...prevState,
-      rows: newRows,
-      columns: newColumnData,
-    }));
-
     setRequirements((prev) => ({
       ...prev,
       data: [
         ...prev.data,
         {
+          id: uuidv4(),
           value: state.columnName.value,
-          type: {
-            type: state.typeSelected.type,
-            value: state.typeSelected.value,
-          },
-          placeholder: "",
+          type: state.typeSelected,
+          placeholder: undefined,
         },
       ],
     }));
