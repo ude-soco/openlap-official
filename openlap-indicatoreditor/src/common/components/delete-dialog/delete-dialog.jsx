@@ -11,12 +11,14 @@ import { useState } from "react";
 
 const DeleteDialog = ({ reset, open, toggleOpen, message, handleDelete }) => {
   const [loading, setLoading] = useState(false);
-  const handleClose = () => {
+  const handleClose = async () => {
     setLoading(true);
-    handleDelete(() => {
+    try {
+      await handleDelete();
       toggleOpen();
+    } finally {
       setLoading(false);
-    });
+    }
   };
 
   return (
