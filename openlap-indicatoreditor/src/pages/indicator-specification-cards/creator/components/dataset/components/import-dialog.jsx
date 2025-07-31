@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import {
   Button,
   Dialog,
@@ -8,15 +8,15 @@ import {
   DialogTitle,
   Typography,
 } from "@mui/material";
-import { GetApp as GetAppIcon } from "@mui/icons-material";
-import CsvImporter from "./csv-importer.jsx";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import GetAppIcon from "@mui/icons-material/GetApp";
 import Papa from "papaparse";
 import { v4 as uuidv4 } from "uuid";
+import CsvImporter from "./csv-importer.jsx";
+import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { DataTypes } from "../../../utils/data/config.js";
 
 const ImportDialog = ({ open, toggleOpen }) => {
-  const { dataset, setDataset } = useContext(ISCContext);
+  const { dataset, setDataset, setRequirements } = useContext(ISCContext);
 
   const handleUploadFile = () => {
     const reader = new FileReader();
@@ -34,13 +34,12 @@ const ImportDialog = ({ open, toggleOpen }) => {
       );
       setDataset((prevState) => ({
         ...prevState,
-        file: {
-          name: "",
-        },
         rows: newRowData,
-        columns: modifiedColumnData,
       }));
-      // handlePopulateDataAndCloseModal(newRowData, newRowData);
+      setRequirements((prevState) => ({
+        ...prevState,
+        data: modifiedColumnData,
+      }));
     };
     reader.readAsText(dataset.file);
     toggleOpen();
@@ -57,51 +56,32 @@ const ImportDialog = ({ open, toggleOpen }) => {
     const isColumnNumeric = (col) =>
       rowData.every((row) => Boolean(Number(row[col])));
 
-    let newColumnDataArray = [];
-    const newColumnData = columnData.map((col) => {
-      let tempColumnUUID = uuidv4();
-      newColumnDataArray.push({ [col]: tempColumnUUID });
+    const newColumn = columnData.map((col) => {
       const isNumeric = isColumnNumeric(col);
       return {
-        field: tempColumnUUID,
-        headerName: col,
-        sortable: false,
-        editable: true,
-        width: 200,
-        type: isNumeric ? "number" : "string",
-        dataType: isNumeric ? DataTypes.numerical : DataTypes.categorical,
-        align: "left",
-        headerAlign: "left",
-        renderHeader: () => (
-          <span>
-            <Typography>{col}</Typography>
-            <Typography variant="caption">
-              {isNumeric ? DataTypes.numerical : DataTypes.categorical}
-            </Typography>
-          </span>
-        ),
+        id: uuidv4(),
+        value: col,
+        type: isNumeric ? DataTypes.numerical : DataTypes.categorical,
+        placeholder: undefined,
       };
     });
-    let newRowData = rowData.map((data) => {
-      const newData = { id: data.id };
-      newColumnDataArray.forEach((column) => {
-        const key = Object.keys(column)[0];
-        const value = column[key];
-        newData[value] = data[key];
+
+    let newRowData = rowData.map((row) => {
+      const newData = { id: row.id };
+      newColumn.forEach((col) => {
+        const key = Object.keys(col)[0];
+        const value = col[key];
+        newData[value] = row[col.value];
       });
       return newData;
     });
-    return [newColumnData, newRowData];
+    return [newColumn, newRowData];
   };
 
   return (
     <>
-      <Dialog
-        open={Boolean(open)}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">Import Data</DialogTitle>
+      <Dialog open={Boolean(open)}>
+        <DialogTitle>Import Data</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
             <Typography gutterBottom>
