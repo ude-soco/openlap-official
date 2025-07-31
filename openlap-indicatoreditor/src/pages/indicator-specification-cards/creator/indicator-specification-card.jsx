@@ -9,6 +9,7 @@ import Dataset from "./components/dataset/dataset.jsx";
 import Finalize from "./components/finalize/finalize.jsx";
 import { useSnackbar } from "notistack";
 import { v4 as uuidv4 } from "uuid";
+import { DataTypes } from "./utils/data/config.js";
 
 export const ISCContext = createContext(undefined);
 
@@ -36,11 +37,17 @@ const IndicatorSpecificationCard = () => {
           indicatorName: "",
           data: [
             {
+              id: uuidv4(),
               value: "",
               placeholder: "e.g., name of materials",
               type: {},
             },
-            { value: "", placeholder: "e.g., number of downloads", type: {} },
+            {
+              id: uuidv4(),
+              value: "",
+              placeholder: "e.g., number of downloads",
+              type: {},
+            },
           ],
           selectedPath: "",
           edit: {
@@ -138,17 +145,11 @@ const IndicatorSpecificationCard = () => {
     lockedStep,
   });
 
-  const lastUpdateSource = useRef(null);
-
-  // requirements.data -> dataset.columns
   useEffect(() => {
-    if (lastUpdateSource.current === "dataset") return;
-    lastUpdateSource.current = "requirements";
-
     const newColumns = requirements.data.map((item, index) => ({
-      field: item.id || `field_${index}`,
+      field: item.id,
       headerName: item.value || `Column ${index + 1}`,
-      type: item.type?.type || "string",
+      type: item.type.type || DataTypes.categorical.value,
       editable: true,
       sortable: false,
       width: 200,
@@ -163,24 +164,43 @@ const IndicatorSpecificationCard = () => {
       ),
     }));
 
-    const numberOfRows = 3;
+    setDataset((prev) => {
+      const prevRows = prev.rows || [];
+      const prevColumnsMap = (prev.columns || []).reduce((acc, col) => {
+        acc[col.field] = col;
+        return acc;
+      }, {});
 
-    const newRows = [];
-    for (let i = 0; i < numberOfRows; i++) {
-      const row = { id: uuidv4() };
-      newColumns.forEach((col) => {
-        row[col.field] =
-          col.type === "string" ? `${col.headerName} ${i + 1}` : 0;
-      });
-      newRows.push(row);
-    }
+      const numberOfRows = prevRows.length || 3;
+      const updatedRows = [];
 
-    setDataset((prev) => ({
-      ...prev,
-      columns: newColumns,
-      rows: newRows,
-    }));
-  }, [requirements.data, requirements.numberOfRows]);
+      if (newColumns.length) {
+        for (let i = 0; i < numberOfRows; i++) {
+          const prevRow = prevRows[i] || { id: uuidv4() };
+          const newRow = { ...prevRow };
+
+          newColumns.forEach((col) => {
+            const oldCol = prevColumnsMap[col.field];
+            const oldType = oldCol?.type;
+
+            // ? If column is new or type has changed, reset value
+            if (!(col.field in newRow) || oldType !== col.type) {
+              newRow[col.field] =
+                col.type === "string" ? `${col.headerName} ${i + 1}` : 0;
+            }
+          });
+
+          updatedRows.push(newRow);
+        }
+      }
+
+      return {
+        ...prev,
+        columns: newColumns,
+        rows: updatedRows,
+      };
+    });
+  }, [requirements.data]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -214,7 +234,7 @@ const IndicatorSpecificationCard = () => {
         visRef,
         lockedStep,
       };
-    }, 10000);
+    }, 6000);
 
     return () => clearInterval(intervalId);
   }, [requirements, dataset, visRef, lockedStep]);

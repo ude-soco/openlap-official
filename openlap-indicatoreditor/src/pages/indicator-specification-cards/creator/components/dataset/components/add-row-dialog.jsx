@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import { useContext, useState } from "react";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { useSnackbar } from "notistack";
 import {
@@ -32,21 +32,28 @@ const AddRowDialog = ({ open, toggleOpen }) => {
   };
 
   const handleAddNewRows = () => {
-    let tempColumnData = dataset.columns;
-    const newRows = Array.from({ length: state.numberOfRows }, () => {
+    const tempColumnData = dataset.columns;
+    const existingRowCount = dataset.rows.length;
+
+    const newRows = Array.from({ length: state.numberOfRows }, (_, i) => {
       const newRow = { id: uuidv4() };
       tempColumnData.forEach((column) => {
-        newRow[column.field] = column.type === "number" ? 0 : "";
+        const rowNumber = existingRowCount + i + 1;
+        newRow[column.field] =
+          column.type === "string" ? `${column.headerName} ${rowNumber}` : 0;
       });
       return newRow;
     });
+
     setDataset((prevState) => ({
       ...prevState,
       rows: [...prevState.rows, ...newRows],
     }));
+
     enqueueSnackbar("New row(s) added successfully", {
       variant: "success",
     });
+
     toggleOpen();
   };
 
