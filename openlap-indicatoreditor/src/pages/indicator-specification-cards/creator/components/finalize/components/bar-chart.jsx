@@ -7,6 +7,7 @@ import {
   Grow,
   IconButton,
   InputLabel,
+  ListSubheader,
   MenuItem,
   Select,
   Tooltip,
@@ -295,7 +296,7 @@ const BarChart = ({ customize = false, handleToggleCustomizePanel }) => {
         name: yAxisColumn.headerName || "Default Series",
         data: categories.map((category) => groupedData[category]),
         color: customize
-          ? state.series[0].color
+          ? state.series[0]?.color
           : visRef.data.series[0]?.color || "#008FFB",
       },
     ];
@@ -405,6 +406,11 @@ const BarChart = ({ customize = false, handleToggleCustomizePanel }) => {
               label="X-Axis"
               variant="outlined"
             >
+              <ListSubheader>
+                {state.axisOptions.xAxisOptions.length === 0
+                  ? `No ${state.axisOptions.xAxisType.value} column created yet!`
+                  : `${state.axisOptions.xAxisType.value} column(s)`}
+              </ListSubheader>
               {state.axisOptions.xAxisOptions.map((col) => (
                 <MenuItem key={col.field} value={col.field}>
                   {col.headerName}
@@ -433,6 +439,11 @@ const BarChart = ({ customize = false, handleToggleCustomizePanel }) => {
               label="Y-Axis"
               variant="outlined"
             >
+              <ListSubheader>
+                {state.axisOptions.yAxisOptions.length === 0
+                  ? `No ${state.axisOptions.yAxisType.value} column created yet!`
+                  : `${state.axisOptions.yAxisType.value} column(s)`}
+              </ListSubheader>
               {state.axisOptions.yAxisOptions.map((col) => (
                 <MenuItem key={col.field} value={col.field}>
                   {col.headerName}
