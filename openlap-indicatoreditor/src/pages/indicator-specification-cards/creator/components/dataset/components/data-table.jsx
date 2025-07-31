@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Paper,
   Table,
@@ -28,7 +28,7 @@ const DataTable = ({ rows, columns }) => {
   // Slice rows for the current page
   const displayedRows = rows.slice(
     page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage,
+    page * rowsPerPage + rowsPerPage
   );
 
   return (

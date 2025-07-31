@@ -19,7 +19,7 @@ import UploadIcon from "@mui/icons-material/Upload";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
 const TableSideBar = () => {
-  const { setDataset } = useContext(ISCContext);
+  const { setDataset, setRequirements } = useContext(ISCContext);
   const [state, setState] = useState({
     openCsvImport: false,
     openAddColumn: false,
@@ -61,6 +61,10 @@ const TableSideBar = () => {
       rows: [],
       columns: [],
       file: { name: "" },
+    }));
+    setRequirements((prevState) => ({
+      ...prevState,
+      data: [],
     }));
   };
 
