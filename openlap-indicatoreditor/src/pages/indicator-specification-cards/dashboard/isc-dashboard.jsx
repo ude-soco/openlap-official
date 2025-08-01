@@ -49,7 +49,6 @@ const IscDashboard = () => {
             Home
           </Link>
           <Typography sx={{ color: "text.primary" }}>ISC Dashboard</Typography>
-          <Typography sx={{ color: "text.primary" }}>My ISCs</Typography>
         </Breadcrumbs>
 
         <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
