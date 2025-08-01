@@ -188,16 +188,6 @@ const Dataset = () => {
                       <>
                         <Grid item>
                           <Tooltip
-                            title={<Typography>Edit dataset</Typography>}
-                          >
-                            <IconButton onClick={handleTogglePanel}>
-                              <EditIcon color="primary" />
-                            </IconButton>
-                          </Tooltip>
-                        </Grid>
-
-                        <Grid item>
-                          <Tooltip
                             title={
                               <Typography>
                                 {!state.showSelections
@@ -215,17 +205,28 @@ const Dataset = () => {
                             </IconButton>
                           </Tooltip>
                         </Grid>
+                        <Grid item xs>
+                          <Grid container justifyContent="flex-end">
+                            <Button
+                              onClick={handleTogglePanel}
+                              startIcon={<EditIcon />}
+                            >
+                              Edit
+                            </Button>
+                          </Grid>
+                        </Grid>
                       </>
                     )}
                   </Grid>
                 </Grid>
                 {lockedStep.dataset.openPanel && (
                   <Grid item>
-                    <Tooltip title={<Typography>Close panel</Typography>}>
-                      <IconButton onClick={handleTogglePanel}>
-                        <CloseIcon color="primary" />
-                      </IconButton>
-                    </Tooltip>
+                    <Button
+                      onClick={handleTogglePanel}
+                      startIcon={<CloseIcon />}
+                    >
+                      Close Edit
+                    </Button>
                   </Grid>
                 )}
               </Grid>

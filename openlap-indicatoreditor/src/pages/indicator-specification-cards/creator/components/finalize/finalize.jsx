@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import { useContext, useState } from "react";
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import {
   Accordion,
@@ -129,7 +129,9 @@ const Finalize = () => {
                         }}
                       >
                         <Box sx={{ p: 2, maxWidth: 400 }}>
-                          <Typography gutterBottom><b>Tip:</b></Typography>
+                          <Typography gutterBottom>
+                            <b>Tip:</b>
+                          </Typography>
                           <Typography>
                             Take a final look at your indicator with the chosen
                             data. Customize the chart by adding a title,
@@ -157,18 +159,15 @@ const Finalize = () => {
                       </Popover>
                     </Grid>
                     {!lockedStep.finalize.openPanel && (
-                      <Grid item>
-                        <Tooltip
-                          title={
-                            <Typography>
-                              Edit and customize visualization
-                            </Typography>
-                          }
-                        >
-                          <IconButton onClick={handleTogglePanel}>
-                            <EditIcon color="primary" />
-                          </IconButton>
-                        </Tooltip>
+                      <Grid item xs>
+                        <Grid container justifyContent="flex-end">
+                          <Button
+                            onClick={handleTogglePanel}
+                            startIcon={<EditIcon />}
+                          >
+                            Edit
+                          </Button>
+                        </Grid>
                       </Grid>
                     )}
                   </Grid>
@@ -176,9 +175,12 @@ const Finalize = () => {
                 {lockedStep.finalize.openPanel && (
                   <Grid item>
                     <Tooltip title={<Typography>Close panel</Typography>}>
-                      <IconButton onClick={handleTogglePanel}>
-                        <CloseIcon color="primary" />
-                      </IconButton>
+                      <Button
+                        onClick={handleTogglePanel}
+                        startIcon={<CloseIcon />}
+                      >
+                        Close Edit
+                      </Button>
                     </Tooltip>
                   </Grid>
                 )}
