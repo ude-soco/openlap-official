@@ -1,23 +1,10 @@
-import React, { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useSnackbar } from "notistack";
+import { useContext, useEffect, useState } from "react";
 import {
-  requestDeleteISC,
-  requestISCDetails,
-  requestMyISCs,
-} from "../utils/dashboard-api.js";
-import {
+  Box,
   Button,
-  Backdrop,
-  CircularProgress,
+  Checkbox,
   Divider,
-  Grid,
   IconButton,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
   Paper,
   Table,
   TableBody,
@@ -26,19 +13,24 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import {
-  ArrowDownward,
-  ArrowUpward,
-  MoreVert,
-  Preview,
-  Delete,
-  Edit,
-} from "@mui/icons-material";
-import DeleteDialog from "../../../../common/components/delete-dialog/delete-dialog.jsx";
+import Grid from "@mui/material/Grid2";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import PreviewIcon from "@mui/icons-material/Preview";
+import SearchIcon from "@mui/icons-material/Search";
+import CloseIcon from "@mui/icons-material/Close";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useSnackbar } from "notistack";
+import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager";
+import { requestISCDetails, requestMyISCs } from "../utils/dashboard-api";
+import DeleteDialog from "../../../../common/components/delete-dialog/delete-dialog";
 
-const MyIscTable = () => {
+export default function MyIscTable() {
+  // const [selected, setSelected] = useState([]);
   const { api } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -59,134 +51,9 @@ const MyIscTable = () => {
     openDeleteDialog: false,
     loadingIndicators: false,
     loadingEditIndicator: false,
+    onHoverIndicatorId: undefined,
+    toggleSearch: true,
   });
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedIndicator, setSelectedIndicator] = useState(null);
-
-  const handleMenuOpen = (event, indicator) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedIndicator(indicator);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedIndicator(null);
-  };
-
-  const handlePageChange = (event, newPage) => {
-    setState((prevState) => ({
-      ...prevState,
-      params: {
-        ...prevState.params,
-        page: newPage,
-      },
-    }));
-  };
-
-  // Handle rows per page change
-  const handleRowsPerPageChange = (event) => {
-    setState((prevState) => ({
-      ...prevState,
-      params: {
-        ...prevState.params,
-        size: parseInt(event.target.value, 10),
-        page: 0,
-      },
-    }));
-  };
-
-  // Handle sorting
-  const handleSort = (sortBy) => {
-    setState((prevState) => ({
-      ...prevState,
-      params: {
-        ...prevState.params,
-        sortBy,
-        sortDirection:
-          prevState.params.sortBy === sortBy &&
-          prevState.params.sortDirection === "asc"
-            ? "dsc"
-            : "asc",
-        page: 0, // Reset to first page on sort change
-      },
-    }));
-  };
-
-  const renderSortIcon = (column) => {
-    if (state.params.sortBy !== column) return null;
-    return state.params.sortDirection === "asc" ? (
-      <ArrowUpward fontSize="small" />
-    ) : (
-      <ArrowDownward fontSize="small" />
-    );
-  };
-
-  const handleToggleDelete = () => {
-    setState((prevState) => ({
-      ...prevState,
-      openDeleteDialog: !prevState.openDeleteDialog,
-    }));
-  };
-
-  const handlePreview = (id) => {
-    handleMenuClose();
-    navigate(`/isc/${id}`);
-  };
-
-  const handleEditIndicator = () => {
-    const loadISCDetail = async (api, iscId) => {
-      try {
-        return await requestISCDetails(api, iscId);
-      } catch (error) {
-        console.log("Error requesting my indicators");
-      }
-    };
-    setState((prevState) => ({
-      ...prevState,
-      loadingEditIndicator: true,
-    }));
-    loadISCDetail(api, selectedIndicator.id)
-      .then((responseData) => {
-        let parsedData = JSON.parse(JSON.stringify(responseData));
-        parsedData.requirements = JSON.parse(parsedData.requirements);
-        parsedData.dataset = JSON.parse(parsedData.dataset);
-        parsedData.visRef = JSON.parse(parsedData.visRef);
-        parsedData.lockedStep = JSON.parse(parsedData.lockedStep);
-        parsedData.visRef.edit = true;
-        sessionStorage.setItem("session_isc", JSON.stringify(parsedData));
-      })
-      .then(() => {
-        setState((prevState) => ({
-          ...prevState,
-          loadingEditIndicator: false,
-        }));
-        navigate(`/isc/creator`);
-      })
-      .catch((error) => {
-        setState((prevState) => ({
-          ...prevState,
-          loadingEditIndicator: false,
-        }));
-        console.error(error);
-      });
-  };
-
-  const handleDeleteIndicator = async () => {
-    await requestDeleteISC(api, selectedIndicator.id)
-      .then(() => {
-        handleMenuClose();
-        setState((prevState) => ({
-          ...prevState,
-          myISCList: prevState.myISCList.filter(
-            (item) => item.id !== selectedIndicator.id
-          ),
-        }));
-        enqueueSnackbar("Indicator deleted successfully", {
-          variant: "success",
-        });
-      })
-      .catch((error) => console.error(error));
-  };
 
   useEffect(() => {
     const loadMyISCList = async (api, params) => {
@@ -214,169 +81,291 @@ const MyIscTable = () => {
     });
   }, [api, state.params, location]);
 
-  // * Helper function
+  // const handleSelect = (id) => {
+  //   setSelected((prev) =>
+  //     prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+  //   );
+  // };
+
+  const handleOnHoverIndicator = (id) => {
+    setState((p) => ({ ...p, onHoverIndicatorId: id }));
+  };
+
+  const handlePreview = (id) => {
+    navigate(`/isc/${id}`);
+  };
+
+  const handleEditIndicator = (id) => {
+    const loadISCDetail = async (api, iscId) => {
+      try {
+        return await requestISCDetails(api, iscId);
+      } catch (error) {
+        console.log("Error requesting my indicators");
+      }
+    };
+    setState((prevState) => ({
+      ...prevState,
+      loadingEditIndicator: true,
+    }));
+    loadISCDetail(api, id)
+      .then((responseData) => {
+        let parsedData = JSON.parse(JSON.stringify(responseData));
+        parsedData.requirements = JSON.parse(parsedData.requirements);
+        parsedData.dataset = JSON.parse(parsedData.dataset);
+        parsedData.visRef = JSON.parse(parsedData.visRef);
+        parsedData.lockedStep = JSON.parse(parsedData.lockedStep);
+        parsedData.visRef.edit = true;
+        sessionStorage.setItem("session_isc", JSON.stringify(parsedData));
+      })
+      .then(() => {
+        setState((prevState) => ({
+          ...prevState,
+          loadingEditIndicator: false,
+        }));
+        navigate(`/isc/creator`);
+      })
+      .catch((error) => {
+        setState((prevState) => ({
+          ...prevState,
+          loadingEditIndicator: false,
+        }));
+        console.error(error);
+      });
+  };
+
+  const handleToggleDelete = () => {
+    setState((prevState) => ({
+      ...prevState,
+      openDeleteDialog: !prevState.openDeleteDialog,
+    }));
+  };
+
+  const handleDeleteIndicator = async () => {
+    await requestDeleteISC(api, state.onHoverIndicatorId)
+      .then(() => {
+        setState((prevState) => ({
+          ...prevState,
+          myISCList: prevState.myISCList.filter(
+            (item) => item.id !== state.onHoverIndicatorId
+          ),
+        }));
+        enqueueSnackbar("Indicator deleted successfully", {
+          variant: "success",
+        });
+      })
+      .catch((error) => console.error(error));
+  };
+
+  const handlePageChange = (event, newPage) => {
+    setState((prevState) => ({
+      ...prevState,
+      params: {
+        ...prevState.params,
+        page: newPage,
+      },
+    }));
+  };
+
+  // * Handle rows per page change
+  const handleRowsPerPageChange = (event) => {
+    setState((prevState) => ({
+      ...prevState,
+      params: {
+        ...prevState.params,
+        size: parseInt(event.target.value, 10),
+        page: 0,
+      },
+    }));
+  };
+
+  const handleToggleSearch = () => {
+    setState((p) => ({
+      ...p,
+      toggleSearch: !p.toggleSearch,
+    }));
+  };
+
+  // * Helper functions
   function toSentenceCase(str) {
     if (!str) return "";
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   }
 
+  function changeTimeFormat(time) {
+    return new Date(time).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
   return (
     <>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Grid container justifyContent="space-between">
-            <Grid item xs>
-              <Typography>My ISCs</Typography>
-            </Grid>
-            <Grid item>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => navigate("/isc/creator")}
-              >
-                Create new
-              </Button>
-            </Grid>
-          </Grid>
-        </Grid>
-        <Grid item xs={12}>
-          <TableContainer component={Paper} variant="outlined">
-            <Table stickyHeader size="small">
+        <Grid size={12}>
+          <TableContainer component={Paper} elevation={0} variant="outlined">
+            <Table>
               <TableHead>
                 <TableRow>
+                  {/* // TODO: For the future: multi select delete */}
+                  {/* <TableCell padding="checkbox" sx={{ width: 30 }}>
+                    <Checkbox
+                      checked={selected.length === emails.length}
+                      indeterminate={
+                        selected.length > 0 && selected.length < emails.length
+                      }
+                      onChange={(e) => {
+                        setSelected(
+                          e.target.checked ? emails.map((e) => e.id) : []
+                        );
+                      }}
+                    />
+                  </TableCell> */}
                   <TableCell>
-                    <Typography variant="caption">
-                      <b>Indicator name</b>
-                    </Typography>
-                  </TableCell>
-
-                  <TableCell align="right">
-                    <Grid
-                      container
-                      alignItems="center"
-                      justifyContent="flex-end"
-                    >
-                      <Grid item xs>
-                        <Typography variant="caption">
-                          <b>Created On</b>
-                        </Typography>
-                      </Grid>
-                      <Grid item>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleSort("createdOn")}
-                        >
-                          {renderSortIcon("createdOn")}
-                        </IconButton>
-                      </Grid>
+                    <Grid container alignItems="center" spacing={1}>
+                      {state.toggleSearch ? (
+                        <>
+                          <Typography>Indicator name</Typography>
+                          <Tooltip
+                            title={
+                              <Typography>Search for indicator</Typography>
+                            }
+                          >
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={handleToggleSearch}
+                            >
+                              <SearchIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </>
+                      ) : (
+                        <>
+                          <Grid size="auto">
+                            <Tooltip
+                              title={<Typography>Close search</Typography>}
+                            >
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={handleToggleSearch}
+                              >
+                                <CloseIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </Grid>
+                          <Grid size="grow">
+                            <TextField
+                              size="small"
+                              placeholder="Search for indicator"
+                            />
+                          </Grid>
+                        </>
+                      )}
                     </Grid>
                   </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="caption">
-                      <b>Actions</b>
-                    </Typography>
-                  </TableCell>
+                  <TableCell align="right" sx={{ width: 180 }}></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {state.myISCList.length > 0 ? (
-                  state.myISCList.map((indicator) => (
-                    <TableRow key={indicator.id}>
-                      <TableCell>
-                        {toSentenceCase(indicator.indicatorName)}
-                      </TableCell>
-                      <TableCell align="right">
-                        {indicator.createdOn.split("T")[0]}
-                      </TableCell>
-                      <TableCell align="right">
-                        <Button
-                          onClick={() => handlePreview(indicator.id)}
-                          sx={{ mr: 1 }}
-                        >
-                          Preview
-                        </Button>
-                        <IconButton
-                          size="small"
-                          onClick={(event) => handleMenuOpen(event, indicator)}
-                        >
-                          <MoreVert />
-                        </IconButton>
-                        <Menu
-                          anchorEl={anchorEl}
-                          open={Boolean(anchorEl)}
-                          onClose={handleMenuClose}
-                        >
-                          <MenuItem onClick={handleEditIndicator}>
-                            <ListItemIcon>
-                              <Edit fontSize="small" color="primary" />
-                            </ListItemIcon>
-                            <ListItemText primary="Edit" />
-                          </MenuItem>
-                          <Backdrop
-                            sx={(theme) => ({
-                              color: "#fff",
-                              zIndex: theme.zIndex.drawer + 1,
-                            })}
-                            open={state.loadingEditIndicator}
-                          >
-                            <Grid
-                              container
-                              direction="column"
-                              alignItems="center"
-                              spacing={2}
-                            >
-                              <CircularProgress color="inherit" />
-                              <Typography sx={{ mt: 2 }}>
-                                Loading Indicator
-                              </Typography>
-                            </Grid>
-                          </Backdrop>
-                          <Divider />
+                {state.myISCList.map((indicator) => (
+                  <TableRow
+                    key={indicator.id}
+                    // selected={selected.includes(indicator.id)}
+                    onMouseEnter={() => handleOnHoverIndicator(indicator.id)}
+                    hover
+                    sx={{
+                      cursor: "pointer",
+                      position: "relative",
+                      "&:hover .hover-actions": { opacity: 1 },
+                      "&:hover .time-text": { opacity: 0 },
+                    }}
+                  >
+                    {/* // TODO: For the future: multi select delete */}
+                    {/* <TableCell padding="checkbox" sx={{ width: 40 }}>
+                      <Checkbox
+                        checked={selected.includes(indicator.id)}
+                        onChange={() => handleSelect(indicator.id)}
+                      />
+                    </TableCell> */}
 
-                          <MenuItem onClick={handleToggleDelete}>
-                            <ListItemIcon>
-                              <Delete fontSize="small" color="error" />
-                            </ListItemIcon>
-                            <ListItemText primary="Delete" />
-                          </MenuItem>
-                          <DeleteDialog
-                            open={state.openDeleteDialog}
-                            toggleOpen={handleToggleDelete}
-                            message={
-                              <Typography>
-                                This will delete the indicator permanently from
-                                your dashboard.
-                              </Typography>
-                            }
-                            handleDelete={handleDeleteIndicator}
-                          />
-                          {/* Uncommented menu items */}
-                        </Menu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={3} sx={{ py: 1.5 }}>
-                      {state.loadingIndicators ? (
-                        <>
-                          <Grid container alignItems="center" spacing={1}>
-                            <Grid item>
-                              <CircularProgress size={18} />
-                            </Grid>
-                            <Grid item>
-                              <Typography variant="body2" gutterBottom>
-                                Loading your indicators ...
-                              </Typography>
-                            </Grid>
-                          </Grid>
-                        </>
-                      ) : (
-                        "No indicators found"
-                      )}
+                    <TableCell onClick={() => handlePreview(indicator.id)}>
+                      <Typography component="span" fontWeight="bold">
+                        {toSentenceCase(indicator.indicatorName)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography
+                        className="time-text"
+                        sx={{
+                          transition: "opacity 0.2s ease-in-out",
+                          textAlign: "right",
+                        }}
+                      >
+                        {changeTimeFormat(indicator.createdOn)}
+                      </Typography>
+
+                      <Box
+                        className="hover-actions"
+                        sx={{
+                          position: "absolute",
+                          right: 0,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          display: "flex",
+                          gap: 1,
+                          opacity: 0,
+                          transition: "opacity 0.2s ease-in-out",
+                          zIndex: 2,
+                          mr: 2,
+                        }}
+                      >
+                        <Tooltip
+                          arrow
+                          title={<Typography>Preview indicator</Typography>}
+                        >
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handlePreview(indicator.id)}
+                          >
+                            <PreviewIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip
+                          arrow
+                          title={<Typography>Edit indicator</Typography>}
+                        >
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleEditIndicator(indicator.id)}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Divider
+                          orientation="vertical"
+                          flexItem
+                          sx={{ mx: 1 }}
+                        />
+                        <Tooltip
+                          arrow
+                          title={<Typography>Delete indicator</Typography>}
+                        >
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleToggleDelete(indicator.id)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </TableCell>
                   </TableRow>
-                )}
+                ))}
               </TableBody>
             </Table>
             <TablePagination
@@ -391,8 +380,17 @@ const MyIscTable = () => {
           </TableContainer>
         </Grid>
       </Grid>
+
+      <DeleteDialog
+        open={state.openDeleteDialog}
+        toggleOpen={handleToggleDelete}
+        message={
+          <Typography>
+            This will delete the indicator permanently from your dashboard.
+          </Typography>
+        }
+        handleDelete={handleDeleteIndicator}
+      />
     </>
   );
-};
-
-export default MyIscTable;
+}
