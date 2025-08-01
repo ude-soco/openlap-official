@@ -209,17 +209,6 @@ const SpecifyRequirements = () => {
                       <>
                         <Grid item>
                           <Tooltip
-                            arrow
-                            title={<Typography>Edit requirements</Typography>}
-                          >
-                            <IconButton onClick={handleTogglePanel}>
-                              <EditIcon color="primary" />
-                            </IconButton>
-                          </Tooltip>
-                        </Grid>
-
-                        <Grid item>
-                          <Tooltip
                             title={
                               <Typography>
                                 {!state.showSelections
@@ -237,17 +226,28 @@ const SpecifyRequirements = () => {
                             </IconButton>
                           </Tooltip>
                         </Grid>
+                        <Grid item xs>
+                          <Grid container justifyContent="flex-end">
+                            <Button
+                              startIcon={<EditIcon />}
+                              onClick={handleTogglePanel}
+                            >
+                              Edit
+                            </Button>
+                          </Grid>
+                        </Grid>
                       </>
                     )}
                   </Grid>
                 </Grid>
                 {lockedStep.requirements.openPanel && (
                   <Grid item>
-                    <Tooltip title={<Typography>Close panel</Typography>}>
-                      <IconButton onClick={handleTogglePanel}>
-                        <CloseIcon color="primary" />
-                      </IconButton>
-                    </Tooltip>
+                    <Button
+                      startIcon={<CloseIcon />}
+                      onClick={handleTogglePanel}
+                    >
+                      Close edit
+                    </Button>
                   </Grid>
                 )}
               </Grid>
@@ -390,7 +390,7 @@ const SpecifyRequirements = () => {
                               <Typography gutterBottom>
                                 Here are some <b>Examples</b> for inspiration:
                               </Typography>
-                              <Typography sx={{my: -1}}>
+                              <Typography sx={{ my: -1 }}>
                                 <ul>
                                   <li>
                                     I want to <b>assess</b> students’
