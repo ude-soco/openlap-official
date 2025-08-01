@@ -5,6 +5,7 @@ import {
   AccordionActions,
   AccordionDetails,
   AccordionSummary,
+  Box,
   Button,
   Chip,
   Grid,
@@ -137,14 +138,34 @@ const Dataset = () => {
                           },
                         }}
                       >
-                        <Typography
-                          sx={{ whiteSpace: "pre-line", p: 2, maxWidth: 400 }}
-                          dangerouslySetInnerHTML={{
-                            __html: `Tip: Add your data by filling in the table or uploading a CSV file. 
-                            Use the rows to enter the values you want to visualize. 
-                            You can always add or remove rows and columns as needed.`,
-                          }}
-                        />
+                        <Box sx={{ p: 2, maxWidth: 400 }}>
+                          <Typography gutterBottom>
+                            <b>Tip!</b>
+                          </Typography>
+                          <Typography>
+                            Create your own data by filling in the table.
+                          </Typography>
+                          <Typography>
+                            <ul>
+                              <li>
+                                You can add new columns and rows based on your
+                                needs
+                              </li>
+                              <li>
+                                Double click on the cells in each row to enter
+                                the values you want to analyze
+                              </li>
+                              <li>
+                                Click the column header to access the menu
+                                options
+                              </li>
+                            </ul>
+                          </Typography>
+                          <Typography gutterBottom>
+                            If you have an existing dataset (.csv data), you can
+                            upload it here easily.
+                          </Typography>
+                        </Box>
 
                         <Grid container justifyContent="flex-end">
                           <Button

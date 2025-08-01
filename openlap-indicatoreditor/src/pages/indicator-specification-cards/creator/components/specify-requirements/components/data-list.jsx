@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import {
   Autocomplete,
+  Box,
   Button,
   IconButton,
   Popover,
@@ -77,167 +78,165 @@ const DataList = () => {
         {requirements.data.map((requirement, index) => {
           const isDuplicate = duplicateValues.has(requirement.value);
           return (
-            <>
-              <Grid size={{ xs: 12 }} key={index}>
-                <Grid container spacing={1}>
-                  <Grid size="grow">
-                    <TextField
-                      fullWidth
-                      name="value"
-                      label={`${index + 1}. Name of data`}
-                      error={requirement.value === "" || isDuplicate}
-                      value={requirement.value}
-                      onChange={(event) => handleChangeValue(index, event)}
-                      placeholder={requirement.placeholder || ""}
-                      helperText={
-                        requirement.value === ""
-                          ? "Provide a name"
-                          : isDuplicate
-                          ? "Duplicate name detected"
-                          : ""
-                      }
-                    />
-                  </Grid>
-                  <Grid size={{ xs: "grow", sm: 6 }}>
-                    <Grid container alignItems="center" spacing={1}>
-                      <Grid size={{ xs: "grow" }}>
-                        <Autocomplete
-                          fullWidth
-                          disableClearable
-                          options={Object.values(DataTypes)}
-                          value={
-                            Object.values(DataTypes).find(
-                              (dt) => dt.value === requirement.type?.value
-                            ) || null
-                          }
-                          getOptionLabel={(option) => {
-                            return option?.value || "Unknown";
-                          }}
-                          renderOption={(props, option) => {
-                            const { key, ...restProps } = props;
-                            return (
-                              <li key={key} {...restProps}>
-                                <Grid container sx={{ py: 0.5 }}>
-                                  <Typography>{option.value}</Typography>
-                                  <Typography
-                                    variant="body2"
-                                    sx={{ fontStyle: "italic" }}
-                                  >
-                                    {option.description}
-                                  </Typography>
-                                </Grid>
-                              </li>
-                            );
-                          }}
-                          groupBy={() => "Column types"}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              placeholder="Select a data column type"
-                              label="Type of data"
-                            />
-                          )}
-                          onChange={(event, value) => {
-                            if (value) handleChangeType(index, value);
-                          }}
-                        />
-                      </Grid>
-                      <Grid size="auto">
-                        {!lockedStep.dataset.locked && (
-                          <>
-                            <Tooltip
-                              arrow
-                              title={
-                                <Typography>Click to view warning</Typography>
+            <Grid size={{ xs: 12 }} key={index}>
+              <Grid container spacing={1}>
+                <Grid size="grow">
+                  <TextField
+                    fullWidth
+                    name="value"
+                    label={`${index + 1}. Name of data`}
+                    error={requirement.value === "" || isDuplicate}
+                    value={requirement.value}
+                    onChange={(event) => handleChangeValue(index, event)}
+                    placeholder={requirement.placeholder || ""}
+                    helperText={
+                      requirement.value === ""
+                        ? "Provide a name"
+                        : isDuplicate
+                        ? "Duplicate name detected"
+                        : ""
+                    }
+                  />
+                </Grid>
+                <Grid size={{ xs: "grow", sm: 6 }}>
+                  <Grid container alignItems="center" spacing={1}>
+                    <Grid size={{ xs: "grow" }}>
+                      <Autocomplete
+                        fullWidth
+                        disableClearable
+                        options={Object.values(DataTypes)}
+                        value={
+                          Object.values(DataTypes).find(
+                            (dt) => dt.value === requirement.type?.value
+                          ) || null
+                        }
+                        getOptionLabel={(option) => {
+                          return option?.value || "Unknown";
+                        }}
+                        renderOption={(props, option) => {
+                          const { key, ...restProps } = props;
+                          return (
+                            <li key={key} {...restProps}>
+                              <Grid container sx={{ py: 0.5 }}>
+                                <Typography>{option.value}</Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontStyle: "italic" }}
+                                >
+                                  {option.description}
+                                </Typography>
+                              </Grid>
+                            </li>
+                          );
+                        }}
+                        groupBy={() => "Column types"}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            placeholder="Select a data column type"
+                            label="Type of data"
+                          />
+                        )}
+                        onChange={(event, value) => {
+                          if (value) handleChangeType(index, value);
+                        }}
+                      />
+                    </Grid>
+                    <Grid size="auto">
+                      {!lockedStep.dataset.locked && (
+                        <>
+                          <Tooltip
+                            arrow
+                            title={
+                              <Typography>Click to view warning</Typography>
+                            }
+                          >
+                            <IconButton
+                              color="warning"
+                              onClick={(e) =>
+                                setState((prevState) => ({
+                                  ...prevState,
+                                  tipAnchor: e.currentTarget,
+                                }))
                               }
                             >
-                              <IconButton
-                                color="warning"
-                                onClick={(e) =>
-                                  setState((prevState) => ({
-                                    ...prevState,
-                                    tipAnchor: e.currentTarget,
-                                  }))
-                                }
-                              >
-                                <WarningIcon />
-                              </IconButton>
-                            </Tooltip>
-                          </>
-                        )}
-                        <Tooltip
-                          arrow
-                          title={
-                            <Typography>
-                              Remove <b>{requirement.value}</b>
-                            </Typography>
-                          }
+                              <WarningIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </>
+                      )}
+                      <Tooltip
+                        arrow
+                        title={
+                          <Typography>
+                            Remove <b>{requirement.value}</b>
+                          </Typography>
+                        }
+                      >
+                        <IconButton
+                          color="error"
+                          onClick={() => handleDeleteDataRow(index)}
                         >
-                          <IconButton
-                            color="error"
-                            onClick={() => handleDeleteDataRow(index)}
-                          >
-                            <CloseIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </Grid>
+                          <CloseIcon />
+                        </IconButton>
+                      </Tooltip>
                     </Grid>
                   </Grid>
                 </Grid>
-                <Popover
-                  open={Boolean(state.tipAnchor)}
-                  anchorEl={state.tipAnchor}
-                  onClose={() =>
-                    setState((prevState) => ({
-                      ...prevState,
-                      tipAnchor: null,
-                    }))
-                  }
-                  anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "left",
-                  }}
-                  PaperProps={{
-                    sx: {
-                      backgroundColor: "error.dark",
-                      color: "primary.contrastText",
-                      position: "absolute",
-                      p: 1,
-                    },
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      whiteSpace: "pre-line",
-                      p: 2,
-                      maxWidth: 350,
-                    }}
-                    dangerouslySetInnerHTML={{
-                      __html: `<b>Attention!</b>
-                            Changing the type of this data will reset the data of <b>${requirement.value}</b> column in the <b>Dataset</b> step below.
-                            It will cause the loss of data <b>only</b> in this column! Other columns remain uneffected.
-                            Please proceed with caution!`,
-                    }}
-                  />
-
-                  <Grid container justifyContent="flex-end">
-                    <Button
-                      size="small"
-                      onClick={() =>
-                        setState((prevState) => ({
-                          ...prevState,
-                          tipAnchor: null,
-                        }))
-                      }
-                      color="text"
-                      variant="outlined"
-                    >
-                      Close
-                    </Button>
-                  </Grid>
-                </Popover>
               </Grid>
-            </>
+              <Popover
+                open={Boolean(state.tipAnchor)}
+                anchorEl={state.tipAnchor}
+                onClose={() =>
+                  setState((prevState) => ({
+                    ...prevState,
+                    tipAnchor: null,
+                  }))
+                }
+                anchorOrigin={{
+                  vertical: "bottom",
+                  horizontal: "left",
+                }}
+                PaperProps={{
+                  sx: {
+                    backgroundColor: "error.dark",
+                    color: "primary.contrastText",
+                    position: "absolute",
+                    p: 1,
+                  },
+                }}
+              >
+                <Box sx={{ p: 2, maxWidth: 350 }}>
+                  <Typography gutterBottom><b>Attention!</b></Typography>
+                  <Typography>
+                    Changing the type of this data will reset the data of{" "}
+                    <b>{requirement.value}</b> column in the <b>Dataset</b>{" "}
+                    step below.
+                  </Typography>
+                  <Typography>
+                    It will cause the loss of data <b>only</b> in this column!
+                    Other columns remain uneffected.
+                  </Typography>
+                  <Typography>Please proceed with caution!</Typography>
+                </Box>
+
+                <Grid container justifyContent="flex-end">
+                  <Button
+                    size="small"
+                    onClick={() =>
+                      setState((prevState) => ({
+                        ...prevState,
+                        tipAnchor: null,
+                      }))
+                    }
+                    color="text"
+                    variant="outlined"
+                  >
+                    Close
+                  </Button>
+                </Grid>
+              </Popover>
+            </Grid>
           );
         })}
 

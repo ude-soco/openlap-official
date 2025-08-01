@@ -1,7 +1,10 @@
 import Grid from "@mui/material/Grid2";
 import { Alert, AlertTitle, Typography } from "@mui/material";
 
-export default function ChartAxisDropdownFeedback({ axisName, columnTypeValue }) {
+export default function ChartAxisDropdownFeedback({
+  axisName,
+  columnTypeValue,
+}) {
   return (
     <>
       <Grid container spacing={1} sx={{ pt: 1 }}>
@@ -23,9 +26,8 @@ export default function ChartAxisDropdownFeedback({ axisName, columnTypeValue })
             <Typography
               sx={{ whiteSpace: "pre-line" }}
               dangerouslySetInnerHTML={{
-                __html: `• Make sure to add the missing column in the <b>Dataset</b> step <em>OR</em>
-                        • Make sure to add the missing type of data in the <b>Specify your goal, question, and indicator</b> step
-                        `,
+                __html: `• Make sure to insert the missing type of column(s) in the <b>Dataset</b> step <em>OR</em>
+                        • Make sure to add the missing type of data in the <b>Specify your goal, question, and indicator</b> step`,
               }}
             />
           </Alert>

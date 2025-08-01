@@ -5,8 +5,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Grid,
-  TextField,
+  Typography,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
@@ -17,21 +16,13 @@ import { useNavigate } from "react-router-dom";
 
 const NameDialog = ({ open, toggleOpen }) => {
   const { api } = useContext(AuthContext);
-  const { id, requirements, setRequirements, dataset, visRef, lockedStep } =
+  const { id, requirements, dataset, visRef, lockedStep } =
     useContext(ISCContext);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const [state, setState] = useState({
     loading: false,
   });
-
-  const handleChangeName = (event) => {
-    const { name, value } = event.target;
-    setRequirements((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  };
 
   const handleCloseDialog = () => {
     toggleOpen();
@@ -126,29 +117,17 @@ const NameDialog = ({ open, toggleOpen }) => {
 
   return (
     <>
-      <Dialog open={open} fullWidth maxWidth="md">
-        <DialogTitle>Provide a name</DialogTitle>
+      <Dialog open={open} fullWidth maxWidth="sm">
+        <DialogTitle>Save Indicator</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ pt: 2 }}>
-            <Grid item xs={12}>
-              <TextField
-                autoFocus
-                fullWidth
-                name="indicatorName"
-                label="Indicator name"
-                value={requirements.indicatorName}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                onChange={(event) => handleChangeName(event)}
-                variant="outlined"
-              />
-            </Grid>
-          </Grid>
+          <Typography>
+            You've completed all the steps. Saving now will finalize the
+            indicator and make it available for use from ISC Dashboard.
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button fullWidth color="primary" onClick={handleCloseDialog}>
-            Cancel
+            Continue editing
           </Button>
           <LoadingButton
             loading={state.loading}
@@ -158,7 +137,7 @@ const NameDialog = ({ open, toggleOpen }) => {
             onClick={handleSaveIndicator}
             variant="contained"
           >
-            Save
+            Confirm Save
           </LoadingButton>
         </DialogActions>
       </Dialog>

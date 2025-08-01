@@ -13,6 +13,7 @@ import {
   Tooltip,
   Typography,
   Popover,
+  Box,
 } from "@mui/material";
 import VisSelection from "../visualization/components/vis-selection.jsx";
 import NameDialog from "./components/name-dialog.jsx";
@@ -127,14 +128,16 @@ const Finalize = () => {
                           },
                         }}
                       >
-                        <Typography
-                          sx={{ whiteSpace: "pre-line", p: 2, maxWidth: 400 }}
-                          dangerouslySetInnerHTML={{
-                            __html: `Tip: Take a final look at your indicator with the chosen data.
-                            Customize the chart by adding a title, subtitle, and choosing colors that highlight your message.
-                            Make sure everything looks clear and meaningful before you finish.`,
-                          }}
-                        />
+                        <Box sx={{ p: 2, maxWidth: 400 }}>
+                          <Typography gutterBottom><b>Tip:</b></Typography>
+                          <Typography>
+                            Take a final look at your indicator with the chosen
+                            data. Customize the chart by adding a title,
+                            subtitle, and choosing colors that highlight your
+                            message. Make sure everything looks clear and
+                            meaningful before you finish.
+                          </Typography>
+                        </Box>
 
                         <Grid container justifyContent="flex-end">
                           <Button

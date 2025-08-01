@@ -47,7 +47,7 @@ const VisualizationDescription = ({ columnError }) => {
 
             <Grid size={{ xs: 12 }}>
               <Typography gutterBottom>
-                <b>Dataset for {visRef.chart.type}</b>
+                <b>Required type of data for {visRef.chart.type}</b>
               </Typography>
               <Grid size={{ xs: 12 }}>
                 <Grid container spacing={1}>
@@ -56,10 +56,10 @@ const VisualizationDescription = ({ columnError }) => {
                       return (
                         <Grid size={{ xs: 12 }} key={index}>
                           <Grid container spacing={1} alignItems="center">
-                            <Typography>
-                              <b>{type.type.value}</b> column(s) required:
-                            </Typography>
                             <Chip color="warning" label={`${type.required}`} />
+                            <Typography>
+                              <b>{type.type.value}</b> required
+                            </Typography>
                           </Grid>
                         </Grid>
                       );
@@ -74,7 +74,7 @@ const VisualizationDescription = ({ columnError }) => {
                   <Grid container spacing={1}>
                     <Grid size={{ xs: 12 }}>
                       <Alert severity="error">
-                        <AlertTitle>Missing data</AlertTitle>
+                        <AlertTitle>Missing type of data</AlertTitle>
                         {columnError.errorMessages.map((msg, i) => (
                           <Typography
                             key={i}
@@ -84,18 +84,20 @@ const VisualizationDescription = ({ columnError }) => {
                         ))}
                       </Alert>
                     </Grid>
-                    <Alert severity="info">
-                      <AlertTitle>
-                        Possible fix for using <b>{visRef.chart.type}</b>
-                      </AlertTitle>
-                      <Typography
-                        sx={{ whiteSpace: "pre-line" }}
-                        dangerouslySetInnerHTML={{
-                          __html: `• Make sure to add the missing type of data in the <b>Specify your goal, question, and indicator</b> step <em>OR</em>
-                                    • Make sure to add the missing column(s) in the <b>Dataset</b> step`,
-                        }}
-                      />
-                    </Alert>
+                    <Grid size={{ xs: 12 }}>
+                      <Alert severity="info">
+                        <AlertTitle>
+                          Possible fix for using <b>{visRef.chart.type}</b>
+                        </AlertTitle>
+                        <Typography
+                          sx={{ whiteSpace: "pre-line" }}
+                          dangerouslySetInnerHTML={{
+                            __html: `• Make sure to add the missing type of data in the <b>Specify your goal, question, and indicator</b> step <em>OR</em>
+                                    • Make sure to insert the missing type of column(s) in the <b>Dataset</b> step`,
+                          }}
+                        />
+                      </Alert>
+                    </Grid>
                   </Grid>
                 )}
               </Grid>
