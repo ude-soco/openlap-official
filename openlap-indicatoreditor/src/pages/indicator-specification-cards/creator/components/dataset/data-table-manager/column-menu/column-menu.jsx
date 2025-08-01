@@ -10,11 +10,12 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Edit as EditIcon } from "@mui/icons-material";
+import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
 import { isNullOrEmpty } from "../../../../../../isc-creator/creator/data/utils/functions.js";
 import { ISCContext } from "../../../../indicator-specification-card.jsx";
 import RenameMenuAndDialog from "./components/rename-menu-and-dialog.jsx";
 import DeleteMenuAndDialog from "./components/delete-menu-and-dialog.jsx";
+import ChangeTypeMenuAndDialog from "./components/change-type-menu-and-dialog.jsx";
 
 const ColumnMenu = ({ props }) => {
   const { dataset } = useContext(ISCContext);
@@ -22,6 +23,7 @@ const ColumnMenu = ({ props }) => {
     isNullOrEmpty(row[props.colDef.field])
   );
   const [columnMenu, setColumnMenu] = useState({
+    columnChangeType: false,
     columnRename: false,
     columnDelete: false,
   });
@@ -30,33 +32,24 @@ const ColumnMenu = ({ props }) => {
     <>
       <Stack py={0.5}>
         {/* TODO: Make the rename and add row functionalities */}
-        <Tooltip
-          arrow
-          placement="right"
-          title={
-            <Typography variant="body2" sx={{ p: 1 }}>
-              {!foundNullEmpty
-                ? "Cannot change column type because the column has values. Please delete all the values in this column and try again."
-                : "Change column type"}
-            </Typography>
-          }
+
+        {/* <MenuItem
+          sx={{ py: 1 }}
+          onClick={() => {
+            // handleOpenChangeColumnType(props.colDef);
+            toggleEditPanel("", false);
+          }}
         >
-          <span>
-            <MenuItem
-              sx={{ py: 1 }}
-              disabled={!foundNullEmpty}
-              // onClick={() => {
-              //   handleOpenChangeColumnType(props.colDef);
-              //   toggleEditPanel("", false);
-              // }}
-            >
-              <ListItemIcon>
-                <EditIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText primary="Change column type" />
-            </MenuItem>
-          </span>
-        </Tooltip>
+          <ListItemIcon>
+            <ChangeCircleIcon fontSize="small" color="primary"/>
+          </ListItemIcon>
+          <ListItemText primary="Change data type" />
+        </MenuItem> */}
+        <ChangeTypeMenuAndDialog
+          props={props}
+          columnMenu={columnMenu}
+          setColumnMenu={setColumnMenu}
+        />
 
         <RenameMenuAndDialog
           props={props}
