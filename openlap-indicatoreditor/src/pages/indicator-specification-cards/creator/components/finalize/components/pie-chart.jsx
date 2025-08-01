@@ -214,7 +214,7 @@ const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
       },
       edit: false,
     }));
-  }, [dataset.columns.length]);
+  }, [dataset]);
 
   // * This effect is used to update the chart when the selected X-axis or Y-axis changes.
   useEffect(() => {

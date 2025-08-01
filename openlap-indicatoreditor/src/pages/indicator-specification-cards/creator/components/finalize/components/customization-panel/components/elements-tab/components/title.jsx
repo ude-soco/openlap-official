@@ -1,4 +1,3 @@
-import React from "react";
 import Grid from "@mui/material/Grid2";
 import {
   FormControl,
@@ -30,6 +29,10 @@ const Title = ({ state, setState }) => {
         ...prevState.options,
         title: {
           ...prevState.options.title,
+          align: e.target.value,
+        },
+        subtitle: {
+          ...prevState.options.subtitle,
           align: e.target.value,
         },
       },

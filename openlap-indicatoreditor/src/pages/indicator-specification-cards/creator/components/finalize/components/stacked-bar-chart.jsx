@@ -228,7 +228,7 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
       },
       edit: false,
     }));
-  }, [dataset.columns.length]);
+  }, [dataset]);
 
   // * Executes only when dataset changes.
   // * This effect is used to populate the xAxis, yAxis, and groupBy options.

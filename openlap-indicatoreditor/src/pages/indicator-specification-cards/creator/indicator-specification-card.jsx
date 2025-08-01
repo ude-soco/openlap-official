@@ -1,18 +1,9 @@
 import { createContext, useEffect, useRef, useState } from "react";
-import {
-  Alert,
-  Breadcrumbs,
-  Button,
-  Divider,
-  Fade,
-  Link,
-  Typography,
-} from "@mui/material";
+import { Breadcrumbs, Divider, Link, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { Link as RouterLink } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { v4 as uuidv4 } from "uuid";
-import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import SpecifyRequirements from "./components/specify-requirements/specify-requirements.jsx";
 import ChoosePath from "./components/choose-path/choose-path.jsx";
 import Visualization from "./components/visualization/visualization.jsx";

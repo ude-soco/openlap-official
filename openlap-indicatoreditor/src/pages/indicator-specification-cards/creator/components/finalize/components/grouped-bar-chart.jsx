@@ -218,7 +218,7 @@ const GroupedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
       },
       edit: false,
     }));
-  }, [dataset.columns.length]);
+  }, [dataset]);
 
   useEffect(() => {
     const selectedXAxis =

@@ -229,7 +229,7 @@ const ScatterPlotChart = ({
       },
       edit: false,
     }));
-  }, [dataset.columns.length]);
+  }, [dataset]);
 
   useEffect(() => {
     const selectedLabel =
