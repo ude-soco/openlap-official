@@ -496,7 +496,7 @@ const SpecifyRequirements = () => {
                           }}
                         >
                           <Grid item xs>
-                            <Typography>
+                            <Typography gutterBottom>
                               <i>Your goal:</i> I want to{" "}
                               <b>{requirements.goalType.verb}</b> the{" "}
                               <b>{requirements.goal}</b>
@@ -528,7 +528,7 @@ const SpecifyRequirements = () => {
                         </Grid>
                         <Grid item xs={12} md={8}>
                           <Grid container spacing={2} alignItems="center">
-                            <Grid item >
+                            <Grid item xs>
                               <TextField
                                 fullWidth
                                 required
