@@ -152,7 +152,7 @@ const IscPreview = () => {
             ISC Dashboard
           </Link>
           <Typography sx={{ color: "text.primary" }}>
-            Preview Indicator
+            Preview ISC
           </Typography>
         </Breadcrumbs>
         <Grid size={{ xs: 12 }}>

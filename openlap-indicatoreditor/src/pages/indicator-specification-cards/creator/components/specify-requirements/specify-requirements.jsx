@@ -137,7 +137,7 @@ const SpecifyRequirements = () => {
                         color="primary"
                       />
                     </Grid>
-                    <Grid item>
+                    <Grid item xs>
                       <Typography>
                         Specify your goal, question, and indicator
                       </Typography>
@@ -338,7 +338,7 @@ const SpecifyRequirements = () => {
                 <Grid item xs={12}>
                   <Grid container spacing={2} justifyContent="center">
                     <Grid item xs={12} md={8}>
-                      <Grid container spacing={1} alignItems="center">
+                      <Grid container spacing={2} alignItems="center">
                         <Grid item>
                           <Tooltip
                             arrow
@@ -388,7 +388,7 @@ const SpecifyRequirements = () => {
                                 Here are some examples for inspiration:
                               </Typography> */}
                               <Typography gutterBottom>
-                                Here are some <b>Examples</b> for inspiration: 
+                                Here are some <b>Examples</b> for inspiration:
                               </Typography>
                               <Typography>
                                 <ul>
@@ -452,21 +452,23 @@ const SpecifyRequirements = () => {
                               />
                             </Grid>
                             <Grid item>
-                              <Tooltip title="Confirm">
-                                <span>
-                                  <Fab
-                                    color="primary"
-                                    size="small"
-                                    onClick={handleToggleGoalEdit}
-                                    disabled={
-                                      requirements.goal.length < 1 ||
-                                      requirements.goalType.verb.length < 1
-                                    }
-                                  >
-                                    <DoneIcon />
-                                  </Fab>
-                                </span>
-                              </Tooltip>
+                              <Grid container justifyContent="center">
+                                <Tooltip title="Confirm">
+                                  <span>
+                                    <Fab
+                                      color="primary"
+                                      size="small"
+                                      onClick={handleToggleGoalEdit}
+                                      disabled={
+                                        requirements.goal.length < 1 ||
+                                        requirements.goalType.verb.length < 1
+                                      }
+                                    >
+                                      <DoneIcon />
+                                    </Fab>
+                                  </span>
+                                </Tooltip>
+                              </Grid>
                             </Grid>
                           </Grid>
                         </Grid>
@@ -480,26 +482,29 @@ const SpecifyRequirements = () => {
                 <Grid item xs={12}>
                   <Grid container spacing={2} justifyContent="center">
                     <Grid item xs={12} md={8}>
-                      <Grid container alignItems="center" spacing={1}>
-                        <Grid item>
-                          <Typography>
-                            <i>Your goal:</i> I want to{" "}
-                            <b>{requirements.goalType.verb}</b> the{" "}
-                            <b>{requirements.goal}</b>
-                          </Typography>
+                      <Tooltip arrow title="Edit your goal">
+                        <Grid
+                          container
+                          alignItems="center"
+                          spacing={1}
+                          onClick={handleToggleGoalEdit}
+                          sx={{
+                            "&:hover": {
+                              cursor: "pointer",
+                              backgroundColor: "rgba(0, 0, 0, 0.03)",
+                            },
+                          }}
+                        >
+                          <Grid item xs>
+                            <Typography>
+                              <i>Your goal:</i> I want to{" "}
+                              <b>{requirements.goalType.verb}</b> the{" "}
+                              <b>{requirements.goal}</b>
+                            </Typography>
+                          </Grid>
+                          <EditIcon color="primary" />
                         </Grid>
-                        <Grid item>
-                          <Tooltip arrow title="Edit your goal">
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={handleToggleGoalEdit}
-                            >
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </Grid>
-                      </Grid>
+                      </Tooltip>
                     </Grid>
                   </Grid>
                 </Grid>
@@ -523,7 +528,7 @@ const SpecifyRequirements = () => {
                         </Grid>
                         <Grid item xs={12} md={8}>
                           <Grid container spacing={2} alignItems="center">
-                            <Grid item xs>
+                            <Grid item >
                               <TextField
                                 fullWidth
                                 required
@@ -535,18 +540,22 @@ const SpecifyRequirements = () => {
                               />
                             </Grid>
                             <Grid item>
-                              <Tooltip title="Confirm">
-                                <span>
-                                  <Fab
-                                    size="small"
-                                    color="primary"
-                                    onClick={handleToggleQuestionEdit}
-                                    disabled={requirements.question.length < 1}
-                                  >
-                                    <DoneIcon />
-                                  </Fab>
-                                </span>
-                              </Tooltip>
+                              <Grid container justifyContent="center">
+                                <Tooltip title="Confirm">
+                                  <span>
+                                    <Fab
+                                      size="small"
+                                      color="primary"
+                                      onClick={handleToggleQuestionEdit}
+                                      disabled={
+                                        requirements.question.length < 1
+                                      }
+                                    >
+                                      <DoneIcon />
+                                    </Fab>
+                                  </span>
+                                </Tooltip>
+                              </Grid>
                             </Grid>
                           </Grid>
                         </Grid>
@@ -557,27 +566,32 @@ const SpecifyRequirements = () => {
                   <>
                     <Grid item xs={12}>
                       <Grid container spacing={2} justifyContent="center">
-                        <Grid item xs={12} md={8}>
-                          <Grid container alignItems="center" spacing={1}>
-                            <Grid item>
-                              <Typography>
-                                <i>Your question:</i> I am interested in{" "}
-                                <b>{requirements.question}</b>
-                              </Typography>
-                            </Grid>
-                            <Grid item>
-                              <Tooltip arrow title="Edit your question">
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  onClick={handleToggleQuestionEdit}
-                                >
-                                  <EditIcon />
-                                </IconButton>
-                              </Tooltip>
+                        <Tooltip arrow title="Edit your question">
+                          <Grid item xs={12} md={8}>
+                            <Grid
+                              container
+                              alignItems="center"
+                              spacing={1}
+                              onClick={handleToggleQuestionEdit}
+                              sx={{
+                                "&:hover": {
+                                  cursor: "pointer",
+                                  backgroundColor: "rgba(0, 0, 0, 0.03)",
+                                },
+                              }}
+                            >
+                              <Grid item xs>
+                                <Typography gutterBottom>
+                                  <i>Your question:</i> I am interested in{" "}
+                                  <b>{requirements.question}</b>
+                                </Typography>
+                              </Grid>
+                              <Grid item>
+                                <EditIcon color="primary" />
+                              </Grid>
                             </Grid>
                           </Grid>
-                        </Grid>
+                        </Tooltip>
                       </Grid>
                     </Grid>
                   </>

@@ -1,9 +1,19 @@
 import { createContext, useEffect, useRef, useState } from "react";
-import { Breadcrumbs, Divider, Link, Typography } from "@mui/material";
+import {
+  Alert,
+  Breadcrumbs,
+  Button,
+  Divider,
+  Fade,
+  Link,
+  Typography,
+} from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { Link as RouterLink } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { v4 as uuidv4 } from "uuid";
+import SaveIcon from "@mui/icons-material/Save";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import SpecifyRequirements from "./components/specify-requirements/specify-requirements.jsx";
 import ChoosePath from "./components/choose-path/choose-path.jsx";
 import Visualization from "./components/visualization/visualization.jsx";
@@ -15,6 +25,7 @@ export const ISCContext = createContext(undefined);
 
 const IndicatorSpecificationCard = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const [savedState, setSaveState] = useState(false);
   const [id, setId] = useState(() => {
     const savedState = sessionStorage.getItem("session_isc");
     return savedState
@@ -224,10 +235,10 @@ const IndicatorSpecificationCard = () => {
         prevDependencies.current.visRef !== visRef ||
         prevDependencies.current.lockedStep !== lockedStep
       ) {
-        enqueueSnackbar("Indicator progress saved", {
-          variant: "info",
-          autoHideDuration: 2000,
-        });
+        setSaveState(true);
+        setTimeout(() => {
+          setSaveState(false);
+        }, 3000);
       }
 
       // Update the previous dependencies to the current ones
@@ -237,7 +248,7 @@ const IndicatorSpecificationCard = () => {
         visRef,
         lockedStep,
       };
-    }, 6000);
+    }, 3000);
 
     return () => clearInterval(intervalId);
   }, [requirements, dataset, visRef, lockedStep]);
@@ -280,6 +291,29 @@ const IndicatorSpecificationCard = () => {
 
           <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
             <Divider />
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <Grid
+              container
+              justifyContent={savedState ? "space-between" : "flex-end"}
+              spacing={1}
+              sx={{ mr: 2 }}
+            >
+              <Fade
+                in={savedState}
+                timeout={{ enter: 500, exit: 300 }}
+                unmountOnExit
+              >
+                <Grid size="grow">
+                  <Alert>Draft autosaved</Alert>
+                </Grid>
+              </Fade>
+
+              <Button startIcon={<RestartAltIcon />} color="error">
+                Restart
+              </Button>
+            </Grid>
           </Grid>
 
           <Grid size={{ xs: 12 }}>
