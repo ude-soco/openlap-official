@@ -137,7 +137,7 @@ const SpecifyRequirements = () => {
                         color="primary"
                       />
                     </Grid>
-                    <Grid item xs>
+                    <Grid item>
                       <Typography>
                         Specify your goal, question, and indicator
                       </Typography>
@@ -390,7 +390,7 @@ const SpecifyRequirements = () => {
                               <Typography gutterBottom>
                                 Here are some <b>Examples</b> for inspiration:
                               </Typography>
-                              <Typography>
+                              <Typography sx={{my: -1}}>
                                 <ul>
                                   <li>
                                     I want to <b>assess</b> students’
@@ -411,12 +411,12 @@ const SpecifyRequirements = () => {
                                   </li>
                                 </ul>
                               </Typography>
-                              <Typography>
+                              <Typography gutterBottom>
                                 You can select one of the goals from the list.
                               </Typography>
                               <Typography>
                                 You can also create your own goal by typing in
-                                this text box and then selecting it.
+                                this text box and then adding it to the list.
                               </Typography>
                             </Box>
                             <Grid container justifyContent="flex-end">
