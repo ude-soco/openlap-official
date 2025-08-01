@@ -4,6 +4,7 @@ import {
   AccordionActions,
   AccordionDetails,
   AccordionSummary,
+  Box,
   Button,
   Chip,
   Grid,
@@ -146,15 +147,33 @@ const Visualization = () => {
                           },
                         }}
                       >
-                        <Typography
-                          sx={{ whiteSpace: "pre-line", p: 2, maxWidth: 400 }}
-                          dangerouslySetInnerHTML={{
-                            __html: `Tip: Choose a chart type that fits your data. 
-                            Make sure the number of columns and their types (e.g. categorical, numerical, and categorical (ordinal)) in the dataset step, match the requirements of the selected chart. 
-                            
-                            Good to know! Charts will be recommended to you if those match your dataset.`,
-                          }}
-                        />
+                        <Box sx={{ p: 2, maxWidth: 400 }}>
+                          <Typography gutterBottom>
+                            <b>Tip!</b>
+                          </Typography>
+                          <Typography gutterBottom>
+                            Choose a <b>Chart type</b> that fits your needs.
+                          </Typography>
+                          <Typography gutterBottom>
+                            Each chart requires specific type of data (e.g.{" "}
+                            <em>categorical</em>, <em>numerical</em>, and{" "}
+                            <em>categorical (ordinal)</em>).
+                          </Typography>
+                          <Typography gutterBottom>
+                            Your <b>Dataset</b> should have the type of data
+                            required by your selected <b>Chart</b>. Check the
+                            required type of data under the short description
+                            for the Charts.
+                          </Typography>
+                          <Typography>
+                            <b>Good to know!</b>
+                          </Typography>
+                          <Typography>
+                            Charts will be <b>recommended</b> to you if those
+                            match the type of data available in your{" "}
+                            <b>Dataset</b>.
+                          </Typography>
+                        </Box>
 
                         <Grid container justifyContent="flex-end">
                           <Button

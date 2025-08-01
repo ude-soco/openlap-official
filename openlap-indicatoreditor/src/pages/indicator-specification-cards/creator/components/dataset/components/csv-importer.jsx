@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import {
+  AlertTitle,
   Box,
   Grid,
   IconButton,
@@ -7,10 +8,8 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import {
-  Delete as DeleteIcon,
-  InsertDriveFile as InsertDriveFileIcon,
-} from "@mui/icons-material";
+import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
+import CloseIcon from "@mui/icons-material/Close";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { Alert } from "@mui/lab";
 
@@ -78,13 +77,16 @@ const CsvImporter = () => {
                       <Typography>{dataset.file.size} KB</Typography>
                     </Grid>
                     <Grid item>
-                      <Tooltip title="Remove file" arrow>
+                      <Tooltip
+                        title={<Typography>Remove file</Typography>}
+                        arrow
+                      >
                         <IconButton
                           onClick={handleRemoveFile}
                           size="small"
                           color="error"
                         >
-                          <DeleteIcon />
+                          <CloseIcon />
                         </IconButton>
                       </Tooltip>
                     </Grid>
@@ -95,6 +97,7 @@ const CsvImporter = () => {
             <Grid item xs={12}>
               {(dataset.columns.length > 0 || dataset.rows.length > 0) && (
                 <Alert severity="warning">
+                  <AlertTitle>Please proceed with caution!</AlertTitle>
                   Uploading the file will replace the existing dataset
                 </Alert>
               )}

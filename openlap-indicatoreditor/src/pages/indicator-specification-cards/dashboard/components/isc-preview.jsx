@@ -1,17 +1,18 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { requestISCDetails } from "../utils/dashboard-api.js";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Chip,
+  Breadcrumbs,
   Divider,
   Grid,
-  IconButton,
+  Link,
   Paper,
   Skeleton,
   Typography,
 } from "@mui/material";
-import { ArrowBack } from "@mui/icons-material";
+import { Link as RouterLink } from "react-router-dom";
 import PreviewChart from "./preview-chart.jsx";
 
 const IscPreview = () => {
@@ -52,29 +53,31 @@ const IscPreview = () => {
     });
   }, []);
 
-  const handleGoBack = () => {
-    navigate(-1);
-  };
-
   return (
     <>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <Grid container alignItems="center">
-            <Grid item>
-              <IconButton size="small" onClick={handleGoBack}>
-                <ArrowBack />
-              </IconButton>
-            </Grid>
-            <Grid item>
-              <Typography>Back</Typography>
-            </Grid>
-            <Grid item xs>
-              <Typography align="center">
-                Indicator Specification Card
-              </Typography>
-            </Grid>
-          </Grid>
+          <Breadcrumbs>
+            <Link
+              component={RouterLink}
+              underline="hover"
+              color="inherit"
+              to="/"
+            >
+              Home
+            </Link>
+            <Link
+              component={RouterLink}
+              underline="hover"
+              color="inherit"
+              to="/isc"
+            >
+              ISC Dashboard
+            </Link>
+            <Typography sx={{ color: "text.primary" }}>
+              Preview Indicator
+            </Typography>
+          </Breadcrumbs>
         </Grid>
         <Grid item xs={12}>
           <Divider />
@@ -111,19 +114,25 @@ const IscPreview = () => {
                       <Divider />
                     </Grid>
                     <Grid item xs={12} md={4}>
-                      <Typography variant="overline">Goal</Typography>
+                      <Typography variant="overline">
+                        I want to (goal)
+                      </Typography>
                       <Grid item xs={12}>
                         <Chip label={requirements.goalType?.category} />
                       </Grid>
                     </Grid>
                     <Grid item xs={12} md={8}>
-                      <Typography variant="overline">Question</Typography>
+                      <Typography variant="overline">
+                        I am interested in (question)
+                      </Typography>
                       <Grid item xs={12}>
                         <Chip label={requirements.question} />
                       </Grid>
                     </Grid>
                     <Grid item xs={12}>
-                      <Typography variant="overline">Indicator Name</Typography>
+                      <Typography variant="overline">
+                        I need an indicator showing
+                      </Typography>
                       <Grid item xs={12}>
                         <Chip label={requirements.indicatorName} />
                       </Grid>
@@ -132,7 +141,9 @@ const IscPreview = () => {
                       <Divider />
                     </Grid>
                     <Grid item xs={12} md={6}>
-                      <Typography variant="overline">Data</Typography>
+                      <Typography variant="overline">
+                        I need the following data
+                      </Typography>
                       <Grid container spacing={1}>
                         {dataset.columns?.map((column, index) => (
                           <Grid item key={index}>
@@ -142,7 +153,9 @@ const IscPreview = () => {
                       </Grid>
                     </Grid>
                     <Grid item xs={12} md={6}>
-                      <Typography variant="overline">Idiom</Typography>
+                      <Typography variant="overline">
+                        I need the following chart (Idiom)
+                      </Typography>
                       <Grid item xs={12}>
                         <Chip label={visRef.chart?.type} />
                       </Grid>

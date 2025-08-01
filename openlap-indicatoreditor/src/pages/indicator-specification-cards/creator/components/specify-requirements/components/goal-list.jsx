@@ -235,11 +235,11 @@ const GoalList = () => {
             );
           }}
         />
-        {requirements.goalType.verb === "" && (
+        {/* {requirements.goalType.verb === "" && (
           <FormHelperText sx={{ color: "#b71c1c" }}>
             Select a goal or create a new one
           </FormHelperText>
-        )}
+        )} */}
       </FormControl>
     </>
   );

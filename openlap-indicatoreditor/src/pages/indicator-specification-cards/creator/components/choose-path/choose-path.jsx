@@ -12,6 +12,7 @@ import {
   Popover,
   Tooltip,
   Typography,
+  Box,
 } from "@mui/material";
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import { blue, orange } from "@mui/material/colors";
@@ -200,15 +201,30 @@ const ChoosePath = () => {
                           },
                         }}
                       >
-                        <Typography
-                          sx={{ whiteSpace: "pre-line", p: 2, maxWidth: 400 }}
-                          dangerouslySetInnerHTML={{
-                            __html: `Tip: You can start either with data or visualization.
-                            • If you have an idea what data you want to show in a table, choose Data. 
-                            • If you have a chart in mind, choose Visualization.                             
-                            Don’t worry — you’ll complete both steps either way.`,
-                          }}
-                        />
+                        <Box sx={{ p: 2, maxWidth: 400 }}>
+                          <Typography gutterBottom>
+                            <b>Tip!</b>
+                          </Typography>
+                          <Typography>
+                            You can choose one of the following paths:
+                          </Typography>
+                          <Typography>
+                            <ul>
+                              <li>
+                                If you have an idea what data you want to show
+                                in a table, you can start by creating or
+                                uploading a <b>Dataset</b>.
+                              </li>
+                              <li>
+                                If you have a chart in mind, you can start by
+                                choosing a <b>Visualization</b>.
+                              </li>
+                            </ul>
+                          </Typography>
+                          <Typography>
+                            Don’t worry — you’ll complete both steps either way.
+                          </Typography>
+                        </Box>
 
                         <Grid container justifyContent="flex-end">
                           <Button
