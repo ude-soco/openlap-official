@@ -1,4 +1,3 @@
-import React from "react";
 import Grid from "@mui/material/Grid2";
 import Legends from "./components/legends.jsx";
 import Title from "./components/title.jsx";
