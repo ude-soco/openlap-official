@@ -128,9 +128,9 @@ const MyIscTable = () => {
     }));
   };
 
-  const handlePreview = () => {
+  const handlePreview = (id) => {
     handleMenuClose();
-    navigate(`/isc/${selectedIndicator.id}`);
+    navigate(`/isc/${id}`);
   };
 
   const handleEditIndicator = () => {
@@ -214,6 +214,12 @@ const MyIscTable = () => {
     });
   }, [api, state.params, location]);
 
+  // * Helper function
+  function toSentenceCase(str) {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
   return (
     <>
       <Grid container spacing={2}>
@@ -239,14 +245,9 @@ const MyIscTable = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>
-                    <Grid container alignItems="center">
-                      <Typography
-                        variant="overline"
-                        sx={{ fontWeight: "bold" }}
-                      >
-                        Name
-                      </Typography>
-                    </Grid>
+                    <Typography variant="caption">
+                      <b>Indicator name</b>
+                    </Typography>
                   </TableCell>
 
                   <TableCell align="right">
@@ -255,23 +256,24 @@ const MyIscTable = () => {
                       alignItems="center"
                       justifyContent="flex-end"
                     >
-                      <Typography
-                        variant="overline"
-                        sx={{ fontWeight: "bold" }}
-                      >
-                        Created On
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleSort("createdOn")}
-                      >
-                        {renderSortIcon("createdOn")}
-                      </IconButton>
+                      <Grid item xs>
+                        <Typography variant="caption">
+                          <b>Created On</b>
+                        </Typography>
+                      </Grid>
+                      <Grid item>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleSort("createdOn")}
+                        >
+                          {renderSortIcon("createdOn")}
+                        </IconButton>
+                      </Grid>
                     </Grid>
                   </TableCell>
                   <TableCell align="right">
-                    <Typography variant="overline" sx={{ fontWeight: "bold" }}>
-                      Actions
+                    <Typography variant="caption">
+                      <b>Actions</b>
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -280,11 +282,19 @@ const MyIscTable = () => {
                 {state.myISCList.length > 0 ? (
                   state.myISCList.map((indicator) => (
                     <TableRow key={indicator.id}>
-                      <TableCell>{indicator.indicatorName}</TableCell>
+                      <TableCell>
+                        {toSentenceCase(indicator.indicatorName)}
+                      </TableCell>
                       <TableCell align="right">
                         {indicator.createdOn.split("T")[0]}
                       </TableCell>
                       <TableCell align="right">
+                        <Button
+                          onClick={() => handlePreview(indicator.id)}
+                          sx={{ mr: 1 }}
+                        >
+                          Preview
+                        </Button>
                         <IconButton
                           size="small"
                           onClick={(event) => handleMenuOpen(event, indicator)}
@@ -296,12 +306,6 @@ const MyIscTable = () => {
                           open={Boolean(anchorEl)}
                           onClose={handleMenuClose}
                         >
-                          <MenuItem onClick={handlePreview}>
-                            <ListItemIcon>
-                              <Preview fontSize="small" color="primary" />
-                            </ListItemIcon>
-                            <ListItemText primary="Preview" />
-                          </MenuItem>
                           <MenuItem onClick={handleEditIndicator}>
                             <ListItemIcon>
                               <Edit fontSize="small" color="primary" />
@@ -340,8 +344,8 @@ const MyIscTable = () => {
                             toggleOpen={handleToggleDelete}
                             message={
                               <Typography>
-                                This will delete the indicator permanently. Are
-                                you sure?
+                                This will delete the indicator permanently from
+                                your dashboard.
                               </Typography>
                             }
                             handleDelete={handleDeleteIndicator}
@@ -382,7 +386,7 @@ const MyIscTable = () => {
               onPageChange={handlePageChange}
               rowsPerPage={state.pageable.pageSize}
               onRowsPerPageChange={handleRowsPerPageChange}
-              rowsPerPageOptions={[5, 10, 25]}
+              rowsPerPageOptions={[5, 10, 20, 50]}
             />
           </TableContainer>
         </Grid>
