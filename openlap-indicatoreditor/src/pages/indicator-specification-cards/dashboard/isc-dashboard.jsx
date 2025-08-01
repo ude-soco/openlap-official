@@ -1,18 +1,19 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
+  Alert,
+  AlertTitle,
   Breadcrumbs,
   Button,
   Divider,
   Link,
-  Paper,
   Typography,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import Grid from "@mui/material/Grid2";
-import MyIscTable from "./components/my-isc-table.jsx";
-import { Delete } from "@mui/icons-material";
+import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
+import MyIscTable from "./components/my-isc-table.jsx";
 
 const IscDashboard = () => {
   const navigate = useNavigate();
@@ -35,6 +36,11 @@ const IscDashboard = () => {
     });
   };
 
+  const handleCreateNew = () => {
+    handleClearSession();
+    navigate("/isc/creator");
+  };
+
   return (
     <>
       <Grid container spacing={2}>
@@ -43,45 +49,51 @@ const IscDashboard = () => {
             Home
           </Link>
           <Typography sx={{ color: "text.primary" }}>ISC Dashboard</Typography>
+          <Typography sx={{ color: "text.primary" }}>My ISCs</Typography>
         </Breadcrumbs>
 
         <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
           <Divider />
         </Grid>
 
-        <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
-          <MyIscTable />
+        <Grid size={12}>
+          <Button
+          size="small"
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleCreateNew}
+          >
+            Create new
+          </Button>
         </Grid>
-
         {indicatorInProgress && (
-          <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
-            <Paper sx={{ p: 3 }} variant="outlined">
-              <Grid
-                container
-                justifyContent="space-between"
-                alignItems="center"
-              >
-                <Typography>
-                  You have an indicator in progress. Would you like to continue?
-                </Typography>
-
-                <Grid container spacing={2}>
-                  <Button variant="contained" onClick={handleContinueEditing}>
-                    Continue
-                  </Button>
-
-                  <Button
-                    color="error"
-                    onClick={handleClearSession}
-                    startIcon={<Delete />}
-                  >
+          <Grid size={{ xs: 12 }}>
+            <Alert
+              severity="info"
+              action={
+                <Grid container spacing={1}>
+                  <Button variant="outlined" onClick={handleClearSession}>
                     Discard
                   </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleContinueEditing}
+                  >
+                    Continue
+                  </Button>
                 </Grid>
-              </Grid>
-            </Paper>
+              }
+            >
+              <AlertTitle>
+                You have an indicator in progress! Would you like to continue?
+              </AlertTitle>
+            </Alert>
           </Grid>
         )}
+        <Grid size={{ xs: 12 }}>
+          <MyIscTable />
+        </Grid>
       </Grid>
     </>
   );
