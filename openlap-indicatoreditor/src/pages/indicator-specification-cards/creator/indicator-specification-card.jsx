@@ -12,7 +12,6 @@ import Grid from "@mui/material/Grid2";
 import { Link as RouterLink } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { v4 as uuidv4 } from "uuid";
-import SaveIcon from "@mui/icons-material/Save";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import SpecifyRequirements from "./components/specify-requirements/specify-requirements.jsx";
 import ChoosePath from "./components/choose-path/choose-path.jsx";
