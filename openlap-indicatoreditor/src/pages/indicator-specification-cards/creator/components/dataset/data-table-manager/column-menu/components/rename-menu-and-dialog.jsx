@@ -11,7 +11,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { Edit as EditIcon } from "@mui/icons-material";
+import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
 import { ISCContext } from "../../../../../indicator-specification-card.jsx";
 import { useGridApiContext } from "@mui/x-data-grid";
 
@@ -125,7 +125,7 @@ const RenameMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {
     <>
       <MenuItem onClick={handleToggleColumnRenameDialog}>
         <ListItemIcon>
-          <EditIcon fontSize="small" />
+          <DriveFileRenameOutlineIcon fontSize="small" color="primary" />
         </ListItemIcon>
         <ListItemText primary="Rename column" />
       </MenuItem>
