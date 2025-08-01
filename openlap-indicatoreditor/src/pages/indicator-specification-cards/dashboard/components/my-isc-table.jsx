@@ -53,6 +53,8 @@ export default function MyIscTable() {
     loadingEditIndicator: false,
     onHoverIndicatorId: undefined,
     toggleSearch: true,
+    searchTerm: "",
+    filteredIndicatorList: [],
   });
 
   useEffect(() => {
@@ -80,6 +82,15 @@ export default function MyIscTable() {
       }));
     });
   }, [api, state.params, location]);
+
+  useEffect(() => {
+    const filtered = state.myISCList.filter((indicator) =>
+      indicator.indicatorName
+        .toLowerCase()
+        .includes(state.searchTerm.toLowerCase())
+    );
+    setState((p) => ({ ...p, filteredIndicatorList: filtered }));
+  }, [state.searchTerm, state.myISCList]);
 
   // const handleSelect = (id) => {
   //   setSelected((prev) =>
@@ -185,6 +196,11 @@ export default function MyIscTable() {
     }));
   };
 
+  const handleSearchTerm = (event) => {
+    const { value } = event.target;
+    setState((p) => ({ ...p, searchTerm: value }));
+  };
+
   // * Helper functions
   function toSentenceCase(str) {
     if (!str) return "";
@@ -259,6 +275,8 @@ export default function MyIscTable() {
                             <TextField
                               size="small"
                               placeholder="Search for indicator"
+                              value={state.searchTerm}
+                              onChange={handleSearchTerm}
                             />
                           </Grid>
                         </>
@@ -269,7 +287,7 @@ export default function MyIscTable() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {state.myISCList.map((indicator) => (
+                {state.filteredIndicatorList.map((indicator) => (
                   <TableRow
                     key={indicator.id}
                     // selected={selected.includes(indicator.id)}
