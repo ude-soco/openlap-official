@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
   Autocomplete,
   FormControl,
@@ -9,13 +9,13 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
-import { Close as CloseIcon } from "@mui/icons-material";
+import CloseIcon from "@mui/icons-material/Close";
 import { createFilterOptions } from "@mui/material/Autocomplete";
 import { v4 as uuidv4 } from "uuid";
-import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import { requestAllGoals } from "../utils/requirements-api.js";
+import { requestAllGoals } from "../../utils/requirements-api.js";
 import { useSnackbar } from "notistack";
+import { ISCContext } from "../../../../indicator-specification-card.jsx";
+import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 
 const filter = createFilterOptions();
 

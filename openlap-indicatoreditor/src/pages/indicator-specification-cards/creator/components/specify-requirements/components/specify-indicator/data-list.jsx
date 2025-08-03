@@ -13,8 +13,8 @@ import Grid from "@mui/material/Grid2";
 import CloseIcon from "@mui/icons-material/Close";
 import WarningIcon from "@mui/icons-material/Warning";
 import AddIcon from "@mui/icons-material/Add";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
-import { DataTypes } from "../../../utils/data/config.js";
+import { ISCContext } from "../../../../indicator-specification-card.jsx";
+import { DataTypes } from "../../../../utils/data/config.js";
 import { v4 as uuidv4 } from "uuid";
 
 const DataList = () => {
