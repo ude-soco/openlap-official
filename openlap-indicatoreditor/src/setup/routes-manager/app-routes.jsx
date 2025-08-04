@@ -17,7 +17,6 @@ import Sidebar, {
 import IndicatorEditorDashboard from "../../pages/indicator-editor/dashboard/indicator-editor-dashboard.jsx";
 import IndicatorPool from "../../pages/indicator-editor/indicator-pool/indicator-pool.jsx";
 import IndicatorEditor from "../../pages/indicator-editor/editor/indicator-editor.jsx";
-import ISCCreator from "../../pages/isc-creator/creator/isc-creator.jsx";
 import ISCPool from "../../pages/indicator-specification-cards/isc-pool/isc-pool.jsx";
 import GQIDashboard from "../../pages/gqi-editor/dashboard/gqi-dashboard.jsx";
 import GQIEditor from "../../pages/gqi-editor/gqi-editor/gqi-editor.jsx";
@@ -63,10 +62,11 @@ const AppRoutes = () => {
   const isMatch = useMediaQuery(theme.breakpoints.down("lg"));
 
   useEffect(() => {
-    if (isMatch && openSidebar && user) {
-      setOpenSidebar(false);
-    }
-  }, [isMatch]);
+    if (user) {
+      if (isMatch) setOpenSidebar(false);
+      else setOpenSidebar(true);
+    } else setOpenSidebar(false);
+  }, [isMatch, user]);
 
   const toggleSidebar = () => {
     setOpenSidebar((prevState) => !prevState);
@@ -229,18 +229,6 @@ const AppRoutes = () => {
                         }
                       />
                     </Route>
-                    <Route
-                      path="/isc/creator/old"
-                      element={
-                        <PrivateRoute
-                          component={<ISCCreator />}
-                          allowedRoles={[
-                            RoleTypes.user,
-                            RoleTypes.userWithoutLRS,
-                          ]}
-                        />
-                      }
-                    />
                     <Route
                       path="/isc/creator"
                       element={

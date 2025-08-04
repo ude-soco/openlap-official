@@ -49,13 +49,6 @@ const menus = [
         icon: <AddchartIcon />,
         component: <IndicatorSpecificationCard />,
       },
-      // {
-      //   primary: "ISC Creator Old",
-      //   secondary: "Create a ISC",
-      //   navigate: "/isc/creator/old",
-      //   icon: <AddchartIcon />,
-      //   component: <ISCCreator />,
-      // },
       {
         primary: "ISC Pool",
         secondary: "Search for ISCs",
