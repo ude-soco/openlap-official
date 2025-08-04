@@ -1,7 +1,10 @@
 import { Chip, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import { useContext } from "react";
+import { ISCContext } from "../../../../indicator-specification-card";
 
 export default function Summary({ filterType, chartType }) {
+  const { lockedStep } = useContext(ISCContext);
   const handleCheckFilterType = () => {
     return filterType !== "";
   };
@@ -27,13 +30,15 @@ export default function Summary({ filterType, chartType }) {
             </Grid>
           </Grid>
         )}
-        {!handleCheckChartType() && !handleCheckChartType() && (
-          <Grid size={{ xs: 12 }}>
-            <Typography>
-              <em>No visualization selected yet!</em>
-            </Typography>
-          </Grid>
-        )}
+        {!handleCheckChartType() &&
+          !handleCheckChartType() &&
+          !lockedStep.visualization.step && (
+            <Grid size={{ xs: 12 }}>
+              <Typography>
+                <em>No visualization selected yet!</em>
+              </Typography>
+            </Grid>
+          )}
       </Grid>
     </>
   );
