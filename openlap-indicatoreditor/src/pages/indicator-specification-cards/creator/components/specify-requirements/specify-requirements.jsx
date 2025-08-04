@@ -1,13 +1,6 @@
 import { useContext } from "react";
-import {
-  Accordion,
-  AccordionActions,
-  AccordionDetails,
-  AccordionSummary,
-  Box,
-  Button,
-  Grid,
-} from "@mui/material";
+import { Box, Button, Collapse, Divider, Paper } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import SpecifyGoal from "./components/specify-goal/specify-goal.jsx";
 import ConfirmGoal from "./components/specify-goal/confirm-goal.jsx";
@@ -20,12 +13,9 @@ const SpecifyRequirements = () => {
   const { requirements, lockedStep, setLockedStep } = useContext(ISCContext);
 
   const handleTogglePanel = () => {
-    setLockedStep((prevState) => ({
-      ...prevState,
-      requirements: {
-        ...prevState.requirements,
-        openPanel: !prevState.requirements.openPanel,
-      },
+    setLockedStep((p) => ({
+      ...p,
+      requirements: { ...p.requirements, openPanel: !p.requirements.openPanel },
     }));
   };
 
@@ -60,48 +50,59 @@ const SpecifyRequirements = () => {
 
   return (
     <>
-      <Accordion expanded={lockedStep.requirements.openPanel}>
-        <AccordionSummary>
-          <Grid container>
-            <Grid item xs={12}>
-              <RequirementSummary />
-            </Grid>
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12 }}>
+            <RequirementSummary />
           </Grid>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Box sx={{ pb: 1 }}>
-            {requirements.edit.goal ? <SpecifyGoal /> : <ConfirmGoal />}
-          </Box>
-          {requirements.show.question && (
-            <Box sx={{ pb: 2 }}>
-              {requirements.edit.question ? (
-                <FormulateQuestion />
-              ) : (
-                <ConfirmQuestion />
-              )}
-            </Box>
-          )}
-          {requirements.show.indicatorName && <SpecifyIndicator />}
-        </AccordionDetails>
-        <AccordionActions sx={{ py: 1 }}>
-          {requirements.show.indicatorName && (
-            <Grid item xs={12}>
-              <Grid container spacing={2} justifyContent="center">
-                <Grid item xs={12} md={6}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    disabled={handleCheckDisabled(requirements)}
-                    onClick={handleUnlockPath}
-                  >
-                    Next
-                  </Button>
+          <Grid size={{ xs: 12 }}>
+            <Collapse
+              in={lockedStep.requirements.openPanel}
+              timeout={{ enter: 500, exit: 0 }}
+              unmountOnExit
+            >
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12 }}>
+                  <Box sx={{ pb: 1 }}>
+                    {requirements.edit.goal ? <SpecifyGoal /> : <ConfirmGoal />}
+                  </Box>
+                  {requirements.show.question && (
+                    <Box sx={{ pb: 2 }}>
+                      {requirements.edit.question ? (
+                        <FormulateQuestion />
+                      ) : (
+                        <ConfirmQuestion />
+                      )}
+                    </Box>
+                  )}
+                  {requirements.show.indicatorName && <SpecifyIndicator />}
                 </Grid>
+                {requirements.show.indicatorName && (
+                  <>
+                    <Grid size={{ xs: 12 }}>
+                      <Divider />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <Grid container justifyContent="center">
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                          <Button
+                            fullWidth
+                            variant="contained"
+                            disabled={handleCheckDisabled(requirements)}
+                            onClick={handleUnlockPath}
+                          >
+                            Next
+                          </Button>
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </>
+                )}
               </Grid>
-            </Grid>
-          )}
-        </AccordionActions>
-      </Accordion>
+            </Collapse>
+          </Grid>
+        </Grid>
+      </Paper>
     </>
   );
 };

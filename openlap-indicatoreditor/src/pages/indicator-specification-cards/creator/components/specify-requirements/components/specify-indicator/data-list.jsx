@@ -79,10 +79,11 @@ const DataList = () => {
           const isDuplicate = duplicateValues.has(requirement.value);
           return (
             <Grid size={{ xs: 12 }} key={index}>
-              <Grid container spacing={1}>
+              <Grid container spacing={2}>
                 <Grid size="grow">
                   <TextField
                     fullWidth
+                    required
                     name="value"
                     label={`${index + 1}. Name of data`}
                     error={requirement.value === "" || isDuplicate}
@@ -91,7 +92,7 @@ const DataList = () => {
                     placeholder={requirement.placeholder || ""}
                     helperText={
                       requirement.value === ""
-                        ? "Provide a name"
+                        ? ""
                         : isDuplicate
                         ? "Duplicate name detected"
                         : ""
@@ -99,7 +100,7 @@ const DataList = () => {
                   />
                 </Grid>
                 <Grid size={{ xs: "grow", sm: 6 }}>
-                  <Grid container alignItems="center" spacing={1}>
+                  <Grid container alignItems="center" spacing={2}>
                     <Grid size={{ xs: "grow" }}>
                       <Autocomplete
                         fullWidth
@@ -134,7 +135,7 @@ const DataList = () => {
                           <TextField
                             {...params}
                             placeholder="Select a data column type"
-                            label="Type of data"
+                            label="Type of data *"
                           />
                         )}
                         onChange={(event, value) => {
@@ -207,11 +208,13 @@ const DataList = () => {
                 }}
               >
                 <Box sx={{ p: 2, maxWidth: 350 }}>
-                  <Typography gutterBottom><b>Attention!</b></Typography>
+                  <Typography gutterBottom>
+                    <b>Attention!</b>
+                  </Typography>
                   <Typography>
                     Changing the type of this data will reset the data of{" "}
-                    <b>{requirement.value}</b> column in the <b>Dataset</b>{" "}
-                    step below.
+                    <b>{requirement.value}</b> column in the <b>Dataset</b> step
+                    below.
                   </Typography>
                   <Typography>
                     It will cause the loss of data <b>only</b> in this column!
