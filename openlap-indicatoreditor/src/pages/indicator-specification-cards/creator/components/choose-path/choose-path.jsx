@@ -10,7 +10,18 @@ const ChoosePath = () => {
 
   return (
     <>
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2,
+          position: "relative",
+          opacity: lockedStep.path.locked ? "0.5" : "1",
+          pointerEvents: lockedStep.path.locked ? "none" : "auto",
+          backgroundColor: lockedStep.path.locked
+            ? "grey.500"
+            : "background.paper",
+        }}
+      >
         <Grid container spacing={2}>
           <Grid size={{ xs: 12 }}>
             <ChoosePathSummary />

@@ -1,8 +1,9 @@
 import { useContext, useState } from "react";
 import Grid from "@mui/material/Grid2";
-import { Button, Chip, Fade, Typography } from "@mui/material";
+import { Button, Chip, Fade, IconButton, Typography } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
+import LockIcon from "@mui/icons-material/Lock";
 import { ISCContext } from "../../../../indicator-specification-card";
 import SummaryTipPopover from "./summary-tip-popover";
 import ToggleSummaryButton from "../../../toggle-summary-button";
@@ -41,7 +42,13 @@ export default function ChoosePathSummary() {
           >
             <Grid size="grow">
               <Grid container alignItems="center" spacing={1}>
-                <Chip label={lockedStep.path.step} color="primary" />
+                {!lockedStep.path.locked ? (
+                  <Chip label={lockedStep.path.step} color="primary" />
+                ) : (
+                  <IconButton size="small">
+                    <LockIcon />
+                  </IconButton>
+                )}
                 <Typography>How would you like to start?</Typography>
                 <SummaryTipPopover
                   tipAnchor={state.tipAnchor}
@@ -85,6 +92,7 @@ export default function ChoosePathSummary() {
                 </Grid>
               </Grid>
             ) : (
+              !lockedStep.path.locked &&
               <Typography>
                 <em>No path selected yet</em>
               </Typography>

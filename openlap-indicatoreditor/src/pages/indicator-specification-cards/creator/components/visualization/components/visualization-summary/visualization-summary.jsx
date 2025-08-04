@@ -1,16 +1,16 @@
 import { useContext, useState } from "react";
 import { ISCContext } from "../../../../indicator-specification-card";
-import { Button, Chip, Fade, Typography } from "@mui/material";
+import { Button, Chip, Fade, IconButton, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
+import LockIcon from "@mui/icons-material/Lock";
 import ToggleSummaryButton from "../../../toggle-summary-button";
 import SummaryTipPopover from "./summary-tip-popover";
 import Summary from "./summary";
 
 export default function VisualizationSummary() {
-  const { lockedStep, requirements, visRef, setLockedStep } =
-    useContext(ISCContext);
+  const { lockedStep, visRef, setLockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     tipAnchor: null,
     showSelections: true,
@@ -46,7 +46,13 @@ export default function VisualizationSummary() {
           >
             <Grid size="grow">
               <Grid container alignItems="center" spacing={1}>
-                <Chip label={lockedStep.visualization.step} color="primary" />
+                {!lockedStep.visualization.locked ? (
+                  <Chip label={lockedStep.visualization.step} color="primary" />
+                ) : (
+                  <IconButton size="small">
+                    <LockIcon />
+                  </IconButton>
+                )}
                 <Typography>Choose visualization</Typography>
                 <SummaryTipPopover
                   tipAnchor={state.tipAnchor}

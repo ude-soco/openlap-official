@@ -61,7 +61,16 @@ const Visualization = () => {
 
   return (
     <>
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2,
+          position: "relative",
+          opacity: lockedStep.visualization.locked ? "0.5" : "1",
+          pointerEvents: lockedStep.visualization.locked ? "none" : "auto",
+          backgroundColor: lockedStep.visualization.locked ? 'grey.500' : 'background.paper',
+        }}
+      >
         <Grid container spacing={2}>
           <Grid size={{ xs: 12 }}>
             <VisualizationSummary />
