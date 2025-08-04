@@ -33,14 +33,14 @@ export default function SpecifyIndicator() {
   return (
     <Grid container justifyContent="center">
       <Grid size={{ xs: 12, md: 8 }}>
-        <Grid container spacing={1}>
+        <Grid container spacing={2}>
           <Grid size="grow">
             <Typography variant="body2" gutterBottom>
               Specify your indicator
             </Typography>
           </Grid>
           <Grid size={{ xs: 12 }}>
-            <Grid container alignItems="center" spacing={1}>
+            <Grid container alignItems="center" spacing={2}>
               <Grid size="auto">
                 <Tooltip
                   arrow
@@ -132,6 +132,7 @@ export default function SpecifyIndicator() {
                   label="I need an indicator showing"
                   placeholder="e.g., the number of views of learning materials and sort by the most viewed ones."
                   onChange={handleFormData}
+                  error={requirements.indicatorName === ""}
                 />
               </Grid>
             </Grid>

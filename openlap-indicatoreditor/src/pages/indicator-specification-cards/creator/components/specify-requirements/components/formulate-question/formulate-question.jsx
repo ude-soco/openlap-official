@@ -45,14 +45,14 @@ export default function FormulateQuestion() {
     <>
       <Grid container justifyContent="center">
         <Grid size={{ xs: 12, md: 8 }}>
-          <Grid container spacing={1}>
+          <Grid container spacing={2}>
             <Grid size="grow">
               <Typography variant="body2" gutterBottom>
                 Formulate your question
               </Typography>
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <Grid container alignItems="center" spacing={1}>
+              <Grid container alignItems="center" spacing={2}>
                 <Grid size="auto">
                   <Tooltip
                     arrow
@@ -135,7 +135,7 @@ export default function FormulateQuestion() {
                   </Tooltip>
                 </Grid>
                 <Grid size={{ xs: 12, sm: "grow" }}>
-                  <Grid container spacing={1} alignItems="center">
+                  <Grid container spacing={2} alignItems="center">
                     <Grid size="grow">
                       <TextField
                         fullWidth
@@ -145,6 +145,7 @@ export default function FormulateQuestion() {
                         label="I am interested in"
                         placeholder="e.g., knowing how often these learning materials are viewed by my students."
                         onChange={handleFormData}
+                        error={requirements.question === ""}
                       />
                     </Grid>
                     <Grid size="auto">

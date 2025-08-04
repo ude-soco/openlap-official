@@ -49,14 +49,14 @@ export default function SpecifyGoal() {
     <>
       <Grid container justifyContent="center">
         <Grid size={{ xs: 12, md: 8 }}>
-          <Grid container spacing={1}>
+          <Grid container spacing={2}>
             <Grid size="grow">
               <Typography variant="body2" gutterBottom>
                 Specify your goal
               </Typography>
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <Grid container alignItems="center" spacing={1}>
+              <Grid container alignItems="center" spacing={2}>
                 <Grid size="auto">
                   <Tooltip
                     arrow
@@ -140,15 +140,17 @@ export default function SpecifyGoal() {
                   <GoalList />
                 </Grid>
                 <Grid size={{ xs: 12, sm: "grow" }}>
-                  <Grid container spacing={1} alignItems="center">
+                  <Grid container spacing={2} alignItems="center">
                     <Grid size="grow">
                       <TextField
                         fullWidth
+                        required
                         name="goal"
                         value={requirements.goal}
                         label="Describe your goal"
                         placeholder="e.g., the usage of the learning materials in my course."
                         onChange={handleFormData}
+                        error={requirements.goal === ""}
                       />
                     </Grid>
                     <Grid size="auto">

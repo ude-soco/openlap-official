@@ -1,10 +1,10 @@
 import { useContext, useState } from "react";
 import Grid from "@mui/material/Grid2";
-import { Button, Chip, Grow, Typography } from "@mui/material";
+import { Button, Chip, Fade, Typography } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import { ISCContext } from "../../../../indicator-specification-card";
-import SummaryTip from "./summary-tip";
+import SummaryTipPopover from "./summary-tip-popover";
 import ToggleSummaryButton from "./toggle-summary-button";
 import Summary from "./summary";
 
@@ -12,7 +12,7 @@ export default function RequirementSummary() {
   const { lockedStep, requirements, setLockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     tipAnchor: null,
-    showSelections: false,
+    showSelections: true,
   });
 
   const handleTipAnchor = (param) => {
@@ -32,7 +32,7 @@ export default function RequirementSummary() {
 
   return (
     <Grid container spacing={1}>
-      <Grid size={12}>
+      <Grid size={{ xs: 12 }}>
         <Grid
           container
           justifyContent="space-between"
@@ -45,14 +45,16 @@ export default function RequirementSummary() {
               <Typography>
                 Specify your goal, question, and indicator
               </Typography>
-              <SummaryTip
+              <SummaryTipPopover
                 tipAnchor={state.tipAnchor}
                 toggleTipAnchor={handleTipAnchor}
               />
-              <ToggleSummaryButton
-                showSelections={state.showSelections}
-                toggleShowSelection={handleToggleShowSelection}
-              />
+              {!lockedStep.requirements.openPanel && (
+                <ToggleSummaryButton
+                  showSelections={state.showSelections}
+                  toggleShowSelection={handleToggleShowSelection}
+                />
+              )}
             </Grid>
           </Grid>
           <Grid size="auto">
@@ -67,8 +69,8 @@ export default function RequirementSummary() {
           </Grid>
         </Grid>
       </Grid>
-      <Grow
-        in={!lockedStep.requirements.openPanel}
+      <Fade
+        in={!lockedStep.requirements.openPanel && state.showSelections}
         timeout={{ enter: 500, exit: 0 }}
         unmountOnExit
       >
@@ -82,7 +84,7 @@ export default function RequirementSummary() {
             indicatorData={requirements.data}
           />
         </Grid>
-      </Grow>
+      </Fade>
     </Grid>
   );
 }

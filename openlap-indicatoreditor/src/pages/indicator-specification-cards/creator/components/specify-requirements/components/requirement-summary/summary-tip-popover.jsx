@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 
-export default function SummaryTip({ tipAnchor, toggleTipAnchor }) {
+export default function SummaryTipPopover({ tipAnchor, toggleTipAnchor }) {
   return (
     <>
       <IconButton

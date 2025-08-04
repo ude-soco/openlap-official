@@ -159,6 +159,7 @@ const GoalList = () => {
     <>
       <FormControl fullWidth>
         <Autocomplete
+          required
           value={requirements.goalType || null}
           selectOnFocus
           disablePortal
