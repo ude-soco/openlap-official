@@ -31,7 +31,7 @@ const SpecifyRequirements = () => {
     }));
   };
 
-  const handleCheckDisabled = (requirements) => {
+  const handleCheckDisabled = () => {
     return (
       requirements.goalType.verb === "" ||
       requirements.goal === "" ||
@@ -58,7 +58,7 @@ const SpecifyRequirements = () => {
           <Grid size={{ xs: 12 }}>
             <Collapse
               in={lockedStep.requirements.openPanel}
-              timeout={{ enter: 500, exit: 0 }}
+              timeout={{ enter: 500, exit: 250 }}
               unmountOnExit
             >
               <Grid container spacing={2}>
@@ -88,7 +88,7 @@ const SpecifyRequirements = () => {
                           <Button
                             fullWidth
                             variant="contained"
-                            disabled={handleCheckDisabled(requirements)}
+                            disabled={handleCheckDisabled()}
                             onClick={handleUnlockPath}
                           >
                             Next

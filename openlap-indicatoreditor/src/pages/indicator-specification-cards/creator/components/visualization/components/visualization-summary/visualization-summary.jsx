@@ -1,14 +1,16 @@
 import { useContext, useState } from "react";
-import Grid from "@mui/material/Grid2";
+import { ISCContext } from "../../../../indicator-specification-card";
 import { Button, Chip, Fade, Typography } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
-import { ISCContext } from "../../../../indicator-specification-card";
-import SummaryTipPopover from "./summary-tip-popover";
 import ToggleSummaryButton from "../../../toggle-summary-button";
+import SummaryTipPopover from "./summary-tip-popover";
+import Summary from "./summary";
 
-export default function ChoosePathSummary() {
-  const { lockedStep, requirements, setLockedStep } = useContext(ISCContext);
+export default function VisualizationSummary() {
+  const { lockedStep, requirements, visRef, setLockedStep } =
+    useContext(ISCContext);
   const [state, setState] = useState({
     tipAnchor: null,
     showSelections: true,
@@ -25,7 +27,10 @@ export default function ChoosePathSummary() {
   const handleTogglePanel = () => {
     setLockedStep((p) => ({
       ...p,
-      path: { ...p.path, openPanel: !p.path.openPanel },
+      visualization: {
+        ...p.visualization,
+        openPanel: !p.visualization.openPanel,
+      },
     }));
   };
 
@@ -41,13 +46,13 @@ export default function ChoosePathSummary() {
           >
             <Grid size="grow">
               <Grid container alignItems="center" spacing={1}>
-                <Chip label={lockedStep.path.step} color="primary" />
-                <Typography>How would you like to start?</Typography>
+                <Chip label={lockedStep.visualization.step} color="primary" />
+                <Typography>Choose visualization</Typography>
                 <SummaryTipPopover
                   tipAnchor={state.tipAnchor}
                   toggleTipAnchor={handleTipAnchor}
                 />
-                {!lockedStep.path.openPanel && (
+                {!lockedStep.visualization.openPanel && (
                   <ToggleSummaryButton
                     showSelections={state.showSelections}
                     toggleShowSelection={handleToggleShowSelection}
@@ -58,40 +63,32 @@ export default function ChoosePathSummary() {
             <Grid size="auto">
               <Button
                 startIcon={
-                  lockedStep.path.openPanel ? <CloseIcon /> : <EditIcon />
+                  lockedStep.visualization.openPanel ? (
+                    <CloseIcon />
+                  ) : (
+                    <EditIcon />
+                  )
                 }
                 onClick={handleTogglePanel}
               >
-                {lockedStep.path.openPanel ? "Close" : "Edit"}
+                {lockedStep.visualization.openPanel ? "Close" : "Edit"}
               </Button>
             </Grid>
           </Grid>
         </Grid>
-        <Fade
-          in={!lockedStep.path.openPanel && state.showSelections}
-          timeout={{ enter: 500, exit: 0 }}
-          unmountOnExit
-        >
-          <Grid size={{ xs: 12 }}>
-            {requirements.selectedPath !== "" ? (
-              <Grid item xs={12}>
-                <Grid container alignItems="center" spacing={1}>
-                  <Grid item>
-                    <Typography>Selected path:</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Chip label={requirements.selectedPath} />
-                  </Grid>
-                </Grid>
-              </Grid>
-            ) : (
-              <Typography>
-                <em>No path selected yet</em>
-              </Typography>
-            )}
-          </Grid>
-        </Fade>
       </Grid>
+      <Fade
+        in={!lockedStep.visualization.openPanel && state.showSelections}
+        timeout={{ enter: 500, exit: 0 }}
+        unmountOnExit
+      >
+        <Grid size={{ xs: 12 }} sx={{ pt: 1 }}>
+          <Summary
+            filterType={visRef.filter.type}
+            chartType={visRef.chart.type}
+          />
+        </Grid>
+      </Fade>
     </>
   );
 }

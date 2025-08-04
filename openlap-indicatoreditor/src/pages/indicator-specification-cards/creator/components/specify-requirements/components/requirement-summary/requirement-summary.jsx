@@ -74,7 +74,7 @@ export default function RequirementSummary() {
         timeout={{ enter: 500, exit: 0 }}
         unmountOnExit
       >
-        <Grid size={{xs:12}}>
+        <Grid size={{ xs: 12 }}>
           <Summary
             verb={requirements.goalType.verb}
             goal={requirements.goal}
