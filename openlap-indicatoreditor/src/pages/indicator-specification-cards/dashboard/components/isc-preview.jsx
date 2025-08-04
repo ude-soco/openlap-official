@@ -40,6 +40,7 @@ const IscPreview = () => {
     showDetails: true,
     loadingEditIndicator: false,
     openDeleteDialog: false,
+    dataRequiredByUser: [],
   });
 
   useEffect(() => {
@@ -63,6 +64,10 @@ const IscPreview = () => {
         createdBy: response.createdBy,
         createdOn: response.createdOn,
         loading: false,
+        dataRequiredByUser: handleDataRequiredByUser(
+          JSON.parse(response.visRef),
+          JSON.parse(response.dataset)
+        ),
       }));
     });
   }, []);
@@ -130,10 +135,23 @@ const IscPreview = () => {
       .catch((error) => console.error(error));
   };
 
-  // * Helper function
+  // * Helper functions
   function toSentenceCase(str) {
     if (!str) return "";
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
+  // * Helper function to find the actual data used to create the indicator
+  function handleDataRequiredByUser(visRef, dataset) {
+    const selectedKeys = Object.keys(visRef.data.axisOptions).filter((key) =>
+      key.includes("selected")
+    );
+    const selectedValues = selectedKeys.map(
+      (key) => visRef.data.axisOptions[key]
+    );
+    return dataset.columns
+      .filter((item) => selectedValues.includes(item.field))
+      .map((item) => item.headerName);
   }
 
   return (
@@ -274,9 +292,9 @@ const IscPreview = () => {
                             I need the following data
                           </Typography>
                           <Grid container spacing={1}>
-                            {dataset.columns?.map((column, index) => (
+                            {state.dataRequiredByUser.map((data, index) => (
                               <Grid item key={index}>
-                                <Chip label={column.headerName} />
+                                <Chip label={data} />
                               </Grid>
                             ))}
                           </Grid>
