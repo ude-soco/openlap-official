@@ -8,6 +8,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import ToggleSummaryButton from "../../../toggle-summary-button";
 import SummaryTipPopover from "./summary-tip-popover";
 import Summary from "./summary";
+import { ToggleEditIconButton } from "../../../toggle-edit-button";
 
 export default function VisualizationSummary() {
   const { lockedStep, visRef, setLockedStep } = useContext(ISCContext);
@@ -66,20 +67,10 @@ export default function VisualizationSummary() {
                 )}
               </Grid>
             </Grid>
-            <Grid size="auto">
-              <Button
-                startIcon={
-                  lockedStep.visualization.openPanel ? (
-                    <CloseIcon />
-                  ) : (
-                    <EditIcon />
-                  )
-                }
-                onClick={handleTogglePanel}
-              >
-                {lockedStep.visualization.openPanel ? "Close" : "Edit"}
-              </Button>
-            </Grid>
+            <ToggleEditIconButton
+              openPanel={lockedStep.visualization.openPanel}
+              togglePanel={handleTogglePanel}
+            />
           </Grid>
         </Grid>
       </Grid>
