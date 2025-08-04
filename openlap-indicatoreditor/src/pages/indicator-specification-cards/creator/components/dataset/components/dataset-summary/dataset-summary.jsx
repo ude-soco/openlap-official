@@ -1,16 +1,18 @@
 import { useContext, useState } from "react";
-import Grid from "@mui/material/Grid2";
-import { Button, Chip, Fade, IconButton, Typography } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
-import CloseIcon from "@mui/icons-material/Close";
-import LockIcon from "@mui/icons-material/Lock";
 import { ISCContext } from "../../../../indicator-specification-card";
-import SummaryTipPopover from "./summary-tip-popover";
+import { Chip, Fade, IconButton, Typography } from "@mui/material";
+import Grid from "@mui/material/Grid2";
+import LockIcon from "@mui/icons-material/Lock";
 import ToggleSummaryButton from "../../../toggle-summary-button";
-import { ToggleEditIconButton } from "../../../toggle-edit-button";
+import SummaryTipPopover from "./summary-tip-popover";
+import DataTable from "../data-table";
+import {
+  ToggleEditButton,
+  ToggleEditIconButton,
+} from "../../../toggle-edit-button";
 
-export default function ChoosePathSummary() {
-  const { lockedStep, requirements, setLockedStep } = useContext(ISCContext);
+export default function DatasetSummary() {
+  const { lockedStep, dataset, setLockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     tipAnchor: null,
     showSelections: true,
@@ -27,7 +29,10 @@ export default function ChoosePathSummary() {
   const handleTogglePanel = () => {
     setLockedStep((p) => ({
       ...p,
-      path: { ...p.path, openPanel: !p.path.openPanel },
+      dataset: {
+        ...p.dataset,
+        openPanel: !p.dataset.openPanel,
+      },
     }));
   };
 
@@ -43,19 +48,19 @@ export default function ChoosePathSummary() {
           >
             <Grid size="grow">
               <Grid container alignItems="center" spacing={1}>
-                {!lockedStep.path.locked ? (
-                  <Chip label={lockedStep.path.step} color="primary" />
+                {!lockedStep.dataset.locked ? (
+                  <Chip label={lockedStep.dataset.step} color="primary" />
                 ) : (
                   <IconButton size="small">
                     <LockIcon />
                   </IconButton>
                 )}
-                <Typography>How would you like to start?</Typography>
+                <Typography>Choose Dataset</Typography>
                 <SummaryTipPopover
                   tipAnchor={state.tipAnchor}
                   toggleTipAnchor={handleTipAnchor}
                 />
-                {!lockedStep.path.openPanel && (
+                {!lockedStep.dataset.openPanel && (
                   <ToggleSummaryButton
                     showSelections={state.showSelections}
                     toggleShowSelection={handleToggleShowSelection}
@@ -64,38 +69,26 @@ export default function ChoosePathSummary() {
               </Grid>
             </Grid>
             <ToggleEditIconButton
-              openPanel={lockedStep.path.openPanel}
+              openPanel={lockedStep.dataset.openPanel}
               togglePanel={handleTogglePanel}
             />
           </Grid>
         </Grid>
+      </Grid>
+      {!lockedStep.dataset.locked && (
         <Fade
-          in={!lockedStep.path.openPanel && state.showSelections}
-          timeout={{ enter: 500, exit: 0 }}
+          in={!lockedStep.dataset.openPanel && state.showSelections}
+          timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
-          <Grid size={{ xs: 12 }}>
-            {requirements.selectedPath !== "" ? (
-              <Grid item xs={12}>
-                <Grid container alignItems="center" spacing={1}>
-                  <Grid item>
-                    <Typography>Selected path:</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Chip label={requirements.selectedPath} />
-                  </Grid>
-                </Grid>
-              </Grid>
-            ) : (
-              !lockedStep.path.locked && (
-                <Typography>
-                  <em>No path selected yet</em>
-                </Typography>
-              )
-            )}
+          <Grid size={{ xs: 12 }} sx={{ pt: 1 }}>
+            <Typography variant="body2" gutterBottom>
+              Preview
+            </Typography>
+            <DataTable rows={dataset.rows} columns={dataset.columns} />
           </Grid>
         </Fade>
-      </Grid>
+      )}
     </>
   );
 }

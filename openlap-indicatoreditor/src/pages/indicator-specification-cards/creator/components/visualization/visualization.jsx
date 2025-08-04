@@ -68,47 +68,48 @@ const Visualization = () => {
           position: "relative",
           opacity: lockedStep.visualization.locked ? "0.5" : "1",
           pointerEvents: lockedStep.visualization.locked ? "none" : "auto",
-          backgroundColor: lockedStep.visualization.locked ? 'grey.500' : 'background.paper',
+          backgroundColor: lockedStep.visualization.locked
+            ? "grey.500"
+            : "background.paper",
         }}
       >
         <Grid container spacing={2}>
           <Grid size={{ xs: 12 }}>
             <VisualizationSummary />
           </Grid>
-        </Grid>
-
-        <Grid size={{ xs: 12 }} sx={{ pt: 1 }}>
-          <Collapse
-            in={lockedStep.visualization.openPanel}
-            timeout={{ enter: 500, exit: 250 }}
-            unmountOnExit
-          >
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12 }}>
-                <ChartTypeFilter />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <VisualizationFilter />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <Divider />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <Grid container justifyContent="center">
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      disabled={handleCheckDisabled()}
-                      onClick={handleUnlockPath}
-                    >
-                      Next
-                    </Button>
+          <Grid size={{ xs: 12 }} sx={{ pt: 1 }}>
+            <Collapse
+              in={lockedStep.visualization.openPanel}
+              timeout={{ enter: 500, exit: 250 }}
+              unmountOnExit
+            >
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12 }}>
+                  <ChartTypeFilter />
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <VisualizationFilter />
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <Divider />
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <Grid container justifyContent="center">
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        disabled={handleCheckDisabled()}
+                        onClick={handleUnlockPath}
+                      >
+                        Next
+                      </Button>
+                    </Grid>
                   </Grid>
                 </Grid>
               </Grid>
-            </Grid>
-          </Collapse>
+            </Collapse>
+          </Grid>
         </Grid>
       </Paper>
     </>

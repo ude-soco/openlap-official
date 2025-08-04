@@ -7,6 +7,7 @@ import { ISCContext } from "../../../../indicator-specification-card";
 import SummaryTipPopover from "./summary-tip-popover";
 import Summary from "./summary";
 import ToggleSummaryButton from "../../../toggle-summary-button";
+import { ToggleEditIconButton } from "../../../toggle-edit-button";
 
 export default function RequirementSummary() {
   const { lockedStep, requirements, setLockedStep } = useContext(ISCContext);
@@ -57,16 +58,10 @@ export default function RequirementSummary() {
               )}
             </Grid>
           </Grid>
-          <Grid size="auto">
-            <Button
-              startIcon={
-                lockedStep.requirements.openPanel ? <CloseIcon /> : <EditIcon />
-              }
-              onClick={handleTogglePanel}
-            >
-              {lockedStep.requirements.openPanel ? "Close" : "Edit"}
-            </Button>
-          </Grid>
+          <ToggleEditIconButton
+            openPanel={lockedStep.requirements.openPanel}
+            togglePanel={handleTogglePanel}
+          />
         </Grid>
       </Grid>
       <Fade
