@@ -15,12 +15,13 @@ import {
   Popover,
   Box,
 } from "@mui/material";
-import VisSelection from "../visualization/components/vis-selection.jsx";
+
 import NameDialog from "./components/name-dialog.jsx";
 import LockIcon from "@mui/icons-material/Lock";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
+import VisSelection from "../visualization/components/visualization-filter/vis-selection.jsx";
 
 const Finalize = () => {
   const { dataset, lockedStep, setLockedStep } = useContext(ISCContext);

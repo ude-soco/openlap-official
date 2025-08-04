@@ -18,7 +18,7 @@ const ChoosePath = () => {
           <Grid size={{ xs: 12 }}>
             <Collapse
               in={lockedStep.path.openPanel}
-              timeout={{ enter: 500, exit: 0 }}
+              timeout={{ enter: 500, exit: 250 }}
               unmountOnExit
             >
               <PathSelectors />

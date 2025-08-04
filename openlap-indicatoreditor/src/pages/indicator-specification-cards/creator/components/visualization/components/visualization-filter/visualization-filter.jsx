@@ -3,7 +3,6 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Alert,
   Box,
   Divider,
   Grid,
@@ -13,10 +12,10 @@ import {
   Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { DataTypes, visualizations } from "../../../utils/data/config.js";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
 import VisualizationDescription from "./visualization-description.jsx";
 import { Recommend } from "@mui/icons-material";
+import { DataTypes, visualizations } from "../../../../utils/data/config.js";
+import { ISCContext } from "../../../../indicator-specification-card.jsx";
 
 const VisualizationFilter = () => {
   const { dataset, visRef, setVisRef } = useContext(ISCContext);
@@ -66,9 +65,6 @@ const VisualizationFilter = () => {
       if (validTypeValues.has(colType)) acc[colType] = (acc[colType] || 0) + 1;
       return acc;
     }, {});
-
-    // console.log("Required column types for chart:", requiredTypes);
-    // console.log("Available column types in dataset:", availableTypes);
 
     const messages = [];
 
