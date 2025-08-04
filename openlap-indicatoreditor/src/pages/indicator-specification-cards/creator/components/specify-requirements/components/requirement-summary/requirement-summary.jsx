@@ -5,8 +5,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import { ISCContext } from "../../../../indicator-specification-card";
 import SummaryTipPopover from "./summary-tip-popover";
-import ToggleSummaryButton from "./toggle-summary-button";
 import Summary from "./summary";
+import ToggleSummaryButton from "../../../toggle-summary-button";
 
 export default function RequirementSummary() {
   const { lockedStep, requirements, setLockedStep } = useContext(ISCContext);
@@ -74,7 +74,7 @@ export default function RequirementSummary() {
         timeout={{ enter: 500, exit: 0 }}
         unmountOnExit
       >
-        <Grid size={12}>
+        <Grid size={{xs:12}}>
           <Summary
             verb={requirements.goalType.verb}
             goal={requirements.goal}
