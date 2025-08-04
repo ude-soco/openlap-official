@@ -11,11 +11,14 @@ import {
   Typography,
 } from "@mui/material";
 import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
-import { isNullOrEmpty } from "../../../../../../isc-creator/creator/data/utils/functions.js";
 import { ISCContext } from "../../../../indicator-specification-card.jsx";
 import RenameMenuAndDialog from "./components/rename-menu-and-dialog.jsx";
 import DeleteMenuAndDialog from "./components/delete-menu-and-dialog.jsx";
 import ChangeTypeMenuAndDialog from "./components/change-type-menu-and-dialog.jsx";
+
+function isNullOrEmpty(value) {
+  return value === null || (typeof value === "string" && value.trim() === "");
+}
 
 const ColumnMenu = ({ props }) => {
   const { dataset } = useContext(ISCContext);
