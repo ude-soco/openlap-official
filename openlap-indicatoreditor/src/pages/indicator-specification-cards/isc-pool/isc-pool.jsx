@@ -10,7 +10,9 @@ const ISCPool = () => {
           <Link component={RouterLink} underline="hover" color="inherit" to="/">
             Home
           </Link>
-          <Typography sx={{ color: "text.primary" }}>ISC Pool</Typography>
+          <Typography sx={{ color: "text.primary" }}>
+            Search for ISCs
+          </Typography>
         </Breadcrumbs>
         <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
           <Divider />

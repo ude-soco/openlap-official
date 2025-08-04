@@ -49,6 +49,9 @@ const IscDashboard = () => {
             Home
           </Link>
           <Typography sx={{ color: "text.primary" }}>ISC Dashboard</Typography>
+          <Typography sx={{ color: "text.primary" }}>
+            List of my ISCs
+          </Typography>
         </Breadcrumbs>
 
         <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
@@ -57,7 +60,7 @@ const IscDashboard = () => {
 
         <Grid size={12}>
           <Button
-          size="small"
+            size="small"
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleCreateNew}

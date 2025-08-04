@@ -275,7 +275,7 @@ const IndicatorSpecificationCard = () => {
             >
               ISC Dashboard
             </Link>
-            <Typography sx={{ color: "text.primary" }}>ISC Creator</Typography>
+            <Typography sx={{ color: "text.primary" }}>Create an ISC</Typography>
           </Breadcrumbs>
 
           <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
