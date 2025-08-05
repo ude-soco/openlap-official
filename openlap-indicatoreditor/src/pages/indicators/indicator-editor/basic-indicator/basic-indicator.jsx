@@ -7,6 +7,7 @@ import { Breadcrumbs, Link, Typography } from "@mui/material";
 import dayjs from "dayjs";
 import { Condition } from "../utils/indicator-data";
 import Dataset from "./components/dataset/dataset";
+import Filters from "./components/filters/filters";
 
 export const BasicContext = createContext(undefined);
 
@@ -44,6 +45,25 @@ export default function BasicIndicator() {
       : {
           myLRSList: [],
           selectedLRSList: [],
+        };
+  });
+
+  const [filters, setFilters] = useState(() => {
+    const savedState = sessionStorage.getItem(SESSION);
+    return savedState
+      ? {
+          ...JSON.parse(savedState).filters,
+        }
+      : {
+          selectedUserFilter: Condition.only_me,
+          selectedTime: {
+            from: dayjs().subtract(1, "year").toISOString(),
+            until: dayjs().toISOString(),
+          },
+          activityTypesList: [],
+          selectedActivities: [
+            // {activityType: {}, actionOnActivityList: [], selectedActionOnActivity: [{}], activities: [{}]}
+          ],
         };
   });
 
@@ -184,6 +204,8 @@ export default function BasicIndicator() {
     analysisInputMenu,
     lockedStep,
     indicator,
+    dataset,
+    filters,
   });
 
   useEffect(() => {
@@ -196,6 +218,7 @@ export default function BasicIndicator() {
         indicator,
         lockedStep,
         dataset,
+        filters,
       };
 
       sessionStorage.setItem(SESSION, JSON.stringify(session));
@@ -208,7 +231,8 @@ export default function BasicIndicator() {
         prevDependencies.current.analysisInputMenu !== analysisInputMenu ||
         prevDependencies.current.lockedStep !== lockedStep ||
         prevDependencies.current.indicator !== indicator ||
-        prevDependencies.current.dataset !== dataset
+        prevDependencies.current.dataset !== dataset ||
+        prevDependencies.current.filters !== filters
       ) {
         enqueueSnackbar("Autosaved", { variant: "success" });
       }
@@ -222,6 +246,7 @@ export default function BasicIndicator() {
         lockedStep,
         indicator,
         dataset,
+        filters,
       };
     }, 5000);
 
@@ -234,6 +259,7 @@ export default function BasicIndicator() {
     lockedStep,
     indicator,
     dataset,
+    filters,
   ]);
 
   return (
@@ -247,6 +273,7 @@ export default function BasicIndicator() {
           lockedStep,
           indicator,
           dataset,
+          filters,
           setIndicatorQuery,
           setAnalysisRef,
           setVisRef,
@@ -254,6 +281,7 @@ export default function BasicIndicator() {
           setLockedStep,
           setIndicator,
           setDataset,
+          setFilters,
         }}
       >
         <Grid container spacing={2}>
@@ -289,6 +317,9 @@ export default function BasicIndicator() {
           </Breadcrumbs>
           <Grid size={{ xs: 12 }}>
             <Dataset />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <Filters />
           </Grid>
         </Grid>
       </BasicContext.Provider>

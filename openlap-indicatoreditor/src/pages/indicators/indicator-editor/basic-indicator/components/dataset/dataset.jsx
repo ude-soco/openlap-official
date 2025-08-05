@@ -43,6 +43,13 @@ export default function Dataset() {
     setState((p) => ({ ...p, tipAnchor: param }));
   };
 
+  const handleShowOptions = () => {
+    return dataset.myLRSList.filter(
+      (item) =>
+        !dataset.selectedLRSList.some((selected) => selected.id === item.id)
+    );
+  };
+
   const handleSelectLRS = (selectedLRSList) => {
     setDataset((p) => ({ ...p, selectedLRSList: selectedLRSList }));
   };
@@ -104,7 +111,7 @@ export default function Dataset() {
                                 getOptionLabel={(option) => option.lrsTitle}
                                 value={dataset.selectedLRSList}
                                 multiple
-                                options={dataset.myLRSList}
+                                options={handleShowOptions()}
                                 renderInput={(params) => (
                                   <TextField
                                     {...params}

@@ -95,8 +95,9 @@ public class StatementServiceImpl implements StatementService {
             Aggregation.match(
                 Criteria.where("lrs_id")
                     .in(getLrsObjectIdsMethod(activityTypesRequest.getLrsStores()))
-                    .and("statement.context.platform")
-                    .in(activityTypesRequest.getPlatforms())),
+//                    .and("statement.context.platform")
+//                    .in(activityTypesRequest.getPlatforms())
+            ),
             Aggregation.group("statement.object.definition.type"),
             Aggregation.sort(Sort.Direction.ASC, "_id"),
             Aggregation.project().and("statement.object.definition.type").as("definitionType"));
@@ -204,27 +205,28 @@ public class StatementServiceImpl implements StatementService {
     Criteria matchCriteria =
         Criteria.where("lrs_id")
             .in(getLrsObjectIdsMethod(actionOnActivitiesRequest.getLrsStores()))
-            .and("statement.context.platform")
-            .in(actionOnActivitiesRequest.getPlatforms())
+//            .and("statement.context.platform")
+//            .in(actionOnActivitiesRequest.getPlatforms())
             .and("statement.object.definition.type")
             .in(actionOnActivitiesRequest.getActivityTypes());
 
-    List<Criteria> orCriteriaList = new ArrayList<>();
-    for (Map.Entry<String, ArrayList<String>> entry :
-        actionOnActivitiesRequest.getActivities().entrySet()) {
-      String key = entry.getKey();
-      List<String> values = entry.getValue();
-      orCriteriaList.add(Criteria.where(key).in(values));
-    }
-
-    Criteria orCriteria = new Criteria().orOperator(orCriteriaList.toArray(new Criteria[0]));
+//    List<Criteria> orCriteriaList = new ArrayList<>();
+//    for (Map.Entry<String, ArrayList<String>> entry :
+//        actionOnActivitiesRequest.getActivities().entrySet()) {
+//      String key = entry.getKey();
+//      List<String> values = entry.getValue();
+//      orCriteriaList.add(Criteria.where(key).in(values));
+//    }
+//
+//    Criteria orCriteria = new Criteria().orOperator(orCriteriaList.toArray(new Criteria[0]));
 
     // Combine the main match criteria with the OR criteria using AND operator
-    Criteria finalCriteria = new Criteria().andOperator(matchCriteria, orCriteria);
+//    Criteria finalCriteria = new Criteria().andOperator(matchCriteria, orCriteria);
 
     Aggregation aggregation =
         Aggregation.newAggregation(
-            Aggregation.match(finalCriteria),
+//            Aggregation.match(finalCriteria),
+            Aggregation.match(matchCriteria),
             projectOperation,
             Aggregation.group("verbId", "verbDisplay"),
             Aggregation.project("verbId", "verbDisplay").andExclude("_id"));
