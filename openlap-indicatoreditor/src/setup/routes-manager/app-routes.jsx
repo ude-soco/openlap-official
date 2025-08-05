@@ -14,25 +14,28 @@ import NavBar from "../../common/components/nav-bar/nav-bar.jsx";
 import Sidebar, {
   DrawerHeader,
 } from "../../common/components/side-bar/side-bar.jsx";
-import IndicatorEditorDashboard from "../../pages/indicator-editor/dashboard/indicator-editor-dashboard.jsx";
-import IndicatorPool from "../../pages/indicator-editor/indicator-pool/indicator-pool.jsx";
-import IndicatorEditor from "../../pages/indicator-editor/editor/indicator-editor.jsx";
+import IndicatorEditorDashboard from "../../pages/indicators/dashboard/indicator-editor-dashboard.jsx";
+import IndicatorPool from "../../pages/indicators/indicator-pool/indicator-pool.jsx";
+import IndicatorEditorOld from "../../pages/indicators/editor/indicator-editor.jsx";
 import ISCPool from "../../pages/indicator-specification-cards/isc-pool/isc-pool.jsx";
 import GQIDashboard from "../../pages/gqi-editor/dashboard/gqi-dashboard.jsx";
 import GQIEditor from "../../pages/gqi-editor/gqi-editor/gqi-editor.jsx";
 import GQIPool from "../../pages/gqi-editor/gqi-pool/gqi-pool.jsx";
 import Footer from "../../common/components/footer/footer.jsx";
 import { SnackbarProvider } from "notistack";
-import IndicatorPreview from "../../pages/indicator-editor/dashboard/components/indicator-preview.jsx";
-import BasicIndicator from "../../pages/indicator-editor/editor/basic-indicator/basic-indicator.jsx";
-import CompositeIndicator from "../../pages/indicator-editor/editor/composite-indicator/composite-indicator.jsx";
-import MultiLevelAnalysisIndicator from "../../pages/indicator-editor/editor/multi-level-analysis-indicator/multi-level-analysis-indicator.jsx";
+import IndicatorPreview from "../../pages/indicators/dashboard/components/indicator-preview.jsx";
+import BasicIndicatorOld from "../../pages/indicators/editor/basic-indicator/basic-indicator.jsx";
+import CompositeIndicator from "../../pages/indicators/editor/composite-indicator/composite-indicator.jsx";
+import MultiLevelAnalysisIndicator from "../../pages/indicators/editor/multi-level-analysis-indicator/multi-level-analysis-indicator.jsx";
 import CsvXapiDashboard from "../../pages/csv-xapi-converter/csv-xapi-dashboard.jsx";
 import ManageLrs from "../../pages/account-manager/manage-lrs.jsx";
 import Home from "../../pages/home/home.jsx";
 import IndicatorSpecificationCard from "../../pages/indicator-specification-cards/creator/indicator-specification-card.jsx";
 import IscDashboard from "../../pages/indicator-specification-cards/dashboard/isc-dashboard.jsx";
 import IscPreview from "../../pages/indicator-specification-cards/dashboard/components/isc-preview.jsx";
+
+import IndicatorEditor from "../../pages/indicators/indicator-editor/indicator-editor";
+import BasicIndicator from "../../pages/indicators/indicator-editor/basic-indicator/basic-indicator";
 
 const drawerWidth = 280;
 
@@ -141,6 +144,7 @@ const AppRoutes = () => {
                         index
                         element={
                           <PrivateRoute
+                            // component={<IndicatorEditorOld />}
                             component={<IndicatorEditor />}
                             allowedRoles={[RoleTypes.user]}
                           />
@@ -150,6 +154,7 @@ const AppRoutes = () => {
                         path="basic"
                         element={
                           <PrivateRoute
+                            // component={<BasicIndicatorOld />}
                             component={<BasicIndicator />}
                             allowedRoles={[RoleTypes.user]}
                           />
