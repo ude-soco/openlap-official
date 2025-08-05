@@ -17,13 +17,18 @@ public class ActivitiesRequest {
   private List<@NotNull(message = "LRS stores cannot be blank") LrsStoresStatementRequest>
       lrsStores;
 
-  @NotEmpty(message = "List of platforms is mandatory")
-  @Valid
-  private List<@NotNull(message = "Platform cannot be blank") String> platforms;
+  //  @NotEmpty(message = "List of platforms is mandatory")
+  //  @Valid
+  //  private List<@NotNull(message = "Platform cannot be blank") String> platforms;
 
   @NotEmpty(message = "List of activity types is mandatory")
   @Valid
   private List<@NotNull(message = "Activity types cannot be blank") String> activityTypes;
+
+  @NotEmpty(message = "List of action on activities is mandatory")
+  @Valid
+  private List<@NotNull(message = "Action on activities cannot be blank") String>
+      actionOnActivities;
   //
   //  @NotEmpty(message = "List of action on activities is mandatory")
   //  @Valid

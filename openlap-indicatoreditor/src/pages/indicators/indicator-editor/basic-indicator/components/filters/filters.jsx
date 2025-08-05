@@ -1,21 +1,8 @@
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Autocomplete,
-  Button,
-  Collapse,
-  Divider,
-  Paper,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Button, Collapse, Divider, Paper } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import { BasicContext } from "../../basic-indicator";
 import FiltersSummary from "./components/filters-summary";
-import TipPopover from "../../../../../../common/components/tip-popover/tip-popover";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
 import UserFilter from "./components/user-filter";
 import DateFilter from "./components/date-filter";
@@ -79,10 +66,10 @@ export default function Filters() {
                   <Grid container spacing={2} justifyContent="center">
                     <Grid size={{ xs: 12, md: 10, lg: 8 }}>
                       <Grid container spacing={2}>
-                        <Grid size={{ xs: 12, md: 6 }}>
+                        <Grid size={{ xs: 12, md: 7 }}>
                           <DateFilter />
                         </Grid>
-                        <Grid size={{ xs: 12, md: 6 }}>
+                        <Grid size={{ xs: 12, md: 5 }}>
                           <UserFilter />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
@@ -100,7 +87,7 @@ export default function Filters() {
                         <Button
                           fullWidth
                           variant="contained"
-                          disabled={handleCheckDisabled()}
+                          //   disabled={handleCheckDisabled()}
                           onClick={handleUnlockPath}
                         >
                           Next

@@ -4,15 +4,21 @@ import {
   AccordionDetails,
   Box,
   Button,
+  IconButton,
+  Paper,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { BasicContext } from "../../../../basic-indicator";
 import TipPopover from "../../../../../../../../common/components/tip-popover/tip-popover";
-import ActivityFilterCard from "./activity-filter-card";
 import { fetchActivityTypesList } from "../../utils/filters-api";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { v4 as uuidv4 } from "uuid";
+import ActivityTypeSelection from "./activity-type-selection";
+import ActionSelection from "./action-selection";
+import ActivitySelection from "./activity-selection";
 
 export default function ActivityFilters() {
   const { api } = useContext(AuthContext);
@@ -63,13 +69,22 @@ export default function ActivityFilters() {
         {
           id: uuidv4(),
           selectedActivityType: { name: "" },
-          actionOnActivityList: [],
-          selectedActionOnActivityList: [],
+          actionList: [],
+          selectedActionList: [],
           activityList: [],
           selectedActivityList: [],
         },
       ];
       return { ...p, selectedActivities: tempSelectedActivities };
+    });
+  };
+
+  const handleRemoveFilter = (activity) => {
+    setFilters((p) => {
+      const updatedActivities = p.selectedActivities.filter(
+        (a) => a.id !== activity.id
+      );
+      return { ...p, selectedActivities: updatedActivities };
     });
   };
 
@@ -132,7 +147,47 @@ export default function ActivityFilters() {
             >
               {filters.selectedActivities.map((activity, index) => (
                 <div key={activity.id}>
-                  <ActivityFilterCard activity={activity} index={index} />
+                  <Paper
+                    sx={{
+                      width: 450,
+                      p: 2,
+                      flexShrink: 0,
+                    }}
+                    variant="outlined"
+                  >
+                    <Grid container spacing={2}>
+                      <Grid size="grow">
+                        <Grid
+                          container
+                          justifyContent="space-between"
+                          alignItems="center"
+                        >
+                          <Typography>Filter {index + 1}</Typography>
+                          <Tooltip
+                            arrow
+                            title={<Typography>Delete filter</Typography>}
+                          >
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleRemoveFilter(activity)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Grid>
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <ActivityTypeSelection activity={activity} />
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <ActionSelection activity={activity} />
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <ActivitySelection activity={activity} />
+                      </Grid>
+                    </Grid>
+                  </Paper>
                 </div>
               ))}
             </Box>
