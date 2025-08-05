@@ -9,7 +9,11 @@ import {
 } from "@mui/material";
 import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 
-export default function SummaryTipPopover({ tipAnchor, toggleTipAnchor }) {
+export default function TipPopover({
+  tipAnchor,
+  toggleTipAnchor,
+  description,
+}) {
   return (
     <>
       <IconButton
@@ -37,26 +41,8 @@ export default function SummaryTipPopover({ tipAnchor, toggleTipAnchor }) {
           },
         }}
       >
-        <Box sx={{ p: 2, maxWidth: 360 }}>
-          <Typography gutterBottom>
-            <b>Tip!</b>
-          </Typography>
-          <Typography>You can choose one of the following paths:</Typography>
-          <Typography>
-            <ul>
-              <li>
-                If you have an idea what data you want to show in a table, you
-                can start by creating or uploading a <b>Dataset</b>.
-              </li>
-              <li>
-                If you have a chart in mind, you can start by choosing a{" "}
-                <b>Visualization</b>.
-              </li>
-            </ul>
-          </Typography>
-          <Typography>
-            Don’t worry — you’ll complete both steps either way.
-          </Typography>
+        <Box sx={{ p: 2, maxWidth: 380 }}>
+          <Typography dangerouslySetInnerHTML={{ __html: description }} />
         </Box>
         <Grid container justifyContent="flex-end">
           <Button

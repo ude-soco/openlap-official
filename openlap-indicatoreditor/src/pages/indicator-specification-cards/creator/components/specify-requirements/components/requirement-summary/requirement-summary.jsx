@@ -1,19 +1,21 @@
 import { useContext, useState } from "react";
 import Grid from "@mui/material/Grid2";
-import { Button, Chip, Fade, Typography } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
-import CloseIcon from "@mui/icons-material/Close";
+import { Chip, Fade, Typography } from "@mui/material";
 import { ISCContext } from "../../../../indicator-specification-card";
-import SummaryTipPopover from "./summary-tip-popover";
 import Summary from "./summary";
-import ToggleSummaryButton from "../../../toggle-summary-button";
-import { ToggleEditIconButton } from "../../../toggle-edit-button";
+import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
+import { ToggleEditIconButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
+import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover.jsx";
 
 export default function RequirementSummary() {
   const { lockedStep, requirements, setLockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     tipAnchor: null,
     showSelections: true,
+    tipDescription: `
+    <b>Tip!</b><br/>
+    This step is designed to help you define and create a data-driven indicator related to your educational goals. It breaks down a potentially complex data analysis task into simple, fillable steps.
+    `,
   });
 
   const handleTipAnchor = (param) => {
@@ -46,9 +48,10 @@ export default function RequirementSummary() {
               <Typography>
                 Specify your goal, question, and indicator
               </Typography>
-              <SummaryTipPopover
+              <TipPopover
                 tipAnchor={state.tipAnchor}
                 toggleTipAnchor={handleTipAnchor}
+                description={state.tipDescription}
               />
               {!lockedStep.requirements.openPanel && (
                 <ToggleSummaryButton

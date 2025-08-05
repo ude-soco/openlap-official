@@ -1,19 +1,26 @@
 import { useContext, useState } from "react";
 import Grid from "@mui/material/Grid2";
-import { Button, Chip, Fade, IconButton, Typography } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
-import CloseIcon from "@mui/icons-material/Close";
+import { Chip, Fade, IconButton, Typography } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
-import { ISCContext } from "../../../../indicator-specification-card";
-import SummaryTipPopover from "./summary-tip-popover";
-import ToggleSummaryButton from "../../../toggle-summary-button";
-import { ToggleEditIconButton } from "../../../toggle-edit-button";
+import { ISCContext } from "../../../indicator-specification-card.jsx";
+import ToggleSummaryButton from "../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
+import { ToggleEditIconButton } from "../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
+import TipPopover from "../../../../../../common/components/tip-popover/tip-popover.jsx";
 
 export default function ChoosePathSummary() {
   const { lockedStep, requirements, setLockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     tipAnchor: null,
     showSelections: true,
+    tipDescription: `
+    <b>Tip!</b><br/>
+    You can choose one of the following paths:
+    <ul>
+      <li>If you have an idea what data you want to show in a table, you can start by creating or uploading a <b>Dataset</b>.</li>
+      <li>If you have a chart in mind, you can start by choosing a <b>Visualization</b>.</li>
+    </ul>
+    Don’t worry — you’ll complete both steps either way.
+    `,
   });
 
   const handleTipAnchor = (param) => {
@@ -51,9 +58,10 @@ export default function ChoosePathSummary() {
                   </IconButton>
                 )}
                 <Typography>How would you like to start?</Typography>
-                <SummaryTipPopover
+                <TipPopover
                   tipAnchor={state.tipAnchor}
                   toggleTipAnchor={handleTipAnchor}
+                  description={state.tipDescription}
                 />
                 {!lockedStep.path.openPanel && (
                   <ToggleSummaryButton
