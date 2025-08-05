@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../indicator-specification-card.jsx";
 import Grid from "@mui/material/Grid2";
 import { Paper, Typography } from "@mui/material";
 import { blue, orange } from "@mui/material/colors";

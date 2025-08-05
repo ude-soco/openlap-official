@@ -1,23 +1,26 @@
-import {
-  Box,
-  Button,
-  Fab,
-  IconButton,
-  Popover,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
+import { Fab, TextField, Tooltip, Typography } from "@mui/material";
 import DoneIcon from "@mui/icons-material/Done";
 import Grid from "@mui/material/Grid2";
 import { useContext, useState } from "react";
 import { ISCContext } from "../../../../indicator-specification-card";
+import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover.jsx";
 
 export default function FormulateQuestion() {
   const { requirements, setRequirements } = useContext(ISCContext);
   const [state, setState] = useState({
     questionPopoverAnchor: null,
+    // TODO: Description needs to be updated
+    questionDescription: `
+      <b>Step 2: Formulate a question</b><br/>  
+      What are you trying to monitor or improve?    
+      Here are some <b>Examples</b> for inspiration:
+      <ul>
+        <li>I want to <b>assess</b> students’ understanding of course material by analyzing quiz and test results weekly.</li>
+        <li>I want to <b>monitor</b> student engagement by tracking logins, participation in discussions, and time spent on learning activities.</li>
+        <li>I want to <b>intervene</b> early by identifying students at risk of failure using predictive models based on past performance and engagement.</li>
+      </ul>
+      You can select one of the goals from the list. You can also create your own goal by typing in this text box and then adding it to the list.    
+    `,
   });
 
   const handleQuestionPopoverAnchor = (param) => {
@@ -53,87 +56,12 @@ export default function FormulateQuestion() {
             </Grid>
             <Grid size={{ xs: 12 }}>
               <Grid container alignItems="center" spacing={2}>
-                <Grid size="auto">
-                  <Tooltip
-                    arrow
-                    title={<Typography>Click to view some examples</Typography>}
-                  >
-                    <IconButton
-                      size="small"
-                      color="warning"
-                      onClick={(e) =>
-                        handleQuestionPopoverAnchor(e.currentTarget)
-                      }
-                    >
-                      <TipsAndUpdatesIcon />
-                    </IconButton>
-                    <Popover
-                      open={Boolean(state.questionPopoverAnchor)}
-                      anchorEl={state.questionPopoverAnchor}
-                      onClose={() => handleQuestionPopoverAnchor(null)}
-                      anchorOrigin={{
-                        vertical: "bottom",
-                        horizontal: "left",
-                      }}
-                      PaperProps={{
-                        sx: {
-                          backgroundColor: "primary.main",
-                          color: "primary.contrastText",
-                          position: "absolute",
-                          p: 1,
-                        },
-                      }}
-                    >
-                      <Box sx={{ p: 2, maxWidth: 400 }}>
-                        <Typography gutterBottom>
-                          <b>Step 1: Clarify your goal</b>
-                        </Typography>
-                        <Typography>
-                          What are you trying to monitor or improve?
-                        </Typography>
-                        <Typography gutterBottom>
-                          Here are some <b>Examples</b> for inspiration:
-                        </Typography>
-                        <Typography sx={{ my: -1 }}>
-                          <ul>
-                            <li>
-                              I want to <b>assess</b> students’ understanding of
-                              course material by analyzing quiz and test results
-                              weekly.
-                            </li>
-                            <li>
-                              I want to <b>monitor</b> student engagement by
-                              tracking logins, participation in discussions, and
-                              time spent on learning activities.
-                            </li>
-                            <li>
-                              I want to <b>intervene</b> early by identifying
-                              students at risk of failure using predictive
-                              models based on past performance and engagement.
-                            </li>
-                          </ul>
-                        </Typography>
-                        <Typography gutterBottom>
-                          You can select one of the goals from the list.
-                        </Typography>
-                        <Typography>
-                          You can also create your own goal by typing in this
-                          text box and then adding it to the list.
-                        </Typography>
-                      </Box>
-                      <Grid container justifyContent="flex-end">
-                        <Button
-                          size="small"
-                          onClick={() => handleQuestionPopoverAnchor(null)}
-                          color="text"
-                          variant="outlined"
-                        >
-                          Close
-                        </Button>
-                      </Grid>
-                    </Popover>
-                  </Tooltip>
-                </Grid>
+                <TipPopover
+                  tipAnchor={state.questionPopoverAnchor}
+                  toggleTipAnchor={handleQuestionPopoverAnchor}
+                  description={state.questionDescription}
+                />
+
                 <Grid size={{ xs: 12, sm: "grow" }}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid size="grow">

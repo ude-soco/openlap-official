@@ -2,8 +2,8 @@ import { useContext } from "react";
 import { Paper, Collapse } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { ISCContext } from "../../indicator-specification-card.jsx";
-import ChoosePathSummary from "./components/choose-path-summary/choose-path-summary.jsx";
-import PathSelectors from "./components/path-selectors/path-selectors.jsx";
+import ChoosePathSummary from "./components/choose-path-summary.jsx";
+import PathSelectors from "./components/path-selectors.jsx";
 
 const ChoosePath = () => {
   const { lockedStep } = useContext(ISCContext);

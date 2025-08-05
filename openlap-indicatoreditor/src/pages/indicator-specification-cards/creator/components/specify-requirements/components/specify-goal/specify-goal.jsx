@@ -15,11 +15,23 @@ import DoneIcon from "@mui/icons-material/Done";
 
 import GoalList from "./goal-list";
 import { ISCContext } from "../../../../indicator-specification-card";
+import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover.jsx";
 
 export default function SpecifyGoal() {
   const { requirements, setRequirements } = useContext(ISCContext);
   const [state, setState] = useState({
     goalPopoverAnchor: null,
+    goalDescription: `
+      <b>Step 1: Clarify your goal</b><br/>
+      What are you trying to monitor or improve?    
+      Here are some <b>Examples</b> for inspiration:
+      <ul>
+        <li>I want to <b>assess</b> students’ understanding of course material by analyzing quiz and test results weekly.</li>
+        <li>I want to <b>monitor</b> student engagement by tracking logins, participation in discussions, and time spent on learning activities.</li>
+        <li>I want to <b>intervene</b> early by identifying students at risk of failure using predictive models based on past performance and engagement.</li>
+      </ul>
+      You can select one of the goals from the list. You can also create your own goal by typing in this text box and then adding it to the list.    
+      `,
   });
 
   const handleGoalPopoverAnchor = (param) => {
@@ -57,85 +69,11 @@ export default function SpecifyGoal() {
             </Grid>
             <Grid size={{ xs: 12 }}>
               <Grid container alignItems="center" spacing={2}>
-                <Grid size="auto">
-                  <Tooltip
-                    arrow
-                    title={<Typography>Click to view some examples</Typography>}
-                  >
-                    <IconButton
-                      size="small"
-                      color="warning"
-                      onClick={(e) => handleGoalPopoverAnchor(e.currentTarget)}
-                    >
-                      <TipsAndUpdatesIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Popover
-                    open={Boolean(state.goalPopoverAnchor)}
-                    anchorEl={state.goalPopoverAnchor}
-                    onClose={() => handleGoalPopoverAnchor(null)}
-                    anchorOrigin={{
-                      vertical: "bottom",
-                      horizontal: "left",
-                    }}
-                    PaperProps={{
-                      sx: {
-                        backgroundColor: "primary.main",
-                        color: "primary.contrastText",
-                        position: "absolute",
-                        p: 1,
-                      },
-                    }}
-                  >
-                    <Box sx={{ p: 2, maxWidth: 400 }}>
-                      <Typography gutterBottom>
-                        <b>Step 1: Clarify your goal</b>
-                      </Typography>
-                      <Typography>
-                        What are you trying to monitor or improve?
-                      </Typography>
-                      <Typography gutterBottom>
-                        Here are some <b>Examples</b> for inspiration:
-                      </Typography>
-                      <Typography sx={{ my: -1 }}>
-                        <ul>
-                          <li>
-                            I want to <b>assess</b> students’ understanding of
-                            course material by analyzing quiz and test results
-                            weekly.
-                          </li>
-                          <li>
-                            I want to <b>monitor</b> student engagement by
-                            tracking logins, participation in discussions, and
-                            time spent on learning activities.
-                          </li>
-                          <li>
-                            I want to <b>intervene</b> early by identifying
-                            students at risk of failure using predictive models
-                            based on past performance and engagement.
-                          </li>
-                        </ul>
-                      </Typography>
-                      <Typography gutterBottom>
-                        You can select one of the goals from the list.
-                      </Typography>
-                      <Typography>
-                        You can also create your own goal by typing in this text
-                        box and then adding it to the list.
-                      </Typography>
-                    </Box>
-                    <Grid container justifyContent="flex-end">
-                      <Button
-                        size="small"
-                        onClick={() => handleGoalPopoverAnchor(null)}
-                        color="text"
-                        variant="outlined"
-                      >
-                        Close
-                      </Button>
-                    </Grid>
-                  </Popover>
-                </Grid>
+                <TipPopover
+                  tipAnchor={state.goalPopoverAnchor}
+                  toggleTipAnchor={handleGoalPopoverAnchor}
+                  description={state.goalDescription}
+                />
                 <Grid size={{ xs: "grow", sm: 4 }}>
                   <GoalList />
                 </Grid>

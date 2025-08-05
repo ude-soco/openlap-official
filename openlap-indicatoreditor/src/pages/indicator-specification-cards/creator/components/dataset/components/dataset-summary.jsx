@@ -1,21 +1,29 @@
 import { useContext, useState } from "react";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { Chip, Fade, IconButton, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import LockIcon from "@mui/icons-material/Lock";
-import ToggleSummaryButton from "../../../toggle-summary-button";
-import SummaryTipPopover from "./summary-tip-popover";
-import DataTable from "../data-table";
-import {
-  ToggleEditButton,
-  ToggleEditIconButton,
-} from "../../../toggle-edit-button";
+import ToggleSummaryButton from "../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
+import DataTable from "./data-table.jsx";
+import { ToggleEditIconButton } from "../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
+import TipPopover from "../../../../../../common/components/tip-popover/tip-popover.jsx";
 
 export default function DatasetSummary() {
   const { lockedStep, dataset, setLockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     tipAnchor: null,
     showSelections: true,
+    tipDescription: `
+      <b>Tip!</b><br/>
+      Create your own data by filling in the table.
+      <ul>
+        <li>You can add new columns and rows based on your needs</li>
+        <li>Double click on the cells in each row to enter the values you want to analyze</li>
+        <li>Click the column header to access the menu options</li>
+      </ul>
+      If you have an existing dataset (.csv data), you can upload it here
+      easily.
+    `,
   });
 
   const handleTipAnchor = (param) => {
@@ -56,9 +64,10 @@ export default function DatasetSummary() {
                   </IconButton>
                 )}
                 <Typography>Choose Dataset</Typography>
-                <SummaryTipPopover
+                <TipPopover
                   tipAnchor={state.tipAnchor}
                   toggleTipAnchor={handleTipAnchor}
+                  description={state.tipDescription}
                 />
                 {!lockedStep.dataset.openPanel && (
                   <ToggleSummaryButton

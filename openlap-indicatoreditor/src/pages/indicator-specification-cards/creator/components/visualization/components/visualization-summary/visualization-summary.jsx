@@ -3,16 +3,25 @@ import { ISCContext } from "../../../../indicator-specification-card";
 import { Chip, Fade, IconButton, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import LockIcon from "@mui/icons-material/Lock";
-import ToggleSummaryButton from "../../../toggle-summary-button";
-import SummaryTipPopover from "./summary-tip-popover";
+import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
 import Summary from "./summary";
-import { ToggleEditIconButton } from "../../../toggle-edit-button";
+import { ToggleEditIconButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
+import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover.jsx";
 
 export default function VisualizationSummary() {
   const { lockedStep, visRef, setLockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     tipAnchor: null,
     showSelections: true,
+    tipDescription: `
+      <b>Tip!</b><br />
+      Choose a <b>Chart type</b> that fits your needs.<br />
+      Each chart requires specific type of data (e.g. <em>categorical</em>, <em>numerical</em>, and <em>categorical (ordinal)</em>).<br />
+      Your <b>Dataset</b> should have the type of data required by your selected <b>Chart</b>. <br />
+      Check the required type of data under the short description for the Charts.<br /><br />
+      <b>Good to know!</b><br />
+      Charts will be <b>recommended</b> to you if those match the type of data available in your <b>Dataset</b>.
+    `,
   });
 
   const handleTipAnchor = (param) => {
@@ -53,9 +62,10 @@ export default function VisualizationSummary() {
                   </IconButton>
                 )}
                 <Typography>Choose visualization</Typography>
-                <SummaryTipPopover
+                <TipPopover
                   tipAnchor={state.tipAnchor}
                   toggleTipAnchor={handleTipAnchor}
+                  description={state.tipDescription}
                 />
                 {!lockedStep.visualization.openPanel && (
                   <ToggleSummaryButton

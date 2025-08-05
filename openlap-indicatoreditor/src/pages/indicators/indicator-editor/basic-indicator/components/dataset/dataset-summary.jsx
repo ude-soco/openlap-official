@@ -3,8 +3,8 @@ import { Chip, Fade, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { BasicContext } from "../../basic-indicator";
 import SummaryTipPopover from "./summary-tip-popover";
-import ToggleSummaryButton from "../../../../../indicator-specification-cards/creator/components/toggle-summary-button";
-import { ToggleEditIconButton } from "../../../../../indicator-specification-cards/creator/components/toggle-edit-button";
+import ToggleSummaryButton from "../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
+import { ToggleEditIconButton } from "../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
 
 export default function DatasetSummary() {
   const { lockedStep, setLockedStep } = useContext(BasicContext);

@@ -3,14 +3,19 @@ import { ISCContext } from "../../../../indicator-specification-card";
 import { Chip, IconButton, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import LockIcon from "@mui/icons-material/Lock";
-import { ToggleEditIconButton } from "../../../toggle-edit-button";
-import SummaryTipPopover from "./summary-tip-popover";
+import { ToggleEditIconButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
+import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover.jsx";
 
 export default function FinalizeSummary() {
   const { lockedStep, setLockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     tipAnchor: null,
     showSelections: true,
+    tipDescription: `
+      <b>Tip:</b><br/>
+      Take a final look at your indicator with the chosen data. Customize the chart by adding a title, subtitle, and choosing colors that highlight your message. <br/>
+      Make sure everything looks clear and meaningful before you finish.
+    `,
   });
 
   const handleTipAnchor = (param) => {
@@ -26,6 +31,7 @@ export default function FinalizeSummary() {
       },
     }));
   };
+
   return (
     <>
       <Grid container spacing={1}>
@@ -46,9 +52,10 @@ export default function FinalizeSummary() {
                   </IconButton>
                 )}
                 <Typography>Finalize Indicator</Typography>
-                <SummaryTipPopover
+                <TipPopover
                   tipAnchor={state.tipAnchor}
                   toggleTipAnchor={handleTipAnchor}
+                  description={state.tipDescription}
                 />
               </Grid>
             </Grid>

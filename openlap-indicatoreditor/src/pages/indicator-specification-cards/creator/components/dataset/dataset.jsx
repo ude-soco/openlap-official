@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import { Button, Collapse, Divider, Paper } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import DatasetSummary from "./components/dataset-summary/dataset-summary.jsx";
+import DatasetSummary from "./components/dataset-summary.jsx";
 import DataTableManager from "./data-table-manager/data-table-manager";
 
 const Dataset = () => {
