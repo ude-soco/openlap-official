@@ -3,7 +3,7 @@ import { AuthContext } from "../../../../setup/auth-context-manager/auth-context
 import { useSnackbar } from "notistack";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import Grid from "@mui/material/Grid2";
-import { Breadcrumbs, Divider, Link, Paper, Typography } from "@mui/material";
+import { Breadcrumbs, Link, Typography } from "@mui/material";
 import dayjs from "dayjs";
 import { Condition } from "../utils/indicator-data";
 import Dataset from "./components/dataset/dataset";
@@ -35,6 +35,18 @@ export default function BasicIndicator() {
           type: "BASIC",
         };
   });
+  const [dataset, setDataset] = useState(() => {
+    const savedState = sessionStorage.getItem(SESSION);
+    return savedState
+      ? {
+          ...JSON.parse(savedState).dataset,
+        }
+      : {
+          myLRSList: [],
+          selectedLRSList: [],
+        };
+  });
+
   const [indicatorQuery, setIndicatorQuery] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION);
     return savedState
@@ -142,7 +154,7 @@ export default function BasicIndicator() {
             openPanel: true,
             step: "1",
           },
-          filter: {
+          filters: {
             locked: true,
             openPanel: false,
             step: "2",
@@ -183,9 +195,10 @@ export default function BasicIndicator() {
         analysisInputMenu,
         indicator,
         lockedStep,
+        dataset,
       };
 
-      sessionStorage.setItem("session", JSON.stringify(session));
+      sessionStorage.setItem(SESSION, JSON.stringify(session));
 
       // Check if any of the dependencies have changed
       if (
@@ -194,7 +207,8 @@ export default function BasicIndicator() {
         prevDependencies.current.visRef !== visRef ||
         prevDependencies.current.analysisInputMenu !== analysisInputMenu ||
         prevDependencies.current.lockedStep !== lockedStep ||
-        prevDependencies.current.indicator !== indicator
+        prevDependencies.current.indicator !== indicator ||
+        prevDependencies.current.dataset !== dataset
       ) {
         enqueueSnackbar("Autosaved", { variant: "success" });
       }
@@ -207,6 +221,7 @@ export default function BasicIndicator() {
         analysisInputMenu,
         lockedStep,
         indicator,
+        dataset,
       };
     }, 5000);
 
@@ -218,6 +233,7 @@ export default function BasicIndicator() {
     analysisInputMenu,
     lockedStep,
     indicator,
+    dataset,
   ]);
 
   return (
@@ -230,12 +246,14 @@ export default function BasicIndicator() {
           analysisInputMenu,
           lockedStep,
           indicator,
+          dataset,
           setIndicatorQuery,
           setAnalysisRef,
           setVisRef,
           setAnalysisInputMenu,
           setLockedStep,
           setIndicator,
+          setDataset,
         }}
       >
         <Grid container spacing={2}>
