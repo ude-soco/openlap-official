@@ -47,7 +47,8 @@ const IndicatorEditor = () => {
 
   const handleCreateIndicator = (link) => {
     navigate(link);
-    handleClearSession();
+    // TODO: Temporary
+    // handleClearSession();
   };
 
   return (
@@ -104,9 +105,7 @@ const IndicatorEditor = () => {
                           backgroundColor: "white",
                         }}
                       />
-                      <Typography variant="h6">
-                        {indicatorType.name}
-                      </Typography>
+                      <Typography variant="h6">{indicatorType.name}</Typography>
                       <Typography variant="body1">
                         {indicatorType.description}
                       </Typography>
