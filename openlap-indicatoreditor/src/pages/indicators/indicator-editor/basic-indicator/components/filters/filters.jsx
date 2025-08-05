@@ -1,0 +1,119 @@
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Autocomplete,
+  Button,
+  Collapse,
+  Divider,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
+import Grid from "@mui/material/Grid2";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useContext, useEffect, useState } from "react";
+import { BasicContext } from "../../basic-indicator";
+import FiltersSummary from "./components/filters-summary";
+import TipPopover from "../../../../../../common/components/tip-popover/tip-popover";
+import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
+import UserFilter from "./components/user-filter";
+import DateFilter from "./components/date-filter";
+import ActivityFilters from "./components/activity-filters/activity-filters.jsx";
+
+export default function Filters() {
+  const { api } = useContext(AuthContext);
+  const { lockedStep, setLockedStep, filters, setFilters } =
+    useContext(BasicContext);
+
+  //   useEffect(() => {
+  //     const loadMyLearningRecordStores = async () => {
+  //       try {
+  //         const myLRSList = await fetchUserLRSList(api);
+  //         setDataset((p) => ({ ...p, myLRSList: myLRSList }));
+  //       } catch (error) {
+  //         console.error(`Failed to load LRS data`, error);
+  //       }
+  //     };
+  //     loadMyLearningRecordStores();
+  //   }, []);
+
+  //   const handleSelectLRS = (selectedLRSList) => {
+  //     setDataset((p) => ({ ...p, selectedLRSList: selectedLRSList }));
+  //   };
+
+  const handleCheckDisabled = () => {
+    return filters.selectedActivities.length === 0;
+  };
+
+  const handleTogglePanel = () => {
+    setLockedStep((p) => ({
+      ...p,
+      filters: { ...p.filters, openPanel: !p.filters.openPanel },
+    }));
+  };
+
+  const handleUnlockPath = () => {
+    handleTogglePanel();
+    setLockedStep((p) => ({
+      ...p,
+      analysis: { ...p.analysis, locked: false, openPanel: true },
+    }));
+  };
+
+  return (
+    <>
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12 }}>
+            <FiltersSummary />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <Collapse
+              in={lockedStep.filters.openPanel}
+              timeout={{ enter: 500, exit: 250 }}
+              unmountOnExit
+            >
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12 }}>
+                  <Grid container spacing={2} justifyContent="center">
+                    <Grid size={{ xs: 12, md: 10, lg: 8 }}>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <DateFilter />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <UserFilter />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                          <ActivityFilters />
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                  <Grid size={{ xs: 12 }} sx={{ py: 2 }}>
+                    <Divider />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Grid container justifyContent="center">
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          disabled={handleCheckDisabled()}
+                          onClick={handleUnlockPath}
+                        >
+                          Next
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Collapse>
+          </Grid>
+        </Grid>
+      </Paper>
+    </>
+  );
+}

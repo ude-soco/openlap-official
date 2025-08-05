@@ -20,18 +20,18 @@ public class ActionOnActivitiesRequest {
   private List<@NotNull(message = "LRS stores cannot be blank") LrsStoresStatementRequest>
       lrsStores;
 
-  @NotEmpty(message = "List of platforms is mandatory")
-  @Valid
-  private List<@NotNull(message = "Platform cannot be blank") String> platforms;
+//  @NotEmpty(message = "List of platforms is mandatory")
+//  @Valid
+//  private List<@NotNull(message = "Platform cannot be blank") String> platforms;
 
   @NotEmpty(message = "List of activity types is mandatory")
   @Valid
   private List<@NotNull(message = "Activity types cannot be blank") String> activityTypes;
 
-  @NotEmpty(message = "Activities map is mandatory")
-  @Valid
-  private Map<
-          @NotBlank(message = "Activity key cannot be blank") String,
-          @NotNull(message = "Activity values cannot be empty") ArrayList<String>>
-      activities;
+  //  @NotEmpty(message = "Activities map is mandatory")
+  //  @Valid
+  //  private Map<
+  //          @NotBlank(message = "Activity key cannot be blank") String,
+  //          @NotNull(message = "Activity values cannot be empty") ArrayList<String>>
+  //      activities;
 }
