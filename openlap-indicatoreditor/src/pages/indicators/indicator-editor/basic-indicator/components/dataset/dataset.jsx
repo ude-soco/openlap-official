@@ -97,11 +97,6 @@ export default function Dataset() {
 
                         <Grid size={{ xs: 12 }}>
                           <Grid container spacing={2} alignItems="center">
-                            <TipPopover
-                              tipAnchor={state.tipAnchor}
-                              toggleTipAnchor={handleDatasetPopoverAnchor}
-                              description={state.tipDescription}
-                            />
                             <Grid size="grow">
                               <Autocomplete
                                 autoFocus
@@ -115,7 +110,7 @@ export default function Dataset() {
                                 renderInput={(params) => (
                                   <TextField
                                     {...params}
-                                    placeholder="*Learning Record Stores (LRSs)"
+                                    placeholder="Learning Record Stores"
                                   />
                                 )}
                                 renderOption={(props, option) => {
@@ -131,6 +126,11 @@ export default function Dataset() {
                                 }}
                               />
                             </Grid>
+                            <TipPopover
+                              tipAnchor={state.tipAnchor}
+                              toggleTipAnchor={handleDatasetPopoverAnchor}
+                              description={state.tipDescription}
+                            />
                           </Grid>
                         </Grid>
                       </Grid>

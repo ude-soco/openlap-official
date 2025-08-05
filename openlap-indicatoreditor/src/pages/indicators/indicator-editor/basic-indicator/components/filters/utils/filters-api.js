@@ -12,15 +12,15 @@ export const fetchActivityTypesList = async (api, lrsStores) => {
 
 export const fetchActivitiesList = async (
   api,
-  lrsStores,
-  platforms,
-  activityTypes
+  myLRSStoreList,
+  activityTypesIdList,
+  actionsIdList
 ) => {
   try {
     let activitiesRequest = {
-      lrsStores,
-      platforms,
-      activityTypes,
+      lrsStores: myLRSStoreList,
+      activityTypes: [activityTypesIdList],
+      actionOnActivities: actionsIdList,
     };
     const response = await api.post(
       "v1/statements/activities",
@@ -41,7 +41,7 @@ export const fetchActionOnActivitiesList = async (
   try {
     let actionOnActivitiesRequest = {
       lrsStores: myLRSStoreList,
-      activityTypes: activityTypesIdList,
+      activityTypes: [activityTypesIdList],
     };
     const response = await api.post(
       "v1/statements/actions",
