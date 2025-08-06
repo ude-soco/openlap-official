@@ -58,17 +58,10 @@ export default function Dataset() {
     return dataset.selectedLRSList.length === 0;
   };
 
-  const handleTogglePanel = () => {
+  const handleUnlockPath = () => {
     setLockedStep((p) => ({
       ...p,
       dataset: { ...p.dataset, openPanel: !p.dataset.openPanel },
-    }));
-  };
-
-  const handleUnlockPath = () => {
-    handleTogglePanel();
-    setLockedStep((p) => ({
-      ...p,
       filters: { ...p.filters, locked: false, openPanel: true },
     }));
   };

@@ -13,6 +13,7 @@ import {
 import Grid from "@mui/material/Grid2";
 import { Alert } from "@mui/material";
 import { BasicContext } from "../../../basic-indicator";
+import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 
 const AnalyzedDataTable = () => {
   const {
@@ -20,6 +21,18 @@ const AnalyzedDataTable = () => {
   } = useContext(BasicContext);
   const [page, setPage] = useState(0); // Current page
   const [rowsPerPage, setRowsPerPage] = useState(5); // Rows per page
+  const [state, setState] = useState({
+    tipAnchor: false,
+    showSelections: true,
+    tipDescription: `
+              <b>Tip!</b><br/>
+              To be decided!
+          `,
+  });
+
+  const handleTipAnchor = (param) => {
+    setState((p) => ({ ...p, tipAnchor: param }));
+  };
 
   const columns = Object.keys(analyzedData).map((key) => ({
     title: analyzedData[key].configurationData.title,
@@ -45,7 +58,16 @@ const AnalyzedDataTable = () => {
 
   return (
     <Grid container spacing={1}>
-      <Typography gutterBottom>Preview data</Typography>
+      <Grid size={{ xs: 12 }}>
+        <Grid container justifyContent="space-between" alignItems="center">
+          <Typography>Preview data</Typography>
+          <TipPopover
+            tipAnchor={state.tipAnchor}
+            toggleTipAnchor={handleTipAnchor}
+            description={state.tipDescription}
+          />
+        </Grid>
+      </Grid>
       <Grid size={{ xs: 12 }}>
         <TableContainer component={Paper} variant="outlined">
           <Table size="small">
