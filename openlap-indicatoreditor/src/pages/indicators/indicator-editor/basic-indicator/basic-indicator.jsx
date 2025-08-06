@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager";
 import { useSnackbar } from "notistack";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import Grid from "@mui/material/Grid2";
 import { Breadcrumbs, Link, Typography } from "@mui/material";
 import dayjs from "dayjs";
@@ -15,9 +14,7 @@ export const BasicContext = createContext(undefined);
 const SESSION = "session_indicator";
 
 export default function BasicIndicator() {
-  const { api } = useContext(AuthContext);
   const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate();
   const [indicator, setIndicator] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION);
     return savedState
@@ -48,7 +45,6 @@ export default function BasicIndicator() {
           selectedLRSList: [],
         };
   });
-
   const [filters, setFilters] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION);
     return savedState
@@ -82,38 +78,6 @@ export default function BasicIndicator() {
           analyzedData: {},
         };
   });
-
-  const [indicatorQuery, setIndicatorQuery] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION);
-    return savedState
-      ? JSON.parse(savedState).indicatorQuery
-      : {
-          lrsStores: [],
-          platforms: [],
-          activityTypes: [],
-          activities: {},
-          actionOnActivities: [],
-          duration: {
-            from: dayjs().subtract(1, "year").toISOString(),
-            until: dayjs().toISOString(),
-          },
-          outputs: [],
-          userQueryCondition: Condition.only_me,
-        };
-  });
-  const [analysisRef, setAnalysisRef] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION);
-    return savedState
-      ? JSON.parse(savedState).analysisRef
-      : {
-          analyticsTechniqueId: "",
-          analyticsTechniqueParams: [],
-          analyticsTechniqueMapping: {
-            mapping: [],
-          },
-          analyzedData: {},
-        };
-  });
   const [visRef, setVisRef] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION);
     return savedState
@@ -128,56 +92,6 @@ export default function BasicIndicator() {
           visualizationMapping: {
             mapping: [],
           },
-        };
-  });
-  const [analysisInputMenu, setAnalysisInputMenu] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION);
-    return savedState
-      ? JSON.parse(savedState).analysisInputMenu
-      : {
-          activities: {
-            id: undefined,
-            type: "Text",
-            required: true,
-            title: "Activities",
-            description:
-              "Selected list of all the Activities specified in Activity Filter. " +
-              'E.g. courses that are selected in Activity name section are "Learning Analytics", "Data Mining" etc.',
-            options: [],
-          },
-          activityTypes: {
-            id: "statement.object.definition.type",
-            type: "Text",
-            required: true,
-            title: "Activity Types",
-            description: "Types of activities",
-          },
-          actionOnActivities: {
-            id: undefined,
-            type: "Text",
-            required: true,
-            title: "Actions",
-            description:
-              "Selected list of actions performed on the activity(ies). E.g. a list of actions that were " +
-              'performed on a course such as "viewed", "enrolled" etc.',
-            options: [],
-          },
-          platforms: {
-            id: "statement.context.platform",
-            type: "Text",
-            required: true,
-            title: "Platforms",
-            description:
-              'Selected list of sources specified in Dataset such as "Moodle" etc.',
-          },
-          // user: {
-          //   id: "statement.actor.account.name",
-          //   type: "Text",
-          //   required: true,
-          //   title: "Users",
-          //   description:
-          //     "Selected list of the User(s) specified in User Filter",
-          // },
         };
   });
   const [lockedStep, setLockedStep] = useState(() => {
@@ -214,10 +128,7 @@ export default function BasicIndicator() {
   });
 
   const prevDependencies = useRef({
-    indicatorQuery,
-    analysisRef,
     visRef,
-    analysisInputMenu,
     lockedStep,
     indicator,
     dataset,
@@ -228,10 +139,7 @@ export default function BasicIndicator() {
   useEffect(() => {
     const intervalId = setInterval(() => {
       let session = {
-        indicatorQuery,
-        analysisRef,
         visRef,
-        analysisInputMenu,
         indicator,
         lockedStep,
         dataset,
@@ -243,10 +151,7 @@ export default function BasicIndicator() {
 
       // Check if any of the dependencies have changed
       if (
-        prevDependencies.current.indicatorQuery !== indicatorQuery ||
-        prevDependencies.current.analysisRef !== analysisRef ||
         prevDependencies.current.visRef !== visRef ||
-        prevDependencies.current.analysisInputMenu !== analysisInputMenu ||
         prevDependencies.current.lockedStep !== lockedStep ||
         prevDependencies.current.indicator !== indicator ||
         prevDependencies.current.dataset !== dataset ||
@@ -258,10 +163,7 @@ export default function BasicIndicator() {
 
       // Update the previous dependencies to the current ones
       prevDependencies.current = {
-        indicatorQuery,
-        analysisRef,
         visRef,
-        analysisInputMenu,
         lockedStep,
         indicator,
         dataset,
@@ -271,35 +173,19 @@ export default function BasicIndicator() {
     }, 5000);
 
     return () => clearInterval(intervalId);
-  }, [
-    indicatorQuery,
-    analysisRef,
-    visRef,
-    analysisInputMenu,
-    lockedStep,
-    indicator,
-    dataset,
-    filters,
-    analysis,
-  ]);
+  }, [visRef, lockedStep, indicator, dataset, filters, analysis]);
 
   return (
     <>
       <BasicContext.Provider
         value={{
-          indicatorQuery,
-          analysisRef,
           visRef,
-          analysisInputMenu,
           lockedStep,
           indicator,
           dataset,
           filters,
           analysis,
-          setIndicatorQuery,
-          setAnalysisRef,
           setVisRef,
-          setAnalysisInputMenu,
           setLockedStep,
           setIndicator,
           setDataset,
