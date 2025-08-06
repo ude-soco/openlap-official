@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AnalyticsTechniqueStatementResponse {
-  private List<String> platforms;
+  //  private List<String> platforms;
   private List<String> activityTypes;
   private List<String> actionOnActivities;
   private List<String> activities;

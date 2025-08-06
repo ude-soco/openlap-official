@@ -155,14 +155,14 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       indicator.setName(indicatorReference.getName());
       indicator.setIndicatorType(indicatorReference.getIndicatorType());
       indicator.setCreatedOn(LocalDateTime.now());
-      Set<String> uniquePlatforms = new HashSet<>();
+//      Set<String> uniquePlatforms = new HashSet<>();
       // Indicator creator validation
       indicator.setCreatedBy(tokenService.getUserFromToken(request));
 
       if (indicatorReference.getIndicatorType() == IndicatorType.BASIC) {
         // TODO: Extract platform information and add it to an attribute
         indicator.setIndicatorQuery(gson.toJson(indicatorReference.getIndicatorQuery()));
-        uniquePlatforms.addAll(indicatorReference.getIndicatorQuery().getPlatforms());
+//        uniquePlatforms.addAll(indicatorReference.getIndicatorQuery().getPlatforms());
       }
 
       // Analytics Technique
@@ -240,7 +240,7 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
               fetchIndicatorMethod(indicatorsToMergeRequest.getIndicatorId());
           StatementsRequest statementsRequest =
               gson.fromJson(foundIndicator.getIndicatorQuery(), StatementsRequest.class);
-          uniquePlatforms.addAll(statementsRequest.getPlatforms());
+//          uniquePlatforms.addAll(statementsRequest.getPlatforms());
         }
         indicator.setIndicators(new ArrayList<>());
         for (int i = 0; i < indicatorsList.size(); i++) {
@@ -259,7 +259,7 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
           }
         }
       }
-      indicator.setPlatforms(uniquePlatforms);
+//      indicator.setPlatforms(uniquePlatforms);
       log.info("An indicator with name '{}' was prepared.", indicator.getName());
     } catch (Exception e) {
       throw new DatabaseOperationException(

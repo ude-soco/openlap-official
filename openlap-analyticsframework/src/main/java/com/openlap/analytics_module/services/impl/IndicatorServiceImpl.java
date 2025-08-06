@@ -156,7 +156,7 @@ public class IndicatorServiceImpl implements IndicatorService {
     indicatorFullDetailResponse.setCreatedBy(foundIndicator.getCreatedBy().getName());
     indicatorFullDetailResponse.setIndicatorCode(
         generateIndicatorCode(foundIndicator.getId(), true));
-    indicatorFullDetailResponse.setPlatforms(foundIndicator.getPlatforms());
+//    indicatorFullDetailResponse.setPlatforms(foundIndicator.getPlatforms());
 
     // Visualization
     indicatorFullDetailResponse.setVisualizationLibrary(
@@ -182,7 +182,7 @@ public class IndicatorServiceImpl implements IndicatorService {
           new AnalyticsTechniqueStatementResponse();
 
       // Statement: Platforms
-      statementResponse.setPlatforms(statementsRequest.getPlatforms());
+      //      statementResponse.setPlatforms(statementsRequest.getPlatforms());
 
       // Statement: Activity Types
       List<String> activityTypes = new ArrayList<>();
@@ -251,7 +251,7 @@ public class IndicatorServiceImpl implements IndicatorService {
     Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
     String baseUrl =
         String.format(
-            "%s://%s:%d", request.getScheme(), request.getServerName(), request.getServerPort());
+            "%s://%s", request.getScheme(), request.getServerName());
     String apiUrl = "/api/v1/code/indicators?indicatorId=";
     String metaDataUrl = "' frameborder='0' height='500px' width='500px'";
 
@@ -532,7 +532,7 @@ public class IndicatorServiceImpl implements IndicatorService {
           new StatementsRequest(
               validateUserLrsStoresWithIndicatorLrsStores(
                   foundUser, gson.fromJson(indicatorQuery, StatementsRequest.class).getLrsStores()),
-              foundStatementRequest.getPlatforms(),
+//              foundStatementRequest.getPlatforms(),
               foundStatementRequest.getActivityTypes(),
               foundStatementRequest.getActionOnActivities(),
               foundStatementRequest.getActivities(),
@@ -645,7 +645,7 @@ public class IndicatorServiceImpl implements IndicatorService {
                 LocalDateTime.now(),
                 0,
                 indicator.getGoalRef(),
-                indicator.getPlatforms(),
+//                indicator.getPlatforms(),
                 tempStatementRequestStringify.isEmpty() ? null : tempStatementRequestStringify,
                 indicator.getAnalyticsTechniqueReference(),
                 columnToMergeStringify,
@@ -670,7 +670,7 @@ public class IndicatorServiceImpl implements IndicatorService {
             LocalDateTime.now(),
             0,
             foundIndicator.getGoalRef(),
-            foundIndicator.getPlatforms(),
+//            foundIndicator.getPlatforms(),
             statementRequestStringify.isEmpty() ? null : statementRequestStringify,
             foundIndicator.getAnalyticsTechniqueReference(),
             foundIndicator.getColumnToMerge(),
@@ -729,7 +729,7 @@ public class IndicatorServiceImpl implements IndicatorService {
         new StatementsRequest(
             validateUserLrsStoresWithIndicatorLrsStores(
                 foundUser, gson.fromJson(indicatorQuery, StatementsRequest.class).getLrsStores()),
-            foundStatementRequest.getPlatforms(),
+//            foundStatementRequest.getPlatforms(),
             foundStatementRequest.getActivityTypes(),
             foundStatementRequest.getActionOnActivities(),
             foundStatementRequest.getActivities(),
