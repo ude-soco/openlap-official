@@ -8,6 +8,7 @@ import dayjs from "dayjs";
 import { Condition } from "../utils/indicator-data";
 import Dataset from "./components/dataset/dataset";
 import Filters from "./components/filters/filters";
+import Analysis from "./components/analysis/analysis";
 
 export const BasicContext = createContext(undefined);
 
@@ -64,6 +65,21 @@ export default function BasicIndicator() {
           selectedActivities: [
             // {activityType: {}, actionOnActivityList: [], selectedActionOnActivity: [{}], activities: [{}]}
           ],
+        };
+  });
+  const [analysis, setAnalysis] = useState(() => {
+    const savedState = sessionStorage.getItem(SESSION);
+    return savedState
+      ? { ...JSON.parse(savedState).analysis }
+      : {
+          analyticsMethodList: [],
+          inputs: [],
+          params: [],
+          selectedAnalyticsMethod: {
+            method: { name: "" },
+            mapping: { mapping: [] },
+          },
+          analyzedData: {},
         };
   });
 
@@ -206,6 +222,7 @@ export default function BasicIndicator() {
     indicator,
     dataset,
     filters,
+    analysis,
   });
 
   useEffect(() => {
@@ -219,6 +236,7 @@ export default function BasicIndicator() {
         lockedStep,
         dataset,
         filters,
+        analysis,
       };
 
       sessionStorage.setItem(SESSION, JSON.stringify(session));
@@ -232,7 +250,8 @@ export default function BasicIndicator() {
         prevDependencies.current.lockedStep !== lockedStep ||
         prevDependencies.current.indicator !== indicator ||
         prevDependencies.current.dataset !== dataset ||
-        prevDependencies.current.filters !== filters
+        prevDependencies.current.filters !== filters ||
+        prevDependencies.current.analysis !== analysis
       ) {
         enqueueSnackbar("Autosaved", { variant: "success" });
       }
@@ -247,6 +266,7 @@ export default function BasicIndicator() {
         indicator,
         dataset,
         filters,
+        analysis,
       };
     }, 5000);
 
@@ -260,6 +280,7 @@ export default function BasicIndicator() {
     indicator,
     dataset,
     filters,
+    analysis,
   ]);
 
   return (
@@ -274,6 +295,7 @@ export default function BasicIndicator() {
           indicator,
           dataset,
           filters,
+          analysis,
           setIndicatorQuery,
           setAnalysisRef,
           setVisRef,
@@ -282,6 +304,7 @@ export default function BasicIndicator() {
           setIndicator,
           setDataset,
           setFilters,
+          setAnalysis,
         }}
       >
         <Grid container spacing={2}>
@@ -320,6 +343,9 @@ export default function BasicIndicator() {
           </Grid>
           <Grid size={{ xs: 12 }}>
             <Filters />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <Analysis />
           </Grid>
         </Grid>
       </BasicContext.Provider>

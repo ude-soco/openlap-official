@@ -111,8 +111,10 @@ export default function ActionSelection({ activity }) {
               title={
                 <>
                   <Typography>
-                    <b>Caution:</b> Reselecting Actions will reset the
-                    selections in Activities!
+                    <b>Caution:</b> <br />
+                    If you have selected any <b>Activities</b> below, changing
+                    the <b>Actions</b> in this dropdown will reset your{" "}
+                    <b>Activity</b> selections.
                   </Typography>
                 </>
               }
@@ -125,9 +127,13 @@ export default function ActionSelection({ activity }) {
           gutterBottom
           color={handleCheckActionsAvailable() ? "textSecondary" : undefined}
         >
-          {handleCheckActionsAvailable()
-            ? "(Disabled) Actions"
-            : "Select Actions"}
+          {handleCheckActionsAvailable() ? (
+            "(Disabled) Actions"
+          ) : (
+            <>
+              Select <b>Actions</b>
+            </>
+          )}
         </Typography>
       </Grid>
       <Grid container spacing={1}>

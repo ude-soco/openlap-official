@@ -13,22 +13,6 @@ export default function Filters() {
   const { lockedStep, setLockedStep, filters, setFilters } =
     useContext(BasicContext);
 
-  //   useEffect(() => {
-  //     const loadMyLearningRecordStores = async () => {
-  //       try {
-  //         const myLRSList = await fetchUserLRSList(api);
-  //         setDataset((p) => ({ ...p, myLRSList: myLRSList }));
-  //       } catch (error) {
-  //         console.error(`Failed to load LRS data`, error);
-  //       }
-  //     };
-  //     loadMyLearningRecordStores();
-  //   }, []);
-
-  //   const handleSelectLRS = (selectedLRSList) => {
-  //     setDataset((p) => ({ ...p, selectedLRSList: selectedLRSList }));
-  //   };
-
   const handleCheckDisabled = () => {
     return filters.selectedActivities.length === 0;
   };
@@ -87,7 +71,7 @@ export default function Filters() {
                         <Button
                           fullWidth
                           variant="contained"
-                          //   disabled={handleCheckDisabled()}
+                          disabled={handleCheckDisabled()}
                           onClick={handleUnlockPath}
                         >
                           Next

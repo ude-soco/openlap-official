@@ -278,8 +278,8 @@ public class StatementServiceImpl implements StatementService {
     Criteria matchCriteria =
         Criteria.where("lrs_id")
             .in(getLrsObjectIdsMethod(statementsRequest.getLrsStores()))
-            .and("statement.context.platform")
-            .in(statementsRequest.getPlatforms())
+            //            .and("statement.context.platform")
+            //            .in(statementsRequest.getPlatforms())
             .and("statement.object.definition.type")
             .in(statementsRequest.getActivityTypes())
             .and("statement.verb.id")

@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
-import { Autocomplete, TextField, Typography } from "@mui/material";
+import { Autocomplete, TextField, Tooltip, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import WarningIcon from "@mui/icons-material/Warning";
 import { BasicContext } from "../../../../basic-indicator";
 import { fetchActionOnActivitiesList } from "../../utils/filters-api";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
@@ -57,9 +58,34 @@ export default function ActivityTypeSelection({ activity }) {
     });
   };
 
+  const handleCheckActivityTypeSelected = () => {
+    return activity.selectedActivityType.name !== "";
+  };
+
   return (
     <>
-      <Typography gutterBottom>Select a type of Activity</Typography>
+      <Grid container spacing={1} alignItems="center">
+        {handleCheckActivityTypeSelected() && (
+          <Grid size="auto" sx={{ cursor: "pointer" }}>
+            <Tooltip
+              title={
+                <>
+                  <Typography>
+                    <b>Caution:</b>
+                    <br />
+                    If you have selected any <b>Actions</b> or <b>Activities</b>{" "}
+                    below, changing the <b>Activity Type</b> from this dropdown
+                    will reset both selections.
+                  </Typography>
+                </>
+              }
+            >
+              <WarningIcon color="warning" />
+            </Tooltip>
+          </Grid>
+        )}
+        <Typography gutterBottom>Select <b>Activity Type</b></Typography>
+      </Grid>
       <Grid container spacing={1} alignItems="center">
         <Grid size="grow">
           <Autocomplete

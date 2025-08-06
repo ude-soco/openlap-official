@@ -56,7 +56,7 @@ export default function ActivitySelection({ activity }) {
               title={
                 <>
                   <Typography>This dropdown is disabled because:</Typography>
-                  <Typography sx={{ my: -1 }}>
+                  <Typography component="div" sx={{ my: -1 }}>
                     <ul>
                       <li>At least an action needs to be selected</li>
                     </ul>
@@ -72,9 +72,13 @@ export default function ActivitySelection({ activity }) {
           gutterBottom
           color={handleCheckActivityAvailable() ? "textSecondary" : undefined}
         >
-          {handleCheckActivityAvailable()
-            ? "(Disabled) Activities"
-            : "Select Activities"}
+          {handleCheckActivityAvailable() ? (
+            "(Disabled) Activities"
+          ) : (
+            <>
+              Select <b>Activities</b>
+            </>
+          )}
         </Typography>
       </Grid>
       <Grid container spacing={1}>
@@ -118,8 +122,10 @@ export default function ActivitySelection({ activity }) {
                 activity.selectedActivityList.length ===
                 activity.activityList.length;
 
+              const { key, ...rest } = props;
+
               return (
-                <li {...props}>
+                <li key={key} {...rest}>
                   <Checkbox
                     icon={icon}
                     checkedIcon={checkedIcon}

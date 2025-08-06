@@ -53,7 +53,8 @@ const AuthProvider = ({ children }) => {
     setAuthTokens(null);
     setUser(null);
     localStorage.removeItem("authTokens");
-    window.location.reload();
+    // window.location.reload();
+    navigate("/login");
   };
 
   const refreshAccessToken = async () => {
