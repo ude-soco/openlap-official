@@ -45,6 +45,14 @@ export default function Analysis() {
     return Object.keys(analysis.analyzedData).length === 0;
   };
 
+  const handleUnlockPath = () => {
+    setLockedStep((p) => ({
+      ...p,
+      analysis: { ...p.analysis, openPanel: !p.analysis.openPanel },
+      filters: { ...p.filters, locked: false, openPanel: true },
+    }));
+  };
+
   return (
     <>
       <Paper variant="outlined" sx={{ p: 2 }}>
@@ -75,7 +83,6 @@ export default function Analysis() {
                         <Grid size={{ xs: 12 }}>
                           <ParamsSelection />
                         </Grid>
-                        {/* // TODO: Condition required when the anaylzed data is empty */}
                         <Grid size={{ xs: 12 }}>
                           {Object.keys(analysis.analyzedData).length ? (
                             <AnalyzedDataTable />
@@ -118,7 +125,7 @@ export default function Analysis() {
                           fullWidth
                           variant="contained"
                           disabled={handleCheckDisabled()}
-                          //   onClick={handleUnlockPath}
+                          onClick={handleUnlockPath}
                         >
                           Next
                         </Button>

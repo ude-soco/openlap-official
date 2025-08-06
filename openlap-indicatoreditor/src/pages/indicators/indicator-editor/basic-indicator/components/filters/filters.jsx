@@ -3,31 +3,21 @@ import Grid from "@mui/material/Grid2";
 import { useContext } from "react";
 import { BasicContext } from "../../basic-indicator";
 import FiltersSummary from "./components/filters-summary";
-import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
 import UserFilter from "./components/user-filter";
 import DateFilter from "./components/date-filter";
 import ActivityFilters from "./components/activity-filters/activity-filters.jsx";
 
 export default function Filters() {
-  const { api } = useContext(AuthContext);
-  const { lockedStep, setLockedStep, filters, setFilters } =
-    useContext(BasicContext);
+  const { lockedStep, setLockedStep, filters } = useContext(BasicContext);
 
   const handleCheckDisabled = () => {
     return filters.selectedActivities.length === 0;
   };
 
-  const handleTogglePanel = () => {
+  const handleUnlockPath = () => {
     setLockedStep((p) => ({
       ...p,
       filters: { ...p.filters, openPanel: !p.filters.openPanel },
-    }));
-  };
-
-  const handleUnlockPath = () => {
-    handleTogglePanel();
-    setLockedStep((p) => ({
-      ...p,
       analysis: { ...p.analysis, locked: false, openPanel: true },
     }));
   };
