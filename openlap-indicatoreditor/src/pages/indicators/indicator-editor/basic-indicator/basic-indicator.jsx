@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useEffect, useRef, useState } from "react";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
 import Grid from "@mui/material/Grid2";
@@ -8,6 +8,7 @@ import { Condition } from "../utils/indicator-data";
 import Dataset from "./components/dataset/dataset";
 import Filters from "./components/filters/filters";
 import Analysis from "./components/analysis/analysis";
+import Visualization from "./components/visualization/visualization";
 
 export const BasicContext = createContext(undefined);
 
@@ -78,18 +79,21 @@ export default function BasicIndicator() {
           analyzedData: {},
         };
   });
-  const [visRef, setVisRef] = useState(() => {
+  const [visualization, setVisualization] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION);
     return savedState
-      ? JSON.parse(savedState).visRef
+      ? JSON.parse(savedState).visualization
       : {
-          visualizationLibraryId: "",
-          visualizationTypeId: "",
-          visualizationParams: {
+          libraryList: [],
+          selectedLibrary: { name: "" },
+          typeList: [],
+          selectedType: { name: "" },
+          inputs: [],
+          params: {
             height: 500,
             width: 500,
           },
-          visualizationMapping: {
+          mapping: {
             mapping: [],
           },
         };
@@ -99,98 +103,78 @@ export default function BasicIndicator() {
     return savedState
       ? JSON.parse(savedState).lockedStep
       : {
-          dataset: {
-            locked: false,
-            openPanel: true,
-            step: "1",
-          },
-          filters: {
-            locked: true,
-            openPanel: false,
-            step: "2",
-          },
-          analysis: {
-            locked: true,
-            openPanel: false,
-            step: "3",
-          },
-          visualization: {
-            locked: true,
-            openPanel: false,
-            step: "4",
-          },
-          finalize: {
-            locked: true,
-            openPanel: false,
-            step: "5",
-          },
+          dataset: { locked: false, openPanel: true, step: "1" },
+          filters: { locked: true, openPanel: false, step: "2" },
+          analysis: { locked: true, openPanel: false, step: "3" },
+          visualization: { locked: true, openPanel: false, step: "4" },
+          finalize: { locked: true, openPanel: false, step: "5" },
         };
   });
 
   const prevDependencies = useRef({
-    visRef,
     lockedStep,
-    indicator,
     dataset,
     filters,
     analysis,
+    visualization,
+    indicator,
   });
 
   useEffect(() => {
     const intervalId = setInterval(() => {
       let session = {
-        visRef,
-        indicator,
         lockedStep,
         dataset,
         filters,
         analysis,
+        visualization,
+        indicator,
       };
 
       sessionStorage.setItem(SESSION, JSON.stringify(session));
 
       // Check if any of the dependencies have changed
       if (
-        prevDependencies.current.visRef !== visRef ||
         prevDependencies.current.lockedStep !== lockedStep ||
-        prevDependencies.current.indicator !== indicator ||
         prevDependencies.current.dataset !== dataset ||
         prevDependencies.current.filters !== filters ||
-        prevDependencies.current.analysis !== analysis
+        prevDependencies.current.analysis !== analysis ||
+        prevDependencies.current.visualization !== visualization ||
+        prevDependencies.current.indicator !== indicator
       ) {
         enqueueSnackbar("Autosaved", { variant: "success" });
       }
 
       // Update the previous dependencies to the current ones
       prevDependencies.current = {
-        visRef,
         lockedStep,
-        indicator,
         dataset,
         filters,
         analysis,
+        visualization,
+        indicator,
       };
     }, 5000);
 
     return () => clearInterval(intervalId);
-  }, [visRef, lockedStep, indicator, dataset, filters, analysis]);
+  }, [lockedStep, dataset, filters, analysis, visualization, indicator]);
 
   return (
     <>
       <BasicContext.Provider
         value={{
-          visRef,
           lockedStep,
-          indicator,
           dataset,
           filters,
           analysis,
-          setVisRef,
+          visualization,
+          indicator,
           setLockedStep,
-          setIndicator,
           setDataset,
           setFilters,
           setAnalysis,
+          setVisualization,
+          setIndicator,
         }}
       >
         <Grid container spacing={2}>
@@ -232,6 +216,9 @@ export default function BasicIndicator() {
           </Grid>
           <Grid size={{ xs: 12 }}>
             <Analysis />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <Visualization />
           </Grid>
         </Grid>
       </BasicContext.Provider>

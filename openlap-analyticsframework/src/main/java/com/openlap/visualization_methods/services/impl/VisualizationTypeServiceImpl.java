@@ -102,7 +102,7 @@ public class VisualizationTypeServiceImpl implements VisualizationTypeService {
     }
   }
 
-  private static List<VisualizationTypeResponse> generateVisTypeResponseList(
+  private List<VisualizationTypeResponse> generateVisTypeResponseList(
       List<VisType> foundAllVisualizationTypes) {
     if (foundAllVisualizationTypes.isEmpty()) {
       return new ArrayList<>();
@@ -119,8 +119,21 @@ public class VisualizationTypeServiceImpl implements VisualizationTypeService {
     }
   }
 
-  private static VisualizationTypeResponse generateVisTypeResponse(VisType visType) {
+  private VisualizationTypeResponse generateVisTypeResponse(VisType visType) {
     try {
+      VisualizationCodeGenerator codeGenerator =
+          visualizationMethodUtilityService.loadVisTypeInstance(visType.getId());
+      OpenLAPDataSet inputDataSet;
+      Gson gson = new Gson();
+      try {
+        inputDataSet = gson.fromJson(codeGenerator.getInputAsJsonString(), OpenLAPDataSet.class);
+      } catch (Exception ex) {
+        throw new ServiceException("Error in deserializing code generator input config.", ex);
+      }
+      VisualizationTypeConfiguration visualizationTypeConfiguration =
+          new VisualizationTypeConfiguration();
+      visualizationTypeConfiguration.setInput(inputDataSet);
+
       VisualizationTypeResponse visualizationTypeResponse = new VisualizationTypeResponse();
       visualizationTypeResponse.setId(visType.getId());
       visualizationTypeResponse.setLibrary(visType.getVisualizationLib().getName());
@@ -128,6 +141,8 @@ public class VisualizationTypeServiceImpl implements VisualizationTypeService {
       String[] imageCodeStringList = visType.getImplementingClass().split("\\.");
       visualizationTypeResponse.setImageCode(imageCodeStringList[imageCodeStringList.length - 1]);
       visualizationTypeResponse.setChartConfiguration(visType.getChartConfiguration());
+      visualizationTypeResponse.setChartInputs(
+          visualizationTypeConfiguration.getInput().getColumnsConfigurationData());
       return visualizationTypeResponse;
     } catch (Exception e) {
       throw new ServiceException("Error in generating vis type response.", e);

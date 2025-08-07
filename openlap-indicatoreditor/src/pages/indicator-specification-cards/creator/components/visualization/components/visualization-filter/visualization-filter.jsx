@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import VisualizationDescription from "./visualization-description.jsx";
-import { Recommend } from "@mui/icons-material";
+import RecommendIcon from "@mui/icons-material/Recommend";
 import { DataTypes, visualizations } from "../../../../utils/data/config.js";
 import { ISCContext } from "../../../../indicator-specification-card.jsx";
 
@@ -241,7 +241,7 @@ const VisualizationFilter = () => {
                                               columnTypes
                                             ) && (
                                               <Grid item>
-                                                <Recommend color="success" />
+                                                <RecommendIcon color="success" />
                                               </Grid>
                                             )}
                                             <Grid item xs>
@@ -274,7 +274,7 @@ const VisualizationFilter = () => {
                       justifyContent="center"
                     >
                       <Grid item>
-                        <Recommend color="success" />
+                        <RecommendIcon color="success" />
                       </Grid>
                       <Grid item>
                         <Typography gutterBottom variant="body2">
