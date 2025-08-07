@@ -3,6 +3,7 @@ import { BasicContext } from "../../../basic-indicator";
 import {
   Autocomplete,
   IconButton,
+  Paper,
   TextField,
   Tooltip,
   Typography,
@@ -55,72 +56,99 @@ export default function InputsSelection() {
   }
 
   return (
-    <>
-      <Typography gutterBottom sx={{ pb: 0.5 }}>
-        Select <b>Inputs</b> of the method
-      </Typography>
-      <Grid container spacing={2} alignItems="center">
-        {analysis.inputs.map((input, index) => (
-          <Grid size={{ xs: 12, md: 6 }} key={index}>
-            <Grid container spacing={1} alignItems="center">
-              <Grid size="grow">
-                {/* // TODO: Need to change to normal Select Menu Item component */}
-                <Autocomplete
-                  disableClearable
-                  disablePortal
-                  fullWidth
-                  options={analysiInputMenuList}
-                  getOptionLabel={(o) => o.name}
-                  value={input.selectedInput || null}
-                  onChange={(event, value) => handleSelectInputs(input, value)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={`${input.title} ${
-                        input.required ? "" : "(Optional)"
-                      }`}
-                      placeholder="Input attributes"
-                    />
-                  )}
-                  renderOption={(props, option) => {
-                    const { key, ...restProps } = props;
-                    return (
-                      <li {...restProps} key={option.id}>
-                        <Grid container sx={{ py: 0.5 }}>
-                          <Grid size={{ xs: 12 }}>
-                            <Typography>{option.name}</Typography>
+    <Grid
+      container
+      spacing={2}
+      component={Paper}
+      variant="outlined"
+      sx={{ p: 2 }}
+    >
+      <Grid container spacing={0} alignItems="center">
+        <Typography>
+          Select <b>Inputs</b> of the method
+        </Typography>
+        <Tooltip
+          arrow
+          title={
+            <Typography sx={{ p: 1 }}>
+              <b>Description</b>
+              <br />
+              Each Analysis Method has input parameters. You can decide which
+              data should be assigned to which analysis input parameter.
+            </Typography>
+          }
+        >
+          <IconButton color="info">
+            <InfoIcon />
+          </IconButton>
+        </Tooltip>
+      </Grid>
+      <Grid size={{ xs: 12 }}>
+        <Grid container spacing={2} alignItems="center">
+          {analysis.inputs.map((input, index) => (
+            <Grid size={{ xs: 12 }} key={index}>
+              <Grid container spacing={1} alignItems="center">
+                <Grid size="grow">
+                  {/* // TODO: Need to change to normal Select Menu Item component */}
+                  <Autocomplete
+                    disableClearable
+                    disablePortal
+                    fullWidth
+                    options={analysiInputMenuList}
+                    getOptionLabel={(o) => o.name}
+                    value={input.selectedInput || null}
+                    onChange={(event, value) =>
+                      handleSelectInputs(input, value)
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label={`${input.title} ${
+                          input.required ? "" : "(Optional)"
+                        }`}
+                        placeholder="Input attributes"
+                      />
+                    )}
+                    renderOption={(props, option) => {
+                      const { key, ...restProps } = props;
+                      return (
+                        <li {...restProps} key={option.id}>
+                          <Grid container sx={{ py: 0.5 }}>
+                            <Grid size={{ xs: 12 }}>
+                              <Typography>{option.name}</Typography>
+                            </Grid>
+                            <Grid size={{ xs: 12 }}>
+                              <Typography variant="body2">
+                                {option.description}
+                              </Typography>
+                            </Grid>
                           </Grid>
-                          <Grid size={{ xs: 12 }}>
-                            <Typography variant="body2">
-                              {option.description}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                      </li>
-                    );
-                  }}
-                />
-              </Grid>
-              <Grid size="auto">
-                <Tooltip
-                  arrow
-                  title={
-                    <Typography sx={{ p: 1 }}>
-                      <b>Description</b>
-                      <br />
-                      {input.description}
-                    </Typography>
-                  }
-                >
-                  <IconButton color="info">
-                    <InfoIcon />
-                  </IconButton>
-                </Tooltip>
+                        </li>
+                      );
+                    }}
+                  />
+                </Grid>
+                <Grid size="auto">
+                  <Tooltip
+                    arrow
+                    title={
+                      <Typography sx={{ p: 1 }}>
+                        <b>Description</b>
+                        <br />
+                        {input.description}
+                      </Typography>
+                    }
+                  >
+                    <IconButton color="info">
+                      <InfoIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
               </Grid>
             </Grid>
-          </Grid>
-        ))}
+          ))}
+        </Grid>
       </Grid>
-    </>
+    </Grid>
   );
 }

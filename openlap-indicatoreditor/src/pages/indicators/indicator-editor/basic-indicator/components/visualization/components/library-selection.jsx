@@ -1,7 +1,14 @@
 import { useContext, useEffect } from "react";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
-import { Autocomplete, TextField, Typography } from "@mui/material";
+import {
+  Autocomplete,
+  IconButton,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import InfoIcon from "@mui/icons-material/Info";
 import {
   fetchVisualizationLibrary,
   fetchVisualizationTypeByLibraryId,
@@ -25,7 +32,12 @@ export default function LibrarySelection() {
   }, []);
 
   const handleSelectVisualizationLibrary = async (value) => {
-    setVisualization((p) => ({ ...p, selectedLibrary: value }));
+    setVisualization((p) => ({
+      ...p,
+      selectedLibrary: value,
+      typeList: [],
+      selectedType: { name: "", chartInputs: [] },
+    }));
     try {
       const typeList = await fetchVisualizationTypeByLibraryId(api, value.id);
       setVisualization((p) => ({ ...p, typeList: typeList }));
@@ -36,11 +48,29 @@ export default function LibrarySelection() {
 
   return (
     <>
-      <Typography gutterBottom>
-        Select a <b>Visualization library</b>
-      </Typography>
-      <Grid container spacing={1} alignItems="center">
-        <Grid size="grow">
+      <Grid container>
+        <Grid size={{ xs: 12 }}>
+          <Grid container alignItems="center">
+            <Typography>
+              Select a <b>Visualization library</b>
+            </Typography>
+            <Tooltip
+              arrow
+              title={
+                <Typography sx={{ p: 1 }}>
+                  <b>Description</b>
+                  <br />
+                  To be decided
+                </Typography>
+              }
+            >
+              <IconButton color="info">
+                <InfoIcon />
+              </IconButton>
+            </Tooltip>
+          </Grid>
+        </Grid>
+        <Grid size={{ xs: 12 }}>
           <Autocomplete
             disableClearable
             disablePortal

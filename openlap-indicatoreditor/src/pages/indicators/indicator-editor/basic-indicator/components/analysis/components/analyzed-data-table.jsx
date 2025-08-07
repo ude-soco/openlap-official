@@ -1,5 +1,6 @@
 import { useContext, useState } from "react";
 import {
+  IconButton,
   Paper,
   Table,
   TableBody,
@@ -8,12 +9,13 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { Alert } from "@mui/material";
 import { BasicContext } from "../../../basic-indicator";
-import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
+import InfoIcon from "@mui/icons-material/Info";
 
 const AnalyzedDataTable = () => {
   const {
@@ -21,18 +23,6 @@ const AnalyzedDataTable = () => {
   } = useContext(BasicContext);
   const [page, setPage] = useState(0); // Current page
   const [rowsPerPage, setRowsPerPage] = useState(5); // Rows per page
-  const [state, setState] = useState({
-    tipAnchor: false,
-    showSelections: true,
-    tipDescription: `
-              <b>Tip!</b><br/>
-              To be decided!
-          `,
-  });
-
-  const handleTipAnchor = (param) => {
-    setState((p) => ({ ...p, tipAnchor: param }));
-  };
 
   const columns = Object.keys(analyzedData).map((key) => ({
     title: analyzedData[key].configurationData.title,
@@ -57,15 +47,26 @@ const AnalyzedDataTable = () => {
   };
 
   return (
-    <Grid container spacing={1}>
+    <Grid container>
       <Grid size={{ xs: 12 }}>
-        <Grid container justifyContent="space-between" alignItems="center">
+        <Grid container alignItems="center">
           <Typography>Preview data</Typography>
-          <TipPopover
-            tipAnchor={state.tipAnchor}
-            toggleTipAnchor={handleTipAnchor}
-            description={state.tipDescription}
-          />
+          <Grid size="auto">
+            <Tooltip
+              arrow
+              title={
+                <Typography sx={{ p: 1 }}>
+                  <b>Description</b>
+                  <br />
+                  To be decided
+                </Typography>
+              }
+            >
+              <IconButton color="info">
+                <InfoIcon />
+              </IconButton>
+            </Tooltip>
+          </Grid>
         </Grid>
       </Grid>
       <Grid size={{ xs: 12 }}>
@@ -107,9 +108,8 @@ const AnalyzedDataTable = () => {
       {numRows === 0 && (
         <Grid size={{ xs: 12 }}>
           <Alert severity="warning">
-            The columns selected cannot be merged as they don’t share common
-            data between the chosen indicators. Consider selecting columns with
-            shared data.
+            There are not enough data to perform the analysis. Please change the
+            filters.
           </Alert>
         </Grid>
       )}

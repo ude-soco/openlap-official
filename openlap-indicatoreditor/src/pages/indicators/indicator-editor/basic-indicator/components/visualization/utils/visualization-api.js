@@ -23,6 +23,7 @@ export const fetchVisualizationTypeByLibraryId = async (api, libraryId) => {
   }
 };
 
+// * Unused
 export const fetchVisualizationTypeInputs = async (api, typeId) => {
   try {
     const response = await api.get(
