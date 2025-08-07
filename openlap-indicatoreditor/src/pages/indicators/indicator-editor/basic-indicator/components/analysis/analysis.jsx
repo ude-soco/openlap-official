@@ -49,7 +49,7 @@ export default function Analysis() {
     setLockedStep((p) => ({
       ...p,
       analysis: { ...p.analysis, openPanel: !p.analysis.openPanel },
-      filters: { ...p.filters, locked: false, openPanel: true },
+      visualization: { ...p.visualization, locked: false, openPanel: true },
     }));
   };
 

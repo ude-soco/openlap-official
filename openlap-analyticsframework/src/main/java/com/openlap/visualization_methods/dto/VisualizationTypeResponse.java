@@ -1,7 +1,10 @@
 package com.openlap.visualization_methods.dto;
 
+import com.openlap.dataset.OpenLAPColumnConfigData;
 import com.openlap.template.model.ChartConfiguration;
 import lombok.*;
+
+import java.util.List;
 
 @Data
 @Getter
@@ -14,5 +17,6 @@ public class VisualizationTypeResponse {
   private String name;
   private String imageCode;
   private ChartConfiguration chartConfiguration;
-
+  // * TODO: Visualization input
+  private List<OpenLAPColumnConfigData> chartInputs;
 }
