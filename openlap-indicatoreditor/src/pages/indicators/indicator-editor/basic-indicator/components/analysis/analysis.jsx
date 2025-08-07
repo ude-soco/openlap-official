@@ -15,7 +15,7 @@ import AnalysisSelection from "./components/analysis-selection";
 import InputsSelection from "./components/inputs-selection";
 import ParamsSelection from "./components/params-selection";
 import { fetchAnalyzedData } from "./utils/analysis-api";
-import { buildAnalysisRef, buildIndicatorQuery } from "./utils/query-builder";
+import { buildAnalysisRef, buildIndicatorQuery } from "../../utils/query-builder.js";
 import AnalyzedDataTable from "./components/analyzed-data-table";
 
 export default function Analysis() {
@@ -74,44 +74,52 @@ export default function Analysis() {
                         <Grid size={{ xs: 12 }}>
                           <AnalysisSelection />
                         </Grid>
+
                         <Grid size={{ xs: 12 }}>
-                          <Divider />
+                          <Grid container spacing={2}>
+                            {analysis.inputs.length !== 0 ? (
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <InputsSelection />
+                              </Grid>
+                            ) : undefined}
+                            {analysis.params.length !== 0 ? (
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <ParamsSelection />
+                              </Grid>
+                            ) : undefined}
+                          </Grid>
                         </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          <InputsSelection />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          <ParamsSelection />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          {Object.keys(analysis.analyzedData).length ? (
-                            <AnalyzedDataTable />
-                          ) : (
-                            <Box
-                              sx={{
-                                mt: 2,
-                                pb: 1,
-                                p: 8,
-                                border: "1px dashed",
-                                borderColor: "divider",
-                                borderRadius: 2,
-                                textAlign: "center",
-                                color: "text.secondary",
-                              }}
-                            >
-                              <Typography variant="body1" gutterBottom>
-                                Click "Preview" to run the analysis of your
-                                data.
-                              </Typography>
-                              <Button
-                                variant="contained"
-                                onClick={handlePreviewAnalyzedData}
+                        {analysis.inputs.length !== 0 ? (
+                          <Grid size={{ xs: 12 }}>
+                            {Object.keys(analysis.analyzedData).length ? (
+                              <AnalyzedDataTable />
+                            ) : (
+                              <Box
+                                sx={{
+                                  mt: 2,
+                                  pb: 1,
+                                  p: 8,
+                                  border: "1px dashed",
+                                  borderColor: "divider",
+                                  borderRadius: 2,
+                                  textAlign: "center",
+                                  color: "text.secondary",
+                                }}
                               >
-                                Preview
-                              </Button>
-                            </Box>
-                          )}
-                        </Grid>
+                                <Typography variant="body1" gutterBottom>
+                                  Click "Preview" to run the analysis of your
+                                  data.
+                                </Typography>
+                                <Button
+                                  variant="contained"
+                                  onClick={handlePreviewAnalyzedData}
+                                >
+                                  Preview
+                                </Button>
+                              </Box>
+                            )}
+                          </Grid>
+                        ) : undefined}
                       </Grid>
                     </Grid>
                   </Grid>

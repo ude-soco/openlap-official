@@ -1,11 +1,11 @@
 import { useContext } from "react";
-import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { BasicContext } from "../../../basic-indicator";
 import {
   FormControl,
   IconButton,
   InputLabel,
   MenuItem,
+  Paper,
   Select,
   TextField,
   Tooltip,
@@ -30,13 +30,36 @@ export default function ParamsSelection() {
   };
 
   return (
-    <>
-      <Typography gutterBottom sx={{ pb: 0.5 }}>
-        Select <b>Parameters</b> of the method
-      </Typography>
+    <Grid
+      container
+      spacing={2}
+      component={Paper}
+      variant="outlined"
+      sx={{ p: 2 }}
+    >
+      <Grid container spacing={0} alignItems="center">
+        <Typography>
+          Select <b>Parameters</b> of the method
+        </Typography>
+        <Tooltip
+          arrow
+          title={
+            <Typography sx={{ p: 1 }}>
+              <b>Description</b>
+              <br />
+              Parameters are preselected with default values and can be changed
+              based on your needs.
+            </Typography>
+          }
+        >
+          <IconButton color="info">
+            <InfoIcon />
+          </IconButton>
+        </Tooltip>
+      </Grid>
       <Grid container spacing={2} alignItems="center">
         {analysis.params.map((param, index) => (
-          <Grid size={{ xs: 12, md: 6 }} key={index}>
+          <Grid size={{ xs: 12 }} key={index}>
             <Grid container alignItems="center" spacing={1}>
               <Grid size="grow">
                 <FormControl fullWidth>
@@ -97,6 +120,6 @@ export default function ParamsSelection() {
           </Grid>
         ))}
       </Grid>
-    </>
+    </Grid>
   );
 }

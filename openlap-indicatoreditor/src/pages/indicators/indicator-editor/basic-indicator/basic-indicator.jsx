@@ -87,14 +87,17 @@ export default function BasicIndicator() {
           libraryList: [],
           selectedLibrary: { name: "" },
           typeList: [],
-          selectedType: { name: "" },
-          inputs: [],
+          selectedType: { name: "", chartInputs: [] },
           params: {
             height: 500,
             width: 500,
           },
           mapping: {
             mapping: [],
+          },
+          previewData: {
+            displayCode: [],
+            scriptData: {},
           },
         };
   });

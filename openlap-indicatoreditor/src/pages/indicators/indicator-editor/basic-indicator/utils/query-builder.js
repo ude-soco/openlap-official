@@ -17,7 +17,7 @@ function buildActivities(filters) {
 }
 
 export function buildIndicatorQuery(dataset, filters, analysis) {
-  let indicatorQuery = {
+  return {
     lrsStores: dataset.selectedLRSList,
     activityTypes: filters.selectedActivities.map(
       (item) => item.selectedActivityType.id
@@ -35,16 +35,23 @@ export function buildIndicatorQuery(dataset, filters, analysis) {
     ),
     userQueryCondition: filters.selectedUserFilter,
   };
-  return indicatorQuery;
 }
 
 export function buildAnalysisRef(analysis) {
-  let analysisRef = {
+  return {
     analyticsTechniqueId: analysis.selectedAnalyticsMethod.method.id,
     analyticsTechniqueParams: analysis.params,
     analyticsTechniqueMapping: {
       mapping: analysis.selectedAnalyticsMethod.mapping.mapping,
     },
   };
-  return analysisRef;
+}
+
+export function buildVisRef(visualization) {
+  return {
+    visualizationLibraryId: visualization.selectedLibrary.id,
+    visualizationTypeId: visualization.selectedType.id,
+    visualizationParams: { ...visualization.params },
+    visualizationMapping: { mapping: visualization.mapping.mapping },
+  };
 }

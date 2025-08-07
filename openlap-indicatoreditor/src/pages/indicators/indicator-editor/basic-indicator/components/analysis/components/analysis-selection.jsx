@@ -6,8 +6,15 @@ import {
   fetchTechniqueInputs,
   fetchTechniqueParams,
 } from "../utils/analysis-api";
-import { Autocomplete, TextField, Typography } from "@mui/material";
+import {
+  Autocomplete,
+  IconButton,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import InfoIcon from "@mui/icons-material/Info";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 
 export default function AnalysisSelection() {
@@ -78,11 +85,29 @@ export default function AnalysisSelection() {
 
   return (
     <>
-      <Typography gutterBottom>
-        Select an <b>Analytics Method</b>
-      </Typography>
-      <Grid container spacing={1} alignItems="center">
-        <Grid size="grow">
+      <Grid container>
+        <Grid size={{ xs: 12 }}>
+          <Grid container alignItems="center">
+            <Typography>
+              Select an <b>Analytics Method</b>
+            </Typography>
+            <Tooltip
+              arrow
+              title={
+                <Typography sx={{ p: 1 }}>
+                  <b>Description</b>
+                  <br />
+                  To be decided!
+                </Typography>
+              }
+            >
+              <IconButton color="info">
+                <InfoIcon />
+              </IconButton>
+            </Tooltip>
+          </Grid>
+        </Grid>
+        <Grid size={{ xs: 12 }}>
           <Autocomplete
             disableClearable
             disablePortal
@@ -111,13 +136,6 @@ export default function AnalysisSelection() {
                 </li>
               );
             }}
-          />
-        </Grid>
-        <Grid size="auto">
-          <TipPopover
-            tipAnchor={state.tipAnchor}
-            toggleTipAnchor={handleTipAnchor}
-            description={state.tipDescription}
           />
         </Grid>
       </Grid>
