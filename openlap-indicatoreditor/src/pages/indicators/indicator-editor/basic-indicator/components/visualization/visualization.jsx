@@ -12,17 +12,16 @@ import { BasicContext } from "../../basic-indicator";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
 import VisualizationSummary from "./components/visualization-summary";
 import LibrarySelection from "./components/library-selection";
-import { visualizationImages } from "./utils/visualization-data";
 import TypeSelection from "./components/type-selection";
-import InputsSelection from "./components/inputs-selection";
 import { requestBasicIndicatorPreview } from "./utils/visualization-api";
 import {
   buildAnalysisRef,
   buildIndicatorQuery,
   buildVisRef,
 } from "../../utils/query-builder";
+import TypeInputSelection from "./components/type-input-selection";
 
-export default function Dataset() {
+export default function Visualization() {
   const { api } = useContext(AuthContext);
   const {
     dataset,
@@ -93,40 +92,42 @@ export default function Dataset() {
                         </Grid>
                       </>
                     ) : undefined}
-                    {visualization.selectedType.chartInputs.length > 0 ? (
-                      <>
-                        <Grid size={{ xs: 12 }} sx={{ pt: 2 }}>
-                          <Divider />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 8 }}>
-                          <InputsSelection />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 8 }}>
-                          <Box
-                            sx={{
-                              mt: 2,
-                              pb: 1,
-                              p: 8,
-                              border: "1px dashed",
-                              borderColor: "divider",
-                              borderRadius: 2,
-                              textAlign: "center",
-                              color: "text.secondary",
-                            }}
-                          >
-                            <Typography variant="body1" gutterBottom>
-                              Click "Preview" to generate the visualization.
-                            </Typography>
-                            <Button
-                              variant="contained"
-                              onClick={handleLoadPreviewVisualization}
+                    <>
+                      <Grid size={{ xs: 12 }} sx={{ pt: 2 }}>
+                        <Divider />
+                      </Grid>
+                      {visualization.inputs.length > 0 ? (
+                        <>
+                          <Grid size={{ xs: 12, md: 8 }}>
+                            <TypeInputSelection />
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 8 }}>
+                            <Box
+                              sx={{
+                                mt: 2,
+                                pb: 1,
+                                p: 8,
+                                border: "1px dashed",
+                                borderColor: "divider",
+                                borderRadius: 2,
+                                textAlign: "center",
+                                color: "text.secondary",
+                              }}
                             >
-                              Preview
-                            </Button>
-                          </Box>
-                        </Grid>
-                      </>
-                    ) : undefined}
+                              <Typography variant="body1" gutterBottom>
+                                Click "Preview" to generate the visualization.
+                              </Typography>
+                              <Button
+                                variant="contained"
+                                onClick={handleLoadPreviewVisualization}
+                              >
+                                Preview
+                              </Button>
+                            </Box>
+                          </Grid>
+                        </>
+                      ) : undefined}
+                    </>
                     <Grid size={{ xs: 12 }}>
                       <Divider />
                     </Grid>

@@ -88,17 +88,10 @@ export default function BasicIndicator() {
           selectedLibrary: { name: "" },
           typeList: [],
           selectedType: { name: "", chartInputs: [] },
-          params: {
-            height: 500,
-            width: 500,
-          },
-          mapping: {
-            mapping: [],
-          },
-          previewData: {
-            displayCode: [],
-            scriptData: {},
-          },
+          inputs: [],
+          params: { height: 500, width: 500 },
+          mapping: { mapping: [] },
+          previewData: { displayCode: [], scriptData: {} },
         };
   });
   const [lockedStep, setLockedStep] = useState(() => {

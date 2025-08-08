@@ -23,7 +23,14 @@ const TypeSelection = () => {
   const [state, setState] = useState({ showTypeSelection: false });
 
   const handleSelectVisualizationType = async (typeSelected) => {
-    setVisualization((p) => ({ ...p, selectedType: typeSelected }));
+    setVisualization((p) => ({
+      ...p,
+      selectedType: typeSelected,
+      inputs: [...typeSelected.chartInputs],
+      params: { height: 500, width: 500 },
+      mapping: { mapping: [] },
+      previewData: { displayCode: [], scriptData: {} },
+    }));
   };
 
   const handleShowSelected = (expanded) => {
