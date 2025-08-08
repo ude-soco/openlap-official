@@ -110,11 +110,13 @@ export default function ActivityFilters() {
                 />
               </Grid>
             </Grid>
-            <Grid size="auto">
-              <Button variant="contained" onClick={handleAddMoreFilter}>
-                Add Filter
-              </Button>
-            </Grid>
+            {filters.selectedActivities.length > 0 ? (
+              <Grid size="auto">
+                <Button variant="contained" onClick={handleAddMoreFilter}>
+                  Add Filter
+                </Button>
+              </Grid>
+            ) : undefined}
           </Grid>
 
           {filters.selectedActivities.length === 0 ? (
@@ -122,7 +124,7 @@ export default function ActivityFilters() {
               sx={{
                 mt: 2,
                 pb: 1,
-                p: 2,
+                p: 8,
                 border: "1px dashed",
                 borderColor: "divider",
                 borderRadius: 2,
@@ -130,9 +132,12 @@ export default function ActivityFilters() {
                 color: "text.secondary",
               }}
             >
-              <Typography variant="body1">
+              <Typography variant="body1" gutterBottom>
                 No filters added. Click "Add Filter" to get started.
               </Typography>
+              <Button variant="contained" onClick={handleAddMoreFilter}>
+                Add Filter
+              </Button>
             </Box>
           ) : (
             <Box

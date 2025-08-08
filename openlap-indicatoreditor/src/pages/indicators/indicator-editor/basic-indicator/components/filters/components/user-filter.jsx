@@ -9,14 +9,13 @@ import {
   Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Condition } from "../../../../utils/indicator-data";
 import { useContext, useState } from "react";
 import { BasicContext } from "../../../basic-indicator";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 
 export default function UserFilter() {
-  const { filters } = useContext(BasicContext);
+  const { filters, setFilters } = useContext(BasicContext);
   const [state, setState] = useState({
     tipAnchor: null,
     tipDescription: `
@@ -27,6 +26,10 @@ export default function UserFilter() {
 
   const handleUserFilterPopoverAnchor = (param) => {
     setState((p) => ({ ...p, tipAnchor: param }));
+  };
+
+  const handleChangeUserFilter = (event) => {
+    setFilters((p) => ({ ...p, selectedUserFilter: event.target.value }));
   };
 
   return (
@@ -49,7 +52,12 @@ export default function UserFilter() {
             />
           </Grid>
           <FormControl name="role">
-            <RadioGroup row name="role" value={filters.selectedUserFilter}>
+            <RadioGroup
+              row
+              name="role"
+              value={filters.selectedUserFilter}
+              onChange={handleChangeUserFilter}
+            >
               <FormControlLabel
                 value={Condition.only_me}
                 control={<Radio />}

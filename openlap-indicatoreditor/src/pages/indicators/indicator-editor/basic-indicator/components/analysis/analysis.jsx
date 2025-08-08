@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
 import { BasicContext } from "../../basic-indicator";
 import {
@@ -15,7 +15,10 @@ import AnalysisSelection from "./components/analysis-selection";
 import InputsSelection from "./components/inputs-selection";
 import ParamsSelection from "./components/params-selection";
 import { fetchAnalyzedData } from "./utils/analysis-api";
-import { buildAnalysisRef, buildIndicatorQuery } from "../../utils/query-builder.js";
+import {
+  buildAnalysisRef,
+  buildIndicatorQuery,
+} from "../../utils/query-builder.js";
 import AnalyzedDataTable from "./components/analyzed-data-table";
 
 export default function Analysis() {

@@ -20,6 +20,8 @@ import {
   buildVisRef,
 } from "../../utils/query-builder";
 import TypeInputSelection from "./components/type-input-selection";
+import ChartPreview from "./components/chart-preview";
+import ChartCustomizationPanel from "./components/customization/chart-customization-panel";
 
 export default function Visualization() {
   const { api } = useContext(AuthContext);
@@ -30,6 +32,7 @@ export default function Visualization() {
     lockedStep,
     setLockedStep,
     visualization,
+    setVisualization,
   } = useContext(BasicContext);
   const [state, setState] = useState({
     tipAnchor: null,
@@ -41,10 +44,27 @@ export default function Visualization() {
 
   // useEffect(() => {
   //   console.log("Call");
-  //   handleLoadPreviewVisualization().then((response) => {
-  //     console.log(response);
-  //   });
+  // handleLoadPreviewVisualization().then((response) => {
+  //   console.log(response);
+  // });
   // }, [visualization.selectedType.chartInputs, analysis.analyzedData]);
+
+  useEffect(() => {
+    if (
+      visualization.inputs.length !== 0 &&
+      allInputsHaveSelected(visualization.inputs)
+    )
+      handleLoadPreviewVisualization().then((previewData) => {
+        setVisualization((p) => ({
+          ...p,
+          previewData: {
+            ...p.previewData,
+            displayCode: previewData.displayCode,
+            scriptData: previewData.scriptData,
+          },
+        }));
+      });
+  }, [visualization.inputs, visualization.params]);
 
   const handleDatasetPopoverAnchor = (param) => {
     setState((p) => ({ ...p, tipAnchor: param }));
@@ -65,6 +85,18 @@ export default function Visualization() {
       console.error("Failed to load the visualization", error);
     }
   };
+
+  // * Helper function
+  function allInputsHaveSelected(chartInputs) {
+    return chartInputs.every((input) => {
+      const selected = input.selectedInput;
+      return (
+        selected &&
+        typeof selected === "object" &&
+        Object.keys(selected).length > 0
+      );
+    });
+  }
 
   return (
     <>
@@ -93,15 +125,15 @@ export default function Visualization() {
                       </>
                     ) : undefined}
                     <>
-                      <Grid size={{ xs: 12 }} sx={{ pt: 2 }}>
-                        <Divider />
-                      </Grid>
                       {visualization.inputs.length > 0 ? (
                         <>
-                          <Grid size={{ xs: 12, md: 8 }}>
+                          <Grid size={{ xs: 12 }} sx={{ py: 2 }}>
                             <TypeInputSelection />
                           </Grid>
-                          <Grid size={{ xs: 12, md: 8 }}>
+                          {/* <Grid size={{ xs: 12 }}>
+                            <Divider />
+                          </Grid> */}
+                          {/* <Grid size={{ xs: 12, md: 8 }}>
                             <Box
                               sx={{
                                 mt: 2,
@@ -124,7 +156,22 @@ export default function Visualization() {
                                 Preview
                               </Button>
                             </Box>
-                          </Grid>
+                          </Grid> */}
+                          {visualization.previewData.displayCode.length !==
+                          0 ? (
+                            <Grid size={{ xs: 12 }}>
+                              <Grid container spacing={2}>
+                                <Grid size={{ xs: 12, md: "grow" }}>
+                                  <Grid container justifyContent="center" sx={{backgroundColor: "white", p: 3, borderRadius: 2}}>
+                                    <ChartPreview />
+                                  </Grid>
+                                </Grid>
+                                <Grid size={{ xs: 12, md: "grow" }}>
+                                  <ChartCustomizationPanel />
+                                </Grid>
+                              </Grid>
+                            </Grid>
+                          ) : undefined}
                         </>
                       ) : undefined}
                     </>
