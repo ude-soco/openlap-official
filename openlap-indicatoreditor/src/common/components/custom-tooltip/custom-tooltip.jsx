@@ -26,6 +26,7 @@ const CustomTooltip = ({ type = "description", message }) => {
 
   return (
     <Tooltip
+      sx={{ cursor: "help" }}
       arrow
       title={
         <Box sx={{ p: 1 }}>
