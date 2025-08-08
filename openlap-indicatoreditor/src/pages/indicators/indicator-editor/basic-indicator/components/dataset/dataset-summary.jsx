@@ -7,7 +7,7 @@ import { ToggleEditIconButton } from "../../../../../../common/components/toggle
 import TipPopover from "../../../../../../common/components/tip-popover/tip-popover";
 
 export default function DatasetSummary() {
-  const { lockedStep, setLockedStep } = useContext(BasicContext);
+  const { dataset, lockedStep, setLockedStep } = useContext(BasicContext);
   const [state, setState] = useState({
     tipAnchor: false,
     showSelections: true,
@@ -34,13 +34,13 @@ export default function DatasetSummary() {
 
   return (
     <>
-      <Grid container spacing={1}>
+      <Grid container>
         <Grid size={{ xs: 12 }}>
           <Grid container justifyContent="space-between" spacing={1}>
             <Grid size="grow">
               <Grid container alignItems="center" spacing={1}>
                 <Chip label={lockedStep.dataset.step} color="primary" />
-                <Typography>Choose source of data</Typography>
+                <Typography>Dataset</Typography>
                 <TipPopover
                   tipAnchor={state.tipAnchor}
                   toggleTipAnchor={handleTipAnchor}
@@ -66,8 +66,14 @@ export default function DatasetSummary() {
           unmountOnExit
         >
           <Grid size={{ xs: 12 }}>
-            {/* // TODO: Incomplete summary */}
-            <Typography>Dataset summary</Typography>
+            <Grid container spacing={1} alignItems="center">
+              <Typography>Source of data:</Typography>
+              {dataset.selectedLRSList.map((lrs) => (
+                <Grid key={lrs.id}>
+                  <Chip label={lrs.lrsTitle} />
+                </Grid>
+              ))}
+            </Grid>
           </Grid>
         </Collapse>
       </Grid>

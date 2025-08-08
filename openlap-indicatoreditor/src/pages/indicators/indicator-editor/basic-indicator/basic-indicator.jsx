@@ -73,7 +73,7 @@ export default function BasicIndicator() {
           inputs: [],
           params: [],
           selectedAnalyticsMethod: {
-            method: { name: "" },
+            method: { id: "", name: "" },
             mapping: { mapping: [] },
           },
           analyzedData: {},
@@ -85,7 +85,7 @@ export default function BasicIndicator() {
       ? JSON.parse(savedState).visualization
       : {
           libraryList: [],
-          selectedLibrary: { name: "" },
+          selectedLibrary: { id: "", name: "" },
           typeList: [],
           selectedType: { id: "", name: "", chartInputs: [] },
           inputs: [],
