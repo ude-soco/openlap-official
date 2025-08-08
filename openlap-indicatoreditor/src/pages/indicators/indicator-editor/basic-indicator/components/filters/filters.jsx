@@ -6,8 +6,10 @@ import FiltersSummary from "./components/filters-summary";
 import UserFilter from "./components/user-filter";
 import DateFilter from "./components/date-filter";
 import ActivityFilters from "./components/activity-filters/activity-filters.jsx";
+import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 
 export default function Filters() {
+  const { darkMode } = useContext(CustomThemeContext);
   const { lockedStep, setLockedStep, filters } = useContext(BasicContext);
 
   const handleCheckDisabled = () => {
@@ -24,7 +26,20 @@ export default function Filters() {
 
   return (
     <>
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2,
+          position: "relative",
+          opacity: lockedStep.filters.locked ? "0.5" : "1",
+          pointerEvents: lockedStep.filters.locked ? "none" : "auto",
+          backgroundColor: lockedStep.filters.locked
+            ? darkMode
+              ? "grey.800"
+              : "grey.400"
+            : "background.paper",
+        }}
+      >
         <Grid container>
           <Grid size={{ xs: 12 }}>
             <FiltersSummary />

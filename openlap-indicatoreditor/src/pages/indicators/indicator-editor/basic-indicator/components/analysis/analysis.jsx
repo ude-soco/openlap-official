@@ -21,8 +21,10 @@ import {
 } from "../../utils/query-builder.js";
 import AnalyzedDataTable from "./components/analyzed-data-table";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip.jsx";
+import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 
 export default function Analysis() {
+  const { darkMode } = useContext(CustomThemeContext);
   const { api } = useContext(AuthContext);
   const { dataset, filters, lockedStep, setLockedStep, analysis, setAnalysis } =
     useContext(BasicContext);
@@ -59,7 +61,20 @@ export default function Analysis() {
 
   return (
     <>
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2,
+          position: "relative",
+          opacity: lockedStep.analysis.locked ? "0.5" : "1",
+          pointerEvents: lockedStep.analysis.locked ? "none" : "auto",
+          backgroundColor: lockedStep.analysis.locked
+            ? darkMode
+              ? "grey.800"
+              : "grey.400"
+            : "background.paper",
+        }}
+      >
         <Grid container>
           <Grid size={{ xs: 12 }}>
             <AnalysisSummary />
