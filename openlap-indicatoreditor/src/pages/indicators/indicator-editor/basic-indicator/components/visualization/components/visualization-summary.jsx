@@ -7,7 +7,7 @@ import { ToggleEditIconButton } from "../../../../../../../common/components/tog
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 
 export default function VisualizationSummary() {
-  const { lockedStep, setLockedStep } = useContext(BasicContext);
+  const { visualization, lockedStep, setLockedStep } = useContext(BasicContext);
   const [state, setState] = useState({
     tipAnchor: false,
     showSelections: true,
@@ -36,7 +36,7 @@ export default function VisualizationSummary() {
 
   return (
     <>
-      <Grid container spacing={1}>
+      <Grid container>
         <Grid size={{ xs: 12 }}>
           <Grid container justifyContent="space-between" spacing={1}>
             <Grid size="grow">
@@ -67,9 +67,34 @@ export default function VisualizationSummary() {
           timeout={{ enter: 500, exit: 0 }}
           unmountOnExit
         >
-          <Grid size={{ xs: 12 }}>
-            {/* // TODO: Incomplete summary */}
-            <Typography>Visualization summary</Typography>
+          <Grid container spacing={1}>
+            <Grid size={{ xs: 12 }}>
+              <Grid container spacing={1} alignItems="center">
+                <Typography>Selected Visualization Library</Typography>
+                <Chip label={visualization.selectedLibrary.name} />
+              </Grid>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Grid container spacing={1} alignItems="center">
+                <Typography>Selected Chart</Typography>
+                <Chip label={visualization.selectedType.name} />
+              </Grid>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Grid container spacing={1} alignItems="center">
+                <Typography>Selected Inputs</Typography>
+                {visualization.inputs.map((input) => {
+                  if (input.selectedInput) {
+                    return (
+                      <Chip
+                        key={input.id}
+                        label={`${input.title} (${input.selectedInput.title})`}
+                      />
+                    );
+                  }
+                })}
+              </Grid>
+            </Grid>
           </Grid>
         </Collapse>
       </Grid>
