@@ -245,7 +245,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
             <FormControl>
               <FormLabel>Title and Subtitle Position</FormLabel>
               <RadioGroup
-                value={state.titleAndSubTitlePosition}
+                value={state.titleAndSubTitlePosition ?? "left"}
                 onChange={handleTitlePosition}
                 row
               >

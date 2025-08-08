@@ -4,6 +4,7 @@ import {
   Collapse,
   Divider,
   Paper,
+  Skeleton,
   Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
@@ -117,61 +118,48 @@ export default function Visualization() {
                     <Grid size={{ xs: 12, md: 8 }}>
                       <LibrarySelection />
                     </Grid>
-                    {visualization.typeList.length > 0 ? (
-                      <>
-                        <Grid size={{ xs: 12, md: 8 }}>
+                    <Grid size={{ xs: 12, md: 8 }}>
+                      {visualization.typeList.length > 0 ? (
+                        <>
                           <TypeSelection />
-                        </Grid>
-                      </>
-                    ) : undefined}
+                        </>
+                      ) : (
+                        <Skeleton variant="rectangular" height={500} />
+                      )}
+                    </Grid>
                     <>
                       {visualization.inputs.length > 0 ? (
                         <>
                           <Grid size={{ xs: 12 }} sx={{ py: 2 }}>
                             <TypeInputSelection />
                           </Grid>
-                          {/* <Grid size={{ xs: 12 }}>
-                            <Divider />
-                          </Grid> */}
-                          {/* <Grid size={{ xs: 12, md: 8 }}>
-                            <Box
-                              sx={{
-                                mt: 2,
-                                pb: 1,
-                                p: 8,
-                                border: "1px dashed",
-                                borderColor: "divider",
-                                borderRadius: 2,
-                                textAlign: "center",
-                                color: "text.secondary",
-                              }}
-                            >
-                              <Typography variant="body1" gutterBottom>
-                                Click "Preview" to generate the visualization.
-                              </Typography>
-                              <Button
-                                variant="contained"
-                                onClick={handleLoadPreviewVisualization}
-                              >
-                                Preview
-                              </Button>
-                            </Box>
-                          </Grid> */}
-                          {visualization.previewData.displayCode.length !==
-                          0 ? (
-                            <Grid size={{ xs: 12 }}>
-                              <Grid container spacing={2}>
-                                <Grid size={{ xs: 12, md: "grow" }}>
-                                  <Grid container justifyContent="center" sx={{backgroundColor: "white", p: 3, borderRadius: 2}}>
+
+                          <Grid size={{ xs: 12 }}>
+                            <Grid container spacing={2}>
+                              <Grid size={{ xs: 12, md: "grow" }}>
+                                {visualization.previewData.displayCode
+                                  .length !== 0 ? (
+                                  <Grid
+                                    container
+                                    component={Paper}
+                                    variant="outlined"
+                                    justifyContent="center"
+                                    sx={{ backgroundColor: "white", p: 3 }}
+                                  >
                                     <ChartPreview />
                                   </Grid>
-                                </Grid>
-                                <Grid size={{ xs: 12, md: "grow" }}>
-                                  <ChartCustomizationPanel />
-                                </Grid>
+                                ) : (
+                                  <Skeleton
+                                    variant="rectangular"
+                                    height={500}
+                                  />
+                                )}
+                              </Grid>
+                              <Grid size={{ xs: 12, md: "grow" }}>
+                                <ChartCustomizationPanel />
                               </Grid>
                             </Grid>
-                          ) : undefined}
+                          </Grid>
                         </>
                       ) : undefined}
                     </>

@@ -87,7 +87,7 @@ export default function BasicIndicator() {
           libraryList: [],
           selectedLibrary: { name: "" },
           typeList: [],
-          selectedType: { name: "", chartInputs: [] },
+          selectedType: { id: "", name: "", chartInputs: [] },
           inputs: [],
           params: { height: 500, width: 500 },
           mapping: { mapping: [] },
