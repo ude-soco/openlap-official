@@ -109,6 +109,7 @@ const TypeInputSelection = () => {
           const filteredInputs = Object.values(analysis.analyzedData).filter(
             (value) => input.type === value.configurationData.type
           );
+
           return (
             <Grid size={{ xs: 12, md: 6 }} key={input.id}>
               <Grid container alignItems="center" spacing={1}>
