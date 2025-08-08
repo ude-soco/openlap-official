@@ -49,7 +49,7 @@ export default function UserFilter() {
               <FormControlLabel
                 value={Condition.exclude_me}
                 control={<Radio />}
-                label="Exclude only my data"
+                label="Use all except my data"
               />
               <FormControlLabel
                 value={Condition.all}

@@ -81,11 +81,11 @@ export default function FilterSummary() {
 
   // * Helper functions
   function getUserFilterLabel() {
-    switch (filters.selecedUserFilter) {
+    switch (filters.selectedUserFilter) {
       case Condition.only_me:
         return "Use only my data";
       case Condition.exclude_me:
-        return "Exclude only my data";
+        return "Use all except my data";
       default:
         return "Use data of all users";
     }
