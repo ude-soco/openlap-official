@@ -22,8 +22,16 @@ const AnalyzedDataTable = () => {
   const [page, setPage] = useState(0); // Current page
   const [rowsPerPage, setRowsPerPage] = useState(5); // Rows per page
 
+  const formatTypeName = (type) => {
+    if (type === "Text") return "Categorical";
+    if (type === "Numeric") return "Numerical";
+    return type;
+  };
+  
   const columns = Object.keys(analyzedData).map((key) => ({
-    title: analyzedData[key].configurationData.title,
+    title: `${analyzedData[key].configurationData.title} (${formatTypeName(
+      analyzedData[key].configurationData.type
+    )})`,
     data: analyzedData[key].data,
   }));
 
