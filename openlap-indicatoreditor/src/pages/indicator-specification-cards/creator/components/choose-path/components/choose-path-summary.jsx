@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 import Grid from "@mui/material/Grid2";
-import { Chip, Fade, IconButton, Typography } from "@mui/material";
+import { Chip, Collapse, Fade, IconButton, Typography } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 import ToggleSummaryButton from "../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
@@ -58,12 +58,14 @@ export default function ChoosePathSummary() {
                   </IconButton>
                 )}
                 <Typography>How would you like to start?</Typography>
-                <TipPopover
-                  tipAnchor={state.tipAnchor}
-                  toggleTipAnchor={handleTipAnchor}
-                  description={state.tipDescription}
-                />
-                {!lockedStep.path.openPanel && (
+                {!lockedStep.path.locked && (
+                  <TipPopover
+                    tipAnchor={state.tipAnchor}
+                    toggleTipAnchor={handleTipAnchor}
+                    description={state.tipDescription}
+                  />
+                )}
+                {!lockedStep.path.locked && !lockedStep.path.openPanel && (
                   <ToggleSummaryButton
                     showSelections={state.showSelections}
                     toggleShowSelection={handleToggleShowSelection}
@@ -77,9 +79,9 @@ export default function ChoosePathSummary() {
             />
           </Grid>
         </Grid>
-        <Fade
+        <Collapse
           in={!lockedStep.path.openPanel && state.showSelections}
-          timeout={{ enter: 500, exit: 0 }}
+          timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
           <Grid size={{ xs: 12 }}>
@@ -102,7 +104,7 @@ export default function ChoosePathSummary() {
               )
             )}
           </Grid>
-        </Fade>
+        </Collapse>
       </Grid>
     </>
   );

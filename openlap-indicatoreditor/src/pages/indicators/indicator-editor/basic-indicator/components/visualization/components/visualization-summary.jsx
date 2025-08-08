@@ -63,11 +63,13 @@ export default function VisualizationSummary() {
                   </IconButton>
                 )}
                 <Typography>Visualization</Typography>
-                <TipPopover
-                  tipAnchor={state.tipAnchor}
-                  toggleTipAnchor={handleTipAnchor}
-                  description={state.tipDescription}
-                />
+                {!lockedStep.visualization.locked && (
+                  <TipPopover
+                    tipAnchor={state.tipAnchor}
+                    toggleTipAnchor={handleTipAnchor}
+                    description={state.tipDescription}
+                  />
+                )}
                 {!lockedStep.visualization.locked &&
                   !lockedStep.visualization.openPanel && (
                     <ToggleSummaryButton

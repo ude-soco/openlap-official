@@ -106,17 +106,20 @@ export default function FilterSummary() {
                   </IconButton>
                 )}
                 <Typography>Filters</Typography>
-                <TipPopover
-                  tipAnchor={state.tipAnchor}
-                  toggleTipAnchor={handleTipAnchor}
-                  description={state.tipDescription}
-                />
-                {!lockedStep.filters.openPanel && (
-                  <ToggleSummaryButton
-                    showSelections={state.showSelections}
-                    toggleShowSelection={handleToggleShowSelection}
+                {!lockedStep.filters.locked && (
+                  <TipPopover
+                    tipAnchor={state.tipAnchor}
+                    toggleTipAnchor={handleTipAnchor}
+                    description={state.tipDescription}
                   />
                 )}
+                {!lockedStep.filters.locked &&
+                  !lockedStep.filters.openPanel && (
+                    <ToggleSummaryButton
+                      showSelections={state.showSelections}
+                      toggleShowSelection={handleToggleShowSelection}
+                    />
+                  )}
               </Grid>
             </Grid>
             <ToggleEditIconButton

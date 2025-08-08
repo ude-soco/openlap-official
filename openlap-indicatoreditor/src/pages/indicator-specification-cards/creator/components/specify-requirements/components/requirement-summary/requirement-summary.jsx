@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 import Grid from "@mui/material/Grid2";
-import { Chip, Fade, Typography } from "@mui/material";
+import { Chip, Collapse, Fade, Typography } from "@mui/material";
 import { ISCContext } from "../../../../indicator-specification-card";
 import Summary from "./summary";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
@@ -67,9 +67,9 @@ export default function RequirementSummary() {
           />
         </Grid>
       </Grid>
-      <Fade
+      <Collapse
         in={!lockedStep.requirements.openPanel && state.showSelections}
-        timeout={{ enter: 500, exit: 0 }}
+        timeout={{ enter: 500, exit: 250 }}
         unmountOnExit
       >
         <Grid size={{ xs: 12 }}>
@@ -82,7 +82,7 @@ export default function RequirementSummary() {
             indicatorData={requirements.data}
           />
         </Grid>
-      </Fade>
+      </Collapse>
     </Grid>
   );
 }
