@@ -82,7 +82,7 @@ export default function AnalysisSummary() {
                       return (
                         <Chip
                           key={input.id}
-                          label={`${input.title} - ${input.selectedInput.name}`}
+                          label={`${input.title} (${input.selectedInput.name})`}
                         />
                       );
                     }

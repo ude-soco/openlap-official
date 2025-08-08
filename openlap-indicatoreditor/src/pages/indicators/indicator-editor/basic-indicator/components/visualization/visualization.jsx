@@ -102,11 +102,9 @@ export default function Visualization() {
   return (
     <>
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Grid container spacing={2}>
+        <Grid container>
           <Grid size={{ xs: 12 }}>
             <VisualizationSummary />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
             <Collapse
               in={lockedStep.visualization.openPanel}
               timeout={{ enter: 500, exit: 250 }}
@@ -119,7 +117,8 @@ export default function Visualization() {
                       <LibrarySelection />
                     </Grid>
                     <Grid size={{ xs: 12, md: 8 }}>
-                      {visualization.selectedLibrary.id && visualization.typeList.length > 0 ? (
+                      {visualization.selectedLibrary.id &&
+                      visualization.typeList.length > 0 ? (
                         <>
                           <TypeSelection />
                         </>

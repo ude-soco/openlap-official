@@ -131,14 +131,14 @@ export default function FilterSummary() {
                 <Grid container spacing={1} alignItems="center">
                   <Typography>Timeframe</Typography>
                   <Chip
-                    label={`From: ${dayjs(filters.selectedTime.from).format(
+                    label={`From (${dayjs(filters.selectedTime.from).format(
                       "DD MMM YYYY"
-                    )}`}
+                    )})`}
                   />
                   <Chip
-                    label={`Until: ${dayjs(filters.selectedTime.until).format(
+                    label={`Until (${dayjs(filters.selectedTime.until).format(
                       "DD MMM YYYY"
-                    )}`}
+                    )})`}
                   />
                 </Grid>
               </Grid>
