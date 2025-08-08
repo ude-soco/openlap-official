@@ -52,11 +52,13 @@ export default function FinalizeSummary() {
                   </IconButton>
                 )}
                 <Typography>Finalize Indicator</Typography>
-                <TipPopover
-                  tipAnchor={state.tipAnchor}
-                  toggleTipAnchor={handleTipAnchor}
-                  description={state.tipDescription}
-                />
+                {!lockedStep.finalize.locked && (
+                  <TipPopover
+                    tipAnchor={state.tipAnchor}
+                    toggleTipAnchor={handleTipAnchor}
+                    description={state.tipDescription}
+                  />
+                )}
               </Grid>
             </Grid>
             <ToggleEditIconButton

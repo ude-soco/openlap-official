@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
-import { Chip, Fade, IconButton, Typography } from "@mui/material";
+import { Chip, Collapse, IconButton, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import LockIcon from "@mui/icons-material/Lock";
 import ToggleSummaryButton from "../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
@@ -64,17 +64,20 @@ export default function DatasetSummary() {
                   </IconButton>
                 )}
                 <Typography>Choose Dataset</Typography>
-                <TipPopover
-                  tipAnchor={state.tipAnchor}
-                  toggleTipAnchor={handleTipAnchor}
-                  description={state.tipDescription}
-                />
-                {!lockedStep.dataset.openPanel && (
-                  <ToggleSummaryButton
-                    showSelections={state.showSelections}
-                    toggleShowSelection={handleToggleShowSelection}
+                {!lockedStep.dataset.locked && (
+                  <TipPopover
+                    tipAnchor={state.tipAnchor}
+                    toggleTipAnchor={handleTipAnchor}
+                    description={state.tipDescription}
                   />
                 )}
+                {!lockedStep.dataset.locked &&
+                  !lockedStep.dataset.openPanel && (
+                    <ToggleSummaryButton
+                      showSelections={state.showSelections}
+                      toggleShowSelection={handleToggleShowSelection}
+                    />
+                  )}
               </Grid>
             </Grid>
             <ToggleEditIconButton
@@ -85,7 +88,7 @@ export default function DatasetSummary() {
         </Grid>
       </Grid>
       {!lockedStep.dataset.locked && (
-        <Fade
+        <Collapse
           in={!lockedStep.dataset.openPanel && state.showSelections}
           timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
@@ -96,7 +99,7 @@ export default function DatasetSummary() {
             </Typography>
             <DataTable rows={dataset.rows} columns={dataset.columns} />
           </Grid>
-        </Fade>
+        </Collapse>
       )}
     </>
   );

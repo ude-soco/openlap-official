@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 import { ISCContext } from "../../../../indicator-specification-card";
-import { Chip, Fade, IconButton, Typography } from "@mui/material";
+import { Chip, Collapse, IconButton, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import LockIcon from "@mui/icons-material/Lock";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
@@ -62,17 +62,20 @@ export default function VisualizationSummary() {
                   </IconButton>
                 )}
                 <Typography>Choose visualization</Typography>
-                <TipPopover
-                  tipAnchor={state.tipAnchor}
-                  toggleTipAnchor={handleTipAnchor}
-                  description={state.tipDescription}
-                />
-                {!lockedStep.visualization.openPanel && (
-                  <ToggleSummaryButton
-                    showSelections={state.showSelections}
-                    toggleShowSelection={handleToggleShowSelection}
+                {!lockedStep.visualization.locked && (
+                  <TipPopover
+                    tipAnchor={state.tipAnchor}
+                    toggleTipAnchor={handleTipAnchor}
+                    description={state.tipDescription}
                   />
                 )}
+                {!lockedStep.visualization.locked &&
+                  !lockedStep.visualization.openPanel && (
+                    <ToggleSummaryButton
+                      showSelections={state.showSelections}
+                      toggleShowSelection={handleToggleShowSelection}
+                    />
+                  )}
               </Grid>
             </Grid>
             <ToggleEditIconButton
@@ -82,9 +85,9 @@ export default function VisualizationSummary() {
           </Grid>
         </Grid>
       </Grid>
-      <Fade
+      <Collapse
         in={!lockedStep.visualization.openPanel && state.showSelections}
-        timeout={{ enter: 500, exit: 0 }}
+        timeout={{ enter: 500, exit: 250 }}
         unmountOnExit
       >
         <Grid size={{ xs: 12 }} sx={{ pt: 1 }}>
@@ -93,7 +96,7 @@ export default function VisualizationSummary() {
             chartType={visRef.chart.type}
           />
         </Grid>
-      </Fade>
+      </Collapse>
     </>
   );
 }

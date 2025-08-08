@@ -60,17 +60,20 @@ export default function AnalysisSummary() {
                   </IconButton>
                 )}
                 <Typography>Analysis</Typography>
-                <TipPopover
-                  tipAnchor={state.tipAnchor}
-                  toggleTipAnchor={handleTipAnchor}
-                  description={state.tipDescription}
-                />
-                {!lockedStep.analysis.openPanel && (
-                  <ToggleSummaryButton
-                    showSelections={state.showSelections}
-                    toggleShowSelection={handleToggleShowSelection}
+                {!lockedStep.analysis.locked && (
+                  <TipPopover
+                    tipAnchor={state.tipAnchor}
+                    toggleTipAnchor={handleTipAnchor}
+                    description={state.tipDescription}
                   />
                 )}
+                {!lockedStep.analysis.locked &&
+                  !lockedStep.analysis.openPanel && (
+                    <ToggleSummaryButton
+                      showSelections={state.showSelections}
+                      toggleShowSelection={handleToggleShowSelection}
+                    />
+                  )}
               </Grid>
             </Grid>
             <ToggleEditIconButton
