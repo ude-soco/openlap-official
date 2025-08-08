@@ -1,19 +1,13 @@
 import { useContext, useEffect } from "react";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
-import {
-  Autocomplete,
-  IconButton,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Autocomplete, TextField, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import InfoIcon from "@mui/icons-material/Info";
 import {
   fetchVisualizationLibrary,
   fetchVisualizationTypeByLibraryId,
 } from "../utils/visualization-api";
 import { BasicContext } from "../../../basic-indicator";
+import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 export default function LibrarySelection() {
   const { api } = useContext(AuthContext);
@@ -74,20 +68,7 @@ export default function LibrarySelection() {
             <Typography>
               Select a <b>Visualization library</b>
             </Typography>
-            <Tooltip
-              arrow
-              title={
-                <Typography sx={{ p: 1 }}>
-                  <b>Description</b>
-                  <br />
-                  To be decided
-                </Typography>
-              }
-            >
-              <IconButton color="info">
-                <InfoIcon />
-              </IconButton>
-            </Tooltip>
+            <CustomTooltip type="description" message={`To be decided`} />
           </Grid>
         </Grid>
         <Grid size={{ xs: 12 }}>

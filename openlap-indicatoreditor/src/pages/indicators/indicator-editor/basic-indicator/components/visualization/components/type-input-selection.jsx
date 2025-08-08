@@ -2,15 +2,13 @@ import { useContext, useEffect } from "react";
 import { BasicContext } from "../../../basic-indicator";
 import {
   FormControl,
-  IconButton,
   InputLabel,
   MenuItem,
   Select,
-  Tooltip,
   Typography,
 } from "@mui/material";
-import InfoIcon from "@mui/icons-material/Info";
 import Grid from "@mui/material/Grid2";
+import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 const TypeInputSelection = () => {
   const { analysis, visualization, setVisualization } =
@@ -141,20 +139,10 @@ const TypeInputSelection = () => {
                   </FormControl>
                 </Grid>
                 <Grid size="auto">
-                  <Tooltip
-                    arrow
-                    title={
-                      <Typography sx={{ p: 1 }}>
-                        <b>Description</b>
-                        <br />
-                        {input.description}
-                      </Typography>
-                    }
-                  >
-                    <IconButton color="info">
-                      <InfoIcon />
-                    </IconButton>
-                  </Tooltip>
+                  <CustomTooltip
+                    type="description"
+                    message={input.description}
+                  />
                 </Grid>
               </Grid>
             </Grid>

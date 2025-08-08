@@ -6,16 +6,9 @@ import {
   fetchTechniqueInputs,
   fetchTechniqueParams,
 } from "../utils/analysis-api";
-import {
-  Autocomplete,
-  IconButton,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Autocomplete, TextField, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import InfoIcon from "@mui/icons-material/Info";
-import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
+import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 export default function AnalysisSelection() {
   const { api } = useContext(AuthContext);
@@ -91,20 +84,7 @@ export default function AnalysisSelection() {
             <Typography>
               Select an <b>Analytics Method</b>
             </Typography>
-            <Tooltip
-              arrow
-              title={
-                <Typography sx={{ p: 1 }}>
-                  <b>Description</b>
-                  <br />
-                  To be decided!
-                </Typography>
-              }
-            >
-              <IconButton color="info">
-                <InfoIcon />
-              </IconButton>
-            </Tooltip>
+            <CustomTooltip type="description" message={`To be decided!`} />
           </Grid>
         </Grid>
         <Grid size={{ xs: 12 }}>

@@ -20,6 +20,7 @@ import {
   buildIndicatorQuery,
 } from "../../utils/query-builder.js";
 import AnalyzedDataTable from "./components/analyzed-data-table";
+import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip.jsx";
 
 export default function Analysis() {
   const { api } = useContext(AuthContext);
@@ -113,12 +114,23 @@ export default function Analysis() {
                                   Click "Preview" to run the analysis of your
                                   data.
                                 </Typography>
-                                <Button
-                                  variant="contained"
-                                  onClick={handlePreviewAnalyzedData}
+                                <Grid
+                                  container
+                                  spacing={1}
+                                  justifyContent="center"
                                 >
-                                  Preview
-                                </Button>
+                                  <Button
+                                    variant="contained"
+                                    // TODO: Disable the button if the Inputs are not selected
+                                    onClick={handlePreviewAnalyzedData}
+                                  >
+                                    Preview
+                                  </Button>
+                                  <CustomTooltip
+                                    type="help"
+                                    message={`The button is disabled because:<br/>- All of the required <b>Inputs of the method</b> must be selected!`}
+                                  />
+                                </Grid>
                               </Box>
                             )}
                           </Grid>

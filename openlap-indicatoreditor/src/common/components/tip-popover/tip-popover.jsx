@@ -20,7 +20,7 @@ export default function TipPopover({
         onClick={(e) => toggleTipAnchor(e.currentTarget)}
         color="warning"
       >
-        <Tooltip arrow title={<Typography>Tips</Typography>}>
+        <Tooltip arrow title={<Typography>Click to view useful tips!</Typography>}>
           <TipsAndUpdatesIcon />
         </Tooltip>
       </IconButton>

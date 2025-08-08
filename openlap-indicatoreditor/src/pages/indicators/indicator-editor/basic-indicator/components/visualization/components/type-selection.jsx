@@ -5,17 +5,15 @@ import {
   AccordionSummary,
   Box,
   Chip,
-  IconButton,
   Paper,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import InfoIcon from "@mui/icons-material/Info";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RecommendIcon from "@mui/icons-material/Recommend";
 import { BasicContext } from "../../../basic-indicator";
 import { visualizationImages } from "../utils/visualization-data";
+import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 const TypeSelection = () => {
   const { analysis, visualization, setVisualization } =
@@ -78,20 +76,7 @@ const TypeSelection = () => {
             <Typography>
               Available <b>Charts</b>
             </Typography>
-            <Tooltip
-              arrow
-              title={
-                <Typography sx={{ p: 1 }}>
-                  <b>Description</b>
-                  <br />
-                  To be decided
-                </Typography>
-              }
-            >
-              <IconButton color="info">
-                <InfoIcon />
-              </IconButton>
-            </Tooltip>
+            <CustomTooltip type="description" message={`To be decided`} />
             {state.showTypeSelection ? (
               visualization.selectedType.name.length ? (
                 <Chip label={visualization.selectedType.name} />

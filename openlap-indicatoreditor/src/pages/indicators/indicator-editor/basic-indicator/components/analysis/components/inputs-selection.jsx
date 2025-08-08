@@ -1,16 +1,9 @@
 import { useContext } from "react";
 import { BasicContext } from "../../../basic-indicator";
-import {
-  Autocomplete,
-  IconButton,
-  Paper,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Autocomplete, Paper, TextField, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import InfoIcon from "@mui/icons-material/Info";
 import { analysiInputMenuList } from "../utils/analysis-data";
+import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 export default function InputsSelection() {
   const { analysis, setAnalysis } = useContext(BasicContext);
@@ -67,21 +60,11 @@ export default function InputsSelection() {
         <Typography>
           Select <b>Inputs</b> of the method
         </Typography>
-        <Tooltip
-          arrow
-          title={
-            <Typography sx={{ p: 1 }}>
-              <b>Description</b>
-              <br />
-              Each Analysis Method has input parameters. You can decide which
-              data should be assigned to which analysis input parameter.
-            </Typography>
-          }
-        >
-          <IconButton color="info">
-            <InfoIcon />
-          </IconButton>
-        </Tooltip>
+        <CustomTooltip
+          type="description"
+          message={`Each Analysis Method has input parameters. You can decide which
+              data should be assigned to which analysis input parameter.`}
+        />
       </Grid>
       <Grid size={{ xs: 12 }}>
         <Grid container spacing={2} alignItems="center">
@@ -129,20 +112,10 @@ export default function InputsSelection() {
                   />
                 </Grid>
                 <Grid size="auto">
-                  <Tooltip
-                    arrow
-                    title={
-                      <Typography sx={{ p: 1 }}>
-                        <b>Description</b>
-                        <br />
-                        {input.description}
-                      </Typography>
-                    }
-                  >
-                    <IconButton color="info">
-                      <InfoIcon />
-                    </IconButton>
-                  </Tooltip>
+                  <CustomTooltip
+                    type="description"
+                    message={input.description}
+                  />
                 </Grid>
               </Grid>
             </Grid>

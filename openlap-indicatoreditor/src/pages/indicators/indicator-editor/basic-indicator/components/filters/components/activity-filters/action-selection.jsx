@@ -1,27 +1,14 @@
-import { useContext, useState } from "react";
-import { Autocomplete, TextField, Tooltip, Typography } from "@mui/material";
+import { useContext } from "react";
+import { Autocomplete, TextField, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import HelpIcon from "@mui/icons-material/Help";
-import WarningIcon from "@mui/icons-material/Warning";
 import { BasicContext } from "../../../../basic-indicator";
 import { fetchActivitiesList } from "../../utils/filters-api";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
-import TipPopover from "../../../../../../../../common/components/tip-popover/tip-popover";
+import CustomTooltip from "../../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 export default function ActionSelection({ activity }) {
   const { api } = useContext(AuthContext);
   const { dataset, setFilters } = useContext(BasicContext);
-  const [state, setState] = useState({
-    tipAnchor: null,
-    tipDescription: `
-        <b>Tip!</b><br/>
-        To be decided!
-      `,
-  });
-
-  const handleTipAnchor = (param) => {
-    setState((p) => ({ ...p, tipAnchor: param }));
-  };
 
   const handleCheckActionsAvailable = () => {
     return activity.actionList.length === 0;
@@ -87,44 +74,23 @@ export default function ActionSelection({ activity }) {
 
   return (
     <>
-      <Grid container spacing={1} alignItems="center">
+      <Grid container alignItems="center">
         {handleCheckActionsAvailable() ? (
-          <Grid size="auto" sx={{ cursor: "pointer" }}>
-            <Tooltip
-              title={
-                <>
-                  <Typography>This dropdown is disabled because:</Typography>
-                  <Typography sx={{ my: -1 }}>
-                    <ul>
-                      <li>At least an activity type needs to be selected</li>
-                    </ul>
-                  </Typography>
-                </>
-              }
-            >
-              <HelpIcon color="info" />
-            </Tooltip>
+          <Grid size="auto">
+            <CustomTooltip
+              type="help"
+              message={`This dropdown is disabled because:<br/>- At least an activity type needs to be selected`}
+            />
           </Grid>
         ) : (
-          <Grid size="auto" sx={{ cursor: "pointer" }}>
-            <Tooltip
-              title={
-                <>
-                  <Typography>
-                    <b>Caution:</b> <br />
-                    If you have selected any <b>Activities</b> below, changing
-                    the <b>Actions</b> in this dropdown will reset your{" "}
-                    <b>Activity</b> selections.
-                  </Typography>
-                </>
-              }
-            >
-              <WarningIcon color="warning" />
-            </Tooltip>
+          <Grid size="auto">
+            <CustomTooltip
+              type="warning"
+              message={`If you have selected any <b>Activities</b> below, changing the <b>Actions</b> in this dropdown will reset your <b>Activity</b> selections.`}
+            />
           </Grid>
         )}
         <Typography
-          gutterBottom
           color={handleCheckActionsAvailable() ? "textSecondary" : undefined}
         >
           {handleCheckActionsAvailable() ? (
@@ -179,11 +145,7 @@ export default function ActionSelection({ activity }) {
         </Grid>
         {!handleCheckActionsAvailable() && (
           <Grid size="auto" sx={{ pt: 1 }}>
-            <TipPopover
-              tipAnchor={state.tipAnchor}
-              toggleTipAnchor={handleTipAnchor}
-              description={state.tipDescription}
-            />
+            <CustomTooltip type="description" message={`To be decided`} />
           </Grid>
         )}
       </Grid>

@@ -1,11 +1,5 @@
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Typography,
-} from "@mui/material";
+import { Accordion, AccordionDetails, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useContext, useState } from "react";
 import { BasicContext } from "../../../basic-indicator";
 import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
@@ -13,21 +7,10 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
-import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
+import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 export default function DateFilter() {
   const { filters, setFilters } = useContext(BasicContext);
-  const [state, setState] = useState({
-    tipAnchor: null,
-    tipDescription: `
-        <b>Tip!</b><br/>
-        To be decided!
-      `,
-  });
-
-  const handleDateFilterPopoverAnchor = (param) => {
-    setState((p) => ({ ...p, tipAnchor: param }));
-  };
 
   const handleUpdateDate = (value, name) => {
     setFilters((p) => ({
@@ -47,13 +30,9 @@ export default function DateFilter() {
         }}
       >
         <AccordionDetails>
-          <Grid container spacing={1} alignItems="center">
+          <Grid container alignItems="center">
             <Typography>Select date range</Typography>
-            <TipPopover
-              tipAnchor={state.tipAnchor}
-              toggleTipAnchor={handleDateFilterPopoverAnchor}
-              description={state.tipDescription}
-            />
+            <CustomTooltip type="description" message={`To be decided!`} />
           </Grid>
           <Grid container spacing={2}>
             <Grid size="auto">
