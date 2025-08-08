@@ -5,8 +5,10 @@ import { ISCContext } from "../../indicator-specification-card.jsx";
 import ChartTypeFilter from "./components/chart-type-filter.jsx";
 import VisualizationFilter from "./components/visualization-filter/visualization-filter";
 import VisualizationSummary from "./components/visualization-summary/visualization-summary.jsx";
+import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";
 
 const Visualization = () => {
+  const { darkMode } = useContext(CustomThemeContext);
   const { lockedStep, setLockedStep, visRef } = useContext(ISCContext);
 
   const handleTogglePanel = () => {
@@ -69,7 +71,9 @@ const Visualization = () => {
           opacity: lockedStep.visualization.locked ? "0.5" : "1",
           pointerEvents: lockedStep.visualization.locked ? "none" : "auto",
           backgroundColor: lockedStep.visualization.locked
-            ? "grey.500"
+            ? darkMode
+              ? "grey.800"
+              : "grey.400"
             : "background.paper",
         }}
       >

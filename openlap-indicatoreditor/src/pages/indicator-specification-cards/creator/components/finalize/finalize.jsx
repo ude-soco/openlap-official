@@ -5,8 +5,10 @@ import Grid from "@mui/material/Grid2";
 import NameDialog from "./components/name-dialog.jsx";
 import VisSelection from "../visualization/components/visualization-filter/vis-selection";
 import FinalizeSummary from "./components/finalize-summary/finalize-summary";
+import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";
 
 const Finalize = () => {
+  const { darkMode } = useContext(CustomThemeContext);
   const { dataset, lockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     openSaveDialog: false,
@@ -39,7 +41,9 @@ const Finalize = () => {
           opacity: lockedStep.finalize.locked ? "0.5" : "1",
           pointerEvents: lockedStep.finalize.locked ? "none" : "auto",
           backgroundColor: lockedStep.finalize.locked
-            ? "grey.500"
+            ? darkMode
+              ? "grey.800"
+              : "grey.400"
             : "background.paper",
         }}
       >

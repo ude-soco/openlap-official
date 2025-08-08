@@ -4,8 +4,10 @@ import Grid from "@mui/material/Grid2";
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import ChoosePathSummary from "./components/choose-path-summary.jsx";
 import PathSelectors from "./components/path-selectors.jsx";
+import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";
 
 const ChoosePath = () => {
+  const { darkMode } = useContext(CustomThemeContext);
   const { lockedStep } = useContext(ISCContext);
 
   return (
@@ -18,7 +20,9 @@ const ChoosePath = () => {
           opacity: lockedStep.path.locked ? "0.5" : "1",
           pointerEvents: lockedStep.path.locked ? "none" : "auto",
           backgroundColor: lockedStep.path.locked
-            ? "grey.500"
+            ? darkMode
+              ? "grey.800"
+              : "grey.400"
             : "background.paper",
         }}
       >
