@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
 import Grid from "@mui/material/Grid2";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { Breadcrumbs, Divider, Link, Paper, Typography } from "@mui/material";
+import {
+  Alert,
+  AlertTitle,
+  Breadcrumbs,
+  Button,
+  Divider,
+  Link,
+  Paper,
+  Typography,
+} from "@mui/material";
 import { indicatorData } from "./utils/indicator-data";
 
 const SESSION = "session_indicator";
@@ -16,39 +25,35 @@ const IndicatorEditor = () => {
     },
   });
 
-  useEffect(() => {
-    const savedState = sessionStorage.getItem(SESSION);
-    if (savedState) {
-      let route;
-      switch (JSON.parse(savedState).indicator.type) {
-        case "BASIC":
-          route = "/indicator/editor/basic";
-          break;
-        case "COMPOSITE":
-          route = "/indicator/editor/composite";
-          break;
-        case "MULTI_LEVEL":
-          route = "/indicator/editor/multi-level-analysis";
-          break;
-        default:
-          route = "Unknown";
-      }
-      setState((p) => ({
-        ...p,
-        route: route,
-      }));
-    }
-  }, []);
-
   const handleClearSession = () => {
     setState((p) => ({ ...p, indicatorInProgress: !p.indicatorInProgress }));
     sessionStorage.removeItem(SESSION);
   };
 
+  const handleContinueEditing = () => {
+    const savedState = sessionStorage.getItem(SESSION);
+
+    if (savedState) {
+      let route;
+      switch (JSON.parse(savedState).indicator.type) {
+        case "BASIC":
+          navigate("/indicator/editor/basic");
+          break;
+        case "COMPOSITE":
+          navigate("/indicator/editor/composite");
+          break;
+        case "MULTI_LEVEL":
+          navigate("/indicator/editor/multi-level-analysis");
+          break;
+        default:
+          route = "Unknown";
+      }
+    }
+  };
+
   const handleCreateIndicator = (link) => {
+    handleClearSession();
     navigate(link);
-    // TODO: Temporary
-    // handleClearSession();
   };
 
   return (
@@ -121,6 +126,31 @@ const IndicatorEditor = () => {
             </Grid>
           </Grid>
         </Grid>
+        {state.indicatorInProgress && (
+          <Grid size={{ xs: 12 }}>
+            <Alert
+              severity="info"
+              action={
+                <Grid container spacing={1}>
+                  <Button variant="outlined" onClick={handleClearSession}>
+                    Discard
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleContinueEditing}
+                  >
+                    Continue
+                  </Button>
+                </Grid>
+              }
+            >
+              <AlertTitle>
+                You have an indicator in progress! Would you like to continue?
+              </AlertTitle>
+            </Alert>
+          </Grid>
+        )}
       </Grid>
     </>
   );
