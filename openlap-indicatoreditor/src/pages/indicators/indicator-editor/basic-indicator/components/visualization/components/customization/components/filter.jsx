@@ -8,9 +8,9 @@ import {
   FormLabel,
   RadioGroup,
   Radio,
-  Grid,
   TextField,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 
 export const FiltersBar = ({
   categories,
@@ -59,7 +59,7 @@ export const FiltersBar = ({
 
   return (
     <>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Grid container sx={{ mt: 1 }}>
           {chartConfiguration.categoriesFilteringAvailable && (
             <FormControl>
@@ -130,7 +130,7 @@ export const FiltersBar = ({
         </Grid>
 
         {chartConfiguration.sortingOrderChangeable && (
-          <Grid item xs={12} mt={2}>
+          <Grid size={{ xs: 12 }} mt={2}>
             <FormControl>
               <FormLabel id="role-label">Data Sorting</FormLabel>
               <FormControl>
