@@ -32,6 +32,10 @@ export default function DatasetSummary() {
     }));
   };
 
+  const handleCheckDatasetSelected = () => {
+    return dataset.selectedLRSList.length !== 0;
+  };
+
   return (
     <>
       <Grid container>
@@ -62,17 +66,25 @@ export default function DatasetSummary() {
         </Grid>
         <Collapse
           in={!lockedStep.dataset.openPanel && state.showSelections}
-          timeout={{ enter: 500, exit: 0 }}
+          timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
           <Grid size={{ xs: 12 }}>
             <Grid container spacing={1} alignItems="center">
-              <Typography>Source of data:</Typography>
-              {dataset.selectedLRSList.map((lrs) => (
-                <Grid key={lrs.id}>
-                  <Chip label={lrs.lrsTitle} />
-                </Grid>
-              ))}
+              {handleCheckDatasetSelected() ? (
+                <>
+                  <Typography>Source of data:</Typography>
+                  {dataset.selectedLRSList.map((lrs) => (
+                    <Grid key={lrs.id}>
+                      <Chip label={lrs.lrsTitle} />
+                    </Grid>
+                  ))}
+                </>
+              ) : (
+                <Typography sx={{ fontStyle: "italic" }}>
+                  No source selected yet!
+                </Typography>
+              )}
             </Grid>
           </Grid>
         </Collapse>

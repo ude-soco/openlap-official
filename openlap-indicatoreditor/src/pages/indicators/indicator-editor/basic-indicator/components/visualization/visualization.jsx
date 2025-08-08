@@ -1,12 +1,4 @@
-import {
-  Box,
-  Button,
-  Collapse,
-  Divider,
-  Paper,
-  Skeleton,
-  Typography,
-} from "@mui/material";
+import { Button, Collapse, Divider, Paper, Skeleton } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { useContext, useEffect, useState } from "react";
 import { BasicContext } from "../../basic-indicator";
@@ -23,8 +15,10 @@ import {
 import TypeInputSelection from "./components/type-input-selection";
 import ChartPreview from "./components/chart-preview";
 import ChartCustomizationPanel from "./components/customization/chart-customization-panel";
+import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager";
 
 export default function Visualization() {
+  const { darkMode } = useContext(CustomThemeContext);
   const { api } = useContext(AuthContext);
   const {
     dataset,
@@ -101,7 +95,20 @@ export default function Visualization() {
 
   return (
     <>
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2,
+          position: "relative",
+          opacity: lockedStep.visualization.locked ? "0.5" : "1",
+          pointerEvents: lockedStep.visualization.locked ? "none" : "auto",
+          backgroundColor: lockedStep.visualization.locked
+            ? darkMode
+              ? "grey.800"
+              : "grey.400"
+            : "background.paper",
+        }}
+      >
         <Grid container>
           <Grid size={{ xs: 12 }}>
             <VisualizationSummary />
@@ -117,14 +124,13 @@ export default function Visualization() {
                       <LibrarySelection />
                     </Grid>
                     <Grid size={{ xs: 12, md: 8 }}>
-                      {visualization.selectedLibrary.id &&
-                      visualization.typeList.length > 0 ? (
-                        <>
+                      {visualization.selectedLibrary.id ? (
+                        visualization.typeList.length > 0 ? (
                           <TypeSelection />
-                        </>
-                      ) : (
-                        <Skeleton variant="rectangular" height={500} />
-                      )}
+                        ) : (
+                          <Skeleton variant="rectangular" height={500} />
+                        )
+                      ) : undefined}
                     </Grid>
                     <>
                       {visualization.inputs.length > 0 ? (
@@ -135,7 +141,7 @@ export default function Visualization() {
 
                           <Grid size={{ xs: 12 }}>
                             <Grid container spacing={2}>
-                              <Grid size={{ xs: 12, md: "grow" }}>
+                              <Grid size={{ xs: 12, lg: "grow", xl: 8 }}>
                                 {visualization.previewData.displayCode
                                   .length !== 0 ? (
                                   <Grid
@@ -150,7 +156,7 @@ export default function Visualization() {
                                 ) : (
                                   <Skeleton
                                     variant="rectangular"
-                                    height={500}
+                                    height={565}
                                   />
                                 )}
                               </Grid>

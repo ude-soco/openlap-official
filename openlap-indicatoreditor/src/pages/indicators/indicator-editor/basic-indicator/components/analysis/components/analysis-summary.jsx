@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
-import { Chip, Collapse, Typography } from "@mui/material";
+import { Chip, Collapse, IconButton, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import LockIcon from "@mui/icons-material/Lock";
 import { BasicContext } from "../../../basic-indicator";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button";
@@ -33,6 +34,17 @@ export default function AnalysisSummary() {
     }));
   };
 
+  const handleCheckAnalyticsMethodSelected = (condition) => {
+    switch (condition) {
+      case "method":
+        return analysis.selectedAnalyticsMethod.method.name.length !== 0;
+      case "inputs":
+        return analysis.inputs.some((obj) => "selectedInput" in obj);
+      default:
+        return false;
+    }
+  };
+
   return (
     <>
       <Grid container>
@@ -40,7 +52,13 @@ export default function AnalysisSummary() {
           <Grid container justifyContent="space-between" spacing={1}>
             <Grid size="grow">
               <Grid container alignItems="center" spacing={1}>
-                <Chip label={lockedStep.analysis.step} color="primary" />
+                {!lockedStep.analysis.locked ? (
+                  <Chip label={lockedStep.analysis.step} color="primary" />
+                ) : (
+                  <IconButton size="small">
+                    <LockIcon />
+                  </IconButton>
+                )}
                 <Typography>Analysis</Typography>
                 <TipPopover
                   tipAnchor={state.tipAnchor}
@@ -63,43 +81,51 @@ export default function AnalysisSummary() {
         </Grid>
         <Collapse
           in={!lockedStep.analysis.openPanel && state.showSelections}
-          timeout={{ enter: 500, exit: 0 }}
+          timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
           <Grid size={{ xs: 12 }}>
             <Grid container spacing={1}>
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Typography>Selected Analytics Method</Typography>
-                  <Chip label={analysis.selectedAnalyticsMethod.method.name} />
-                </Grid>
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Typography>Selected Inputs</Typography>
-                  {analysis.inputs.map((input) => {
-                    if (input.selectedInput) {
-                      return (
-                        <Chip
-                          key={input.id}
-                          label={`${input.title} (${input.selectedInput.name})`}
-                        />
-                      );
-                    }
-                  })}
-                </Grid>
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Typography>Selected Inputs</Typography>
-                  {analysis.params.map((param) => (
+              {handleCheckAnalyticsMethodSelected("method") && (
+                <Grid size={{ xs: 12 }}>
+                  <Grid container spacing={1} alignItems="center">
+                    <Typography>Selected Analytics Method</Typography>
                     <Chip
-                      key={param.id}
-                      label={`${param.title} (${param.value})`}
+                      label={analysis.selectedAnalyticsMethod.method.name}
                     />
-                  ))}
+                  </Grid>
                 </Grid>
-              </Grid>
+              )}
+              {handleCheckAnalyticsMethodSelected("inputs") && (
+                <Grid size={{ xs: 12 }}>
+                  <Grid container spacing={1} alignItems="center">
+                    <Typography>Selected Inputs</Typography>
+                    {analysis.inputs.map((input) => {
+                      if (input.selectedInput) {
+                        return (
+                          <Chip
+                            key={input.id}
+                            label={`${input.title} (${input.selectedInput.name})`}
+                          />
+                        );
+                      }
+                    })}
+                  </Grid>
+                </Grid>
+              )}
+              {handleCheckAnalyticsMethodSelected("method") && (
+                <Grid size={{ xs: 12 }}>
+                  <Grid container spacing={1} alignItems="center">
+                    <Typography>Selected Params</Typography>
+                    {analysis.params.map((param) => (
+                      <Chip
+                        key={param.id}
+                        label={`${param.title} (${param.value})`}
+                      />
+                    ))}
+                  </Grid>
+                </Grid>
+              )}
               <Grid size={{ xs: 12 }}>
                 {Object.keys(analysis.analyzedData).length ? (
                   <AnalyzedDataTable />

@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
-import { Box, Chip, Collapse, Tooltip, Typography } from "@mui/material";
+import { Chip, Collapse, IconButton, Tooltip, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import LockIcon from "@mui/icons-material/Lock";
 import { BasicContext } from "../../../basic-indicator";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button";
 import { ToggleEditIconButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button";
@@ -74,7 +75,12 @@ export default function FilterSummary() {
     }));
   };
 
-  const getUserFilterLabel = () => {
+  const handleCheckFiltersSelected = () => {
+    return filters.selectedActivities.length !== 0;
+  };
+
+  // * Helper functions
+  function getUserFilterLabel() {
     switch (filters.selecedUserFilter) {
       case Condition.only_me:
         return "Use only my data";
@@ -83,7 +89,7 @@ export default function FilterSummary() {
       default:
         return "Use data of all users";
     }
-  };
+  }
 
   return (
     <>
@@ -92,7 +98,13 @@ export default function FilterSummary() {
           <Grid container justifyContent="space-between" spacing={1}>
             <Grid size="grow">
               <Grid container alignItems="center" spacing={1}>
-                <Chip label={lockedStep.filters.step} color="primary" />
+                {!lockedStep.filters.locked ? (
+                  <Chip label={lockedStep.filters.step} color="primary" />
+                ) : (
+                  <IconButton size="small">
+                    <LockIcon />
+                  </IconButton>
+                )}
                 <Typography>Filters</Typography>
                 <TipPopover
                   tipAnchor={state.tipAnchor}
@@ -114,8 +126,12 @@ export default function FilterSummary() {
           </Grid>
         </Grid>
         <Collapse
-          in={!lockedStep.filters.openPanel && state.showSelections}
-          timeout={{ enter: 500, exit: 0 }}
+          in={
+            !lockedStep.filters.locked &&
+            !lockedStep.filters.openPanel &&
+            state.showSelections
+          }
+          timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
           <Grid size={{ xs: 12 }}>
@@ -142,41 +158,44 @@ export default function FilterSummary() {
                   />
                 </Grid>
               </Grid>
+              {handleCheckFiltersSelected() && (
+                <>
+                  <Grid size={{ xs: 12 }}>
+                    <Grid container spacing={1} alignItems="center">
+                      <Typography>Selected Activity Types</Typography>
+                      {filters.selectedActivities.map((activity) => (
+                        <Chip
+                          key={activity.id}
+                          label={activity.selectedActivityType.name}
+                        />
+                      ))}
+                    </Grid>
+                  </Grid>
 
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Typography>Selected Activity Types</Typography>
-                  {filters.selectedActivities.map((activity) => (
-                    <Chip
-                      key={activity.id}
-                      label={activity.selectedActivityType.name}
-                    />
-                  ))}
-                </Grid>
-              </Grid>
-
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Typography>Selected Actions</Typography>
-                  {filters.selectedActivities.map((activity) => (
-                    <ChipsWithMore
-                      key={activity.id}
-                      items={activity.selectedActionList}
-                    />
-                  ))}
-                </Grid>
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Typography>Selected Activities</Typography>
-                  {filters.selectedActivities.map((activity) => (
-                    <ChipsWithMore
-                      key={activity.id}
-                      items={activity.selectedActivityList}
-                    />
-                  ))}
-                </Grid>
-              </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Grid container spacing={1} alignItems="center">
+                      <Typography>Selected Actions</Typography>
+                      {filters.selectedActivities.map((activity) => (
+                        <ChipsWithMore
+                          key={activity.id}
+                          items={activity.selectedActionList}
+                        />
+                      ))}
+                    </Grid>
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Grid container spacing={1} alignItems="center">
+                      <Typography>Selected Activities</Typography>
+                      {filters.selectedActivities.map((activity) => (
+                        <ChipsWithMore
+                          key={activity.id}
+                          items={activity.selectedActivityList}
+                        />
+                      ))}
+                    </Grid>
+                  </Grid>
+                </>
+              )}
             </Grid>
           </Grid>
         </Collapse>
