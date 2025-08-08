@@ -1,11 +1,10 @@
 import { useContext, useState } from "react";
 import { Autocomplete, TextField, Tooltip, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import WarningIcon from "@mui/icons-material/Warning";
 import { BasicContext } from "../../../../basic-indicator";
 import { fetchActionOnActivitiesList } from "../../utils/filters-api";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
-import TipPopover from "../../../../../../../../common/components/tip-popover/tip-popover";
+import CustomTooltip from "../../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 export default function ActivityTypeSelection({ activity }) {
   const { api } = useContext(AuthContext);
@@ -64,27 +63,18 @@ export default function ActivityTypeSelection({ activity }) {
 
   return (
     <>
-      <Grid container spacing={1} alignItems="center">
+      <Grid container alignItems="center">
         {handleCheckActivityTypeSelected() && (
-          <Grid size="auto" sx={{ cursor: "pointer" }}>
-            <Tooltip
-              title={
-                <>
-                  <Typography>
-                    <b>Caution:</b>
-                    <br />
-                    If you have selected any <b>Actions</b> or <b>Activities</b>{" "}
-                    below, changing the <b>Activity Type</b> from this dropdown
-                    will reset both selections.
-                  </Typography>
-                </>
-              }
-            >
-              <WarningIcon color="warning" />
-            </Tooltip>
+          <Grid size="auto">
+            <CustomTooltip
+              type="warning"
+              message={`If you have selected any <b>Actions</b> or <b>Activities</b> below, changing the <b>Activity Type</b> from this dropdown will reset both selections.`}
+            />
           </Grid>
         )}
-        <Typography gutterBottom>Select <b>Activity Type</b></Typography>
+        <Typography>
+          Select <b>Activity Type</b>
+        </Typography>
       </Grid>
       <Grid container spacing={1} alignItems="center">
         <Grid size="grow">
@@ -119,11 +109,7 @@ export default function ActivityTypeSelection({ activity }) {
           />
         </Grid>
         <Grid size="auto">
-          <TipPopover
-            tipAnchor={state.tipAnchor}
-            toggleTipAnchor={handleTipAnchor}
-            description={state.tipDescription}
-          />
+          <CustomTooltip type="description" message={`To be decided`} />
         </Grid>
       </Grid>
     </>

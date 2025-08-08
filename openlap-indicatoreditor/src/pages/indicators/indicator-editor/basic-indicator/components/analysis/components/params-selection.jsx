@@ -2,17 +2,15 @@ import { useContext } from "react";
 import { BasicContext } from "../../../basic-indicator";
 import {
   FormControl,
-  IconButton,
   InputLabel,
   MenuItem,
   Paper,
   Select,
   TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
-import InfoIcon from "@mui/icons-material/Info";
 import Grid from "@mui/material/Grid2";
+import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 const PARAM_TYPE = { choice: "Choice", textBox: "Textbox" };
 
@@ -41,21 +39,11 @@ export default function ParamsSelection() {
         <Typography>
           Select <b>Parameters</b> of the method
         </Typography>
-        <Tooltip
-          arrow
-          title={
-            <Typography sx={{ p: 1 }}>
-              <b>Description</b>
-              <br />
-              Parameters are preselected with default values and can be changed
-              based on your needs.
-            </Typography>
-          }
-        >
-          <IconButton color="info">
-            <InfoIcon />
-          </IconButton>
-        </Tooltip>
+        <CustomTooltip
+          type="description"
+          message={`Parameters are preselected with default values and can be changed
+              based on your needs.`}
+        />
       </Grid>
       <Grid container spacing={2} alignItems="center">
         {analysis.params.map((param, index) => (
@@ -101,20 +89,7 @@ export default function ParamsSelection() {
                 </FormControl>
               </Grid>
               <Grid size="auto">
-                <Tooltip
-                  arrow
-                  title={
-                    <Typography sx={{ p: 1 }}>
-                      <b>Description</b>
-                      <br />
-                      {param.description}
-                    </Typography>
-                  }
-                >
-                  <IconButton color="info">
-                    <InfoIcon />
-                  </IconButton>
-                </Tooltip>
+                <CustomTooltip type="description" message={param.description} />
               </Grid>
             </Grid>
           </Grid>

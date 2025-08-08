@@ -1,6 +1,5 @@
 import { useContext, useState } from "react";
 import {
-  IconButton,
   Paper,
   Table,
   TableBody,
@@ -9,13 +8,12 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { Alert } from "@mui/material";
 import { BasicContext } from "../../../basic-indicator";
-import InfoIcon from "@mui/icons-material/Info";
+import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 const AnalyzedDataTable = () => {
   const {
@@ -52,20 +50,7 @@ const AnalyzedDataTable = () => {
         <Grid container alignItems="center">
           <Typography>Preview data</Typography>
           <Grid size="auto">
-            <Tooltip
-              arrow
-              title={
-                <Typography sx={{ p: 1 }}>
-                  <b>Description</b>
-                  <br />
-                  To be decided
-                </Typography>
-              }
-            >
-              <IconButton color="info">
-                <InfoIcon />
-              </IconButton>
-            </Tooltip>
+            <CustomTooltip type="description" message={`To be decided`} />
           </Grid>
         </Grid>
       </Grid>

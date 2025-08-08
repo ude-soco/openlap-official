@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -12,24 +12,17 @@ import {
 import Grid from "@mui/material/Grid2";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { BasicContext } from "../../../../basic-indicator";
-import TipPopover from "../../../../../../../../common/components/tip-popover/tip-popover";
 import { fetchActivityTypesList } from "../../utils/filters-api";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { v4 as uuidv4 } from "uuid";
 import ActivityTypeSelection from "./activity-type-selection";
 import ActionSelection from "./action-selection";
 import ActivitySelection from "./activity-selection";
+import CustomTooltip from "../../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 export default function ActivityFilters() {
   const { api } = useContext(AuthContext);
   const { dataset, filters, setFilters } = useContext(BasicContext);
-  const [state, setState] = useState({
-    tipAnchor: null,
-    tipDescription: `
-        <b>Tip!</b><br/>
-        To be decided!
-      `,
-  });
 
   const scrollContainerRef = useRef(null);
 
@@ -57,10 +50,6 @@ export default function ActivityFilters() {
     };
     if (dataset.selectedLRSList.length) loadActivityTypesList();
   }, [dataset.selectedLRSList.length]);
-
-  const handleActivityFilterPopoverAnchor = (param) => {
-    setState((p) => ({ ...p, tipAnchor: param }));
-  };
 
   const handleAddMoreFilter = () => {
     setFilters((p) => {
@@ -101,13 +90,9 @@ export default function ActivityFilters() {
         <AccordionDetails sx={{ pt: 2 }}>
           <Grid container justifyContent="space-between" alignItems="center">
             <Grid size="auto">
-              <Grid container spacing={1} alignItems="center">
+              <Grid container alignItems="center">
                 <Typography>Apply Activity filters</Typography>
-                <TipPopover
-                  tipAnchor={state.tipAnchor}
-                  toggleTipAnchor={handleActivityFilterPopoverAnchor}
-                  description={state.tipDescription}
-                />
+                <CustomTooltip type="description" message={`To be decided.`} />
               </Grid>
             </Grid>
             {filters.selectedActivities.length > 0 ? (

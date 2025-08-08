@@ -11,9 +11,9 @@ import Grid from "@mui/material/Grid2";
 import DatasetSummary from "./dataset-summary";
 import { useContext, useEffect, useState } from "react";
 import { BasicContext } from "../../basic-indicator";
-import TipPopover from "../../../../../../common/components/tip-popover/tip-popover";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
 import { fetchUserLRSList } from "./utils/dataset-api";
+import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 export default function Dataset() {
   const { api } = useContext(AuthContext);
@@ -119,10 +119,9 @@ export default function Dataset() {
                                 }}
                               />
                             </Grid>
-                            <TipPopover
-                              tipAnchor={state.tipAnchor}
-                              toggleTipAnchor={handleDatasetPopoverAnchor}
-                              description={state.tipDescription}
+                            <CustomTooltip
+                              type="description"
+                              message={`To be decided!`}
                             />
                           </Grid>
                         </Grid>
