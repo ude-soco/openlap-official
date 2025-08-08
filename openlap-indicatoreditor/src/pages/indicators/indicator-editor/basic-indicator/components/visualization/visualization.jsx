@@ -119,7 +119,7 @@ export default function Visualization() {
                       <LibrarySelection />
                     </Grid>
                     <Grid size={{ xs: 12, md: 8 }}>
-                      {visualization.typeList.length > 0 ? (
+                      {visualization.selectedLibrary.id && visualization.typeList.length > 0 ? (
                         <>
                           <TypeSelection />
                         </>
