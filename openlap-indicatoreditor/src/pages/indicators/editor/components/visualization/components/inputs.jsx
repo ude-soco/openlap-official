@@ -46,10 +46,7 @@ const Inputs = ({ state, setVisRef, analyzedData }) => {
       return oldMappings;
     };
     setVisRef((prevState) => {
-      let tempInputMappings = {
-        inputPort: input,
-        outputPort: value,
-      };
+      let tempInputMappings = { inputPort: input, outputPort: value };
       let updatedMappings = updateMappingsMethod(
         tempInputMappings,
         prevState.visualizationMapping.mapping
