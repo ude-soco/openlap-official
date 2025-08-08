@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Box, FormControl, FormLabel, Grid, Typography } from "@mui/material";
+import { Box, FormControl, FormLabel, Typography } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 
 export const StylesBar = ({
   categories,
@@ -70,7 +71,7 @@ export const StylesBar = ({
   return (
     <>
       {/* <Grid container spacing={2}>
-        <Grid item xs={12}>
+        <Grid size={{xs:12}}>
           <Grid container sx={{ mt: 1 }}>
             <FormControl>
               <FormLabel sx={{ mb: 1 }} id="role-label">
@@ -105,7 +106,7 @@ export const StylesBar = ({
           </Grid>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={{xs:12}}>
           <FormControl>
             <FormLabel id="role-label">Legend Text Color</FormLabel>
           </FormControl>
@@ -123,7 +124,7 @@ export const StylesBar = ({
           </Grid>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={{xs:12}}>
           <Grid container>
             <FormControl>
               <FormLabel sx={{ mb: 1 }} id="role-label">
@@ -188,13 +189,13 @@ export const StylesBar = ({
       </Grid> */}
 
       <Grid container spacing={2}>
-        <Grid item xs={12}>
+        <Grid size={{xs:12}}>
           <Grid container sx={{ mt: 1 }}>
             <FormControl>
               <FormLabel sx={{ mb: 1 }} id="role-label">
                 Data Colors
               </FormLabel>
-              <Grid item xs={12}>
+              <Grid size={{xs:12}}>
                 {chartConfiguration.seriesSingleColor && (
                   <Grid container spacing={1} item>
                     <Grid item>
@@ -258,7 +259,7 @@ export const StylesBar = ({
           </Grid>
         </Grid>
 
-        {/* <Grid item xs={12}>
+        {/* <Grid size={{xs:12}}>
           <FormControl>
             <FormLabel id="role-label">Legend Text Color</FormLabel>
           </FormControl>
@@ -270,7 +271,7 @@ export const StylesBar = ({
           </Grid>
         </Grid> */}
 
-        {/* <Grid item xs={12}>
+        {/* <Grid size={{xs:12}}>
           <Grid container>
             <FormControl>
               <FormLabel sx={{ mb: 1 }} id="role-label">

@@ -7,7 +7,7 @@ import { ElementsBar } from "./components/elements-bar";
 import { StylesBar } from "./components/styles";
 import { FiltersBar } from "./components/filter";
 
-const HEIGHT = "400px";
+const HEIGHT = "440px";
 
 const ChartCustomizationPanel = () => {
   const { analysis, visualization, setVisualization } =
@@ -118,7 +118,7 @@ const ChartCustomizationPanel = () => {
               </TabList>
             </Box>
             <TabPanel value="1">
-              <Box height={HEIGHT} sx={{ overflowY: "scroll" }}>
+              <Box height={HEIGHT} sx={{ overflowY: "scroll", px: 1 }}>
                 <ElementsBar
                   state={state}
                   setState={setState}
@@ -129,7 +129,7 @@ const ChartCustomizationPanel = () => {
               </Box>
             </TabPanel>
             <TabPanel value="2">
-              <Box height={HEIGHT} sx={{ overflowY: "scroll" }}>
+              <Box height={HEIGHT} sx={{ overflowY: "scroll", px: 1 }}>
                 <StylesBar
                   categories={analysis.analyzedData?.item_name?.data}
                   state={state}
@@ -141,7 +141,7 @@ const ChartCustomizationPanel = () => {
               </Box>
             </TabPanel>
             <TabPanel value="3">
-              <Box height={HEIGHT} sx={{ overflowY: "scroll" }}>
+              <Box height={HEIGHT} sx={{ overflowY: "scroll", px: 1 }}>
                 <FiltersBar
                   categories={analysis.analyzedData?.item_name?.data}
                   state={state}
