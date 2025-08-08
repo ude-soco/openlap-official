@@ -18,11 +18,17 @@ export function ToggleEditButton({ openPanel, togglePanel }) {
 
 export function ToggleEditIconButton({ openPanel, togglePanel }) {
   return (
-    <Grid container spacing={0.5} direction="column" alignItems="center">
-      <IconButton size="small" color="primary" onClick={togglePanel}>
+    <Grid
+      container
+      spacing={0.5}
+      direction="column"
+      alignItems="center"
+      onClick={togglePanel}
+    >
+      <IconButton size="small" color="primary">
         {openPanel ? <CloseIcon /> : <EditIcon />}
       </IconButton>
-      <Typography variant="body2" color="primary">
+      <Typography variant="body2" color="primary" sx={{ cursor: "pointer" }}>
         {openPanel ? "Close" : "Edit"}
       </Typography>
     </Grid>
