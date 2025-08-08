@@ -4,8 +4,10 @@ import { Button, Collapse, Divider, Paper } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import DatasetSummary from "./components/dataset-summary.jsx";
 import DataTableManager from "./data-table-manager/data-table-manager";
+import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";
 
 const Dataset = () => {
+  const { darkMode } = useContext(CustomThemeContext);
   const { dataset, lockedStep, setLockedStep } = useContext(ISCContext);
 
   const handleTogglePanel = () => {
@@ -68,7 +70,9 @@ const Dataset = () => {
           opacity: lockedStep.dataset.locked ? "0.5" : "1",
           pointerEvents: lockedStep.dataset.locked ? "none" : "auto",
           backgroundColor: lockedStep.dataset.locked
-            ? "grey.500"
+            ? darkMode
+              ? "grey.800"
+              : "grey.400"
             : "background.paper",
         }}
       >
