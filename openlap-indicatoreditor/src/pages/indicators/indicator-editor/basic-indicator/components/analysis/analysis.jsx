@@ -60,11 +60,9 @@ export default function Analysis() {
   return (
     <>
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Grid container spacing={2}>
+        <Grid container>
           <Grid size={{ xs: 12 }}>
             <AnalysisSummary />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
             <Collapse
               in={lockedStep.analysis.openPanel}
               timeout={{ enter: 500, exit: 250 }}
