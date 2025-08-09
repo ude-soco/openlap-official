@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Box,
@@ -44,6 +44,16 @@ const Sidebar = ({ openSidebar }) => {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const updatedOpenMenus = { ...openMenus };
+    menus.forEach((menu) => {
+      const disabled = roles.some((role) => menu.disabledRoles.includes(role));
+      if (disabled) updatedOpenMenus[menu.key] = false;
+      else updatedOpenMenus[menu.key] = true;
+    });
+    setOpenMenus(updatedOpenMenus);
+  }, [roles, menus]);
 
   const handleToggle = (menuKey) => {
     setOpenMenus((prev) => ({
