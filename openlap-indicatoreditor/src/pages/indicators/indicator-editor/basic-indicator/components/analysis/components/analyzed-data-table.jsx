@@ -14,6 +14,7 @@ import Grid from "@mui/material/Grid2";
 import { Alert } from "@mui/material";
 import { BasicContext } from "../../../basic-indicator";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
+import { DataTypes } from "../../../../../../indicator-specification-cards/creator/utils/data/config";
 
 const AnalyzedDataTable = () => {
   const {
@@ -33,7 +34,13 @@ const AnalyzedDataTable = () => {
       analyzedData[key].configurationData.type
     )})`,
     data: analyzedData[key].data,
+    type: formatTypeName(analyzedData[key].configurationData.type),
   }));
+
+  const handleTooltipDescription = (type) => {
+    return `What is <b>${type}</b> data type?<br/>
+    ${DataTypes[type.toLowerCase()].description}`;
+  };
 
   const numRows = columns[0].data.length;
 
@@ -60,7 +67,9 @@ const AnalyzedDataTable = () => {
           <Grid size="auto">
             <CustomTooltip
               type="description"
-              message={`View a sample of the data based on the selected method, inputs and parameters.`}
+              message={`View a sample of the data based on the selected method, inputs and parameters.<br/>
+                Each column can either be of type Categorical or Numerical
+                `}
             />
           </Grid>
         </Grid>
@@ -72,7 +81,13 @@ const AnalyzedDataTable = () => {
               <TableRow>
                 {columns.map((column, index) => (
                   <TableCell key={index}>
-                    <b>{column.title}</b>
+                    <Grid container alignItems="center">
+                      <b>{column.title}</b>
+                      <CustomTooltip
+                        type="description"
+                        message={handleTooltipDescription(column.type)}
+                      />
+                    </Grid>
                   </TableCell>
                 ))}
               </TableRow>

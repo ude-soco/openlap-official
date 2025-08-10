@@ -20,7 +20,7 @@ import CustomTooltip from "../../../../../../../../common/components/custom-tool
 import CustomDialog from "../../../../../../../../common/components/custom-dialog/custom-dialog";
 
 export default function ActivityFilters() {
-  const { filters, setFilters } = useContext(BasicContext);
+  const { filters, setFilters, setAnalysis } = useContext(BasicContext);
   const [state, setState] = useState({
     activityDialog: {
       openActivityDialog: false,
@@ -66,6 +66,7 @@ export default function ActivityFilters() {
       ];
       return { ...p, selectedActivities: tempSelectedActivities };
     });
+    setAnalysis((p) => ({ ...p, analyzedData: {} }));
   };
 
   const handleToggleDialogOpen = (pendingActivity = null) => {
@@ -90,6 +91,7 @@ export default function ActivityFilters() {
       );
       return { ...p, selectedActivities: updatedActivities };
     });
+    setAnalysis((p) => ({ ...p, analyzedData: {} }));
     handleToggleDialogOpen(null);
   };
 

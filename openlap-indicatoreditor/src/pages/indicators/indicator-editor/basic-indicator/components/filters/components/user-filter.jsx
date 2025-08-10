@@ -14,10 +14,11 @@ import { BasicContext } from "../../../basic-indicator";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 export default function UserFilter() {
-  const { filters, setFilters } = useContext(BasicContext);
+  const { filters, setFilters, setAnalysis } = useContext(BasicContext);
 
   const handleChangeUserFilter = (event) => {
     setFilters((p) => ({ ...p, selectedUserFilter: event.target.value }));
+    setAnalysis((p) => ({ ...p, analyzedData: {} }));
   };
 
   return (
@@ -32,7 +33,9 @@ export default function UserFilter() {
       >
         <AccordionDetails>
           <Grid container alignItems="center">
-            <Typography>Select <b>Users</b></Typography>
+            <Typography>
+              Select <b>Users</b>
+            </Typography>
             <CustomTooltip
               type="description"
               message={`Choose which users’ data to include in the analysis — only yours, all except yours, or all users.`}

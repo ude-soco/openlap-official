@@ -37,6 +37,7 @@ export default function InputsSelection() {
             mapping: updatedMappings,
           },
         },
+        analyzedData: {},
       };
     });
   };
