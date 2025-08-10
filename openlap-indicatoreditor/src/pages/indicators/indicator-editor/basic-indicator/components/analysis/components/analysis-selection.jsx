@@ -84,7 +84,10 @@ export default function AnalysisSelection() {
             <Typography>
               Select an <b>Analytics Method</b>
             </Typography>
-            <CustomTooltip type="description" message={`To be decided!`} />
+            <CustomTooltip
+              type="description"
+              message={`Select the type of analysis to apply to your data.`}
+            />
           </Grid>
         </Grid>
         <Grid size={{ xs: 12 }}>

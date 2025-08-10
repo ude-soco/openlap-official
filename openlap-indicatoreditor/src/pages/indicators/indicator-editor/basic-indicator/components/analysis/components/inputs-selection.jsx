@@ -62,8 +62,7 @@ export default function InputsSelection() {
         </Typography>
         <CustomTooltip
           type="description"
-          message={`Each Analysis Method has input parameters. You can decide which
-              data should be assigned to which analysis input parameter.`}
+          message={`Each method has input parameter(s). You can decide which data should be assigned to which analysis input parameter.`}
         />
       </Grid>
       <Grid size={{ xs: 12 }}>

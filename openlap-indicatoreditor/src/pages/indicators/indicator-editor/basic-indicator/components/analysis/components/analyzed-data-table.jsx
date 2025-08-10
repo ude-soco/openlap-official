@@ -27,7 +27,7 @@ const AnalyzedDataTable = () => {
     if (type === "Numeric") return "Numerical";
     return type;
   };
-  
+
   const columns = Object.keys(analyzedData).map((key) => ({
     title: `${analyzedData[key].configurationData.title} (${formatTypeName(
       analyzedData[key].configurationData.type
@@ -58,7 +58,10 @@ const AnalyzedDataTable = () => {
         <Grid container alignItems="center">
           <Typography>Preview data</Typography>
           <Grid size="auto">
-            <CustomTooltip type="description" message={`To be decided`} />
+            <CustomTooltip
+              type="description"
+              message={`View a sample of the data based on the selected method, inputs and parameters.`}
+            />
           </Grid>
         </Grid>
       </Grid>
