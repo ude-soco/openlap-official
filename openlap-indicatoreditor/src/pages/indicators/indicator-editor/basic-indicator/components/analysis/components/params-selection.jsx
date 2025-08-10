@@ -37,7 +37,7 @@ export default function ParamsSelection() {
     >
       <Grid container spacing={0} alignItems="center">
         <Typography>
-          Select <b>Parameters</b> of the method
+          Set <b>Parameters</b> of the method
         </Typography>
         <CustomTooltip
           type="description"

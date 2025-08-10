@@ -100,7 +100,7 @@ export default function AnalysisSelection() {
             value={analysis.selectedAnalyticsMethod.method || null}
             onChange={(event, value) => handleSelectAnalyticsMethod(value)}
             renderInput={(params) => (
-              <TextField {...params} placeholder="List of Analytics Methods" />
+              <TextField {...params} placeholder="Search for Analytics Methods" />
             )}
             renderOption={(props, option) => {
               const { key, ...restProps } = props;

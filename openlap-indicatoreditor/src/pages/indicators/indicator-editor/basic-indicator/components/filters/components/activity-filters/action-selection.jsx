@@ -79,7 +79,7 @@ export default function ActionSelection({ activity }) {
           <Grid size="auto">
             <CustomTooltip
               type="help"
-              message={`This dropdown is disabled because:<br/>• An <b>Activity Type</b> needs to be selected`}
+              message={`This dropdown is disabled because:<br/>● An <b>Activity Type</b> needs to be selected`}
             />
           </Grid>
         ) : (
@@ -118,7 +118,7 @@ export default function ActionSelection({ activity }) {
               handleSelectActions(value);
             }}
             renderInput={(params) => (
-              <TextField {...params} placeholder="List of actions" />
+              <TextField {...params} placeholder="Search for actions" />
             )}
             renderOption={(props, option) => {
               const { key, ...restProps } = props;

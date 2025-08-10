@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { Autocomplete, TextField, Tooltip, Typography } from "@mui/material";
+import { Autocomplete, TextField, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { BasicContext } from "../../../../basic-indicator";
 import { fetchActionOnActivitiesList } from "../../utils/filters-api";
@@ -16,10 +16,6 @@ export default function ActivityTypeSelection({ activity }) {
       To be decided!.
     `,
   });
-
-  const handleTipAnchor = (param) => {
-    setState((p) => ({ ...p, tipAnchor: param }));
-  };
 
   const handleSelectActivityType = (value) => {
     const loadActionList = async () => {
@@ -89,7 +85,10 @@ export default function ActivityTypeSelection({ activity }) {
               if (value) handleSelectActivityType(value);
             }}
             renderInput={(params) => (
-              <TextField {...params} placeholder="List of Activity types" />
+              <TextField
+                {...params}
+                placeholder="Search for a type of Activity"
+              />
             )}
             renderOption={(props, option) => {
               const { key, ...restProps } = props;
@@ -111,7 +110,7 @@ export default function ActivityTypeSelection({ activity }) {
         <Grid size="auto">
           <CustomTooltip
             type="description"
-            message={`Choose the category of activity you want to filter by, such as annotations, materials, or videos.`}
+            message={`Choose the type of activity you want to filter by, such as annotations, materials, or videos.`}
           />
         </Grid>
       </Grid>
