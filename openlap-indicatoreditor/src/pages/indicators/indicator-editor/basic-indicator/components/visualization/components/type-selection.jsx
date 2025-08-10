@@ -213,17 +213,17 @@ function buildRecommendationExplanationTooltip(chartType, analyzedData) {
       </Typography>
 
       <Typography gutterBottom>
-        {chartType.name} requires the following number of data columns:
+        {chartType.name} requires the following number of data types as inputs:
         <br />
         {Object.entries(requiredTypeCount).map(([type, count]) => (
           <div key={`req-${type}`}>
-            ⦁ {count} {formatTypeName(type)}
+            ⦁ {count} {formatTypeName(type)} {count > 1 ? "columns" : "column"}
           </div>
         ))}
       </Typography>
 
       <Typography gutterBottom>
-        Your analyzed data has the following number of data column types:
+        Your analyzed data has the following number of data types:
         <br />
         {Object.entries(requiredTypeCount).map(([type]) => {
           const count = availableTypeCount[type] || 0;
@@ -240,15 +240,8 @@ function buildRecommendationExplanationTooltip(chartType, analyzedData) {
           );
         })}
       </Typography>
-
       <Typography>
-        {`This ${
-          Object.entries(requiredTypeCount).every(
-            ([type, reqCount]) => (availableTypeCount[type] || 0) >= reqCount
-          )
-            ? "fulfils"
-            : "does not fulfil"
-        } the minimum requirement of the chart inputs.`}
+        This fulfils the minimum requirement of the chart inputs.
       </Typography>
     </>
   );
@@ -278,19 +271,28 @@ function buildRequirementsTooltip(chartType, analyzedData) {
       <Typography gutterBottom>
         <b>{chartType.name} requirements</b>
       </Typography>
-      {Object.entries(requiredTypeCount).map(([type, count]) => (
-        <Typography key={type}>
-          ⦁ {count} {formatTypeName(type)} {count > 1 ? "columns" : "column"}
-        </Typography>
-      ))}
-      <Typography gutterBottom sx={{ mt: 1 }}>
-        Your analyzed data contains:
+      <Typography gutterBottom>
+        {chartType.name} requires the following number of data types as inputs:
+        <br />
+        {Object.entries(requiredTypeCount).map(([type, count]) => (
+          <Typography key={type}>
+            ⦁ {count} {formatTypeName(type)} {count > 1 ? "columns" : "column"}
+          </Typography>
+        ))}
       </Typography>
-      {Object.entries(requiredTypeCount).map(([type]) => (
-        <Typography key={type}>
-          ⦁ {availableTypeCount[type] || 0} {formatTypeName(type)} column(s)
-        </Typography>
-      ))}
+
+      <Typography gutterBottom sx={{ mt: 1 }}>
+        However, your analyzed data contains:
+        <br />
+        {Object.entries(requiredTypeCount).map(([type]) => (
+          <Typography key={type}>
+            ⦁ {availableTypeCount[type] || 0} {formatTypeName(type)} column(s)
+          </Typography>
+        ))}
+      </Typography>
+      <Typography>
+        This does <b>not</b> fulfil the minimum requirement of the chart inputs.
+      </Typography>
     </>
   );
 }
