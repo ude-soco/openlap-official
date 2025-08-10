@@ -8,15 +8,18 @@ export const fetchUserLRSList = async (api) => {
   }
 };
 
-export const fetchPlatformList = async (api, lrsStores) => {
+export const fetchActivityTypesList = async (api, lrsStores) => {
+  const requestBody = lrsStores.map((store) => ({
+    lrsId: store.lrsId,
+    uniqueIdentifier: store.uniqueIdentifier,
+  }));
   try {
-    let request = {
-      lrsStores,
-    };
-    const response = await api.post("v1/statements/platforms", request);
+    const response = await api.post("v1/statements/activity-types", {
+      lrsStores: requestBody,
+    });
     return response.data.data;
   } catch (error) {
-    console.error("Failed to fetch platform data", error);
+    console.error("Failed to fetch activity types data", error);
     throw error; // Re-throw the error to handle it in the component
   }
 };
