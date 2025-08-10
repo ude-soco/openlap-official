@@ -12,8 +12,6 @@ import {
 import Grid from "@mui/material/Grid2";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { BasicContext } from "../../../../basic-indicator";
-import { fetchActivityTypesList } from "../../utils/filters-api";
-import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { v4 as uuidv4 } from "uuid";
 import ActivityTypeSelection from "./activity-type-selection";
 import ActionSelection from "./action-selection";
@@ -21,8 +19,7 @@ import ActivitySelection from "./activity-selection";
 import CustomTooltip from "../../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 export default function ActivityFilters() {
-  const { api } = useContext(AuthContext);
-  const { dataset, filters, setFilters } = useContext(BasicContext);
+  const { filters, setFilters } = useContext(BasicContext);
 
   const scrollContainerRef = useRef(null);
 
@@ -35,21 +32,6 @@ export default function ActivityFilters() {
       });
     }
   }, [filters.selectedActivities]);
-
-  useEffect(() => {
-    const loadActivityTypesList = async () => {
-      try {
-        const activityTypesList = await fetchActivityTypesList(
-          api,
-          dataset.selectedLRSList
-        );
-        setFilters((p) => ({ ...p, activityTypesList: activityTypesList }));
-      } catch (error) {
-        console.error(`Failed to load Activity types list`, error);
-      }
-    };
-    if (dataset.selectedLRSList.length) loadActivityTypesList();
-  }, [dataset.selectedLRSList.length]);
 
   const handleAddMoreFilter = () => {
     setFilters((p) => {

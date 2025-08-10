@@ -107,6 +107,45 @@ export default function BasicIndicator() {
         };
   });
 
+  const handleResetIfDatasetEmpty = () => {
+    setLockedStep({
+      dataset: { locked: false, openPanel: true, step: "1" },
+      filters: { locked: true, openPanel: false, step: "2" },
+      analysis: { locked: true, openPanel: false, step: "3" },
+      visualization: { locked: true, openPanel: false, step: "4" },
+      finalize: { locked: true, openPanel: false, step: "5" },
+    });
+    setFilters({
+      selectedUserFilter: Condition.only_me,
+      selectedTime: {
+        from: dayjs().subtract(1, "year").toISOString(),
+        until: dayjs().toISOString(),
+      },
+      activityTypesList: [],
+      selectedActivities: [],
+    });
+    setAnalysis({
+      analyticsMethodList: [],
+      inputs: [],
+      params: [],
+      selectedAnalyticsMethod: {
+        method: { id: "", name: "" },
+        mapping: { mapping: [] },
+      },
+      analyzedData: {},
+    });
+    setVisualization({
+      libraryList: [],
+      selectedLibrary: { id: "", name: "" },
+      typeList: [],
+      selectedType: { id: "", name: "", chartInputs: [] },
+      inputs: [],
+      params: { height: 500, width: 500 },
+      mapping: { mapping: [] },
+      previewData: { displayCode: [], scriptData: {} },
+    });
+  };
+
   const prevDependencies = useRef({
     lockedStep,
     dataset,
@@ -171,6 +210,7 @@ export default function BasicIndicator() {
           setAnalysis,
           setVisualization,
           setIndicator,
+          handleResetIfDatasetEmpty,
         }}
       >
         <Grid container spacing={2}>

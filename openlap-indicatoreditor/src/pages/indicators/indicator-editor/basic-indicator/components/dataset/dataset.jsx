@@ -12,19 +12,31 @@ import DatasetSummary from "./dataset-summary";
 import { useContext, useEffect, useState } from "react";
 import { BasicContext } from "../../basic-indicator";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
-import { fetchUserLRSList } from "./utils/dataset-api";
+import { fetchActivityTypesList, fetchUserLRSList } from "./utils/dataset-api";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
+import CustomDialog from "../../../../../../common/components/custom-dialog/custom-dialog";
 
 export default function Dataset() {
   const { api } = useContext(AuthContext);
-  const { lockedStep, setLockedStep, dataset, setDataset } =
-    useContext(BasicContext);
+  const {
+    lockedStep,
+    setLockedStep,
+    dataset,
+    setDataset,
+    setFilters,
+    handleResetIfDatasetEmpty,
+  } = useContext(BasicContext);
   const [state, setState] = useState({
-    tipAnchor: null,
-    tipDescription: `
-      <b>Tip!</b><br/>
-      To be decided!
-    `,
+    lrsDialog: {
+      openDialogLRS: false,
+      content: `Removing an LRS from the list will have the following effects:<br/>
+      • All chosen activity filters in <b>Filters</b> will be removed<br/>
+      • Analyzed data in <b>Analysis</b> will be deleted<br/>
+      • Chosen visualization and its customizations in <b>Visualization</b> will be lost<br/><br/>
+      Please confirm before proceeding.
+      `,
+      pendingLRSList: null,
+    },
   });
 
   useEffect(() => {
@@ -39,10 +51,6 @@ export default function Dataset() {
     loadMyLearningRecordStores();
   }, []);
 
-  const handleDatasetPopoverAnchor = (param) => {
-    setState((p) => ({ ...p, tipAnchor: param }));
-  };
-
   const handleShowOptions = () => {
     return dataset.myLRSList.filter(
       (item) =>
@@ -50,8 +58,45 @@ export default function Dataset() {
     );
   };
 
-  const handleSelectLRS = (selectedLRSList) => {
+  const handleToggleDialogOpen = (pendingLRSList = null) => {
+    setState((p) => ({
+      ...p,
+      lrsDialog: {
+        ...p.lrsDialog,
+        openDialogLRS: !p.lrsDialog.openDialogLRS,
+        pendingLRSList,
+      },
+    }));
+  };
+
+  const handleSelectLRS = async (selectedLRSList) => {
+    const isRemoving =
+      dataset.selectedLRSList.length > selectedLRSList.length &&
+      !lockedStep.filters.locked &&
+      !state.lrsDialog.openDialogLRS;
+    if (isRemoving) {
+      handleToggleDialogOpen(selectedLRSList);
+      return;
+    }
     setDataset((p) => ({ ...p, selectedLRSList: selectedLRSList }));
+    if (selectedLRSList.length !== 0) {
+      try {
+        const activityTypesList = await fetchActivityTypesList(
+          api,
+          selectedLRSList
+        );
+        setFilters((p) => ({ ...p, activityTypesList: activityTypesList }));
+      } catch (error) {
+        console.error(`Failed to load Activity types list`, error);
+      }
+    } else {
+      handleResetIfDatasetEmpty();
+    }
+  };
+
+  const handleConfirmRemoveLRS = async () => {
+    await handleSelectLRS(state.lrsDialog.pendingLRSList);
+    handleToggleDialogOpen();
   };
 
   const handleCheckDisabled = () => {
@@ -145,6 +190,12 @@ export default function Dataset() {
                   </Grid>
                 </Grid>
               </Grid>
+              <CustomDialog
+                open={state.lrsDialog.openDialogLRS}
+                toggleOpen={handleToggleDialogOpen}
+                content={state.lrsDialog.content}
+                handler={handleConfirmRemoveLRS}
+              />
             </Collapse>
           </Grid>
         </Grid>
