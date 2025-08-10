@@ -13,13 +13,6 @@ import CustomTooltip from "../../../../../../../common/components/custom-tooltip
 export default function AnalysisSelection() {
   const { api } = useContext(AuthContext);
   const { analysis, setAnalysis } = useContext(BasicContext);
-  const [state, setState] = useState({
-    tipAnchor: null,
-    tipDescription: `
-        <b>Tip!</b><br/>
-        To be decided!.
-      `,
-  });
 
   useEffect(() => {
     const loadAnalyticsMethodsList = async () => {
@@ -38,10 +31,6 @@ export default function AnalysisSelection() {
       loadAnalyticsMethodsList();
   }, []);
 
-  const handleTipAnchor = (param) => {
-    setState((p) => ({ ...p, tipAnchor: param }));
-  };
-
   const handleSelectAnalyticsMethod = async (value) => {
     const methodId = value.id;
 
@@ -54,7 +43,6 @@ export default function AnalysisSelection() {
         method: value,
         mapping: { mapping: [] },
       },
-      analyzedData: {},
     }));
 
     try {
@@ -100,7 +88,10 @@ export default function AnalysisSelection() {
             value={analysis.selectedAnalyticsMethod.method || null}
             onChange={(event, value) => handleSelectAnalyticsMethod(value)}
             renderInput={(params) => (
-              <TextField {...params} placeholder="Search for Analytics Methods" />
+              <TextField
+                {...params}
+                placeholder="Search for Analytics Methods"
+              />
             )}
             renderOption={(props, option) => {
               const { key, ...restProps } = props;

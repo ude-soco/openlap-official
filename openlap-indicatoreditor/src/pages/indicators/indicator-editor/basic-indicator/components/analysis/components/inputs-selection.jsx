@@ -78,7 +78,6 @@ export default function InputsSelection() {
             <Grid size={{ xs: 12 }} key={index}>
               <Grid container spacing={1} alignItems="center">
                 <Grid size="grow">
-                  {/* // TODO: Need to change to normal Select Menu Item component */}
                   <FormControl
                     fullWidth
                     error={

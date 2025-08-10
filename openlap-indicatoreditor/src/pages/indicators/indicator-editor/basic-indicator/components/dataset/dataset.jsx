@@ -3,7 +3,6 @@ import {
   Button,
   Collapse,
   Divider,
-  Paper,
   TextField,
   Typography,
 } from "@mui/material";
@@ -15,6 +14,7 @@ import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-c
 import { fetchActivityTypesList, fetchUserLRSList } from "./utils/dataset-api";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
 import CustomDialog from "../../../../../../common/components/custom-dialog/custom-dialog";
+import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper";
 
 export default function Dataset() {
   const { api } = useContext(AuthContext);
@@ -29,6 +29,7 @@ export default function Dataset() {
   const [state, setState] = useState({
     lrsDialog: {
       openDialogLRS: false,
+      // TODO: Ideally, if user decides to remove it, it should analyze and visualize with the remaining filters
       content: `Removing an LRS from the list will have the following effects:<br/>
       • All chosen activity filters in <b>Filters</b> will be removed<br/>
       • Analyzed data in <b>Analysis</b> will be deleted<br/>
@@ -113,7 +114,7 @@ export default function Dataset() {
 
   return (
     <>
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <CustomPaper sx={{ p: 2 }}>
         <Grid container>
           <Grid size={{ xs: 12 }}>
             <DatasetSummary />
@@ -192,6 +193,7 @@ export default function Dataset() {
                 </Grid>
               </Grid>
               <CustomDialog
+                type="delete"
                 open={state.lrsDialog.openDialogLRS}
                 toggleOpen={handleToggleDialogOpen}
                 content={state.lrsDialog.content}
@@ -200,7 +202,7 @@ export default function Dataset() {
             </Collapse>
           </Grid>
         </Grid>
-      </Paper>
+      </CustomPaper>
     </>
   );
 }

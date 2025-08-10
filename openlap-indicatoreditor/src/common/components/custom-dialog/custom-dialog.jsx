@@ -42,7 +42,7 @@ const CustomDialog = ({
 
   return (
     <>
-      <Dialog open={Boolean(open)}>
+      <Dialog open={Boolean(open)} fullWidth maxWidth="sm">
         <DialogTitle>{config.title}</DialogTitle>
         <DialogContent>
           <DialogContentText dangerouslySetInnerHTML={{ __html: content }} />

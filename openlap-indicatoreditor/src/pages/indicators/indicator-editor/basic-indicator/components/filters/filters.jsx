@@ -1,4 +1,4 @@
-import { Button, Collapse, Divider, Paper } from "@mui/material";
+import { Button, Collapse, Divider } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { useContext } from "react";
 import { BasicContext } from "../../basic-indicator";
@@ -6,10 +6,9 @@ import FiltersSummary from "./components/filters-summary";
 import UserFilter from "./components/user-filter";
 import DateFilter from "./components/date-filter";
 import ActivityFilters from "./components/activity-filters/activity-filters.jsx";
-import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
+import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper.jsx";
 
 export default function Filters() {
-  const { darkMode } = useContext(CustomThemeContext);
   const { lockedStep, setLockedStep, filters } = useContext(BasicContext);
 
   const handleCheckDisabled = () => {
@@ -26,20 +25,7 @@ export default function Filters() {
 
   return (
     <>
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 2,
-          position: "relative",
-          opacity: lockedStep.filters.locked ? "0.5" : "1",
-          pointerEvents: lockedStep.filters.locked ? "none" : "auto",
-          backgroundColor: lockedStep.filters.locked
-            ? darkMode
-              ? "grey.800"
-              : "grey.400"
-            : "background.paper",
-        }}
-      >
+      <CustomPaper locked={lockedStep.filters.locked}>
         <Grid container>
           <Grid size={{ xs: 12 }}>
             <FiltersSummary />
@@ -87,7 +73,7 @@ export default function Filters() {
             </Collapse>
           </Grid>
         </Grid>
-      </Paper>
+      </CustomPaper>
     </>
   );
 }

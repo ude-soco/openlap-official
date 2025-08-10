@@ -16,6 +16,7 @@ import TypeInputSelection from "./components/type-input-selection";
 import ChartPreview from "./components/chart-preview";
 import ChartCustomizationPanel from "./components/customization/chart-customization-panel";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager";
+import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper";
 
 export default function Visualization() {
   const { darkMode } = useContext(CustomThemeContext);
@@ -95,20 +96,7 @@ export default function Visualization() {
 
   return (
     <>
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 2,
-          position: "relative",
-          opacity: lockedStep.visualization.locked ? "0.5" : "1",
-          pointerEvents: lockedStep.visualization.locked ? "none" : "auto",
-          backgroundColor: lockedStep.visualization.locked
-            ? darkMode
-              ? "grey.800"
-              : "grey.400"
-            : "background.paper",
-        }}
-      >
+      <CustomPaper locked={lockedStep.visualization.locked}>
         <Grid container>
           <Grid size={{ xs: 12 }}>
             <VisualizationSummary />
@@ -191,7 +179,7 @@ export default function Visualization() {
             </Collapse>
           </Grid>
         </Grid>
-      </Paper>
+      </CustomPaper>
     </>
   );
 }

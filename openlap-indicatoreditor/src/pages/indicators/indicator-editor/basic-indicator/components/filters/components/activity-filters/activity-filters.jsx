@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -17,9 +17,20 @@ import ActivityTypeSelection from "./activity-type-selection";
 import ActionSelection from "./action-selection";
 import ActivitySelection from "./activity-selection";
 import CustomTooltip from "../../../../../../../../common/components/custom-tooltip/custom-tooltip";
+import CustomDialog from "../../../../../../../../common/components/custom-dialog/custom-dialog";
 
 export default function ActivityFilters() {
   const { filters, setFilters } = useContext(BasicContext);
+  const [state, setState] = useState({
+    activityDialog: {
+      openActivityDialog: false,
+      content: `Removing this filter will have the following effects:<br/>
+      • Analyzed data in <b>Analysis</b> will be deleted<br/>
+      • Chosen visualization and its customizations in <b>Visualization</b> will be lost<br/><br/>
+      Please confirm before proceeding.`,
+      pendingActivity: null,
+    },
+  });
 
   const scrollContainerRef = useRef(null);
 
@@ -50,13 +61,33 @@ export default function ActivityFilters() {
     });
   };
 
+  const handleToggleDialogOpen = (pendingActivity = null) => {
+    setState((p) => ({
+      ...p,
+      activityDialog: {
+        ...p.activityDialog,
+        openActivityDialog: !p.activityDialog.openActivityDialog,
+        pendingActivity,
+      },
+    }));
+  };
+
   const handleRemoveFilter = (activity) => {
+    if (state.activityDialog.pendingActivity === null) {
+      handleToggleDialogOpen(activity);
+      return;
+    }
     setFilters((p) => {
       const updatedActivities = p.selectedActivities.filter(
-        (a) => a.id !== activity.id
+        (a) => a.id !== state.activityDialog.pendingActivity.id
       );
       return { ...p, selectedActivities: updatedActivities };
     });
+    handleToggleDialogOpen(null);
+  };
+
+  const handleConfirmRemoveFilter = () => {
+    handleRemoveFilter(null);
   };
 
   return (
@@ -151,6 +182,13 @@ export default function ActivityFilters() {
                             </IconButton>
                           </Tooltip>
                         </Grid>
+                        <CustomDialog
+                          type="delete"
+                          open={state.activityDialog.openActivityDialog}
+                          toggleOpen={handleToggleDialogOpen}
+                          content={state.activityDialog.content}
+                          handler={handleConfirmRemoveFilter}
+                        />
                       </Grid>
                       <Grid size={{ xs: 12 }}>
                         <ActivityTypeSelection activity={activity} />
