@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { BasicContext } from "../../../basic-indicator";
 import {
+  Box,
   FormControl,
   InputLabel,
   MenuItem,
@@ -106,7 +107,7 @@ export default function InputsSelection() {
                             title={<Typography>{menu.description}</Typography>}
                             placement="right"
                           >
-                            {menu.name}
+                            <Box sx={{ width: "100%" }}>{menu.name}</Box>
                           </Tooltip>
                         </MenuItem>
                       ))}
