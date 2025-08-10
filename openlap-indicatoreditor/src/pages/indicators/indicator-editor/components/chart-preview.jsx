@@ -1,11 +1,9 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
-import { BasicContext } from "../../../basic-indicator";
-import { Box } from "@mui/material";
+import React, { useEffect, useRef } from "react";
+import Grid from "@mui/material/Grid2";
+import { Paper } from "@mui/material";
 
-const ChartPreview = () => {
-  const { visualization, setVisualization } = useContext(BasicContext);
-  const [state, setState] = useState();
-  const firstCode = visualization?.previewData?.displayCode?.[0];
+const ChartPreview = ({ previewData }) => {
+  const firstCode = previewData?.displayCode?.[0];
 
   if (!firstCode) return null;
 
@@ -14,11 +12,11 @@ const ChartPreview = () => {
   useEffect(() => {
     if (!scriptRef.current) {
       const script = document.createElement("script");
-      script.innerHTML = visualization.previewData.scriptData;
+      script.innerHTML = previewData.scriptData;
       document.getElementById("root").appendChild(script);
       scriptRef.current = script;
     } else {
-      scriptRef.current.innerHTML = visualization.previewData.scriptData;
+      scriptRef.current.innerHTML = previewData.scriptData;
     }
 
     return () => {
@@ -27,10 +25,16 @@ const ChartPreview = () => {
         scriptRef.current = null;
       }
     };
-  }, [visualization.previewData.scriptData]);
+  }, [previewData.scriptData]);
 
   return (
-    <>
+    <Grid
+      container
+      component={Paper}
+      variant="outlined"
+      justifyContent="center"
+      sx={{ backgroundColor: "white", p: 3 }}
+    >
       {
         React.isValidElement(firstCode) ? (
           firstCode // render element as-is
@@ -38,7 +42,7 @@ const ChartPreview = () => {
           <span dangerouslySetInnerHTML={{ __html: firstCode }} />
         ) : null // skip if it's some unexpected object
       }
-    </>
+    </Grid>
   );
 };
 
