@@ -74,7 +74,10 @@ export default function ActivityFilters() {
             <Grid size="auto">
               <Grid container alignItems="center">
                 <Typography>Apply Activity filters</Typography>
-                <CustomTooltip type="description" message={`To be decided.`} />
+                <CustomTooltip
+                  type="description"
+                  message={`Narrow down the data by selecting specific activity types, actions, or activities to include in the analysis.`}
+                />
               </Grid>
             </Grid>
             {filters.selectedActivities.length > 0 ? (

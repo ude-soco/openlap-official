@@ -79,7 +79,7 @@ export default function ActionSelection({ activity }) {
           <Grid size="auto">
             <CustomTooltip
               type="help"
-              message={`This dropdown is disabled because:<br/>- At least an activity type needs to be selected`}
+              message={`This dropdown is disabled because:<br/>• An <b>Activity Type</b> needs to be selected`}
             />
           </Grid>
         ) : (
@@ -145,7 +145,10 @@ export default function ActionSelection({ activity }) {
         </Grid>
         {!handleCheckActionsAvailable() && (
           <Grid size="auto" sx={{ pt: 1 }}>
-            <CustomTooltip type="description" message={`To be decided`} />
+            <CustomTooltip
+              type="description"
+              message={`Select one or more actions performed within the chosen activity type, such as viewed, edited, or deleted.`}
+            />
           </Grid>
         )}
       </Grid>

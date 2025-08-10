@@ -109,7 +109,10 @@ export default function ActivityTypeSelection({ activity }) {
           />
         </Grid>
         <Grid size="auto">
-          <CustomTooltip type="description" message={`To be decided`} />
+          <CustomTooltip
+            type="description"
+            message={`Choose the category of activity you want to filter by, such as annotations, materials, or videos.`}
+          />
         </Grid>
       </Grid>
     </>

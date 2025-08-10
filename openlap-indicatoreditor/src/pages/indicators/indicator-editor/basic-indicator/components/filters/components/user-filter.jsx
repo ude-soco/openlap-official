@@ -33,7 +33,10 @@ export default function UserFilter() {
         <AccordionDetails>
           <Grid container alignItems="center">
             <Typography>Select users</Typography>
-            <CustomTooltip type="description" message={`To be decided!`} />
+            <CustomTooltip
+              type="description"
+              message={`Choose which users’ data to include in the analysis — only yours, all except yours, or all users.`}
+            />
           </Grid>
           <FormControl name="role">
             <RadioGroup
