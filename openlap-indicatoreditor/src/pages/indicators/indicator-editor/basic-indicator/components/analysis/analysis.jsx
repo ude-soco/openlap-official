@@ -51,6 +51,10 @@ export default function Analysis() {
     return Object.keys(analysis.analyzedData).length === 0;
   };
 
+  const handleCheckPreviewDisabled = () => {
+    return analysis.selectedAnalyticsMethod.mapping.mapping.length === 0;
+  };
+
   const handleUnlockPath = () => {
     setLockedStep((p) => ({
       ...p,
@@ -127,21 +131,18 @@ export default function Analysis() {
                                   Click "Preview" to run the analysis of your
                                   data.
                                 </Typography>
-                                <Grid
-                                  container
-                                  spacing={1}
-                                  justifyContent="center"
-                                >
+                                <Grid container justifyContent="center">
                                   <Button
                                     variant="contained"
                                     // TODO: Disable the button if the Inputs are not selected
+                                    disabled={handleCheckPreviewDisabled()}
                                     onClick={handlePreviewAnalyzedData}
                                   >
                                     Preview
                                   </Button>
                                   <CustomTooltip
                                     type="help"
-                                    message={`The button is disabled because:<br/>- All of the required <b>Inputs of the method</b> must be selected!`}
+                                    message={`The button is disabled because:<br/>● Please select the required <b>Inputs</b> of the method.`}
                                   />
                                 </Grid>
                               </Box>
