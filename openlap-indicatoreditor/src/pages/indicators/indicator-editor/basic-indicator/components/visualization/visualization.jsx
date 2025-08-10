@@ -1,6 +1,13 @@
-import { Button, Collapse, Divider, Paper, Skeleton } from "@mui/material";
+import {
+  Button,
+  Collapse,
+  Divider,
+  LinearProgress,
+  Paper,
+  Skeleton,
+} from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { BasicContext } from "../../basic-indicator";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
 import VisualizationSummary from "./components/visualization-summary";
@@ -15,35 +22,18 @@ import {
 import TypeInputSelection from "./components/type-input-selection";
 import ChartPreview from "./components/chart-preview";
 import ChartCustomizationPanel from "./components/customization/chart-customization-panel";
-import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager";
 import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper";
 
 export default function Visualization() {
-  const { darkMode } = useContext(CustomThemeContext);
   const { api } = useContext(AuthContext);
   const {
     dataset,
     filters,
     analysis,
     lockedStep,
-    setLockedStep,
     visualization,
     setVisualization,
   } = useContext(BasicContext);
-  const [state, setState] = useState({
-    tipAnchor: null,
-    tipDescription: `
-      <b>Tip!</b><br/>
-      To be decided!
-    `,
-  });
-
-  // useEffect(() => {
-  //   console.log("Call");
-  // handleLoadPreviewVisualization().then((response) => {
-  //   console.log(response);
-  // });
-  // }, [visualization.selectedType.chartInputs, analysis.analyzedData]);
 
   useEffect(() => {
     if (
@@ -61,10 +51,6 @@ export default function Visualization() {
         }));
       });
   }, [visualization.inputs, visualization.params]);
-
-  const handleDatasetPopoverAnchor = (param) => {
-    setState((p) => ({ ...p, tipAnchor: param }));
-  };
 
   const handleLoadPreviewVisualization = async () => {
     let indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
@@ -116,7 +102,7 @@ export default function Visualization() {
                         visualization.typeList.length > 0 ? (
                           <TypeSelection />
                         ) : (
-                          <Skeleton variant="rectangular" height={500} />
+                          <LinearProgress />
                         )
                       ) : undefined}
                     </Grid>
