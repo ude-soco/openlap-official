@@ -107,6 +107,15 @@ export default function BasicIndicator() {
         };
   });
 
+  useEffect(() => {
+    if (Object.keys(analysis.analyzedData || {}).length > 0) {
+      setAnalysis((p) => ({ ...p, analyzedData: {} }));
+    }
+  }, [
+    JSON.stringify(filters),
+    JSON.stringify({ ...analysis, analyzedData: undefined }),
+  ]);
+
   const handleResetIfDatasetEmpty = () => {
     setLockedStep({
       dataset: { locked: false, openPanel: true, step: "1" },
