@@ -16,14 +16,17 @@ export default function TipPopover({
 }) {
   return (
     <>
-      <IconButton
-        onClick={(e) => toggleTipAnchor(e.currentTarget)}
-        color="warning"
+      <Tooltip
+        arrow
+        title={<Typography>Click to view helpful tips</Typography>}
       >
-        <Tooltip arrow title={<Typography>Click to view useful tips!</Typography>}>
+        <IconButton
+          onClick={(e) => toggleTipAnchor(e.currentTarget)}
+          color="warning"
+        >
           <TipsAndUpdatesIcon />
-        </Tooltip>
-      </IconButton>
+        </IconButton>
+      </Tooltip>
       <Popover
         open={Boolean(tipAnchor)}
         anchorEl={tipAnchor}
