@@ -33,15 +33,22 @@ export default function ActivityFilters() {
   });
 
   const scrollContainerRef = useRef(null);
+  const prevLengthRef = useRef(filters.selectedActivities.length);
 
   useEffect(() => {
-    if (scrollContainerRef.current) {
-      const scroll = scrollContainerRef.current;
-      scroll.scrollTo({
-        left: scroll.scrollWidth,
-        behavior: "smooth",
-      });
+    const prevLength = prevLengthRef.current;
+    const newLength = filters.selectedActivities.length;
+
+    if (newLength > prevLength) {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTo({
+          left: scrollContainerRef.current.scrollWidth,
+          behavior: "smooth",
+        });
+      }
     }
+
+    prevLengthRef.current = newLength;
   }, [filters.selectedActivities]);
 
   const handleAddMoreFilter = () => {
@@ -104,7 +111,9 @@ export default function ActivityFilters() {
           <Grid container justifyContent="space-between" alignItems="center">
             <Grid size="auto">
               <Grid container alignItems="center">
-                <Typography>Apply Activity filters</Typography>
+                <Typography>
+                  Apply <b>Activity filters</b>
+                </Typography>
                 <CustomTooltip
                   type="description"
                   message={`Narrow down the data by selecting specific activity types, actions, or activities to include in the analysis.`}
@@ -168,7 +177,7 @@ export default function ActivityFilters() {
                           justifyContent="space-between"
                           alignItems="center"
                         >
-                          <Typography>Filter {index + 1}</Typography>
+                          <Typography>Activity filter {index + 1}</Typography>
                           <Tooltip
                             arrow
                             title={<Typography>Delete filter</Typography>}

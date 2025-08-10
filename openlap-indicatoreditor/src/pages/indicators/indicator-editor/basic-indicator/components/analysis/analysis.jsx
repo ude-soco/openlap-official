@@ -53,7 +53,12 @@ export default function Analysis() {
   };
 
   const handleCheckPreviewDisabled = () => {
-    return analysis.selectedAnalyticsMethod.mapping.mapping.length === 0;
+    const allEmpty = filters.selectedActivities.every(
+      (activity) => activity.selectedActivityList.length === 0
+    );
+    return (
+      analysis.selectedAnalyticsMethod.mapping.mapping.length === 0 || allEmpty
+    );
   };
 
   const handleUnlockPath = () => {
@@ -134,10 +139,15 @@ export default function Analysis() {
                                     >
                                       <span>Preview</span>
                                     </LoadingButton>
-                                    <CustomTooltip
-                                      type="help"
-                                      message={`The button is disabled because:<br/>● Please select the required <b>Inputs</b> of the method.`}
-                                    />
+                                    {handleCheckPreviewDisabled() && (
+                                      <CustomTooltip
+                                        type="help"
+                                        message={`The button is disabled because:<br/>
+                                        ● The required <b>Input(s)</b> of the analytics method may not selected.<br/>
+                                        ● In <b>Filters</b>, under all <b>Activity filters</b>, none of the <b>Activities</b> are possibly not selected.
+                                        `}
+                                      />
+                                    )}
                                   </Grid>
                                 </Box>
                               )}
