@@ -1,8 +1,16 @@
 import { useContext } from "react";
 import { BasicContext } from "../../../basic-indicator";
-import { Autocomplete, Paper, TextField, Typography } from "@mui/material";
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { analysiInputMenuList } from "../utils/analysis-data";
+import { analyticsInputMenuList } from "../utils/analysis-data";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 export default function InputsSelection() {
@@ -28,7 +36,6 @@ export default function InputsSelection() {
             mapping: updatedMappings,
           },
         },
-        analyzedData: {},
       };
     });
   };
@@ -72,43 +79,40 @@ export default function InputsSelection() {
               <Grid container spacing={1} alignItems="center">
                 <Grid size="grow">
                   {/* // TODO: Need to change to normal Select Menu Item component */}
-                  <Autocomplete
-                    disableClearable
-                    disablePortal
+                  <FormControl
                     fullWidth
-                    options={analysiInputMenuList}
-                    getOptionLabel={(o) => o.name}
-                    value={input.selectedInput || null}
-                    onChange={(event, value) =>
-                      handleSelectInputs(input, value)
+                    error={
+                      Boolean(input.required) &&
+                      input.selectedInput === undefined
                     }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label={`${input.title} ${
-                          input.required ? "" : "(Optional)"
-                        }`}
-                        placeholder="Input attributes"
-                      />
-                    )}
-                    renderOption={(props, option) => {
-                      const { key, ...restProps } = props;
-                      return (
-                        <li {...restProps} key={option.id}>
-                          <Grid container sx={{ py: 0.5 }}>
-                            <Grid size={{ xs: 12 }}>
-                              <Typography>{option.name}</Typography>
-                            </Grid>
-                            <Grid size={{ xs: 12 }}>
-                              <Typography variant="body2">
-                                {option.description}
-                              </Typography>
-                            </Grid>
-                          </Grid>
-                        </li>
-                      );
-                    }}
-                  />
+                  >
+                    <InputLabel>
+                      {input.title}{" "}
+                      {input.required ? "(Required)" : "(Optional)"}
+                    </InputLabel>
+
+                    <Select
+                      label={`${input.title} ${
+                        input.required ? "(Required)" : "(Optional)"
+                      }`}
+                      value={input.selectedInput || ""}
+                      onChange={(event) =>
+                        handleSelectInputs(input, event.target.value)
+                      }
+                    >
+                      {analyticsInputMenuList.map((menu) => (
+                        <MenuItem value={menu} key={menu.id}>
+                          <Tooltip
+                            arrow
+                            title={<Typography>{menu.description}</Typography>}
+                            placement="right"
+                          >
+                            {menu.name}
+                          </Tooltip>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Grid>
                 <Grid size="auto">
                   <CustomTooltip

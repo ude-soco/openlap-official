@@ -1,4 +1,4 @@
-export const analysiInputMenuList = [
+export const analyticsInputMenuList = [
   {
     id: "statement.object.definition.name.en-US",
     type: "Text",
