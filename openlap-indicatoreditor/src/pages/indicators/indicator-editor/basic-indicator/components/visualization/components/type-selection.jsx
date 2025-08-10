@@ -269,7 +269,7 @@ function buildRequirementsTooltip(chartType, analyzedData) {
   return (
     <>
       <Typography gutterBottom>
-        <b>{chartType.name} requirements</b>
+        <b>Why {chartType.name} is not recommended?</b>
       </Typography>
       <Typography gutterBottom>
         {chartType.name} requires the following number of data types as inputs:

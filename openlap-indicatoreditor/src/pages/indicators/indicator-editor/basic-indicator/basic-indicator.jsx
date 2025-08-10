@@ -19,39 +19,19 @@ export default function BasicIndicator() {
   const [indicator, setIndicator] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION);
     return savedState
-      ? {
-          ...JSON.parse(savedState).indicator,
-          previewData: {
-            displayCode: [],
-            scriptData: "",
-          },
-        }
-      : {
-          previewData: {
-            displayCode: [],
-            scriptData: "",
-          },
-          indicatorName: "",
-          type: "BASIC",
-        };
+      ? { ...JSON.parse(savedState).indicator }
+      : { indicatorName: "", type: "BASIC" };
   });
   const [dataset, setDataset] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION);
     return savedState
-      ? {
-          ...JSON.parse(savedState).dataset,
-        }
-      : {
-          myLRSList: [],
-          selectedLRSList: [],
-        };
+      ? { ...JSON.parse(savedState).dataset }
+      : { myLRSList: [], selectedLRSList: [] };
   });
   const [filters, setFilters] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION);
     return savedState
-      ? {
-          ...JSON.parse(savedState).filters,
-        }
+      ? { ...JSON.parse(savedState).filters }
       : {
           selectedUserFilter: Condition.only_me,
           selectedTime: {
@@ -82,7 +62,7 @@ export default function BasicIndicator() {
   const [visualization, setVisualization] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION);
     return savedState
-      ? JSON.parse(savedState).visualization
+      ? { ...JSON.parse(savedState).visualization }
       : {
           libraryList: [],
           selectedLibrary: { id: "", name: "" },
@@ -97,7 +77,7 @@ export default function BasicIndicator() {
   const [lockedStep, setLockedStep] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION);
     return savedState
-      ? JSON.parse(savedState).lockedStep
+      ? { ...JSON.parse(savedState).lockedStep }
       : {
           dataset: { locked: false, openPanel: true, step: "1" },
           filters: { locked: true, openPanel: false, step: "2" },
