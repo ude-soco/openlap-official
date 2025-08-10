@@ -10,13 +10,14 @@ import dayjs from "dayjs";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 export default function DateFilter() {
-  const { filters, setFilters } = useContext(BasicContext);
+  const { filters, setFilters, setAnalysis } = useContext(BasicContext);
 
   const handleUpdateDate = (value, name) => {
     setFilters((p) => ({
       ...p,
       selectedTime: { ...p.selectedTime, [name]: value.toISOString() },
     }));
+    setAnalysis((p) => ({ ...p, analyzedData: {} }));
   };
 
   return (
@@ -31,7 +32,9 @@ export default function DateFilter() {
       >
         <AccordionDetails>
           <Grid container alignItems="center">
-            <Typography>Select <b>Date range</b></Typography>
+            <Typography>
+              Select <b>Date range</b>
+            </Typography>
             <CustomTooltip
               type="description"
               message={`Choose the start and end dates to define the period of data you want to include in your analysis.`}

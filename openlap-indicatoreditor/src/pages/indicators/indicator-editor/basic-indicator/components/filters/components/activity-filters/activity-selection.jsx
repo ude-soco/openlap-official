@@ -10,7 +10,7 @@ const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
 export default function ActivitySelection({ activity }) {
-  const { setFilters } = useContext(BasicContext);
+  const { setFilters, setAnalysis } = useContext(BasicContext);
 
   const handleCheckActivityAvailable = () => {
     return activity.activityList.length === 0;
@@ -27,6 +27,7 @@ export default function ActivitySelection({ activity }) {
         selectedActivities: updatedActivities,
       };
     });
+    setAnalysis((p) => ({ ...p, analyzedData: {} }));
   };
 
   return (
