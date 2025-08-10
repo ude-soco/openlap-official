@@ -33,7 +33,7 @@ public class Indicator {
   private LocalDateTime createdOn;
   private Integer timesExecuted;
   @DBRef private AnalyticsGoal goalRef;
-//  private Set<String> platforms;
+  private String configurationRequest;
 
   // Only for BASIC
   private String indicatorQuery;

@@ -1,13 +1,20 @@
 import {
+  Box,
   Button,
   Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   LinearProgress,
   Paper,
   Skeleton,
+  TextField,
+  Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { BasicContext } from "../../basic-indicator";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
 import VisualizationSummary from "./components/visualization-summary";
@@ -23,6 +30,10 @@ import TypeInputSelection from "./components/type-input-selection";
 import ChartPreview from "./components/chart-preview";
 import ChartCustomizationPanel from "./components/customization/chart-customization-panel";
 import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper";
+import { LoadingButton } from "@mui/lab";
+import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
+import { requestCreateBasicIndicator } from "../../utils/basic-indicator-api";
+import { useNavigate } from "react-router-dom";
 
 export default function Visualization() {
   const { api } = useContext(AuthContext);
@@ -33,7 +44,16 @@ export default function Visualization() {
     lockedStep,
     visualization,
     setVisualization,
+    indicator,
+    setIndicator,
   } = useContext(BasicContext);
+  const [state, setState] = useState({
+    nameIndicator: {
+      openDialog: false,
+      loading: false,
+    },
+  });
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (
@@ -65,6 +85,44 @@ export default function Visualization() {
       );
     } catch (error) {
       console.error("Failed to load the visualization", error);
+    }
+  };
+
+  const handleToggleNameIndicator = () => {
+    setState((p) => ({ ...p, openDialog: !p.openDialog }));
+  };
+
+  const handleOnChangeNameIndicator = (event) => {
+    setIndicator((p) => ({ ...p, indicatorName: event.target.value }));
+  };
+
+  const handleSaveIndicator = async () => {
+    setState((p) => ({
+      ...p,
+      indicatorName: { ...p.indicatorName, loading: true },
+    }));
+    let indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
+    let analysisRef = buildAnalysisRef(analysis);
+    let visRef = buildVisRef(visualization);
+    try {
+      await requestCreateBasicIndicator(
+        api,
+        indicatorQuery,
+        analysisRef,
+        visRef,
+        indicator
+      );
+      setState((p) => ({
+        ...p,
+        indicatorName: { ...p.indicatorName, loading: false },
+      }));
+      navigate("/indicator");
+    } catch (error) {
+      setState((p) => ({
+        ...p,
+        indicatorName: { ...p.indicatorName, loading: false },
+      }));
+      console.error("Failed to save the indicator", error);
     }
   };
 
@@ -151,8 +209,9 @@ export default function Visualization() {
                           <Button
                             fullWidth
                             variant="contained"
+                            // TODO: A check required, if lrs, filters (activities) are selected, required analysis mapping are selected, visualization inputs are selected
                             // disabled={handleCheckDisabled()}
-                            // onClick={handleUnlockPath}
+                            onClick={handleToggleNameIndicator}
                           >
                             Save Indicator
                           </Button>
@@ -165,6 +224,49 @@ export default function Visualization() {
             </Collapse>
           </Grid>
         </Grid>
+        <Dialog
+          fullWidth
+          maxWidth="sm"
+          open={state.openDialog}
+          onClose={handleToggleNameIndicator}
+        >
+          <DialogTitle>Provide a name to the indicator</DialogTitle>
+          <DialogContent>
+            <Box sx={{ py: 1 }}>
+              <TextField
+                fullWidth
+                label="Indicator name"
+                value={indicator.indicatorName}
+                placeholder="e.g., The most frequently access learning materials in my course"
+                onChange={handleOnChangeNameIndicator}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={handleToggleNameIndicator}
+            >
+              Continue editing
+            </Button>
+            <LoadingButton
+              loading={state.nameIndicator.loading}
+              disabled={indicator.indicatorName.length === 0}
+              fullWidth
+              variant="contained"
+              onClick={handleSaveIndicator}
+            >
+              Save to dashboard
+            </LoadingButton>
+            {indicator.indicatorName.length === 0 && (
+              <CustomTooltip
+                type="help"
+                message={`The button is disabled because:<br/>● Indicator name is missing.`}
+              />
+            )}
+          </DialogActions>
+        </Dialog>
       </CustomPaper>
     </>
   );
