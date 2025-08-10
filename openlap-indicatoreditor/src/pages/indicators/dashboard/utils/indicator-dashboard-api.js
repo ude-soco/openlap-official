@@ -26,8 +26,14 @@ export const requestIndicatorFullDetail = async (api, indicatorId) => {
     }
 
     return {
-      ...response.data.data,
-      indicatorCode: {
+      indicatorName: response.data.data.name,
+      type: response.data.data.type,
+      createdOn: response.data.data.createdOn,
+      createdBy: response.data.data.createdBy,
+      analyticsMethod: response.data.data.analyticsTechnique,
+      library: response.data.data.visualizationLibrary,
+      chart: response.data.data.visualizationType,
+      previewData: {
         displayCode,
         scriptData,
       },
@@ -46,7 +52,7 @@ export const requestIndicatorCode = async (api, indicatorId) => {
     console.error("Failed to request indicators code data");
     throw error;
   }
-}
+};
 
 export const requestIndicatorDeletion = async (api, indicatorId) => {
   try {
@@ -56,4 +62,4 @@ export const requestIndicatorDeletion = async (api, indicatorId) => {
     console.error("Failed to delete indicator");
     throw error.response.data;
   }
-}
+};

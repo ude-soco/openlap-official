@@ -11,7 +11,6 @@ import {
   Paper,
   Skeleton,
   TextField,
-  Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { useContext, useEffect, useState } from "react";
@@ -27,7 +26,7 @@ import {
   buildVisRef,
 } from "../../utils/query-builder";
 import TypeInputSelection from "./components/type-input-selection";
-import ChartPreview from "./components/chart-preview";
+import ChartPreview from "../../../components/chart-preview";
 import ChartCustomizationPanel from "./components/customization/chart-customization-panel";
 import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper";
 import { LoadingButton } from "@mui/lab";
@@ -176,15 +175,9 @@ export default function Visualization() {
                               <Grid size={{ xs: 12, lg: "grow", xl: 8 }}>
                                 {visualization.previewData.displayCode
                                   .length !== 0 ? (
-                                  <Grid
-                                    container
-                                    component={Paper}
-                                    variant="outlined"
-                                    justifyContent="center"
-                                    sx={{ backgroundColor: "white", p: 3 }}
-                                  >
-                                    <ChartPreview />
-                                  </Grid>
+                                  <ChartPreview
+                                    previewData={visualization.previewData}
+                                  />
                                 ) : (
                                   <Skeleton
                                     variant="rectangular"
