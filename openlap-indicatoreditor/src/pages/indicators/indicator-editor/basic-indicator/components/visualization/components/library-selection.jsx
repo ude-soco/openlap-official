@@ -83,7 +83,7 @@ export default function LibrarySelection() {
             renderInput={(params) => (
               <TextField
                 {...params}
-                placeholder="List of Visualization Libraries"
+                placeholder="Search for Visualization libraries"
               />
             )}
             renderOption={(props, option) => {

@@ -137,6 +137,7 @@ export default function Dataset() {
                               <Autocomplete
                                 autoFocus
                                 disablePortal
+                                disableClearable
                                 disableCloseOnSelect
                                 fullWidth
                                 getOptionLabel={(option) => option.lrsTitle}
@@ -146,7 +147,7 @@ export default function Dataset() {
                                 renderInput={(params) => (
                                   <TextField
                                     {...params}
-                                    placeholder="Learning Record Stores"
+                                    placeholder="Search for Learning Record Stores (LRS)"
                                   />
                                 )}
                                 renderOption={(props, option) => {

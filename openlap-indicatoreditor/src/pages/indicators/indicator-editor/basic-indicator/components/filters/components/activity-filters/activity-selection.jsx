@@ -36,7 +36,7 @@ export default function ActivitySelection({ activity }) {
           <Grid size="auto">
             <CustomTooltip
               type="help"
-              message={`This dropdown is disabled because:<br />• At least one <b>Action</b> needs to be selected`}
+              message={`This dropdown is disabled because:<br />● At least one <b>Action</b> needs to be selected`}
             />
           </Grid>
         )}
@@ -108,7 +108,7 @@ export default function ActivitySelection({ activity }) {
               );
             }}
             renderInput={(params) => (
-              <TextField {...params} placeholder="List of activities" />
+              <TextField {...params} placeholder="Search for activities" />
             )}
             value={activity.selectedActivityList || []}
           />
