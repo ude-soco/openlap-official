@@ -7,11 +7,12 @@ import { useNavigate } from "react-router-dom";
 const AuthContext = createContext(undefined);
 
 const BackendURL = import.meta.env.VITE_BACKEND_URL;
+const AuthTokens = "authTokens";
 
 const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const [authTokens, setAuthTokens] = useState(() => {
-    const tokens = localStorage.getItem("authTokens");
+    const tokens = localStorage.getItem(AuthTokens);
     return tokens ? JSON.parse(tokens) : null;
   });
 
@@ -43,27 +44,26 @@ const AuthProvider = ({ children }) => {
       const tokens = response.data;
       setAuthTokens(tokens);
       setUser(jwtDecode(tokens.access_token));
-      localStorage.setItem("authTokens", JSON.stringify(tokens));
+      localStorage.setItem(AuthTokens, JSON.stringify(tokens));
     } catch (error) {
       throw error.response;
     }
   };
 
   const logout = () => {
+    localStorage.removeItem(AuthTokens);
     setAuthTokens(null);
     setUser(null);
-    localStorage.removeItem("authTokens");
-    // window.location.reload();
     navigate("/login");
   };
 
   const refreshAccessToken = async () => {
-    const tokens = JSON.parse(localStorage.getItem("authTokens"));
+    const tokens = JSON.parse(localStorage.getItem(AuthTokens));
     if (!tokens) {
       navigate("/login");
     }
     try {
-      localStorage.removeItem("authTokens");
+      localStorage.removeItem(AuthTokens);
       const response = await axios.get(BackendURL + "v1/token/refresh", {
         headers: {
           Authorization: `Bearer ${tokens.refresh_token}`,
@@ -72,7 +72,7 @@ const AuthProvider = ({ children }) => {
       const newTokens = response.data.data;
       setAuthTokens(newTokens);
       setUser(jwtDecode(newTokens.access_token));
-      localStorage.setItem("authTokens", JSON.stringify(newTokens));
+      localStorage.setItem(AuthTokens, JSON.stringify(newTokens));
       return newTokens;
     } catch (error) {
       logout(); // If refresh token fails, log out the user
@@ -104,7 +104,7 @@ const AuthProvider = ({ children }) => {
         }
       }
       return Promise.reject(error);
-    },
+    }
   );
 
   return (
