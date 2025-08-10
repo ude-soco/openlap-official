@@ -32,7 +32,7 @@ export default function UserFilter() {
       >
         <AccordionDetails>
           <Grid container alignItems="center">
-            <Typography>Select users</Typography>
+            <Typography>Select <b>Users</b></Typography>
             <CustomTooltip
               type="description"
               message={`Choose which users’ data to include in the analysis — only yours, all except yours, or all users.`}
