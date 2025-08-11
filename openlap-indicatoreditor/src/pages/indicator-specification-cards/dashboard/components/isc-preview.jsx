@@ -187,15 +187,6 @@ const IscPreview = () => {
                         <Grid size="grow">
                           <Typography variant="h5" gutterBottom>
                             {toSentenceCase(requirements.indicatorName)}
-                          </Typography>
-                          {state.showDetails && (
-                            <Typography gutterBottom variant="body2">
-                              Created on: {state.createdOn.split("T")[0]}
-                            </Typography>
-                          )}
-                        </Grid>
-                        <Grid size="auto">
-                          <Grid container>
                             <Tooltip
                               arrow
                               title={<Typography>Hide details</Typography>}
@@ -211,6 +202,15 @@ const IscPreview = () => {
                                 )}
                               </IconButton>
                             </Tooltip>
+                          </Typography>
+                          {state.showDetails && (
+                            <Typography gutterBottom variant="body2">
+                              Created on: {state.createdOn.split("T")[0]}
+                            </Typography>
+                          )}
+                        </Grid>
+                        <Grid size="auto">
+                          <Grid container>
                             <Tooltip
                               arrow
                               title={<Typography>Edit indicator</Typography>}

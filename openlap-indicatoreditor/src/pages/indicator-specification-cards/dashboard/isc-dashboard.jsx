@@ -10,7 +10,6 @@ import {
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import Grid from "@mui/material/Grid2";
-import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import MyIscTable from "./components/my-isc-table.jsx";
@@ -53,25 +52,12 @@ const IscDashboard = () => {
             Home
           </Link>
           <Typography sx={{ color: "text.primary" }}>ISC Dashboard</Typography>
-          <Typography sx={{ color: "text.primary" }}>
-            List of my ISCs
-          </Typography>
         </Breadcrumbs>
 
         <Grid size={{ xs: 12 }}>
           <Divider />
         </Grid>
 
-        <Grid size={12}>
-          <Button
-            size="small"
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreateNew}
-          >
-            Create new
-          </Button>
-        </Grid>
         {state.indicatorInProgress && (
           <Grid size={{ xs: 12 }}>
             <Alert
