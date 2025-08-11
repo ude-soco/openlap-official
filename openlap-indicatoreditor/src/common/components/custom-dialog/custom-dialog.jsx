@@ -35,6 +35,7 @@ const CustomDialog = ({
     setState((p) => ({ ...p, loading: true }));
     try {
       await handler();
+      toggleOpen();
     } finally {
       setState((p) => ({ ...p, loading: false }));
     }

@@ -64,3 +64,13 @@ export const requestIndicatorDeletion = async (api, indicatorId) => {
     throw error.response.data;
   }
 };
+
+export const requestMyIndicatorDuplication = async (api, indicatorId) => {
+  try {
+    const response = await api.get(`v1/indicators/my/${indicatorId}/copy`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to duplicate indicator");
+    throw error.response.data;
+  }
+};
