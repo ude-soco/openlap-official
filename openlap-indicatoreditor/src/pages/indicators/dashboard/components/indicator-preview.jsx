@@ -27,12 +27,6 @@ import { useSnackbar } from "notistack";
 import ChartPreview from "../../indicator-editor/components/chart-preview.jsx";
 import CustomDialog from "../../../../common/components/custom-dialog/custom-dialog.jsx";
 
-const ButtonTypes = {
-  embed: "EMBED",
-  edit: "EDIT",
-  delete: "DELETE",
-};
-
 const IndicatorPreview = () => {
   const { api, SESSION_INDICATOR } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -53,34 +47,30 @@ const IndicatorPreview = () => {
     configuration: "",
     isLoading: {
       status: false,
-      type: undefined,
     },
     openDeleteDialog: false,
   });
   const { enqueueSnackbar } = useSnackbar();
 
-  useEffect(() => {
-    const loadIndicatorDetail = async (api, indicatorId) => {
-      try {
-        return await requestIndicatorFullDetail(api, indicatorId);
-      } catch (error) {
-        console.log("Error requesting my indicators");
-      }
-    };
+  const loadIndicatorDetail = async () => {
     setState((p) => ({ ...p, loading: true }));
-    loadIndicatorDetail(api, params.id).then((indicatorData) => {
-      setState((p) => ({
-        ...p,
-        ...indicatorData,
-        loading: false,
-      }));
-    });
+    try {
+      const indicatorData = await requestIndicatorFullDetail(api, params.id);
+      setState((p) => ({ ...p, ...indicatorData, loading: false }));
+    } catch (error) {
+      console.log("Error requesting my indicators");
+      setState((p) => ({ ...p, loading: false }));
+    }
+  };
+
+  useEffect(() => {
+    loadIndicatorDetail();
   }, []);
 
   const handleEditIndicator = () => {
     setState((p) => ({
       ...p,
-      isLoading: { ...p.isLoading, status: true, type: ButtonTypes.edit },
+      isLoading: { ...p.isLoading, status: true },
     }));
     sessionStorage.setItem(SESSION_INDICATOR, state.configuration);
     // TODO: Better error handling needed
@@ -102,7 +92,7 @@ const IndicatorPreview = () => {
     } else {
       setState((p) => ({
         ...p,
-        isLoading: { ...p.isLoading, status: false, type: undefined },
+        isLoading: { ...p.isLoading, status: false },
       }));
       enqueueSnackbar("Something went wrong. Try again later", {
         variant: "error",
@@ -113,7 +103,7 @@ const IndicatorPreview = () => {
   const handleCopyEmbedCode = async () => {
     setState((p) => ({
       ...p,
-      isLoading: { ...p.isLoading, status: true, type: ButtonTypes.embed },
+      isLoading: { ...p.isLoading, status: true },
     }));
     try {
       const indicatorCode = await requestIndicatorCode(api, params.id);
@@ -121,12 +111,12 @@ const IndicatorPreview = () => {
       enqueueSnackbar(indicatorCode.message, { variant: "success" });
       setState((p) => ({
         ...p,
-        isLoading: { ...p.isLoading, status: false, type: undefined },
+        isLoading: { ...p.isLoading, status: false },
       }));
     } catch (error) {
       setState((p) => ({
         ...p,
-        isLoading: { ...p.isLoading, status: false, type: undefined },
+        isLoading: { ...p.isLoading, status: false },
       }));
       console.error("Error requesting my indicators", error);
     }
@@ -142,7 +132,6 @@ const IndicatorPreview = () => {
       isLoading: {
         ...p.isLoading,
         status: true,
-        type: ButtonTypes.delete,
       },
     }));
     try {
@@ -201,7 +190,7 @@ const IndicatorPreview = () => {
         <Grid container justifyContent="center">
           <Grid size={{ xs: 12, lg: 10, xl: 7 }}>
             {state.loading ? (
-              <Skeleton height={900} animation="wave" />
+              <Skeleton variant="rounded" height={500} />
             ) : (
               <>
                 {state.isLoading.status && <LinearProgress />}
@@ -246,9 +235,7 @@ const IndicatorPreview = () => {
                                 size="small"
                                 color="primary"
                                 onClick={handleCopyEmbedCode}
-                                disabled={
-                                  state.isLoading.type === ButtonTypes.embed
-                                }
+                                disabled={state.isLoading.status}
                               >
                                 <CodeIcon />
                               </IconButton>
@@ -261,9 +248,7 @@ const IndicatorPreview = () => {
                               <IconButton
                                 color="primary"
                                 onClick={handleEditIndicator}
-                                disabled={
-                                  state.isLoading.type === ButtonTypes.edit
-                                }
+                                disabled={state.isLoading.status}
                               >
                                 <EditIcon />
                               </IconButton>
@@ -281,9 +266,7 @@ const IndicatorPreview = () => {
                             >
                               <IconButton
                                 color="error"
-                                disabled={
-                                  state.isLoading.type === ButtonTypes.delete
-                                }
+                                disabled={state.isLoading.status}
                                 onClick={handleToggleDelete}
                               >
                                 <DeleteIcon />

@@ -363,10 +363,8 @@ const MyIndicatorsTable = () => {
                       )}
                     </Grid>
                   </TableCell>
-                  <TableCell align="left" sx={{ width: 180 }}>
-                    Type
-                  </TableCell>
-                  <TableCell align="right" sx={{ width: 140 }}>
+
+                  <TableCell align="right" sx={{ width: 200 }}>
                     Created on
                   </TableCell>
                 </TableRow>
@@ -375,8 +373,6 @@ const MyIndicatorsTable = () => {
                 {state.filteredIndicatorList.map((indicator) => (
                   <React.Fragment key={indicator.id}>
                     <TableRow
-                      // key={indicator.id}
-                      // selected={selected.includes(indicator.id)}
                       onMouseEnter={() => handleOnHoverIndicator(indicator.id)}
                       hover
                       sx={{
@@ -386,22 +382,17 @@ const MyIndicatorsTable = () => {
                         "&:hover .time-text": { opacity: 0 },
                       }}
                     >
-                      {/* // TODO: For the future: multi select delete */}
-                      {/* <TableCell padding="checkbox" sx={{ width: 40 }}>
-                      <Checkbox
-                        checked={selected.includes(indicator.id)}
-                        onChange={() => handleSelect(indicator.id)}
-                      />
-                    </TableCell> */}
-
                       <TableCell onClick={() => handlePreview(indicator.id)}>
                         <Typography component="span">
                           <b>{toSentenceCase(indicator.indicatorName)}</b>
-                        </Typography>
-                      </TableCell>
-                      <TableCell onClick={() => handlePreview(indicator.id)}>
-                        <Typography component="span" className="time-text">
-                          {handleDisplayType(indicator.type)}
+                          <br />
+                          <Typography
+                            component="span"
+                            variant="caption"
+                            className="time-text"
+                          >
+                            {handleDisplayType(indicator.type)}
+                          </Typography>
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
@@ -438,6 +429,7 @@ const MyIndicatorsTable = () => {
                               size="small"
                               color="primary"
                               onClick={() => handlePreview(indicator.id)}
+                              disabled={state.isLoading.status}
                             >
                               <PreviewIcon />
                             </IconButton>
@@ -467,6 +459,7 @@ const MyIndicatorsTable = () => {
                               size="small"
                               color="primary"
                               onClick={handleCopyEmbedCode}
+                              disabled={state.isLoading.status}
                             >
                               <CodeIcon />
                             </IconButton>
@@ -480,6 +473,7 @@ const MyIndicatorsTable = () => {
                               size="small"
                               color="primary"
                               onClick={handleEditIndicator}
+                              disabled={state.isLoading.status}
                             >
                               <EditIcon />
                             </IconButton>
@@ -492,6 +486,7 @@ const MyIndicatorsTable = () => {
                               size="small"
                               color="primary"
                               onClick={handleDuplicateMyIndicator}
+                              disabled={state.isLoading.status}
                             >
                               <ContentCopyIcon />
                             </IconButton>
@@ -509,6 +504,7 @@ const MyIndicatorsTable = () => {
                               size="small"
                               color="error"
                               onClick={handleToggleDelete}
+                              disabled={state.isLoading.status}
                             >
                               <DeleteIcon />
                             </IconButton>

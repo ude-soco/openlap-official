@@ -270,7 +270,7 @@ export default function MyIscTable() {
                       )}
                     </Grid>
                   </TableCell>
-                  <TableCell align="right" sx={{ width: 140 }}>
+                  <TableCell align="right" sx={{ width: 200 }}>
                     Created on
                   </TableCell>
                 </TableRow>
@@ -327,6 +327,7 @@ export default function MyIscTable() {
                               size="small"
                               color="primary"
                               onClick={() => handlePreview(indicator.id)}
+                              disabled={state.isLoading.status}
                             >
                               <PreviewIcon />
                             </IconButton>
@@ -339,6 +340,7 @@ export default function MyIscTable() {
                               size="small"
                               color="primary"
                               onClick={handleEditIndicator}
+                              disabled={state.isLoading.status}
                             >
                               <EditIcon />
                             </IconButton>
@@ -356,6 +358,7 @@ export default function MyIscTable() {
                               size="small"
                               color="error"
                               onClick={handleToggleDelete}
+                              disabled={state.isLoading.status}
                             >
                               <DeleteIcon />
                             </IconButton>
