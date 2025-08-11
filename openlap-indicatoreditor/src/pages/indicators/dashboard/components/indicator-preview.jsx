@@ -1,10 +1,10 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
   Breadcrumbs,
-  Button,
   Chip,
   Divider,
   IconButton,
+  LinearProgress,
   Link,
   Paper,
   Skeleton,
@@ -14,28 +14,31 @@ import {
 import Grid from "@mui/material/Grid2";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+import CodeIcon from "@mui/icons-material/Code";
 import { useNavigate, useParams, Link as RouterLink } from "react-router-dom";
 import {
   requestIndicatorCode,
+  requestIndicatorDeletion,
   requestIndicatorFullDetail,
 } from "../utils/indicator-dashboard-api.js";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { handleDisplayType } from "../utils/utils.js";
-import { CustomThemeContext } from "../../../../setup/theme-manager/theme-context-manager.jsx";
 import { useSnackbar } from "notistack";
-import { LoadingButton } from "@mui/lab";
-
 import ChartPreview from "../../indicator-editor/components/chart-preview.jsx";
+import CustomDialog from "../../../../common/components/custom-dialog/custom-dialog.jsx";
+
+const ButtonTypes = {
+  embed: "EMBED",
+  edit: "EDIT",
+  delete: "DELETE",
+};
 
 const IndicatorPreview = () => {
-  const { api } = useContext(AuthContext);
+  const { api, SESSION_INDICATOR } = useContext(AuthContext);
   const navigate = useNavigate();
   const params = useParams();
   const [state, setState] = useState({
     loading: false,
-    showDetails: true,
     indicatorName: "",
     type: "",
     createdOn: "",
@@ -47,6 +50,12 @@ const IndicatorPreview = () => {
       displayCode: [],
       scriptData: "",
     },
+    configuration: "",
+    isLoading: {
+      status: false,
+      type: undefined,
+    },
+    openDeleteDialog: false,
   });
   const { enqueueSnackbar } = useSnackbar();
 
@@ -69,11 +78,87 @@ const IndicatorPreview = () => {
   }, []);
 
   const handleEditIndicator = () => {
-    console.log("Edit");
+    setState((p) => ({
+      ...p,
+      isLoading: { ...p.isLoading, status: true, type: ButtonTypes.edit },
+    }));
+    sessionStorage.setItem(SESSION_INDICATOR, state.configuration);
+    // TODO: Better error handling needed
+    let route;
+    if (state.type) {
+      switch (state.type) {
+        case "BASIC":
+          navigate("/indicator/editor/basic");
+          break;
+        case "COMPOSITE":
+          navigate("/indicator/editor/composite");
+          break;
+        case "MULTI_LEVEL":
+          navigate("/indicator/editor/multi-level-analysis");
+          break;
+        default:
+          route = "Unknown";
+      }
+    } else {
+      setState((p) => ({
+        ...p,
+        isLoading: { ...p.isLoading, status: false, type: undefined },
+      }));
+      enqueueSnackbar("Something went wrong. Try again later", {
+        variant: "error",
+      });
+    }
   };
 
-  const toggleDetails = () => {
-    setState((p) => ({ ...p, showDetails: !p.showDetails }));
+  const handleCopyEmbedCode = async () => {
+    setState((p) => ({
+      ...p,
+      isLoading: { ...p.isLoading, status: true, type: ButtonTypes.embed },
+    }));
+    try {
+      const indicatorCode = await requestIndicatorCode(api, params.id);
+      await navigator.clipboard.writeText(indicatorCode.data);
+      enqueueSnackbar(indicatorCode.message, { variant: "success" });
+      setState((p) => ({
+        ...p,
+        isLoading: { ...p.isLoading, status: false, type: undefined },
+      }));
+    } catch (error) {
+      setState((p) => ({
+        ...p,
+        isLoading: { ...p.isLoading, status: false, type: undefined },
+      }));
+      console.error("Error requesting my indicators", error);
+    }
+  };
+
+  const handleToggleDelete = () => {
+    setState((p) => ({ ...p, openDeleteDialog: !p.openDeleteDialog }));
+  };
+
+  const handleDeleteIndicator = async () => {
+    setState((p) => ({
+      ...p,
+      isLoading: {
+        ...p.isLoading,
+        status: true,
+        type: ButtonTypes.delete,
+      },
+    }));
+    try {
+      await requestIndicatorDeletion(api, params.id);
+      enqueueSnackbar("Indicator deleted!", { variant: "success" });
+      navigate("/indicator");
+    } catch (error) {
+      setState((p) => ({
+        isLoading: {
+          ...p.isLoading,
+          status: false,
+          type: undefined,
+        },
+      }));
+      enqueueSnackbar(error.message, { variant: "error" });
+    }
   };
 
   // * Helper functions
@@ -118,122 +203,143 @@ const IndicatorPreview = () => {
             {state.loading ? (
               <Skeleton height={900} animation="wave" />
             ) : (
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12 }}>
-                    <Grid container spacing={1}>
-                      <Grid size="grow">
-                        <Typography variant="h5" gutterBottom>
-                          {toSentenceCase(state.indicatorName)}
-                        </Typography>
-                        <Typography gutterBottom variant="body2">
-                          {handleDisplayType(state.type)} ● Created on:{" "}
-                          {changeTimeFormat(state.createdOn)} ● Created by:{" "}
-                          {state.createdBy}
-                        </Typography>
-                      </Grid>
+              <>
+                {state.isLoading.status && <LinearProgress />}
+                <Paper variant="outlined" sx={{ p: 2 }}>
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12 }}>
+                      <Grid container spacing={1}>
+                        <Grid size="grow">
+                          <Typography variant="h5" gutterBottom>
+                            {toSentenceCase(state.indicatorName)}
+                          </Typography>
+                          <Typography gutterBottom variant="body2">
+                            {handleDisplayType(state.type)} ● Created on:{" "}
+                            {changeTimeFormat(state.createdOn)} ● Created by:{" "}
+                            {state.createdBy}
+                          </Typography>
+                        </Grid>
 
-                      <Grid size="auto">
-                        <Grid container>
-                          <Tooltip
-                            arrow
-                            title={<Typography>Hide details</Typography>}
-                          >
-                            <IconButton color="primary" onClick={toggleDetails}>
-                              {state.showDetails ? (
-                                <VisibilityOffIcon />
-                              ) : (
-                                <VisibilityIcon />
-                              )}
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip
-                            arrow
-                            title={<Typography>Edit indicator</Typography>}
-                          >
-                            <IconButton
-                              color="primary"
-                              onClick={handleEditIndicator}
+                        <Grid size="auto">
+                          <Grid container>
+                            <Tooltip
+                              arrow
+                              title={
+                                <>
+                                  <Typography gutterBottom>
+                                    Copy ICC code
+                                  </Typography>
+                                  <Typography>
+                                    What's an ICC code?
+                                    <br />
+                                    An Interactive Indicator Code (ICC) is an
+                                    iFrame code snippet you can embed in any web
+                                    application that supports iFrames.
+                                    <br />
+                                    It lets you display real-time analytics
+                                    directly within your website.
+                                  </Typography>
+                                </>
+                              }
                             >
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={handleCopyEmbedCode}
+                                disabled={
+                                  state.isLoading.type === ButtonTypes.embed
+                                }
+                              >
+                                <CodeIcon />
+                              </IconButton>
+                            </Tooltip>
 
-                          <Divider
-                            orientation="vertical"
-                            flexItem
-                            sx={{ mx: 1 }}
-                          />
-
-                          <Tooltip
-                            arrow
-                            title={<Typography>Edit indicator</Typography>}
-                          >
-                            <IconButton
-                              color="error"
-                              // onClick={handleToggleDelete}
+                            <Tooltip
+                              arrow
+                              title={<Typography>Edit indicator</Typography>}
                             >
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
-                          {/* <DeleteDialog
-                            open={state.openDeleteDialog}
-                            toggleOpen={handleToggleDelete}
-                            message={
-                              <Typography>
-                                This will delete the indicator permanently from
-                                your dashboard.
-                              </Typography>
-                            }
-                            handleDelete={handleDeleteIndicator}
-                          /> */}
+                              <IconButton
+                                color="primary"
+                                onClick={handleEditIndicator}
+                                disabled={
+                                  state.isLoading.type === ButtonTypes.edit
+                                }
+                              >
+                                <EditIcon />
+                              </IconButton>
+                            </Tooltip>
+
+                            <Divider
+                              orientation="vertical"
+                              flexItem
+                              sx={{ mx: 1 }}
+                            />
+
+                            <Tooltip
+                              arrow
+                              title={<Typography>Edit indicator</Typography>}
+                            >
+                              <IconButton
+                                color="error"
+                                disabled={
+                                  state.isLoading.type === ButtonTypes.delete
+                                }
+                                onClick={handleToggleDelete}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </Tooltip>
+                            <CustomDialog
+                              type="delete"
+                              content={`This will delete the indicator permanently from your dashboard.`}
+                              open={state.openDeleteDialog}
+                              toggleOpen={handleToggleDelete}
+                              handler={handleDeleteIndicator}
+                            />
+                          </Grid>
                         </Grid>
                       </Grid>
                     </Grid>
-                  </Grid>
-                  <Grid size={{ xs: 12 }}>
-                    <Divider />
-                  </Grid>
-                  {state.showDetails && (
-                    <>
-                      <Grid size={{ xs: 12 }}>
-                        <Grid container spacing={3}>
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <Typography variant="overline">
-                              Analytics method used
-                            </Typography>
-                            <Grid size={{ xs: 12 }}>
-                              <Chip label={state.analyticsMethod} />
-                            </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <Divider />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <Grid container spacing={3}>
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <Typography variant="overline">
+                            Analytics method used
+                          </Typography>
+                          <Grid size={{ xs: 12 }}>
+                            <Chip label={state.analyticsMethod} />
                           </Grid>
-                          <Grid size={{ xs: 6, md: 3 }}>
-                            <Typography variant="overline">
-                              Visualization Library
-                            </Typography>
-                            <Grid size={{ xs: 12 }}>
-                              <Chip label={state.library} />
-                            </Grid>
+                        </Grid>
+                        <Grid size={{ xs: 6, md: 3 }}>
+                          <Typography variant="overline">
+                            Visualization Library
+                          </Typography>
+                          <Grid size={{ xs: 12 }}>
+                            <Chip label={state.library} />
                           </Grid>
-                          <Grid size={{ xs: 6, md: 3 }}>
-                            <Typography variant="overline">Chart</Typography>
-                            <Grid size={{ xs: 12 }}>
-                              <Chip label={state.chart} />
-                            </Grid>
+                        </Grid>
+                        <Grid size={{ xs: 6, md: 3 }}>
+                          <Typography variant="overline">Chart</Typography>
+                          <Grid size={{ xs: 12 }}>
+                            <Chip label={state.chart} />
                           </Grid>
                         </Grid>
                       </Grid>
-                      <Grid size={{ xs: 12 }}>
-                        <Divider />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <Divider />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <Grid container justifyContent="center">
+                        <ChartPreview previewData={state.previewData} />
                       </Grid>
-                    </>
-                  )}
-                  <Grid size={{ xs: 12 }}>
-                    <Grid container justifyContent="center">
-                      <ChartPreview previewData={state.previewData} />
                     </Grid>
                   </Grid>
-                </Grid>
-              </Paper>
+                </Paper>
+              </>
             )}
           </Grid>
         </Grid>

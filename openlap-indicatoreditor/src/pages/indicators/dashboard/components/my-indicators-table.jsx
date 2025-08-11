@@ -1,9 +1,9 @@
-import { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Box,
-  CircularProgress,
   Divider,
   IconButton,
+  LinearProgress,
   Paper,
   Table,
   TableBody,
@@ -12,6 +12,7 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -20,25 +21,25 @@ import {
   requestIndicatorCode,
   requestIndicatorDeletion,
   requestIndicatorFullDetail,
+  requestMyIndicatorDuplication,
   requestMyIndicators,
 } from "../utils/indicator-dashboard-api.js";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
-
 import SearchIcon from "@mui/icons-material/Search";
 import PreviewIcon from "@mui/icons-material/Preview";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CodeIcon from "@mui/icons-material/Code";
+import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { handleDisplayType } from "../utils/utils.js";
-import DeleteDialog from "../../../../common/components/delete-dialog/delete-dialog.jsx";
+import CustomDialog from "../../../../common/components/custom-dialog/custom-dialog.jsx";
 
 const MyIndicatorsTable = () => {
   const { api, SESSION_INDICATOR } = useContext(AuthContext);
   const navigate = useNavigate();
-  const location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
   const [state, setState] = useState({
     indicatorList: [],
@@ -53,37 +54,34 @@ const MyIndicatorsTable = () => {
       sortDirection: "dsc",
       sortBy: "createdOn",
     },
-    copyCode: {
-      loading: false,
-      code: "",
-    },
     openDeleteDialog: false,
-    loadingIndicators: false,
+    isLoading: { status: false, indicator: undefined },
+    loadingMyIndicatorList: false,
     onHoverIndicatorId: undefined,
     toggleSearch: true,
     searchTerm: "",
     filteredIndicatorList: [],
   });
 
-  useEffect(() => {
-    const loadMyIndicators = async (api, params) => {
-      try {
-        return await requestMyIndicators(api, params);
-      } catch (error) {
-        console.log("Error requesting my indicators");
-      }
-    };
-    setState((p) => ({ ...p, loadingIndicators: true }));
-    loadMyIndicators(api, state.params).then((indicators) => {
+  const loadMyIndicators = async (api, params) => {
+    setState((p) => ({ ...p, loadingMyIndicatorList: true }));
+    try {
+      const indicatorList = await requestMyIndicators(api, params);
       setState((p) => ({
         ...p,
-        indicatorList: indicators.content,
-        pageable: indicators.pageable,
-        totalElements: indicators.totalElements,
-        loadingIndicators: false,
+        indicatorList: indicatorList.content,
+        pageable: indicatorList.pageable,
+        totalElements: indicatorList.totalElements,
+        loadingMyIndicatorList: false,
       }));
-    });
-  }, [api, state.params, location]);
+    } catch (error) {
+      console.log("Error requesting my indicators");
+    }
+  };
+
+  useEffect(() => {
+    loadMyIndicators(api, state.params);
+  }, [state.params]);
 
   useEffect(() => {
     const filtered = state.indicatorList.filter((indicator) =>
@@ -99,8 +97,14 @@ const MyIndicatorsTable = () => {
   };
 
   const handleCopyEmbedCode = async () => {
-    console.log("Embed copy code", state.onHoverIndicatorId);
-    setState((p) => ({ ...p, copyCode: { ...p.copyCode, loading: true } }));
+    setState((p) => ({
+      ...p,
+      isLoading: {
+        ...p.isLoading,
+        status: true,
+        indicator: p.onHoverIndicatorId,
+      },
+    }));
     try {
       const indicatorCode = await requestIndicatorCode(
         api,
@@ -108,14 +112,17 @@ const MyIndicatorsTable = () => {
       );
       await navigator.clipboard.writeText(indicatorCode.data);
       enqueueSnackbar(indicatorCode.message, { variant: "success" });
+      setState((p) => ({ ...p, isLoading: false }));
+    } catch (error) {
       setState((p) => ({
         ...p,
-        copyCode: { code: indicatorCode.data, loading: false },
+        isLoading: {
+          ...p.isLoading,
+          status: false,
+          indicator: undefined,
+        },
       }));
-    } catch (error) {
-      setState((p) => ({ ...p, copyCode: { ...p.copyCode, loading: false } }));
       enqueueSnackbar(error.response.data.message, { variant: "error" });
-      console.error("Error requesting my indicators", error);
     }
   };
 
@@ -124,13 +131,20 @@ const MyIndicatorsTable = () => {
   };
 
   const handleEditIndicator = async () => {
+    setState((p) => ({
+      ...p,
+      isLoading: {
+        ...p.isLoading,
+        status: true,
+        indicator: p.onHoverIndicatorId,
+      },
+    }));
     try {
       const indicator = await requestIndicatorFullDetail(
         api,
         state.onHoverIndicatorId
       );
       sessionStorage.setItem(SESSION_INDICATOR, indicator.configuration);
-      // navigate("")
       switch (indicator.type) {
         case "BASIC":
           navigate("/indicator/editor/basic");
@@ -145,12 +159,53 @@ const MyIndicatorsTable = () => {
           route = "Unknown";
       }
     } catch (error) {
-      console.log("Error requesting my indicators");
+      setState((p) => ({
+        ...p,
+        isLoading: {
+          ...p.isLoading,
+          status: false,
+          indicator: undefined,
+        },
+      }));
+      console.error("Error requesting my indicators", error);
     }
   };
 
-  const handleDuplicateIndicator = () => {
-    console.log("Duplicate Indicator", state.onHoverIndicatorId);
+  const handleDuplicateMyIndicator = async () => {
+    setState((p) => ({
+      ...p,
+      isLoading: {
+        ...p.isLoading,
+        status: true,
+        indicator: p.onHoverIndicatorId,
+      },
+    }));
+    try {
+      const response = await requestMyIndicatorDuplication(
+        api,
+        state.onHoverIndicatorId
+      );
+      await loadMyIndicators(api, state.params);
+      setState((p) => ({
+        ...p,
+        isLoading: {
+          ...p.isLoading,
+          status: false,
+          indicator: undefined,
+        },
+      }));
+      enqueueSnackbar(response.message, { variant: "success" });
+    } catch (error) {
+      setState((p) => ({
+        ...p,
+        isLoading: {
+          ...p.isLoading,
+          status: false,
+          indicator: undefined,
+        },
+      }));
+      console.error("Error duplication my indicator", error);
+    }
   };
 
   const handleToggleDelete = () => {
@@ -158,17 +213,40 @@ const MyIndicatorsTable = () => {
   };
 
   const handleDeleteIndicator = async () => {
-    console.log("Delete Indicator", state.onHoverIndicatorId);
+    setState((p) => ({
+      ...p,
+      isLoading: {
+        ...p.isLoading,
+        status: true,
+        indicator: p.onHoverIndicatorId,
+      },
+    }));
     try {
-      await requestIndicatorDeletion(api, state.onHoverIndicatorId);
+      const response = await requestIndicatorDeletion(
+        api,
+        state.onHoverIndicatorId
+      );
       setState((p) => ({
         ...p,
         indicatorList: p.indicatorList.filter(
           (item) => item.id !== state.onHoverIndicatorId
         ),
+        isLoading: {
+          ...p.isLoading,
+          status: false,
+          indicator: undefined,
+        },
       }));
-      enqueueSnackbar("Indicator deleted successfully", { variant: "success" });
+      enqueueSnackbar(response.message, { variant: "success" });
     } catch (error) {
+      setState((p) => ({
+        ...p,
+        isLoading: {
+          ...p.isLoading,
+          status: false,
+          indicator: undefined,
+        },
+      }));
       enqueueSnackbar(error.message, { variant: "error" });
     }
   };
@@ -206,29 +284,6 @@ const MyIndicatorsTable = () => {
       year: "numeric",
     });
   }
-
-  // const handleDeleteIndicator = (callback) => {
-  //   const deleteIndicator = async (api, indicatorId) => {
-  //     try {
-  //       return await requestIndicatorDeletion(api, indicatorId);
-  //     } catch (error) {
-  //       enqueueSnackbar(error.message, { variant: "error" });
-  //     }
-  //   };
-  //   if (selectedIndicator !== null) {
-  //     deleteIndicator(api, selectedIndicator.id).then((response) => {
-  //       enqueueSnackbar(response.message, { variant: "success" });
-  //       setState((prevState) => ({
-  //         ...prevState,
-  //         myIndicators: prevState.myIndicators.filter(
-  //           (indicator) => indicator.id !== selectedIndicator.id
-  //         ),
-  //       }));
-  //       callback();
-  //     });
-  //     handleMenuClose();
-  //   }
-  // };
 
   return (
     <>
@@ -298,65 +353,86 @@ const MyIndicatorsTable = () => {
                       )}
                     </Grid>
                   </TableCell>
-                  <TableCell align="right" sx={{ width: 180 }}></TableCell>
+                  <TableCell align="left" sx={{ width: 180 }}>
+                    Type
+                  </TableCell>
+                  <TableCell align="right" sx={{ width: 140 }}>
+                    Created on
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {state.filteredIndicatorList.map((indicator) => (
-                  <TableRow
-                    key={indicator.id}
-                    // selected={selected.includes(indicator.id)}
-                    onMouseEnter={() => handleOnHoverIndicator(indicator.id)}
-                    hover
-                    sx={{
-                      cursor: "pointer",
-                      position: "relative",
-                      "&:hover .hover-actions": { opacity: 1 },
-                      "&:hover .time-text": { opacity: 0 },
-                    }}
-                  >
-                    {/* // TODO: For the future: multi select delete */}
-                    {/* <TableCell padding="checkbox" sx={{ width: 40 }}>
+                  <React.Fragment key={indicator.id}>
+                    <TableRow
+                      // key={indicator.id}
+                      // selected={selected.includes(indicator.id)}
+                      onMouseEnter={() => handleOnHoverIndicator(indicator.id)}
+                      hover
+                      sx={{
+                        cursor: "pointer",
+                        position: "relative",
+                        "&:hover .hover-actions": { opacity: 1 },
+                        "&:hover .time-text": { opacity: 0 },
+                      }}
+                    >
+                      {/* // TODO: For the future: multi select delete */}
+                      {/* <TableCell padding="checkbox" sx={{ width: 40 }}>
                       <Checkbox
                         checked={selected.includes(indicator.id)}
                         onChange={() => handleSelect(indicator.id)}
                       />
                     </TableCell> */}
 
-                    <TableCell onClick={() => handlePreview(indicator.id)}>
-                      <Typography component="span" fontWeight="bold">
-                        {toSentenceCase(indicator.indicatorName)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography
-                        className="time-text"
-                        sx={{
-                          transition: "opacity 0.2s ease-in-out",
-                          textAlign: "right",
-                        }}
-                      >
-                        {changeTimeFormat(indicator.createdOn)}
-                      </Typography>
+                      <TableCell onClick={() => handlePreview(indicator.id)}>
+                        <Typography component="span">
+                          <b>{toSentenceCase(indicator.indicatorName)}</b>
+                        </Typography>
+                      </TableCell>
+                      <TableCell onClick={() => handlePreview(indicator.id)}>
+                        <Typography component="span" className="time-text">
+                          {handleDisplayType(indicator.type)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography
+                          className="time-text"
+                          sx={{
+                            transition: "opacity 0.2s ease-in-out",
+                            textAlign: "right",
+                          }}
+                        >
+                          {changeTimeFormat(indicator.createdOn)}
+                        </Typography>
 
-                      <Box
-                        className="hover-actions"
-                        sx={{
-                          position: "absolute",
-                          right: 0,
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          display: "flex",
-                          gap: 1,
-                          opacity: 0,
-                          transition: "opacity 0.2s ease-in-out",
-                          zIndex: 2,
-                          mr: 2,
-                        }}
-                      >
-                        {state.copyCode.loading ? (
-                          <CircularProgress size="2rem" />
-                        ) : (
+                        <Box
+                          className="hover-actions"
+                          sx={{
+                            position: "absolute",
+                            right: 0,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            display: "flex",
+                            gap: 1,
+                            opacity: 0,
+                            transition: "opacity 0.2s ease-in-out",
+                            zIndex: 2,
+                            mr: 2,
+                          }}
+                        >
+                          <Tooltip
+                            arrow
+                            title={<Typography>Preview indicator</Typography>}
+                          >
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={() => handlePreview(indicator.id)}
+                            >
+                              <PreviewIcon />
+                            </IconButton>
+                          </Tooltip>
+
                           <Tooltip
                             arrow
                             title={
@@ -385,64 +461,60 @@ const MyIndicatorsTable = () => {
                               <CodeIcon />
                             </IconButton>
                           </Tooltip>
-                        )}
 
-                        <Tooltip
-                          arrow
-                          title={<Typography>Preview indicator</Typography>}
-                        >
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handlePreview(indicator.id)}
+                          <Tooltip
+                            arrow
+                            title={<Typography>Edit indicator</Typography>}
                           >
-                            <PreviewIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip
-                          arrow
-                          title={<Typography>Edit indicator</Typography>}
-                        >
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleEditIndicator(indicator.id)}
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={handleEditIndicator}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip
+                            arrow
+                            title={<Typography>Duplicate indicator</Typography>}
                           >
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip
-                          arrow
-                          title={<Typography>Duplicate indicator</Typography>}
-                        >
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleEditIndicator(indicator.id)}
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={handleDuplicateMyIndicator}
+                            >
+                              <ContentCopyIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Divider
+                            orientation="vertical"
+                            flexItem
+                            sx={{ mx: 1 }}
+                          />
+                          <Tooltip
+                            arrow
+                            title={<Typography>Delete indicator</Typography>}
                           >
-                            <ContentCopyIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Divider
-                          orientation="vertical"
-                          flexItem
-                          sx={{ mx: 1 }}
-                        />
-                        <Tooltip
-                          arrow
-                          title={<Typography>Delete indicator</Typography>}
-                        >
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={handleToggleDelete}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={handleToggleDelete}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                    {state.isLoading.status &&
+                      indicator.id === state.isLoading.indicator && (
+                        <TableRow>
+                          <TableCell colSpan={3} sx={{ padding: 0 }}>
+                            <LinearProgress />
+                          </TableCell>
+                        </TableRow>
+                      )}
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
@@ -459,15 +531,12 @@ const MyIndicatorsTable = () => {
         </Grid>
       </Grid>
 
-      <DeleteDialog
+      <CustomDialog
+        type="delete"
+        content={`This will delete the indicator permanently from your dashboard.`}
         open={state.openDeleteDialog}
         toggleOpen={handleToggleDelete}
-        message={
-          <Typography>
-            This will delete the indicator permanently from your dashboard.
-          </Typography>
-        }
-        handleDelete={handleDeleteIndicator}
+        handler={handleDeleteIndicator}
       />
     </>
   );

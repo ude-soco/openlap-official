@@ -2,10 +2,7 @@ package com.openlap.analytics_module.controllers;
 
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorDraftRequest;
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorsToAnalyzeRequest;
-import com.openlap.analytics_module.dto.response.indicator.CompatibleIndicatorsCompositeResponse;
-import com.openlap.analytics_module.dto.response.indicator.IndicatorResponse;
-import com.openlap.analytics_module.dto.response.indicator.IndicatorWithCodeResponse;
-import com.openlap.analytics_module.dto.response.indicator.IndicatorsAnalyzedResponse;
+import com.openlap.analytics_module.dto.response.indicator.*;
 import com.openlap.analytics_module.services.IndicatorService;
 import com.openlap.response.ApiSuccess;
 

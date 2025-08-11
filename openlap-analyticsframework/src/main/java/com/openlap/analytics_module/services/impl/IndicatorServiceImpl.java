@@ -272,6 +272,8 @@ public class IndicatorServiceImpl implements IndicatorService {
         foundIndicator.getVisualizationTechniqueReference());
     indicator.setCreatedOn(LocalDateTime.now());
     indicator.setTimesExecuted(0);
+    indicator.setIndicatorQuery(foundIndicator.getIndicatorQuery());
+    indicator.setConfigurationRequest(foundIndicator.getConfigurationRequest());
     try {
       switch (foundIndicator.getIndicatorType()) {
         case BASIC:
@@ -657,7 +659,7 @@ public class IndicatorServiceImpl implements IndicatorService {
     }
 
     // Saving the indicator
-    indicatorRepository.save(
+    Indicator indicator =
         new Indicator(
             null,
             indicatorUtilityService.fetchUserIndicatorForCopyMethod(
@@ -672,7 +674,8 @@ public class IndicatorServiceImpl implements IndicatorService {
             statementRequestStringify.isEmpty() ? null : statementRequestStringify,
             foundIndicator.getAnalyticsTechniqueReference(),
             foundIndicator.getColumnToMerge(),
-            indicatorsToMergeList.isEmpty() ? null : indicatorsToMergeList));
+            indicatorsToMergeList.isEmpty() ? null : indicatorsToMergeList);
+    indicatorRepository.save(indicator);
   }
 
   @Override
