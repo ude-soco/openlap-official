@@ -31,12 +31,13 @@ import DeleteDialog from "../../../../common/components/delete-dialog/delete-dia
 
 export default function MyIscTable() {
   // const [selected, setSelected] = useState([]);
-  const { api } = useContext(AuthContext);
+  const { api, SESSION_ISC } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
   const [state, setState] = useState({
-    myISCList: [],
+    indicatorList: [],
+    myISCList: [], // ! Replace
     pageable: {
       pageSize: 10,
       pageNumber: 0,
@@ -75,7 +76,8 @@ export default function MyIscTable() {
     loadMyISCList(api, state.params).then((response) => {
       setState((prevState) => ({
         ...prevState,
-        myISCList: response.content,
+        indicatorList: response.content,
+        myISCList: response.content, // ! Remove
         pageable: response.pageable,
         totalElements: response.totalElements,
         loadingIndicators: false,
@@ -126,7 +128,7 @@ export default function MyIscTable() {
         parsedData.visRef = JSON.parse(parsedData.visRef);
         parsedData.lockedStep = JSON.parse(parsedData.lockedStep);
         parsedData.visRef.edit = true;
-        sessionStorage.setItem("session_isc", JSON.stringify(parsedData));
+        sessionStorage.setItem(SESSION_ISC, JSON.stringify(parsedData));
       })
       .then(() => {
         setState((prevState) => ({
@@ -145,18 +147,15 @@ export default function MyIscTable() {
   };
 
   const handleToggleDelete = () => {
-    setState((prevState) => ({
-      ...prevState,
-      openDeleteDialog: !prevState.openDeleteDialog,
-    }));
+    setState((p) => ({ ...p, openDeleteDialog: !p.openDeleteDialog }));
   };
 
   const handleDeleteIndicator = async () => {
     await requestDeleteISC(api, state.onHoverIndicatorId)
       .then(() => {
-        setState((prevState) => ({
-          ...prevState,
-          myISCList: prevState.myISCList.filter(
+        setState((p) => ({
+          ...p,
+          myISCList: p.myISCList.filter(
             (item) => item.id !== state.onHoverIndicatorId
           ),
         }));
@@ -168,32 +167,19 @@ export default function MyIscTable() {
   };
 
   const handlePageChange = (event, newPage) => {
-    setState((prevState) => ({
-      ...prevState,
-      params: {
-        ...prevState.params,
-        page: newPage,
-      },
-    }));
+    setState((p) => ({ ...p, params: { ...p.params, page: newPage } }));
   };
 
   // * Handle rows per page change
   const handleRowsPerPageChange = (event) => {
-    setState((prevState) => ({
-      ...prevState,
-      params: {
-        ...prevState.params,
-        size: parseInt(event.target.value, 10),
-        page: 0,
-      },
+    setState((p) => ({
+      ...p,
+      params: { ...p.params, size: parseInt(event.target.value, 10), page: 0 },
     }));
   };
 
   const handleToggleSearch = () => {
-    setState((p) => ({
-      ...p,
-      toggleSearch: !p.toggleSearch,
-    }));
+    setState((p) => ({ ...p, toggleSearch: !p.toggleSearch }));
   };
 
   const handleSearchTerm = (event) => {

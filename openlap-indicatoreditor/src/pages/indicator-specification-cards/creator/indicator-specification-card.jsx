@@ -1,4 +1,4 @@
-import { createContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Breadcrumbs, Divider, Link, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { Link as RouterLink } from "react-router-dom";
@@ -10,13 +10,15 @@ import Visualization from "./components/visualization/visualization.jsx";
 import Dataset from "./components/dataset/dataset.jsx";
 import Finalize from "./components/finalize/finalize.jsx";
 import { DataTypes } from "./utils/data/config.js";
+import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 
 export const ISCContext = createContext(undefined);
 
 const IndicatorSpecificationCard = () => {
+  const { SESSION_ISC } = useContext(AuthContext);
   const { enqueueSnackbar } = useSnackbar();
   const [id, setId] = useState(() => {
-    const savedState = sessionStorage.getItem("session_isc");
+    const savedState = sessionStorage.getItem(SESSION_ISC);
     return savedState
       ? JSON.parse(savedState).id
         ? JSON.parse(savedState).id
@@ -25,7 +27,7 @@ const IndicatorSpecificationCard = () => {
   });
 
   const [requirements, setRequirements] = useState(() => {
-    const savedState = sessionStorage.getItem("session_isc");
+    const savedState = sessionStorage.getItem(SESSION_ISC);
     return savedState
       ? JSON.parse(savedState).requirements
       : {
@@ -64,7 +66,7 @@ const IndicatorSpecificationCard = () => {
   });
 
   const [dataset, setDataset] = useState(() => {
-    const savedState = sessionStorage.getItem("session_isc");
+    const savedState = sessionStorage.getItem(SESSION_ISC);
     return savedState
       ? JSON.parse(savedState).dataset
       : {
@@ -75,7 +77,7 @@ const IndicatorSpecificationCard = () => {
   });
 
   const [visRef, setVisRef] = useState(() => {
-    const savedState = sessionStorage.getItem("session_isc");
+    const savedState = sessionStorage.getItem(SESSION_ISC);
     return savedState
       ? JSON.parse(savedState).visRef
       : {
@@ -110,7 +112,7 @@ const IndicatorSpecificationCard = () => {
   });
 
   const [lockedStep, setLockedStep] = useState(() => {
-    const savedState = sessionStorage.getItem("session_isc");
+    const savedState = sessionStorage.getItem(SESSION_ISC);
     return savedState
       ? JSON.parse(savedState).lockedStep
       : {
@@ -207,7 +209,7 @@ const IndicatorSpecificationCard = () => {
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      let session_isc = {
+      let sessionISC = {
         id,
         requirements,
         dataset,
@@ -215,7 +217,7 @@ const IndicatorSpecificationCard = () => {
         lockedStep,
       };
       // TODO: Add date to the session
-      sessionStorage.setItem("session_isc", JSON.stringify(session_isc));
+      sessionStorage.setItem(SESSION_ISC, JSON.stringify(sessionISC));
 
       // Check if any of the dependencies have changed
       if (
@@ -275,10 +277,12 @@ const IndicatorSpecificationCard = () => {
             >
               ISC Dashboard
             </Link>
-            <Typography sx={{ color: "text.primary" }}>Create an ISC</Typography>
+            <Typography sx={{ color: "text.primary" }}>
+              Create an ISC
+            </Typography>
           </Breadcrumbs>
 
-          <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
+          <Grid size={{ xs: 12 }}>
             <Divider />
           </Grid>
 

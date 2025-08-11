@@ -26,7 +26,7 @@ import DeleteDialog from "../../../../common/components/delete-dialog/delete-dia
 import { useSnackbar } from "notistack";
 
 const IscPreview = () => {
-  const { api } = useContext(AuthContext);
+  const { api, SESSION_ISC } = useContext(AuthContext);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const params = useParams();
@@ -99,7 +99,7 @@ const IscPreview = () => {
         parsedData.visRef = JSON.parse(parsedData.visRef);
         parsedData.lockedStep = JSON.parse(parsedData.lockedStep);
         parsedData.visRef.edit = true;
-        sessionStorage.setItem("session_isc", JSON.stringify(parsedData));
+        sessionStorage.setItem(SESSION_ISC, JSON.stringify(parsedData));
       })
       .then(() => {
         setState((prevState) => ({

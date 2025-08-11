@@ -3,7 +3,8 @@ export const requestCreateBasicIndicator = async (
   indicatorQuery,
   analysisRef,
   visRef,
-  indicator
+  indicator,
+  configuration
 ) => {
   try {
     const requestBody = {
@@ -35,12 +36,13 @@ export const requestCreateBasicIndicator = async (
       visualizationMapping: {
         mapping: visRef.visualizationMapping.mapping,
       },
+      configuration: configuration,
     };
     const response = await api.post("v1/indicators/basic/create", requestBody);
 
     return response.data;
   } catch (error) {
-    console.error("Failed to fetch analytics technique param data");
+    console.error("Failed to save indicator", error);
     throw error; // Re-throw the error to handle it in the component
   }
 };

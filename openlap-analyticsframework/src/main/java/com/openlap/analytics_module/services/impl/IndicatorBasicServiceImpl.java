@@ -221,7 +221,7 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
         indicatorBasicRequest.getAnalyticsTechniqueMapping());
     indicatorReference.setAnalyticsTechniqueParams(
         indicatorBasicRequest.getAnalyticsTechniqueParams());
-    indicatorReference.setConfigurationRequest(indicatorBasicRequest);
+    indicatorReference.setConfigurationRequest(indicatorBasicRequest.getConfiguration());
     return indicatorReference;
   }
 }

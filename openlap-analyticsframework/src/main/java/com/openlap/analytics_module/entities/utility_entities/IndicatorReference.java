@@ -25,7 +25,7 @@ public class IndicatorReference {
   private Object visualizationParams;
   private OpenLAPPortConfig visualizationMapping;
   // For editing
-  private Object configurationRequest;
+  private String configurationRequest;
 
   // Only for BASIC
   private StatementsRequest indicatorQuery;

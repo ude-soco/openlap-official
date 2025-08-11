@@ -37,6 +37,7 @@ export const requestIndicatorFullDetail = async (api, indicatorId) => {
         displayCode,
         scriptData,
       },
+      configuration: response.data.data.configuration,
     };
   } catch (error) {
     console.error("Failed to request indicator details");
