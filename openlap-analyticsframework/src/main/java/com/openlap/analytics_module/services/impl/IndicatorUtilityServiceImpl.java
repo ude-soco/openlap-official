@@ -260,7 +260,7 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
         }
       }
       //      indicator.setPlatforms(uniquePlatforms);
-      indicator.setConfigurationRequest(gson.toJson(indicatorReference.getConfigurationRequest()));
+      indicator.setConfigurationRequest(indicatorReference.getConfigurationRequest());
       log.info("An indicator with name '{}' was prepared.", indicator.getName());
     } catch (Exception e) {
       throw new DatabaseOperationException(

@@ -1,14 +1,9 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
-  Button,
+  Box,
   CircularProgress,
   Divider,
-  Grid,
   IconButton,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
   Paper,
   Table,
   TableBody,
@@ -17,33 +12,36 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  Tooltip,
   Typography,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import {
   requestIndicatorCode,
   requestIndicatorDeletion,
+  requestIndicatorFullDetail,
   requestMyIndicators,
 } from "../utils/indicator-dashboard-api.js";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import {
-  ArrowDownward,
-  ArrowUpward,
-  ContentCopy,
-  Delete,
-  Edit,
-  Link,
-  MoreVert,
-  Preview,
-} from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
+
+import SearchIcon from "@mui/icons-material/Search";
+import PreviewIcon from "@mui/icons-material/Preview";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import CodeIcon from "@mui/icons-material/Code";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { handleDisplayType } from "../utils/utils.js";
 import DeleteDialog from "../../../../common/components/delete-dialog/delete-dialog.jsx";
 
 const MyIndicatorsTable = () => {
-  const { api } = useContext(AuthContext);
+  const { api, SESSION_INDICATOR } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { enqueueSnackbar } = useSnackbar();
   const [state, setState] = useState({
-    myIndicators: [],
+    indicatorList: [],
     pageable: {
       pageSize: 10,
       pageNumber: 0,
@@ -55,35 +53,17 @@ const MyIndicatorsTable = () => {
       sortDirection: "dsc",
       sortBy: "createdOn",
     },
-    openDeleteDialog: false,
-    loadingIndicators: false,
     copyCode: {
       loading: false,
       code: "",
     },
+    openDeleteDialog: false,
+    loadingIndicators: false,
+    onHoverIndicatorId: undefined,
+    toggleSearch: true,
+    searchTerm: "",
+    filteredIndicatorList: [],
   });
-  const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
-
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedIndicator, setSelectedIndicator] = useState(null);
-
-  const handleMenuOpen = (event, indicator) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedIndicator(indicator);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedIndicator(null);
-  };
-
-  const toggleOpenDeleteDialog = () => {
-    setState((prevState) => ({
-      ...prevState,
-      openDeleteDialog: !prevState.openDeleteDialog,
-    }));
-  };
 
   useEffect(() => {
     const loadMyIndicators = async (api, params) => {
@@ -93,329 +73,377 @@ const MyIndicatorsTable = () => {
         console.log("Error requesting my indicators");
       }
     };
-    setState((prevState) => ({
-      ...prevState,
-      loadingIndicators: true,
-    }));
-    loadMyIndicators(api, state.params).then((response) => {
-      setState((prevState) => ({
-        ...prevState,
-        myIndicators: response.content,
-        pageable: response.pageable,
-        totalElements: response.totalElements,
+    setState((p) => ({ ...p, loadingIndicators: true }));
+    loadMyIndicators(api, state.params).then((indicators) => {
+      setState((p) => ({
+        ...p,
+        indicatorList: indicators.content,
+        pageable: indicators.pageable,
+        totalElements: indicators.totalElements,
         loadingIndicators: false,
       }));
     });
-  }, [api, state.params]);
+  }, [api, state.params, location]);
 
-  // Handle page change
-  const handlePageChange = (event, newPage) => {
-    setState((prevState) => ({
-      ...prevState,
-      params: {
-        ...prevState.params,
-        page: newPage,
-      },
-    }));
-  };
-
-  // Handle rows per page change
-  const handleRowsPerPageChange = (event) => {
-    setState((prevState) => ({
-      ...prevState,
-      params: {
-        ...prevState.params,
-        size: parseInt(event.target.value, 10),
-        page: 0,
-      },
-    }));
-  };
-
-  // Handle sorting
-  const handleSort = (sortBy) => {
-    setState((prevState) => ({
-      ...prevState,
-      params: {
-        ...prevState.params,
-        sortBy,
-        sortDirection:
-          prevState.params.sortBy === sortBy &&
-          prevState.params.sortDirection === "asc"
-            ? "dsc"
-            : "asc",
-        page: 0, // Reset to first page on sort change
-      },
-    }));
-  };
-
-  const renderSortIcon = (column) => {
-    if (state.params.sortBy !== column) return null;
-    return state.params.sortDirection === "asc" ? (
-      <ArrowUpward fontSize="small" />
-    ) : (
-      <ArrowDownward fontSize="small" />
+  useEffect(() => {
+    const filtered = state.indicatorList.filter((indicator) =>
+      indicator.indicatorName
+        .toLowerCase()
+        .includes(state.searchTerm.toLowerCase())
     );
+    setState((p) => ({ ...p, filteredIndicatorList: filtered }));
+  }, [state.searchTerm, state.indicatorList]);
+
+  const handleOnHoverIndicator = (id) => {
+    setState((p) => ({ ...p, onHoverIndicatorId: id }));
   };
 
-  const handlePreview = () => {
-    handleMenuClose();
-    navigate(`/indicator/${selectedIndicator.id}`);
-  };
-
-  const handleEdit = () => {
-    handleMenuClose();
-  };
-
-  const handleDuplicate = () => {
-    handleMenuClose();
-  };
-
-  const handleCopyCode = () => {
-    setState((prevState) => ({
-      ...prevState,
-      copyCode: {
-        ...prevState.copyCode,
-        loading: true,
-      },
-    }));
-    const loadIndicatorCode = async (api, indicatorId) => {
-      try {
-        return await requestIndicatorCode(api, indicatorId);
-      } catch (error) {
-        setState((prevState) => ({
-          ...prevState,
-          copyCode: {
-            ...prevState.copyCode,
-            loading: false,
-          },
-        }));
-        enqueueSnackbar(error.response.data.message, { variant: "error" });
-        console.error("Error requesting my indicators");
-      }
-    };
-
-    loadIndicatorCode(api, selectedIndicator.id).then((response) => {
-      navigator.clipboard.writeText(response.data).then(() =>
-        setState((prevState) => ({
-          ...prevState,
-          copyCode: {
-            code: response.data,
-            loading: false,
-          },
-        }))
+  const handleCopyEmbedCode = async () => {
+    console.log("Embed copy code", state.onHoverIndicatorId);
+    setState((p) => ({ ...p, copyCode: { ...p.copyCode, loading: true } }));
+    try {
+      const indicatorCode = await requestIndicatorCode(
+        api,
+        state.onHoverIndicatorId
       );
-      enqueueSnackbar(response.message, { variant: "success" });
-      handleMenuClose();
-    });
-  };
-
-  const confirmDeleteIndicator = () => {
-    setState((prevState) => ({
-      ...prevState,
-      openDeleteDialog: true,
-    }));
-    setAnchorEl(null);
-  };
-
-  const handleDeleteIndicator = (callback) => {
-    const deleteIndicator = async (api, indicatorId) => {
-      try {
-        return await requestIndicatorDeletion(api, indicatorId);
-      } catch (error) {
-        enqueueSnackbar(error.message, { variant: "error" });
-      }
-    };
-    if (selectedIndicator !== null) {
-      deleteIndicator(api, selectedIndicator.id).then((response) => {
-        enqueueSnackbar(response.message, { variant: "success" });
-        setState((prevState) => ({
-          ...prevState,
-          myIndicators: prevState.myIndicators.filter(
-            (indicator) => indicator.id !== selectedIndicator.id
-          ),
-        }));
-        callback();
-      });
-      handleMenuClose();
+      await navigator.clipboard.writeText(indicatorCode.data);
+      enqueueSnackbar(indicatorCode.message, { variant: "success" });
+      setState((p) => ({
+        ...p,
+        copyCode: { code: indicatorCode.data, loading: false },
+      }));
+    } catch (error) {
+      setState((p) => ({ ...p, copyCode: { ...p.copyCode, loading: false } }));
+      enqueueSnackbar(error.response.data.message, { variant: "error" });
+      console.error("Error requesting my indicators", error);
     }
   };
+
+  const handlePreview = (id) => {
+    navigate(`/indicator/${id}`);
+  };
+
+  const handleEditIndicator = async () => {
+    try {
+      const indicator = await requestIndicatorFullDetail(
+        api,
+        state.onHoverIndicatorId
+      );
+      sessionStorage.setItem(SESSION_INDICATOR, indicator.configuration);
+      // navigate("")
+      switch (indicator.type) {
+        case "BASIC":
+          navigate("/indicator/editor/basic");
+          break;
+        case "COMPOSITE":
+          navigate("/indicator/editor/composite");
+          break;
+        case "MULTI_LEVEL":
+          navigate("/indicator/editor/multi-level-analysis");
+          break;
+        default:
+          route = "Unknown";
+      }
+    } catch (error) {
+      console.log("Error requesting my indicators");
+    }
+  };
+
+  const handleDuplicateIndicator = () => {
+    console.log("Duplicate Indicator", state.onHoverIndicatorId);
+  };
+
+  const handleToggleDelete = () => {
+    setState((p) => ({ ...p, openDeleteDialog: !p.openDeleteDialog }));
+  };
+
+  const handleDeleteIndicator = async () => {
+    console.log("Delete Indicator", state.onHoverIndicatorId);
+    try {
+      await requestIndicatorDeletion(api, state.onHoverIndicatorId);
+      setState((p) => ({
+        ...p,
+        indicatorList: p.indicatorList.filter(
+          (item) => item.id !== state.onHoverIndicatorId
+        ),
+      }));
+      enqueueSnackbar("Indicator deleted successfully", { variant: "success" });
+    } catch (error) {
+      enqueueSnackbar(error.message, { variant: "error" });
+    }
+  };
+
+  const handlePageChange = (event, newPage) => {
+    setState((p) => ({ ...p, params: { ...p.params, page: newPage } }));
+  };
+
+  const handleRowsPerPageChange = (event) => {
+    setState((p) => ({
+      ...p,
+      params: { ...p.params, size: parseInt(event.target.value, 10), page: 0 },
+    }));
+  };
+
+  const handleToggleSearch = () => {
+    setState((p) => ({ ...p, toggleSearch: !p.toggleSearch }));
+  };
+
+  const handleSearchTerm = (event) => {
+    const { value } = event.target;
+    setState((p) => ({ ...p, searchTerm: value }));
+  };
+
+  // * Helper functions
+  function toSentenceCase(str) {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
+  function changeTimeFormat(time) {
+    return new Date(time).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
+  // const handleDeleteIndicator = (callback) => {
+  //   const deleteIndicator = async (api, indicatorId) => {
+  //     try {
+  //       return await requestIndicatorDeletion(api, indicatorId);
+  //     } catch (error) {
+  //       enqueueSnackbar(error.message, { variant: "error" });
+  //     }
+  //   };
+  //   if (selectedIndicator !== null) {
+  //     deleteIndicator(api, selectedIndicator.id).then((response) => {
+  //       enqueueSnackbar(response.message, { variant: "success" });
+  //       setState((prevState) => ({
+  //         ...prevState,
+  //         myIndicators: prevState.myIndicators.filter(
+  //           (indicator) => indicator.id !== selectedIndicator.id
+  //         ),
+  //       }));
+  //       callback();
+  //     });
+  //     handleMenuClose();
+  //   }
+  // };
 
   return (
     <>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Grid container justifyContent="space-between">
-            <Grid item xs>
-              <Typography>My Indicators</Typography>
-            </Grid>
-            <Grid item>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => navigate("/indicator/editor")}
-              >
-                Create new
-              </Button>
-            </Grid>
-          </Grid>
-        </Grid>
-        <Grid item xs={12}>
-          <TableContainer component={Paper} variant="outlined">
-            <Table stickyHeader size="small">
+        <Grid size={12}>
+          <TableContainer component={Paper} elevation={0} variant="outlined">
+            <Table>
               <TableHead>
                 <TableRow>
+                  {/* // TODO: For the future: multi select delete */}
+                  {/* <TableCell padding="checkbox" sx={{ width: 30 }}>
+                    <Checkbox
+                      checked={selected.length === emails.length}
+                      indeterminate={
+                        selected.length > 0 && selected.length < emails.length
+                      }
+                      onChange={(e) => {
+                        setSelected(
+                          e.target.checked ? emails.map((e) => e.id) : []
+                        );
+                      }}
+                    />
+                  </TableCell> */}
                   <TableCell>
-                    <Grid container alignItems="center">
-                      <Typography
-                        variant="overline"
-                        sx={{ fontWeight: "bold" }}
-                      >
-                        Name
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleSort("name")}
-                      >
-                        {renderSortIcon("name")}
-                      </IconButton>
+                    <Grid container alignItems="center" spacing={1}>
+                      {state.toggleSearch ? (
+                        <>
+                          <Typography>Indicator name</Typography>
+                          <Tooltip
+                            title={
+                              <Typography>Search for indicator</Typography>
+                            }
+                          >
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={handleToggleSearch}
+                            >
+                              <SearchIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </>
+                      ) : (
+                        <>
+                          <Grid size="auto">
+                            <Tooltip
+                              title={<Typography>Close search</Typography>}
+                            >
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={handleToggleSearch}
+                              >
+                                <CloseIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </Grid>
+                          <Grid size="grow">
+                            <TextField
+                              size="small"
+                              placeholder="Search for indicator"
+                              value={state.searchTerm}
+                              onChange={handleSearchTerm}
+                            />
+                          </Grid>
+                        </>
+                      )}
                     </Grid>
                   </TableCell>
-                  <TableCell>
-                    <Grid container alignItems="center">
-                      <Typography
-                        variant="overline"
-                        sx={{ fontWeight: "bold" }}
-                      >
-                        Type
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleSort("indicatorType")}
-                      >
-                        {renderSortIcon("indicatorType")}
-                      </IconButton>
-                    </Grid>
-                  </TableCell>
-
-                  <TableCell align="right">
-                    <Grid
-                      container
-                      alignItems="center"
-                      justifyContent="flex-end"
-                    >
-                      <Typography
-                        variant="overline"
-                        sx={{ fontWeight: "bold" }}
-                      >
-                        Created On
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleSort("createdOn")}
-                      >
-                        {renderSortIcon("createdOn")}
-                      </IconButton>
-                    </Grid>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography variant="overline" sx={{ fontWeight: "bold" }}>
-                      Actions
-                    </Typography>
-                  </TableCell>
+                  <TableCell align="right" sx={{ width: 180 }}></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {state.myIndicators.length > 0 ? (
-                  state.myIndicators.map((indicator) => (
-                    <TableRow key={indicator.id}>
-                      <TableCell>{indicator.name}</TableCell>
-                      <TableCell>{handleDisplayType(indicator.type)}</TableCell>
-                      <TableCell align="right">
-                        {indicator.createdOn.split("T")[0]}
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          size="small"
-                          onClick={(event) => handleMenuOpen(event, indicator)}
-                        >
-                          <MoreVert />
-                        </IconButton>
-                        <Menu
-                          anchorEl={anchorEl}
-                          open={Boolean(anchorEl)}
-                          onClose={handleMenuClose}
-                        >
-                          <MenuItem onClick={handlePreview}>
-                            <ListItemIcon>
-                              <Preview fontSize="small" color="primary" />
-                            </ListItemIcon>
-                            <ListItemText primary="Preview Indicator" />
-                          </MenuItem>
-                          <MenuItem
-                            onClick={handleCopyCode}
-                            disabled={state.copyCode.loading}
+                {state.filteredIndicatorList.map((indicator) => (
+                  <TableRow
+                    key={indicator.id}
+                    // selected={selected.includes(indicator.id)}
+                    onMouseEnter={() => handleOnHoverIndicator(indicator.id)}
+                    hover
+                    sx={{
+                      cursor: "pointer",
+                      position: "relative",
+                      "&:hover .hover-actions": { opacity: 1 },
+                      "&:hover .time-text": { opacity: 0 },
+                    }}
+                  >
+                    {/* // TODO: For the future: multi select delete */}
+                    {/* <TableCell padding="checkbox" sx={{ width: 40 }}>
+                      <Checkbox
+                        checked={selected.includes(indicator.id)}
+                        onChange={() => handleSelect(indicator.id)}
+                      />
+                    </TableCell> */}
+
+                    <TableCell onClick={() => handlePreview(indicator.id)}>
+                      <Typography component="span" fontWeight="bold">
+                        {toSentenceCase(indicator.indicatorName)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography
+                        className="time-text"
+                        sx={{
+                          transition: "opacity 0.2s ease-in-out",
+                          textAlign: "right",
+                        }}
+                      >
+                        {changeTimeFormat(indicator.createdOn)}
+                      </Typography>
+
+                      <Box
+                        className="hover-actions"
+                        sx={{
+                          position: "absolute",
+                          right: 0,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          display: "flex",
+                          gap: 1,
+                          opacity: 0,
+                          transition: "opacity 0.2s ease-in-out",
+                          zIndex: 2,
+                          mr: 2,
+                        }}
+                      >
+                        {state.copyCode.loading ? (
+                          <CircularProgress size="2rem" />
+                        ) : (
+                          <Tooltip
+                            arrow
+                            title={
+                              <>
+                                <Typography gutterBottom>
+                                  Copy ICC code
+                                </Typography>
+                                <Typography>
+                                  What's an ICC code?
+                                  <br />
+                                  An Interactive Indicator Code (ICC) is an
+                                  iFrame code snippet you can embed in any web
+                                  application that supports iFrames.
+                                  <br />
+                                  It lets you display real-time analytics
+                                  directly within your website.
+                                </Typography>
+                              </>
+                            }
                           >
-                            {state.copyCode.loading ? (
-                              <>
-                                <ListItemIcon>
-                                  <CircularProgress size={15} />
-                                </ListItemIcon>
-                                <ListItemText primary="Copying code" />
-                              </>
-                            ) : (
-                              <>
-                                <ListItemIcon>
-                                  <Link fontSize="small" color="primary" />
-                                </ListItemIcon>
-                                <ListItemText primary="Copy Code" />
-                              </>
-                            )}
-                          </MenuItem>
-                          <Divider />
-                          {/* <MenuItem onClick={handleEdit} disabled>
-                            <ListItemIcon>
-                              <Edit fontSize="small" color="primary" />
-                            </ListItemIcon>
-                            <ListItemText primary="Edit Indicator" />
-                          </MenuItem>
-                          <MenuItem onClick={handleDuplicate} disabled>
-                            <ListItemIcon>
-                              <ContentCopy fontSize="small" color="primary" />
-                            </ListItemIcon>
-                            <ListItemText primary="Duplicate Indicator" />
-                          </MenuItem> */}
-                          <MenuItem onClick={confirmDeleteIndicator}>
-                            <ListItemIcon>
-                              <Delete fontSize="small" color="error" />
-                            </ListItemIcon>
-                            <ListItemText primary="Delete Indicator" />
-                          </MenuItem>
-                        </Menu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} sx={{ py: 1.5 }}>
-                      {state.loadingIndicators ? (
-                        <>
-                          <Grid container alignItems="center" spacing={1}>
-                            <Grid item>
-                              <CircularProgress size={18} />
-                            </Grid>
-                            <Grid item>
-                              <Typography variant="body2" gutterBottom>
-                                Loading your indicators ...
-                              </Typography>
-                            </Grid>
-                          </Grid>
-                        </>
-                      ) : (
-                        "No indicators found"
-                      )}
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={handleCopyEmbedCode}
+                            >
+                              <CodeIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+
+                        <Tooltip
+                          arrow
+                          title={<Typography>Preview indicator</Typography>}
+                        >
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handlePreview(indicator.id)}
+                          >
+                            <PreviewIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip
+                          arrow
+                          title={<Typography>Edit indicator</Typography>}
+                        >
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleEditIndicator(indicator.id)}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip
+                          arrow
+                          title={<Typography>Duplicate indicator</Typography>}
+                        >
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleEditIndicator(indicator.id)}
+                          >
+                            <ContentCopyIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Divider
+                          orientation="vertical"
+                          flexItem
+                          sx={{ mx: 1 }}
+                        />
+                        <Tooltip
+                          arrow
+                          title={<Typography>Delete indicator</Typography>}
+                        >
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={handleToggleDelete}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </TableCell>
                   </TableRow>
-                )}
+                ))}
               </TableBody>
             </Table>
             <TablePagination
@@ -425,15 +453,20 @@ const MyIndicatorsTable = () => {
               onPageChange={handlePageChange}
               rowsPerPage={state.pageable.pageSize}
               onRowsPerPageChange={handleRowsPerPageChange}
-              rowsPerPageOptions={[5, 10, 25]}
+              rowsPerPageOptions={[5, 10, 20, 50]}
             />
           </TableContainer>
         </Grid>
       </Grid>
+
       <DeleteDialog
         open={state.openDeleteDialog}
-        toggleOpen={toggleOpenDeleteDialog}
-        message="This will delete this indicator permanently. You cannot undo this action."
+        toggleOpen={handleToggleDelete}
+        message={
+          <Typography>
+            This will delete the indicator permanently from your dashboard.
+          </Typography>
+        }
         handleDelete={handleDeleteIndicator}
       />
     </>

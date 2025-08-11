@@ -8,6 +8,8 @@ const AuthContext = createContext(undefined);
 
 const BackendURL = import.meta.env.VITE_BACKEND_URL;
 const AuthTokens = "authTokens";
+const SESSION_ISC = "session_isc";
+const SESSION_INDICATOR = "session_indicator";
 
 const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
@@ -109,7 +111,16 @@ const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ authTokens, user, login, logout, refreshAccessToken, api }}
+      value={{
+        authTokens,
+        user,
+        login,
+        logout,
+        refreshAccessToken,
+        api,
+        SESSION_ISC,
+        SESSION_INDICATOR,
+      }}
     >
       {children}
     </AuthContext.Provider>

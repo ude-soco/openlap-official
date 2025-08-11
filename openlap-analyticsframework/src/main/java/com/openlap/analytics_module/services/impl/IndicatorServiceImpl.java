@@ -157,6 +157,7 @@ public class IndicatorServiceImpl implements IndicatorService {
     indicatorFullDetailResponse.setIndicatorCode(
         generateIndicatorCode(foundIndicator.getId(), true));
     //    indicatorFullDetailResponse.setPlatforms(foundIndicator.getPlatforms());
+    indicatorFullDetailResponse.setConfiguration(foundIndicator.getConfigurationRequest());
 
     // Visualization
     indicatorFullDetailResponse.setVisualizationLibrary(

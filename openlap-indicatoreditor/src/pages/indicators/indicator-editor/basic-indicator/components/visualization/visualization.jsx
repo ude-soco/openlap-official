@@ -35,7 +35,7 @@ import { requestCreateBasicIndicator } from "../../utils/basic-indicator-api";
 import { useNavigate } from "react-router-dom";
 
 export default function Visualization() {
-  const { api } = useContext(AuthContext);
+  const { api, SESSION_INDICATOR } = useContext(AuthContext);
   const {
     dataset,
     filters,
@@ -103,18 +103,21 @@ export default function Visualization() {
     let indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
     let analysisRef = buildAnalysisRef(analysis);
     let visRef = buildVisRef(visualization);
+    let configuration = sessionStorage.getItem(SESSION_INDICATOR);
     try {
       await requestCreateBasicIndicator(
         api,
         indicatorQuery,
         analysisRef,
         visRef,
-        indicator
+        indicator,
+        configuration
       );
       setState((p) => ({
         ...p,
         indicatorName: { ...p.indicatorName, loading: false },
       }));
+      sessionStorage.removeItem(SESSION_INDICATOR);
       navigate("/indicator");
     } catch (error) {
       setState((p) => ({

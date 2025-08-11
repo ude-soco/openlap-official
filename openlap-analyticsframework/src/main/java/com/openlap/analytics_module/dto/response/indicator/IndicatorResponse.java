@@ -15,6 +15,6 @@ public class IndicatorResponse {
   private String id;
   private IndicatorType type;
   private String createdBy;
-  private String name;
+  private String indicatorName;
   private LocalDateTime createdOn;
 }

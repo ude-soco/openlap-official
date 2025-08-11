@@ -15,7 +15,7 @@ import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 
 const NameDialog = ({ open, toggleOpen }) => {
-  const { api } = useContext(AuthContext);
+  const { api, SESSION_ISC } = useContext(AuthContext);
   const { id, requirements, dataset, visRef, lockedStep } =
     useContext(ISCContext);
   const { enqueueSnackbar } = useSnackbar();
@@ -79,7 +79,7 @@ const NameDialog = ({ open, toggleOpen }) => {
         .then((response) => {
           enqueueSnackbar(response.message, { variant: "success" });
           toggleOpen();
-          sessionStorage.removeItem("session_isc");
+          sessionStorage.removeItem(SESSION_ISC);
           navigate("/isc");
           setState((prevState) => ({
             prevState,
@@ -98,7 +98,7 @@ const NameDialog = ({ open, toggleOpen }) => {
         .then((response) => {
           enqueueSnackbar(response.message, { variant: "success" });
           toggleOpen();
-          sessionStorage.removeItem("session_isc");
+          sessionStorage.removeItem(SESSION_ISC);
           navigate("/isc");
           setState((prevState) => ({
             prevState,

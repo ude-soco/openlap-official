@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Grid from "@mui/material/Grid2";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
@@ -12,30 +12,27 @@ import {
   Typography,
 } from "@mui/material";
 import { indicatorData } from "./utils/indicator-data";
-
-const SESSION = "session_indicator";
+import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
 
 const IndicatorEditor = () => {
+  const { SESSION_INDICATOR } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [state, setState] = useState({
-    route: "",
-    indicatorInProgress: () => {
-      let savedState = sessionStorage.getItem(SESSION);
-      return !!savedState;
-    },
-  });
+  const [state, setState] = useState({ indicatorInProgress: false });
+
+  useEffect(() => {
+    let savedState = sessionStorage.getItem(SESSION_INDICATOR);
+    setState((p) => ({ ...p, indicatorInProgress: Boolean(savedState) }));
+  }, []);
 
   const handleClearSession = () => {
     setState((p) => ({ ...p, indicatorInProgress: !p.indicatorInProgress }));
-    sessionStorage.removeItem(SESSION);
+    sessionStorage.removeItem(SESSION_INDICATOR);
   };
 
   const handleContinueEditing = () => {
-    const savedState = sessionStorage.getItem(SESSION);
-
-    if (savedState) {
+    if (state.indicatorInProgress) {
       let route;
-      switch (JSON.parse(savedState).indicator.type) {
+      switch (JSON.parse(sessionStorage.getItem(SESSION_INDICATOR)).indicator.type) {
         case "BASIC":
           navigate("/indicator/editor/basic");
           break;
@@ -55,6 +52,8 @@ const IndicatorEditor = () => {
     handleClearSession();
     navigate(link);
   };
+
+  console.log(state.indicatorInProgress);
 
   return (
     <>
@@ -76,7 +75,7 @@ const IndicatorEditor = () => {
           </Typography>
         </Breadcrumbs>
 
-        <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
+        <Grid size={{ xs: 12 }}>
           <Divider />
         </Grid>
 
@@ -84,7 +83,7 @@ const IndicatorEditor = () => {
           <Grid container spacing={2}>
             <Typography gutterBottom>Choose a type of indicator</Typography>
             <Grid size={{ xs: 12 }}>
-              <Grid container spacing={2}>
+              <Grid container spacing={2} justifyContent="center">
                 {indicatorData.map((indicatorType, index) => (
                   <Grid
                     key={index}

@@ -50,4 +50,7 @@ public class IndicatorBasicRequest {
   private OpenLAPPortConfig analyticsTechniqueMapping;
 
   @Valid private List<OpenLAPDynamicParam> analyticsTechniqueParams = new ArrayList<>();
+
+  @NotBlank(message = "Configuration is mandatory")
+  private String configuration;
 }

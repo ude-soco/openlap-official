@@ -1,4 +1,4 @@
-import { createContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
 import Grid from "@mui/material/Grid2";
@@ -9,27 +9,27 @@ import Dataset from "./components/dataset/dataset";
 import Filters from "./components/filters/filters";
 import Analysis from "./components/analysis/analysis";
 import Visualization from "./components/visualization/visualization";
+import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager";
 
 export const BasicContext = createContext(undefined);
 
-const SESSION = "session_indicator";
-
 export default function BasicIndicator() {
+  const { SESSION_INDICATOR } = useContext(AuthContext);
   const { enqueueSnackbar } = useSnackbar();
   const [indicator, setIndicator] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION);
+    const savedState = sessionStorage.getItem(SESSION_INDICATOR);
     return savedState
       ? { ...JSON.parse(savedState).indicator }
       : { indicatorName: "", type: "BASIC" };
   });
   const [dataset, setDataset] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION);
+    const savedState = sessionStorage.getItem(SESSION_INDICATOR);
     return savedState
       ? { ...JSON.parse(savedState).dataset }
       : { myLRSList: [], selectedLRSList: [] };
   });
   const [filters, setFilters] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION);
+    const savedState = sessionStorage.getItem(SESSION_INDICATOR);
     return savedState
       ? { ...JSON.parse(savedState).filters }
       : {
@@ -45,7 +45,7 @@ export default function BasicIndicator() {
         };
   });
   const [analysis, setAnalysis] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION);
+    const savedState = sessionStorage.getItem(SESSION_INDICATOR);
     return savedState
       ? { ...JSON.parse(savedState).analysis }
       : {
@@ -60,7 +60,7 @@ export default function BasicIndicator() {
         };
   });
   const [visualization, setVisualization] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION);
+    const savedState = sessionStorage.getItem(SESSION_INDICATOR);
     return savedState
       ? { ...JSON.parse(savedState).visualization }
       : {
@@ -75,7 +75,7 @@ export default function BasicIndicator() {
         };
   });
   const [lockedStep, setLockedStep] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION);
+    const savedState = sessionStorage.getItem(SESSION_INDICATOR);
     return savedState
       ? { ...JSON.parse(savedState).lockedStep }
       : {
@@ -146,7 +146,7 @@ export default function BasicIndicator() {
         indicator,
       };
 
-      sessionStorage.setItem(SESSION, JSON.stringify(session));
+      sessionStorage.setItem(SESSION_INDICATOR, JSON.stringify(session));
 
       // Check if any of the dependencies have changed
       if (

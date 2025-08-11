@@ -25,7 +25,8 @@ public class IndicatorFullDetailResponse {
   private IndicatorType type;
   private String createdBy;
   private LocalDateTime createdOn;
-//  private Set<String> platforms;
+  //  private Set<String> platforms;
+  private String configuration;
 
   // Visualization
   private String visualizationLibrary;
