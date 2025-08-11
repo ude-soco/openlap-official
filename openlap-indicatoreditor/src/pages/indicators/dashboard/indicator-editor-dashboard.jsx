@@ -9,7 +9,6 @@ import {
   Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import AddIcon from "@mui/icons-material/Add";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import MyIndicatorsTable from "./components/my-indicators-table.jsx";
 import { useSnackbar } from "notistack";
@@ -25,11 +24,6 @@ const IndicatorEditorDashboard = () => {
     let savedState = sessionStorage.getItem(SESSION_INDICATOR);
     setState((p) => ({ ...p, indicatorInProgress: Boolean(savedState) }));
   }, []);
-
-  const handleClearSession = () => {
-    setState((p) => ({ ...p, indicatorInProgress: !p.indicatorInProgress }));
-    sessionStorage.removeItem(SESSION_INDICATOR);
-  };
 
   const handleContinueEditing = () => {
     if (state.indicatorInProgress) {
@@ -56,6 +50,11 @@ const IndicatorEditorDashboard = () => {
     });
   };
 
+  const handleClearSession = () => {
+    setState((p) => ({ ...p, indicatorInProgress: !p.indicatorInProgress }));
+    sessionStorage.removeItem(SESSION_INDICATOR);
+  };
+
   const handleCreateNew = () => {
     handleClearSession();
     navigate("/indicator/editor");
@@ -74,17 +73,6 @@ const IndicatorEditorDashboard = () => {
         </Breadcrumbs>
         <Grid size={{ xs: 12 }}>
           <Divider />
-        </Grid>
-
-        <Grid size={12}>
-          <Button
-            size="small"
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreateNew}
-          >
-            Create new
-          </Button>
         </Grid>
 
         {state.indicatorInProgress && (

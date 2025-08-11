@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import {
   Box,
+  Button,
   Divider,
   IconButton,
   LinearProgress,
@@ -31,6 +32,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CodeIcon from "@mui/icons-material/Code";
 import CloseIcon from "@mui/icons-material/Close";
+import AddIcon from "@mui/icons-material/Add";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
@@ -63,7 +65,7 @@ const MyIndicatorsTable = () => {
     filteredIndicatorList: [],
   });
 
-  const loadMyIndicators = async (api, params) => {
+  const loadMyIndicatorList = async (api, params) => {
     setState((p) => ({ ...p, loadingMyIndicatorList: true }));
     try {
       const indicatorList = await requestMyIndicators(api, params);
@@ -75,12 +77,13 @@ const MyIndicatorsTable = () => {
         loadingMyIndicatorList: false,
       }));
     } catch (error) {
+      setState((p) => ({ ...p, loadingMyIndicatorList: false }));
       console.log("Error requesting my indicators");
     }
   };
 
   useEffect(() => {
-    loadMyIndicators(api, state.params);
+    loadMyIndicatorList(api, state.params);
   }, [state.params]);
 
   useEffect(() => {
@@ -185,7 +188,6 @@ const MyIndicatorsTable = () => {
         api,
         state.onHoverIndicatorId
       );
-      await loadMyIndicators(api, state.params);
       setState((p) => ({
         ...p,
         isLoading: {
@@ -194,6 +196,7 @@ const MyIndicatorsTable = () => {
           indicator: undefined,
         },
       }));
+      await loadMyIndicatorList(api, state.params);
       enqueueSnackbar(response.message, { variant: "success" });
     } catch (error) {
       setState((p) => ({
@@ -271,6 +274,16 @@ const MyIndicatorsTable = () => {
     setState((p) => ({ ...p, searchTerm: value }));
   };
 
+  const handleClearSession = () => {
+    setState((p) => ({ ...p, indicatorInProgress: !p.indicatorInProgress }));
+    sessionStorage.removeItem(SESSION_INDICATOR);
+  };
+
+  const handleCreateNew = () => {
+    handleClearSession();
+    navigate("/indicator/editor");
+  };
+
   // * Helper functions
   function toSentenceCase(str) {
     if (!str) return "";
@@ -293,25 +306,21 @@ const MyIndicatorsTable = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  {/* // TODO: For the future: multi select delete */}
-                  {/* <TableCell padding="checkbox" sx={{ width: 30 }}>
-                    <Checkbox
-                      checked={selected.length === emails.length}
-                      indeterminate={
-                        selected.length > 0 && selected.length < emails.length
-                      }
-                      onChange={(e) => {
-                        setSelected(
-                          e.target.checked ? emails.map((e) => e.id) : []
-                        );
-                      }}
-                    />
-                  </TableCell> */}
                   <TableCell>
                     <Grid container alignItems="center" spacing={1}>
+                      <Button
+                        startIcon={<AddIcon />}
+                        size="small"
+                        color="primary"
+                        variant="contained"
+                        onClick={handleCreateNew}
+                      >
+                        Create New
+                      </Button>
+                      <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
                       {state.toggleSearch ? (
                         <>
-                          <Typography>Indicator name</Typography>
+                          <Typography>Search for Indicator</Typography>
                           <Tooltip
                             title={
                               <Typography>Search for indicator</Typography>
@@ -328,6 +337,15 @@ const MyIndicatorsTable = () => {
                         </>
                       ) : (
                         <>
+                          <Grid>
+                            <TextField
+                              autoFocus
+                              size="small"
+                              placeholder="Search for indicator"
+                              value={state.searchTerm}
+                              onChange={handleSearchTerm}
+                            />
+                          </Grid>
                           <Grid size="auto">
                             <Tooltip
                               title={<Typography>Close search</Typography>}
@@ -340,14 +358,6 @@ const MyIndicatorsTable = () => {
                                 <CloseIcon />
                               </IconButton>
                             </Tooltip>
-                          </Grid>
-                          <Grid size="grow">
-                            <TextField
-                              size="small"
-                              placeholder="Search for indicator"
-                              value={state.searchTerm}
-                              onChange={handleSearchTerm}
-                            />
                           </Grid>
                         </>
                       )}
@@ -516,6 +526,46 @@ const MyIndicatorsTable = () => {
                       )}
                   </React.Fragment>
                 ))}
+                {state.loadingMyIndicatorList && (
+                  <TableRow>
+                    <TableCell colSpan={3} sx={{ padding: 0 }}>
+                      <LinearProgress />
+                    </TableCell>
+                  </TableRow>
+                )}
+                {state.filteredIndicatorList.length === 0 &&
+                  !state.loadingMyIndicatorList && (
+                    <TableRow>
+                      <TableCell colSpan={3}>
+                        <Box>
+                          {state.searchTerm.length > 0 ? (
+                            <Typography>
+                              <em>No indicators found with this name!</em>
+                            </Typography>
+                          ) : (
+                            <Box
+                              sx={{
+                                p: 8,
+                                textAlign: "center",
+                                color: "text.secondary",
+                              }}
+                            >
+                              <Typography variant="body1" gutterBottom>
+                                No indicators created yet. Click "Create new" to
+                                get started.
+                              </Typography>
+                              <Button
+                                variant="contained"
+                                onClick={handleCreateNew}
+                              >
+                                Create New
+                              </Button>
+                            </Box>
+                          )}
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  )}
               </TableBody>
             </Table>
             <TablePagination
