@@ -81,9 +81,6 @@ const IndicatorEditorDashboard = () => {
               severity="info"
               action={
                 <Grid container spacing={1}>
-                  <Button variant="outlined" onClick={handleCreateNew}>
-                    Discard and create new
-                  </Button>
                   <Button variant="outlined" onClick={handleClearSession}>
                     Discard
                   </Button>

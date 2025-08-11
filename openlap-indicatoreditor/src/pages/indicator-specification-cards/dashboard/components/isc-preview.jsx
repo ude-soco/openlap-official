@@ -14,12 +14,11 @@ import {
   Tooltip,
   Backdrop,
   CircularProgress,
+  LinearProgress,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { Link as RouterLink } from "react-router-dom";
 import PreviewChart from "./preview-chart.jsx";
 import DeleteDialog from "../../../../common/components/delete-dialog/delete-dialog.jsx";
@@ -37,7 +36,7 @@ const IscPreview = () => {
     createdBy: "",
     createdOn: "",
     loading: false,
-    showDetails: true,
+    isLoading: { status: false },
     loadingEditIndicator: false,
     openDeleteDialog: false,
     dataRequiredByUser: [],
@@ -72,67 +71,64 @@ const IscPreview = () => {
     });
   }, []);
 
-  const toggleDetails = () => {
+  const handleEditIndicator = async () => {
     setState((p) => ({
       ...p,
-      showDetails: !p.showDetails,
+      isLoading: { ...p.isLoading, status: true },
     }));
-  };
-
-  const handleEditIndicator = () => {
-    const loadISCDetail = async (api, iscId) => {
-      try {
-        return await requestISCDetails(api, iscId);
-      } catch (error) {
-        console.log("Error requesting my indicators");
-      }
-    };
-    setState((prevState) => ({
-      ...prevState,
-      loadingEditIndicator: true,
-    }));
-    loadISCDetail(api, params.id)
-      .then((responseData) => {
-        let parsedData = JSON.parse(JSON.stringify(responseData));
-        parsedData.requirements = JSON.parse(parsedData.requirements);
-        parsedData.dataset = JSON.parse(parsedData.dataset);
-        parsedData.visRef = JSON.parse(parsedData.visRef);
-        parsedData.lockedStep = JSON.parse(parsedData.lockedStep);
-        parsedData.visRef.edit = true;
-        sessionStorage.setItem(SESSION_ISC, JSON.stringify(parsedData));
-      })
-      .then(() => {
-        setState((prevState) => ({
-          ...prevState,
-          loadingEditIndicator: false,
-        }));
-        navigate(`/isc/creator`);
-      })
-      .catch((error) => {
-        setState((prevState) => ({
-          ...prevState,
-          loadingEditIndicator: false,
-        }));
-        console.error(error);
-      });
+    try {
+      const responseData = await requestISCDetails(api, params.id);
+      let parsedData = JSON.parse(JSON.stringify(responseData));
+      parsedData.requirements = JSON.parse(parsedData.requirements);
+      parsedData.dataset = JSON.parse(parsedData.dataset);
+      parsedData.visRef = JSON.parse(parsedData.visRef);
+      parsedData.lockedStep = JSON.parse(parsedData.lockedStep);
+      parsedData.visRef.edit = true;
+      sessionStorage.setItem(SESSION_ISC, JSON.stringify(parsedData));
+      setState((p) => ({
+        ...p,
+        isLoading: { ...p.isLoading, status: false },
+      }));
+      navigate(`/isc/creator`);
+    } catch (error) {
+      setState((p) => ({
+        ...p,
+        isLoading: { ...p.isLoading, status: false },
+      }));
+      console.error("Error requesting my indicators");
+    }
   };
 
   const handleToggleDelete = () => {
-    setState((prevState) => ({
-      ...prevState,
-      openDeleteDialog: !prevState.openDeleteDialog,
+    setState((p) => ({
+      ...p,
+      openDeleteDialog: !p.openDeleteDialog,
     }));
   };
 
   const handleDeleteIndicator = async () => {
-    await requestDeleteISC(api, params.id)
-      .then(() => {
-        navigate(`/isc`);
-        enqueueSnackbar("Indicator deleted successfully", {
-          variant: "success",
-        });
-      })
-      .catch((error) => console.error(error));
+    setState((p) => ({
+      ...p,
+      isLoading: { ...p.isLoading, status: true },
+    }));
+    try {
+      await requestDeleteISC(api, params.id);
+      setState((p) => ({
+        ...p,
+        isLoading: { ...p.isLoading, status: false },
+      }));
+      enqueueSnackbar("Indicator deleted successfully", {
+        variant: "success",
+      });
+      handleToggleDelete();
+      navigate("/isc");
+    } catch (error) {
+      setState((p) => ({
+        ...p,
+        isLoading: { ...p.isLoading, status: false },
+      }));
+      console.error(error);
+    }
   };
 
   // * Helper functions
@@ -180,145 +176,129 @@ const IscPreview = () => {
               {state.loading ? (
                 <Skeleton variant="rounded" height={500} />
               ) : (
-                <Paper variant="outlined" sx={{ p: 2 }}>
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12 }}>
-                      <Grid container spacing={1}>
-                        <Grid size="grow">
-                          <Typography variant="h5" gutterBottom>
-                            {toSentenceCase(requirements.indicatorName)}
-                            <Tooltip
-                              arrow
-                              title={<Typography>Hide details</Typography>}
-                            >
-                              <IconButton
-                                color="primary"
-                                onClick={toggleDetails}
-                              >
-                                {state.showDetails ? (
-                                  <VisibilityOffIcon />
-                                ) : (
-                                  <VisibilityIcon />
-                                )}
-                              </IconButton>
-                            </Tooltip>
-                          </Typography>
-                          {state.showDetails && (
+                <>
+                  {state.isLoading.status && <LinearProgress />}
+                  <Paper variant="outlined" sx={{ p: 2 }}>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12 }}>
+                        <Grid container spacing={1}>
+                          <Grid size="grow">
+                            <Typography variant="h5" gutterBottom>
+                              {toSentenceCase(requirements.indicatorName)}
+                            </Typography>
                             <Typography gutterBottom variant="body2">
                               Created on: {state.createdOn.split("T")[0]}
                             </Typography>
-                          )}
-                        </Grid>
-                        <Grid size="auto">
-                          <Grid container>
-                            <Tooltip
-                              arrow
-                              title={<Typography>Edit indicator</Typography>}
-                            >
-                              <IconButton
-                                color="primary"
-                                onClick={handleEditIndicator}
+                          </Grid>
+                          <Grid size="auto">
+                            <Grid container>
+                              <Tooltip
+                                arrow
+                                title={<Typography>Edit indicator</Typography>}
                               >
-                                <EditIcon />
-                              </IconButton>
-                            </Tooltip>
+                                <IconButton
+                                  color="primary"
+                                  onClick={handleEditIndicator}
+                                  disabled={state.isLoading.status}
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              </Tooltip>
 
-                            <Divider
-                              orientation="vertical"
-                              flexItem
-                              sx={{ mx: 1 }}
-                            />
+                              <Divider
+                                orientation="vertical"
+                                flexItem
+                                sx={{ mx: 1 }}
+                              />
 
-                            <Tooltip
-                              arrow
-                              title={<Typography>Edit indicator</Typography>}
-                            >
-                              <IconButton
-                                color="error"
-                                onClick={handleToggleDelete}
+                              <Tooltip
+                                arrow
+                                title={<Typography>Edit indicator</Typography>}
                               >
-                                <DeleteIcon />
-                              </IconButton>
-                            </Tooltip>
-                            <DeleteDialog
-                              open={state.openDeleteDialog}
-                              toggleOpen={handleToggleDelete}
-                              message={
-                                <Typography>
-                                  This will delete the indicator permanently
-                                  from your dashboard.
-                                </Typography>
-                              }
-                              handleDelete={handleDeleteIndicator}
-                            />
+                                <IconButton
+                                  color="error"
+                                  onClick={handleToggleDelete}
+                                  disabled={state.isLoading.status}
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Tooltip>
+                              <DeleteDialog
+                                open={state.openDeleteDialog}
+                                toggleOpen={handleToggleDelete}
+                                message={
+                                  <Typography>
+                                    This will delete the indicator permanently
+                                    from your dashboard.
+                                  </Typography>
+                                }
+                                handleDelete={handleDeleteIndicator}
+                              />
+                            </Grid>
                           </Grid>
                         </Grid>
                       </Grid>
-                    </Grid>
-                    {state.showDetails && (
-                      <>
+                      <Grid size={{ xs: 12 }}>
+                        <Divider />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Typography variant="overline">
+                          I want to (goal)
+                        </Typography>
                         <Grid size={{ xs: 12 }}>
-                          <Divider />
+                          <Chip label={requirements.goalType?.category} />
                         </Grid>
-                        <Grid size={{ xs: 12, md: 4 }}>
-                          <Typography variant="overline">
-                            I want to (goal)
-                          </Typography>
-                          <Grid size={{ xs: 12 }}>
-                            <Chip label={requirements.goalType?.category} />
-                          </Grid>
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 8 }}>
-                          <Typography variant="overline">
-                            I am interested in (question)
-                          </Typography>
-                          <Grid size={{ xs: 12 }}>
-                            <Chip label={requirements.question} />
-                          </Grid>
-                        </Grid>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 8 }}>
+                        <Typography variant="overline">
+                          I am interested in (question)
+                        </Typography>
                         <Grid size={{ xs: 12 }}>
-                          <Typography variant="overline">
-                            I need an indicator showing
-                          </Typography>
-                          <Grid size={{ xs: 12 }}>
-                            <Chip label={requirements.indicatorName} />
-                          </Grid>
+                          <Chip label={requirements.question} />
                         </Grid>
-                        <Grid size={{ xs: 12 }} sx={{ pt: 1 }}>
-                          <Divider />
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="overline">
+                          I need an indicator showing
+                        </Typography>
+                        <Grid size={{ xs: 12 }}>
+                          <Chip label={requirements.indicatorName} />
                         </Grid>
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Typography variant="overline">
-                            I need the following data
-                          </Typography>
-                          <Grid container spacing={1}>
-                            {state.dataRequiredByUser.map((data, index) => (
-                              <Grid item key={index}>
-                                <Chip label={data} />
-                              </Grid>
-                            ))}
-                          </Grid>
+                      </Grid>
+                      <Grid size={{ xs: 12 }} sx={{ pt: 1 }}>
+                        <Divider />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Typography variant="overline">
+                          I need the following data
+                        </Typography>
+                        <Grid container spacing={1}>
+                          {state.dataRequiredByUser.map((data, index) => (
+                            <Grid item key={index}>
+                              <Chip label={data} />
+                            </Grid>
+                          ))}
                         </Grid>
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Typography variant="overline">
-                            I need the following chart (Idiom)
-                          </Typography>
-                          <Grid size={{ xs: 12 }}>
-                            <Chip label={visRef.chart?.type} />
-                          </Grid>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Typography variant="overline">
+                          I need the following chart (Idiom)
+                        </Typography>
+                        <Grid size={{ xs: 12 }}>
+                          <Chip label={visRef.chart?.type} />
                         </Grid>
-                        <Grid size={{ xs: 12 }} sx={{ pt: 2 }}>
-                          <Divider />
-                        </Grid>
-                      </>
-                    )}
-                    <Grid size={{ xs: 12 }}>
-                      {Object.values(visRef).length > 0 && (
-                        <PreviewChart dataset={dataset} visRef={visRef} />
-                      )}
+                      </Grid>
+                      <Grid size={{ xs: 12 }} sx={{ pt: 2 }}>
+                        <Divider />
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        {Object.values(visRef).length > 0 && (
+                          <PreviewChart dataset={dataset} visRef={visRef} />
+                        )}
+                      </Grid>
                     </Grid>
-                  </Grid>
-                </Paper>
+                  </Paper>
+                </>
               )}
             </Grid>
           </Grid>
