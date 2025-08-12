@@ -150,13 +150,17 @@ const MyIndicatorsTable = () => {
       sessionStorage.setItem(SESSION_INDICATOR, indicator.configuration);
       switch (indicator.type) {
         case "BASIC":
-          navigate("/indicator/editor/basic");
+          navigate(`/indicator/editor/basic/edit/${state.onHoverIndicatorId}`);
           break;
         case "COMPOSITE":
-          navigate("/indicator/editor/composite");
+          navigate(
+            `/indicator/editor/composite/edit/${state.onHoverIndicatorId}`
+          );
           break;
         case "MULTI_LEVEL":
-          navigate("/indicator/editor/multi-level-analysis");
+          navigate(
+            `/indicator/editor/multi-level-analysis/edit/${state.onHoverIndicatorId}`
+          );
           break;
         default:
           route = "Unknown";

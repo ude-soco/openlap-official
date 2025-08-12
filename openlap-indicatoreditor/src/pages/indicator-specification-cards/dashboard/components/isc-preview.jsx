@@ -89,7 +89,7 @@ const IscPreview = () => {
         ...p,
         isLoading: { ...p.isLoading, status: false },
       }));
-      navigate(`/isc/creator`);
+      navigate(`/isc/creator/edit/${params.id}`);
     } catch (error) {
       setState((p) => ({
         ...p,

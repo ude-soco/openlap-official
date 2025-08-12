@@ -31,19 +31,23 @@ import ChartCustomizationPanel from "./components/customization/chart-customizat
 import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper";
 import { LoadingButton } from "@mui/lab";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
-import { requestCreateBasicIndicator } from "../../utils/basic-indicator-api";
-import { useNavigate } from "react-router-dom";
+import {
+  requestCreateBasicIndicator,
+  requestUpdateBasicIndicator,
+} from "../../utils/basic-indicator-api";
+import { useNavigate, useParams } from "react-router-dom";
 
 export default function Visualization() {
+  const params = useParams();
   const { api, SESSION_INDICATOR } = useContext(AuthContext);
   const {
+    indicator,
     dataset,
     filters,
     analysis,
-    lockedStep,
     visualization,
+    lockedStep,
     setVisualization,
-    indicator,
     setIndicator,
   } = useContext(BasicContext);
   const [state, setState] = useState({
@@ -103,16 +107,35 @@ export default function Visualization() {
     let indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
     let analysisRef = buildAnalysisRef(analysis);
     let visRef = buildVisRef(visualization);
-    let configuration = sessionStorage.getItem(SESSION_INDICATOR);
+    let configuration = JSON.stringify({
+      indicator,
+      dataset,
+      filters,
+      analysis,
+      visualization,
+      lockedStep,
+    });
     try {
-      await requestCreateBasicIndicator(
-        api,
-        indicatorQuery,
-        analysisRef,
-        visRef,
-        indicator,
-        configuration
-      );
+      if (params.id) {
+        await requestUpdateBasicIndicator(
+          api,
+          params.id,
+          indicatorQuery,
+          analysisRef,
+          visRef,
+          indicator,
+          configuration
+        );
+      } else {
+        await requestCreateBasicIndicator(
+          api,
+          indicatorQuery,
+          analysisRef,
+          visRef,
+          indicator,
+          configuration
+        );
+      }
       setState((p) => ({
         ...p,
         indicatorName: { ...p.indicatorName, loading: false },
@@ -209,7 +232,7 @@ export default function Visualization() {
                             // disabled={handleCheckDisabled()}
                             onClick={handleToggleNameIndicator}
                           >
-                            Save Indicator
+                            {params.id ? "Update Indicator" : "Save Indicator"}
                           </Button>
                         </Grid>
                       </Grid>
@@ -253,7 +276,7 @@ export default function Visualization() {
               variant="contained"
               onClick={handleSaveIndicator}
             >
-              Save to dashboard
+              {params.id ? "Update & Save to Dashboard" : "Save to dashboard"}
             </LoadingButton>
             {indicator.indicatorName.length === 0 && (
               <CustomTooltip
