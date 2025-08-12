@@ -330,13 +330,15 @@ const MyIndicatorsTable = () => {
                               <Typography>Search for indicator</Typography>
                             }
                           >
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={handleToggleSearch}
-                            >
-                              <SearchIcon />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={handleToggleSearch}
+                              >
+                                <SearchIcon />
+                              </IconButton>
+                            </span>
                           </Tooltip>
                         </>
                       ) : (
@@ -354,13 +356,15 @@ const MyIndicatorsTable = () => {
                             <Tooltip
                               title={<Typography>Close search</Typography>}
                             >
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={handleToggleSearch}
-                              >
-                                <CloseIcon />
-                              </IconButton>
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={handleToggleSearch}
+                                >
+                                  <CloseIcon />
+                                </IconButton>
+                              </span>
                             </Tooltip>
                           </Grid>
                         </>
@@ -429,14 +433,16 @@ const MyIndicatorsTable = () => {
                             arrow
                             title={<Typography>Preview indicator</Typography>}
                           >
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() => handlePreview(indicator.id)}
-                              disabled={state.isLoading.status}
-                            >
-                              <PreviewIcon />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handlePreview(indicator.id)}
+                                disabled={state.isLoading.status}
+                              >
+                                <PreviewIcon />
+                              </IconButton>
+                            </span>
                           </Tooltip>
 
                           <Tooltip
@@ -459,41 +465,47 @@ const MyIndicatorsTable = () => {
                               </>
                             }
                           >
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={handleCopyEmbedCode}
-                              disabled={state.isLoading.status}
-                            >
-                              <CodeIcon />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={handleCopyEmbedCode}
+                                disabled={state.isLoading.status}
+                              >
+                                <CodeIcon />
+                              </IconButton>
+                            </span>
                           </Tooltip>
 
                           <Tooltip
                             arrow
                             title={<Typography>Edit indicator</Typography>}
                           >
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={handleEditIndicator}
-                              disabled={state.isLoading.status}
-                            >
-                              <EditIcon />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={handleEditIndicator}
+                                disabled={state.isLoading.status}
+                              >
+                                <EditIcon />
+                              </IconButton>
+                            </span>
                           </Tooltip>
                           <Tooltip
                             arrow
                             title={<Typography>Duplicate indicator</Typography>}
                           >
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={handleDuplicateMyIndicator}
-                              disabled={state.isLoading.status}
-                            >
-                              <ContentCopyIcon />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={handleDuplicateMyIndicator}
+                                disabled={state.isLoading.status}
+                              >
+                                <ContentCopyIcon />
+                              </IconButton>
+                            </span>
                           </Tooltip>
                           <Divider
                             orientation="vertical"
@@ -504,14 +516,16 @@ const MyIndicatorsTable = () => {
                             arrow
                             title={<Typography>Delete indicator</Typography>}
                           >
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={handleToggleDelete}
-                              disabled={state.isLoading.status}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={handleToggleDelete}
+                                disabled={state.isLoading.status}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </span>
                           </Tooltip>
                         </Box>
                       </TableCell>

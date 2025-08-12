@@ -196,13 +196,15 @@ const IscPreview = () => {
                                 arrow
                                 title={<Typography>Edit indicator</Typography>}
                               >
-                                <IconButton
-                                  color="primary"
-                                  onClick={handleEditIndicator}
-                                  disabled={state.isLoading.status}
-                                >
-                                  <EditIcon />
-                                </IconButton>
+                                <span>
+                                  <IconButton
+                                    color="primary"
+                                    onClick={handleEditIndicator}
+                                    disabled={state.isLoading.status}
+                                  >
+                                    <EditIcon />
+                                  </IconButton>
+                                </span>
                               </Tooltip>
 
                               <Divider
@@ -215,13 +217,15 @@ const IscPreview = () => {
                                 arrow
                                 title={<Typography>Edit indicator</Typography>}
                               >
-                                <IconButton
-                                  color="error"
-                                  onClick={handleToggleDelete}
-                                  disabled={state.isLoading.status}
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
+                                <span>
+                                  <IconButton
+                                    color="error"
+                                    onClick={handleToggleDelete}
+                                    disabled={state.isLoading.status}
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </span>
                               </Tooltip>
                               <DeleteDialog
                                 open={state.openDeleteDialog}

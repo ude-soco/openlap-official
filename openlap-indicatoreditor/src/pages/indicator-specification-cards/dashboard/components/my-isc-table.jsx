@@ -231,13 +231,15 @@ export default function MyIscTable() {
                           <Tooltip
                             title={<Typography>Search for ISC</Typography>}
                           >
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={handleToggleSearch}
-                            >
-                              <SearchIcon />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={handleToggleSearch}
+                              >
+                                <SearchIcon />
+                              </IconButton>
+                            </span>
                           </Tooltip>
                         </>
                       ) : (
@@ -255,13 +257,15 @@ export default function MyIscTable() {
                             <Tooltip
                               title={<Typography>Close search</Typography>}
                             >
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={handleToggleSearch}
-                              >
-                                <CloseIcon />
-                              </IconButton>
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={handleToggleSearch}
+                                >
+                                  <CloseIcon />
+                                </IconButton>
+                              </span>
                             </Tooltip>
                           </Grid>
                         </>
@@ -321,14 +325,16 @@ export default function MyIscTable() {
                             arrow
                             title={<Typography>Preview indicator</Typography>}
                           >
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() => handlePreview(indicator.id)}
-                              disabled={state.isLoading.status}
-                            >
-                              <PreviewIcon />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handlePreview(indicator.id)}
+                                disabled={state.isLoading.status}
+                              >
+                                <PreviewIcon />
+                              </IconButton>
+                            </span>
                           </Tooltip>
                           <Tooltip
                             arrow
@@ -352,14 +358,16 @@ export default function MyIscTable() {
                             arrow
                             title={<Typography>Delete indicator</Typography>}
                           >
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={handleToggleDelete}
-                              disabled={state.isLoading.status}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={handleToggleDelete}
+                                disabled={state.isLoading.status}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </span>
                           </Tooltip>
                         </Box>
                       </TableCell>

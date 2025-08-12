@@ -15,6 +15,7 @@ import RecommendIcon from "@mui/icons-material/Recommend";
 import { BasicContext } from "../../../basic-indicator";
 import { visualizationImages } from "../utils/visualization-data";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
+import { defaultParams } from "../utils/visualization-data";
 
 const TypeSelection = () => {
   const { analysis, visualization, setVisualization } =
@@ -26,7 +27,7 @@ const TypeSelection = () => {
       ...p,
       selectedType: typeSelected,
       inputs: [...typeSelected.chartInputs],
-      params: { height: 500, width: 500 },
+      params: { ...defaultParams },
       mapping: { mapping: [] },
       previewData: { displayCode: [], scriptData: {} },
     }));
