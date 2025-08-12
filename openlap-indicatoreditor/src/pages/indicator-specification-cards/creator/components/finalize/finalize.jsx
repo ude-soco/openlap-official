@@ -6,8 +6,10 @@ import NameDialog from "./components/name-dialog.jsx";
 import VisSelection from "../visualization/components/visualization-filter/vis-selection";
 import FinalizeSummary from "./components/finalize-summary/finalize-summary";
 import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";
+import { useParams } from "react-router-dom";
 
 const Finalize = () => {
+  const params = useParams();
   const { darkMode } = useContext(CustomThemeContext);
   const { dataset, lockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
@@ -77,7 +79,7 @@ const Finalize = () => {
                         disabled={handleCheckDisabled()}
                         onClick={handleOpenSaveDialog}
                       >
-                        Save Indicator
+                        {params.id ? "Update indicator" : "Save indicator"}
                       </Button>
                     </Grid>
                   </Grid>

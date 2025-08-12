@@ -12,9 +12,10 @@ import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { requestCreateISC, requestUpdateISC } from "../utils/finalize-api.js";
 import { useSnackbar } from "notistack";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const NameDialog = ({ open, toggleOpen }) => {
+  const params = useParams();
   const { api, SESSION_ISC } = useContext(AuthContext);
   const { id, requirements, dataset, visRef, lockedStep } =
     useContext(ISCContext);
@@ -28,101 +29,66 @@ const NameDialog = ({ open, toggleOpen }) => {
     toggleOpen();
   };
 
-  const handleSaveIndicator = () => {
-    const createISC = async (
-      api,
-      requirements,
-      dataset,
-      visRef,
-      lockedStep
-    ) => {
+  const handleSaveIndicator = async () => {
+    const callISC = async (isUpdate) => {
       try {
-        return await requestCreateISC(
-          api,
-          requirements,
-          dataset,
-          visRef,
-          lockedStep
-        );
+        if (isUpdate) {
+          return await requestUpdateISC(
+            api,
+            id,
+            requirements,
+            dataset,
+            visRef,
+            lockedStep
+          );
+        } else {
+          return await requestCreateISC(
+            api,
+            requirements,
+            dataset,
+            visRef,
+            lockedStep
+          );
+        }
       } catch (error) {
         enqueueSnackbar(error.message, { variant: "error" });
-      }
-    };
-    const updateISC = async (
-      api,
-      id,
-      requirements,
-      dataset,
-      visRef,
-      lockedStep
-    ) => {
-      try {
-        return await requestUpdateISC(
-          api,
-          id,
-          requirements,
-          dataset,
-          visRef,
-          lockedStep
-        );
-      } catch (error) {
-        enqueueSnackbar(error.message, { variant: "error" });
+        throw error;
       }
     };
 
     setState((prevState) => ({
-      prevState,
+      ...prevState,
       loading: true,
     }));
-    if (Boolean(id)) {
-      updateISC(api, id, requirements, dataset, visRef, lockedStep)
-        .then((response) => {
-          enqueueSnackbar(response.message, { variant: "success" });
-          toggleOpen();
-          sessionStorage.removeItem(SESSION_ISC);
-          navigate("/isc");
-          setState((prevState) => ({
-            prevState,
-            loading: false,
-          }));
-        })
-        .catch((error) => {
-          setState((prevState) => ({
-            prevState,
-            loading: false,
-          }));
-          console.error(error);
-        });
-    } else {
-      createISC(api, requirements, dataset, visRef, lockedStep)
-        .then((response) => {
-          enqueueSnackbar(response.message, { variant: "success" });
-          toggleOpen();
-          sessionStorage.removeItem(SESSION_ISC);
-          navigate("/isc");
-          setState((prevState) => ({
-            prevState,
-            loading: false,
-          }));
-        })
-        .catch((error) => {
-          setState((prevState) => ({
-            prevState,
-            loading: false,
-          }));
-          console.error(error);
-        });
+
+    try {
+      const response = await callISC(Boolean(id));
+
+      enqueueSnackbar(response.message, { variant: "success" });
+      toggleOpen();
+      sessionStorage.removeItem(SESSION_ISC);
+      navigate("/isc");
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setState((prevState) => ({
+        ...prevState,
+        loading: false,
+      }));
     }
   };
 
   return (
     <>
       <Dialog open={open} fullWidth maxWidth="sm">
-        <DialogTitle>Save Indicator</DialogTitle>
+        <DialogTitle>
+          {params.id ? "Update Indicator?" : "Save Indicator?"}
+        </DialogTitle>
         <DialogContent>
           <Typography>
-            You've completed all the steps. Saving now will finalize the
-            indicator and make it available for use from ISC Dashboard.
+            You've completed all the steps. Saving now will{" "}
+            {params.id ? "update" : "finalize"} the indicator and make it
+            available for use from ISC Dashboard.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -137,7 +103,7 @@ const NameDialog = ({ open, toggleOpen }) => {
             onClick={handleSaveIndicator}
             variant="contained"
           >
-            Confirm Save
+            Confirm
           </LoadingButton>
         </DialogActions>
       </Dialog>
