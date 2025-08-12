@@ -73,18 +73,17 @@ const IndicatorPreview = () => {
       isLoading: { ...p.isLoading, status: true },
     }));
     sessionStorage.setItem(SESSION_INDICATOR, state.configuration);
-    // TODO: Better error handling needed
     let route;
     if (state.type) {
       switch (state.type) {
         case "BASIC":
-          navigate("/indicator/editor/basic");
+          navigate(`/indicator/editor/basic/edit/${params.id}`);
           break;
         case "COMPOSITE":
-          navigate("/indicator/editor/composite");
+          navigate(`/indicator/editor/composite/edit/${params.id}`);
           break;
         case "MULTI_LEVEL":
-          navigate("/indicator/editor/multi-level-analysis");
+          navigate(`/indicator/editor/multi-level-analysis/edit/${params.id}`);
           break;
         default:
           route = "Unknown";
@@ -231,27 +230,31 @@ const IndicatorPreview = () => {
                                 </>
                               }
                             >
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={handleCopyEmbedCode}
-                                disabled={state.isLoading.status}
-                              >
-                                <CodeIcon />
-                              </IconButton>
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={handleCopyEmbedCode}
+                                  disabled={state.isLoading.status}
+                                >
+                                  <CodeIcon />
+                                </IconButton>
+                              </span>
                             </Tooltip>
 
                             <Tooltip
                               arrow
                               title={<Typography>Edit indicator</Typography>}
                             >
-                              <IconButton
-                                color="primary"
-                                onClick={handleEditIndicator}
-                                disabled={state.isLoading.status}
-                              >
-                                <EditIcon />
-                              </IconButton>
+                              <span>
+                                <IconButton
+                                  color="primary"
+                                  onClick={handleEditIndicator}
+                                  disabled={state.isLoading.status}
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              </span>
                             </Tooltip>
 
                             <Divider
@@ -264,13 +267,15 @@ const IndicatorPreview = () => {
                               arrow
                               title={<Typography>Edit indicator</Typography>}
                             >
-                              <IconButton
-                                color="error"
-                                disabled={state.isLoading.status}
-                                onClick={handleToggleDelete}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
+                              <span>
+                                <IconButton
+                                  color="error"
+                                  disabled={state.isLoading.status}
+                                  onClick={handleToggleDelete}
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              </span>
                             </Tooltip>
                             <CustomDialog
                               type="delete"

@@ -33,7 +33,7 @@ const CustomTooltip = ({ type = "description", message }) => {
           <Typography>
             <b>{config.label}</b>
           </Typography>
-          <Typography dangerouslySetInnerHTML={{ __html: message }} />
+          <Typography component="span" dangerouslySetInnerHTML={{ __html: message }} />
         </Box>
       }
     >

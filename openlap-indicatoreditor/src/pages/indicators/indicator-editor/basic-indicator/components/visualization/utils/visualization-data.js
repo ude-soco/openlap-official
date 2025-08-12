@@ -2,7 +2,7 @@ const DIMENSION = "75px";
 
 export const visualizationImages = {
   // * Area Chart
-  "Area": `<?xml version="1.0" encoding="utf-8"?>
+  Area: `<?xml version="1.0" encoding="utf-8"?>
     <!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
     <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -13,7 +13,7 @@ export const visualizationImages = {
     </svg>`,
 
   // * Bar Chart
-  "Bar": `<?xml version="1.0" encoding="utf-8"?>
+  Bar: `<?xml version="1.0" encoding="utf-8"?>
     <!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
     <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -28,7 +28,7 @@ export const visualizationImages = {
     </svg>`,
 
   // * Donut Chart
-  "Donut": `<?xml version="1.0" encoding="utf-8"?>
+  Donut: `<?xml version="1.0" encoding="utf-8"?>
     <!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
     <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -51,7 +51,7 @@ export const visualizationImages = {
     </svg>`,
 
   // * Grouped Area Chart
-  "GroupedArea": `<?xml version="1.0" encoding="utf-8"?>
+  GroupedArea: `<?xml version="1.0" encoding="utf-8"?>
     <!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
     <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -72,7 +72,7 @@ export const visualizationImages = {
     </svg>`,
 
   // * Group Bar Chart
-  "GroupBar": `<?xml version="1.0" encoding="utf-8"?>
+  GroupBar: `<?xml version="1.0" encoding="utf-8"?>
     <!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
     <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -89,7 +89,7 @@ export const visualizationImages = {
     </svg>`,
 
   // * Line Chart
-  "Line": `<?xml version="1.0" encoding="utf-8"?>
+  Line: `<?xml version="1.0" encoding="utf-8"?>
     <!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
     <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -102,7 +102,7 @@ export const visualizationImages = {
     </svg>`,
 
   // * Multi Line Chart
-  "MultiLine": `<?xml version="1.0" encoding="utf-8"?>
+  MultiLine: `<?xml version="1.0" encoding="utf-8"?>
     <!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
     <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -115,7 +115,7 @@ export const visualizationImages = {
     </svg>`,
 
   // * Pie Chart
-  "Pie": `<?xml version="1.0" encoding="utf-8"?>
+  Pie: `<?xml version="1.0" encoding="utf-8"?>
     <!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
     <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -132,7 +132,7 @@ export const visualizationImages = {
     </svg>`,
 
   // * Scatter Plot Chart
-  "ScatterPlot": `<?xml version="1.0" encoding="utf-8"?>
+  ScatterPlot: `<?xml version="1.0" encoding="utf-8"?>
     <!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
     <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -165,7 +165,7 @@ export const visualizationImages = {
     </svg>`,
 
   // * Stacked Area Chart
-  "StackedArea": `<?xml version="1.0" encoding="utf-8"?>
+  StackedArea: `<?xml version="1.0" encoding="utf-8"?>
     <!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
     <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -186,7 +186,7 @@ export const visualizationImages = {
     </svg>`,
 
   // * Stacked Bar Chart
-  "StackedBar": `<?xml version="1.0" encoding="utf-8"?>
+  StackedBar: `<?xml version="1.0" encoding="utf-8"?>
     <!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
     <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
     <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -223,4 +223,39 @@ export const visualizationImages = {
         </g>
     </g>
     </svg>`,
+};
+
+export const defaultParams = {
+  height: 500,
+  width: 500,
+  // * Elements tab
+  showLegend: true,
+  legendPosition: "bottom",
+  showXAxis: true,
+  showYAxis: true,
+  chartTitle: "",
+  chartSubtitle: "",
+  titleAndSubtitlePosition: "left",
+  showLabels: true,
+  showLabelsBackground: false,
+  labelsPosition: "bottom",
+  colorsArray: [
+    "#008ffb",
+    "#ff5733",
+    "#3498db",
+    "#2ecc71",
+    "#9b59b6",
+    "#f1c40f",
+    "#e74c3c",
+    "#1abc9c",
+    "#34495e",
+    "#d35400",
+    "#95a5a6",
+  ],
+  dataLabelsForeColor: "#ffffff",
+  useSeriesColors: false,
+  dataLabelsBgColor: "#000000",
+  hiddenCategoriesIndexes: [],
+  sortingOrder: "desc",
+  edited: false,
 };

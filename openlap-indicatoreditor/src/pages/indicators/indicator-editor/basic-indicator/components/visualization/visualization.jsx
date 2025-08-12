@@ -102,7 +102,7 @@ export default function Visualization() {
   const handleSaveIndicator = async () => {
     setState((p) => ({
       ...p,
-      indicatorName: { ...p.indicatorName, loading: true },
+      nameIndicator: { ...p.nameIndicator, loading: true },
     }));
     let indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
     let analysisRef = buildAnalysisRef(analysis);
@@ -138,14 +138,14 @@ export default function Visualization() {
       }
       setState((p) => ({
         ...p,
-        indicatorName: { ...p.indicatorName, loading: false },
+        nameIndicator: { ...p.nameIndicator, loading: false },
       }));
       sessionStorage.removeItem(SESSION_INDICATOR);
       navigate("/indicator");
     } catch (error) {
       setState((p) => ({
         ...p,
-        indicatorName: { ...p.indicatorName, loading: false },
+        nameIndicator: { ...p.nameIndicator, loading: false },
       }));
       console.error("Failed to save the indicator", error);
     }
@@ -246,7 +246,7 @@ export default function Visualization() {
         <Dialog
           fullWidth
           maxWidth="sm"
-          open={state.openDialog}
+          open={!!state.openDialog}
           onClose={handleToggleNameIndicator}
         >
           <DialogTitle>Provide a name to the indicator</DialogTitle>
@@ -266,12 +266,14 @@ export default function Visualization() {
               fullWidth
               variant="outlined"
               onClick={handleToggleNameIndicator}
+              disabled={state.nameIndicator.loading}
             >
               Continue editing
             </Button>
             <LoadingButton
               loading={state.nameIndicator.loading}
               disabled={indicator.indicatorName.length === 0}
+              loadingIndicator={params.id ? "Updating..." : "Saving..."}
               fullWidth
               variant="contained"
               onClick={handleSaveIndicator}

@@ -75,7 +75,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
   const handleTitlePosition = (e) => {
     setState((prevState) => ({
       ...prevState,
-      titleAndSubTitlePosition: e.target.value,
+      titleAndSubtitlePosition: e.target.value,
       edited: true,
     }));
   };
@@ -125,6 +125,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
     }));
   };
 
+  console.log(state.titleAndSubtitlePosition);
   return (
     <>
       <Grid container spacing={2}>
@@ -245,7 +246,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
             <FormControl>
               <FormLabel>Title and Subtitle Position</FormLabel>
               <RadioGroup
-                value={state.titleAndSubTitlePosition}
+                value={state.titleAndSubtitlePosition}
                 onChange={handleTitlePosition}
                 row
               >
