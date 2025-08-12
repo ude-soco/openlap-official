@@ -26,25 +26,27 @@ const IndicatorEditorDashboard = () => {
   }, []);
 
   const handleContinueEditing = () => {
-    if (state.indicatorInProgress) {
-      let route;
-      switch (
-        JSON.parse(sessionStorage.getItem(SESSION_INDICATOR)).indicator.type
-      ) {
-        case "BASIC":
-          navigate("/indicator/editor/basic");
-          break;
-        case "COMPOSITE":
-          navigate("/indicator/editor/composite");
-          break;
-        case "MULTI_LEVEL":
-          navigate("/indicator/editor/multi-level-analysis");
-          break;
-        default:
-          route = "Unknown";
-      }
-    }
-    enqueueSnackbar("Indicator progress restored", {
+    const indicatorDraft = JSON.parse(
+      sessionStorage.getItem(SESSION_INDICATOR)
+    );
+    const { type: indicatorType, id: indicatorExist } =
+      indicatorDraft.indicator;
+
+    const baseRoutes = {
+      BASIC: "/indicator/editor/basic",
+      COMPOSITE: "/indicator/editor/composite",
+      MULTI_LEVEL: "/indicator/editor/multi-level-analysis",
+    };
+
+    const baseRoute = baseRoutes[indicatorType];
+
+    const route = indicatorExist
+      ? `${baseRoute}/edit/${indicatorExist}`
+      : baseRoute;
+
+    navigate(route);
+
+    enqueueSnackbar("Indicator data restored", {
       variant: "info",
       autoHideDuration: 2000,
     });
@@ -53,11 +55,6 @@ const IndicatorEditorDashboard = () => {
   const handleClearSession = () => {
     setState((p) => ({ ...p, indicatorInProgress: !p.indicatorInProgress }));
     sessionStorage.removeItem(SESSION_INDICATOR);
-  };
-
-  const handleCreateNew = () => {
-    handleClearSession();
-    navigate("/indicator/editor");
   };
 
   return (

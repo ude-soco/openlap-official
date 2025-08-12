@@ -77,8 +77,9 @@ const MyIndicatorsTable = () => {
         loadingMyIndicatorList: false,
       }));
     } catch (error) {
-      setState((p) => ({ ...p, loadingMyIndicatorList: false }));
       console.log("Error requesting my indicators");
+    } finally {
+      setState((p) => ({ ...p, loadingMyIndicatorList: false }));
     }
   };
 
@@ -117,6 +118,8 @@ const MyIndicatorsTable = () => {
       enqueueSnackbar(indicatorCode.message, { variant: "success" });
       setState((p) => ({ ...p, isLoading: false }));
     } catch (error) {
+      enqueueSnackbar(error.response.data.message, { variant: "error" });
+    } finally {
       setState((p) => ({
         ...p,
         isLoading: {
@@ -125,7 +128,6 @@ const MyIndicatorsTable = () => {
           indicator: undefined,
         },
       }));
-      enqueueSnackbar(error.response.data.message, { variant: "error" });
     }
   };
 
@@ -147,25 +149,27 @@ const MyIndicatorsTable = () => {
         api,
         state.onHoverIndicatorId
       );
-      sessionStorage.setItem(SESSION_INDICATOR, indicator.configuration);
-      switch (indicator.type) {
-        case "BASIC":
-          navigate(`/indicator/editor/basic/edit/${state.onHoverIndicatorId}`);
-          break;
-        case "COMPOSITE":
-          navigate(
-            `/indicator/editor/composite/edit/${state.onHoverIndicatorId}`
-          );
-          break;
-        case "MULTI_LEVEL":
-          navigate(
-            `/indicator/editor/multi-level-analysis/edit/${state.onHoverIndicatorId}`
-          );
-          break;
-        default:
-          route = "Unknown";
-      }
+      let configuration = JSON.parse(indicator.configuration);
+      let updatedConfiguration = {
+        ...configuration,
+        indicator: { ...configuration.indicator, id: state.onHoverIndicatorId },
+      };
+      sessionStorage.setItem(
+        SESSION_INDICATOR,
+        JSON.stringify(updatedConfiguration)
+      );
+      const baseRoutes = {
+        BASIC: "/indicator/editor/basic/edit",
+        COMPOSITE: "/indicator/editor/composite/edit",
+        MULTI_LEVEL: "/indicator/editor/multi-level-analysis/edit",
+      };
+
+      const baseRoute = baseRoutes[indicator.type];
+
+      navigate(`${baseRoute}/${state.onHoverIndicatorId}`);
     } catch (error) {
+      console.error("Error requesting my indicators", error);
+    } finally {
       setState((p) => ({
         ...p,
         isLoading: {
@@ -174,7 +178,6 @@ const MyIndicatorsTable = () => {
           indicator: undefined,
         },
       }));
-      console.error("Error requesting my indicators", error);
     }
   };
 

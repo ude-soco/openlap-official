@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  ButtonGroup,
   Collapse,
   Dialog,
   DialogActions,
@@ -8,7 +9,6 @@ import {
   DialogTitle,
   Divider,
   LinearProgress,
-  Paper,
   Skeleton,
   TextField,
 } from "@mui/material";
@@ -36,6 +36,7 @@ import {
   requestUpdateBasicIndicator,
 } from "../../utils/basic-indicator-api";
 import { useNavigate, useParams } from "react-router-dom";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
 export default function Visualization() {
   const params = useParams();
@@ -232,7 +233,7 @@ export default function Visualization() {
                             // disabled={handleCheckDisabled()}
                             onClick={handleToggleNameIndicator}
                           >
-                            {params.id ? "Update Indicator" : "Save Indicator"}
+                            Save Indicator
                           </Button>
                         </Grid>
                       </Grid>
