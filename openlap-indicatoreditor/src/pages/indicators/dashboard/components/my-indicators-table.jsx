@@ -394,11 +394,7 @@ const MyIndicatorsTable = () => {
                         <Typography component="span">
                           <b>{toSentenceCase(indicator.indicatorName)}</b>
                           <br />
-                          <Typography
-                            component="span"
-                            variant="caption"
-                            className="time-text"
-                          >
+                          <Typography component="span" variant="caption">
                             {handleDisplayType(indicator.type)}
                           </Typography>
                         </Typography>

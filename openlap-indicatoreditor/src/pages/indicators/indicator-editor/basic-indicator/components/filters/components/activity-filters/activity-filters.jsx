@@ -92,7 +92,13 @@ export default function ActivityFilters() {
       return { ...p, selectedActivities: updatedActivities };
     });
     setAnalysis((p) => ({ ...p, analyzedData: {} }));
-    handleToggleDialogOpen(null);
+    setState((p) => ({
+      ...p,
+      activityDialog: {
+        ...p.activityDialog,
+        pendingActivity: null,
+      },
+    }));
   };
 
   const handleConfirmRemoveFilter = () => {
