@@ -24,7 +24,6 @@ import GQIPool from "../../pages/gqi-editor/gqi-pool/gqi-pool.jsx";
 import Footer from "../../common/components/footer/footer.jsx";
 import { SnackbarProvider } from "notistack";
 import IndicatorPreview from "../../pages/indicators/dashboard/components/indicator-preview.jsx";
-import BasicIndicatorOld from "../../pages/indicators/editor/basic-indicator/basic-indicator.jsx";
 import CompositeIndicator from "../../pages/indicators/editor/composite-indicator/composite-indicator.jsx";
 import MultiLevelAnalysisIndicator from "../../pages/indicators/editor/multi-level-analysis-indicator/multi-level-analysis-indicator.jsx";
 import CsvXapiDashboard from "../../pages/csv-xapi-converter/csv-xapi-dashboard.jsx";
