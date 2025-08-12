@@ -144,7 +144,6 @@ const AppRoutes = () => {
                         index
                         element={
                           <PrivateRoute
-                            // component={<IndicatorEditorOld />}
                             component={<IndicatorEditor />}
                             allowedRoles={[RoleTypes.user]}
                           />
@@ -154,7 +153,15 @@ const AppRoutes = () => {
                         path="basic"
                         element={
                           <PrivateRoute
-                            // component={<BasicIndicatorOld />}
+                            component={<BasicIndicator />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                      <Route
+                        path="basic/edit/:id"
+                        element={
+                          <PrivateRoute
                             component={<BasicIndicator />}
                             allowedRoles={[RoleTypes.user]}
                           />
@@ -170,7 +177,25 @@ const AppRoutes = () => {
                         }
                       />
                       <Route
+                        path="composite/edit/:id"
+                        element={
+                          <PrivateRoute
+                            component={<CompositeIndicator />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                      <Route
                         path="multi-level-analysis"
+                        element={
+                          <PrivateRoute
+                            component={<MultiLevelAnalysisIndicator />}
+                            allowedRoles={[RoleTypes.user]}
+                          />
+                        }
+                      />
+                      <Route
+                        path="multi-level-analysis/edit/:id"
                         element={
                           <PrivateRoute
                             component={<MultiLevelAnalysisIndicator />}
@@ -234,18 +259,32 @@ const AppRoutes = () => {
                         }
                       />
                     </Route>
-                    <Route
-                      path="/isc/creator"
-                      element={
-                        <PrivateRoute
-                          component={<IndicatorSpecificationCard />}
-                          allowedRoles={[
-                            RoleTypes.user,
-                            RoleTypes.userWithoutLRS,
-                          ]}
-                        />
-                      }
-                    />
+                    <Route path="/isc/creator">
+                      <Route
+                        index
+                        element={
+                          <PrivateRoute
+                            component={<IndicatorSpecificationCard />}
+                            allowedRoles={[
+                              RoleTypes.user,
+                              RoleTypes.userWithoutLRS,
+                            ]}
+                          />
+                        }
+                      />
+                      <Route
+                        path="edit/:id"
+                        element={
+                          <PrivateRoute
+                            component={<IndicatorSpecificationCard />}
+                            allowedRoles={[
+                              RoleTypes.user,
+                              RoleTypes.userWithoutLRS,
+                            ]}
+                          />
+                        }
+                      />
+                    </Route>
                     <Route
                       path="/isc/pool"
                       element={

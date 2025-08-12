@@ -95,21 +95,23 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
 
   @Override
   public OpenLAPDataSet analyzeIndicatorByIndicatorId(String indicatorId) {
+    log.info("Attempting to analyze the data of a basic indicator with id '{}'...", indicatorId);
+    Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
     Gson gson = new Gson();
     Optional<IndicatorCache> indicatorCache = indicatorCacheRepository.findById(indicatorId);
-    if (indicatorCache.isPresent()) {
+    LocalDateTime indicatorCreatedOn = foundIndicator.getCreatedOn();
+    // * This is checking, whether the indicator has been updated in the meantime. If yes, the new
+    // analyzed data will be generated
+    if (indicatorCache.isPresent()
+        && indicatorCreatedOn.isEqual(indicatorCache.get().getIndicatorCreatedOn())) {
       IndicatorCache cache = indicatorCache.get();
-      LocalDateTime createdOn = cache.getCreatedOn();
+      LocalDateTime generatedOn = cache.getGeneratedOn();
       // Check if the indicator code is 8 hours old
-      if (createdOn != null
-          && Duration.between(createdOn, LocalDateTime.now()).toMinutes() < (60 * 8)) {
+      if (generatedOn != null
+          && Duration.between(generatedOn, LocalDateTime.now()).toMinutes() < (60 * 8)) {
         return gson.fromJson(cache.getAnalyzedDataset(), OpenLAPDataSet.class);
       }
     }
-
-    log.info("Attempting to analyze the data of a basic indicator with id '{}'...", indicatorId);
-    Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
-
     // Query statement
     String queryJson = foundIndicator.getIndicatorQuery();
     StatementsRequest statementsRequest = gson.fromJson(queryJson, StatementsRequest.class);

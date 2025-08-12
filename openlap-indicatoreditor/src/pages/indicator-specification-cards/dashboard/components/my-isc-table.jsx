@@ -133,7 +133,7 @@ export default function MyIscTable() {
           indicator: undefined,
         },
       }));
-      navigate(`/isc/creator`);
+      navigate(`/isc/creator/edit/${state.onHoverIndicatorId}`);
     } catch (error) {
       console.error("Error requesting my indicators", error);
     }
@@ -229,9 +229,7 @@ export default function MyIscTable() {
                         <>
                           <Typography>Search for ISC</Typography>
                           <Tooltip
-                            title={
-                              <Typography>Search for ISC</Typography>
-                            }
+                            title={<Typography>Search for ISC</Typography>}
                           >
                             <IconButton
                               size="small"
@@ -401,8 +399,8 @@ export default function MyIscTable() {
                               }}
                             >
                               <Typography variant="body1" gutterBottom>
-                                No ISCs created yet. Click "Create new" to
-                                get started.
+                                No ISCs created yet. Click "Create new" to get
+                                started.
                               </Typography>
                               <Button
                                 variant="contained"

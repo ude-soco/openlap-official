@@ -10,22 +10,6 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import SchoolIcon from "@mui/icons-material/School";
 import PersonIcon from "@mui/icons-material/Person";
 import RoleTypes from "../../pages/account-manager/utils/enums/role-types.js";
-import UserProfile from "../../pages/account-manager/user-profile.jsx";
-import ManageLrs from "../../pages/account-manager/manage-lrs.jsx";
-import CsvXapiDashboard from "../../pages/csv-xapi-converter/csv-xapi-dashboard.jsx";
-import GQIPool from "../../pages/gqi-editor/gqi-pool/gqi-pool.jsx";
-import GQIEditor from "../../pages/gqi-editor/gqi-editor/gqi-editor.jsx";
-import GQIDashboard from "../../pages/gqi-editor/dashboard/gqi-dashboard.jsx";
-import IndicatorPool from "../../pages/indicators/indicator-pool/indicator-pool.jsx";
-import IndicatorEditor from "../../pages/indicators/editor/indicator-editor.jsx";
-import IndicatorEditorDashboard from "../../pages/indicators/dashboard/indicator-editor-dashboard.jsx";
-import MultiLevelAnalysisIndicator from "../../pages/indicators/editor/multi-level-analysis-indicator/multi-level-analysis-indicator.jsx";
-import CompositeIndicator from "../../pages/indicators/editor/composite-indicator/composite-indicator.jsx";
-import BasicIndicator from "../../pages/indicators/editor/basic-indicator/basic-indicator.jsx";
-import IndicatorPreview from "../../pages/indicators/dashboard/components/indicator-preview.jsx";
-import ISCPool from "../../pages/indicator-specification-cards/isc-pool/isc-pool.jsx";
-import IndicatorSpecificationCard from "../../pages/indicator-specification-cards/creator/indicator-specification-card.jsx";
-import IscDashboard from "../../pages/indicator-specification-cards/dashboard/isc-dashboard.jsx";
 
 const menus = [
   {
@@ -40,21 +24,18 @@ const menus = [
         secondary: "List of my ISCs",
         navigate: "/isc",
         icon: <DashboardIcon />,
-        component: <IscDashboard />,
       },
       {
         primary: "ISC Creator",
         secondary: "Create a ISC",
         navigate: "/isc/creator",
         icon: <AddchartIcon />,
-        component: <IndicatorSpecificationCard />,
       },
       {
         primary: "ISC Pool",
         secondary: "Search for ISCs",
         navigate: "/isc/pool",
         icon: <AddchartIcon />,
-        component: <ISCPool />,
       },
     ],
   },
@@ -70,14 +51,12 @@ const menus = [
         secondary: "List of my Indicators",
         navigate: "/indicator",
         icon: <DashboardIcon />,
-        component: <IndicatorEditorDashboard />,
         children: [
           {
             primary: "Basic Indicator",
             secondary: "Create a Basic Indicator",
             navigate: "/indicator/:id",
             icon: <AddchartIcon />,
-            component: <IndicatorPreview />,
           },
         ],
       },
@@ -86,28 +65,24 @@ const menus = [
         secondary: "Create an Indicator",
         navigate: "/indicator/editor",
         icon: <AddchartIcon />,
-        component: <IndicatorEditor />,
         children: [
           {
             primary: "Basic Indicator",
             secondary: "Create a Basic Indicator",
             navigate: "/indicator/editor/basic",
             icon: <AddchartIcon />,
-            component: <BasicIndicator />,
           },
           {
             primary: "Indicator Editor",
             secondary: "Create an Indicator",
             navigate: "/indicator/editor/composite",
             icon: <AddchartIcon />,
-            component: <CompositeIndicator />,
           },
           {
             primary: "Indicator Editor",
             secondary: "Create an Indicator",
             navigate: "/indicator/editor/multi-level-analysis",
             icon: <AddchartIcon />,
-            component: <MultiLevelAnalysisIndicator />,
           },
         ],
       },
@@ -116,7 +91,6 @@ const menus = [
         secondary: "Search for indicators",
         navigate: "/indicator/pool",
         icon: <AddchartIcon />,
-        component: <IndicatorPool />,
       },
     ],
   },
@@ -132,21 +106,18 @@ const menus = [
         secondary: "List of my GQIs",
         navigate: "/gqi",
         icon: <DashboardIcon />,
-        component: <GQIDashboard />,
       },
       {
         primary: "GQI Editor",
         secondary: "Create a GQI",
         navigate: "/gqi/editor",
         icon: <ListAltIcon />,
-        component: <GQIEditor />,
       },
       {
         primary: "GQI Pool",
         secondary: "Search for GQIs",
         navigate: "/gqi/pool",
         icon: <ListAltIcon />,
-        component: <GQIPool />,
       },
     ],
   },
@@ -162,7 +133,6 @@ const menus = [
         secondary: "Convert CSV to xAPI and vice versa",
         navigate: "/csv-xapi",
         icon: <ChangeCircleIcon />,
-        component: <CsvXapiDashboard />,
       },
     ],
   },
@@ -182,14 +152,12 @@ const menus = [
         secondary: "Add or remove LRS",
         navigate: "/manage-lrs",
         icon: <SchoolIcon />,
-        component: <ManageLrs />,
       },
       {
         primary: "Account Settings",
         secondary: "Update your profile",
         navigate: "/account-settings",
         icon: <PersonIcon />,
-        component: <UserProfile />,
       },
     ],
   },

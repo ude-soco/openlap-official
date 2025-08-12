@@ -449,19 +449,24 @@ public class IndicatorServiceImpl implements IndicatorService {
 
   @Override
   public String generateIndicatorCode(String indicatorId, Boolean uriCode) {
+    // ! TODO: Cache is causing the problem of showing an updated indicator.
+    Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
     Optional<IndicatorCache> indicatorCache = indicatorCacheRepository.findById(indicatorId);
-    if (indicatorCache.isPresent()) {
+    LocalDateTime indicatorCreatedOn = foundIndicator.getCreatedOn();
+    // * This is checking, whether the indicator has been updated in the meantime. If yes, then the
+    // cache will be overwritten.
+    if (indicatorCache.isPresent()
+        && indicatorCreatedOn.isEqual(indicatorCache.get().getIndicatorCreatedOn())) {
       IndicatorCache cache = indicatorCache.get();
-      LocalDateTime createdOn = cache.getCreatedOn();
+      LocalDateTime generatedOn = cache.getGeneratedOn();
 
       // Check if the indicator code is 8 hours old
-      if (createdOn != null
-          && Duration.between(createdOn, LocalDateTime.now()).toMinutes() < (60 * 8)) {
+      if (generatedOn != null
+          && Duration.between(generatedOn, LocalDateTime.now()).toMinutes() < (60 * 8)) {
         return cache.getIndicatorCode();
       }
     }
     Gson gson = new Gson();
-    Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
     OpenLAPDataSet analyzedDataSet = null;
     if (foundIndicator.getIndicatorType() == IndicatorType.BASIC) {
       analyzedDataSet = indicatorBasicService.analyzeIndicatorByIndicatorId(indicatorId);
@@ -499,7 +504,11 @@ public class IndicatorServiceImpl implements IndicatorService {
 
     indicatorCacheRepository.save(
         new IndicatorCache(
-            indicatorId, indicatorCode, gson.toJson(analyzedDataSet), LocalDateTime.now()));
+            indicatorId,
+            indicatorCode,
+            gson.toJson(analyzedDataSet),
+            indicatorCreatedOn,
+            LocalDateTime.now()));
     return indicatorCode;
   }
 

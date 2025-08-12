@@ -19,5 +19,6 @@ public class IndicatorCache {
   @Id private String id;
   private String indicatorCode;
   private String analyzedDataset;
-  private LocalDateTime createdOn;
+  private LocalDateTime indicatorCreatedOn;
+  private LocalDateTime generatedOn;
 }
