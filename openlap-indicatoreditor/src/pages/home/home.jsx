@@ -49,8 +49,6 @@ export default function Home() {
     }
   };
 
-  console.log(roles);
-
   return (
     <>
       <Grid container spacing={2}>
