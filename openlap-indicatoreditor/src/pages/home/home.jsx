@@ -1,13 +1,21 @@
-import { useContext, useEffect, useState } from "react";
-import { Divider, Paper, Skeleton, Typography } from "@mui/material";
+import React, { useContext, useEffect, useState } from "react";
+import {
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  CardMedia,
+  Divider,
+  LinearProgress,
+  Typography,
+} from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { requestUserDetails } from "../account-manager/utils/account-manager-api.js";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
 
 import { useNavigate } from "react-router-dom";
 import RoleTypes from "../account-manager/utils/enums/role-types.js";
-import LRSLogo from "../../assets/svg/learning_locker.svg";
-import PrototypeImage from "../../assets/svg/prototype.svg";
+import homeData from "./utils/home-data.js";
 
 export default function Home() {
   const {
@@ -25,23 +33,23 @@ export default function Home() {
   });
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const response = await requestUserDetails(api);
-        setState((prevState) => ({
-          ...prevState,
-          user: {
-            ...prevState.user,
-            ...response,
-          },
-          loading: false,
-        }));
-      } catch (error) {
-        console.error("Failed to load user data", error);
-      }
-    };
-    loadData();
+    loadUserData();
   }, []);
+
+  const loadUserData = async () => {
+    try {
+      const response = await requestUserDetails(api);
+      setState((p) => ({
+        ...p,
+        user: { ...p.user, ...response },
+        loading: false,
+      }));
+    } catch (error) {
+      console.error("Failed to load user data", error);
+    }
+  };
+
+  console.log(roles);
 
   return (
     <>
@@ -50,84 +58,77 @@ export default function Home() {
         <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
           <Divider />
         </Grid>
-      </Grid>
-      <Grid container spacing={2}>
-        <Grid size={12}>
-          <Typography variant="h4">
-            {state.loading ? (
-              <Skeleton width={300} />
-            ) : (
-              `Hello, ${state.user.name}`
-            )}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          {state.loading ? (
-            <Skeleton width={300} height={100} />
-          ) : (
-            <Grid
-              container
-              justifyContent="center"
-              component={Paper}
-              variant="outlined"
-              sx={{
-                p: 2,
-                cursor: "pointer",
-                "&:hover": { backgroundColor: "#f5f5f5" },
-              }}
-              onClick={() => navigate("/isc/creator")}
-            >
-              <Grid
-                size={{ xs: 12 }}
-                sx={{ height: 200, mb: 3 }}
-                component="img"
-                src={PrototypeImage}
-                alt="LRS Logo"
-              />
-              <Grid size={{ xs: 12 }}>
-                <Typography align="center">
-                  Create an <b>Indicator Specification Card</b>
-                </Typography>
+
+        {state.loading && (
+          <Grid size={{ xs: 12 }}>
+            <Typography gutterBottom>Loading</Typography>
+            <LinearProgress />
+          </Grid>
+        )}
+        {!state.loading && (
+          <>
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="h4">Hello, {state.user.name}</Typography>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Grid container spacing={2}>
+                {homeData.map((home) => {
+                  const disabled = roles.some((role) =>
+                    home.disabledRoles.includes(role)
+                  );
+                  if (!disabled) {
+                    return (
+                      <Grid
+                        key={home.id}
+                        size={{ xs: 12, md: 4 }}
+                        sx={{ display: "flex" }}
+                      >
+                        <Card
+                          variant="outlined"
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            flex: 1,
+                          }}
+                        >
+                          <CardMedia sx={{ height: 250 }} image={home.image} />
+                          <CardContent sx={{ flexGrow: 1 }}>
+                            <Typography variant="h6" component="div">
+                              {home.label}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "text.secondary" }}
+                            >
+                              {home.description}
+                            </Typography>
+                          </CardContent>
+                          <CardActions>
+                            {home.buttons.map((button) => (
+                              <Button
+                                key={button.id}
+                                variant={button.variant}
+                                startIcon={
+                                  button.icon
+                                    ? React.createElement(button.icon)
+                                    : null
+                                }
+                                onClick={() => navigate(button.link)}
+                              >
+                                {button.label}
+                              </Button>
+                            ))}
+                          </CardActions>
+                        </Card>
+                      </Grid>
+                    );
+                  }
+                  return undefined;
+                })}
               </Grid>
             </Grid>
-          )}
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-          {state.loading ? (
-            <Skeleton width={300} height={100} />
-          ) : (
-            <>
-              {roles.includes(RoleTypes.user) && (
-                <Grid
-                  container
-                  justifyContent="center"
-                  component={Paper}
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    cursor: "pointer",
-                    "&:hover": { backgroundColor: "#f5f5f5" },
-                  }}
-                  onClick={() => navigate("/indicator/editor")}
-                >
-                  <Grid
-                    size={{ xs: 12 }}
-                    sx={{ height: 200, mb: 3 }}
-                    component="img"
-                    src={PrototypeImage}
-                    alt="LRS Logo"
-                  />
-                  <Grid size={{ xs: 12 }}>
-                    <Typography align="center">
-                      Create an <b>Indicator</b>
-                    </Typography>
-                  </Grid>
-                </Grid>
-              )}
-            </>
-          )}
-        </Grid>
+          </>
+        )}
       </Grid>
     </>
   );
