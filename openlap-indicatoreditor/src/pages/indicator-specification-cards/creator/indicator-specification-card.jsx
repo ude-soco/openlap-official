@@ -32,7 +32,12 @@ const IndicatorSpecificationCard = () => {
       ? JSON.parse(savedState).requirements
       : {
           goalType: {
+            id: "",
             verb: "",
+            category: "",
+            description: "",
+            custom: false,
+            active: true,
           },
           goal: "",
           question: "",
