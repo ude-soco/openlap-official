@@ -2,7 +2,6 @@ import { useContext, useEffect, useState } from "react";
 import {
   Autocomplete,
   FormControl,
-  FormHelperText,
   Grid,
   IconButton,
   TextField,
@@ -10,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import SearchIcon from "@mui/icons-material/Search";
 import { createFilterOptions } from "@mui/material/Autocomplete";
 import { v4 as uuidv4 } from "uuid";
 import { requestAllGoals } from "../../utils/requirements-api.js";
@@ -30,66 +30,54 @@ const GoalList = () => {
   });
 
   useEffect(() => {
-    const loadGoalList = async (api) => {
-      try {
-        return await requestAllGoals(api);
-      } catch (error) {
-        console.log(error);
-        enqueueSnackbar(error.message, { variant: "error" });
-        setState((prevState) => ({
-          ...prevState,
-          message: "No goals found",
-        }));
-      }
-    };
-
-    loadGoalList(api).then((response) => {
-      if (state.goalList.length === 0) {
-        setState((prevState) => ({
-          ...prevState,
-          goalList: response.sort((a, b) => a.verb.localeCompare(b.verb)),
-          message: "I want to",
-        }));
-      }
-    });
+    loadGoalList();
   }, []);
 
-  const handleOnChange = (event, newValue) => {
-    if (newValue === null || newValue === "") {
-      // Handle clear action
-      setRequirements((prevState) => ({
+  const loadGoalList = async () => {
+    try {
+      const goalList = await requestAllGoals(api);
+      console.log(goalList);
+
+      setState((prevState) => ({
         ...prevState,
+        goalList: goalList.sort((a, b) => a.verb.localeCompare(b.verb)),
+        message: "I want to",
+      }));
+    } catch (error) {
+      console.log(error);
+      enqueueSnackbar(error.message, { variant: "error" });
+      setState((prevState) => ({
+        ...prevState,
+        message: "No goals found",
+      }));
+    }
+  };
+
+  const handleOnChange = (_, newValue) => {
+    if (newValue === null || newValue === "") {
+      setRequirements((p) => ({
+        ...p,
         goalType: {
+          id: "",
           verb: "",
+          category: "",
+          description: "",
+          custom: false,
+          active: true,
         },
       }));
     } else if (typeof newValue === "string") {
-      setRequirements((prevState) => ({
-        ...prevState,
-        goalType: newValue,
-      }));
+      setRequirements((p) => ({ ...p, goalType: newValue }));
     } else if (newValue && newValue.inputValue) {
       // Create a new value from the user input
-      let tempListOfGoals = [...state.goalList];
-      let newGoal = {
-        id: uuidv4(),
-        verb: newValue.inputValue,
-        custom: true,
-      };
-      setRequirements((prevState) => ({
-        ...prevState,
-        goalType: newGoal,
-      }));
-      tempListOfGoals.push(newGoal);
-      setState((prevState) => ({
-        ...prevState,
-        goalList: tempListOfGoals.sort((a, b) => a.verb.localeCompare(b.verb)),
-      }));
+      let newGoal = { id: uuidv4(), verb: newValue.inputValue, custom: true };
+      let tempListOfGoals = [...state.goalList, newGoal].sort((a, b) =>
+        a.verb.localeCompare(b.verb)
+      );
+      setRequirements((p) => ({ ...p, goalType: newGoal }));
+      setState((p) => ({ ...p, goalList: tempListOfGoals }));
     } else {
-      setRequirements((prevState) => ({
-        ...prevState,
-        goalType: newValue,
-      }));
+      setRequirements((p) => ({ ...p, goalType: newValue }));
     }
   };
 
@@ -106,19 +94,15 @@ const GoalList = () => {
     if (inputValue !== "" && !isExisting) {
       filtered.unshift({
         inputValue,
-        verb: `Just use "${inputValue}"`,
+        verb: (
+          <span>
+            Create goal <b>"{inputValue}"</b>
+          </span>
+        ),
       });
     }
 
     return filtered;
-  };
-
-  const handleInputChange = (event, newInputValue, reason) => {
-    if (reason !== "reset")
-      setState((prevState) => ({
-        ...prevState,
-        typedGoal: newInputValue,
-      }));
   };
 
   const handleOnClose = () => {
@@ -163,23 +147,31 @@ const GoalList = () => {
           value={requirements.goalType || null}
           selectOnFocus
           disablePortal
-          disableClearable
           clearOnBlur
           handleHomeEndKeys
           freeSolo
           options={state.goalList}
-          onInputChange={(event, newInputValue, reason) =>
-            handleInputChange(event, newInputValue, reason)
-          }
           onChange={(event, newValue) => handleOnChange(event, newValue)}
           onClose={handleOnClose}
           renderInput={(params) => (
             <TextField
               {...params}
               placeholder={
-                state.goalList.length > 0 ? "e.g., monitor" : undefined
+                state.goalList.length > 0 ? "Find or create a goal" : undefined
               }
               label={state.message}
+              InputProps={{
+                ...params.InputProps,
+                startAdornment:
+                  requirements.goalType || params.inputProps.value ? (
+                    <>
+                      <SearchIcon sx={{ mr: 1, color: "action.active" }} />
+                      {params.InputProps.startAdornment}
+                    </>
+                  ) : (
+                    params.InputProps.startAdornment
+                  ),
+              }}
             />
           )}
           getOptionLabel={(option) => handleGetOptionLabel(option)}
@@ -236,11 +228,6 @@ const GoalList = () => {
             );
           }}
         />
-        {/* {requirements.goalType.verb === "" && (
-          <FormHelperText sx={{ color: "#b71c1c" }}>
-            Select a goal or create a new one
-          </FormHelperText>
-        )} */}
       </FormControl>
     </>
   );
