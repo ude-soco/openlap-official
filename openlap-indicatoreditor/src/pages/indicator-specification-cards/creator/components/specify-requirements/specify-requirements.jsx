@@ -21,14 +21,16 @@ const SpecifyRequirements = () => {
 
   const handleUnlockPath = () => {
     handleTogglePanel();
-    setLockedStep((prevState) => ({
-      ...prevState,
-      path: {
-        ...prevState.path,
-        locked: false,
-        openPanel: true,
-      },
-    }));
+    if (lockedStep.path.locked) {
+      setLockedStep((p) => ({
+        ...p,
+        path: {
+          ...p.path,
+          locked: false,
+          openPanel: true,
+        },
+      }));
+    }
   };
 
   const handleCheckDisabled = () => {
@@ -63,7 +65,7 @@ const SpecifyRequirements = () => {
             >
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12 }}>
-                  <Box sx={{ pb: 1 }}>
+                  <Box sx={{ pb: 2 }}>
                     {requirements.edit.goal ? <SpecifyGoal /> : <ConfirmGoal />}
                   </Box>
                   {requirements.show.question && (
@@ -91,7 +93,7 @@ const SpecifyRequirements = () => {
                             disabled={handleCheckDisabled()}
                             onClick={handleUnlockPath}
                           >
-                            Next
+                            {lockedStep.path.locked ? "Next" : "Close"}
                           </Button>
                         </Grid>
                       </Grid>

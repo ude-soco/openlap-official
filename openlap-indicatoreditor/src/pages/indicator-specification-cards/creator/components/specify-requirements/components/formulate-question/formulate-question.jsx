@@ -1,5 +1,4 @@
-import { Fab, TextField, Tooltip, Typography } from "@mui/material";
-import DoneIcon from "@mui/icons-material/Done";
+import { Button, Divider, Paper, TextField, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { useContext, useState } from "react";
 import { ISCContext } from "../../../../indicator-specification-card";
@@ -46,26 +45,35 @@ export default function FormulateQuestion() {
 
   return (
     <>
-      <Grid container justifyContent="center">
+      <Grid container justifyContent="center" spacing={2}>
+        <Grid size={{ xs: 12 }}>
+          <Divider />
+        </Grid>
         <Grid size={{ xs: 12, md: 8 }}>
-          <Grid container spacing={2}>
+          <Grid
+            component={Paper}
+            variant="outlined"
+            container
+            spacing={2}
+            sx={{ p: 2 }}
+          >
             <Grid size="grow">
-              <Typography variant="body2" gutterBottom>
-                Formulate your question
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <Grid container alignItems="center" spacing={2}>
+              <Grid container spacing={1} alignItems="center">
+                <Typography>Formulate your question</Typography>
                 <TipPopover
                   tipAnchor={state.questionPopoverAnchor}
                   toggleTipAnchor={handleQuestionPopoverAnchor}
                   description={state.questionDescription}
                 />
-
+              </Grid>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: "grow" }}>
-                  <Grid container spacing={2} alignItems="center">
+                  <Grid container spacing={2}>
                     <Grid size="grow">
                       <TextField
+                        multiline
                         fullWidth
                         required
                         name="question"
@@ -76,19 +84,22 @@ export default function FormulateQuestion() {
                         error={requirements.question === ""}
                       />
                     </Grid>
-                    <Grid size="auto">
-                      <Fab
-                        color="primary"
-                        size="small"
-                        onClick={handleToggleQuestionEdit}
-                        disabled={handleDisabledFabButton()}
-                      >
-                        <Tooltip title={<Typography>Confirm</Typography>}>
-                          <DoneIcon />
-                        </Tooltip>
-                      </Fab>
-                    </Grid>
                   </Grid>
+                </Grid>
+              </Grid>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Grid container justifyContent="center" spacing={2}>
+                <Grid size={{ xs: 12, sm: 8 }}>
+                  <Button
+                    color="primary"
+                    variant="contained"
+                    fullWidth
+                    onClick={handleToggleQuestionEdit}
+                    disabled={handleDisabledFabButton()}
+                  >
+                    Confirm
+                  </Button>
                 </Grid>
               </Grid>
             </Grid>

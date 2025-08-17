@@ -1,17 +1,6 @@
 import { useContext, useState } from "react";
-import {
-  Box,
-  Button,
-  Fab,
-  IconButton,
-  Popover,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Button, Divider, Paper, TextField, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
-import DoneIcon from "@mui/icons-material/Done";
 
 import GoalList from "./goal-list";
 import { ISCContext } from "../../../../indicator-specification-card";
@@ -59,31 +48,38 @@ export default function SpecifyGoal() {
 
   return (
     <>
-      <Grid container justifyContent="center">
+      <Grid container justifyContent="center" spacing={2}>
         <Grid size={{ xs: 12, md: 8 }}>
-          <Grid container spacing={2}>
+          <Grid
+            container
+            component={Paper}
+            variant="outlined"
+            spacing={2}
+            sx={{ p: 2 }}
+          >
             <Grid size="grow">
-              <Typography variant="body2" gutterBottom>
-                Specify your goal
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <Grid container alignItems="center" spacing={2}>
+              <Grid container spacing={1} alignItems="center">
+                <Typography>Specify your goal</Typography>
                 <TipPopover
                   tipAnchor={state.goalPopoverAnchor}
                   toggleTipAnchor={handleGoalPopoverAnchor}
                   description={state.goalDescription}
                 />
+              </Grid>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Grid container spacing={2}>
                 <Grid size={{ xs: "grow", sm: 4 }}>
                   <GoalList />
                 </Grid>
                 <Grid size={{ xs: 12, sm: "grow" }}>
-                  <Grid container spacing={2} alignItems="center">
+                  <Grid container spacing={2}>
                     <Grid size="grow">
                       <TextField
-                        fullWidth
                         required
+                        fullWidth
                         name="goal"
+                        multiline
                         value={requirements.goal}
                         label="Describe your goal"
                         placeholder="e.g., the usage of the learning materials in my course."
@@ -91,24 +87,32 @@ export default function SpecifyGoal() {
                         error={requirements.goal === ""}
                       />
                     </Grid>
-                    <Grid size="auto">
-                      <Fab
-                        color="primary"
-                        size="small"
-                        onClick={handleToggleGoalEdit}
-                        disabled={handleDisabledFabButton()}
-                      >
-                        <Tooltip title={<Typography>Confirm</Typography>}>
-                          <DoneIcon />
-                        </Tooltip>
-                      </Fab>
-                    </Grid>
                   </Grid>
+                </Grid>
+              </Grid>
+            </Grid>
+            <Grid size={{ xs: 12, sm: "grow" }}>
+              <Grid container justifyContent="center" spacing={2}>
+                <Grid size={{ xs: 12, sm: 8 }}>
+                  <Button
+                    fullWidth
+                    color="primary"
+                    variant="contained"
+                    onClick={handleToggleGoalEdit}
+                    disabled={handleDisabledFabButton()}
+                  >
+                    Confirm
+                  </Button>
                 </Grid>
               </Grid>
             </Grid>
           </Grid>
         </Grid>
+        {!requirements.edit.question && (
+          <Grid size={{ xs: 12 }}>
+            <Divider />
+          </Grid>
+        )}
       </Grid>
     </>
   );
