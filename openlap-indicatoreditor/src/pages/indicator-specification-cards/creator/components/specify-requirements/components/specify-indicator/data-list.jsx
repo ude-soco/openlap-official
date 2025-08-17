@@ -74,7 +74,7 @@ const DataList = () => {
   return (
     <>
       <Grid container spacing={2}>
-        <Typography variant="body2">I need the following data</Typography>
+        <Typography>I need the following data</Typography>
         {requirements.data.map((requirement, index) => {
           const isDuplicate = duplicateValues.has(requirement.value);
           return (

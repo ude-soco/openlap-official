@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { TextField, Typography } from "@mui/material";
+import { Divider, Paper, TextField, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 
 import { ISCContext } from "../../../../indicator-specification-card";
@@ -34,24 +34,33 @@ export default function SpecifyIndicator() {
   };
 
   return (
-    <Grid container justifyContent="center">
+    <Grid container justifyContent="center" spacing={2}>
+      <Grid size={{ xs: 12 }}>
+        <Divider />
+      </Grid>
       <Grid size={{ xs: 12, md: 8 }}>
-        <Grid container spacing={2}>
+        <Grid
+          container
+          component={Paper}
+          variant="outlined"
+          spacing={2}
+          sx={{ p: 2 }}
+        >
           <Grid size="grow">
-            <Typography variant="body2" gutterBottom>
-              Specify your indicator
-            </Typography>
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <Grid container alignItems="center" spacing={2}>
+            <Grid container spacing={1} alignItems="center">
+              <Typography>Specify your indicator</Typography>
               <TipPopover
                 tipAnchor={state.indicatorPopoverAnchor}
                 toggleTipAnchor={handleIndicatorPopoverAnchor}
                 description={state.indicatorDescription}
               />
-
+            </Grid>
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <Grid container alignItems="center" spacing={2}>
               <Grid size={{ xs: "grow" }}>
                 <TextField
+                  multiline
                   fullWidth
                   required
                   name="indicatorName"
