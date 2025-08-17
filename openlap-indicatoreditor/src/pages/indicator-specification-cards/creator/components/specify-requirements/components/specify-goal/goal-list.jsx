@@ -36,8 +36,6 @@ const GoalList = () => {
   const loadGoalList = async () => {
     try {
       const goalList = await requestAllGoals(api);
-      console.log(goalList);
-
       setState((prevState) => ({
         ...prevState,
         goalList: goalList.sort((a, b) => a.verb.localeCompare(b.verb)),
