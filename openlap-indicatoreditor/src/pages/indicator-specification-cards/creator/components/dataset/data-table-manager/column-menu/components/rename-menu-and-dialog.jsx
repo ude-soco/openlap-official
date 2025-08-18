@@ -11,7 +11,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import DriveFileRenameOutlineIcon from '@mui/icons-material/DriveFileRenameOutline';
+import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
 import { ISCContext } from "../../../../../indicator-specification-card.jsx";
 import { useGridApiContext } from "@mui/x-data-grid";
 
@@ -29,50 +29,36 @@ const RenameMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {
   });
 
   const handleToggleColumnRenameDialog = () => {
-    setColumnMenu((prevState) => ({
-      ...prevState,
-      columnRename: !prevState.columnRename,
-    }));
+    setColumnMenu((p) => ({ ...p, columnRename: !p.columnRename }));
   };
 
   const handleRenameHeader = (event) => {
     const { value } = event.target;
-    setColumn((prevState) => ({
-      ...prevState,
-      value: value,
-    }));
+    setColumn((p) => ({ ...p, value: value }));
     if (
       dataset.columns.find(
         (col) => col.headerName.toLowerCase() === value.toLowerCase()
       )
     ) {
       if (value.toLowerCase() !== colDef.headerName.toLowerCase()) {
-        setColumn((prevState) => ({
-          ...prevState,
+        setColumn((p) => ({
+          ...p,
           status: {
-            ...prevState.status,
+            ...p.status,
             exists: true,
             message: "Column name already exists",
           },
         }));
       } else {
-        setColumn((prevState) => ({
-          ...prevState,
-          status: {
-            ...prevState.status,
-            exists: false,
-            message: "",
-          },
+        setColumn((p) => ({
+          ...p,
+          status: { ...p.status, exists: false, message: "" },
         }));
       }
     } else {
-      setColumn((prevState) => ({
-        ...prevState,
-        status: {
-          ...prevState.status,
-          exists: false,
-          message: "",
-        },
+      setColumn((p) => ({
+        ...p,
+        status: { ...p.status, exists: false, message: "" },
       }));
     }
   };
@@ -82,13 +68,11 @@ const RenameMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {
     apiRef.current.hideColumnMenu();
 
     if (column.value && !column.status.exists) {
-      // 1. Update dataset.columns
       const updatedCols = dataset.columns.map((c) =>
         c.field === colDef.field ? { ...c, headerName: column.value } : c
       );
       setDataset((p) => ({ ...p, columns: updatedCols }));
 
-      // 2. Update requirements.data
       setRequirements((prev) => {
         const updatedData = prev.data.map((item) =>
           item.value === colDef.headerName
@@ -101,25 +85,6 @@ const RenameMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {
       handleToggleColumnRenameDialog();
     }
   };
-  // const handleConfirmRenameColumn = (event) => {
-  //   event.preventDefault();
-  //   apiRef.current.hideColumnMenu();
-  //   if (column.value !== "") {
-  //     let tempColumnData = colDef;
-  //     tempColumnData.headerName = column.value;
-  //     let columnData = dataset.columns.map((col) => {
-  //       if (col.field === tempColumnData.field) {
-  //         col.headerName = tempColumnData.headerName;
-  //       }
-  //       return col;
-  //     });
-  //     setDataset((prevState) => ({
-  //       ...prevState,
-  //       columns: columnData,
-  //     }));
-  //     handleToggleColumnRenameDialog();
-  //   }
-  // };
 
   return (
     <>
@@ -144,9 +109,7 @@ const RenameMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {
             fullWidth
             label="Column name"
             value={column.value}
-            InputLabelProps={{
-              shrink: true,
-            }}
+            InputLabelProps={{ shrink: true }}
             onChange={(event) => handleRenameHeader(event)}
             variant="outlined"
           />

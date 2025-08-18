@@ -28,44 +28,24 @@ const TableSideBar = () => {
   });
 
   const handleOpenImportDataset = () => {
-    setState((prevState) => ({
-      ...prevState,
-      openCsvImport: !prevState.openCsvImport,
-    }));
+    setState((p) => ({ ...p, openCsvImport: !p.openCsvImport }));
   };
 
   const handleOpenAddColumn = () => {
-    setState((prevState) => ({
-      ...prevState,
-      openAddColumn: !prevState.openAddColumn,
-    }));
+    setState((p) => ({ ...p, openAddColumn: !p.openAddColumn }));
   };
 
   const handleOpenAddRow = () => {
-    setState((prevState) => ({
-      ...prevState,
-      openAddRow: !prevState.openAddRow,
-    }));
+    setState((p) => ({ ...p, openAddRow: !p.openAddRow }));
   };
 
   const handleOpenDeleteDialog = () => {
-    setState((prevState) => ({
-      ...prevState,
-      deleteDialog: !prevState.deleteDialog,
-    }));
+    setState((p) => ({ ...p, deleteDialog: !p.deleteDialog }));
   };
 
   const handleDeleteDataset = () => {
-    setDataset((prevState) => ({
-      ...prevState,
-      rows: [],
-      columns: [],
-      file: { name: "" },
-    }));
-    setRequirements((prevState) => ({
-      ...prevState,
-      data: [],
-    }));
+    setDataset((p) => ({ ...p, rows: [], columns: [], file: { name: "" } }));
+    setRequirements((p) => ({ ...p, data: [] }));
   };
 
   return (

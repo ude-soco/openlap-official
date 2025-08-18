@@ -40,10 +40,7 @@ const DataTableManager = () => {
 
       const numRows = state.pageSize;
       const calculatedHeight = numRows * rowHeight + footerHeight + padding;
-      setState((prevState) => ({
-        ...prevState,
-        gridHeight: calculatedHeight,
-      }));
+      setState((p) => ({ ...p, gridHeight: calculatedHeight }));
     };
     calculateGridHeight();
   }, [state.pageSize, dataset.rows]);
@@ -52,21 +49,18 @@ const DataTableManager = () => {
   const popperRef = useRef();
 
   const handleCellModesModelChange = useCallback((newModel) => {
-    setState((prevState) => ({
-      ...prevState,
-      cellModesModel: newModel,
-    }));
+    setState((p) => ({ ...p, cellModesModel: newModel }));
   }, []);
 
   const handleCellClick = useCallback((params) => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       cellModesModel: {
         // Revert the mode of the other cells from other rows
-        ...Object.keys(prevState.cellModesModel).reduce(
+        ...Object.keys(p.cellModesModel).reduce(
           (acc, id) => ({
             ...acc,
-            [id]: Object.keys(prevState.cellModesModel[id]).reduce(
+            [id]: Object.keys(p.cellModesModel[id]).reduce(
               (acc2, field) => ({
                 ...acc2,
                 [field]: { mode: "view" },
@@ -78,7 +72,7 @@ const DataTableManager = () => {
         ),
         [params.id]: {
           // Revert the mode of other cells in the same row
-          ...Object.keys(prevState.cellModesModel[params.id] || {}).reduce(
+          ...Object.keys(p.cellModesModel[params.id] || {}).reduce(
             (acc, field) => ({ ...acc, [field]: { mode: "view" } }),
             {}
           ),
@@ -89,10 +83,7 @@ const DataTableManager = () => {
   }, []);
 
   const handleRowSelectionModelChange = (newSelectionModel) => {
-    setState((prevState) => ({
-      ...prevState,
-      selectionModel: newSelectionModel,
-    }));
+    setState((p) => ({ ...p, selectionModel: newSelectionModel }));
   };
 
   const handleProcessRowUpdate = (updatedRow) => {
@@ -100,10 +91,7 @@ const DataTableManager = () => {
     const rowIndex = dataset.rows.findIndex((row) => row.id === updatedRow.id);
     const updatedRows = [...dataset.rows];
     updatedRows[rowIndex] = updatedRow;
-    setDataset((prevState) => ({
-      ...prevState,
-      rows: updatedRows,
-    }));
+    setDataset((p) => ({ ...p, rows: updatedRows }));
     return updatedRow;
   };
 
@@ -114,11 +102,7 @@ const DataTableManager = () => {
   const handlePopperOpen = (event) => {
     const id = event.currentTarget.dataset.id;
     const row = dataset.rows.find((r) => r.id === id);
-    setState((prevState) => ({
-      ...prevState,
-      value: row,
-      anchorEl: event.currentTarget,
-    }));
+    setState((p) => ({ ...p, value: row, anchorEl: event.currentTarget }));
   };
 
   const handlePopperClose = (event) => {
@@ -128,10 +112,7 @@ const DataTableManager = () => {
     ) {
       return;
     }
-    setState((prevState) => ({
-      ...prevState,
-      anchorEl: null,
-    }));
+    setState((p) => ({ ...p, anchorEl: null }));
   };
 
   const paginatedRows = dataset.rows.slice(

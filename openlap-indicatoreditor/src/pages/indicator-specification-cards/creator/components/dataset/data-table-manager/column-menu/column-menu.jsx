@@ -1,30 +1,10 @@
-import { useContext, useState } from "react";
-import {
-  Divider,
-  List,
-  ListItemIcon,
-  ListItemText,
-  ListSubheader,
-  MenuItem,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
-import { ISCContext } from "../../../../indicator-specification-card.jsx";
+import { useState } from "react";
+import { Divider, Stack } from "@mui/material";
 import RenameMenuAndDialog from "./components/rename-menu-and-dialog.jsx";
 import DeleteMenuAndDialog from "./components/delete-menu-and-dialog.jsx";
 import ChangeTypeMenuAndDialog from "./components/change-type-menu-and-dialog.jsx";
 
-function isNullOrEmpty(value) {
-  return value === null || (typeof value === "string" && value.trim() === "");
-}
-
 const ColumnMenu = ({ props }) => {
-  const { dataset } = useContext(ISCContext);
-  const foundNullEmpty = [...dataset.rows].every((row) =>
-    isNullOrEmpty(row[props.colDef.field])
-  );
   const [columnMenu, setColumnMenu] = useState({
     columnChangeType: false,
     columnRename: false,
@@ -34,20 +14,6 @@ const ColumnMenu = ({ props }) => {
   return (
     <>
       <Stack py={0.5}>
-        {/* TODO: Make the rename and add row functionalities */}
-
-        {/* <MenuItem
-          sx={{ py: 1 }}
-          onClick={() => {
-            // handleOpenChangeColumnType(props.colDef);
-            toggleEditPanel("", false);
-          }}
-        >
-          <ListItemIcon>
-            <ChangeCircleIcon fontSize="small" color="primary"/>
-          </ListItemIcon>
-          <ListItemText primary="Change data type" />
-        </MenuItem> */}
         <ChangeTypeMenuAndDialog
           props={props}
           columnMenu={columnMenu}

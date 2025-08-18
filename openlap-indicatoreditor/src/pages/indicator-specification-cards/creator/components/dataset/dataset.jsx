@@ -13,19 +13,16 @@ const Dataset = () => {
   const handleTogglePanel = () => {
     setLockedStep((p) => ({
       ...p,
-      dataset: {
-        ...p.dataset,
-        openPanel: !p.dataset.openPanel,
-      },
+      dataset: { ...p.dataset, openPanel: !p.dataset.openPanel },
     }));
   };
 
   const handleUnlockVisualization = () => {
     handleTogglePanel();
-    setLockedStep((prevState) => ({
-      ...prevState,
+    setLockedStep((p) => ({
+      ...p,
       visualization: {
-        ...prevState.visualization,
+        ...p.visualization,
         locked: false,
         openPanel: true,
         step: "4",
@@ -35,13 +32,9 @@ const Dataset = () => {
 
   const handleUnlockFinalize = () => {
     handleTogglePanel();
-    setLockedStep((prevState) => ({
-      ...prevState,
-      finalize: {
-        ...prevState.finalize,
-        locked: false,
-        openPanel: true,
-      },
+    setLockedStep((p) => ({
+      ...p,
+      finalize: { ...p.finalize, locked: false, openPanel: true },
     }));
   };
 

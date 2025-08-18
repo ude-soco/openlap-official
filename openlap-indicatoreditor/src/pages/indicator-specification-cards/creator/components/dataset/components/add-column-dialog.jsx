@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from "uuid";
 import { useSnackbar } from "notistack";
 
 const AddColumnDialog = ({ open, toggleOpen }) => {
-  const { dataset, setDataset, setRequirements } = useContext(ISCContext);
+  const { dataset, setRequirements } = useContext(ISCContext);
   const { enqueueSnackbar } = useSnackbar();
 
   const [state, setState] = useState({
@@ -33,8 +33,8 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
     const exists = dataset.columns.some(
       (col) => col.headerName.toLowerCase() === value.toLowerCase()
     );
-    setState((prev) => ({
-      ...prev,
+    setState((p) => ({
+      ...p,
       columnName: {
         value,
         exists,
@@ -43,18 +43,15 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
   };
 
   const handleSelectType = (value) => {
-    setState((prevState) => ({
-      ...prevState,
-      typeSelected: value,
-    }));
+    setState((p) => ({ ...p, typeSelected: value }));
   };
 
   const handleRowNumber = (event) => {
     let { value } = event.target;
     const parsedValue = value === "" ? "" : parseInt(value, 10);
     if ((!isNaN(parsedValue) && parsedValue >= 0) || value === "") {
-      setState((prevState) => ({
-        ...prevState,
+      setState((p) => ({
+        ...p,
         numberOfRows: parsedValue,
       }));
     }
@@ -67,10 +64,10 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
       numberOfRows: dataset.rows.length,
     });
 
-    setRequirements((prev) => ({
-      ...prev,
+    setRequirements((p) => ({
+      ...p,
       data: [
-        ...prev.data,
+        ...p.data,
         {
           id: uuidv4(),
           value: state.columnName.value,
