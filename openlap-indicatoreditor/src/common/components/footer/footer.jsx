@@ -9,12 +9,7 @@ const Footer = () => {
   const { darkMode } = useContext(CustomThemeContext);
   return (
     <>
-      <Grid
-        container
-        sx={{ p: 2 }}
-        justifyContent="space-between"
-        alignItems="center"
-      >
+      <Grid container justifyContent="space-between" alignItems="center">
         <Grid item xs sx={{ zIndex: 1 }}>
           <Typography variant="body2">
             {" Copyright @ "}

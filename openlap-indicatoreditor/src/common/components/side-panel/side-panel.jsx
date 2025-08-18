@@ -4,7 +4,6 @@ import {
   Box,
   Collapse,
   Divider,
-  Drawer,
   List,
   ListItemButton,
   ListItemIcon,
@@ -12,8 +11,8 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { useLocation, useNavigate } from "react-router-dom";
 import { styled } from "@mui/material/styles";
+import { useLocation, useNavigate } from "react-router-dom";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import menus from "../../../setup/routes-manager/router-config.jsx";
@@ -21,8 +20,7 @@ import { AuthContext } from "../../../setup/auth-context-manager/auth-context-ma
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import LockIcon from "@mui/icons-material/Lock";
 
-const drawerWidth = 280;
-export const DrawerHeader = styled("div")(({ theme }) => ({
+const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
   padding: theme.spacing(0, 1),
@@ -30,7 +28,7 @@ export const DrawerHeader = styled("div")(({ theme }) => ({
   justifyContent: "center",
 }));
 
-const Sidebar = ({ openSidebar }) => {
+const SidePanel = () => {
   const {
     user: { roles },
   } = useContext(AuthContext);
@@ -56,10 +54,7 @@ const Sidebar = ({ openSidebar }) => {
   }, [roles, menus]);
 
   const handleToggle = (menuKey) => {
-    setOpenMenus((prev) => ({
-      ...prev,
-      [menuKey]: !prev[menuKey],
-    }));
+    setOpenMenus((p) => ({ ...p, [menuKey]: !p[menuKey] }));
   };
 
   const MenuList = ({ menu }) => {
@@ -125,34 +120,18 @@ const Sidebar = ({ openSidebar }) => {
   };
 
   return (
-    <Drawer
-      variant="persistent"
-      anchor="left"
-      open={openSidebar}
-      sx={{
-        width: drawerWidth,
-        flexShrink: 0,
-        "& .MuiDrawer-paper": {
-          width: drawerWidth,
-          boxSizing: "border-box",
-        },
-      }}
-    >
+    <div>
       <DrawerHeader>
         <Box
           component="img"
-          sx={{
-            height: 40,
-            cursor: "pointer",
-            ...(!openSidebar && { display: "none" }),
-          }}
+          sx={{ height: 40, cursor: "pointer" }}
           onClick={() => navigate("/dashboard")}
           src={OpenLAPLogo}
           alt="Soco logo"
         />
       </DrawerHeader>
 
-      <Divider sx={{ mb: 1 }} />
+      <Divider />
       <List component="div" disablePadding>
         <ListItemButton
           onClick={() => navigate("/dashboard")}
@@ -167,8 +146,8 @@ const Sidebar = ({ openSidebar }) => {
       {menus.map((menu) => (
         <MenuList menu={menu} key={menu.key} />
       ))}
-    </Drawer>
+    </div>
   );
 };
 
-export default Sidebar;
+export default SidePanel;
