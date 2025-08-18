@@ -14,7 +14,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.1.2.RELEASE</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -43,16 +43,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
@@ -62,40 +52,21 @@
             <artifactId>java-jwt</artifactId>
             <version>4.4.0</version>
         </dependency>
-
         <dependency>
             <groupId>com.github.ude-soco</groupId>
             <artifactId>openlap-official-visualization-template</artifactId>
             <version>1.1.0</version>
         </dependency>
-
         <dependency>
             <groupId>com.github.ude-soco</groupId>
             <artifactId>openlap-official-data-exchange-formats</artifactId>
             <version>1.0.0</version>
         </dependency>
-
         <dependency>
             <groupId>com.github.ude-soco</groupId>
             <artifactId>openlap-official-analytics-method-template</artifactId>
             <version>1.0.0</version>
         </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>com.gitee.ude-soco-openlap</groupId>-->
-<!--            <artifactId>open-lap-analytics-method-template</artifactId>-->
-<!--            <version>v1.0.1</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>com.gitee.ude-soco-openlap</groupId>-->
-<!--            <artifactId>open-lap-data-exchange-formats</artifactId>-->
-<!--            <version>v1.0.0</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>com.gitee.ude-soco-openlap</groupId>-->
-<!--            <artifactId>open-lap-visualization-technique-template</artifactId>-->
-<!--            <version>v1.0.0</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.xeustechnologies</groupId>
             <artifactId>jcl-core</artifactId>
@@ -125,7 +96,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jersey</artifactId>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-remote-shell -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
@@ -171,26 +141,10 @@
             <artifactId>spring-boot-starter-data-mongodb</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.data</groupId>
-            <artifactId>spring-data-mongodb</artifactId>
-            <!--            <version>1.6.0.RELEASE</version>-->
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tomcat.embed</groupId>
-            <artifactId>tomcat-embed-core</artifactId>
-            <version>9.0.90</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>2.10.0</version>
-        </dependency>
-        <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
             <version>5.8.21</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
@@ -205,7 +159,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.13.4.2</version> <!-- Use the latest version compatible with your project -->
+            <version>2.13.4.2</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -221,13 +175,11 @@
             <artifactId>jackson-annotations</artifactId>
             <version>2.13.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>[4.3.6,)</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-collections4 -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-collections4</artifactId>
@@ -238,7 +190,6 @@
             <artifactId>json</artifactId>
             <version>20231013</version>
         </dependency>
-
         <dependency>
             <groupId>org.jboss.spec.javax.transaction</groupId>
             <artifactId>jboss-transaction-api_1.2_spec</artifactId>
@@ -265,11 +216,11 @@
             <artifactId>javafx-controls</artifactId>
             <version>11</version>
         </dependency>
-        <!--        <dependency>-->
-        <!--            <groupId>org.openjfx</groupId>-->
-        <!--            <artifactId>javafx-fxml</artifactId>-->
-        <!--            <version>11</version>-->
-        <!--        </dependency>-->
+        <dependency>
+            <groupId>org.javassist</groupId>
+            <artifactId>javassist</artifactId>
+            <version>3.29.2-GA</version>
+        </dependency>
         <dependency>
             <groupId>nz.ac.waikato.cms.weka</groupId>
             <artifactId>weka-dev</artifactId>
