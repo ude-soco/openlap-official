@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import {
   ListItemIcon,
   ListItemText,
@@ -14,26 +14,15 @@ const TableMenu = ({ state, setState }) => {
   const { setDataset } = useContext(ISCContext);
 
   const handleToggleMenu = () => {
-    setState((prevState) => ({
-      ...prevState,
-      anchorEl: null,
-    }));
+    setState((p) => ({ ...p, anchorEl: null }));
   };
 
   const handleOpenDeleteDialog = () => {
-    setState((prevState) => ({
-      ...prevState,
-      deleteDialog: !prevState.deleteDialog,
-    }));
+    setState((p) => ({ ...p, deleteDialog: !p.deleteDialog }));
   };
 
   const handleDeleteDataset = () => {
-    setDataset((prevState) => ({
-      ...prevState,
-      rows: [],
-      columns: [],
-      file: { name: "" },
-    }));
+    setDataset((p) => ({ ...p, rows: [], columns: [], file: { name: "" } }));
   };
 
   return (

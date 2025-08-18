@@ -29,17 +29,11 @@ const ChangeTypeMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {
   });
 
   const handleColumnDataTypeChangeDialog = () => {
-    setColumnMenu((prevState) => ({
-      ...prevState,
-      columnChangeType: !prevState.columnChangeType,
-    }));
+    setColumnMenu((p) => ({ ...p, columnChangeType: !p.columnChangeType }));
   };
 
   const handleSelectType = (value) => {
-    setState((prevState) => ({
-      ...prevState,
-      typeSelected: value,
-    }));
+    setState((p) => ({ ...p, typeSelected: value }));
   };
 
   const handleConfirmUpdateColumnType = (e) => {

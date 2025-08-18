@@ -1,10 +1,8 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import {
   Button,
   Divider,
   FormControl,
-  Grid,
-  IconButton,
   InputLabel,
   MenuItem,
   Pagination,
@@ -12,7 +10,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Delete as DeleteIcon } from "@mui/icons-material";
+import Grid from "@mui/material/Grid2";
 import { ISCContext } from "../../../../indicator-specification-card.jsx";
 
 const Footer = ({ state, setState }) => {
@@ -20,38 +18,29 @@ const Footer = ({ state, setState }) => {
   const totalPages = Math.ceil(dataset.rows.length / state.pageSize);
 
   const handleDeleteSelectedRows = () => {
-    setDataset((prevState) => ({
-      ...prevState,
-      rows: prevState.rows.filter(
-        (row) => !state.selectionModel.includes(row.id)
-      ),
+    setDataset((p) => ({
+      ...p,
+      rows: p.rows.filter((row) => !state.selectionModel.includes(row.id)),
     }));
-
-    setState((prevState) => ({
-      ...prevState,
-      selectionModel: [],
-    }));
+    setState((p) => ({ ...p, selectionModel: [] }));
   };
 
   const handlePageChange = (event, newPage) => {
-    setState((prevState) => ({
-      ...prevState,
-      page: newPage,
-    }));
+    setState((p) => ({ ...p, page: newPage }));
   };
 
   const handleRowsPerPageChange = (event) => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       pageSize: parseInt(event.target.value, 10),
-      page: 1, // Reset to first page
+      page: 1,
     }));
   };
 
   return (
     <>
       <Grid container>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Divider />
         </Grid>
       </Grid>
@@ -63,43 +52,39 @@ const Footer = ({ state, setState }) => {
         px={2}
         py={2}
       >
-        <Grid item xs>
+        <Grid size="grow">
           <Grid container spacing={1} alignItems="center">
             {state.selectionModel.length !== 0 && (
               <>
-                <Grid item>
-                  <Typography variant="body2">
-                    {state.selectionModel.length} row(s) selected
-                  </Typography>
-                </Grid>
-                <Grid item>
-                  <Tooltip
-                    arrow
-                    title={<Typography>Delete selected rows</Typography>}
+                <Typography variant="body2">
+                  {state.selectionModel.length} row(s) selected
+                </Typography>
+                <Tooltip
+                  arrow
+                  title={<Typography>Delete selected rows</Typography>}
+                >
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    color="error"
+                    onClick={handleDeleteSelectedRows}
                   >
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      color="error"
-                      onClick={handleDeleteSelectedRows}
-                    >
-                      Delete
-                    </Button>
-                  </Tooltip>
-                </Grid>
+                    Delete
+                  </Button>
+                </Tooltip>
               </>
             )}
           </Grid>
         </Grid>
 
-        <Grid item>
+        <Grid size="auto">
           <Pagination
             count={totalPages}
             page={state.page}
             onChange={handlePageChange}
           />
         </Grid>
-        <Grid item xs={2}>
+        <Grid size="auto">
           <FormControl fullWidth size="small">
             <InputLabel sx={{ ml: -0.25 }}>Show rows</InputLabel>
             <Select

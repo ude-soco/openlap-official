@@ -7,9 +7,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Grid,
   TextField,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import { v4 as uuidv4 } from "uuid";
 
 const AddRowDialog = ({ open, toggleOpen }) => {
@@ -24,17 +24,13 @@ const AddRowDialog = ({ open, toggleOpen }) => {
     let { value } = event.target;
     const parsedValue = value === "" ? "" : parseInt(value, 10);
     if ((!isNaN(parsedValue) && parsedValue >= 0) || value === "") {
-      setState((prevState) => ({
-        ...prevState,
-        numberOfRows: parsedValue,
-      }));
+      setState((p) => ({ ...p, numberOfRows: parsedValue }));
     }
   };
 
   const handleAddNewRows = () => {
     const tempColumnData = dataset.columns;
     const existingRowCount = dataset.rows.length;
-
     const newRows = Array.from({ length: state.numberOfRows }, (_, i) => {
       const newRow = { id: uuidv4() };
       tempColumnData.forEach((column) => {
@@ -44,16 +40,8 @@ const AddRowDialog = ({ open, toggleOpen }) => {
       });
       return newRow;
     });
-
-    setDataset((prevState) => ({
-      ...prevState,
-      rows: [...prevState.rows, ...newRows],
-    }));
-
-    enqueueSnackbar("New row(s) added successfully", {
-      variant: "success",
-    });
-
+    setDataset((p) => ({ ...p, rows: [...p.rows, ...newRows] }));
+    enqueueSnackbar("New row(s) added successfully", { variant: "success" });
     toggleOpen();
   };
 
@@ -68,9 +56,7 @@ const AddRowDialog = ({ open, toggleOpen }) => {
               label="Number of rows"
               value={state.numberOfRows}
               type="number"
-              InputLabelProps={{
-                shrink: true,
-              }}
+              InputLabelProps={{ shrink: true }}
               onChange={handleRowNumber}
               variant="outlined"
             />

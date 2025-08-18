@@ -12,21 +12,21 @@ const Visualization = () => {
   const { lockedStep, setLockedStep, visRef } = useContext(ISCContext);
 
   const handleTogglePanel = () => {
-    setLockedStep((prevState) => ({
-      ...prevState,
+    setLockedStep((p) => ({
+      ...p,
       visualization: {
-        ...prevState.visualization,
-        openPanel: !prevState.visualization.openPanel,
+        ...p.visualization,
+        openPanel: !p.visualization.openPanel,
       },
     }));
   };
 
   const handleUnlockDataset = () => {
     handleTogglePanel();
-    setLockedStep((prevState) => ({
-      ...prevState,
+    setLockedStep((p) => ({
+      ...p,
       dataset: {
-        ...prevState.dataset,
+        ...p.dataset,
         locked: false,
         openPanel: true,
         step: "4",
@@ -36,10 +36,10 @@ const Visualization = () => {
 
   const handleUnlockFinalize = () => {
     handleTogglePanel();
-    setLockedStep((prevState) => ({
-      ...prevState,
+    setLockedStep((p) => ({
+      ...p,
       finalize: {
-        ...prevState.finalize,
+        ...p.finalize,
         locked: false,
         openPanel: true,
       },

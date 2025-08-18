@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import {
   Button,
   Dialog,
@@ -22,10 +22,7 @@ const DeleteMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {
   const apiRef = useGridApiContext();
 
   const handleToggleColumnDeleteDialog = () => {
-    setColumnMenu((prevState) => ({
-      ...prevState,
-      columnDelete: !prevState.columnDelete,
-    }));
+    setColumnMenu((p) => ({ ...p, columnDelete: !p.columnDelete }));
   };
 
   const handleConfirmDeleteColumn = () => {
@@ -40,8 +37,8 @@ const DeleteMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {
         return newRow;
       });
 
-      setDataset((prevState) => ({
-        ...prevState,
+      setDataset((p) => ({
+        ...p,
         rows: newColumnData.length === 0 ? [] : newRowData,
         columns: newColumnData,
       }));

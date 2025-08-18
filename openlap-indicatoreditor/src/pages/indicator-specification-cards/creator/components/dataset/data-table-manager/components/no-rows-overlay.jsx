@@ -1,5 +1,5 @@
-import React from "react";
-import { Grid, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 
 const NoRowsOverlay = () => {
   return (
@@ -10,10 +10,11 @@ const NoRowsOverlay = () => {
         alignItems="center"
         sx={{ height: "100%" }}
       >
-        <Grid item>
-          <Typography align="center">No data available.</Typography>
+        <Grid size="auto">
           <Typography align="center">
-            <b>Create a new column</b> to add data to the table
+            No data available.
+            <br />
+            <b>Create a new column</b> to add data to the table.
           </Typography>
         </Grid>
       </Grid>
