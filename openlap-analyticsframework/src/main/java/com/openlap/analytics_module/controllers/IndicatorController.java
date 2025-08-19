@@ -62,10 +62,10 @@ public class IndicatorController {
    */
   @GetMapping("/my/indicator-with-code")
   public ResponseEntity<?> getAllMyIndicators(
-      HttpServletRequest request, @RequestParam(defaultValue = "0") int page) {
+      HttpServletRequest request, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "") String searchText) {
 
     PageImpl<IndicatorWithCodeResponse> allMyIndicators =
-        indicatorService.getAllMyIndicatorsForCompositeSelection(request, page);
+        indicatorService.getAllMyIndicatorsForCompositeSelection(request, page, searchText);
     String message =
         allMyIndicators.getContent().isEmpty() ? "No indicators found." : "Indicators found.";
     HttpStatus status = HttpStatus.OK;

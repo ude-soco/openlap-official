@@ -18,8 +18,21 @@ const CompositeIndicator = () => {
       ? { ...JSON.parse(savedState).indicator }
       : {
           myIndicators: {
-            params: { page: 0 },
+            params: { page: 0, searchText: "" },
             list: { content: [], totalPages: 1 },
+            previewModal: {
+              isPreviewModalOpen: false,
+              previewIndicator: {
+                name: "",
+                type: "",
+                createdOn: "",
+                createdBy: "",
+                previewData: {
+                  displayCode: [],
+                  scriptData: "",
+                },
+              },
+            },
           },
           selectedIndicators: [],
           indicatorName: "",

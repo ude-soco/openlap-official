@@ -1,8 +1,14 @@
 import React, { useContext } from "react";
 import {
   Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   Paper,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -17,9 +23,52 @@ import PreviewIcon from "@mui/icons-material/Preview";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { CompositeContext } from "../../../composite-indicator";
 import { handleDisplayType } from "../../../../../dashboard/utils/utils";
+import ChartPreview from "../../../../components/chart-preview";
 
 export const SelectedIndicatorsTable = () => {
-  const { indicator } = useContext(CompositeContext);
+  const { indicator, setIndicator } = useContext(CompositeContext);
+
+  const handleOpenPreview = (indicator) => {
+    setIndicator((p) => ({
+      ...p,
+      myIndicators: {
+        ...p.myIndicators,
+        previewModal: {
+          ...p.myIndicators.previewModal,
+          isPreviewModalOpen: true,
+          previewIndicator: indicator,
+        },
+      },
+    }));
+  };
+
+  const handleClosePreview = () => {
+    setIndicator((p) => ({
+      ...p,
+      myIndicators: {
+        ...p.myIndicators,
+        previewModal: {
+          ...p.myIndicators.previewModal,
+          isPreviewModalOpen: false,
+          previewIndicator: {
+            previewData: {
+              displayCode: [],
+              scriptData: "",
+            },
+          },
+        },
+      },
+    }));
+  };
+
+  const handleDeselectIndicator = (indicatorId) => {
+    setIndicator((p) => ({
+      ...p,
+      selectedIndicators: p.selectedIndicators.filter(
+        (selected) => selected.id !== indicatorId
+      ),
+    }));
+  };
 
   // * Helper functions
   function toSentenceCase(str) {
@@ -34,6 +83,7 @@ export const SelectedIndicatorsTable = () => {
       year: "numeric",
     });
   }
+
   return (
     <>
       <TableContainer component={Paper} elevation={0} variant="outlined">
@@ -65,16 +115,14 @@ export const SelectedIndicatorsTable = () => {
               indicator.selectedIndicators?.map((indicator) => (
                 <React.Fragment key={indicator.id}>
                   <TableRow
-                    //   onMouseEnter={() => handleOnHoverIndicator(indicator.id)}
                     hover
                     sx={{
-                      cursor: "pointer",
                       position: "relative",
                       "&:hover .hover-actions": { opacity: 1 },
                       "&:hover .time-text": { opacity: 0 },
                     }}
                   >
-                    <TableCell onClick={() => handlePreview(indicator.id)}>
+                    <TableCell>
                       <Grid container justifyContent="space-between">
                         <Grid size="grow">
                           <Typography component="span">
@@ -110,29 +158,12 @@ export const SelectedIndicatorsTable = () => {
                                 <IconButton
                                   size="small"
                                   color="primary"
-                                  // onClick={() => handlePreview(indicator.id)}
-                                  // disabled={state.isLoading.status}
+                                  onClick={() => handleOpenPreview(indicator)}
                                 >
                                   <PreviewIcon />
                                 </IconButton>
                               </span>
                             </Tooltip>
-
-                            {/* <Tooltip
-                                arrow
-                                title={<Typography>Edit indicator</Typography>}
-                              >
-                                <span>
-                                  <IconButton
-                                    size="small"
-                                    color="primary"
-                                    onClick={handleEditIndicator}
-                                    disabled={state.isLoading.status}
-                                  >
-                                    <EditIcon />
-                                  </IconButton>
-                                </span>
-                              </Tooltip> */}
 
                             <Tooltip
                               arrow
@@ -144,8 +175,9 @@ export const SelectedIndicatorsTable = () => {
                                 <IconButton
                                   size="small"
                                   color="error"
-                                  // onClick={handleToggleDelete}
-                                  // disabled={state.isLoading.status}
+                                  onClick={() =>
+                                    handleDeselectIndicator(indicator.id)
+                                  }
                                 >
                                   <DeleteIcon />
                                 </IconButton>
@@ -162,6 +194,67 @@ export const SelectedIndicatorsTable = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      <Dialog
+        fullWidth
+        maxWidth="md"
+        open={indicator.myIndicators.previewModal.isPreviewModalOpen}
+        onClose={handleClosePreview}
+      >
+        <DialogTitle>Preview Indicator</DialogTitle>
+        <DialogContent>
+          <Grid container>
+            <Grid size={{ xs: 12 }}>
+              {indicator.myIndicators.previewModal.previewIndicator.previewData
+                .displayCode.length === 0 ? (
+                <Skeleton variant="rectangular" height={200} width="100%" />
+              ) : (
+                <>
+                  <Grid container direction="column" spacing={0}>
+                    <Typography variant="h6">
+                      {
+                        indicator.myIndicators.previewModal.previewIndicator
+                          .name
+                      }
+                    </Typography>
+                    <Typography variant="body2">
+                      {handleDisplayType(
+                        indicator.myIndicators.previewModal.previewIndicator
+                          .type
+                      )}{" "}
+                      ● Created on:{" "}
+                      {changeTimeFormat(
+                        indicator.myIndicators.previewModal.previewIndicator
+                          .createdOn
+                      )}{" "}
+                      ● Created by:{" "}
+                      {
+                        indicator.myIndicators.previewModal.previewIndicator
+                          .createdBy
+                      }
+                    </Typography>
+                  </Grid>
+                  <ChartPreview
+                    previewData={
+                      indicator.myIndicators.previewModal.previewIndicator
+                        .previewData
+                    }
+                  />
+                </>
+              )}
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={handleClosePreview}
+            autoFocus
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

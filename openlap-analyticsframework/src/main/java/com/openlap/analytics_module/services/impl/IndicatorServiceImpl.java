@@ -94,14 +94,24 @@ public class IndicatorServiceImpl implements IndicatorService {
 
   @Override
   public PageImpl<IndicatorWithCodeResponse> getAllMyIndicatorsForCompositeSelection(
-      HttpServletRequest request, int page) {
+      HttpServletRequest request, int page, String searchTerm) {
+
     User createdBy = tokenService.getUserFromToken(request);
-    log.info("Looking up indicators for composite selection");
+    log.info("Looking up indicators for composite selection, searchTerm={}", searchTerm);
+
     Pageable pageable = PageRequest.of(page, 2);
     try {
-      Page<Indicator> foundIndicatorPage =
-          indicatorRepository.findBasicIndicatorByCreatedBy_Id(
-              new ObjectId(createdBy.getId()), pageable);
+      Page<Indicator> foundIndicatorPage;
+      if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+        foundIndicatorPage =
+            indicatorRepository.findBasicIndicatorByCreatedBy_IdAndNameLike(
+                new ObjectId(createdBy.getId()), searchTerm, pageable);
+      } else {
+        foundIndicatorPage =
+            indicatorRepository.findBasicIndicatorByCreatedBy_Id(
+                new ObjectId(createdBy.getId()), pageable);
+      }
+
       return new PageImpl<>(
           getIndicatorWithCodeResponses(foundIndicatorPage, false),
           pageable,
