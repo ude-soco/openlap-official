@@ -30,18 +30,14 @@ const ChartPreview = ({ previewData }) => {
   return (
     <Grid
       container
-      component={Paper}
-      variant="outlined"
       justifyContent="center"
       sx={{ backgroundColor: "white", p: 3 }}
     >
-      {
-        React.isValidElement(firstCode) ? (
-          firstCode // render element as-is
-        ) : typeof firstCode === "string" ? (
-          <span dangerouslySetInnerHTML={{ __html: firstCode }} />
-        ) : null // skip if it's some unexpected object
-      }
+      {React.isValidElement(firstCode) ? (
+        firstCode
+      ) : typeof firstCode === "string" ? (
+        <span dangerouslySetInnerHTML={{ __html: firstCode }} />
+      ) : null}
     </Grid>
   );
 };
