@@ -49,7 +49,7 @@ export default function SpecifyGoal() {
   return (
     <>
       <Grid container justifyContent="center" spacing={2}>
-        <Grid size={{ xs: 12, md: 8 }}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Grid
             container
             component={Paper}

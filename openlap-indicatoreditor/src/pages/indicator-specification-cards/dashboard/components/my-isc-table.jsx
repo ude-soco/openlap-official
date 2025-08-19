@@ -172,7 +172,7 @@ export default function MyIscTable() {
   };
 
   const handleToggleSearch = () => {
-    setState((p) => ({ ...p, toggleSearch: !p.toggleSearch }));
+    setState((p) => ({ ...p, searchTerm: "", toggleSearch: !p.toggleSearch }));
   };
 
   const handleSearchTerm = (event) => {
@@ -227,7 +227,7 @@ export default function MyIscTable() {
                       <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
                       {state.toggleSearch ? (
                         <>
-                          <Typography>Search for ISC</Typography>
+                          <Typography>Search</Typography>
                           <Tooltip
                             title={<Typography>Search for ISC</Typography>}
                           >
@@ -246,8 +246,8 @@ export default function MyIscTable() {
                         <>
                           <Grid>
                             <TextField
-                              size="small"
                               autoFocus
+                              size="small"
                               placeholder="Search for ISC"
                               value={state.searchTerm}
                               onChange={handleSearchTerm}
@@ -272,9 +272,6 @@ export default function MyIscTable() {
                       )}
                     </Grid>
                   </TableCell>
-                  <TableCell align="right" sx={{ width: 200 }}>
-                    Created on
-                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -291,85 +288,87 @@ export default function MyIscTable() {
                       }}
                     >
                       <TableCell onClick={() => handlePreview(indicator.id)}>
-                        <Typography component="span" fontWeight="bold">
-                          {toSentenceCase(indicator.indicatorName)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography
-                          className="time-text"
-                          sx={{
-                            transition: "opacity 0.2s ease-in-out",
-                            textAlign: "right",
-                          }}
-                        >
-                          {changeTimeFormat(indicator.createdOn)}
-                        </Typography>
-
-                        <Box
-                          className="hover-actions"
-                          sx={{
-                            position: "absolute",
-                            right: 0,
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                            display: "flex",
-                            gap: 1,
-                            opacity: 0,
-                            transition: "opacity 0.2s ease-in-out",
-                            zIndex: 2,
-                            mr: 2,
-                          }}
-                        >
-                          <Tooltip
-                            arrow
-                            title={<Typography>Preview indicator</Typography>}
-                          >
-                            <span>
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={() => handlePreview(indicator.id)}
-                                disabled={state.isLoading.status}
-                              >
-                                <PreviewIcon />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                          <Tooltip
-                            arrow
-                            title={<Typography>Edit indicator</Typography>}
-                          >
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={handleEditIndicator}
-                              disabled={state.isLoading.status}
+                        <Grid container justifyContent="space-between">
+                          <Grid size="grow">
+                            <Typography component="span" fontWeight="bold">
+                              {toSentenceCase(indicator.indicatorName)}
+                            </Typography>
+                            <Typography variant="body2">
+                              Created on:{" "}
+                              {changeTimeFormat(indicator.createdOn)}
+                            </Typography>
+                          </Grid>
+                          <Grid size="auto">
+                            <Box
+                              className="hover-actions"
+                              sx={{
+                                position: "absolute",
+                                right: 0,
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                display: "flex",
+                                gap: 1,
+                                opacity: 0,
+                                transition: "opacity 0.2s ease-in-out",
+                                zIndex: 2,
+                                mr: 2,
+                              }}
                             >
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Divider
-                            orientation="vertical"
-                            flexItem
-                            sx={{ mx: 1 }}
-                          />
-                          <Tooltip
-                            arrow
-                            title={<Typography>Delete indicator</Typography>}
-                          >
-                            <span>
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={handleToggleDelete}
-                                disabled={state.isLoading.status}
+                              <Tooltip
+                                arrow
+                                title={
+                                  <Typography>Preview indicator</Typography>
+                                }
                               >
-                                <DeleteIcon />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        </Box>
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={() => handlePreview(indicator.id)}
+                                    disabled={state.isLoading.status}
+                                  >
+                                    <PreviewIcon />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                              <Tooltip
+                                arrow
+                                title={<Typography>Edit indicator</Typography>}
+                              >
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={handleEditIndicator}
+                                  disabled={state.isLoading.status}
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              </Tooltip>
+                              <Divider
+                                orientation="vertical"
+                                flexItem
+                                sx={{ mx: 1 }}
+                              />
+                              <Tooltip
+                                arrow
+                                title={
+                                  <Typography>Delete indicator</Typography>
+                                }
+                              >
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={handleToggleDelete}
+                                    disabled={state.isLoading.status}
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                            </Box>
+                          </Grid>
+                        </Grid>
                       </TableCell>
                     </TableRow>
                     {state.isLoading.status &&

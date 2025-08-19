@@ -12,10 +12,10 @@ import {
   Typography,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import VisualizationDescription from "./visualization-description.jsx";
+import VisualizationDescription from "./visualization-description";
 import RecommendIcon from "@mui/icons-material/Recommend";
-import { DataTypes, visualizations } from "../../../../utils/data/config.js";
-import { ISCContext } from "../../../../indicator-specification-card.jsx";
+import { DataTypes, visualizations } from "../../../../utils/data/config";
+import { ISCContext } from "../../../../indicator-specification-card";
 
 const VisualizationFilter = () => {
   const { dataset, visRef, setVisRef } = useContext(ISCContext);
@@ -34,17 +34,9 @@ const VisualizationFilter = () => {
     localStorage.removeItem("categories");
     localStorage.removeItem("series");
     if (visRef.chart.type !== chart.type) {
-      setVisRef((prevState) => ({
-        ...prevState,
-        chart: chart,
-      }));
+      setVisRef((p) => ({ ...p, chart: chart }));
     } else {
-      setVisRef((prevState) => ({
-        ...prevState,
-        chart: {
-          type: "",
-        },
-      }));
+      setVisRef((p) => ({ ...p, chart: { type: "" } }));
     }
   };
 
@@ -87,10 +79,7 @@ const VisualizationFilter = () => {
 
   useEffect(() => {
     if (visRef.filter.type === "") {
-      setState((prevState) => ({
-        ...prevState,
-        visualizationList: visualizations,
-      }));
+      setState((p) => ({ ...p, visualizationList: visualizations }));
     } else {
       let tempVisualizationList = [];
       visualizations.forEach((visualization) => {
@@ -98,17 +87,14 @@ const VisualizationFilter = () => {
           tempVisualizationList.push(visualization);
         }
       });
-      setState((prevState) => ({
-        ...prevState,
-        visualizationList: tempVisualizationList,
-      }));
+      setState((p) => ({ ...p, visualizationList: tempVisualizationList }));
     }
   }, [visRef.filter.type]);
 
   useEffect(() => {
-    setState((prevState) => ({
-      ...prevState,
-      recommendation: checkRecommendation(prevState.visualizationList),
+    setState((p) => ({
+      ...p,
+      recommendation: checkRecommendation(p.visualizationList),
     }));
   }, [dataset.columns]);
 
@@ -186,7 +172,8 @@ const VisualizationFilter = () => {
                           item
                           xs={6}
                           sm={4}
-                          md={2}
+                          md={3}
+                          lg={2}
                           sx={{ cursor: "pointer" }}
                           onClick={() =>
                             handleSelectVisualization(visualization)

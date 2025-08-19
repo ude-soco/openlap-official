@@ -253,7 +253,7 @@ const IscPreview = () => {
                           <Chip label={requirements.goalType?.category} />
                         </Grid>
                       </Grid>
-                      <Grid size={{ xs: 12, md: 8 }}>
+                      <Grid size={{ xs: 12, lg: 8 }}>
                         <Typography variant="overline">
                           I am interested in (question)
                         </Typography>

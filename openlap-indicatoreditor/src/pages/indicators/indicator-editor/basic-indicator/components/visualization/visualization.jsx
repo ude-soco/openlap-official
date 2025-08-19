@@ -178,10 +178,10 @@ export default function Visualization() {
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12 }}>
                   <Grid container spacing={2} justifyContent="center">
-                    <Grid size={{ xs: 12, md: 8 }}>
+                    <Grid size={{ xs: 12, lg: 8 }}>
                       <LibrarySelection />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 8 }}>
+                    <Grid size={{ xs: 12, lg: 8 }}>
                       {visualization.selectedLibrary.id ? (
                         visualization.typeList.length > 0 ? (
                           <TypeSelection />
