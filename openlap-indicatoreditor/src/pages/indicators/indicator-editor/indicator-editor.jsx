@@ -32,7 +32,9 @@ const IndicatorEditor = () => {
   const handleContinueEditing = () => {
     if (state.indicatorInProgress) {
       let route;
-      switch (JSON.parse(sessionStorage.getItem(SESSION_INDICATOR)).indicator.type) {
+      switch (
+        JSON.parse(sessionStorage.getItem(SESSION_INDICATOR)).indicator.type
+      ) {
         case "BASIC":
           navigate("/indicator/editor/basic");
           break;
@@ -52,8 +54,6 @@ const IndicatorEditor = () => {
     handleClearSession();
     navigate(link);
   };
-
-  console.log(state.indicatorInProgress);
 
   return (
     <>
