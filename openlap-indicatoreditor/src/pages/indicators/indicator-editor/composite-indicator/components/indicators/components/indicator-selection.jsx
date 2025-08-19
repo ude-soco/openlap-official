@@ -1,23 +1,20 @@
 import { useContext, useEffect, useState } from "react";
-import Grid from "@mui/material/Grid2";
-import SearchIcon from "@mui/icons-material/Search";
-import CheckIcon from "@mui/icons-material/Check";
-import { requestAllMyIndicatorsWithCode } from "../utils/indicators-api";
-import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
-import { useSnackbar } from "notistack";
-import { CompositeContext } from "../../../composite-indicator";
 import {
   Button,
   CircularProgress,
   Pagination,
-  Paper,
   Skeleton,
   TextField,
   Typography,
 } from "@mui/material";
-import ChartPreview from "../../../../components/chart-preview";
-import { handleDisplayType } from "../../../../../dashboard/utils/utils";
+import Grid from "@mui/material/Grid2";
+import SearchIcon from "@mui/icons-material/Search";
+import { requestAllMyIndicatorsWithCode } from "../utils/indicators-api";
+import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
+import { useSnackbar } from "notistack";
+import { CompositeContext } from "../../../composite-indicator";
 import { useNavigate } from "react-router-dom";
+import SelectionCard from "./selection-card";
 
 const IndicatorSelection = () => {
   const { api } = useContext(AuthContext);
@@ -50,28 +47,6 @@ const IndicatorSelection = () => {
     } finally {
       setState((p) => ({ ...p, isLoadingMyIndicators: false }));
     }
-  };
-
-  const handleToggleSelectIndicator = (indicator) => {
-    if (isSelected(indicator.id)) {
-      setIndicator((p) => ({
-        ...p,
-        selectedIndicators: p.selectedIndicators.filter(
-          (selected) => selected.id !== indicator.id
-        ),
-      }));
-      return;
-    }
-    setIndicator((p) => ({
-      ...p,
-      selectedIndicators: [...p.selectedIndicators, indicator],
-    }));
-  };
-
-  const isSelected = (indicatorId) => {
-    return indicator.selectedIndicators.some(
-      (selected) => selected.id === indicatorId
-    );
   };
 
   const handleCreateNew = () => {
@@ -111,19 +86,9 @@ const IndicatorSelection = () => {
     loadMyIndicatorList(params);
   };
 
-  // * Helper function
-  function changeTimeFormat(time) {
-    return new Date(time).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  }
-
   return (
-    <Grid container spacing={2}>
+    <Grid container spacing={2} sx={{pt: 2}}>
       <Grid size={{ xs: 12 }}>
-        <Typography gutterBottom>Select indicators to combine</Typography>
         <TextField
           autoFocus
           fullWidth
@@ -141,19 +106,20 @@ const IndicatorSelection = () => {
           }}
         />
       </Grid>
-      <Grid size={{ xs: 12 }}>
-        <Grid container>
-          {state.isLoadingMyIndicators &&
-            Array.from({ length: 2 }).map((_, index) => (
+      {state.isLoadingMyIndicators && (
+        <Grid size={{ xs: 12 }}>
+          <Grid container>
+            {Array.from({ length: 2 }).map((_, index) => (
               <Grid size={{ xs: 12, lg: 6 }} key={index}>
                 <Skeleton variant="rectangle" height={550} width="100%" />
               </Grid>
             ))}
+          </Grid>
         </Grid>
-      </Grid>
-      <Grid size={{ xs: 12 }}>
-        {!state.isLoadingMyIndicators &&
-          indicator.myIndicators.list.content.length === 0 && (
+      )}
+      {!state.isLoadingMyIndicators &&
+        indicator.myIndicators.list.content.length === 0 && (
+          <Grid size={{ xs: 12 }}>
             <Grid
               container
               direction="column"
@@ -173,8 +139,8 @@ const IndicatorSelection = () => {
                 Create New
               </Button>
             </Grid>
-          )}
-      </Grid>
+          </Grid>
+        )}
       <Grid size={{ xs: 12 }}>
         <Grid
           container
@@ -186,36 +152,8 @@ const IndicatorSelection = () => {
           }}
         >
           {!indicator.myIndicators.previewModal.isPreviewModalOpen &&
-            indicator.myIndicators.list.content.map((indicator) => (
-              <Grid size="auto" key={indicator.id} sx={{ flexShrink: 0 }}>
-                <Grid
-                  container
-                  component={Paper}
-                  variant="outlined"
-                  direction="column"
-                  spacing={2}
-                  sx={{ p: 3 }}
-                >
-                  <Grid container direction="column" spacing={0}>
-                    <Typography variant="h6">{indicator.name}</Typography>
-                    <Typography variant="body2">
-                      {handleDisplayType(indicator.type)} ● Created on:{" "}
-                      {changeTimeFormat(indicator.createdOn)} ● Created by:{" "}
-                      {indicator.createdBy}
-                    </Typography>
-                  </Grid>
-                  <ChartPreview previewData={indicator.previewData} />
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    startIcon={isSelected(indicator.id) && <CheckIcon />}
-                    color={isSelected(indicator.id) ? "success" : "primary"}
-                    onClick={() => handleToggleSelectIndicator(indicator)}
-                  >
-                    {isSelected(indicator.id) ? "Selected" : "Select"}
-                  </Button>
-                </Grid>
-              </Grid>
+            indicator.myIndicators.list.content.map((item) => (
+              <SelectionCard cardItem={item} />
             ))}
         </Grid>
       </Grid>
