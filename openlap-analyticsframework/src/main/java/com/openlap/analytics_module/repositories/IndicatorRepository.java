@@ -18,8 +18,14 @@ public interface IndicatorRepository extends MongoRepository<Indicator, String> 
   @Query("{ 'createdBy.$id' : ?0, 'indicatorType': 'BASIC' }")
   Page<Indicator> findBasicIndicatorByCreatedBy_Id(ObjectId userId, Pageable pageable);
 
-  @Query("{ 'createdBy.$id': ?0, 'analyticsTechniqueReference.analyticsTechnique.$id': ?1, '_id' : { $ne : ?2 }  }")
-//  @Query("{ 'createdBy.$id': ?0, 'analyticsTechniqueReference.analyticsTechnique.$id': ?1 }")
+  @Query(
+      "{ 'createdBy.$id' : ?0, 'indicatorType': 'BASIC', 'name': { $regex: ?1, $options: 'i' } }")
+  Page<Indicator> findBasicIndicatorByCreatedBy_IdAndNameLike(
+      ObjectId userId, String name, Pageable pageable);
+
+  @Query(
+      "{ 'createdBy.$id': ?0, 'analyticsTechniqueReference.analyticsTechnique.$id': ?1, '_id' : { $ne : ?2 }  }")
+  //  @Query("{ 'createdBy.$id': ?0, 'analyticsTechniqueReference.analyticsTechnique.$id': ?1 }")
   Page<Indicator> findByCreatedByAndAnalyticsTechniqueId(
       ObjectId userId, ObjectId analyticsTechniqueId, ObjectId excludeId, Pageable pageable);
 }

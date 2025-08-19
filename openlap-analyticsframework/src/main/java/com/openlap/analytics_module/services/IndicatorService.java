@@ -13,39 +13,39 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.ui.Model;
 
 public interface IndicatorService {
-	Page<IndicatorResponse> getAllMyIndicators(
-			HttpServletRequest request, int page, int size, String sortBy, String sortDirection);
+  Page<IndicatorResponse> getAllMyIndicators(
+      HttpServletRequest request, int page, int size, String sortBy, String sortDirection);
 
-	PageImpl<IndicatorWithCodeResponse> getAllMyIndicatorsForCompositeSelection(
-			HttpServletRequest request, int page);
+  PageImpl<IndicatorWithCodeResponse> getAllMyIndicatorsForCompositeSelection(
+      HttpServletRequest request, int page, String searchText);
 
-	IndicatorFullDetailResponse getIndicatorById(String indicatorId);
+  IndicatorFullDetailResponse getIndicatorById(String indicatorId);
 
-	String getInteractiveIndicatorTemplate(String indicatorId, Model model);
+  String getInteractiveIndicatorTemplate(String indicatorId, Model model);
 
-	List<IndicatorWithCodeResponse> getIndicatorDetailResponseList(List<Indicator> indicators);
+  List<IndicatorWithCodeResponse> getIndicatorDetailResponseList(List<Indicator> indicators);
 
-	String requestInteractiveIndicatorCode(String indicatorId, HttpServletRequest request);
+  String requestInteractiveIndicatorCode(String indicatorId, HttpServletRequest request);
 
-	void copyMyExistingIndicator(HttpServletRequest request, String indicatorId);
+  void copyMyExistingIndicator(HttpServletRequest request, String indicatorId);
 
-	void deleteExistingIndicator(HttpServletRequest request, String indicatorId);
+  void deleteExistingIndicator(HttpServletRequest request, String indicatorId);
 
-	String getInteractiveQuestionCode(String questionId, Model model);
+  String getInteractiveQuestionCode(String questionId, Model model);
 
-	Page<IndicatorResponse> getAllIndicators(int page, int size, String sortBy, String sortDirection);
+  Page<IndicatorResponse> getAllIndicators(int page, int size, String sortBy, String sortDirection);
 
-	PageImpl<CompatibleIndicatorsCompositeResponse> findCompatibleIndicators(
-			HttpServletRequest request, String indicatorId, int page);
+  PageImpl<CompatibleIndicatorsCompositeResponse> findCompatibleIndicators(
+      HttpServletRequest request, String indicatorId, int page);
 
-	String generateIndicatorCode(String indicatorId, Boolean uriCode);
+  String generateIndicatorCode(String indicatorId, Boolean uriCode);
 
-	String validatePreviewBeforeDuplicationBasicIndicator(
-			HttpServletRequest request, String indicatorId);
+  String validatePreviewBeforeDuplicationBasicIndicator(
+      HttpServletRequest request, String indicatorId);
 
-	void duplicateIndicator(HttpServletRequest request, String indicatorId);
+  void duplicateIndicator(HttpServletRequest request, String indicatorId);
 
-	void saveIndicatorDraft(HttpServletRequest request, IndicatorDraftRequest indicatorDraftRequest);
+  void saveIndicatorDraft(HttpServletRequest request, IndicatorDraftRequest indicatorDraftRequest);
 
-	IndicatorsAnalyzedResponse getAnalyzedIndicators( IndicatorsToAnalyzeRequest indicatorList);
+  IndicatorsAnalyzedResponse getAnalyzedIndicators(IndicatorsToAnalyzeRequest indicatorList);
 }
