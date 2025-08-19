@@ -1,4 +1,4 @@
-import { Box, IconButton, Link, Tooltip, Typography } from "@mui/material";
+import { IconButton, Link, Tooltip, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import YouTubeIcon from "@mui/icons-material/YouTube";
 import GitHubIcon from "@mui/icons-material/GitHub";
@@ -9,10 +9,15 @@ const Footer = () => {
   const { darkMode } = useContext(CustomThemeContext);
   return (
     <>
-      <Grid container justifyContent="space-between" alignItems="center">
-        <Grid item xs sx={{ zIndex: 1 }}>
+      <Grid
+        container
+        justifyContent="space-between"
+        alignItems="center"
+        spacing={1}
+      >
+        <Grid size={{ xs: 8 }}>
           <Typography variant="body2">
-            {" Copyright @ "}
+            {"Copyright @ "}
             <Link
               color="inherit"
               href="https://www.uni-due.de/soco"
@@ -24,11 +29,8 @@ const Footer = () => {
             {"."}
           </Typography>
         </Grid>
-        <Grid item>
-          <Grid container alignItems="center">
-            <Typography sx={{ mr: 1 }} variant="body2">
-              Follow us
-            </Typography>
+        <Grid size="auto">
+          <Grid container spacing={1} alignItems="center">
             <Tooltip title="Visit our YouTube channel">
               <IconButton
                 sx={{ color: "red" }}

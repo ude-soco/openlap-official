@@ -10,12 +10,10 @@ import {
   Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { requestUserDetails } from "../account-manager/utils/account-manager-api.js";
-import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
-
+import { requestUserDetails } from "../account-manager/utils/account-manager-api";
+import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import { useNavigate } from "react-router-dom";
-import RoleTypes from "../account-manager/utils/enums/role-types.js";
-import homeData from "./utils/home-data.js";
+import homeData from "./utils/home-data";
 
 export default function Home() {
   const {
@@ -25,11 +23,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [state, setState] = useState({
     loading: true,
-    user: {
-      name: "",
-      lrsProviderList: [],
-      lrsConsumerList: [],
-    },
+    user: { name: "", lrsProviderList: [], lrsConsumerList: [] },
   });
 
   useEffect(() => {

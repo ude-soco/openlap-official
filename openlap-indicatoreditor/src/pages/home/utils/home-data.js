@@ -11,7 +11,7 @@ const homeData = [
     description:
       "Helps to prototype your analysis and create visualization in a few steps and with beginner friendly interface.",
     image: PrototypeImage,
-    disabledRoles: [],
+    disabledRoles: [RoleTypes["data provider"]],
     buttons: [
       {
         id: uuidv4(),
@@ -35,7 +35,7 @@ const homeData = [
     description:
       "Helps to analysis real data, create and share indicators with an intuitive interface.",
     image: PrototypeImage,
-    disabledRoles: [RoleTypes.userWithoutLRS],
+    disabledRoles: [RoleTypes.userWithoutLRS, RoleTypes["data provider"]],
     buttons: [
       {
         id: uuidv4(),
