@@ -27,6 +27,7 @@ const CompositeIndicator = () => {
                 type: "",
                 createdOn: "",
                 createdBy: "",
+                analyticsMethod: { name: "" },
                 previewData: {
                   displayCode: [],
                   scriptData: "",
@@ -39,10 +40,10 @@ const CompositeIndicator = () => {
           type: "COMPOSITE",
         };
   });
-  const [analysis, setAnalysis] = useState(() => {
+  const [columnsMerge, setColumnsMerge] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION_INDICATOR);
     return savedState
-      ? { ...JSON.parse(savedState).analysis }
+      ? { ...JSON.parse(savedState).columnsMerge }
       : {
           columnToMerge: {},
           indicators: [],
@@ -77,7 +78,7 @@ const CompositeIndicator = () => {
 
   const prevDependencies = useRef({
     lockedStep,
-    analysis,
+    columnsMerge,
     visualization,
     indicator,
   });
@@ -86,7 +87,7 @@ const CompositeIndicator = () => {
     const intervalId = setInterval(() => {
       let session = {
         lockedStep,
-        analysis,
+        columnsMerge,
         visualization,
         indicator,
       };
@@ -96,7 +97,7 @@ const CompositeIndicator = () => {
       // Check if any of the dependencies have changed
       if (
         prevDependencies.current.lockedStep !== lockedStep ||
-        prevDependencies.current.analysis !== analysis ||
+        prevDependencies.current.analysis !== columnsMerge ||
         prevDependencies.current.visualization !== visualization ||
         prevDependencies.current.indicator !== indicator
       ) {
@@ -105,24 +106,24 @@ const CompositeIndicator = () => {
 
       prevDependencies.current = {
         lockedStep,
-        analysis,
+        columnsMerge,
         visualization,
         indicator,
       };
     }, 5000);
 
     return () => clearInterval(intervalId);
-  }, [lockedStep, analysis, visualization, indicator]);
+  }, [lockedStep, columnsMerge, visualization, indicator]);
 
   return (
     <CompositeContext.Provider
       value={{
         lockedStep,
-        analysis,
+        columnsMerge,
         visualization,
         indicator,
         setLockedStep,
-        setAnalysis,
+        setColumnsMerge,
         setVisualization,
         setIndicator,
       }}

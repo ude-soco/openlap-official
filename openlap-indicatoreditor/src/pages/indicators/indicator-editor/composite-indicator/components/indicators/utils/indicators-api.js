@@ -23,6 +23,7 @@ export const requestAllMyIndicatorsWithCode = async (api, params = {}) => {
         createdOn: tempContent.createdOn,
         name: tempContent.name,
         type: tempContent.type,
+        analyticsMethod: tempContent.analyticsTechnique,
         previewData: {
           displayCode,
           scriptData,

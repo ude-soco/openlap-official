@@ -144,6 +144,7 @@ public class IndicatorServiceImpl implements IndicatorService {
                 indicator.getCreatedBy().getName(),
                 indicator.getName(),
                 indicator.getCreatedOn(),
+                indicator.getAnalyticsTechniqueReference().getAnalyticsTechnique(),
                 generateIndicatorCode(indicator.getId(), false)));
       }
       return indicatorResponses;
@@ -452,6 +453,7 @@ public class IndicatorServiceImpl implements IndicatorService {
               indicator.getCreatedBy().getName(),
               indicator.getName(),
               indicator.getCreatedOn(),
+              indicator.getAnalyticsTechniqueReference().getAnalyticsTechnique(),
               generateIndicatorCode(indicator.getId(), true)));
     }
     return indicatorWithCodeResponses;

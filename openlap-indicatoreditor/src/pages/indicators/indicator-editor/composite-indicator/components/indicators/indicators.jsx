@@ -8,7 +8,24 @@ import IndicatorSelection from "./components/indicator-selection";
 import { SelectedIndicatorsTable } from "./components/selected-indicators-table";
 
 const Indicators = () => {
-  const { lockedStep } = useContext(CompositeContext);
+  const { lockedStep, indicator, setLockedStep } = useContext(CompositeContext);
+
+  const handleCheckDisabled = () => {
+    return indicator.selectedIndicators.length < 2;
+  };
+
+  const handleUnlockPath = () => {
+    setLockedStep((p) => ({
+      ...p,
+      indicators: { ...p.indicators, openPanel: false },
+      analysis: {
+        ...p.analysis,
+        locked: false,
+        openPanel: p.analysis.locked ? true : false,
+      },
+    }));
+  };
+
   return (
     <>
       <CustomPaper sx={{ p: 2 }}>
@@ -41,10 +58,10 @@ const Indicators = () => {
                           <Button
                             fullWidth
                             variant="contained"
-                            // disabled={handleCheckDisabled()}
-                            // onClick={handleUnlockPath}
+                            disabled={handleCheckDisabled()}
+                            onClick={handleUnlockPath}
                           >
-                            Next
+                            {lockedStep.analysis.locked ? "Next" : "Close"}
                           </Button>
                         </Grid>
                       </Grid>
