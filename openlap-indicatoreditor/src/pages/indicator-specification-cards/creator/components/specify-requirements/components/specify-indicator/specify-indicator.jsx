@@ -38,7 +38,7 @@ export default function SpecifyIndicator() {
       <Grid size={{ xs: 12 }}>
         <Divider />
       </Grid>
-      <Grid size={{ xs: 12, md: 8 }}>
+      <Grid size={{ xs: 12, lg: 8 }}>
         <Grid
           container
           component={Paper}

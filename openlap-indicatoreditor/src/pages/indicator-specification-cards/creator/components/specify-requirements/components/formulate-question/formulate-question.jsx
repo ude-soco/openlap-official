@@ -49,7 +49,7 @@ export default function FormulateQuestion() {
         <Grid size={{ xs: 12 }}>
           <Divider />
         </Grid>
-        <Grid size={{ xs: 12, md: 8 }}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Grid
             component={Paper}
             variant="outlined"

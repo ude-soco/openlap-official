@@ -18,7 +18,7 @@ export default function ConfirmQuestion() {
   return (
     <>
       <Grid container justifyContent="center">
-        <Grid size={{ xs: 12, md: 8 }}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Tooltip
             arrow
             title={<Typography>Edit question</Typography>}

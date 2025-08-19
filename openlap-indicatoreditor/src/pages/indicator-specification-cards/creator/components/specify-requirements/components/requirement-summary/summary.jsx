@@ -80,6 +80,7 @@ export default function Summary({
                 if (item.value !== "") {
                   return (
                     <Tooltip
+                      key={index}
                       title={
                         <Typography>
                           {item.value} ({item.type.value})

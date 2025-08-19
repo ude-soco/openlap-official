@@ -273,7 +273,7 @@ const MyIndicatorsTable = () => {
   };
 
   const handleToggleSearch = () => {
-    setState((p) => ({ ...p, toggleSearch: !p.toggleSearch }));
+    setState((p) => ({ ...p, searchTerm: "", toggleSearch: !p.toggleSearch }));
   };
 
   const handleSearchTerm = (event) => {
@@ -327,10 +327,10 @@ const MyIndicatorsTable = () => {
                       <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
                       {state.toggleSearch ? (
                         <>
-                          <Typography>Search for Indicator</Typography>
+                          <Typography>Search</Typography>
                           <Tooltip
                             title={
-                              <Typography>Search for indicator</Typography>
+                              <Typography>Search for indicators</Typography>
                             }
                           >
                             <span>
@@ -374,10 +374,6 @@ const MyIndicatorsTable = () => {
                       )}
                     </Grid>
                   </TableCell>
-
-                  <TableCell align="right" sx={{ width: 200 }}>
-                    Created on
-                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -394,139 +390,140 @@ const MyIndicatorsTable = () => {
                       }}
                     >
                       <TableCell onClick={() => handlePreview(indicator.id)}>
-                        <Typography component="span">
-                          <b>{toSentenceCase(indicator.indicatorName)}</b>
-                          <br />
-                          <Typography component="span" variant="caption">
-                            {handleDisplayType(indicator.type)}
-                          </Typography>
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography
-                          className="time-text"
-                          sx={{
-                            transition: "opacity 0.2s ease-in-out",
-                            textAlign: "right",
-                          }}
-                        >
-                          {changeTimeFormat(indicator.createdOn)}
-                        </Typography>
+                        <Grid container justifyContent="space-between">
+                          <Grid size="grow">
+                            <Typography component="span">
+                              <b>{toSentenceCase(indicator.indicatorName)}</b>
+                              <br />
+                              <Typography component="span" variant="caption">
+                                {handleDisplayType(indicator.type)} ● Created
+                                on: {changeTimeFormat(indicator.createdOn)}
+                              </Typography>
+                            </Typography>
+                          </Grid>
+                          <Grid size="auto">
+                            <Box
+                              className="hover-actions"
+                              sx={{
+                                position: "absolute",
+                                right: 0,
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                display: "flex",
+                                gap: 1,
+                                opacity: 0,
+                                transition: "opacity 0.2s ease-in-out",
+                                zIndex: 2,
+                                mr: 2,
+                              }}
+                            >
+                              <Tooltip
+                                arrow
+                                title={
+                                  <Typography>Preview indicator</Typography>
+                                }
+                              >
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={() => handlePreview(indicator.id)}
+                                    disabled={state.isLoading.status}
+                                  >
+                                    <PreviewIcon />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
 
-                        <Box
-                          className="hover-actions"
-                          sx={{
-                            position: "absolute",
-                            right: 0,
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                            display: "flex",
-                            gap: 1,
-                            opacity: 0,
-                            transition: "opacity 0.2s ease-in-out",
-                            zIndex: 2,
-                            mr: 2,
-                          }}
-                        >
-                          <Tooltip
-                            arrow
-                            title={<Typography>Preview indicator</Typography>}
-                          >
-                            <span>
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={() => handlePreview(indicator.id)}
-                                disabled={state.isLoading.status}
+                              <Tooltip
+                                arrow
+                                title={
+                                  <>
+                                    <Typography gutterBottom>
+                                      Copy ICC code
+                                    </Typography>
+                                    <Typography>
+                                      What's an ICC code?
+                                      <br />
+                                      An Interactive Indicator Code (ICC) is an
+                                      iFrame code snippet you can embed in any
+                                      web application that supports iFrames.
+                                      <br />
+                                      It lets you display real-time analytics
+                                      directly within your website.
+                                    </Typography>
+                                  </>
+                                }
                               >
-                                <PreviewIcon />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={handleCopyEmbedCode}
+                                    disabled={state.isLoading.status}
+                                  >
+                                    <CodeIcon />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
 
-                          <Tooltip
-                            arrow
-                            title={
-                              <>
-                                <Typography gutterBottom>
-                                  Copy ICC code
-                                </Typography>
-                                <Typography>
-                                  What's an ICC code?
-                                  <br />
-                                  An Interactive Indicator Code (ICC) is an
-                                  iFrame code snippet you can embed in any web
-                                  application that supports iFrames.
-                                  <br />
-                                  It lets you display real-time analytics
-                                  directly within your website.
-                                </Typography>
-                              </>
-                            }
-                          >
-                            <span>
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={handleCopyEmbedCode}
-                                disabled={state.isLoading.status}
+                              <Tooltip
+                                arrow
+                                title={<Typography>Edit indicator</Typography>}
                               >
-                                <CodeIcon />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-
-                          <Tooltip
-                            arrow
-                            title={<Typography>Edit indicator</Typography>}
-                          >
-                            <span>
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={handleEditIndicator}
-                                disabled={state.isLoading.status}
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={handleEditIndicator}
+                                    disabled={state.isLoading.status}
+                                  >
+                                    <EditIcon />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                              <Tooltip
+                                arrow
+                                title={
+                                  <Typography>Duplicate indicator</Typography>
+                                }
                               >
-                                <EditIcon />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                          <Tooltip
-                            arrow
-                            title={<Typography>Duplicate indicator</Typography>}
-                          >
-                            <span>
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={handleDuplicateMyIndicator}
-                                disabled={state.isLoading.status}
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={handleDuplicateMyIndicator}
+                                    disabled={state.isLoading.status}
+                                  >
+                                    <ContentCopyIcon />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                              <Divider
+                                orientation="vertical"
+                                flexItem
+                                sx={{ mx: 1 }}
+                              />
+                              <Tooltip
+                                arrow
+                                title={
+                                  <Typography>Delete indicator</Typography>
+                                }
                               >
-                                <ContentCopyIcon />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                          <Divider
-                            orientation="vertical"
-                            flexItem
-                            sx={{ mx: 1 }}
-                          />
-                          <Tooltip
-                            arrow
-                            title={<Typography>Delete indicator</Typography>}
-                          >
-                            <span>
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={handleToggleDelete}
-                                disabled={state.isLoading.status}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        </Box>
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={handleToggleDelete}
+                                    disabled={state.isLoading.status}
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                            </Box>
+                          </Grid>
+                        </Grid>
                       </TableCell>
                     </TableRow>
                     {state.isLoading.status &&

@@ -83,7 +83,7 @@ export default function Analysis() {
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12 }}>
                   <Grid container spacing={2} justifyContent="center">
-                    <Grid size={{ xs: 12, md: 8 }}>
+                    <Grid size={{ xs: 12, lg: 8 }}>
                       <Grid container spacing={3}>
                         <Grid size={{ xs: 12 }}>
                           <AnalysisSelection />

@@ -105,6 +105,7 @@ export default function Home() {
                             {home.buttons.map((button) => (
                               <Button
                                 key={button.id}
+                                fullWidth
                                 variant={button.variant}
                                 startIcon={
                                   button.icon

@@ -62,7 +62,11 @@ const AppRoutes = () => {
                       justifyContent="center"
                     >
                       <Grid size={{ xs: 12 }} sx={{ minHeight: "89vh" }}>
-                        <Outlet />
+                        <Grid container justifyContent="center">
+                          <Grid size={{ xs: 12, xl: 8 }}>
+                            <Outlet />
+                          </Grid>
+                        </Grid>
                       </Grid>
                       <Grid size={{ xs: 12 }}>
                         <Footer />
