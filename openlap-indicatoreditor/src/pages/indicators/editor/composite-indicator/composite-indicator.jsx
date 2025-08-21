@@ -205,21 +205,21 @@ const CompositeIndicator = () => {
                 <SelectionPanel />
               </Grid>
               <Grid item xs={12} xl={4}>
-                <PreviewPanel
+                {/* <PreviewPanel
                   indicator={indicator}
                   changeIndicatorName={handleChangeIndicatorName}
                   handleSaveIndicator={handleSaveNewBasicIndicator}
-                />
+                /> */}
               </Grid>
             </>
           ) : (
             <>
               <Grid item xs={12} xl={4}>
-                <PreviewPanel
+                {/* <PreviewPanel
                   indicator={indicator}
                   changeIndicatorName={handleChangeIndicatorName}
                   handleSaveIndicator={handleSaveNewBasicIndicator}
-                />
+                /> */}
               </Grid>
               <Grid item xs={12} lg={8}>
                 <SelectionPanel />

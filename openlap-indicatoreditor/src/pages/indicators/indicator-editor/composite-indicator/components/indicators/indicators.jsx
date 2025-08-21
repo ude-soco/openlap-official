@@ -18,10 +18,10 @@ const Indicators = () => {
     setLockedStep((p) => ({
       ...p,
       indicators: { ...p.indicators, openPanel: false },
-      analysis: {
-        ...p.analysis,
+      columnsMerge: {
+        ...p.columnsMerge,
         locked: false,
-        openPanel: p.analysis.locked ? true : false,
+        openPanel: p.columnsMerge.locked ? true : false,
       },
     }));
   };
@@ -39,32 +39,28 @@ const Indicators = () => {
               timeout={{ enter: 500, exit: 250 }}
               unmountOnExit
             >
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}>
-                  <Grid container spacing={2} justifyContent="center">
-                    <Grid size={{ xs: 12 }}>
-                      <IndicatorSelection />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <SelectedIndicatorsTable />
-                    </Grid>
+              <Grid container spacing={2} justifyContent="center">
+                <Grid size={{ xs: 12, xl: 10 }}>
+                  <IndicatorSelection />
+                </Grid>
+                <Grid size={{ xs: 12, xl: 10 }}>
+                  <SelectedIndicatorsTable />
+                </Grid>
 
-                    <Grid size={{ xs: 12 }} sx={{ pt: 2 }}>
-                      <Divider />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Grid container justifyContent="center">
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                          <Button
-                            fullWidth
-                            variant="contained"
-                            disabled={handleCheckDisabled()}
-                            onClick={handleUnlockPath}
-                          >
-                            {lockedStep.analysis.locked ? "Next" : "Close"}
-                          </Button>
-                        </Grid>
-                      </Grid>
+                <Grid size={{ xs: 12 }} sx={{ pt: 2 }}>
+                  <Divider />
+                </Grid>
+                <Grid size={{ xs: 12, xl: 10 }}>
+                  <Grid container justifyContent="center">
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        disabled={handleCheckDisabled()}
+                        onClick={handleUnlockPath}
+                      >
+                        {lockedStep.columnsMerge.locked ? "Next" : "Close"}
+                      </Button>
                     </Grid>
                   </Grid>
                 </Grid>

@@ -6,7 +6,7 @@ import TipPopover from "../../../../../../../common/components/tip-popover/tip-p
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button";
 import { ToggleEditButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button";
 
-const IndicatorsSummary = () => {
+const ColumnsMergeSummary = () => {
   const { lockedStep, setLockedStep } = useContext(CompositeContext);
   const [state, setState] = useState({
     tipAnchor: false,
@@ -28,7 +28,7 @@ const IndicatorsSummary = () => {
   const handleTogglePanel = () => {
     setLockedStep((p) => ({
       ...p,
-      indicators: { ...p.indicators, openPanel: !p.indicators.openPanel },
+      columnsMerge: { ...p.columnsMerge, openPanel: !p.columnsMerge.openPanel },
     }));
   };
 
@@ -39,14 +39,14 @@ const IndicatorsSummary = () => {
           <Grid container justifyContent="space-between" spacing={1}>
             <Grid size="grow">
               <Grid container alignItems="center" spacing={1}>
-                <Chip label={lockedStep.indicators.step} color="primary" />
-                <Typography>Indicators</Typography>
+                <Chip label={lockedStep.columnsMerge.step} color="primary" />
+                <Typography>Columns to Merge</Typography>
                 <TipPopover
                   tipAnchor={state.tipAnchor}
                   toggleTipAnchor={handleTipAnchor}
                   description={state.tipDescription}
                 />
-                {!lockedStep.indicators.openPanel && (
+                {!lockedStep.columnsMerge.openPanel && (
                   <ToggleSummaryButton
                     showSelections={state.showSelections}
                     toggleShowSelection={handleToggleShowSelection}
@@ -55,20 +55,20 @@ const IndicatorsSummary = () => {
               </Grid>
             </Grid>
             <ToggleEditButton
-              openPanel={lockedStep.indicators.openPanel}
+              openPanel={lockedStep.columnsMerge.openPanel}
               togglePanel={handleTogglePanel}
             />
           </Grid>
         </Grid>
         <Collapse
-          in={!lockedStep.indicators.openPanel && state.showSelections}
+          in={!lockedStep.columnsMerge.openPanel && state.showSelections}
           timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
           <Grid size={{ xs: 12 }}>
             <Grid container spacing={1} alignItems="center">
-              {/* TODO: Complete Indicators Summary */}
-              <Typography>Indicators Summary</Typography>
+              {/* TODO: Complete Columns Merge Summary */}
+              <Typography>Columns Merge Summary</Typography>
             </Grid>
           </Grid>
         </Collapse>
@@ -77,4 +77,4 @@ const IndicatorsSummary = () => {
   );
 };
 
-export default IndicatorsSummary;
+export default ColumnsMergeSummary;

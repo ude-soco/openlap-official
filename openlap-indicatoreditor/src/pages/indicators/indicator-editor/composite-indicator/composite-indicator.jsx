@@ -5,6 +5,7 @@ import { useSnackbar } from "notistack";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { Breadcrumbs, Link, Typography } from "@mui/material";
 import Indicators from "./components/indicators/indicators";
+import ColumnsMerge from "./components/columns-merge/columns-merge";
 
 export const CompositeContext = createContext(undefined);
 
@@ -45,7 +46,11 @@ const CompositeIndicator = () => {
     return savedState
       ? { ...JSON.parse(savedState).columnsMerge }
       : {
-          columnToMerge: {},
+          indicatorsToAnalyze: {
+            indicators: [],
+            analyticsOutputs: [],
+          },
+          columnToMerge: { id: "" },
           indicators: [],
           analyzedData: {},
         };
@@ -71,7 +76,7 @@ const CompositeIndicator = () => {
       ? { ...JSON.parse(savedState).lockedStep }
       : {
           indicators: { locked: false, openPanel: true, step: "1" },
-          analysis: { locked: true, openPanel: false, step: "2" },
+          columnsMerge: { locked: true, openPanel: false, step: "2" },
           visualization: { locked: true, openPanel: false, step: "3" },
         };
   });
@@ -97,7 +102,7 @@ const CompositeIndicator = () => {
       // Check if any of the dependencies have changed
       if (
         prevDependencies.current.lockedStep !== lockedStep ||
-        prevDependencies.current.analysis !== columnsMerge ||
+        prevDependencies.current.columnsMerge !== columnsMerge ||
         prevDependencies.current.visualization !== visualization ||
         prevDependencies.current.indicator !== indicator
       ) {
@@ -156,6 +161,9 @@ const CompositeIndicator = () => {
         </Breadcrumbs>
         <Grid size={{ xs: 12 }}>
           <Indicators />
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <ColumnsMerge />
         </Grid>
       </Grid>
     </CompositeContext.Provider>
