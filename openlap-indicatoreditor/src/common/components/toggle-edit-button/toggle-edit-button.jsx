@@ -2,15 +2,17 @@ import { Button, Fab, IconButton, Tooltip, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
+import SettingsIcon from "@mui/icons-material/Settings";
 
 export function ToggleEditButton({ openPanel, togglePanel }) {
   return (
     <Grid size="auto">
       <Button
-        startIcon={openPanel ? <CloseIcon /> : <EditIcon />}
+        variant="outlined"
+        // startIcon={openPanel ? <CloseIcon /> : <SettingsIcon />}
         onClick={togglePanel}
       >
-        {openPanel ? "Close" : "Edit"}
+        {openPanel ? "Close" : "Open"}
       </Button>
     </Grid>
   );
