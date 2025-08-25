@@ -13,22 +13,22 @@ export const indicatorData = [
     //   "Four simple steps: Dataset, Filters, Analysis, and Visualization.",
     link: "/indicator/editor/basic",
   },
-  {
-    image: Composite,
-    imageCode: "COMPOSITE",
-    name: "Composite indicator",
-    description: "Combine two or more Basic Indicators.",
-    condition: `Indicators must share a common Analysis Method.`,
-    link: "/indicator/editor/composite",
-  },
-  {
-    image: Multi,
-    imageCode: "MULTI_LEVEL",
-    name: "Multi-level analysis indicator",
-    description: "Combine two or more Basic Indicators.",
-    condition: "Indicators must share a common data column.",
-    link: "/indicator/editor/multi-level-analysis",
-  },
+  // {
+  //   image: Composite,
+  //   imageCode: "COMPOSITE",
+  //   name: "Composite indicator",
+  //   description: "Combine two or more Basic Indicators.",
+  //   condition: `Indicators must share a common Analysis Method.`,
+  //   link: "/indicator/editor/composite",
+  // },
+  // {
+  //   image: Multi,
+  //   imageCode: "MULTI_LEVEL",
+  //   name: "Multi-level analysis indicator",
+  //   description: "Combine two or more Basic Indicators.",
+  //   condition: "Indicators must share a common data column.",
+  //   link: "/indicator/editor/multi-level-analysis",
+  // },
 ];
 
 export const Condition = {
