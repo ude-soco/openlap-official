@@ -10,11 +10,3 @@ labels:
 resources:
 - deployment.yaml
 - service.yaml
-
-secretGenerator:
-- name: web
-  literals:
-  - ADMIN_EMAIL=admin@mail.com
-  - ADMIN_NAME=admin
-  # - ADMIN_PASSWORD=1234qweR
-  # - JWT_SECRET_KEY=secret

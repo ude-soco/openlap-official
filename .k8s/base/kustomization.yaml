@@ -21,6 +21,9 @@ configMapGenerator:
 secretGenerator:
 - name: openlap-analyticsframework-web
   literals: []
+  # - ADMIN_NAME=""
+  # - ADMIN_EMAIL=""
+  # - ADMIN_PASSWORD=""
 
 vars:
 - name: OPENLAP_OFFICIAL_FQDN
