@@ -20,6 +20,7 @@ configMapGenerator:
 
 secretGenerator:
 - name: openlap-analyticsframework-web
+  behavior: merge
   literals: []
   # - ADMIN_NAME=""
   # - ADMIN_EMAIL=""

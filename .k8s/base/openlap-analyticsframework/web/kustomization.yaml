@@ -10,3 +10,7 @@ labels:
 resources:
 - deployment.yaml
 - service.yaml
+
+secretGenerator:
+- name: web
+  literals: []
