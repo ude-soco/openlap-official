@@ -15,8 +15,8 @@ resources:
 
 configMapGenerator:
 - name: openlap-official-ingress
-  literals: []
-  # - host=example.org
+  literals:
+  - host=example.org
 
 secretGenerator:
 - name: openlap-analyticsframework-web
