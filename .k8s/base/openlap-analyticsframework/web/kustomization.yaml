@@ -11,6 +11,10 @@ resources:
 - deployment.yaml
 - service.yaml
 
+configMapGenerator:
+- name: web
+  literals: []
+
 secretGenerator:
 - name: web
   literals: []

@@ -10,6 +10,8 @@ spec:
       - name: web
         image: openlap-analyticsframework
         envFrom:
+        - configMapRef:
+            name: web
         - secretRef:
             name: web
         env:

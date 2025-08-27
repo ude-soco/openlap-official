@@ -18,6 +18,11 @@ configMapGenerator:
   literals:
   - host=example.org
 
+- name: openlap-analyticsframework-web
+  behavior: merge
+  literals: []
+  # - WEBAPP_URL=""  # CORS origin URL(s), incl. protocol, comma-separated
+
 secretGenerator:
 - name: openlap-analyticsframework-web
   behavior: merge
@@ -25,6 +30,7 @@ secretGenerator:
   # - ADMIN_NAME=""
   # - ADMIN_EMAIL=""
   # - ADMIN_PASSWORD=""
+  # - WEBAPP_URL=""  # CORS origin URL(s), incl. protocol, comma-separated
 
 vars:
 - name: OPENLAP_OFFICIAL_FQDN
