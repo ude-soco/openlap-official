@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext(undefined);
 
-const BackendURL = import.meta.env.VITE_BACKEND_URL;
+const BackendURL = import.meta.env.VITE_BACKEND_URL || '/api/';
 const AuthTokens = "authTokens";
 const SESSION_ISC = "session_isc";
 const SESSION_INDICATOR = "session_indicator";
