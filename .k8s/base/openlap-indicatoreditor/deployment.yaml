@@ -9,9 +9,6 @@ spec:
       containers:
       - name: web
         image: openlap-indicatoreditor
-        env:
-        - name: VITE_BACKEND_URL
-          value: /api/
         ports:
         - containerPort: 8080
           protocol: TCP
