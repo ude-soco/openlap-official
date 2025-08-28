@@ -17,9 +17,10 @@ FROM amazoncorretto:24
 WORKDIR /opt/app
 
 ARG PACKAGE_NAME=openlap-analyticsframework
-COPY --from=build /opt/app/target/${PACKAGE_NAME}.jar .
+ENV JAR=${PACKAGE_NAME}.jar
+COPY --from=build /opt/app/target/${JAR} .
 
 ENV DATA_DIR="/opt/app/data"
 COPY ./jars ${DATA_DIR}/jars
 
-CMD [ "java", "-jar", "${PACKAGE_NAME}.jar" ]
+CMD java -jar ${JAR}
