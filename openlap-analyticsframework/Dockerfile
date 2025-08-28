@@ -1,24 +1,25 @@
 # syntax=docker/dockerfile:1.5
-FROM maven:3-jdk-11 as build
-
+FROM maven:3-jdk-11 AS build
 WORKDIR /opt/app
-ENV MAVEN_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
 
 ADD pom.xml .
 RUN --mount=type=cache,target=/root/.m2 \
+  MAVEN_OPTS="-XX:+TieredCompilation -XX:TieredStopAtLevel=1" \
   /usr/local/bin/mvn-entrypoint.sh mvn verify clean --fail-never
 
 ADD . .
+ARG PACKAGE_NAME=openlap-analyticsframework
 RUN --mount=type=cache,target=/root/.m2 \
-  mvn package -DfinalName=openlap-analyticsframework
+  mvn package -DfinalName=${PACKAGE_NAME}
 
 
 FROM amazoncorretto:24
-
 WORKDIR /opt/app
-COPY --from=build /opt/app/target/*.jar .
+
+ARG PACKAGE_NAME=openlap-analyticsframework
+COPY --from=build /opt/app/target/${PACKAGE_NAME}.jar .
 
 ENV DATA_DIR="/opt/app/data"
 COPY ./jars ${DATA_DIR}/jars
 
-CMD [ "java", "-jar", "openlap-analyticsframework.jar" ]
+CMD [ "java", "-jar", "${PACKAGE_NAME}.jar" ]

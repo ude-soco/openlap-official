@@ -2,6 +2,51 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 namePrefix: openlap-official-
+labels:
+- pairs:
+    app.kubernetes.io/name: openlap-official
+  includeSelectors: true
+  includeTemplates: true
 
 resources:
-- https://github.com/ude-soco/learninglocker.git//.k8s/base?ref=1-add-kubernetes-manifests
+- openlap-analyticsframework
+- openlap-indicatoreditor
+- ingress.yaml
+
+configMapGenerator:
+- name: openlap-official-ingress
+  literals:
+  - host=example.org
+
+- name: openlap-analyticsframework-web
+  behavior: merge
+  literals: []
+  # - WEBAPP_URL=""  # CORS origin URL(s), incl. protocol, comma-separated
+
+secretGenerator:
+- name: openlap-analyticsframework-web
+  behavior: merge
+  literals: []
+  # - ADMIN_NAME=""
+  # - ADMIN_EMAIL=""
+  # - ADMIN_PASSWORD=""
+  # - WEBAPP_URL=""  # CORS origin URL(s), incl. protocol, comma-separated
+
+vars:
+- name: OPENLAP_OFFICIAL_FQDN
+  objref:
+    apiVersion: v1
+    kind: ConfigMap
+    name: openlap-official-ingress
+  fieldref:
+    fieldpath: data.host
+
+images:
+- name: openlap-analyticsframework
+  newName: ghcr.io/ude-soco/openlap-official-openlap-analyticsframework
+  newTag: edge
+- name: openlap-indicatoreditor
+  newName: ghcr.io/ude-soco/openlap-official-openlap-indicatoreditor
+  newTag: edge
+- name: mongo
+  newTag: "4.4"
