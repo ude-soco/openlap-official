@@ -21,7 +21,7 @@
     "@mui/x-date-pickers": "^7.27.3",
     "apexcharts": "^4.2.0",
     "axios": "^1.8.3",
-    "dayjs": "^1.11.13",
+    "dayjs": "^1.11.15",
     "html-react-parser": "^5.2.2",
     "jwt-decode": "^4.0.0",
     "notistack": "^3.0.2",
