@@ -150,10 +150,7 @@ const AppAppBar = () => {
                 alignItems: "center",
               }}
             >
-              <ToggleColorMode
-                mode={darkMode}
-                toggleColorMode={toggleDarkMode}
-              />
+              <ToggleColorMode />
               <Button
                 color="primary"
                 variant="text"

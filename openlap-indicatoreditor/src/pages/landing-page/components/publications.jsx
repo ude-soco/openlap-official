@@ -95,7 +95,7 @@ export default function Publications() {
 
   return (
     <Box
-      id="highlights"
+      id="publications"
       sx={{
         pt: { xs: 4, sm: 12 },
         pb: { xs: 8, sm: 16 },

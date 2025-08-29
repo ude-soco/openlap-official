@@ -1,23 +1,23 @@
-import * as React from "react";
-import PropTypes from "prop-types";
-
+import { useContext } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-
 import WbSunnyRoundedIcon from "@mui/icons-material/WbSunnyRounded";
 import ModeNightRoundedIcon from "@mui/icons-material/ModeNightRounded";
+import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager";
 
-function ToggleColorMode({ mode, toggleColorMode }) {
+function ToggleColorMode() {
+  const { darkMode, toggleDarkMode } = useContext(CustomThemeContext);
+
   return (
     <Box sx={{ maxWidth: "32px" }}>
       <Button
         variant="text"
-        onClick={toggleColorMode}
+        onClick={toggleDarkMode}
         size="small"
         aria-label="button to toggle theme"
         sx={{ minWidth: "32px", height: "32px", p: "4px" }}
       >
-        {mode === "dark" ? (
+        {darkMode === "dark" ? (
           <WbSunnyRoundedIcon fontSize="small" />
         ) : (
           <ModeNightRoundedIcon fontSize="small" />
@@ -26,10 +26,5 @@ function ToggleColorMode({ mode, toggleColorMode }) {
     </Box>
   );
 }
-
-ToggleColorMode.propTypes = {
-  mode: PropTypes.oneOf(["dark", "light"]).isRequired,
-  toggleColorMode: PropTypes.func.isRequired,
-};
 
 export default ToggleColorMode;
