@@ -32,6 +32,7 @@ import IscPreview from "../../pages/indicator-specification-cards/dashboard/comp
 import IndicatorEditor from "../../pages/indicators/indicator-editor/indicator-editor";
 import BasicIndicator from "../../pages/indicators/indicator-editor/basic-indicator/basic-indicator";
 import NavigationBar from "../../common/components/navigation-bar/navigation-bar";
+import LandingPage from "../../pages/landing-page/landing-page.jsx";
 
 const AppRoutes = () => {
   const { darkMode, themeDark, themeLight } = useContext(CustomThemeContext);
@@ -46,9 +47,10 @@ const AppRoutes = () => {
             {/* Public routes */}
             {!user && (
               <>
+                <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="*" element={<Navigate to="/login" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </>
             )}
             {/* Private routes (with navigation) */}
