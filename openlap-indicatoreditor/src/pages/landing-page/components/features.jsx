@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -9,53 +9,22 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import DevicesRoundedIcon from "@mui/icons-material/DevicesRounded";
-import EdgesensorHighRoundedIcon from "@mui/icons-material/EdgesensorHighRounded";
-import ViewQuiltRoundedIcon from "@mui/icons-material/ViewQuiltRounded";
-
-const items = [
-  {
-    icon: <ViewQuiltRoundedIcon />,
-    title: "Indicator Specification Card (ISC) Creator",
-    description:
-      "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ",
-    imageLight:
-      'url("/static/images/templates/templates-images/dash-light.png")',
-    imageDark: 'url("/static/images/templates/templates-images/dash-dark.png")',
-  },
-  {
-    icon: <EdgesensorHighRoundedIcon />,
-    title: "Indicator Editor",
-    description:
-      "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. ",
-    imageLight:
-      'url("/static/images/templates/templates-images/mobile-light.png")',
-    imageDark:
-      'url("/static/images/templates/templates-images/mobile-dark.png")',
-  },
-  {
-    icon: <DevicesRoundedIcon />,
-    title: "CSV-xAPI Converter",
-    description:
-      "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.",
-    imageLight:
-      'url("/static/images/templates/templates-images/devices-light.png")',
-    imageDark:
-      'url("/static/images/templates/templates-images/devices-dark.png")',
-  },
-];
+import { featureItems } from "../utils/features-data";
+import { navigationIds } from "../utils/navigation-data";
 
 export default function Features() {
-  const [selectedItemIndex, setSelectedItemIndex] = useState(0);
+  const [selectedItemIndex, setSelectedItemIndex] = useState(
+    featureItems.at(0)
+  );
 
   const handleItemClick = (index) => {
     setSelectedItemIndex(index);
   };
 
-  const selectedFeature = items[selectedItemIndex];
+  const selectedFeature = selectedItemIndex;
 
   return (
-    <Container id="features" sx={{ py: { xs: 8, sm: 16 } }}>
+    <Container id={navigationIds.FEATURE} sx={{ py: { xs: 8, sm: 16 } }}>
       <Grid container spacing={6}>
         <Grid size={{ xs: 12, md: 6 }}>
           <div>
@@ -78,28 +47,32 @@ export default function Features() {
             gap={1}
             sx={{ display: { xs: "auto", sm: "none" } }}
           >
-            {items.map(({ title }, index) => (
+            {featureItems.map((item) => (
               <Chip
-                key={index}
-                label={title}
-                onClick={() => handleItemClick(index)}
+                key={item.id}
+                label={item.title}
+                onClick={() => handleItemClick(item)}
                 sx={{
                   borderColor: (theme) => {
                     if (theme.palette.mode === "light") {
-                      return selectedItemIndex === index ? "primary.light" : "";
+                      return selectedItemIndex.id === item.id
+                        ? "primary.light"
+                        : "";
                     }
-                    return selectedItemIndex === index ? "primary.light" : "";
+                    return selectedItemIndex.id === item.id
+                      ? "primary.light"
+                      : "";
                   },
                   background: (theme) => {
                     if (theme.palette.mode === "light") {
-                      return selectedItemIndex === index ? "none" : "";
+                      return selectedItemIndex.id === item.id ? "none" : "";
                     }
-                    return selectedItemIndex === index ? "none" : "";
+                    return selectedItemIndex.id === item.id ? "none" : "";
                   },
                   backgroundColor:
-                    selectedItemIndex === index ? "primary.main" : "",
+                    selectedItemIndex.id === item.id ? "primary.main" : "",
                   "& .MuiChip-label": {
-                    color: selectedItemIndex === index ? "#fff" : "",
+                    color: selectedItemIndex.id === item.id ? "#fff" : "",
                   },
                 }}
               />
@@ -117,10 +90,11 @@ export default function Features() {
               sx={{
                 backgroundImage: (theme) =>
                   theme.palette.mode === "light"
-                    ? items[selectedItemIndex].imageLight
-                    : items[selectedItemIndex].imageDark,
+                    ? selectedItemIndex.imageLight
+                    : selectedItemIndex.imageDark,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
                 minHeight: 280,
               }}
             />
@@ -166,26 +140,28 @@ export default function Features() {
             useFlexGap
             sx={{ width: "100%", display: { xs: "none", sm: "flex" } }}
           >
-            {items.map(({ icon, title, description }, index) => (
+            {featureItems.map((item) => (
               <Card
-                key={index}
+                key={item.id}
                 variant="outlined"
                 component={Button}
-                onClick={() => handleItemClick(index)}
+                onClick={() => handleItemClick(item)}
                 sx={{
                   p: 3,
                   height: "fit-content",
                   width: "100%",
                   background: "none",
                   backgroundColor:
-                    selectedItemIndex === index ? "action.selected" : undefined,
+                    selectedItemIndex.id === item.id
+                      ? "action.selected"
+                      : undefined,
                   borderColor: (theme) => {
                     if (theme.palette.mode === "light") {
-                      return selectedItemIndex === index
+                      return selectedItemIndex.id === item.id
                         ? "primary.light"
                         : "grey.200";
                     }
-                    return selectedItemIndex === index
+                    return selectedItemIndex.id === item.id
                       ? "primary.dark"
                       : "grey.800";
                   },
@@ -205,17 +181,17 @@ export default function Features() {
                     sx={{
                       color: (theme) => {
                         if (theme.palette.mode === "light") {
-                          return selectedItemIndex === index
+                          return selectedItemIndex.id === item.id
                             ? "primary.main"
                             : "grey.300";
                         }
-                        return selectedItemIndex === index
+                        return selectedItemIndex.id === item.id
                           ? "primary.main"
                           : "grey.700";
                       },
                     }}
                   >
-                    {icon}
+                    {React.createElement(item.icon)}
                   </Box>
                   <Box sx={{ textTransform: "none" }}>
                     <Typography
@@ -223,35 +199,15 @@ export default function Features() {
                       variant="body2"
                       fontWeight="bold"
                     >
-                      {title}
+                      {item.title}
                     </Typography>
                     <Typography
                       color="text.secondary"
                       variant="body2"
                       sx={{ my: 0.5 }}
                     >
-                      {description}
+                      {item.description}
                     </Typography>
-                    <Link
-                      color="primary"
-                      variant="body2"
-                      fontWeight="bold"
-                      sx={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        "& > svg": { transition: "0.2s" },
-                        "&:hover > svg": { transform: "translateX(2px)" },
-                      }}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                      }}
-                    >
-                      <span>Learn more</span>
-                      <ChevronRightRoundedIcon
-                        fontSize="small"
-                        sx={{ mt: "1px", ml: "2px" }}
-                      />
-                    </Link>
                   </Box>
                 </Box>
               </Card>
@@ -275,12 +231,13 @@ export default function Features() {
               sx={{
                 m: "auto",
                 width: 420,
-                height: 500,
+                height: 300,
                 backgroundSize: "contain",
+                backgroundRepeat: "no-repeat",
                 backgroundImage: (theme) =>
                   theme.palette.mode === "light"
-                    ? items[selectedItemIndex].imageLight
-                    : items[selectedItemIndex].imageDark,
+                    ? selectedItemIndex.imageLight
+                    : selectedItemIndex.imageDark,
               }}
             />
           </Card>

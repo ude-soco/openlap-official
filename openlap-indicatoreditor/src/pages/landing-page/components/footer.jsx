@@ -1,3 +1,4 @@
+import React from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
@@ -7,10 +8,11 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
-
-import GitHubIcon from "@mui/icons-material/GitHub";
-import YouTubeIcon from "@mui/icons-material/YouTube";
-import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import {
+  navigationItems,
+  socialItems,
+  legalItems,
+} from "../utils/navigation-data";
 
 const logoStyle = {
   width: "140px",
@@ -21,13 +23,28 @@ function Copyright() {
   return (
     <Typography variant="body2" color="text.secondary" mt={1}>
       {"Copyright © "}
-      <Link href="https://www.uni-due.de/soco/">Social Computing Group</Link>
+      <Link href="https://www.uni-due.de/soco/" target="_blank">
+        Social Computing Group
+      </Link>
       &nbsp;{new Date().getFullYear()}
     </Typography>
   );
 }
 
 export default function Footer() {
+  const scrollToSection = (sectionId) => {
+    const sectionElement = document.getElementById(sectionId);
+    const offset = 128;
+    if (sectionElement) {
+      const targetScroll = sectionElement.offsetTop - offset;
+      sectionElement.scrollIntoView({ behavior: "smooth" });
+      window.scrollTo({
+        top: targetScroll,
+        behavior: "smooth",
+      });
+    }
+  };
+
   return (
     <Container
       sx={{
@@ -78,15 +95,13 @@ export default function Footer() {
                 fullWidth
                 aria-label="Enter your email address"
                 placeholder="Your email address"
-                inputProps={{
-                  autoComplete: "off",
-                  "aria-label": "Enter your email address",
-                }}
+                inputProps={{ autoComplete: "off" }}
               />
               <Button
                 variant="contained"
                 color="primary"
                 sx={{ flexShrink: 0 }}
+                disabled
               >
                 Subscribe
               </Button>
@@ -103,18 +118,22 @@ export default function Footer() {
           <Typography variant="body2" fontWeight={600}>
             Product
           </Typography>
-          <Link color="text.secondary" href="#">
-            Features
-          </Link>
-          <Link color="text.secondary" href="#">
-            News
-          </Link>
-          <Link color="text.secondary" href="#">
-            Publications
-          </Link>
-          <Link color="text.secondary" href="#">
-            Team
-          </Link>
+          {navigationItems.map((item) => (
+            <Typography
+              key={item.id}
+              color="text.secondary"
+              onClick={() => scrollToSection(item.id)}
+              sx={{
+                "&:hover": {
+                  color: "primary.main",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                },
+              }}
+            >
+              {item.name}
+            </Typography>
+          ))}
         </Box>
         <Box
           sx={{
@@ -126,37 +145,35 @@ export default function Footer() {
           <Typography variant="body2" fontWeight={600}>
             Legal
           </Typography>
-          <Link color="text.secondary" href="#">
-            Terms
-          </Link>
-          <Link color="text.secondary" href="#">
-            Privacy
-          </Link>
-          <Link color="text.secondary" href="#">
-            Contact
-          </Link>
+          {legalItems.map((item) => (
+            <Typography
+              key={item.id}
+              color="text.secondary"
+              onClick={() => scrollToSection(item.id)}
+              sx={{
+                "&:hover": {
+                  color: "primary.main",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                },
+              }}
+            >
+              {item.name}
+            </Typography>
+          ))}
         </Box>
       </Box>
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
-          pt: { xs: 4, sm: 8 },
+          pt: { xs: 4 },
           width: "100%",
           borderTop: "1px solid",
           borderColor: "divider",
         }}
       >
         <div>
-          <Link color="text.secondary" href="#">
-            Privacy Policy
-          </Link>
-          <Typography display="inline" sx={{ mx: 0.5, opacity: 0.5 }}>
-            &nbsp;•&nbsp;
-          </Typography>
-          <Link color="text.secondary" href="#">
-            Terms of Service
-          </Link>
           <Copyright />
         </div>
         <Stack
@@ -166,30 +183,17 @@ export default function Footer() {
           useFlexGap
           sx={{ color: "primary.main" }}
         >
-          <IconButton
-            color="inherit"
-            href="https://github.com/mui"
-            aria-label="GitHub"
-            sx={{ alignSelf: "center" }}
-          >
-            <GitHubIcon />
-          </IconButton>
-          <IconButton
-            color="inherit"
-            href="https://x.com/MaterialUI"
-            aria-label="X"
-            sx={{ alignSelf: "center" }}
-          >
-            <YouTubeIcon />
-          </IconButton>
-          <IconButton
-            color="inherit"
-            href="https://www.linkedin.com/company/mui/"
-            aria-label="LinkedIn"
-            sx={{ alignSelf: "center" }}
-          >
-            <LinkedInIcon />
-          </IconButton>
+          {socialItems.map((item) => (
+            <IconButton
+              key={item.id}
+              color="inherit"
+              href={item.link}
+              target="_blank"
+              sx={{ alignSelf: "center" }}
+            >
+              {React.createElement(item.icon)}
+            </IconButton>
+          ))}
         </Stack>
       </Box>
     </Container>

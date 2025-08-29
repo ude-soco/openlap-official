@@ -1,6 +1,4 @@
-import React, { useContext, useState } from "react";
-import PropTypes from "prop-types";
-
+import { useContext, useState } from "react";
 import Box from "@mui/material/Box";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
@@ -15,17 +13,13 @@ import ToggleColorMode from "./toggle-color-mode";
 import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import { useNavigate } from "react-router-dom";
+import { navigationIds, navigationItems } from "../utils/navigation-data";
 
 const logoStyle = {
   width: "120px",
   height: "auto",
   cursor: "pointer",
 };
-
-// AppAppBar.propTypes = {
-//   mode: PropTypes.oneOf(["dark", "light"]).isRequired,
-//   toggleColorMode: PropTypes.func.isRequired,
-// };
 
 const AppAppBar = () => {
   const { darkMode, toggleDarkMode } = useContext(CustomThemeContext);
@@ -99,48 +93,20 @@ const AppAppBar = () => {
                 style={logoStyle}
                 alt="logo of OpenLAP"
                 sx={{ mr: 2 }}
+                onClick={() => scrollToSection(navigationIds.HERO)}
               />
               <Box sx={{ display: { xs: "none", md: "flex" } }}>
-                <MenuItem
-                  onClick={() => scrollToSection("features")}
-                  sx={{ py: 1, px: 1.5 }}
-                >
-                  <Typography variant="body2" color="text.primary">
-                    Features
-                  </Typography>
-                </MenuItem>
-                <MenuItem
-                  onClick={() => scrollToSection("news")}
-                  sx={{ py: 1, px: 1.5 }}
-                >
-                  <Typography variant="body2" color="text.primary">
-                    News
-                  </Typography>
-                </MenuItem>
-                <MenuItem
-                  onClick={() => scrollToSection("publications")}
-                  sx={{ py: 1, px: 1.5 }}
-                >
-                  <Typography variant="body2" color="text.primary">
-                    Publications
-                  </Typography>
-                </MenuItem>
-                <MenuItem
-                  onClick={() => scrollToSection("team")}
-                  sx={{ py: 1, px: 1.5 }}
-                >
-                  <Typography variant="body2" color="text.primary">
-                    Team
-                  </Typography>
-                </MenuItem>
-                {/* <MenuItem
-                  onClick={() => scrollToSection("faq")}
-                  sx={{ py: 1, px: 1.5 }}
-                >
-                  <Typography variant="body2" color="text.primary">
-                    FAQ
-                  </Typography>
-                </MenuItem> */}
+                {navigationItems.map((item) => (
+                  <MenuItem
+                    key={item.id}
+                    onClick={() => scrollToSection(item.id)}
+                    sx={{ py: 1, px: 1.5 }}
+                  >
+                    <Typography variant="body2" color="text.primary">
+                      {item.name}
+                    </Typography>
+                  </MenuItem>
+                ))}
               </Box>
             </Box>
             <Box
@@ -200,21 +166,14 @@ const AppAppBar = () => {
                       toggleColorMode={toggleDarkMode}
                     />
                   </Box>
-                  <MenuItem onClick={() => scrollToSection("features")}>
-                    Features
-                  </MenuItem>
-                  <MenuItem onClick={() => scrollToSection("news")}>
-                    News
-                  </MenuItem>
-                  <MenuItem onClick={() => scrollToSection("publications")}>
-                    Publications
-                  </MenuItem>
-                  <MenuItem onClick={() => scrollToSection("team")}>
-                    Team
-                  </MenuItem>
-                  {/* <MenuItem onClick={() => scrollToSection("faq")}>
-                    FAQ
-                  </MenuItem> */}
+                  {navigationItems.map((item) => (
+                    <MenuItem
+                      key={item.id}
+                      onClick={() => scrollToSection(item.id)}
+                    >
+                      {item.name}
+                    </MenuItem>
+                  ))}
                   <Divider />
                   <MenuItem>
                     <Button
