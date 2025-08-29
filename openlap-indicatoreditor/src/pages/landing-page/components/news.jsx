@@ -33,7 +33,8 @@ export default function News() {
           News
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          All the updates, announcements, and stories from OpenLAP
+          All the updates, announcements, and stories from Open Learning
+          Analytics Platform
         </Typography>
       </Box>
       <Grid container direction="column" spacing={2}>

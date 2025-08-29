@@ -35,7 +35,7 @@ export default function Teams() {
           Team
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          We are the people who make up OpenLAP
+          We are the people who make up Open Learning Analytics Platform
         </Typography>
       </Box>
       <Grid container spacing={10}>

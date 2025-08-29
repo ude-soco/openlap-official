@@ -41,7 +41,7 @@ export default function Publications() {
             Publications
           </Typography>
           <Typography variant="body1" sx={{ color: "grey.400" }}>
-            Discover our papers
+            Discover our papers on Open Learning Analytics Platform
           </Typography>
         </Box>
         <Grid container spacing={1.5}>

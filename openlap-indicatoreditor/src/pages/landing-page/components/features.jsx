@@ -36,9 +36,8 @@ export default function Features() {
               color="text.secondary"
               sx={{ mb: { xs: 2, sm: 4 } }}
             >
-              Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
-              nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam
-              erat, sed diam voluptua.
+              Discover the powerful features behind Open Learning Analytics
+              Platform
             </Typography>
           </div>
           <Grid
