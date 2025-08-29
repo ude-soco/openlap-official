@@ -67,7 +67,9 @@ const Register = () => {
   const [lrsConnect, setLrsConnect] = useState(false);
   const [errors, setErrors] = useState(null);
 
-  useEffect(() => loadLRSData(), []);
+  useEffect(() => {
+    loadLRSData();
+  }, []);
 
   const loadLRSData = async () => {
     try {
@@ -80,16 +82,10 @@ const Register = () => {
 
   const handleFormFields = (event) => {
     const { name, value } = event.target;
-    setFormFields(() => ({
-      ...formFields,
-      [name]: value,
-    }));
+    setFormFields(() => ({ ...formFields, [name]: value }));
     if (errors !== null) {
       if (errors[name] !== "") {
-        setErrors(() => ({
-          ...errors,
-          [name]: "",
-        }));
+        setErrors(() => ({ ...errors, [name]: "" }));
       }
     }
   };
@@ -104,10 +100,7 @@ const Register = () => {
 
   const handleLrsConsumerRequest = (event) => {
     const { name, value } = event.target;
-    setLrsConsumerRequest(() => ({
-      ...lrsConsumerRequest,
-      [name]: value,
-    }));
+    setLrsConsumerRequest(() => ({ ...lrsConsumerRequest, [name]: value }));
     if (errors?.["lrsConsumerRequest." + name] !== "") {
       setErrors(() => ({
         ...errors,
@@ -118,10 +111,7 @@ const Register = () => {
 
   const handleLrsProviderRequest = (event) => {
     const { name, value } = event.target;
-    setLrsProviderRequest(() => ({
-      ...lrsProviderRequest,
-      [name]: value,
-    }));
+    setLrsProviderRequest(() => ({ ...lrsProviderRequest, [name]: value }));
 
     if (errors?.["lrsProviderRequest." + name] !== "") {
       setErrors(() => ({
