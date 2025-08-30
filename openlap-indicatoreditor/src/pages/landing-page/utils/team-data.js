@@ -9,6 +9,9 @@ import Liu from "../../../assets/team/soco-liu.png";
 import Qintha from "../../../assets/team/soco-qintha.jpeg";
 import Nwoke from "../../../assets/team/soco-nwoke.png";
 import Avatar from "../../../assets/team/avatar-random.png";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import SchoolIcon from "@mui/icons-material/School";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
 
 const teamItems = [
   {
@@ -16,14 +19,61 @@ const teamItems = [
     name: "Prof. Mohamed Amine Chatti",
     title: "Founder",
     image: Chatti,
+    social: [
+      {
+        id: uuidv4(),
+        name: "LinkedIn",
+        link: "https://www.linkedin.com/in/mohamedaminechatti/",
+        icon: LinkedInIcon,
+      },
+      {
+        id: uuidv4(),
+        name: "Google Scholar",
+        link: "https://scholar.google.ca/citations?user=gyLI8FYAAAAJ",
+        icon: SchoolIcon,
+      },
+    ],
   },
   {
     id: uuidv4(),
     name: "M.Sc. Shoeb Joarder",
     title: "Research Associate & PhD Student",
     image: Joarder,
+    social: [
+      {
+        id: uuidv4(),
+        name: "LinkedIn",
+        link: "https://www.linkedin.com/in/shoeb-joarder/",
+        icon: LinkedInIcon,
+      },
+      {
+        id: uuidv4(),
+        name: "Google Scholar",
+        link: "https://scholar.google.com/citations?user=nTq1fhUAAAAJ&hl=de&oi=ao",
+        icon: SchoolIcon,
+      },
+      {
+        id: uuidv4(),
+        name: "GitHub",
+        link: "https://github.com/shoebjoarder",
+        icon: GitHubIcon,
+      },
+    ],
   },
-  { id: uuidv4(), name: "Dr. Arham Muslim", title: "Founder", image: Muslim },
+  {
+    id: uuidv4(),
+    name: "Dr. Arham Muslim",
+    title: "Founder",
+    image: Muslim,
+    social: [
+      {
+        id: uuidv4(),
+        name: "Google Scholar",
+        link: "https://scholar.google.de/citations?user=l-NjDaUAAAAJ&hl=de&oi=ao",
+        icon: SchoolIcon,
+      },
+    ],
+  },
   {
     id: uuidv4(),
     name: "Ralf Berger",

@@ -8,6 +8,8 @@ const navigationIds = {
   NEWS: uuidv4(),
   PUBLICATION: uuidv4(),
   TEAM: uuidv4(),
+  FAQ: uuidv4(),
+  CONTACT: uuidv4(),
 };
 
 const navigationItems = [
@@ -26,6 +28,14 @@ const navigationItems = [
   {
     id: navigationIds.TEAM,
     name: "Team",
+  },
+  {
+    id: navigationIds.FAQ,
+    name: "FAQ",
+  },
+  {
+    id: navigationIds.CONTACT,
+    name: "Contact Us",
   },
 ];
 

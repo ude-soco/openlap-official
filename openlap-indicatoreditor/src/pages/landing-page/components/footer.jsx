@@ -1,12 +1,13 @@
 import React from "react";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
+import Grid from "@mui/material/Grid2";
 import Typography from "@mui/material/Typography";
+import CallIcon from "@mui/icons-material/Call";
+import EmailIcon from "@mui/icons-material/Email";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import {
   navigationItems,
@@ -51,8 +52,8 @@ export default function Footer() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: { xs: 4, sm: 8 },
-        py: { xs: 8, sm: 10 },
+        gap: { xs: 4 },
+        py: { xs: 8 },
         textAlign: { sm: "center", md: "left" },
       }}
     >
@@ -80,32 +81,33 @@ export default function Footer() {
               alt="logo of OpenLAP"
               sx={{ pb: 2 }}
             />
-            <Typography variant="body2" fontWeight={600} gutterBottom>
-              Newsletter
-            </Typography>
-            <Typography variant="body2" color="text.secondary" mb={2}>
-              Subscribe to our newsletter for weekly updates and promotions.
-            </Typography>
-            <Stack direction="row" spacing={1} useFlexGap>
-              <TextField
-                id="outlined-basic"
-                hiddenLabel
-                size="small"
-                variant="outlined"
-                fullWidth
-                aria-label="Enter your email address"
-                placeholder="Your email address"
-                inputProps={{ autoComplete: "off" }}
-              />
-              <Button
-                variant="contained"
-                color="primary"
-                sx={{ flexShrink: 0 }}
-                disabled
-              >
-                Subscribe
-              </Button>
-            </Stack>
+            <Grid container direction="column" spacing={2}>
+              <Grid size="auto">
+                <Grid container spacing={1} alignItems="center">
+                  <CallIcon color="primary" />
+                  <Typography>+49 (0) 203 379-3707</Typography>
+                </Grid>
+              </Grid>
+              <Grid size="auto">
+                <Grid container spacing={1} alignItems="center">
+                  <EmailIcon color="primary" />
+                  <Typography>shoeb.joarder@uni-due.de</Typography>
+                </Grid>
+              </Grid>
+              <Grid size="auto">
+                <Typography>
+                  <b>Social Computing Group</b>
+                  <br />
+                  Faculty of Computer Science
+                  <br />
+                  University of Duisburg-Essen
+                  <br />
+                  Forsthausweg 2
+                  <br />
+                  47057 Duisburg
+                </Typography>
+              </Grid>
+            </Grid>
           </Box>
         </Box>
         <Box

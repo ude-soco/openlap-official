@@ -4,10 +4,10 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
-import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { faqItems } from "../utils/faq-data";
+import { navigationIds } from "../utils/navigation-data";
 
 export default function FAQ() {
   const [expanded, setExpanded] = useState(false);
@@ -18,7 +18,7 @@ export default function FAQ() {
 
   return (
     <Container
-      id="faq"
+      id={navigationIds.FAQ}
       sx={{
         pt: { xs: 4, sm: 12 },
         pb: { xs: 8, sm: 16 },

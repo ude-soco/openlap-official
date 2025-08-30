@@ -7,6 +7,7 @@ import Publications from "./components/publications";
 import News from "./components/news";
 import Teams from "./components/teams";
 import FAQ from "./components/faq";
+import ContactUs from "./components/contact-us";
 
 const LandingPage = () => {
   return (
@@ -22,6 +23,8 @@ const LandingPage = () => {
       <Teams />
       <Divider />
       <FAQ />
+      <Divider />
+      <ContactUs />
       <Divider />
       <Footer />
     </>

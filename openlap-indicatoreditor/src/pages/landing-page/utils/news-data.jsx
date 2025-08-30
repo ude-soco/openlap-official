@@ -40,7 +40,7 @@ const newsItems = [
         >
           Shoeb Joarder
         </Link>
-        {` attended the`}
+        {` attended the `}
         <Link
           href="https://ki-edu-nrw.ruhr-uni-bochum.de/learning-aid/"
           target="_blank"
@@ -54,7 +54,7 @@ const newsItems = [
         >
           KI:edu.nrw
         </Link>
-        {` a project to promote Didactics, Ethics, and Technology of Learning Analytics and AI in Higher Education. The event focused on the practical use of learning analytics, artificial intelligence, and data mining in higher education. Shoeb presented our ongoing`}
+        {` a project to promote Didactics, Ethics, and Technology of Learning Analytics and AI in Higher Education. The event focused on the practical use of learning analytics, artificial intelligence, and data mining in higher education. Shoeb presented our ongoing `}
         <Link
           href="https://www.uni-due.de/soco/research/research-topics.php"
           target="_blank"

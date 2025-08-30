@@ -1,15 +1,14 @@
+import React from "react";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid2";
 import { navigationIds } from "../utils/navigation-data";
-import { useContext } from "react";
-import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager";
-import { Avatar } from "@mui/material";
+import { Avatar, IconButton, Tooltip } from "@mui/material";
+
 import { teamItems, studentItems } from "../utils/team-data";
 
 export default function Teams() {
-  const { darkMode } = useContext(CustomThemeContext);
   return (
     <Container
       id={navigationIds.TEAM}
@@ -50,6 +49,22 @@ export default function Teams() {
               <Typography variant="body2" color="textSecondary" align="center">
                 {item.title}
               </Typography>
+              <Grid container spacing={1}>
+                {item.social?.map((social) => (
+                  <Tooltip
+                    key={social.id}
+                    arrow
+                    title={`View ${social.name} profile`}
+                  >
+                    <IconButton
+                      color="primary"
+                      onClick={() => window.open(social.link)}
+                    >
+                      {React.createElement(social.icon)}
+                    </IconButton>
+                  </Tooltip>
+                ))}
+              </Grid>
             </Grid>
           </Grid>
         ))}
@@ -58,10 +73,7 @@ export default function Teams() {
         {studentItems.map((item) => (
           <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={item.id}>
             <Grid container direction="column" alignItems="center">
-              <Avatar
-                src={item.image}
-                sx={{ width: 96, height: 96, mb: 2 }}
-              />
+              <Avatar src={item.image} sx={{ width: 96, height: 96, mb: 2 }} />
               <Typography variant="body2" color="textSecondary" align="center">
                 {item.name}
               </Typography>
