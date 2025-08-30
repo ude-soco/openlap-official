@@ -4,8 +4,11 @@ import Joarder from "../../../assets/team/soco-joarder.jpg";
 import Muslim from "../../../assets/team/soco-muslim.png";
 import Berger from "../../../assets/team/soco-berger.png";
 import Sun from "../../../assets/team/soco-sun.png";
+import Mirhashemi from "../../../assets/team/soco-mirhashemi.jpg";
 import Liu from "../../../assets/team/soco-liu.png";
+import Qintha from "../../../assets/team/soco-qintha.jpeg";
 import Nwoke from "../../../assets/team/soco-nwoke.png";
+import Avatar from "../../../assets/team/avatar-random.png";
 
 const teamItems = [
   {
@@ -17,7 +20,7 @@ const teamItems = [
   {
     id: uuidv4(),
     name: "M.Sc. Shoeb Joarder",
-    title: "PhD Student",
+    title: "Research Associate & PhD Student",
     image: Joarder,
   },
   { id: uuidv4(), name: "Dr. Arham Muslim", title: "Founder", image: Muslim },
@@ -27,11 +30,50 @@ const teamItems = [
     title: "System Administrator",
     image: Berger,
   },
+];
+
+const studentItems = [
+  {
+    id: uuidv4(),
+    name: "M.Sc. Abdul-Rahman Khan",
+    title: "Master Thesis Student",
+    image: Avatar,
+  },
   {
     id: uuidv4(),
     name: "M.Sc. Ao Sun",
     title: "Master Thesis Student",
     image: Sun,
+  },
+  {
+    id: uuidv4(),
+    name: "M.Sc. Bilawal Wajid Ali",
+    title: "Master Thesis Student",
+    image: Avatar,
+  },
+  {
+    id: uuidv4(),
+    name: "M.Sc. Louis Born",
+    title: "Master Thesis Student",
+    image: Avatar,
+  },
+  {
+    id: uuidv4(),
+    name: "M.Sc. Muhammad Faizan",
+    title: "Master Thesis Student",
+    image: Avatar,
+  },
+  {
+    id: uuidv4(),
+    name: "M.Sc. Samer Javed",
+    title: "Master Thesis Student",
+    image: Avatar,
+  },
+  {
+    id: uuidv4(),
+    name: "M.Sc. Seyedemarzie Mirhashemi",
+    title: "Master Thesis Student",
+    image: Mirhashemi,
   },
   {
     id: uuidv4(),
@@ -41,10 +83,28 @@ const teamItems = [
   },
   {
     id: uuidv4(),
+    name: "B.Sc. Karim Lotfy",
+    title: "Bachelor Thesis Student",
+    image: Avatar,
+  },
+  {
+    id: uuidv4(),
     name: "B.Sc. Kingson Nwoke",
-    title: "Master Thesis Student",
+    title: "Bachelor Thesis Student",
     image: Nwoke,
+  },
+  {
+    id: uuidv4(),
+    name: "B.Sc. Qintha Rahma Vierdestya",
+    title: "Bachelor Thesis Student",
+    image: Qintha,
+  },
+  {
+    id: uuidv4(),
+    name: "B.Sc. Rahim Seyidov",
+    title: "Bachelor Thesis Student",
+    image: Avatar,
   },
 ];
 
-export { teamItems };
+export { teamItems, studentItems };

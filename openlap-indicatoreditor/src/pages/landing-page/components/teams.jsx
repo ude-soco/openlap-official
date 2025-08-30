@@ -1,5 +1,3 @@
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
@@ -7,8 +5,8 @@ import Grid from "@mui/material/Grid2";
 import { navigationIds } from "../utils/navigation-data";
 import { useContext } from "react";
 import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager";
-import { Avatar, Button } from "@mui/material";
-import { teamItems } from "../utils/team-data";
+import { Avatar } from "@mui/material";
+import { teamItems, studentItems } from "../utils/team-data";
 
 export default function Teams() {
   const { darkMode } = useContext(CustomThemeContext);
@@ -38,7 +36,7 @@ export default function Teams() {
           We are the people who make up Open Learning Analytics Platform
         </Typography>
       </Box>
-      <Grid container spacing={10}>
+      <Grid container spacing={10} justifyContent="center">
         {teamItems.map((item) => (
           <Grid size={{ xs: 12, sm: 4, md: 3 }} key={item.id}>
             <Grid container direction="column" alignItems="center">
@@ -46,10 +44,28 @@ export default function Teams() {
                 src={item.image}
                 sx={{ width: 148, height: 148, mb: 2 }}
               />
-              <Typography variant="body2" color="textSecondary">
+              <Typography variant="body2" color="textSecondary" align="center">
                 {item.name}
               </Typography>
-              <Typography variant="body2" color="textSecondary">
+              <Typography variant="body2" color="textSecondary" align="center">
+                {item.title}
+              </Typography>
+            </Grid>
+          </Grid>
+        ))}
+      </Grid>
+      <Grid container spacing={2} justifyContent="center">
+        {studentItems.map((item) => (
+          <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={item.id}>
+            <Grid container direction="column" alignItems="center">
+              <Avatar
+                src={item.image}
+                sx={{ width: 96, height: 96, mb: 2 }}
+              />
+              <Typography variant="body2" color="textSecondary" align="center">
+                {item.name}
+              </Typography>
+              <Typography variant="body2" color="textSecondary" align="center">
                 {item.title}
               </Typography>
             </Grid>
