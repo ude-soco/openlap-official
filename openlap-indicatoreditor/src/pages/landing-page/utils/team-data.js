@@ -3,11 +3,6 @@ import Chatti from "../../../assets/team/soco-chatti.jpg";
 import Joarder from "../../../assets/team/soco-joarder.jpg";
 import Muslim from "../../../assets/team/soco-muslim.png";
 import Berger from "../../../assets/team/soco-berger.png";
-import Sun from "../../../assets/team/soco-sun.png";
-import Mirhashemi from "../../../assets/team/soco-mirhashemi.jpg";
-import Liu from "../../../assets/team/soco-liu.png";
-import Qintha from "../../../assets/team/soco-qintha.jpeg";
-import Nwoke from "../../../assets/team/soco-nwoke.png";
 import Avatar from "../../../assets/team/avatar-random.png";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import SchoolIcon from "@mui/icons-material/School";
@@ -16,8 +11,8 @@ import LinkedInIcon from "@mui/icons-material/LinkedIn";
 const teamItems = [
   {
     id: uuidv4(),
-    name: "Prof. Mohamed Amine Chatti",
-    title: "Founder",
+    name: "Prof. Dr. Mohamed Amine Chatti",
+    title: "Founder and Scientific Coordinator",
     image: Chatti,
     social: [
       {
@@ -37,7 +32,7 @@ const teamItems = [
   {
     id: uuidv4(),
     name: "M.Sc. Shoeb Joarder",
-    title: "Research Associate & PhD Student",
+    title: "Project Manager",
     image: Joarder,
     social: [
       {
@@ -68,92 +63,62 @@ const teamItems = [
     social: [
       {
         id: uuidv4(),
+        name: "LinkedIn",
+        link: "https://www.linkedin.com/in/arham-muslim-41482b9/",
+        icon: LinkedInIcon,
+      },
+      {
+        id: uuidv4(),
         name: "Google Scholar",
         link: "https://scholar.google.de/citations?user=l-NjDaUAAAAJ&hl=de&oi=ao",
         icon: SchoolIcon,
       },
     ],
   },
-  {
-    id: uuidv4(),
-    name: "Ralf Berger",
-    title: "System Administrator",
-    image: Berger,
-  },
 ];
 
 const studentItems = [
   {
     id: uuidv4(),
-    name: "M.Sc. Abdul-Rahman Khan",
+    name: "Ralf Berger",
+    title: "System Administrator",
+    image: Berger,
+    social: [
+      {
+        id: uuidv4(),
+        name: "LinkedIn",
+        link: "https://www.linkedin.com/in/ralf-berger/",
+        icon: LinkedInIcon,
+      },
+    ],
+  },
+  {
+    id: uuidv4(),
+    name: "M.Sc. Bassim Bachir",
     title: "Master Thesis Student",
     image: Avatar,
+    social: [
+      {
+        id: uuidv4(),
+        name: "LinkedIn",
+        link: "https://www.linkedin.com/in/bassim-b-7372a53b/",
+        icon: LinkedInIcon,
+      },
+    ],
   },
   {
     id: uuidv4(),
-    name: "M.Sc. Ao Sun",
-    title: "Master Thesis Student",
-    image: Sun,
-  },
-  {
-    id: uuidv4(),
-    name: "M.Sc. Bilawal Wajid Ali",
-    title: "Master Thesis Student",
-    image: Avatar,
-  },
-  {
-    id: uuidv4(),
-    name: "M.Sc. Louis Born",
+    name: "M.Sc. Oscar Barrios",
     title: "Master Thesis Student",
     image: Avatar,
-  },
-  {
-    id: uuidv4(),
-    name: "M.Sc. Muhammad Faizan",
-    title: "Master Thesis Student",
-    image: Avatar,
-  },
-  {
-    id: uuidv4(),
-    name: "M.Sc. Samer Javed",
-    title: "Master Thesis Student",
-    image: Avatar,
-  },
-  {
-    id: uuidv4(),
-    name: "M.Sc. Seyedemarzie Mirhashemi",
-    title: "Master Thesis Student",
-    image: Mirhashemi,
-  },
-  {
-    id: uuidv4(),
-    name: "M.Sc. Ruidan Liu",
-    title: "Master Thesis Student",
-    image: Liu,
-  },
-  {
-    id: uuidv4(),
-    name: "B.Sc. Karim Lotfy",
-    title: "Bachelor Thesis Student",
-    image: Avatar,
-  },
-  {
-    id: uuidv4(),
-    name: "B.Sc. Kingson Nwoke",
-    title: "Bachelor Thesis Student",
-    image: Nwoke,
-  },
-  {
-    id: uuidv4(),
-    name: "B.Sc. Qintha Rahma Vierdestya",
-    title: "Bachelor Thesis Student",
-    image: Qintha,
-  },
-  {
-    id: uuidv4(),
-    name: "B.Sc. Rahim Seyidov",
-    title: "Bachelor Thesis Student",
-    image: Avatar,
+    social: [
+      {
+        id: uuidv4(),
+        name: "LinkedIn",
+        link: "https://www.linkedin.com/in/oscarbarriosvarela/",
+        icon: LinkedInIcon,
+      },
+    ],
   },
 ];
 

@@ -1,11 +1,77 @@
+import { useState } from "react";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid2";
 import { navigationIds } from "../utils/navigation-data";
 import { Button, Checkbox, FormControlLabel, TextField } from "@mui/material";
+import emailjs from "emailjs-com";
+import { useSnackbar } from "notistack";
+import { LoadingButton } from "@mui/lab";
+const emailTemplateId = import.meta.env.VITE_EMAIL_TEMPLATE_ID || "";
+const emailServiceId = import.meta.env.VITE_EMAIL_SERVICE_ID || "";
+const emailPublicKey = import.meta.env.VITE_EMAIL_PUBLIC_KEY || "";
 
 export default function ContactUs() {
+  const { enqueueSnackbar } = useSnackbar();
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    company: "",
+    subject: "",
+    message: "",
+    agreed: false,
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    emailjs
+      .send(
+        emailServiceId,
+        emailTemplateId,
+        {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          company: formData.company,
+          subject: formData.subject,
+          message: formData.message,
+        },
+        emailPublicKey
+      )
+      .then(
+        () => {
+          enqueueSnackbar("Message sent successfully!", { variant: "success" });
+          setFormData({
+            firstName: "",
+            lastName: "",
+            email: "",
+            company: "",
+            subject: "",
+            message: "",
+            agreed: false,
+          });
+          setLoading(false);
+        },
+        (error) => {
+          enqueueSnackbar("Failed to send. Try again.", { variant: "error" });
+          setLoading(false);
+          console.error(error);
+        }
+      );
+  };
+
   return (
     <Container
       id={navigationIds.CONTACT}
@@ -33,26 +99,84 @@ export default function ContactUs() {
         </Typography>
       </Box>
       <Box sx={{ width: { sm: "100%", md: "50%" } }}>
-        <Grid container spacing={2} justifyContent="center">
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField label="First name" fullWidth required />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField label="Last name" fullWidth required />
-          </Grid>
-          <TextField label="Email address" fullWidth required />
-          <TextField label="Company" fullWidth required />
-          <TextField label="Message" fullWidth required />
-          <Grid size={{ xs: 12 }}>
-            <FormControlLabel
-              control={<Checkbox value="allowExtraEmails" color="primary" />}
-              label="I agree to the terms of use and privacy policy."
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={2} justifyContent="center">
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                name="firstName"
+                label="First name"
+                fullWidth
+                required
+                value={formData.firstName}
+                onChange={handleChange}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                name="lastName"
+                label="Last name"
+                fullWidth
+                required
+                value={formData.lastName}
+                onChange={handleChange}
+              />
+            </Grid>
+            <TextField
+              name="email"
+              label="Email address"
+              fullWidth
+              required
+              value={formData.email}
+              onChange={handleChange}
             />
+            <TextField
+              name="company"
+              label="Company"
+              fullWidth
+              value={formData.company}
+              onChange={handleChange}
+            />
+            <TextField
+              name="subject"
+              label="Subject"
+              fullWidth
+              value={formData.subject}
+              onChange={handleChange}
+            />
+            <TextField
+              name="message"
+              label="Message"
+              fullWidth
+              multiline
+              rows={5}
+              required
+              value={formData.message}
+              onChange={handleChange}
+            />
+            <Grid size={{ xs: 12 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    name="agreed"
+                    checked={formData.agreed}
+                    onChange={handleChange}
+                  />
+                }
+                label="I agree to the terms of use and privacy policy."
+              />
+            </Grid>
+            <LoadingButton
+              loading={loading}
+              loadingPosition="start"
+              type="submit"
+              fullWidth
+              variant="contained"
+              disabled={!formData.agreed}
+            >
+              {loading ? "Submitting" : "Submit"}
+            </LoadingButton>
           </Grid>
-          <Button fullWidth variant="contained" disabled>
-            Submit
-          </Button>
-        </Grid>
+        </form>
       </Box>
     </Container>
   );

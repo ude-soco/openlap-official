@@ -91,7 +91,7 @@ export default function Footer() {
               <Grid size="auto">
                 <Grid container spacing={1} alignItems="center">
                   <EmailIcon color="primary" />
-                  <Typography>shoeb.joarder@uni-due.de</Typography>
+                  <Typography>socogroup.ude@gmail.com</Typography>
                 </Grid>
               </Grid>
               <Grid size="auto">
