@@ -9,19 +9,36 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import SearchIcon from "@mui/icons-material/Search";
+import CloseIcon from "@mui/icons-material/Close";
 import { featureItems } from "../utils/features-data";
 import { navigationIds } from "../utils/navigation-data";
+import {
+  CardActionArea,
+  CardContent,
+  CardMedia,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+} from "@mui/material";
 
 export default function Features() {
-  const [selectedItemIndex, setSelectedItemIndex] = useState(
-    featureItems.at(0)
-  );
+  const [selectedItem, setSelectedItem] = useState(featureItems.at(0));
+  const [open, setOpen] = useState(false);
 
-  const handleItemClick = (index) => {
-    setSelectedItemIndex(index);
+  const handleToggleOpen = () => {
+    setOpen((p) => !p);
   };
 
-  const selectedFeature = selectedItemIndex;
+  const handleItemClick = (index) => {
+    setSelectedItem(index);
+  };
+
+  const handleMaximizeImage = () => {
+    third;
+  };
 
   return (
     <Container id={navigationIds.FEATURE} sx={{ py: { xs: 8, sm: 16 } }}>
@@ -51,66 +68,29 @@ export default function Features() {
                 key={item.id}
                 label={item.title}
                 onClick={() => handleItemClick(item)}
-                sx={{
-                  borderColor: (theme) => {
-                    if (theme.palette.mode === "light") {
-                      return selectedItemIndex.id === item.id
-                        ? "primary.light"
-                        : "";
-                    }
-                    return selectedItemIndex.id === item.id
-                      ? "primary.light"
-                      : "";
-                  },
-                  background: (theme) => {
-                    if (theme.palette.mode === "light") {
-                      return selectedItemIndex.id === item.id ? "none" : "";
-                    }
-                    return selectedItemIndex.id === item.id ? "none" : "";
-                  },
-                  backgroundColor:
-                    selectedItemIndex.id === item.id ? "primary.main" : "",
-                  "& .MuiChip-label": {
-                    color: selectedItemIndex.id === item.id ? "#fff" : "",
-                  },
-                }}
+                color={selectedItem.id === item.id ? "primary" : undefined}
               />
             ))}
           </Grid>
-          <Box
-            component={Card}
+          <Card
+            sx={{ mt: 4, display: { xs: "auto", sm: "none" } }}
             variant="outlined"
-            sx={{
-              display: { xs: "auto", sm: "none" },
-              mt: 4,
-            }}
           >
-            <Box
-              sx={{
-                backgroundImage: (theme) =>
-                  theme.palette.mode === "light"
-                    ? selectedItemIndex.imageLight
-                    : selectedItemIndex.imageDark,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                minHeight: 280,
-              }}
-            />
-            <Box sx={{ px: 2, pb: 2 }}>
+            <CardMedia sx={{ height: 190 }} image={selectedItem.image} />
+            <CardContent>
               <Typography
                 color="text.primary"
                 variant="body2"
                 fontWeight="bold"
               >
-                {selectedFeature.title}
+                {selectedItem.title}
               </Typography>
               <Typography
                 color="text.secondary"
                 variant="body2"
                 sx={{ my: 0.5 }}
               >
-                {selectedFeature.description}
+                {selectedItem.description}
               </Typography>
               <Link
                 color="primary"
@@ -120,7 +100,7 @@ export default function Features() {
                   display: "inline-flex",
                   alignItems: "center",
                   "& > svg": { transition: "0.2s" },
-                  "&:hover > svg": { transform: "translateX(2px)" },
+                  "&:hover > svg": { transform: "translateX(4px)" },
                 }}
               >
                 <span>Learn more</span>
@@ -129,8 +109,9 @@ export default function Features() {
                   sx={{ mt: "1px", ml: "2px" }}
                 />
               </Link>
-            </Box>
-          </Box>
+            </CardContent>
+          </Card>
+
           <Stack
             direction="column"
             justifyContent="center"
@@ -151,16 +132,14 @@ export default function Features() {
                   width: "100%",
                   background: "none",
                   backgroundColor:
-                    selectedItemIndex.id === item.id
-                      ? "action.selected"
-                      : undefined,
+                    selectedItem.id === item.id ? "action.selected" : undefined,
                   borderColor: (theme) => {
                     if (theme.palette.mode === "light") {
-                      return selectedItemIndex.id === item.id
+                      return selectedItem.id === item.id
                         ? "primary.light"
                         : "grey.200";
                     }
-                    return selectedItemIndex.id === item.id
+                    return selectedItem.id === item.id
                       ? "primary.dark"
                       : "grey.800";
                   },
@@ -180,11 +159,11 @@ export default function Features() {
                     sx={{
                       color: (theme) => {
                         if (theme.palette.mode === "light") {
-                          return selectedItemIndex.id === item.id
+                          return selectedItem.id === item.id
                             ? "primary.main"
                             : "grey.300";
                         }
-                        return selectedItemIndex.id === item.id
+                        return selectedItem.id === item.id
                           ? "primary.main"
                           : "grey.700";
                       },
@@ -220,26 +199,60 @@ export default function Features() {
           <Card
             variant="outlined"
             sx={{
-              height: "100%",
+              height: { xs: "none", sm: 350, md: "100%" },
               width: "100%",
               display: { xs: "none", sm: "flex" },
-              pointerEvents: "none",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <Box
-              sx={{
-                m: "auto",
-                width: 420,
-                height: 300,
-                backgroundSize: "contain",
-                backgroundRepeat: "no-repeat",
-                backgroundImage: (theme) =>
-                  theme.palette.mode === "light"
-                    ? selectedItemIndex.imageLight
-                    : selectedItemIndex.imageDark,
-              }}
-            />
+            <CardActionArea onClick={handleToggleOpen}>
+              <CardMedia
+                sx={{
+                  m: "auto",
+                  width: "100%",
+                  height: "100%",
+                  backgroundSize: "contain",
+                }}
+                image={selectedItem.image}
+              />
+
+              <IconButton
+                sx={{
+                  position: "absolute",
+                  top: 8,
+                  right: 8,
+                  opacity: 0,
+                  transition: "opacity 0.3s",
+                  ".MuiCard-root:hover &": { opacity: 1 },
+                }}
+              >
+                <SearchIcon />
+              </IconButton>
+            </CardActionArea>
           </Card>
+          <Dialog
+            fullWidth
+            maxWidth="lg"
+            open={open}
+            onClose={handleToggleOpen}
+          >
+            <DialogTitle>
+              <Grid container justifyContent="flex-end">
+                <IconButton onClick={handleToggleOpen}>
+                  <CloseIcon />
+                </IconButton>
+              </Grid>
+            </DialogTitle>
+            <DialogContent>
+              <Box
+                component="img"
+                src={selectedItem.image}
+                alt="Preview"
+                sx={{ width: "100%", height: "auto" }}
+              />
+            </DialogContent>
+          </Dialog>
         </Grid>
       </Grid>
     </Container>

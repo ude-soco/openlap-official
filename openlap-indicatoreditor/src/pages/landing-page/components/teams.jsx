@@ -32,10 +32,16 @@ export default function Teams() {
           Team
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          We are the people who make up Open Learning Analytics Platform
+          Meet the minds building OpenLAP and shaping the future of open and
+          personalized learning analytics
         </Typography>
       </Box>
-      <Grid container spacing={10} justifyContent="center">
+      <Grid
+        container
+        spacing={10}
+        justifyContent="center"
+        sx={{ width: "100%" }}
+      >
         {teamItems.map((item) => (
           <Grid size={{ xs: 12, sm: 4, md: 3 }} key={item.id}>
             <Grid container direction="column" alignItems="center">
@@ -69,7 +75,12 @@ export default function Teams() {
           </Grid>
         ))}
       </Grid>
-      <Grid container spacing={2} justifyContent="center">
+      <Grid
+        container
+        spacing={2}
+        justifyContent="center"
+        sx={{ width: "100%" }}
+      >
         {studentItems.map((item) => (
           <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={item.id}>
             <Grid container direction="column" alignItems="center">
@@ -80,6 +91,22 @@ export default function Teams() {
               <Typography variant="body2" color="textSecondary" align="center">
                 {item.title}
               </Typography>
+              <Grid container spacing={1}>
+                {item.social?.map((social) => (
+                  <Tooltip
+                    key={social.id}
+                    arrow
+                    title={`View ${social.name} profile`}
+                  >
+                    <IconButton
+                      color="primary"
+                      onClick={() => window.open(social.link)}
+                    >
+                      {React.createElement(social.icon)}
+                    </IconButton>
+                  </Tooltip>
+                ))}
+              </Grid>
             </Grid>
           </Grid>
         ))}
