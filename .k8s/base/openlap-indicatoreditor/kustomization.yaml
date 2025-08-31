@@ -9,6 +9,10 @@ labels:
 
 namePrefix: openlap-indicatoreditor-
 
+configMapGenerator:
+- name: web
+  literals: []
+
 resources:
 - deployment.yaml
 - service.yaml
