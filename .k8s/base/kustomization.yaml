@@ -23,6 +23,10 @@ configMapGenerator:
   literals: []
   # - WEBAPP_URL=""  # CORS origin URL(s), incl. protocol, comma-separated
 
+- name: openlap-indicatoreditor-web
+  behavior: merge
+  literals: []
+
 secretGenerator:
 - name: openlap-analyticsframework-web
   behavior: merge
