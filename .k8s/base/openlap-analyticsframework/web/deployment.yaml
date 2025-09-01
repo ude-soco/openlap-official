@@ -3,7 +3,11 @@ kind: Deployment
 metadata:
   name: web
 spec:
-  replicas: 1
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    maxUnavailable: 50% 
+    maxSurge: 25%
   template:
     spec:
       containers:
