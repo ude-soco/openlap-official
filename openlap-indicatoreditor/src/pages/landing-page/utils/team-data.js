@@ -4,9 +4,20 @@ import Joarder from "../../../assets/team/soco-joarder.jpg";
 import Muslim from "../../../assets/team/soco-muslim.png";
 import Berger from "../../../assets/team/soco-berger.png";
 import Avatar from "../../../assets/team/avatar-random.png";
+import Abdul from "../../../assets/team/soco-abdul-rahman.jpeg";
+import Ao from "../../../assets/team/soco-ao.png";
+import Bilawal from "../../../assets/team/soco-bilawal.jpg";
+import Faizan from "../../../assets/team/soco-faizan.jpg";
+import Kingson from "../../../assets/team/soco-kingson.png";
+import Marzie from "../../../assets/team/soco-marzie.jpg";
+import Qintha from "../../../assets/team/soco-qintha.jpeg";
+import Ruidan from "../../../assets/team/soco-ruidan.jpeg";
+import Sammar from "../../../assets/team/soco-sammar.jpg";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import SchoolIcon from "@mui/icons-material/School";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import LaunchIcon from "@mui/icons-material/Launch";
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 
 const teamItems = [
   {
@@ -31,7 +42,7 @@ const teamItems = [
   },
   {
     id: uuidv4(),
-    name: "M.Sc. Shoeb Joarder",
+    name: "Shoeb Joarder",
     title: "Project Manager",
     image: Joarder,
     social: [
@@ -80,6 +91,162 @@ const teamItems = [
 const studentItems = [
   {
     id: uuidv4(),
+    name: "Abdul-Rahman Khan",
+    image: Abdul,
+    social: [
+      {
+        id: uuidv4(),
+        name: "",
+        link: "https://www.uni-due.de/soco/people/abdulrahman-khan.php",
+        icon: PersonSearchIcon,
+      },
+    ],
+  },
+  {
+    id: uuidv4(),
+    name: "Ao Sun",
+    image: Ao,
+    social: [
+      {
+        id: uuidv4(),
+        name: "",
+        link: "https://www.uni-due.de/soco/people/ao-sun.php",
+        icon: PersonSearchIcon,
+      },
+    ],
+  },
+  {
+    id: uuidv4(),
+    name: "Bilawal Wajid Ali",
+    image: Bilawal,
+    social: [
+      {
+        id: uuidv4(),
+        name: "",
+        link: "https://www.uni-due.de/soco/people/ao-sun.php",
+        icon: PersonSearchIcon,
+      },
+    ],
+  },
+  {
+    id: uuidv4(),
+    name: "Louis Born",
+    image: Avatar,
+    social: [
+      {
+        id: uuidv4(),
+        name: "",
+        link: "https://www.uni-due.de/soco/people/louis-born.php",
+        icon: PersonSearchIcon,
+      },
+    ],
+  },
+  {
+    id: uuidv4(),
+    name: "Muhammad Faizan",
+    image: Faizan,
+    social: [
+      {
+        id: uuidv4(),
+        name: "",
+        link: "https://www.uni-due.de/soco/people/faizan-riaz.php",
+        icon: PersonSearchIcon,
+      },
+    ],
+  },
+  {
+    id: uuidv4(),
+    name: "Sammar Javed",
+    image: Sammar,
+    social: [
+      {
+        id: uuidv4(),
+        name: "",
+        link: "https://www.uni-due.de/soco/people/sammar-javed.php",
+        icon: PersonSearchIcon,
+      },
+    ],
+  },
+  {
+    id: uuidv4(),
+    name: "Seyedemarzie Mirhashemi",
+    image: Marzie,
+    social: [
+      {
+        id: uuidv4(),
+        name: "",
+        link: "https://www.uni-due.de/soco/people/seyedemarzie-mirhashemi.php",
+        icon: PersonSearchIcon,
+      },
+    ],
+  },
+  {
+    id: uuidv4(),
+    name: "Ruidan Liu",
+    image: Ruidan,
+    social: [
+      {
+        id: uuidv4(),
+        name: "",
+        link: "https://www.uni-due.de/soco/people/ruidan-liu.php",
+        icon: PersonSearchIcon,
+      },
+    ],
+  },
+  {
+    id: uuidv4(),
+    name: "Karim Lotfy",
+    image: Avatar,
+    social: [
+      {
+        id: uuidv4(),
+        name: "",
+        link: "https://www.uni-due.de/soco/people/karim-lotfy.php",
+        icon: PersonSearchIcon,
+      },
+    ],
+  },
+  {
+    id: uuidv4(),
+    name: "Kingson Nwoke",
+    image: Kingson,
+    social: [
+      {
+        id: uuidv4(),
+        name: "",
+        link: "https://www.uni-due.de/soco/people/kingson-nwoke.php",
+        icon: PersonSearchIcon,
+      },
+    ],
+  },
+  {
+    id: uuidv4(),
+    name: "Qintha Rahma Vierdestya",
+    image: Qintha,
+    social: [
+      {
+        id: uuidv4(),
+        name: "",
+        link: "https://www.uni-due.de/soco/people/qintha-vierdestya.php",
+        icon: PersonSearchIcon,
+      },
+    ],
+  },
+  {
+    id: uuidv4(),
+    name: "Rahim Seyidov",
+    image: Avatar,
+    social: [
+      {
+        id: uuidv4(),
+        name: "",
+        link: "https://www.uni-due.de/soco/people/ao-sun.php",
+        icon: PersonSearchIcon,
+      },
+    ],
+  },
+  {
+    id: uuidv4(),
     name: "Ralf Berger",
     title: "System Administrator",
     image: Berger,
@@ -94,8 +261,7 @@ const studentItems = [
   },
   {
     id: uuidv4(),
-    name: "M.Sc. Bassim Bachir",
-    title: "Master Thesis Student",
+    name: "Bassim Bachir",
     image: Avatar,
     social: [
       {
@@ -108,8 +274,7 @@ const studentItems = [
   },
   {
     id: uuidv4(),
-    name: "M.Sc. Oscar Barrios",
-    title: "Master Thesis Student",
+    name: "Oscar Barrios",
     image: Avatar,
     social: [
       {

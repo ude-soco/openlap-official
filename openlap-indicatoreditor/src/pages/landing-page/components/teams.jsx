@@ -81,35 +81,50 @@ export default function Teams() {
         justifyContent="center"
         sx={{ width: "100%" }}
       >
-        {studentItems.map((item) => (
-          <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={item.id}>
-            <Grid container direction="column" alignItems="center">
-              <Avatar src={item.image} sx={{ width: 96, height: 96, mb: 2 }} />
-              <Typography variant="body2" color="textSecondary" align="center">
-                {item.name}
-              </Typography>
-              <Typography variant="body2" color="textSecondary" align="center">
-                {item.title}
-              </Typography>
-              <Grid container spacing={1}>
-                {item.social?.map((social) => (
-                  <Tooltip
-                    key={social.id}
-                    arrow
-                    title={`View ${social.name} profile`}
+        {studentItems
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((item) => (
+            <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={item.id}>
+              <Grid container direction="column" alignItems="center">
+                <Avatar
+                  src={item.image}
+                  sx={{ width: 96, height: 96, mb: 2 }}
+                />
+                <Typography
+                  variant="body2"
+                  color="textSecondary"
+                  align="center"
+                >
+                  {item.name}
+                </Typography>
+                {item.title && (
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    align="center"
                   >
-                    <IconButton
-                      color="primary"
-                      onClick={() => window.open(social.link)}
+                    {item.title}
+                  </Typography>
+                )}
+                <Grid container spacing={1}>
+                  {item.social?.map((social) => (
+                    <Tooltip
+                      key={social.id}
+                      arrow
+                      title={`View ${social.name} profile`}
                     >
-                      {React.createElement(social.icon)}
-                    </IconButton>
-                  </Tooltip>
-                ))}
+                      <IconButton
+                        color="primary"
+                        onClick={() => window.open(social.link)}
+                      >
+                        {React.createElement(social.icon)}
+                      </IconButton>
+                    </Tooltip>
+                  ))}
+                </Grid>
               </Grid>
             </Grid>
-          </Grid>
-        ))}
+          ))}
       </Grid>
     </Container>
   );

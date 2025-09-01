@@ -16,13 +16,11 @@ const LandingPage = () => {
       <Hero />
       <Features />
       <Divider />
+      <Teams />
+      <Divider />
       <News />
       <Divider />
       <Publications />
-      <Divider />
-      <Teams />
-      <Divider />
-      <FAQ />
       <Divider />
       <ContactUs />
       <Divider />
