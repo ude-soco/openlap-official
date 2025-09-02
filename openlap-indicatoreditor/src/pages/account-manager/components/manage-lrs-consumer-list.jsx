@@ -1,14 +1,16 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import {
   Accordion,
   AccordionActions,
   AccordionDetails,
   AccordionSummary,
+  Box,
   Button,
   Chip,
-  Grid,
+  Stack,
   Typography,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteDialog from "../../../common/components/delete-dialog/delete-dialog.jsx";
 import { requestDeleteLrsConsumer } from "../utils/account-manager-api.js";
@@ -17,11 +19,11 @@ import { AuthContext } from "../../../setup/auth-context-manager/auth-context-ma
 const ManageLrsConsumerList = ({ state, setState }) => {
   const { api } = useContext(AuthContext);
   const handleToggleDelete = (lrsConsumerId = "") => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       deleteLrsConsumerDialog: {
-        ...prevState.deleteLrsConsumerDialog,
-        open: !prevState.deleteLrsConsumerDialog.open,
+        ...p.deleteLrsConsumerDialog,
+        open: !p.deleteLrsConsumerDialog.open,
         lrsConsumerId: lrsConsumerId,
       },
     }));
@@ -32,15 +34,14 @@ const ManageLrsConsumerList = ({ state, setState }) => {
       await requestDeleteLrsConsumer(
         api,
         state.deleteLrsConsumerDialog.lrsConsumerId
-      ).then(() => {
-        setState((prevState) => ({
-          ...prevState,
-          addLRSConsumerDialog: {
-            ...prevState.addLRSConsumerDialog,
-            lrsConsumerUpdated: true,
-          },
-        }));
-      });
+      );
+      setState((p) => ({
+        ...p,
+        addLRSConsumerDialog: {
+          ...p.addLRSConsumerDialog,
+          lrsConsumerUpdated: true,
+        },
+      }));
     } catch (error) {
       console.log(error);
     }
@@ -48,48 +49,40 @@ const ManageLrsConsumerList = ({ state, setState }) => {
 
   return (
     <>
-      {state.user.lrsConsumerList?.map((lrs, index) => (
-        <Grid item xs={12} key={lrs.id}>
-          <Accordion variant="outlined">
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              aria-controls="panel1-content"
-              id="panel1-header"
-            >
-              #{index + 1} {lrs.lrsTitle}
-            </AccordionSummary>
-            <AccordionDetails>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <Grid container spacing={1} alignItems="center">
-                    <Grid item>
-                      <Typography>LRS:</Typography>
-                    </Grid>
-                    <Grid item>
+      <Stack spacing={2}>
+        {state.user.lrsConsumerList?.map((lrs, index) => (
+          <Stack direction="row" key={lrs.id} spacing={2}>
+            <Typography sx={{ pt: 1.5 }}>#{index + 1}</Typography>
+            <Box sx={{ width: "100%" }}>
+              <Accordion variant="outlined">
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>{lrs.lrsTitle}</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Grid container direction="column" spacing={2}>
+                    <Grid container spacing={1} alignItems="center">
+                      <Typography>LRS name:</Typography>
                       <Chip label={lrs.lrsTitle} />
                     </Grid>
-                  </Grid>
-                </Grid>
-                <Grid item xs={12}>
-                  <Grid container spacing={1} alignItems="center">
-                    <Grid item>
+                    <Grid container spacing={1} alignItems="center">
                       <Typography>Unique Identifier:</Typography>
-                    </Grid>
-                    <Grid item>
                       <Chip label={lrs.uniqueIdentifier} />
                     </Grid>
                   </Grid>
-                </Grid>
-              </Grid>
-            </AccordionDetails>
-            <AccordionActions>
-              <Button color="error" onClick={() => handleToggleDelete(lrs.id)}>
-                Delete
-              </Button>
-            </AccordionActions>
-          </Accordion>
-        </Grid>
-      ))}
+                </AccordionDetails>
+                <AccordionActions>
+                  <Button
+                    color="error"
+                    onClick={() => handleToggleDelete(lrs.id)}
+                  >
+                    Delete
+                  </Button>
+                </AccordionActions>
+              </Accordion>
+            </Box>
+          </Stack>
+        ))}
+      </Stack>
       <DeleteDialog
         open={state.deleteLrsConsumerDialog.open}
         toggleOpen={handleToggleDelete}

@@ -1,18 +1,20 @@
-import React, { useContext } from "react";
-import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
+import { useContext } from "react";
+import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
 import { requestDeleteLRSProvider } from "../utils/account-manager-api.js";
 import {
   Accordion,
   AccordionActions,
   AccordionDetails,
   AccordionSummary,
+  Box,
   Button,
   Chip,
-  Grid,
   IconButton,
+  Stack,
   Typography,
 } from "@mui/material";
-import DeleteDialog from "../../../common/components/delete-dialog/delete-dialog.jsx";
+import Grid from "@mui/material/Grid2";
+import DeleteDialog from "../../../common/components/delete-dialog/delete-dialog";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { ContentCopy, Edit } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
@@ -22,11 +24,11 @@ const ManageLrsProviderList = ({ state, setState }) => {
   const { enqueueSnackbar } = useSnackbar();
 
   const handleToggleDelete = (lrsId = "") => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       deleteLrsProviderDialog: {
-        ...prevState.deleteLrsProviderDialog,
-        open: !prevState.deleteLrsProviderDialog.open,
+        ...p.deleteLrsProviderDialog,
+        open: !p.deleteLrsProviderDialog.open,
         lrsProviderId: lrsId,
       },
     }));
@@ -36,16 +38,15 @@ const ManageLrsProviderList = ({ state, setState }) => {
     try {
       await requestDeleteLRSProvider(
         api,
-        state.deleteLrsProviderDialog.lrsProviderId,
-      ).then((response) => {
-        setState((prevState) => ({
-          ...prevState,
-          addLRSProviderDialog: {
-            ...prevState.addLRSProviderDialog,
-            lrsProviderUpdated: true,
-          },
-        }));
-      });
+        state.deleteLrsProviderDialog.lrsProviderId
+      );
+      setState((p) => ({
+        ...p,
+        addLRSProviderDialog: {
+          ...p.addLRSProviderDialog,
+          lrsProviderUpdated: true,
+        },
+      }));
     } catch (error) {
       console.log(error);
     }
@@ -60,99 +61,84 @@ const ManageLrsProviderList = ({ state, setState }) => {
 
   return (
     <>
-      {state.user.lrsProviderList?.map((lrs, index) => {
-        const { lrsId, lrsTitle, statementCount, createdAt, basicAuth } = lrs;
-        return (
-          <Grid item xs={12} key={lrsId}>
-            <Accordion variant="outlined">
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="panel1-content"
-                id="panel1-header"
-              >
-                #{index + 1} {lrsTitle}
-              </AccordionSummary>
-              <AccordionDetails>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Grid container spacing={1} alignItems="center">
-                      <Grid item>
-                        <Typography>LRS:</Typography>
+      <Stack spacing={2}>
+        {state.user.lrsProviderList?.map((lrs, index) => {
+          return (
+            <Stack direction="row" spacing={2} key={lrs.lrsId}>
+              <Typography sx={{ pt: 1.5 }}>#{index + 1}</Typography>
+              <Box sx={{ width: "100%" }}>
+                <Accordion variant="outlined">
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>{lrs.lrsTitle}</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Grid container direction="column" spacing={2}>
+                      <Grid container spacing={1} alignItems="center">
+                        <Typography>LRS name:</Typography>
+                        <Chip label={lrs.lrsTitle} />
+                        <IconButton size="small" disabled color="primary">
+                          <Edit />
+                        </IconButton>
                       </Grid>
-                      <Grid item>
-                        <Chip label={lrsTitle} />
-                      </Grid>
-                      {/*<Grid item>*/}
-                      {/*  <IconButton size="small">*/}
-                      {/*    <Edit />*/}
-                      {/*  </IconButton>*/}
-                      {/*</Grid>*/}
-                    </Grid>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Grid container spacing={1} alignItems="center">
-                      <Grid item>
+                      <Grid container spacing={1} alignItems="center">
                         <Typography>#Statements:</Typography>
+                        <Chip label={lrs.statementCount} />
                       </Grid>
-                      <Grid item>
-                        <Chip label={statementCount} />
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Grid container spacing={1} alignItems="center">
-                      <Grid item>
+                      <Grid container spacing={1} alignItems="center">
                         <Typography>Created at:</Typography>
+                        <Chip label={lrs.createdAt} />
                       </Grid>
-                      <Grid item>
-                        <Chip label={createdAt} />
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Grid container spacing={1}>
-                      <Grid item>
+                      <Grid container spacing={1}>
                         <Typography>Basic Auth: </Typography>
-                      </Grid>
-                      <Grid item xs style={{ wordBreak: "break-all" }}>
-                        <Typography>{basicAuth}</Typography>
-                      </Grid>
-                      <Grid item>
+                        <Grid size="grow">
+                          <Typography sx={{ wordBreak: "break-all" }}>
+                            {lrs.basicAuth}
+                          </Typography>
+                        </Grid>
                         <IconButton
                           size="small"
-                          onClick={() => handleCopyBasicAuth(basicAuth)}
+                          color="primary"
+                          onClick={() => handleCopyBasicAuth(lrs.basicAuth)}
                         >
                           <ContentCopy />
                         </IconButton>
                       </Grid>
                     </Grid>
-                  </Grid>
-                </Grid>
-              </AccordionDetails>
-              <AccordionActions>
-                <Button color="error" onClick={() => handleToggleDelete(lrsId)}>
-                  Delete
-                </Button>
-                <DeleteDialog
-                  open={
-                    state.deleteLrsProviderDialog.open &&
-                    state.deleteLrsProviderDialog.lrsProviderId === lrsId
-                  }
-                  toggleOpen={handleToggleDelete}
-                  message={
-                    <>
-                      <Typography>
-                        {`This will delete the LRS permanently. ${statementCount > 0 ? `There are ${statementCount} statements.` : ""} You cannot undo this action.`}
-                      </Typography>
-                    </>
-                  }
-                  handleDelete={handleDeleteLrs}
-                />
-              </AccordionActions>
-            </Accordion>
-          </Grid>
-        );
-      })}
+                  </AccordionDetails>
+                  <AccordionActions>
+                    <Button
+                      color="error"
+                      onClick={() => handleToggleDelete(lrs.lrsId)}
+                    >
+                      Delete
+                    </Button>
+                    <DeleteDialog
+                      open={
+                        state.deleteLrsProviderDialog.open &&
+                        state.deleteLrsProviderDialog.lrsProviderId ===
+                          lrs.lrsId
+                      }
+                      toggleOpen={handleToggleDelete}
+                      message={
+                        <>
+                          <Typography>
+                            {`This will delete the LRS permanently. ${
+                              lrs.statementCount > 0
+                                ? `There are ${lrs.statementCount} statements.`
+                                : ""
+                            } You cannot undo this action.`}
+                          </Typography>
+                        </>
+                      }
+                      handleDelete={handleDeleteLrs}
+                    />
+                  </AccordionActions>
+                </Accordion>
+              </Box>
+            </Stack>
+          );
+        })}
+      </Stack>
     </>
   );
 };
