@@ -18,20 +18,16 @@ const navigationItems = [
     name: "Features",
   },
   {
+    id: navigationIds.TEAM,
+    name: "Team",
+  },
+  {
     id: navigationIds.NEWS,
     name: "News",
   },
   {
     id: navigationIds.PUBLICATION,
     name: "Publications",
-  },
-  {
-    id: navigationIds.TEAM,
-    name: "Team",
-  },
-  {
-    id: navigationIds.FAQ,
-    name: "FAQ",
   },
   {
     id: navigationIds.CONTACT,
