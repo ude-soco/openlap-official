@@ -6,8 +6,8 @@ import { Divider } from "@mui/material";
 import Publications from "./components/publications";
 import News from "./components/news";
 import Teams from "./components/teams";
-import FAQ from "./components/faq";
 import ContactUs from "./components/contact-us";
+import LogoCollection from "./components/logo-collection";
 
 const LandingPage = () => {
   return (
@@ -15,6 +15,7 @@ const LandingPage = () => {
       <AppAppBar />
       <Hero />
       <Features />
+      <LogoCollection />
       <Divider />
       <Teams />
       <Divider />
