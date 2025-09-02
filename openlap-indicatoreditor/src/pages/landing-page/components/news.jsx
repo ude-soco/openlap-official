@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
-import { Button, Link, Paper } from "@mui/material";
+import { Link, Paper } from "@mui/material";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import {
   Timeline,
@@ -16,15 +16,16 @@ import { navigationIds } from "../utils/navigation-data";
 import { newsItems } from "../utils/news-data";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { useContext } from "react";
-import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager";
 
 export default function News() {
-  const { theme } = useContext(CustomThemeContext);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const sortedNews = [...newsItems].sort(
     (a, b) => new Date(b.date) - new Date(a.date)
   );
+
+  console.log(isMobile);
 
   return (
     <Container
@@ -36,7 +37,7 @@ export default function News() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: { xs: 3, sm: 6 },
+        gap: { xs: 3 },
       }}
     >
       <Box
@@ -48,17 +49,20 @@ export default function News() {
         <Typography component="h2" variant="h4" color="text.primary">
           News
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1" color="textSecondary">
           All the updates, announcements, and stories from Open Learning
           Analytics Platform
         </Typography>
       </Box>
 
-      <Timeline position="alternate">
+      <Timeline position={isMobile ? "right" : "alternate"}>
         {sortedNews.map((item, index) => (
           <TimelineItem key={item.id} sx={{ pb: 1 }}>
-            <TimelineOppositeContent color="textSecondary">
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+            <TimelineOppositeContent
+              color="textSecondary"
+              sx={{ display: { xs: "none", sm: "grid" } }}
+            >
+              <Typography variant="body2" color="textSecondary" gutterBottom>
                 {item.date}
               </Typography>
             </TimelineOppositeContent>
@@ -66,7 +70,15 @@ export default function News() {
               <TimelineDot color="primary" />
               {index < sortedNews.length - 1 && <TimelineConnector />}
             </TimelineSeparator>
+
             <TimelineContent>
+              <Typography
+                variant="body2"
+                color="textSecondary"
+                sx={{ display: { xs: "flex", sm: "none" }, mb: 2 }}
+              >
+                {item.date}
+              </Typography>
               <Box component={Paper} sx={{ p: 2 }} variant="outlined">
                 <Typography fontWeight="medium" gutterBottom>
                   {item.title}
