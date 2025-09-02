@@ -1,13 +1,29 @@
-import { alpha } from "@mui/material";
+import { alpha, Link } from "@mui/material";
 import Box from "@mui/material/Box";
+import Grid from "@mui/material/Grid2";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { navigationIds } from "../utils/navigation-data";
 import HeroLight from "../../../assets/home/hero-light.png";
 import HeroDark from "../../../assets/home/hero-dark.png";
+import OpenLAPFull from "../../../assets/home/soco-openlap-full.svg";
+import LAY from "../../../assets/home/soco-lay.png";
 
 export default function Hero() {
+  const scrollToSection = (sectionId) => {
+    const sectionElement = document.getElementById(sectionId);
+    const offset = 128;
+    if (sectionElement) {
+      const targetScroll = sectionElement.offsetTop - offset;
+      sectionElement.scrollIntoView({ behavior: "smooth" });
+      window.scrollTo({
+        top: targetScroll,
+        behavior: "smooth",
+      });
+    }
+  };
+
   return (
     <Box
       id={navigationIds.HERO}
@@ -41,7 +57,7 @@ export default function Hero() {
               fontSize: "clamp(1rem, 10vw, 1.5rem)",
             }}
           >
-            Define your Analysis with
+            Do-it-yourself Learning Analytics with
           </Typography>
           <Typography
             variant="h1"
@@ -67,20 +83,48 @@ export default function Hero() {
               Open Learning Analytics Platform
             </Typography>
           </Typography>
+          <Grid container justifyContent="center" spacing={5} sx={{ pb: 1 }}>
+            <Box
+              component="img"
+              sx={{ height: 72, display: { xs: "none", md: "flex" } }}
+              src={OpenLAPFull}
+              alt="Soco logo"
+            />
+            <Box component="img" sx={{ height: 72 }} src={LAY} alt="LAY" />
+          </Grid>
           <Typography
             textAlign="center"
-            color="text.secondary"
-            sx={{ alignSelf: "center", width: { sm: "100%", md: "80%" } }}
+            color="textSecondary"
+            // sx={{ alignSelf: "center" }}
           >
-            Explore our cutting-edge dashboard, delivering high-quality
-            solutions tailored to your needs. Elevate your experience with
-            top-tier features and services.
+            A scalable, transparent, and interactive platform for self-service
+            learning analytics. <br />
+            Follows a human-centered learning analytics approach by empowering
+            stakeholders (e.g., teachers, students, researchers, institutions)
+            to take control of the learning analytics indicator design and
+            implementation process, using no-code-environments, namely the{" "}
+            <Link
+              underline="hover"
+              component="button"
+              onClick={() => scrollToSection(navigationIds.FEATURE)}
+            >
+              Indicator Specification Card (ISC) Creator
+            </Link>{" "}
+            and the{" "}
+            <Link
+              underline="hover"
+              component="button"
+              onClick={() => scrollToSection(navigationIds.FEATURE)}
+            >
+              Indicator Editor
+            </Link>
+            .
           </Typography>
         </Stack>
         <Box
           id="image"
           sx={(theme) => ({
-            mt: { xs: 8, sm: 10 },
+            mt: { xs: 6 },
             alignSelf: "center",
             height: { xs: 200, sm: 700 },
             width: "100%",
