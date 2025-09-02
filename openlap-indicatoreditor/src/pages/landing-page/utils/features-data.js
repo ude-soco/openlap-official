@@ -1,26 +1,16 @@
 import { v4 as uuidv4 } from "uuid";
 import StyleIcon from "@mui/icons-material/Style";
 import BarChartIcon from "@mui/icons-material/BarChart";
-import ArchitectureIcon from "@mui/icons-material/Architecture";
-import Achitecture from "../../../assets/home/abstract-architecture.png";
 import ISC from "../../../assets/home/abstract-isc.png";
 import Indicator from "../../../assets/home/abstract-indicators.png";
 
 const featureItems = [
   {
     id: uuidv4(),
-    icon: ArchitectureIcon,
-    title: "OpenLAP Architecture",
-    description:
-      "The three main components of OpenLAP are Indicator Engine, Analytics Framework, and Data Collection and Management.",
-    image: Achitecture,
-  },
-  {
-    id: uuidv4(),
     icon: StyleIcon,
     title: "Indicator Specification Card (ISC) Creator",
     description:
-      "Indicator Specification Cards (ISC)  represent a theory-informed method that helps different LA stakeholders systematically co-design LA indicators.",
+      "The ISC Creator is an intuitive learning analytics tool that supports the systematic and theoretically-sound (co-)design of personalized low-fidelity learning analytics indicators, using Indicator Specification Cards (ISCs).",
     image: ISC,
   },
   {
@@ -28,7 +18,7 @@ const featureItems = [
     icon: BarChartIcon,
     title: "Indicator Editor",
     description:
-      "The Indicator Editor is responsible for providing users with an intuitive and interactive UI that guides them throughout the entire indicator development process, following a Goal-Question-Indicator (GQI) approach. The Indicator Editor supports three different types of indicators, namely Basic, Composite, and Multi-level Analysis.",
+      "The Indicator Editor is an interactive learning analytics tool that enables stakeholders who have knowledge about data analysis and visualization to implement high-fidelity learning analytics indicators based on real xAPI-based learning activity data, by supporting them in selecting data, choosing analysis methods, and specifying visualization techniques.",
     image: Indicator,
   },
 ];
