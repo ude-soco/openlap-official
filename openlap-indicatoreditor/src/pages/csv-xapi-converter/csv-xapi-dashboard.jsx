@@ -1,17 +1,19 @@
-import React from "react";
-import { Divider, Grid, Typography } from "@mui/material";
+import { Divider, Stack, Link, Typography, Breadcrumbs } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 
 const CsvXapiDashboard = () => {
   return (
     <>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Typography>CSV xAPI Dashboard</Typography>
-        </Grid>
-        <Grid item xs={12}>
-          <Divider />
-        </Grid>
-      </Grid>
+      <Stack spacing={2}>
+        <Breadcrumbs>
+          <Link component={RouterLink} underline="hover" color="inherit" to="/">
+            Home
+          </Link>
+          <Typography color="textPrimary">CSV-xAPI Dashboard</Typography>
+        </Breadcrumbs>
+        <Divider />
+        <Typography color="textPrimary">Under construction!</Typography>
+      </Stack>
     </>
   );
 };

@@ -5,8 +5,8 @@ import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid2";
 import { navigationIds } from "../utils/navigation-data";
 import { Avatar, IconButton, Tooltip } from "@mui/material";
-
-import { teamItems, studentItems } from "../utils/team-data";
+import SearchIcon from "@mui/icons-material/Search";
+import { memberItems, peopleItems } from "../utils/team-data";
 
 export default function Teams() {
   return (
@@ -42,13 +42,49 @@ export default function Teams() {
         justifyContent="center"
         sx={{ width: "100%" }}
       >
-        {teamItems.map((item) => (
+        {memberItems.map((item) => (
           <Grid size={{ xs: 12, sm: 4, md: 3 }} key={item.id}>
             <Grid container direction="column" alignItems="center">
-              <Avatar
-                src={item.image}
-                sx={{ width: 148, height: 148, mb: 2 }}
-              />
+              <Box
+                sx={{
+                  position: "relative",
+                  width: 148,
+                  height: 148,
+                  mb: 2,
+                  "&:hover .overlay-member": {
+                    opacity: 1,
+                  },
+                }}
+              >
+                <Avatar
+                  src={item.image}
+                  sx={{ width: "100%", height: "100%" }}
+                />
+
+                <Tooltip arrow title={`View ${item.name}'s profile`}>
+                  <Box
+                    className="overlay-member"
+                    sx={{
+                      position: "absolute",
+                      cursor: "pointer",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      bgcolor: "rgba(0,0,0,0.5)",
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      opacity: 0,
+                      transition: "opacity 0.3s ease",
+                    }}
+                    onClick={() => window.open(item.link, "_blank")}
+                  >
+                    <SearchIcon fontSize="large" sx={{ color: "white" }} />
+                  </Box>
+                </Tooltip>
+              </Box>
               <Typography variant="body2" color="textSecondary" align="center">
                 {item.name}
               </Typography>
@@ -81,15 +117,52 @@ export default function Teams() {
         justifyContent="center"
         sx={{ width: "100%" }}
       >
-        {studentItems
+        {peopleItems
           .sort((a, b) => a.name.localeCompare(b.name))
           .map((item) => (
             <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={item.id}>
               <Grid container direction="column" alignItems="center">
-                <Avatar
-                  src={item.image}
-                  sx={{ width: 96, height: 96, mb: 2 }}
-                />
+                <Box
+                  sx={{
+                    position: "relative",
+                    width: 96,
+                    height: 96,
+                    mb: 2,
+                    "&:hover .overlay-people": {
+                      opacity: 1,
+                    },
+                  }}
+                >
+                  <Avatar
+                    src={item.image}
+                    sx={{ width: "100%", height: "100%" }}
+                  />
+
+                  <Tooltip arrow title={`View ${item.name}'s profile`}>
+                    <Box
+                      className="overlay-people"
+                      sx={{
+                        position: "absolute",
+                        cursor: "pointer",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        bgcolor: "rgba(0,0,0,0.5)",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        opacity: 0,
+                        transition: "opacity 0.3s ease",
+                      }}
+                      onClick={() => window.open(item.link, "_blank")}
+                    >
+                      <SearchIcon sx={{ color: "white" }} />
+                    </Box>
+                  </Tooltip>
+                </Box>
+
                 <Typography
                   variant="body2"
                   color="textSecondary"
@@ -97,6 +170,7 @@ export default function Teams() {
                 >
                   {item.name}
                 </Typography>
+
                 {item.title && (
                   <Typography
                     variant="body2"
@@ -106,22 +180,6 @@ export default function Teams() {
                     {item.title}
                   </Typography>
                 )}
-                <Grid container spacing={1}>
-                  {item.social?.map((social) => (
-                    <Tooltip
-                      key={social.id}
-                      arrow
-                      title={`View ${social.name} profile`}
-                    >
-                      <IconButton
-                        color="primary"
-                        onClick={() => window.open(social.link)}
-                      >
-                        {React.createElement(social.icon)}
-                      </IconButton>
-                    </Tooltip>
-                  ))}
-                </Grid>
               </Grid>
             </Grid>
           ))}

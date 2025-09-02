@@ -8,7 +8,6 @@ const navigationIds = {
   NEWS: uuidv4(),
   PUBLICATION: uuidv4(),
   TEAM: uuidv4(),
-  FAQ: uuidv4(),
   CONTACT: uuidv4(),
 };
 
@@ -45,9 +44,9 @@ const socialItems = [
 ];
 
 const legalItems = [
-  { id: uuidv4(), name: "Privacy Policy" },
-  { id: uuidv4(), name: "Terms of Service" },
-  { id: uuidv4(), name: "Contact" },
+  { id: uuidv4(), name: "Privacy Policy", link: "/privacy" },
+  { id: uuidv4(), name: "Terms of Service", link: "/" },
+  { id: uuidv4(), name: "Contact", link: "/" },
 ];
 
 export { navigationIds, navigationItems, socialItems, legalItems };

@@ -78,7 +78,7 @@ const newsItems = [
     title: "OpenLAP @ LAP24",
     desc: (
       <Typography variant="body2" color="textSecondary">
-        {`On June 19, 2024 `}
+        {`On June 19, 2024, `}
         <Link
           href="https://www.uni-due.de/soco/people/shoeb-joarder.php"
           target="_blank"

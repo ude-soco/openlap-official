@@ -16,14 +16,14 @@ import Sammar from "../../../assets/team/soco-sammar.jpg";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import SchoolIcon from "@mui/icons-material/School";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
-import LaunchIcon from "@mui/icons-material/Launch";
-import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 
-const teamItems = [
+const memberItems = [
   {
     id: uuidv4(),
     name: "Prof. Dr. Mohamed Amine Chatti",
     title: "Founder and Scientific Coordinator",
+    link: "https://www.uni-due.de/soco/people/mohamed-chatti.php",
     image: Chatti,
     social: [
       {
@@ -44,6 +44,7 @@ const teamItems = [
     id: uuidv4(),
     name: "Shoeb Joarder",
     title: "Project Manager",
+    link: "https://www.uni-due.de/soco/people/shoeb-joarder.php",
     image: Joarder,
     social: [
       {
@@ -71,6 +72,7 @@ const teamItems = [
     name: "Dr. Arham Muslim",
     title: "Founder",
     image: Muslim,
+    link: "https://www.uni-due.de/soco/people/arham-muslim.php",
     social: [
       {
         id: uuidv4(),
@@ -88,203 +90,98 @@ const teamItems = [
   },
 ];
 
-const studentItems = [
+const peopleItems = [
   {
     id: uuidv4(),
     name: "Abdul-Rahman Khan",
     image: Abdul,
-    social: [
-      {
-        id: uuidv4(),
-        name: "",
-        link: "https://www.uni-due.de/soco/people/abdulrahman-khan.php",
-        icon: PersonSearchIcon,
-      },
-    ],
+    link: "https://www.uni-due.de/soco/people/abdulrahman-khan.php",
   },
   {
     id: uuidv4(),
     name: "Ao Sun",
     image: Ao,
-    social: [
-      {
-        id: uuidv4(),
-        name: "",
-        link: "https://www.uni-due.de/soco/people/ao-sun.php",
-        icon: PersonSearchIcon,
-      },
-    ],
+    link: "https://www.uni-due.de/soco/people/ao-sun.php",
   },
   {
     id: uuidv4(),
     name: "Bilawal Wajid Ali",
     image: Bilawal,
-    social: [
-      {
-        id: uuidv4(),
-        name: "",
-        link: "https://www.uni-due.de/soco/people/ao-sun.php",
-        icon: PersonSearchIcon,
-      },
-    ],
+    link: "https://www.uni-due.de/soco/people/ao-sun.php",
   },
   {
     id: uuidv4(),
     name: "Louis Born",
     image: Avatar,
-    social: [
-      {
-        id: uuidv4(),
-        name: "",
-        link: "https://www.uni-due.de/soco/people/louis-born.php",
-        icon: PersonSearchIcon,
-      },
-    ],
+    link: "https://www.uni-due.de/soco/people/louis-born.php",
   },
   {
     id: uuidv4(),
     name: "Muhammad Faizan",
     image: Faizan,
-    social: [
-      {
-        id: uuidv4(),
-        name: "",
-        link: "https://www.uni-due.de/soco/people/faizan-riaz.php",
-        icon: PersonSearchIcon,
-      },
-    ],
+    link: "https://www.uni-due.de/soco/people/faizan-riaz.php",
   },
   {
     id: uuidv4(),
     name: "Sammar Javed",
     image: Sammar,
-    social: [
-      {
-        id: uuidv4(),
-        name: "",
-        link: "https://www.uni-due.de/soco/people/sammar-javed.php",
-        icon: PersonSearchIcon,
-      },
-    ],
+    link: "https://www.uni-due.de/soco/people/sammar-javed.php",
   },
   {
     id: uuidv4(),
     name: "Seyedemarzie Mirhashemi",
     image: Marzie,
-    social: [
-      {
-        id: uuidv4(),
-        name: "",
-        link: "https://www.uni-due.de/soco/people/seyedemarzie-mirhashemi.php",
-        icon: PersonSearchIcon,
-      },
-    ],
+    link: "https://www.uni-due.de/soco/people/seyedemarzie-mirhashemi.php",
   },
   {
     id: uuidv4(),
     name: "Ruidan Liu",
     image: Ruidan,
-    social: [
-      {
-        id: uuidv4(),
-        name: "",
-        link: "https://www.uni-due.de/soco/people/ruidan-liu.php",
-        icon: PersonSearchIcon,
-      },
-    ],
+    link: "https://www.uni-due.de/soco/people/ruidan-liu.php",
   },
   {
     id: uuidv4(),
     name: "Karim Lotfy",
     image: Avatar,
-    social: [
-      {
-        id: uuidv4(),
-        name: "",
-        link: "https://www.uni-due.de/soco/people/karim-lotfy.php",
-        icon: PersonSearchIcon,
-      },
-    ],
+    link: "https://www.uni-due.de/soco/people/karim-lotfy.php",
   },
   {
     id: uuidv4(),
     name: "Kingson Nwoke",
     image: Kingson,
-    social: [
-      {
-        id: uuidv4(),
-        name: "",
-        link: "https://www.uni-due.de/soco/people/kingson-nwoke.php",
-        icon: PersonSearchIcon,
-      },
-    ],
+    link: "https://www.uni-due.de/soco/people/kingson-nwoke.php",
   },
   {
     id: uuidv4(),
     name: "Qintha Rahma Vierdestya",
     image: Qintha,
-    social: [
-      {
-        id: uuidv4(),
-        name: "",
-        link: "https://www.uni-due.de/soco/people/qintha-vierdestya.php",
-        icon: PersonSearchIcon,
-      },
-    ],
+    link: "https://www.uni-due.de/soco/people/qintha-vierdestya.php",
   },
   {
     id: uuidv4(),
     name: "Rahim Seyidov",
     image: Avatar,
-    social: [
-      {
-        id: uuidv4(),
-        name: "",
-        link: "https://www.uni-due.de/soco/people/ao-sun.php",
-        icon: PersonSearchIcon,
-      },
-    ],
+    link: "https://www.uni-due.de/soco/people/ao-sun.php",
   },
   {
     id: uuidv4(),
     name: "Ralf Berger",
     title: "System Administrator",
     image: Berger,
-    social: [
-      {
-        id: uuidv4(),
-        name: "LinkedIn",
-        link: "https://www.linkedin.com/in/ralf-berger/",
-        icon: LinkedInIcon,
-      },
-    ],
+    link: "https://www.linkedin.com/in/ralf-berger/",
   },
   {
     id: uuidv4(),
     name: "Bassim Bachir",
     image: Avatar,
-    social: [
-      {
-        id: uuidv4(),
-        name: "LinkedIn",
-        link: "https://www.linkedin.com/in/bassim-b-7372a53b/",
-        icon: LinkedInIcon,
-      },
-    ],
+    link: "https://www.linkedin.com/in/bassim-b-7372a53b/",
   },
   {
     id: uuidv4(),
     name: "Oscar Barrios",
     image: Avatar,
-    social: [
-      {
-        id: uuidv4(),
-        name: "LinkedIn",
-        link: "https://www.linkedin.com/in/oscarbarriosvarela/",
-        icon: LinkedInIcon,
-      },
-    ],
+    link: "https://www.linkedin.com/in/oscarbarriosvarela/",
   },
 ];
 
-export { teamItems, studentItems };
+export { memberItems, peopleItems };

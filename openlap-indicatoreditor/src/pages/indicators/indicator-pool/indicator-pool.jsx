@@ -1,17 +1,19 @@
-import { Divider, Grid, Typography } from "@mui/material";
-import React from "react";
+import { Breadcrumbs, Divider, Link, Stack, Typography } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 
 const IndicatorPool = () => {
   return (
     <>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
+      <Stack spacing={2}>
+        <Breadcrumbs>
+          <Link component={RouterLink} underline="hover" color="inherit" to="/">
+            Home
+          </Link>
           <Typography>Indicator Pool</Typography>
-        </Grid>
-        <Grid item xs={12}>
-          <Divider />
-        </Grid>
-      </Grid>
+        </Breadcrumbs>
+        <Divider />
+        <Typography>Under Construction!</Typography>
+      </Stack>
     </>
   );
 };

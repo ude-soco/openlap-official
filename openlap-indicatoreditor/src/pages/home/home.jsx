@@ -2,12 +2,14 @@ import React, { useContext, useEffect, useState } from "react";
 import {
   Button,
   Card,
-  CardActions,
   CardContent,
   CardMedia,
   Divider,
   LinearProgress,
+  Stack,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { requestUserDetails } from "../account-manager/utils/account-manager-api";
@@ -21,8 +23,10 @@ export default function Home() {
     user: { roles },
   } = useContext(AuthContext);
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("lg"));
   const [state, setState] = useState({
-    loading: true,
+    loading: false,
     user: { name: "", lrsProviderList: [], lrsConsumerList: [] },
   });
 
@@ -31,15 +35,14 @@ export default function Home() {
   }, []);
 
   const loadUserData = async () => {
+    setState((p) => ({ ...p, loading: true }));
     try {
-      const response = await requestUserDetails(api);
-      setState((p) => ({
-        ...p,
-        user: { ...p.user, ...response },
-        loading: false,
-      }));
+      const userData = await requestUserDetails(api);
+      setState((p) => ({ ...p, user: { ...p.user, ...userData } }));
     } catch (error) {
       console.error("Failed to load user data", error);
+    } finally {
+      setState((p) => ({ ...p, loading: false }));
     }
   };
 
@@ -72,7 +75,7 @@ export default function Home() {
                     return (
                       <Grid
                         key={home.id}
-                        size={{ xs: 12, md: 4 }}
+                        size={{ xs: 12, sm: 6, lg: 4 }}
                         sx={{ display: "flex" }}
                       >
                         <Card
@@ -83,7 +86,7 @@ export default function Home() {
                             flex: 1,
                           }}
                         >
-                          <CardMedia sx={{ height: 250 }} image={home.image} />
+                          <CardMedia sx={{ height: 350 }} image={home.image} />
                           <CardContent sx={{ flexGrow: 1 }}>
                             <Typography variant="h6" component="div">
                               {home.label}
@@ -95,9 +98,15 @@ export default function Home() {
                               {home.description}
                             </Typography>
                           </CardContent>
-                          <CardActions>
+                          <Stack
+                            direction={isSmallScreen ? "column" : "row"}
+                            sx={{ p: 1 }}
+                            spacing={1}
+                          >
                             {home.buttons.map((button) => (
                               <Button
+                                disableElevation
+                                size="small"
                                 key={button.id}
                                 fullWidth
                                 variant={button.variant}
@@ -111,7 +120,7 @@ export default function Home() {
                                 {button.label}
                               </Button>
                             ))}
-                          </CardActions>
+                          </Stack>
                         </Card>
                       </Grid>
                     );

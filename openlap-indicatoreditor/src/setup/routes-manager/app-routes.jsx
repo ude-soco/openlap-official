@@ -33,6 +33,7 @@ import IndicatorEditor from "../../pages/indicators/indicator-editor/indicator-e
 import BasicIndicator from "../../pages/indicators/indicator-editor/basic-indicator/basic-indicator";
 import NavigationBar from "../../common/components/navigation-bar/navigation-bar";
 import LandingPage from "../../pages/landing-page/landing-page.jsx";
+import PrivacyPolicy from "../../pages/privacy-policy/privacy-policy.jsx";
 
 const AppRoutes = () => {
   const { theme } = useContext(CustomThemeContext);
@@ -50,6 +51,7 @@ const AppRoutes = () => {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </>
             )}

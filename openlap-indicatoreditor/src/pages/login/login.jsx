@@ -146,40 +146,21 @@ const Login = () => {
             <span>Login with email</span>
           </LoadingButton>
           <Grid container justifyContent="flex-end">
-            {/* <Grid item xs>
-                    <Link href="#" variant="body2">
-                      Forgot password?
-                    </Link>
-                  </Grid> */}
-            <Grid item>
-              <Link
-                onClick={() => navigate("/register")}
-                sx={{ cursor: "pointer" }}
-                variant="body2"
-              >
-                <span>Don't have an account? Create an account</span>
+            {/* 
+              <Link href="#" variant="body2">
+                Forgot password?
               </Link>
-            </Grid>
+             */}
+            <Link
+              component="button"
+              onClick={() => navigate("/register")}
+              variant="body2"
+              underline="hover"
+            >
+              <span>Don't have an account? Create an account</span>
+            </Link>
           </Grid>
         </Stack>
-
-        {/* <Grid
-          container
-          sx={{
-            maxWidth: 500,
-          }}
-          justifyContent="center"
-          alignItems="center"
-        >
-          <Grid
-            item
-            xs={12}
-            component="img"
-            sx={{ height: 50, mb: 3 }}
-            src={OpenLAPLogo}
-            alt="Soco logo"
-          />
-        </Grid> */}
       </Grid>
     </Box>
   );

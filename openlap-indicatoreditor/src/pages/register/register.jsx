@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
+import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import { useNavigate } from "react-router-dom";
 import OpenLAPLogo from "../../assets/brand/openlap-logo.svg";
 import OpenLAPIcon from "../../assets/brand/openlap-icon.svg";
@@ -30,7 +30,7 @@ import UniqueIdentifierTypes from "../account-manager/utils/enums/unique-identif
 import { requestAvailableLrsList, register } from "./register-api";
 import { Help } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
-import ToggleColorMode from "../landing-page/components/toggle-color-mode.jsx";
+import ToggleColorMode from "../landing-page/components/toggle-color-mode";
 
 const logoStyle = {
   width: "120px",
@@ -438,11 +438,12 @@ const Register = () => {
               </LoadingButton>
               <Grid container justifyContent="flex-end">
                 <Link
+                  component="button"
                   onClick={() => navigate("/login")}
-                  sx={{ cursor: "pointer" }}
                   variant="body2"
+                  underline="hover"
                 >
-                  {"Already have an account? Log in to your account"}
+                  Already have an account? Log in to your account
                 </Link>
               </Grid>
             </Stack>

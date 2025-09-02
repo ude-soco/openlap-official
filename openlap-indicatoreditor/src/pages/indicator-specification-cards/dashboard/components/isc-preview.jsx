@@ -278,9 +278,7 @@ const IscPreview = () => {
                         </Typography>
                         <Grid container spacing={1}>
                           {state.dataRequiredByUser.map((data, index) => (
-                            <Grid item key={index}>
-                              <Chip label={data} />
-                            </Grid>
+                            <Chip label={data} key={index} />
                           ))}
                         </Grid>
                       </Grid>

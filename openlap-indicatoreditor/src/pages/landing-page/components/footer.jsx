@@ -14,6 +14,7 @@ import {
   socialItems,
   legalItems,
 } from "../utils/navigation-data";
+import { useNavigate } from "react-router-dom";
 
 const logoStyle = {
   width: "140px",
@@ -24,7 +25,11 @@ function Copyright() {
   return (
     <Typography variant="body2" color="text.secondary" mt={1}>
       {"Copyright © "}
-      <Link href="https://www.uni-due.de/soco/" target="_blank">
+      <Link
+        component="button"
+        underline="hover"
+        onClick={() => window.open("https://www.uni-due.de/soco/")}
+      >
         Social Computing Group
       </Link>
       &nbsp;{new Date().getFullYear()}
@@ -33,6 +38,7 @@ function Copyright() {
 }
 
 export default function Footer() {
+  const navigate = useNavigate();
   const scrollToSection = (sectionId) => {
     const sectionElement = document.getElementById(sectionId);
     const offset = 128;
@@ -150,8 +156,8 @@ export default function Footer() {
           {legalItems.map((item) => (
             <Typography
               key={item.id}
-              color="text.secondary"
-              onClick={() => scrollToSection(item.id)}
+              color="textSecondary"
+              onClick={() => navigate(item.link)}
               sx={{
                 "&:hover": {
                   color: "primary.main",
