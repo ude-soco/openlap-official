@@ -29,15 +29,11 @@ const CustomThemeProvider = ({ children }) => {
     },
   });
 
+  const theme = darkMode ? themeDark : themeLight;
+
   return (
     <CustomThemeContext.Provider
-      value={{
-        darkMode,
-        toggleDarkMode,
-        handleLightMode,
-        themeDark,
-        themeLight,
-      }}
+      value={{ darkMode, toggleDarkMode, handleLightMode, theme }}
     >
       {children}
     </CustomThemeContext.Provider>

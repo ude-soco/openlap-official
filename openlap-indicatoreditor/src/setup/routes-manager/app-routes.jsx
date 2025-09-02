@@ -35,12 +35,12 @@ import NavigationBar from "../../common/components/navigation-bar/navigation-bar
 import LandingPage from "../../pages/landing-page/landing-page.jsx";
 
 const AppRoutes = () => {
-  const { darkMode, themeDark, themeLight } = useContext(CustomThemeContext);
+  const { theme } = useContext(CustomThemeContext);
   const { user } = useContext(AuthContext);
 
   return (
     <>
-      <ThemeProvider theme={darkMode ? themeDark : themeLight}>
+      <ThemeProvider theme={theme}>
         <SnackbarProvider maxSnack={3}>
           <CssBaseline />
           <Routes>
