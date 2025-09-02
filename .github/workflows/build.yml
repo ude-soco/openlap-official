@@ -101,6 +101,10 @@ jobs:
         push:       ${{ inputs.push }}
         cache-from: type=gha
         cache-to:   type=gha,mode=max
+        build-args: |
+          VITE_EMAIL_TEMPLATE_ID=${{ vars.VITE_EMAIL_TEMPLATE_ID }}
+          VITE_EMAIL_SERVICE_ID=${{ vars.VITE_EMAIL_SERVICE_ID }}
+          VITE_EMAIL_PUBLIC_KEY=${{ vars.VITE_EMAIL_PUBLIC_KEY }}
 
     - name: Output tags
       if: inputs.push
