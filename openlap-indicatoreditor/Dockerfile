@@ -11,6 +11,9 @@ RUN  --mount=type=cache,target=/app/.npm,rw \
 
 COPY . .
 ENV  NODE_ENV=production
+ARG  VITE_EMAIL_PUBLIC_KEY
+ARG  VITE_EMAIL_SERVICE_ID
+ARG  VITE_EMAIL_TEMPLATE_ID
 RUN  --mount=type=cache,target=/app/node_modules/.cache,rw \
      npm run build
 
