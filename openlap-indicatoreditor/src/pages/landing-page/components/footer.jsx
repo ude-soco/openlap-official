@@ -8,13 +8,13 @@ import Grid from "@mui/material/Grid2";
 import Typography from "@mui/material/Typography";
 import CallIcon from "@mui/icons-material/Call";
 import EmailIcon from "@mui/icons-material/Email";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import {
   navigationItems,
   socialItems,
   legalItems,
 } from "../utils/navigation-data";
-import { useNavigate } from "react-router-dom";
 
 const logoStyle = {
   width: "140px",
@@ -23,10 +23,10 @@ const logoStyle = {
 
 function Copyright() {
   return (
-    <Typography variant="body2" color="text.secondary" mt={1}>
+    <Typography variant="body2" color="textSecondary" mt={1}>
       {"Copyright © "}
       <Link
-        component="button"
+        sx={{ cursor: "pointer" }}
         underline="hover"
         onClick={() => window.open("https://www.uni-due.de/soco/")}
       >
@@ -38,7 +38,6 @@ function Copyright() {
 }
 
 export default function Footer() {
-  const navigate = useNavigate();
   const scrollToSection = (sectionId) => {
     const sectionElement = document.getElementById(sectionId);
     const offset = 128;
@@ -76,7 +75,7 @@ export default function Footer() {
             display: "flex",
             flexDirection: "column",
             gap: 4,
-            minWidth: { xs: "100%", sm: "60%" },
+            minWidth: { xs: "100%", sm: "40%" },
           }}
         >
           <Box sx={{ width: { xs: "100%", sm: "60%" } }}>
@@ -101,17 +100,10 @@ export default function Footer() {
                 </Grid>
               </Grid>
               <Grid size="auto">
-                <Typography>
-                  <b>Social Computing Group</b>
-                  <br />
-                  Faculty of Computer Science
-                  <br />
-                  University of Duisburg-Essen
-                  <br />
-                  Forsthausweg 2
-                  <br />
-                  47057 Duisburg
-                </Typography>
+                <Grid container spacing={1}>
+                  <LocationOnIcon color="primary" />
+                  <Typography>Forsthausweg 2, 47057 Duisburg</Typography>
+                </Grid>
               </Grid>
             </Grid>
           </Box>
@@ -123,8 +115,31 @@ export default function Footer() {
             gap: 1,
           }}
         >
-          <Typography variant="body2" fontWeight={600}>
-            Product
+          <Grid container direction="column" spacing={2}>
+            <Grid size="auto">
+              <Typography>
+                <b>Social Computing Group</b>
+              </Typography>
+              <Typography color="textSecondary">
+                Department of Human-centered Computing
+                <br /> and Cognitive Science (HCCS)
+                <br />
+                Faculty of Computer Science
+                <br />
+                University of Duisburg-Essen
+              </Typography>
+            </Grid>
+          </Grid>
+        </Box>
+        <Box
+          sx={{
+            display: { xs: "none", sm: "flex" },
+            flexDirection: "column",
+            gap: 1,
+          }}
+        >
+          <Typography>
+            <b>OpenLAP</b>
           </Typography>
           {navigationItems.map((item) => (
             <Typography
@@ -143,7 +158,7 @@ export default function Footer() {
             </Typography>
           ))}
         </Box>
-        <Box
+        {/* <Box
           sx={{
             display: { xs: "none", sm: "flex" },
             flexDirection: "column",
@@ -169,7 +184,7 @@ export default function Footer() {
               {item.name}
             </Typography>
           ))}
-        </Box>
+        </Box> */}
       </Box>
       <Box
         sx={{

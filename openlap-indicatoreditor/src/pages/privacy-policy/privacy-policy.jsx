@@ -260,7 +260,7 @@ const PrivacyPolicy = () => {
                 Legal basis: <b>Art. 6 (1)(e) GDPR.</b>
                 <br />
                 Data is not shared with third parties. If cookies are disabled,
-                some CourseMapper features may not function.
+                some OpenLAP features may not function.
               </Typography>
               <Typography>
                 <b>(3)</b> User Rights under GDPR
@@ -274,7 +274,7 @@ const PrivacyPolicy = () => {
                     <b>Correction</b> (Art. 16 GDPR)
                   </li>
                   <li>
-                    <b>Deletion</b>(Art. 17 GDPR)
+                    <b>Deletion</b> (Art. 17 GDPR)
                   </li>
                   <li>
                     <b>Restriction of processing</b> (Art. 18 GDPR)

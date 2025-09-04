@@ -1,4 +1,4 @@
-import { alpha, Link } from "@mui/material";
+import { alpha, Button, Link } from "@mui/material";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid2";
 import Container from "@mui/material/Container";
@@ -9,8 +9,11 @@ import HeroLight from "../../../assets/home/hero-light.png";
 import HeroDark from "../../../assets/home/hero-dark.png";
 import OpenLAPFull from "../../../assets/home/soco-openlap-full.svg";
 import LAY from "../../../assets/home/soco-lay.png";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import { useNavigate } from "react-router-dom";
 
 export default function Hero() {
+  const navigate = useNavigate();
   const scrollToSection = (sectionId) => {
     const sectionElement = document.getElementById(sectionId);
     const offset = 128;
@@ -83,20 +86,8 @@ export default function Hero() {
               Open Learning Analytics Platform
             </Typography>
           </Typography>
-          <Grid container justifyContent="center" spacing={5} sx={{ pb: 1 }}>
-            <Box
-              component="img"
-              sx={{ height: 72, display: { xs: "none", md: "flex" } }}
-              src={OpenLAPFull}
-              alt="Soco logo"
-            />
-            <Box component="img" sx={{ height: 72 }} src={LAY} alt="LAY" />
-          </Grid>
-          <Typography
-            textAlign="center"
-            color="textSecondary"
-            // sx={{ alignSelf: "center" }}
-          >
+
+          <Typography textAlign="center" color="textSecondary">
             A scalable, transparent, and interactive platform for self-service
             learning analytics. <br />
             Follows a human-centered learning analytics approach by empowering
@@ -105,7 +96,7 @@ export default function Hero() {
             implementation process, using no-code-environments, namely the{" "}
             <Link
               underline="hover"
-              component="button"
+              sx={{ cursor: "pointer" }}
               onClick={() => scrollToSection(navigationIds.FEATURE)}
             >
               Indicator Specification Card (ISC) Creator
@@ -113,7 +104,7 @@ export default function Hero() {
             and the{" "}
             <Link
               underline="hover"
-              component="button"
+              sx={{ cursor: "pointer" }}
               onClick={() => scrollToSection(navigationIds.FEATURE)}
             >
               Indicator Editor
@@ -121,10 +112,35 @@ export default function Hero() {
             .
           </Typography>
         </Stack>
+        <Grid
+          container
+          sx={{ pt: 3, pb: 5, width: { xs: "100%", sm: "70%" } }}
+          justifyContent="space-around"
+        >
+          <Box
+            component="img"
+            sx={{ height: 48, display: { xs: "none", md: "flex" } }}
+            src={OpenLAPFull}
+            alt="Soco logo"
+          />
+          <Button
+            variant="contained"
+            size="large"
+            endIcon={<RocketLaunchIcon />}
+            onClick={() => navigate("/register")}
+          >
+            Try it now
+          </Button>
+          <Box
+            component="img"
+            sx={{ height: 48, display: { xs: "none", md: "flex" } }}
+            src={LAY}
+            alt="LAY logo"
+          />
+        </Grid>
         <Box
           id="image"
           sx={(theme) => ({
-            mt: { xs: 6 },
             alignSelf: "center",
             height: { xs: 200, sm: 700 },
             width: "100%",

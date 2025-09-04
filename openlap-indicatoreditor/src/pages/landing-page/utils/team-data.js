@@ -107,7 +107,7 @@ const peopleItems = [
     id: uuidv4(),
     name: "Bilawal Wajid Ali",
     image: Bilawal,
-    link: "https://www.uni-due.de/soco/people/ao-sun.php",
+    link: "https://www.uni-due.de/soco/people/bilawal-wajid.php",
   },
   {
     id: uuidv4(),
@@ -161,7 +161,7 @@ const peopleItems = [
     id: uuidv4(),
     name: "Rahim Seyidov",
     image: Avatar,
-    link: "https://www.uni-due.de/soco/people/ao-sun.php",
+    link: "https://www.uni-due.de/soco/people/rahim-seyidov.php",
   },
   {
     id: uuidv4(),
