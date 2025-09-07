@@ -53,34 +53,28 @@ const SpecifyRequirements = () => {
   return (
     <>
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <RequirementSummary />
-        <Collapse
-          in={lockedStep.requirements.openPanel}
-          timeout={{ enter: 500, exit: 250 }}
-          unmountOnExit
-        >
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
-              <Box sx={{ pb: 2 }}>
-                {requirements.edit.goal ? <SpecifyGoal /> : <ConfirmGoal />}
-              </Box>
+        <Stack gap={2}>
+          <RequirementSummary />
+          <Collapse
+            in={lockedStep.requirements.openPanel}
+            timeout={{ enter: 500, exit: 250 }}
+            unmountOnExit
+          >
+            <Stack gap={2}>
+              {requirements.edit.goal ? <SpecifyGoal /> : <ConfirmGoal />}
               {requirements.show.question && (
-                <Box sx={{ pb: 2 }}>
+                <>
                   {requirements.edit.question ? (
                     <FormulateQuestion />
                   ) : (
                     <ConfirmQuestion />
                   )}
-                </Box>
+                </>
               )}
               {requirements.show.indicatorName && <SpecifyIndicator />}
-            </Grid>
-            {requirements.show.indicatorName && (
-              <>
-                <Grid size={{ xs: 12 }}>
+              {requirements.show.indicatorName && (
+                <>
                   <Divider />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
                   <Grid container justifyContent="center">
                     <Grid size={{ xs: 12, sm: 6 }}>
                       <Button
@@ -93,11 +87,11 @@ const SpecifyRequirements = () => {
                       </Button>
                     </Grid>
                   </Grid>
-                </Grid>
-              </>
-            )}
-          </Grid>
-        </Collapse>
+                </>
+              )}
+            </Stack>
+          </Collapse>
+        </Stack>
       </Paper>
     </>
   );

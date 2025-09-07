@@ -1,5 +1,12 @@
 import { useContext, useState } from "react";
-import { Button, Divider, Paper, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  Divider,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import Grid from "@mui/material/Grid2";
 
 import GoalList from "./goal-list";
@@ -50,69 +57,43 @@ export default function SpecifyGoal() {
     <>
       <Grid container justifyContent="center" spacing={2}>
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Grid
-            container
-            component={Paper}
-            variant="outlined"
-            spacing={2}
-            sx={{ p: 2 }}
-          >
-            <Grid size="grow">
-              <Grid container spacing={1} alignItems="center">
-                <Typography>Specify your goal</Typography>
-                <TipPopover
-                  tipAnchor={state.goalPopoverAnchor}
-                  toggleTipAnchor={handleGoalPopoverAnchor}
-                  description={state.goalDescription}
-                />
+          <Stack component={Paper} variant="outlined" gap={2} sx={{ p: 3 }}>
+            <Grid container spacing={1} alignItems="center">
+              <Typography>Specify your goal</Typography>
+              <TipPopover
+                tipAnchor={state.goalPopoverAnchor}
+                toggleTipAnchor={handleGoalPopoverAnchor}
+                description={state.goalDescription}
+              />
+            </Grid>
+            <GoalList />
+            <TextField
+              required
+              fullWidth
+              name="goal"
+              multiline
+              value={requirements.goal}
+              label="Describe your goal"
+              placeholder="e.g., the usage of the learning materials in my course."
+              onChange={handleFormData}
+              error={requirements.goal === ""}
+            />
+            <Grid container justifyContent="center" spacing={2}>
+              <Grid size={{ xs: 12, sm: 8 }}>
+                <Button
+                  fullWidth
+                  color="primary"
+                  variant="contained"
+                  onClick={handleToggleGoalEdit}
+                  disabled={handleDisabledFabButton()}
+                >
+                  Confirm
+                </Button>
               </Grid>
             </Grid>
-            <Grid size={{ xs: 12 }}>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: "grow", sm: 4 }}>
-                  <GoalList />
-                </Grid>
-                <Grid size={{ xs: 12, sm: "grow" }}>
-                  <Grid container spacing={2}>
-                    <Grid size="grow">
-                      <TextField
-                        required
-                        fullWidth
-                        name="goal"
-                        multiline
-                        value={requirements.goal}
-                        label="Describe your goal"
-                        placeholder="e.g., the usage of the learning materials in my course."
-                        onChange={handleFormData}
-                        error={requirements.goal === ""}
-                      />
-                    </Grid>
-                  </Grid>
-                </Grid>
-              </Grid>
-            </Grid>
-            <Grid size={{ xs: 12, sm: "grow" }}>
-              <Grid container justifyContent="center" spacing={2}>
-                <Grid size={{ xs: 12, sm: 8 }}>
-                  <Button
-                    fullWidth
-                    color="primary"
-                    variant="contained"
-                    onClick={handleToggleGoalEdit}
-                    disabled={handleDisabledFabButton()}
-                  >
-                    Confirm
-                  </Button>
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
+          </Stack>
         </Grid>
-        {!requirements.edit.question && (
-          <Grid size={{ xs: 12 }}>
-            <Divider />
-          </Grid>
-        )}
+        {!requirements.edit.question && <Divider />}
       </Grid>
     </>
   );

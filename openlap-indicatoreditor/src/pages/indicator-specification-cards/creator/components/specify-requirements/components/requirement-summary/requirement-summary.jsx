@@ -34,7 +34,7 @@ export default function RequirementSummary() {
   };
 
   return (
-    <Stack gap={2}>
+    <>
       <Grid
         container
         justifyContent="space-between"
@@ -79,6 +79,6 @@ export default function RequirementSummary() {
           />
         </Grid>
       </Collapse>
-    </Stack>
+    </>
   );
 }
