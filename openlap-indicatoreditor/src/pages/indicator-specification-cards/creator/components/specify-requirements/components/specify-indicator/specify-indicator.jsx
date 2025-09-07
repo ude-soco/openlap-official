@@ -1,10 +1,10 @@
 import { useContext, useState } from "react";
-import { Divider, Paper, TextField, Typography } from "@mui/material";
+import { Stack, TextField, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 
 import { ISCContext } from "../../../../indicator-specification-card";
 import DataList from "./data-list";
-import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover.jsx";
+import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 
 export default function SpecifyIndicator() {
   const { requirements, setRequirements } = useContext(ISCContext);
@@ -34,28 +34,17 @@ export default function SpecifyIndicator() {
   };
 
   return (
-    <Grid container justifyContent="center" spacing={2}>
-      <Grid size={{ xs: 12 }}>
-        <Divider />
+    <Stack gap={2}>
+      <Grid container spacing={1} alignItems="center">
+        <Typography>Specify your indicator</Typography>
+        <TipPopover
+          tipAnchor={state.indicatorPopoverAnchor}
+          toggleTipAnchor={handleIndicatorPopoverAnchor}
+          description={state.indicatorDescription}
+        />
       </Grid>
       <Grid size={{ xs: 12, lg: 8 }}>
-        <Grid
-          container
-          component={Paper}
-          variant="outlined"
-          spacing={2}
-          sx={{ p: 2 }}
-        >
-          <Grid size="grow">
-            <Grid container spacing={1} alignItems="center">
-              <Typography>Specify your indicator</Typography>
-              <TipPopover
-                tipAnchor={state.indicatorPopoverAnchor}
-                toggleTipAnchor={handleIndicatorPopoverAnchor}
-                description={state.indicatorDescription}
-              />
-            </Grid>
-          </Grid>
+        <Grid container spacing={2}>
           <Grid size={{ xs: 12 }}>
             <Grid container alignItems="center" spacing={2}>
               <Grid size={{ xs: "grow" }}>
@@ -78,6 +67,6 @@ export default function SpecifyIndicator() {
           </Grid>
         </Grid>
       </Grid>
-    </Grid>
+    </Stack>
   );
 }

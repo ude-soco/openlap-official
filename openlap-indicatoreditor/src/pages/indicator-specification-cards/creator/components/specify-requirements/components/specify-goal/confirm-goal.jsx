@@ -1,4 +1,4 @@
-import { Tooltip, Typography } from "@mui/material";
+import { IconButton, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import EditIcon from "@mui/icons-material/Edit";
 import { useContext } from "react";
@@ -17,38 +17,20 @@ export default function ConfirmGoal() {
 
   return (
     <>
-      <Grid container justifyContent="center">
+      <Grid container spacing={1} sx={{ pb: 4 }}>
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Tooltip
-            arrow
-            title={<Typography>Edit goal</Typography>}
-            placement="right"
-          >
-            <Grid
-              container
-              spacing={2}
-              alignItems="center"
-              onClick={handleToggleGoalEdit}
-              sx={{
-                p: 0.5,
-                "&:hover": {
-                  cursor: "pointer",
-                  backgroundColor: "rgba(0, 0, 0, 0.03)",
-                },
-              }}
-            >
-              <Grid size="grow">
-                <Typography>
-                  <i>Your goal:</i> I want to{" "}
-                  <b>{requirements.goalType.verb}</b> the{" "}
-                  <b>{requirements.goal}</b>
-                </Typography>
-              </Grid>
-              <Grid size="auto">
-                <EditIcon size="small" color="primary" />
-              </Grid>
-            </Grid>
-          </Tooltip>
+          <Grid container justifyContent="space-between" alignItems="center">
+            <Typography>Your Goal</Typography>
+            <IconButton color="primary" onClick={handleToggleGoalEdit}>
+              <EditIcon />
+            </IconButton>
+          </Grid>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Typography>
+            I want to <b>{requirements.goalType.verb}</b> the{" "}
+            <b>{requirements.goal}</b>
+          </Typography>
         </Grid>
       </Grid>
     </>

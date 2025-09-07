@@ -1,4 +1,4 @@
-import { Tooltip, Typography } from "@mui/material";
+import { IconButton, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import EditIcon from "@mui/icons-material/Edit";
 import { useContext } from "react";
@@ -17,37 +17,19 @@ export default function ConfirmQuestion() {
 
   return (
     <>
-      <Grid container justifyContent="center">
+      <Grid container spacing={1} sx={{ pb: 4 }}>
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Tooltip
-            arrow
-            title={<Typography>Edit question</Typography>}
-            placement="right"
-          >
-            <Grid
-              container
-              spacing={2}
-              alignItems="center"
-              onClick={handleToggleQuestionEdit}
-              sx={{
-                p: 0.5,
-                "&:hover": {
-                  cursor: "pointer",
-                  backgroundColor: "rgba(0, 0, 0, 0.03)",
-                },
-              }}
-            >
-              <Grid size="grow">
-                <Typography>
-                  <i>Your question:</i> I am interested in{" "}
-                  <b>{requirements.question}</b>
-                </Typography>
-              </Grid>
-              <Grid size="auto">
-                <EditIcon color="primary" />
-              </Grid>
-            </Grid>
-          </Tooltip>
+          <Grid container justifyContent="space-between" alignItems="center">
+            <Typography>Your Question</Typography>
+            <IconButton color="primary" onClick={handleToggleQuestionEdit}>
+              <EditIcon />
+            </IconButton>
+          </Grid>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Typography>
+            I am interested in <b>{requirements.question}</b>
+          </Typography>
         </Grid>
       </Grid>
     </>

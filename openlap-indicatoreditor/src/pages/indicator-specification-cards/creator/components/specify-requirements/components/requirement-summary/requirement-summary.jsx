@@ -44,7 +44,7 @@ export default function RequirementSummary() {
         <Grid size="grow">
           <Grid container alignItems="center" spacing={1}>
             <Chip label={lockedStep.requirements.step} color="primary" />
-            <Typography>Specify your goal, question, and indicator</Typography>
+            <Typography>Specify requirements</Typography>
             <TipPopover
               tipAnchor={state.tipAnchor}
               toggleTipAnchor={handleTipAnchor}

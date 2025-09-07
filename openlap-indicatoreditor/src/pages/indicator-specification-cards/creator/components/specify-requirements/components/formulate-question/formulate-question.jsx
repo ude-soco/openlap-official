@@ -1,8 +1,8 @@
-import { Button, Divider, Paper, TextField, Typography } from "@mui/material";
+import { Button, Stack, TextField, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { useContext, useState } from "react";
 import { ISCContext } from "../../../../indicator-specification-card";
-import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover.jsx";
+import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 
 export default function FormulateQuestion() {
   const { requirements, setRequirements } = useContext(ISCContext);
@@ -45,67 +45,41 @@ export default function FormulateQuestion() {
 
   return (
     <>
-      <Grid container justifyContent="center" spacing={2}>
-        <Grid size={{ xs: 12 }}>
-          <Divider />
+      <Stack gap={2} sx={{ pb: 4 }}>
+        <Grid container spacing={1} alignItems="center">
+          <Typography>Formulate your question</Typography>
+          <TipPopover
+            tipAnchor={state.questionPopoverAnchor}
+            toggleTipAnchor={handleQuestionPopoverAnchor}
+            description={state.questionDescription}
+          />
         </Grid>
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Grid
-            component={Paper}
-            variant="outlined"
-            container
-            spacing={2}
-            sx={{ p: 2 }}
-          >
-            <Grid size="grow">
-              <Grid container spacing={1} alignItems="center">
-                <Typography>Formulate your question</Typography>
-                <TipPopover
-                  tipAnchor={state.questionPopoverAnchor}
-                  toggleTipAnchor={handleQuestionPopoverAnchor}
-                  description={state.questionDescription}
-                />
-              </Grid>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, sm: "grow" }}>
-                  <Grid container spacing={2}>
-                    <Grid size="grow">
-                      <TextField
-                        multiline
-                        fullWidth
-                        required
-                        name="question"
-                        value={requirements.question}
-                        label="I am interested in"
-                        placeholder="e.g., knowing how often these learning materials are viewed by my students."
-                        onChange={handleFormData}
-                        error={requirements.question === ""}
-                      />
-                    </Grid>
-                  </Grid>
-                </Grid>
-              </Grid>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <Grid container justifyContent="center" spacing={2}>
-                <Grid size={{ xs: 12, sm: 8 }}>
-                  <Button
-                    color="primary"
-                    variant="contained"
-                    fullWidth
-                    onClick={handleToggleQuestionEdit}
-                    disabled={handleDisabledFabButton()}
-                  >
-                    Confirm
-                  </Button>
-                </Grid>
-              </Grid>
-            </Grid>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, lg: 8 }}>
+            <TextField
+              multiline
+              fullWidth
+              required
+              name="question"
+              value={requirements.question}
+              label="I am interested in"
+              placeholder="e.g., knowing how often these learning materials are viewed by my students."
+              onChange={handleFormData}
+              error={requirements.question === ""}
+            />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <Button
+              color="primary"
+              variant="contained"
+              onClick={handleToggleQuestionEdit}
+              disabled={handleDisabledFabButton()}
+            >
+              Confirm
+            </Button>
           </Grid>
         </Grid>
-      </Grid>
+      </Stack>
     </>
   );
 }

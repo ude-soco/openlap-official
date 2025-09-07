@@ -1,17 +1,35 @@
 import { useContext } from "react";
-import { Box, Button, Collapse, Divider, Paper, Stack } from "@mui/material";
+import {
+  Button,
+  Collapse,
+  Divider,
+  Paper,
+  Stack,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { ISCContext } from "../../indicator-specification-card.jsx";
-import SpecifyGoal from "./components/specify-goal/specify-goal.jsx";
-import ConfirmGoal from "./components/specify-goal/confirm-goal.jsx";
-import FormulateQuestion from "./components/formulate-question/formulate-question.jsx";
-import ConfirmQuestion from "./components/formulate-question/confirm-question.jsx";
-import SpecifyIndicator from "./components/specify-indicator/specify-indicator.jsx";
-import RequirementSummary from "./components/requirement-summary/requirement-summary.jsx";
+import Timeline from "@mui/lab/Timeline";
+import TimelineItem, { timelineItemClasses } from "@mui/lab/TimelineItem";
+import TimelineSeparator from "@mui/lab/TimelineSeparator";
+import TimelineConnector from "@mui/lab/TimelineConnector";
+import TimelineContent from "@mui/lab/TimelineContent";
+import TimelineDot from "@mui/lab/TimelineDot";
+import { ISCContext } from "../../indicator-specification-card";
+import SpecifyGoal from "./components/specify-goal/specify-goal";
+import ConfirmGoal from "./components/specify-goal/confirm-goal";
+import FormulateQuestion from "./components/formulate-question/formulate-question";
+import ConfirmQuestion from "./components/formulate-question/confirm-question";
+import SpecifyIndicator from "./components/specify-indicator/specify-indicator";
+import RequirementSummary from "./components/requirement-summary/requirement-summary";
+import FlagIcon from "@mui/icons-material/Flag";
+import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
+import BarChartIcon from "@mui/icons-material/BarChart";
 
 const SpecifyRequirements = () => {
   const { requirements, lockedStep, setLockedStep } = useContext(ISCContext);
-
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("lg"));
   const handleTogglePanel = () => {
     setLockedStep((p) => ({
       ...p,
@@ -61,18 +79,68 @@ const SpecifyRequirements = () => {
             unmountOnExit
           >
             <Stack gap={2}>
-              {requirements.edit.goal ? <SpecifyGoal /> : <ConfirmGoal />}
-              {requirements.show.question && (
-                <>
-                  {requirements.edit.question ? (
-                    <FormulateQuestion />
-                  ) : (
-                    <ConfirmQuestion />
+              <Grid container justifyContent="center">
+                <Timeline
+                  sx={{
+                    display: "inline-flex",
+                    [`& .${timelineItemClasses.root}:before`]: {
+                      flex: isSmallScreen ? 0 : 0.2,
+                      p: 0,
+                    },
+                  }}
+                >
+                  <TimelineItem>
+                    <TimelineSeparator>
+                      <TimelineDot color="primary">
+                        <FlagIcon />
+                      </TimelineDot>
+                      <TimelineConnector />
+                    </TimelineSeparator>
+                    <TimelineContent>
+                      {requirements.edit.goal ? (
+                        <SpecifyGoal />
+                      ) : (
+                        <ConfirmGoal />
+                      )}
+                    </TimelineContent>
+                  </TimelineItem>
+
+                  {requirements.show.question && (
+                    <TimelineItem>
+                      <TimelineSeparator>
+                        <TimelineDot color="primary">
+                          <QuestionMarkIcon />
+                        </TimelineDot>
+                        <TimelineConnector />
+                      </TimelineSeparator>
+                      <TimelineContent>
+                        {requirements.edit.question ? (
+                          <FormulateQuestion />
+                        ) : (
+                          <ConfirmQuestion />
+                        )}
+                      </TimelineContent>
+                    </TimelineItem>
                   )}
-                </>
-              )}
-              {requirements.show.indicatorName && <SpecifyIndicator />}
-              {requirements.show.indicatorName && (
+
+                  {requirements.show.question && (
+                    <TimelineItem>
+                      <TimelineSeparator>
+                        <TimelineDot color="primary">
+                          <BarChartIcon />
+                        </TimelineDot>
+                        <TimelineConnector />
+                      </TimelineSeparator>
+                      <TimelineContent>
+                        {requirements.show.indicatorName && (
+                          <SpecifyIndicator />
+                        )}
+                      </TimelineContent>
+                    </TimelineItem>
+                  )}
+                </Timeline>
+              </Grid>
+              {requirements.show.indicatorName && lockedStep.path.locked && (
                 <>
                   <Divider />
                   <Grid container justifyContent="center">
