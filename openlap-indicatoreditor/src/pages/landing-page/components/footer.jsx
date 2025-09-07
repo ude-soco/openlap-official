@@ -10,6 +10,7 @@ import CallIcon from "@mui/icons-material/Call";
 import EmailIcon from "@mui/icons-material/Email";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
+import SocoLogo from "../../../assets/home/soco-logo.svg";
 import {
   navigationItems,
   socialItems,
@@ -76,6 +77,7 @@ export default function Footer() {
             flexDirection: "column",
             gap: 4,
             minWidth: { xs: "100%", sm: "40%" },
+            pb: 5,
           }}
         >
           <Box sx={{ width: { xs: "100%", sm: "60%" } }}>
@@ -87,19 +89,19 @@ export default function Footer() {
               sx={{ pb: 2 }}
             />
             <Grid container direction="column" spacing={2}>
-              <Grid size="auto">
+              <Grid size="grow">
                 <Grid container spacing={1} alignItems="center">
                   <CallIcon color="primary" />
                   <Typography>+49 (0) 203 379-3707</Typography>
                 </Grid>
               </Grid>
-              <Grid size="auto">
+              <Grid size="grow">
                 <Grid container spacing={1} alignItems="center">
                   <EmailIcon color="primary" />
                   <Typography>socogroup.ude@gmail.com</Typography>
                 </Grid>
               </Grid>
-              <Grid size="auto">
+              <Grid size="grow">
                 <Grid container spacing={1}>
                   <LocationOnIcon color="primary" />
                   <Typography>Forsthausweg 2, 47057 Duisburg</Typography>
@@ -110,20 +112,24 @@ export default function Footer() {
         </Box>
         <Box
           sx={{
-            display: { xs: "none", sm: "flex" },
+            display: { xs: "flex" },
             flexDirection: "column",
             gap: 1,
+            pb: 5,
           }}
         >
+          <Box
+            component="img"
+            src={SocoLogo}
+            style={logoStyle}
+            alt="Logo of Social Computing Group"
+          />
           <Grid container direction="column" spacing={2}>
             <Grid size="auto">
-              <Typography>
+              <Typography gutterBottom>
                 <b>Social Computing Group</b>
               </Typography>
               <Typography color="textSecondary">
-                Department of Human-centered Computing
-                <br /> and Cognitive Science (HCCS)
-                <br />
                 Faculty of Computer Science
                 <br />
                 University of Duisburg-Essen
@@ -131,12 +137,10 @@ export default function Footer() {
             </Grid>
           </Grid>
         </Box>
-        <Box
-          sx={{
-            display: { xs: "none", sm: "flex" },
-            flexDirection: "column",
-            gap: 1,
-          }}
+        <Stack
+          direction="column"
+          gap={1}
+          sx={{ display: { xs: "none", lg: "flex" } }}
         >
           <Typography>
             <b>OpenLAP</b>
@@ -157,7 +161,7 @@ export default function Footer() {
               {item.name}
             </Typography>
           ))}
-        </Box>
+        </Stack>
         {/* <Box
           sx={{
             display: { xs: "none", sm: "flex" },
