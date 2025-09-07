@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { Box, Button, Collapse, Divider, Paper } from "@mui/material";
+import { Box, Button, Collapse, Divider, Paper, Stack } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import SpecifyGoal from "./components/specify-goal/specify-goal.jsx";
@@ -53,57 +53,51 @@ const SpecifyRequirements = () => {
   return (
     <>
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12 }}>
-            <RequirementSummary />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <Collapse
-              in={lockedStep.requirements.openPanel}
-              timeout={{ enter: 500, exit: 250 }}
-              unmountOnExit
-            >
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}>
-                  <Box sx={{ pb: 2 }}>
-                    {requirements.edit.goal ? <SpecifyGoal /> : <ConfirmGoal />}
-                  </Box>
-                  {requirements.show.question && (
-                    <Box sx={{ pb: 2 }}>
-                      {requirements.edit.question ? (
-                        <FormulateQuestion />
-                      ) : (
-                        <ConfirmQuestion />
-                      )}
-                    </Box>
+        <RequirementSummary />
+        <Collapse
+          in={lockedStep.requirements.openPanel}
+          timeout={{ enter: 500, exit: 250 }}
+          unmountOnExit
+        >
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ pb: 2 }}>
+                {requirements.edit.goal ? <SpecifyGoal /> : <ConfirmGoal />}
+              </Box>
+              {requirements.show.question && (
+                <Box sx={{ pb: 2 }}>
+                  {requirements.edit.question ? (
+                    <FormulateQuestion />
+                  ) : (
+                    <ConfirmQuestion />
                   )}
-                  {requirements.show.indicatorName && <SpecifyIndicator />}
+                </Box>
+              )}
+              {requirements.show.indicatorName && <SpecifyIndicator />}
+            </Grid>
+            {requirements.show.indicatorName && (
+              <>
+                <Grid size={{ xs: 12 }}>
+                  <Divider />
                 </Grid>
-                {requirements.show.indicatorName && (
-                  <>
-                    <Grid size={{ xs: 12 }}>
-                      <Divider />
+                <Grid size={{ xs: 12 }}>
+                  <Grid container justifyContent="center">
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        disabled={handleCheckDisabled()}
+                        onClick={handleUnlockPath}
+                      >
+                        {lockedStep.path.locked ? "Next" : "Close"}
+                      </Button>
                     </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Grid container justifyContent="center">
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                          <Button
-                            fullWidth
-                            variant="contained"
-                            disabled={handleCheckDisabled()}
-                            onClick={handleUnlockPath}
-                          >
-                            {lockedStep.path.locked ? "Next" : "Close"}
-                          </Button>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                  </>
-                )}
-              </Grid>
-            </Collapse>
+                  </Grid>
+                </Grid>
+              </>
+            )}
           </Grid>
-        </Grid>
+        </Collapse>
       </Paper>
     </>
   );

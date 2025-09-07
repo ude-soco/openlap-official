@@ -3,6 +3,7 @@ import Grid from "@mui/material/Grid2";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
 import SettingsIcon from "@mui/icons-material/Settings";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 export function ToggleEditButton({ openPanel, togglePanel }) {
   return (
@@ -20,7 +21,7 @@ export function ToggleEditButton({ openPanel, togglePanel }) {
 
 export function ToggleEditIconButton({ openPanel, togglePanel }) {
   return (
-    <Tooltip title={<Typography>{openPanel ? "Close" : "Edit"}</Typography>}>
+    <Tooltip arrow title={<Typography>{openPanel ? "Close" : "Edit"}</Typography>}>
       <Grid
         container
         spacing={0.5}
@@ -28,12 +29,16 @@ export function ToggleEditIconButton({ openPanel, togglePanel }) {
         alignItems="center"
         onClick={togglePanel}
       >
-        <IconButton size="small" color="primary">
-          {openPanel ? <CloseIcon /> : <EditIcon />}
+        <IconButton
+          size="small"
+          color="primary"
+          sx={{
+            transform: openPanel ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.3s ease",
+          }}
+        >
+          <KeyboardArrowDownIcon />
         </IconButton>
-        <Typography variant="body2" color="primary" sx={{ cursor: "pointer" }}>
-          {openPanel ? "Close" : "Edit"}
-        </Typography>
       </Grid>
     </Tooltip>
   );

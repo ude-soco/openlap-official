@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { Breadcrumbs, Divider, Link, Typography } from "@mui/material";
+import { Breadcrumbs, Divider, Link, Stack, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { Link as RouterLink } from "react-router-dom";
 import { useSnackbar } from "notistack";
@@ -264,7 +264,7 @@ const IndicatorSpecificationCard = () => {
           setDataset,
         }}
       >
-        <Grid container spacing={2}>
+        <Stack gap={2}>
           <Breadcrumbs>
             <Link
               component={RouterLink}
@@ -286,44 +286,16 @@ const IndicatorSpecificationCard = () => {
               Create an ISC
             </Typography>
           </Breadcrumbs>
-
-          <Grid size={{ xs: 12 }}>
-            <Divider />
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <SpecifyRequirements />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <ChoosePath />
-          </Grid>
-          {lockedStep.visualization.step === "3" && (
-            <Grid size={{ xs: 12 }}>
-              <Visualization />
-            </Grid>
-          )}
-          {lockedStep.dataset.step === "4" && (
-            <Grid size={{ xs: 12 }}>
-              <Dataset />
-            </Grid>
-          )}
-          {lockedStep.dataset.step === "3" && (
-            <Grid size={{ xs: 12 }}>
-              <Dataset />
-            </Grid>
-          )}
-          {lockedStep.visualization.step === "4" && (
-            <Grid size={{ xs: 12 }}>
-              <Visualization />
-            </Grid>
-          )}
+          <Divider />
+          <SpecifyRequirements />
+          <ChoosePath />
+          {lockedStep.visualization.step === "3" && <Visualization />}
+          {lockedStep.dataset.step === "4" && <Dataset />}
+          {lockedStep.dataset.step === "3" && <Dataset />}
+          {lockedStep.visualization.step === "4" && <Visualization />}
           {lockedStep.visualization.step !== "0" &&
-            lockedStep.dataset.step !== "0" && (
-              <Grid size={{ xs: 12 }}>
-                <Finalize />
-              </Grid>
-            )}
-        </Grid>
+            lockedStep.dataset.step !== "0" && <Finalize />}
+        </Stack>
       </ISCContext.Provider>
     </>
   );
