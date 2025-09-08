@@ -24,6 +24,7 @@ import GroupedBarChartFullDescriptionImage from "../../../../../assets/images/is
 import DistributionImage from "../../../../../assets/images/isc_charts_filter/distribution.svg";
 import OutliersImage from "../../../../../assets/images/isc_charts_filter/outliers.svg";
 import TrendsImage from "../../../../../assets/images/isc_charts_filter/trends.svg";
+import CorrelationImage from "../../../../../assets/images/isc_charts_filter/correlation.svg";
 import RelationshipImage from "../../../../../assets/images/isc_charts_filter/relationship.svg";
 import ClusterImage from "../../../../../assets/images/isc_charts_filter/feature.svg";
 import PathsImage from "../../../../../assets/images/isc_charts_filter/paths.svg";
@@ -53,13 +54,14 @@ const DataTypes = {
 };
 
 const ChartTypes = {
-  distribution: "Distribution",
-  outliers: "Outliers",
   trends: "Trends",
-  relationship: "Part-to-whole relationship",
+  outliers: "Outliers",
+  distribution: "Distribution",
+  correlation: "Correlation",
   cluster: "Cluster",
-  paths: "Paths",
+  relationship: "Part-to-whole relationship",
   topology: "Topology",
+  paths: "Paths",
 };
 
 const VisualizationTypes = {
@@ -77,18 +79,11 @@ const VisualizationTypes = {
 
 const chartFilters = [
   {
-    image: DistributionImage,
-    type: ChartTypes.distribution,
+    image: TrendsImage,
+    type: ChartTypes.trends,
     description:
-      "Distribution shows how data points are spread out across different values or categories, helping to see patterns like whether data is evenly spread or clustered.",
+      "Trends show how data changes over time or in a sequence, helping to identify patterns and shifts.",
     enable: true,
-  },
-  {
-    image: ClusterImage,
-    type: ChartTypes.cluster,
-    description:
-      "Clustering groups similar data points together, making it easier to spot patterns and natural groupings within the data.",
-    enable: false,
   },
   {
     image: OutliersImage,
@@ -98,17 +93,24 @@ const chartFilters = [
     enable: true,
   },
   {
-    image: PathsImage,
-    type: ChartTypes.paths,
+    image: DistributionImage,
+    type: ChartTypes.distribution,
     description:
-      "Paths trace the route or sequence between different points, showing how they are connected or related to each other.",
-    enable: false,
+      "Distribution shows how data points are spread out across different values or categories, helping to see patterns like whether data is evenly spread or clustered.",
+    enable: true,
   },
   {
-    image: TrendsImage,
-    type: ChartTypes.trends,
+    image: CorrelationImage,
+    type: ChartTypes.correlation,
     description:
-      "Trends show how data changes over time or in a sequence, helping to identify patterns and shifts.",
+      "Correlation shows how two or more variables move in relation to each other, helping to identify whether changes in one variable are associated with changes in another.",
+    enable: true,
+  },
+  {
+    image: ClusterImage,
+    type: ChartTypes.cluster,
+    description:
+      "Clustering groups similar data points together, making it easier to spot patterns and natural groupings within the data.",
     enable: true,
   },
   {
@@ -125,6 +127,13 @@ const chartFilters = [
       "Topology describes the overall structure and arrangement of connections or relationships within a set of points or elements, focusing on how they are linked, regardless of distance or direction.",
     enable: false,
   },
+  {
+    image: PathsImage,
+    type: ChartTypes.paths,
+    description:
+      "Paths trace the route or sequence between different points, showing how they are connected or related to each other.",
+    enable: false,
+  },
 ];
 
 const visualizations = [
@@ -135,18 +144,9 @@ const visualizations = [
     code: "bar",
     filters: [ChartTypes.distribution],
     dataTypes: [
-      {
-        type: DataTypes.categorical,
-        required: 1,
-      },
-      {
-        type: DataTypes.numerical,
-        required: 1,
-      },
-      {
-        type: DataTypes.catOrdered,
-        required: 0,
-      },
+      { type: DataTypes.categorical, required: 1 },
+      { type: DataTypes.numerical, required: 1 },
+      { type: DataTypes.catOrdered, required: 0 },
     ],
     fullDescription:
       'Also known as Bar Graph or Column Graph. \n\n A Bar Chart uses either horizontal or vertical bars (column chart) to show discrete, numerical comparisons across categories. One axis of the chart shows the specific categories being compared and the other axis represents a discrete value scale. \n\n  Bar Charts are distinguished from Histograms, as they do not display continuous developments over an interval. Instead, Bar Chart\'s discrete data is categorical and therefore answers the question of "how many?" in each category.',
@@ -163,18 +163,9 @@ const visualizations = [
     code: "scatter",
     filters: [ChartTypes.trends],
     dataTypes: [
-      {
-        type: DataTypes.categorical,
-        required: 0,
-      },
-      {
-        type: DataTypes.numerical,
-        required: 1,
-      },
-      {
-        type: DataTypes.catOrdered,
-        required: 1,
-      },
+      { type: DataTypes.categorical, required: 0 },
+      { type: DataTypes.numerical, required: 1 },
+      { type: DataTypes.catOrdered, required: 1 },
     ],
     fullDescription:
       "A scatter plot chart, also known as a dot plot, dot graph, or dot diagram, is a simple data visualization tool used to display the distribution or frequency of a dataset. It is particularly useful for visualizing categorical or discrete data, such as the distribution of values within a category or the occurrence of specific events. \n\n Dot charts are particularly useful for showing the distribution of data when you want to emphasize individual data points rather than connecting them with lines. They are often used in data analysis, statistics, and data visualization to provide a clear and concise representation of the dataset.",
@@ -189,20 +180,17 @@ const visualizations = [
     enable: true,
     type: VisualizationTypes.scatter,
     code: "scatter",
-    filters: [ChartTypes.trends],
+    filters: [
+      ChartTypes.trends,
+      ChartTypes.outliers,
+      ChartTypes.distribution,
+      ChartTypes.correlation,
+      ChartTypes.cluster,
+    ],
     dataTypes: [
-      {
-        type: DataTypes.categorical,
-        required: 1,
-      },
-      {
-        type: DataTypes.numerical,
-        required: 2,
-      },
-      {
-        type: DataTypes.catOrdered,
-        required: 0,
-      },
+      { type: DataTypes.categorical, required: 1 },
+      { type: DataTypes.numerical, required: 2 },
+      { type: DataTypes.catOrdered, required: 0 },
     ],
     fullDescription:
       "A scatter plot chart, also known as a dot plot, dot graph, or dot diagram, is a simple data visualization tool used to display the distribution or frequency of a dataset. It is particularly useful for visualizing categorical or discrete data, such as the distribution of values within a category or the occurrence of specific events. \n\n Dot charts are particularly useful for showing the distribution of data when you want to emphasize individual data points rather than connecting them with lines. They are often used in data analysis, statistics, and data visualization to provide a clear and concise representation of the dataset.",
@@ -219,18 +207,9 @@ const visualizations = [
     code: "bar",
     filters: [ChartTypes.trends, ChartTypes.relationship],
     dataTypes: [
-      {
-        type: DataTypes.categorical,
-        required: 1,
-      },
-      {
-        type: DataTypes.numerical,
-        required: 2,
-      },
-      {
-        type: DataTypes.catOrdered,
-        required: 0,
-      },
+      { type: DataTypes.categorical, required: 1 },
+      { type: DataTypes.numerical, required: 2 },
+      { type: DataTypes.catOrdered, required: 0 },
     ],
     fullDescription:
       "Also known as a Grouped Bar Chart or Clustered Bar Chart. This variation of a Bar Chart can be used when two or more data series need to be plotted all on the same axis and grouped into parent categories. \n\n Like on a Bar Chart, the length of each bar on a Multiset Bar Chart is used to show discrete, numerical comparisons amongst categories. Each bar for a data series is assigned a colour to distinguish them apart. Bars in the same group are placed together and are then spaced apart from other bar groupings. \n\n The use of Multiset Bar Charts is usually to compare across categories that contain the same sub-categorical variables between them. Each bar is a subcategory that is grouped into a larger parent category. \n\n Multiset Bar Charts can also be used to compare mini Histograms to each other, so each bar in the group would represent the significant intervals of a variable. Another use could be to use Multiset Bar Charts to show data changing over time by having, for example, each bar represent a point in time such as a year. \n\n The downside of Multiset Bar Charts is that they become harder to read the more bars you have in one group. Therefore, you should try to limit the number of bars per group.",
@@ -247,18 +226,9 @@ const visualizations = [
     code: "line",
     filters: [ChartTypes.trends],
     dataTypes: [
-      {
-        type: DataTypes.categorical,
-        required: 0,
-      },
-      {
-        type: DataTypes.numerical,
-        required: 1,
-      },
-      {
-        type: DataTypes.catOrdered,
-        required: 1,
-      },
+      { type: DataTypes.categorical, required: 0 },
+      { type: DataTypes.numerical, required: 1 },
+      { type: DataTypes.catOrdered, required: 1 },
     ],
     fullDescription:
       "A line chart is used to display quantitative values over a continuous interval or time period. A Line Graph is most frequently used to show trends and analyse how the data has changed over time. \n\n Line Graphs are drawn by first plotting data points on a Cartesian coordinate grid, and then connecting a line between all of these points. Typically, the y-axis has a quantitative value, while the x-axis is a timescale or a sequence of intervals. Negative values can be displayed below the x-axis. \n\n  The direction of the lines on the graph works as a nice metaphor for the data: an upward slope indicates where values have increased and a downward slope indicates where values have decreased. The line's journey across the graph can create patterns that reveal trends in a dataset. \n\nWhen grouped with other lines (other data series), individual lines can be compared to one another. However, avoid using more than 3-4 lines per graph, as this makes the chart more cluttered and harder to read. A solution to this is to divide the chart into smaller multiples (have a small Line Graph for each data series).",
@@ -275,18 +245,9 @@ const visualizations = [
     code: "polarArea",
     filters: [ChartTypes.distribution],
     dataTypes: [
-      {
-        type: DataTypes.categorical,
-        required: 1,
-      },
-      {
-        type: DataTypes.numerical,
-        required: 1,
-      },
-      {
-        type: DataTypes.catOrdered,
-        required: 0,
-      },
+      { type: DataTypes.categorical, required: 1 },
+      { type: DataTypes.numerical, required: 1 },
+      { type: DataTypes.catOrdered, required: 0 },
     ],
     fullDescription:
       "Also known as a Coxcomb Chart, Nightingale Rose Chart. \n\n This chart was famously used by statistician and medical reformer, Florence Nightingale to communicate the avoidable deaths of soldiers during the Crimean war. \n\n  Polar area charts are drawn on a polar coordinate grid. Each category or interval in the data is divided into equal segments on this radial chart. How far each segment extends from the centre of the polar axis depends on the value it represents. So each ring from the centre of the polar grid can be used as a scale to plot the segment size and represent a higher value. \n\n The major flaw with Nightingale Rose Charts is that the outer segments are emphasised more because of their larger area size, which disproportionately represents any value increases.",
@@ -303,18 +264,9 @@ const visualizations = [
     code: "pie",
     filters: [ChartTypes.relationship],
     dataTypes: [
-      {
-        type: DataTypes.categorical,
-        required: 1,
-      },
-      {
-        type: DataTypes.numerical,
-        required: 1,
-      },
-      {
-        type: DataTypes.catOrdered,
-        required: 0,
-      },
+      { type: DataTypes.categorical, required: 1 },
+      { type: DataTypes.numerical, required: 1 },
+      { type: DataTypes.catOrdered, required: 0 },
     ],
     fullDescription:
       "Extensively used in presentations and offices, Pie Charts help show proportions and percentages between categories, by dividing a circle into proportional segments. Each arc length represents a proportion of each category, while the full circle represents the total sum of all the data, equal to 100%. \n\n Pie Charts are ideal for giving the reader a quick idea of the proportional distribution of the data. However, the major downsides to pie charts are: \n\n  They cannot show more than a few values, because as the number of values shown increases, the size of each segment/slice becomes smaller. This makes them unsuitable for large datasets with many categories. \n\n They take up more space than their alternatives, for example, a 100% Stacked Bar Chart. Mainly due to their size and the usual need for a legend. \n\n They are not great for making accurate comparisons between groups of Pie Charts. This is because it is harder to distinguish the size of items via area when it is for length. \n\n Despite that, comparing a given category (one slice) within the total of a single Pie Chart, then it can often be more effective.",
@@ -331,18 +283,9 @@ const visualizations = [
     code: "bar",
     filters: [ChartTypes.trends, ChartTypes.relationship],
     dataTypes: [
-      {
-        type: DataTypes.categorical,
-        required: 2,
-      },
-      {
-        type: DataTypes.numerical,
-        required: 1,
-      },
-      {
-        type: DataTypes.catOrdered,
-        required: 0,
-      },
+      { type: DataTypes.categorical, required: 2 },
+      { type: DataTypes.numerical, required: 1 },
+      { type: DataTypes.catOrdered, required: 0 },
     ],
     fullDescription:
       "Stacked Bar Graphs segment the bars on top of each other. They are used to show how a larger category is divided into smaller subcategories and what the relationship of each part has on the total amount. There are two types of Stacked Bar Graphs: \n\n Simple Stacked Bar charts place each value for the segment after the previous one. The total value of the bar is all the segment values added together. Ideal for comparing the total amounts across each segmented bar. \n\n 100% Stack Bar Graphs show the percentage-of-the-whole by plotting the percentage of each value to the total amount in each group. This makes it easier to see the relative differences between quantities in each group. \n\n One major flaw of Stacked Bar Graphs is that they become harder to read the more segments each bar has. Also, comparing each segment to the other is difficult, as they're not aligned on a common baseline.",
@@ -359,18 +302,9 @@ const visualizations = [
     code: "treemap",
     filters: [ChartTypes.relationship],
     dataTypes: [
-      {
-        type: DataTypes.categorical,
-        required: 2,
-      },
-      {
-        type: DataTypes.numerical,
-        required: 1,
-      },
-      {
-        type: DataTypes.catOrdered,
-        required: 0,
-      },
+      { type: DataTypes.categorical, required: 2 },
+      { type: DataTypes.numerical, required: 1 },
+      { type: DataTypes.catOrdered, required: 0 },
     ],
     imageDescription: TreeMapDescriptionImage,
     description:
@@ -384,18 +318,9 @@ const visualizations = [
     code: "radar",
     filters: [ChartTypes.distribution],
     dataTypes: [
-      {
-        type: DataTypes.categorical,
-        required: 1,
-      },
-      {
-        type: DataTypes.numerical,
-        required: 1,
-      },
-      {
-        type: DataTypes.catOrdered,
-        required: 0,
-      },
+      { type: DataTypes.categorical, required: 1 },
+      { type: DataTypes.numerical, required: 1 },
+      { type: DataTypes.catOrdered, required: 0 },
     ],
     imageDescription: RadarDescriptionImage,
     description:

@@ -66,7 +66,7 @@ const VisualizationFilter = () => {
       const sufficient = availableCount >= requiredCount;
       if (!sufficient) {
         messages.push(
-          `<b>${requiredCount}</b> <b>${type}</b> data required, but found <b>${availableCount}</b>`
+          `<b>${requiredCount}</b> <b>${type}</b> data column(s) required, but found <b>${availableCount}</b>`
         );
       }
     });
