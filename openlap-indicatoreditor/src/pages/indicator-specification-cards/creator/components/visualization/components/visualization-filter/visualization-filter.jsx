@@ -240,7 +240,10 @@ const VisualizationFilter = () => {
                   alignItems="center"
                   justifyContent="center"
                 >
-                  <RecommendIcon color="success" />
+                  <RecommendIcon
+                    color="success"
+                    sx={{ borderRadius: 50, bgcolor: "white" }}
+                  />
                   <Typography variant="body2">
                     Recommendations are based on your dataset
                   </Typography>
