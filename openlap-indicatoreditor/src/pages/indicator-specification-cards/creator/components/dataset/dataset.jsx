@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { ISCContext } from "../../indicator-specification-card.jsx";
-import { Button, Collapse, Divider, Paper } from "@mui/material";
+import { Button, Collapse, Divider, Paper, Stack } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import DatasetSummary from "./components/dataset-summary.jsx";
 import DataTableManager from "./data-table-manager/data-table-manager";
@@ -69,41 +69,29 @@ const Dataset = () => {
             : "background.paper",
         }}
       >
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12 }}>
-            <DatasetSummary />
-          </Grid>
-          <Grid size={{ xs: 12 }} sx={{ pt: 1 }}>
-            <Collapse
-              in={lockedStep.dataset.openPanel}
-              timeout={{ enter: 500, exit: 250 }}
-              unmountOnExit
-            >
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}>
-                  <DataTableManager />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <Divider />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <Grid container justifyContent="center">
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        disabled={handleCheckDisabled()}
-                        onClick={handleUnlockPath}
-                      >
-                        Next
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Grid>
+        <DatasetSummary />
+        <Collapse
+          in={lockedStep.dataset.openPanel}
+          timeout={{ enter: 500, exit: 250 }}
+          unmountOnExit
+        >
+          <Stack gap={2} sx={{ py: 2 }}>
+            <DataTableManager />
+            <Divider />
+            <Grid container justifyContent="center">
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  disabled={handleCheckDisabled()}
+                  onClick={handleUnlockPath}
+                >
+                  Next
+                </Button>
               </Grid>
-            </Collapse>
-          </Grid>
-        </Grid>
+            </Grid>
+          </Stack>
+        </Collapse>
       </Paper>
     </>
   );

@@ -94,7 +94,7 @@ const SpecifyRequirements = () => {
                       <TimelineDot color="primary">
                         <FlagIcon />
                       </TimelineDot>
-                      <TimelineConnector />
+                      {requirements.show.question && <TimelineConnector />}
                     </TimelineSeparator>
                     <TimelineContent>
                       {requirements.edit.goal ? (
@@ -111,7 +111,9 @@ const SpecifyRequirements = () => {
                         <TimelineDot color="primary">
                           <QuestionMarkIcon />
                         </TimelineDot>
-                        <TimelineConnector />
+                        {requirements.show.indicatorName && (
+                          <TimelineConnector />
+                        )}
                       </TimelineSeparator>
                       <TimelineContent>
                         {requirements.edit.question ? (
@@ -123,13 +125,12 @@ const SpecifyRequirements = () => {
                     </TimelineItem>
                   )}
 
-                  {requirements.show.question && (
+                  {requirements.show.indicatorName && (
                     <TimelineItem>
                       <TimelineSeparator>
                         <TimelineDot color="primary">
                           <BarChartIcon />
                         </TimelineDot>
-                        <TimelineConnector />
                       </TimelineSeparator>
                       <TimelineContent>
                         {requirements.show.indicatorName && (

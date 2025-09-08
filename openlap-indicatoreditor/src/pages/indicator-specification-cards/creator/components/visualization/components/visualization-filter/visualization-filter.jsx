@@ -5,12 +5,13 @@ import {
   AccordionSummary,
   Box,
   Divider,
-  Grid,
   Grow,
   Paper,
+  Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import VisualizationDescription from "./visualization-description";
 import RecommendIcon from "@mui/icons-material/Recommend";
@@ -150,18 +151,15 @@ const VisualizationFilter = () => {
           </Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
+          <Stack gap={4}>
+            <Stack gap={4} justifyContent="center">
+              {visRef.filter.type && (
+                <Typography align="center" variant="body2">
+                  Chart(s) recommended based on chart type:{" "}
+                  <b>{visRef.filter.type}</b>
+                </Typography>
+              )}
               <Grid container spacing={2} justifyContent="center">
-                {visRef.filter.type && (
-                  <Grid item xs={12}>
-                    <Typography align="center" variant="body2">
-                      Chart(s) recommended based on chart type:{" "}
-                      <b>{visRef.filter.type}</b>
-                    </Typography>
-                  </Grid>
-                )}
-
                 {state.visualizationList
                   .sort((a, b) => a.type.localeCompare(b.type))
                   .map((visualization, index) => {
@@ -169,129 +167,97 @@ const VisualizationFilter = () => {
                       return (
                         <Grid
                           key={index}
-                          item
-                          xs={6}
-                          sm={4}
-                          md={3}
-                          lg={2}
-                          sx={{ cursor: "pointer" }}
+                          component={Paper}
+                          variant="outlined"
+                          size={{ xs: 6, md: 3, lg: 2 }}
+                          sx={{
+                            cursor: "pointer",
+                            p: 2,
+                            "&:hover": {
+                              boxShadow: 5,
+                            },
+                            border:
+                              visRef.chart.type === visualization.type
+                                ? "2px solid #F57C00"
+                                : "",
+                          }}
                           onClick={() =>
                             handleSelectVisualization(visualization)
                           }
                         >
-                          <Grid container spacing={2}>
-                            <Grid item xs>
-                              <Grid container spacing={2}>
-                                <Grid item xs={12}>
-                                  <Tooltip
-                                    arrow
-                                    title={
-                                      <Typography
-                                        variant="body2"
-                                        sx={{ p: 1, whiteSpace: "pre-line" }}
-                                      >
-                                        {visualization.description}
-                                      </Typography>
-                                    }
-                                  >
-                                    <Paper
-                                      variant="outlined"
-                                      sx={{
-                                        pb: 1,
-                                        pt: 2,
-                                        "&:hover": {
-                                          boxShadow: 5,
-                                        },
-                                        border:
-                                          visRef.chart.type ===
-                                          visualization.type
-                                            ? "2px solid #F57C00"
-                                            : "",
-                                      }}
-                                    >
-                                      <Grid
-                                        container
-                                        direction="column"
-                                        alignItems="center"
-                                      >
-                                        <Grid item>
-                                          <Box
-                                            component="img"
-                                            src={visualization.image}
-                                            height="48px"
-                                          />
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                          <Grid container alignItems="center">
-                                            {checkVisualizationRecommendation(
-                                              visualization,
-                                              columnTypes
-                                            ) && (
-                                              <Grid item>
-                                                <RecommendIcon color="success" />
-                                              </Grid>
-                                            )}
-                                            <Grid item xs>
-                                              <Typography
-                                                variant="body2"
-                                                gutterBottom
-                                              >
-                                                {visualization.type}
-                                              </Typography>
-                                            </Grid>
-                                          </Grid>
-                                        </Grid>
-                                      </Grid>
-                                    </Paper>
-                                  </Tooltip>
-                                </Grid>
-                              </Grid>
-                            </Grid>
-                          </Grid>
+                          <Tooltip
+                            arrow
+                            title={
+                              <Typography
+                                variant="body2"
+                                sx={{ p: 1, whiteSpace: "pre-line" }}
+                              >
+                                {visualization.description}
+                              </Typography>
+                            }
+                          >
+                            <Stack
+                              gap={2}
+                              alignItems="center"
+                              justifyContent="center"
+                            >
+                              <Box sx={{ position: "relative" }}>
+                                <Box
+                                  component="img"
+                                  src={visualization.image}
+                                  height="56px"
+                                />
+                                {checkVisualizationRecommendation(
+                                  visualization,
+                                  columnTypes
+                                ) && (
+                                  <RecommendIcon
+                                    color="success"
+                                    sx={{
+                                      borderRadius: 50,
+                                      bgcolor: "white",
+                                      position: "absolute",
+                                      top: -4,
+                                      right: -8,
+                                    }}
+                                  />
+                                )}
+                              </Box>
+                              <Typography variant="body2" align="center">
+                                {visualization.type}
+                              </Typography>
+                            </Stack>
+                          </Tooltip>
                         </Grid>
                       );
                     }
                   })}
-                {state.recommendation && (
-                  <Grid item xs={12}>
-                    <Grid
-                      container
-                      spacing={1}
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      <Grid item>
-                        <RecommendIcon color="success" />
-                      </Grid>
-                      <Grid item>
-                        <Typography gutterBottom variant="body2">
-                          Recommendations are based on your dataset
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                )}
               </Grid>
-            </Grid>
-            <Grid item xs={12}>
-              <Grow
-                in={Boolean(visRef.chart.type)}
-                timeout={{ enter: 500, exit: 0 }}
-                unmountOnExit
-              >
-                <div>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <Divider />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <VisualizationDescription columnError={columnError} />
-                    </Grid>
-                  </Grid>
-                </div>
-              </Grow>
-            </Grid>
-          </Grid>
+              {state.recommendation && (
+                <Stack
+                  gap={1}
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <RecommendIcon color="success" />
+                  <Typography variant="body2">
+                    Recommendations are based on your dataset
+                  </Typography>
+                </Stack>
+              )}
+            </Stack>
+            <Grow
+              in={Boolean(visRef.chart.type)}
+              timeout={{ enter: 500, exit: 0 }}
+              unmountOnExit
+            >
+              <Stack gap={4}>
+                <Divider />
+                <VisualizationDescription columnError={columnError} />
+              </Stack>
+            </Grow>
+          </Stack>
         </AccordionDetails>
       </Accordion>
     </>

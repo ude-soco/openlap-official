@@ -1,14 +1,15 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Box,
-  Grid,
   Paper,
+  Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { chartFilters } from "../../../utils/data/config.js";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
@@ -36,15 +37,12 @@ const ChartTypeFilter = () => {
     <>
       <Accordion variant="outlined" defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography><b>Filter chart by types</b></Typography>
+          <Typography>
+            <b>Filter chart by types</b>
+          </Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <Grid
-            container
-            spacing={2}
-            justifyContent="center"
-            sx={{ display: "flex", alignItems: "stretch" }}
-          >
+          <Grid container spacing={2} justifyContent="center">
             {chartFilters
               .sort((a, b) => a.type.localeCompare(b.type))
               .map((filter, index) => {
@@ -52,63 +50,49 @@ const ChartTypeFilter = () => {
                   return (
                     <Grid
                       key={index}
-                      item
-                      xs={6}
-                      sm={4}
-                      md={2}
-                      sx={{ cursor: "pointer" }}
+                      component={Paper}
+                      variant="outlined"
+                      size={{ xs: 6, md: 3, lg: 2 }}
+                      sx={{
+                        cursor: "pointer",
+                        pb: 1,
+                        pt: 2,
+                        "&:hover": {
+                          boxShadow: 5,
+                        },
+                        border:
+                          visRef.filter.type === filter.type
+                            ? "2px solid #F57C00"
+                            : "",
+                      }}
                       onClick={() => handleSelectFilter(filter)}
                     >
-                      <Grid container spacing={2}>
-                        <Grid item xs>
-                          <Tooltip
-                            arrow
-                            title={
-                              <Typography
-                                variant="body2"
-                                sx={{ p: 1, whiteSpace: "pre-line" }}
-                              >
-                                {filter.description}
-                              </Typography>
-                            }
+                      <Tooltip
+                        arrow
+                        title={
+                          <Typography
+                            variant="body2"
+                            sx={{ p: 1, whiteSpace: "pre-line" }}
                           >
-                            <Paper
-                              variant="outlined"
-                              sx={{
-                                pb: 1,
-                                pt: 2,
-                                "&:hover": {
-                                  boxShadow: 5,
-                                },
-                                border:
-                                  visRef.filter.type === filter.type
-                                    ? "2px solid #F57C00"
-                                    : "",
-                              }}
-                            >
-                              <Grid
-                                container
-                                direction="column"
-                                alignItems="center"
-                                
-                              >
-                                <Grid item>
-                                  <Box
-                                    component="img"
-                                    src={filter.image}
-                                    height="48px"
-                                  />
-                                </Grid>
-                                <Grid item>
-                                  <Typography align="center" variant="body2">
-                                    {filter.type}
-                                  </Typography>
-                                </Grid>
-                              </Grid>
-                            </Paper>
-                          </Tooltip>
-                        </Grid>
-                      </Grid>
+                            {filter.description}
+                          </Typography>
+                        }
+                      >
+                        <Stack
+                          gap={2}
+                          alignItems="center"
+                          justifyContent="center"
+                        >
+                          <Box
+                            component="img"
+                            src={filter.image}
+                            height="56px"
+                          />
+                          <Typography align="center" variant="body2">
+                            {filter.type}
+                          </Typography>
+                        </Stack>
+                      </Tooltip>
                     </Grid>
                   );
                 }
