@@ -24,7 +24,7 @@ const Dataset = () => {
       visualization: {
         ...p.visualization,
         locked: false,
-        openPanel: true,
+        openPanel: p.visualization.locked ? true : p.visualization.openPanel,
         step: "4",
       },
     }));

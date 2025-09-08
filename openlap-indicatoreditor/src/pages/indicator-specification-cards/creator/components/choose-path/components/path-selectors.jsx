@@ -36,6 +36,11 @@ export default function PathSelectors() {
           openPanel: false,
           step: "4",
         },
+        finalize: {
+          ...p.finalize,
+          locked: true,
+          openPanel: false,
+        },
       }));
       setRequirements((p) => ({ ...p, selectedPath: VISUALIZATION }));
     } else {
@@ -63,6 +68,11 @@ export default function PathSelectors() {
             locked: true,
             openPanel: false,
             step: "4",
+          },
+          finalize: {
+            ...p.finalize,
+            locked: true,
+            openPanel: false,
           },
         }));
         setRequirements((p) => ({ ...p, selectedPath: DATASET }));
