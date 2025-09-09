@@ -1,4 +1,3 @@
-import Grid from "@mui/material/Grid2";
 import {
   Checkbox,
   FormControl,
@@ -9,14 +8,14 @@ import {
 
 const Axis = ({ state, setState }) => {
   const handleChangeXAxis = (e) => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       options: {
-        ...prevState.options,
+        ...p.options,
         xaxis: {
-          ...prevState.options.xaxis,
+          ...p.options.xaxis,
           labels: {
-            ...prevState.options.xaxis.labels,
+            ...p.options.xaxis.labels,
             show: e.target.checked,
           },
         },
@@ -25,14 +24,14 @@ const Axis = ({ state, setState }) => {
   };
 
   const handleChangeYAxis = (e) => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       options: {
-        ...prevState.options,
+        ...p.options,
         yaxis: {
-          ...prevState.options.yaxis,
+          ...p.options.yaxis,
           labels: {
-            ...prevState.options.yaxis.labels,
+            ...p.options.yaxis.labels,
             show: e.target.checked,
           },
         },
@@ -41,16 +40,16 @@ const Axis = ({ state, setState }) => {
   };
 
   const handleShowYAxisTitle = (e) => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       options: {
-        ...prevState.options,
+        ...p.options,
         yaxis: {
-          ...prevState.options.yaxis,
+          ...p.options.yaxis,
           title: {
-            ...prevState.options.yaxis.title,
+            ...p.options.yaxis.title,
             style: {
-              ...prevState.options.yaxis.title.style,
+              ...p.options.yaxis.title.style,
               cssClass: e.target.checked
                 ? "x-y-axis-show-title"
                 : "x-y-axis-hide-title",
@@ -62,16 +61,16 @@ const Axis = ({ state, setState }) => {
   };
 
   const handleShowXAxisTitle = (e) => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       options: {
-        ...prevState.options,
+        ...p.options,
         xaxis: {
-          ...prevState.options.xaxis,
+          ...p.options.xaxis,
           title: {
-            ...prevState.options.xaxis.title,
+            ...p.options.xaxis.title,
             style: {
-              ...prevState.options.xaxis.title.style,
+              ...p.options.xaxis.title.style,
               cssClass: e.target.checked
                 ? "x-y-axis-show-title"
                 : "x-y-axis-hide-title",
@@ -85,74 +84,70 @@ const Axis = ({ state, setState }) => {
   return (
     <>
       {state.configuration.isShowHideAxesAvailable && (
-        <Grid size={12}>
-          <FormControl>
-            <FormLabel id="role-label">Axes</FormLabel>
-            <FormGroup row>
-              {state.configuration.isShowHideYAxisAvailable && (
-                <FormControlLabel
-                  label="Vertical"
-                  control={
-                    <Checkbox
-                      onChange={handleChangeYAxis}
-                      checked={state.options.yaxis.labels.show}
-                    />
-                  }
-                ></FormControlLabel>
-              )}
-              {state.configuration.isShowHideXAxisAvailable && (
-                <FormControlLabel
-                  label="Horizontal"
-                  control={
-                    <Checkbox
-                      onChange={handleChangeXAxis}
-                      checked={state.options.xaxis.labels.show}
-                    />
-                  }
-                ></FormControlLabel>
-              )}
-            </FormGroup>
-          </FormControl>
-        </Grid>
+        <FormControl>
+          <FormLabel id="role-label">Axes</FormLabel>
+          <FormGroup row>
+            {state.configuration.isShowHideYAxisAvailable && (
+              <FormControlLabel
+                label="Vertical"
+                control={
+                  <Checkbox
+                    onChange={handleChangeYAxis}
+                    checked={state.options.yaxis.labels.show}
+                  />
+                }
+              ></FormControlLabel>
+            )}
+            {state.configuration.isShowHideXAxisAvailable && (
+              <FormControlLabel
+                label="Horizontal"
+                control={
+                  <Checkbox
+                    onChange={handleChangeXAxis}
+                    checked={state.options.xaxis.labels.show}
+                  />
+                }
+              ></FormControlLabel>
+            )}
+          </FormGroup>
+        </FormControl>
       )}
 
       {state.configuration.isShowHideAxesTitleAvailable && (
-        <Grid size={12}>
-          <FormControl>
-            <FormLabel id="role-label">Axes Titles</FormLabel>
-            <FormGroup row>
-              {state.configuration.isShowHideYAxisTitleAvailable && (
-                <FormControlLabel
-                  label="Vertical"
-                  control={
-                    <Checkbox
-                      onChange={handleShowYAxisTitle}
-                      checked={
-                        state.options.yaxis.title.style.cssClass ===
-                        "x-y-axis-show-title"
-                      }
-                    />
-                  }
-                ></FormControlLabel>
-              )}
+        <FormControl>
+          <FormLabel id="role-label">Axes Titles</FormLabel>
+          <FormGroup row>
+            {state.configuration.isShowHideYAxisTitleAvailable && (
+              <FormControlLabel
+                label="Vertical"
+                control={
+                  <Checkbox
+                    onChange={handleShowYAxisTitle}
+                    checked={
+                      state.options.yaxis.title.style.cssClass ===
+                      "x-y-axis-show-title"
+                    }
+                  />
+                }
+              />
+            )}
 
-              {state.configuration.isShowHideXAxisTitleAvailable && (
-                <FormControlLabel
-                  label="Horizontal"
-                  control={
-                    <Checkbox
-                      onChange={handleShowXAxisTitle}
-                      checked={
-                        state.options.xaxis.title.style.cssClass ===
-                        "x-y-axis-show-title"
-                      }
-                    />
-                  }
-                ></FormControlLabel>
-              )}
-            </FormGroup>
-          </FormControl>
-        </Grid>
+            {state.configuration.isShowHideXAxisTitleAvailable && (
+              <FormControlLabel
+                label="Horizontal"
+                control={
+                  <Checkbox
+                    onChange={handleShowXAxisTitle}
+                    checked={
+                      state.options.xaxis.title.style.cssClass ===
+                      "x-y-axis-show-title"
+                    }
+                  />
+                }
+              />
+            )}
+          </FormGroup>
+        </FormControl>
       )}
     </>
   );

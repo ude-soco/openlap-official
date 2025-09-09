@@ -55,8 +55,7 @@ const ChartTypeFilter = () => {
                       size={{ xs: 6, md: 3, lg: 2 }}
                       sx={{
                         cursor: "pointer",
-                        pb: 1,
-                        pt: 2,
+                        p: 1,
                         "&:hover": {
                           boxShadow: 5,
                         },

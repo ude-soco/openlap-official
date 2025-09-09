@@ -1,4 +1,3 @@
-import Grid from "@mui/material/Grid2";
 import {
   FormControl,
   FormControlLabel,
@@ -10,12 +9,12 @@ import {
 
 const Legends = ({ state, setState }) => {
   const handleLegendSwitch = (e) => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       options: {
-        ...prevState.options,
+        ...p.options,
         legend: {
-          ...prevState.options.legend,
+          ...p.options.legend,
           show: e.target.checked,
         },
       },
@@ -23,12 +22,12 @@ const Legends = ({ state, setState }) => {
   };
 
   const handleLegendPosition = (e) => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       options: {
-        ...prevState.options,
+        ...p.options,
         legend: {
-          ...prevState.options.legend,
+          ...p.options.legend,
           position: e.target.value,
         },
       },
@@ -37,54 +36,47 @@ const Legends = ({ state, setState }) => {
   return (
     <>
       {state.configuration.isShowHideLegendAvailable && (
-        <Grid size={12}>
-          <FormControlLabel
-            sx={{ mt: 1 }}
-            label="Show legend"
-            control={
-              <Switch
-                checked={state.options.legend.show}
-                onChange={handleLegendSwitch}
-                color="primary"
-              />
-            }
-          />
-        </Grid>
+        <FormControlLabel
+          sx={{ mt: 1 }}
+          label="Show legend"
+          control={
+            <Switch
+              checked={state.options.legend.show}
+              onChange={handleLegendSwitch}
+              color="primary"
+            />
+          }
+        />
       )}
 
       {state.configuration.isLegendPositionChangeable && (
-        <Grid size={12}>
-          <FormControl>
-            <FormLabel id="role-label">Legend Position</FormLabel>
-            <RadioGroup
-              value={state.options.legend.position}
-              onChange={handleLegendPosition}
-              row
-            >
-              {state.configuration.isLegendPositionTopAvailable && (
-                <FormControlLabel label="Top" control={<Radio value="top" />} />
-              )}
-              {state.configuration.isLegendPositionRightAvailable && (
-                <FormControlLabel
-                  label="Right"
-                  control={<Radio value="right" />}
-                />
-              )}
-              {state.configuration.isLegendPositionBottomAvailable && (
-                <FormControlLabel
-                  label="Bottom"
-                  control={<Radio value="bottom" />}
-                />
-              )}
-              {state.configuration.isLegendPositionLeftAvailable && (
-                <FormControlLabel
-                  label="Left"
-                  control={<Radio value="left" />}
-                />
-              )}
-            </RadioGroup>
-          </FormControl>
-        </Grid>
+        <FormControl>
+          <FormLabel id="role-label">Legend Position</FormLabel>
+          <RadioGroup
+            value={state.options.legend.position}
+            onChange={handleLegendPosition}
+            row
+          >
+            {state.configuration.isLegendPositionTopAvailable && (
+              <FormControlLabel label="Top" control={<Radio value="top" />} />
+            )}
+            {state.configuration.isLegendPositionRightAvailable && (
+              <FormControlLabel
+                label="Right"
+                control={<Radio value="right" />}
+              />
+            )}
+            {state.configuration.isLegendPositionBottomAvailable && (
+              <FormControlLabel
+                label="Bottom"
+                control={<Radio value="bottom" />}
+              />
+            )}
+            {state.configuration.isLegendPositionLeftAvailable && (
+              <FormControlLabel label="Left" control={<Radio value="left" />} />
+            )}
+          </RadioGroup>
+        </FormControl>
       )}
     </>
   );

@@ -1,4 +1,3 @@
-import Grid from "@mui/material/Grid2";
 import {
   FormControl,
   FormControlLabel,
@@ -11,12 +10,12 @@ import {
 
 const Labels = ({ state, setState }) => {
   const handleDataLabelsSwitch = (e) => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       options: {
-        ...prevState.options,
+        ...p.options,
         dataLabels: {
-          ...prevState.options.dataLabels,
+          ...p.options.dataLabels,
           enabled: e.target.checked,
         },
       },
@@ -24,14 +23,14 @@ const Labels = ({ state, setState }) => {
   };
 
   const handleDataLabelsBgSwitch = (e) => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       options: {
-        ...prevState.options,
+        ...p.options,
         dataLabels: {
-          ...prevState.options.dataLabels,
+          ...p.options.dataLabels,
           background: {
-            ...prevState.options.dataLabels.background,
+            ...p.options.dataLabels.background,
             enabled: e.target.checked,
           },
         },
@@ -40,16 +39,16 @@ const Labels = ({ state, setState }) => {
   };
 
   const handleLabelsPosition = (e) => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       options: {
-        ...prevState.options,
+        ...p.options,
         plotOptions: {
-          ...prevState.options.plotOptions,
+          ...p.options.plotOptions,
           bar: {
-            ...prevState.options.plotOptions.bar,
+            ...p.options.plotOptions.bar,
             dataLabels: {
-              ...prevState.options.plotOptions.bar.dataLabels,
+              ...p.options.plotOptions.bar.dataLabels,
               position: e.target.value,
             },
           },
@@ -62,64 +61,57 @@ const Labels = ({ state, setState }) => {
     <>
       {(state.configuration.isShowHideLabelsAvailable ||
         state.configuration.isShowHideLabelsBackgroundAvailable) && (
-        <Grid size={12}>
-          <FormControl>
-            <FormLabel>Data Labels</FormLabel>
-            <FormGroup>
-              {state.configuration.isShowHideLabelsAvailable && (
-                <FormControlLabel
-                  sx={{ mt: 1 }}
-                  label="Show labels"
-                  control={
-                    <Switch
-                      color="primary"
-                      checked={state.options.dataLabels.enabled}
-                      onChange={handleDataLabelsSwitch}
-                    />
-                  }
-                />
-              )}
-              {state.configuration.isShowHideLabelsBackgroundAvailable && (
-                <FormControlLabel
-                  label="Show labels background"
-                  control={
-                    <Switch
-                      color="primary"
-                      checked={state.options.dataLabels.background.enabled}
-                      onChange={handleDataLabelsBgSwitch}
-                    />
-                  }
-                />
-              )}
-            </FormGroup>
-          </FormControl>
-        </Grid>
+        <FormControl>
+          <FormLabel>Data Labels</FormLabel>
+          <FormGroup>
+            {state.configuration.isShowHideLabelsAvailable && (
+              <FormControlLabel
+                sx={{ mt: 1 }}
+                label="Show labels"
+                control={
+                  <Switch
+                    color="primary"
+                    checked={state.options.dataLabels.enabled}
+                    onChange={handleDataLabelsSwitch}
+                  />
+                }
+              />
+            )}
+            {state.configuration.isShowHideLabelsBackgroundAvailable && (
+              <FormControlLabel
+                label="Show labels background"
+                control={
+                  <Switch
+                    color="primary"
+                    checked={state.options.dataLabels.background.enabled}
+                    onChange={handleDataLabelsBgSwitch}
+                  />
+                }
+              />
+            )}
+          </FormGroup>
+        </FormControl>
       )}
 
       {state.configuration.isLabelsPositionChangeable && (
-        <Grid size={12}>
-          <FormControl>
-            <FormLabel>Labels Position</FormLabel>
-            <RadioGroup
-              value={state.options.plotOptions.bar.dataLabels.position}
-              onChange={handleLabelsPosition}
-              row
-            >
-              {state.configuration.isLabelsPositionTopAvailable && (
-                <FormControlLabel
-                  label="Top"
-                  control={<Radio value="top" />}
-                ></FormControlLabel>
-              )}
-              {state.configuration.isLabelsPositionCenterAvailable && (
-                <FormControlLabel
-                  label="Center"
-                  control={<Radio value="center" />}
-                ></FormControlLabel>
-              )}
-            </RadioGroup>
-          </FormControl>
-        </Grid>
+        <FormControl>
+          <FormLabel>Labels Position</FormLabel>
+          <RadioGroup
+            value={state.options.plotOptions.bar.dataLabels.position}
+            onChange={handleLabelsPosition}
+            row
+          >
+            {state.configuration.isLabelsPositionTopAvailable && (
+              <FormControlLabel label="Top" control={<Radio value="top" />} />
+            )}
+            {state.configuration.isLabelsPositionCenterAvailable && (
+              <FormControlLabel
+                label="Center"
+                control={<Radio value="center" />}
+              />
+            )}
+          </RadioGroup>
+        </FormControl>
       )}
     </>
   );

@@ -8,16 +8,11 @@ import {
   FormLabel,
   RadioGroup,
   Radio,
-  Grid,
   TextField,
+  Stack,
 } from "@mui/material";
 
 const FiltersTab = ({ state, setState }) => {
-  const [checkSeries, setcheckSeries] = useState(
-    JSON.parse(localStorage.getItem("checked")) !== null || undefined
-      ? JSON.parse(localStorage.getItem("checked"))
-      : true
-  );
   const [tempcategories, settempcategories] = useState(
     JSON.parse(localStorage.getItem("categories"))?.length > 0
       ? JSON.parse(localStorage.getItem("categories"))
@@ -29,10 +24,7 @@ const FiltersTab = ({ state, setState }) => {
   const [tempSeries, settempSeries] = useState(
     JSON.parse(localStorage.getItem("series"))?.length > 0
       ? JSON.parse(localStorage.getItem("series"))
-      : state.series.map((data) => ({
-          data: data,
-          checked: true,
-        }))
+      : state.series.map((data) => ({ data: data, checked: true }))
   );
   const [sort, setsort] = useState(localStorage.getItem("sort") || "");
   const [count, setcount] = useState(tempcategories.length);
@@ -56,20 +48,12 @@ const FiltersTab = ({ state, setState }) => {
 
       const sortedData = combinedArray.map((item) => item.data);
       const sortedCategories = combinedArray.map((item) => item.category);
-      setState((prevState) => ({
-        ...prevState,
-        series: [
-          {
-            ...prevState.series[0],
-            data: sortedData,
-          },
-        ],
+      setState((p) => ({
+        ...p,
+        series: [{ ...p.series[0], data: sortedData }],
         options: {
-          ...prevState.options,
-          xaxis: {
-            ...prevState.options.xaxis,
-            categories: sortedCategories,
-          },
+          ...p.options,
+          xaxis: { ...p.options.xaxis, categories: sortedCategories },
         },
       }));
     } else if (value === "desc") {
@@ -83,20 +67,12 @@ const FiltersTab = ({ state, setState }) => {
       const sortedData = combinedArray.map((item) => item.data);
       const sortedCategories = combinedArray.map((item) => item.category);
 
-      setState((prevState) => ({
-        ...prevState,
-        series: [
-          {
-            ...prevState.series[0],
-            data: sortedData,
-          },
-        ],
+      setState((p) => ({
+        ...p,
+        series: [{ ...p.series[0], data: sortedData }],
         options: {
-          ...prevState.options,
-          xaxis: {
-            ...prevState.options.xaxis,
-            categories: sortedCategories,
-          },
+          ...p.options,
+          xaxis: { ...p.options.xaxis, categories: sortedCategories },
         },
       }));
     }
@@ -104,116 +80,112 @@ const FiltersTab = ({ state, setState }) => {
 
   return (
     <>
-      <Grid item xs={12}>
+      <Stack gap={1}>
         {state.configuration.isCategoriesFilteringAvailable && (
-          <Grid container sx={{ mt: 1 }}>
-            <FormControl>
-              <Autocomplete
-                multiple
-                disableCloseOnSelect
-                disableClearable
-                limitTags={2}
-                options={tempcategories}
-                getOptionLabel={(option) => option.name}
-                value={tempcategories.filter((cat) => cat.checked)}
-                onChange={(event, newValue) => {
-                  const updatedCategories = tempcategories.map((cat) => ({
-                    ...cat,
-                    checked: newValue.some(
-                      (selected) => selected.name === cat.name
-                    ),
-                  }));
+          <FormControl>
+            <Autocomplete
+              multiple
+              disableCloseOnSelect
+              disableClearable
+              limitTags={2}
+              options={tempcategories}
+              getOptionLabel={(option) => option.name}
+              value={tempcategories.filter((cat) => cat.checked)}
+              onChange={(event, newValue) => {
+                const updatedCategories = tempcategories.map((cat) => ({
+                  ...cat,
+                  checked: newValue.some(
+                    (selected) => selected.name === cat.name
+                  ),
+                }));
 
-                  const checkedCount = updatedCategories.filter(
-                    (item) => item.checked
-                  ).length;
+                const checkedCount = updatedCategories.filter(
+                  (item) => item.checked
+                ).length;
 
-                  setcount(checkedCount);
-                  settempcategories(updatedCategories);
+                setcount(checkedCount);
+                settempcategories(updatedCategories);
 
-                  const newCategories = updatedCategories
-                    .filter((cat) => cat.checked === true)
-                    .map((prevc) => prevc.name);
-                  const newSeries = tempSeries.map((item) => ({
-                    ...item.data,
-                    data: item.data.data.filter(
-                      (value, index) => updatedCategories[index].checked
-                    ),
-                  }));
+                const newCategories = updatedCategories
+                  .filter((cat) => cat.checked === true)
+                  .map((prevc) => prevc.name);
+                const newSeries = tempSeries.map((item) => ({
+                  ...item.data,
+                  data: item.data.data.filter(
+                    (value, index) => updatedCategories[index].checked
+                  ),
+                }));
 
-                  setState((prevState) => ({
-                    ...prevState,
-                    series: newSeries,
-                    options: {
-                      ...prevState.options,
-                      xaxis: {
-                        ...prevState.options.xaxis,
-                        categories: newCategories,
-                      },
+                setState((p) => ({
+                  ...p,
+                  series: newSeries,
+                  options: {
+                    ...p.options,
+                    xaxis: {
+                      ...p.options.xaxis,
+                      categories: newCategories,
                     },
-                  }));
-                  setsort("");
-                  localStorage.setItem("sort", "");
-                }}
-                renderOption={(props, option, { selected }) => (
-                  <li
-                    {...props}
+                  },
+                }));
+                setsort("");
+                localStorage.setItem("sort", "");
+              }}
+              renderOption={(props, option, { selected }) => (
+                <li
+                  {...props}
+                  key={option.name}
+                  style={{
+                    pointerEvents: count === 1 && selected ? "none" : "auto",
+                  }}
+                >
+                  <Checkbox
                     key={option.name}
-                    style={{
-                      pointerEvents: count === 1 && selected ? "none" : "auto",
-                    }}
-                  >
-                    <Checkbox
-                      key={option.name}
-                      checked={selected}
-                      disabled={count === 1 && selected}
-                      style={{ marginRight: 8 }}
-                    />
-                    {option.name}
-                  </li>
-                )}
-                renderTags={(tagValue, getTagProps) =>
-                  tagValue.map((option, index) => (
-                    <Chip
-                      key={option.name}
-                      label={option.name}
-                      {...getTagProps({ index })}
-                      disabled={count === 1}
-                    />
-                  ))
-                }
-                renderInput={(params) => (
-                  <TextField {...params} label="Categories Filter" />
-                )}
-              />
-            </FormControl>
-          </Grid>
+                    checked={selected}
+                    disabled={count === 1 && selected}
+                    style={{ marginRight: 8 }}
+                  />
+                  {option.name}
+                </li>
+              )}
+              renderTags={(tagValue, getTagProps) =>
+                tagValue.map((option, index) => (
+                  <Chip
+                    key={option.name}
+                    label={option.name}
+                    {...getTagProps({ index })}
+                    disabled={count === 1}
+                  />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField {...params} label="Categories Filter" />
+              )}
+            />
+          </FormControl>
         )}
 
         {state.configuration.isSortingOrderChangeable && (
-          <Grid item xs={12} mt={2}>
+          <FormControl>
+            <FormLabel id="role-label">Data Sorting</FormLabel>
             <FormControl>
-              <FormLabel id="role-label">Data Sorting</FormLabel>
-              <FormControl>
-                <RadioGroup value={sort} onChange={handleSortChange} row>
-                  {state.configuration.isSortingOrderAscendingAvailable && (
-                    <FormControlLabel
-                      label="Ascending"
-                      control={<Radio value="asc" />}
-                    ></FormControlLabel>
-                  )}
-                  {state.configuration.isSortingOrderDescendingAvailable && (
-                    <FormControlLabel
-                      label="Descending"
-                      control={<Radio value="desc" />}
-                    ></FormControlLabel>
-                  )}
-                </RadioGroup>
-              </FormControl>
+              <RadioGroup value={sort} onChange={handleSortChange} row>
+                {state.configuration.isSortingOrderAscendingAvailable && (
+                  <FormControlLabel
+                    label="Ascending"
+                    control={<Radio value="asc" />}
+                  />
+                )}
+                {state.configuration.isSortingOrderDescendingAvailable && (
+                  <FormControlLabel
+                    label="Descending"
+                    control={<Radio value="desc" />}
+                  />
+                )}
+              </RadioGroup>
             </FormControl>
-          </Grid>
+          </FormControl>
         )}
-      </Grid>
+      </Stack>
     </>
   );
 };
