@@ -16,13 +16,18 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 import OpenLAPArchitecture from "../../../assets/home/abstract-architecture.png";
+import { navigationIds } from "../utils/navigation-data";
 
 const Architecture = () => {
   const [openDialog, setOpenDialog] = useState(false);
 
   const toggleOpenDialog = () => setOpenDialog((p) => !p);
   return (
-    <Container maxWidth="lg" sx={{ pt: { xs: 4, sm: 12 }, pb: { xs: 8 } }}>
+    <Container
+      id={navigationIds.ARCHITECTURE}
+      maxWidth="lg"
+      sx={{ pt: { xs: 4, sm: 12 }, pb: { xs: 8 } }}
+    >
       <Typography
         variant="h4"
         gutterBottom

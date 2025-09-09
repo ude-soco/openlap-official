@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   Box,
+  Button,
   Card,
   CardActionArea,
   CardMedia,
@@ -10,16 +11,17 @@ import {
   DialogTitle,
   Grid,
   IconButton,
-  Link,
   Stack,
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
-import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import AddchartIcon from "@mui/icons-material/Addchart";
+import { useNavigate } from "react-router-dom";
 import OpenLAPIndicatorEditorAbstract from "../../../assets/home/abstract-indicators.png";
 
 const IndicatorEditorFeature = () => {
+  const navigate = useNavigate();
   const [openDialog, setOpenDialog] = useState(false);
 
   const toggleOpenDialog = () => setOpenDialog((p) => !p);
@@ -38,38 +40,34 @@ const IndicatorEditorFeature = () => {
         alignItems="center"
       >
         <Box sx={{ width: { xs: "100%", md: "40%" } }}>
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ display: { xs: "none", md: "flex" } }}
-          >
-            Indicator Editor
-          </Typography>
-          <Typography>
-            The Indicator Editor is an interactive learning analytics tool that
-            enables stakeholders who have knowledge about data analysis and
-            visualization to implement high-fidelity learning analytics
-            indicators based on real xAPI-based learning activity data, by
-            supporting them in selecting data, choosing analysis methods, and
-            specifying visualization techniques.
-          </Typography>
-          <Link
-            component="button"
-            color="primary"
-            fontWeight="bold"
-            sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              "& > svg": { transition: "0.2s" },
-              "&:hover > svg": { transform: "translateX(4px)" },
-            }}
-          >
-            <span>Learn more</span>
-            <ChevronRightRoundedIcon
-              fontSize="small"
-              sx={{ mt: "1px", ml: "2px" }}
-            />
-          </Link>
+          <Stack gap={4}>
+            <Box>
+              <Typography
+                variant="h4"
+                gutterBottom
+                sx={{ display: { xs: "none", md: "flex" } }}
+              >
+                Indicator Editor
+              </Typography>
+              <Typography>
+                The Indicator Editor is an interactive learning analytics tool
+                that enables stakeholders who have knowledge about data analysis
+                and visualization to implement high-fidelity learning analytics
+                indicators based on real xAPI-based learning activity data, by
+                supporting them in selecting data, choosing analysis methods,
+                and specifying visualization techniques.
+              </Typography>
+            </Box>
+            <Box>
+              <Button
+                variant="contained"
+                endIcon={<AddchartIcon />}
+                onClick={() => navigate("/login")}
+              >
+                Implement indicators now!
+              </Button>
+            </Box>
+          </Stack>
         </Box>
         <Box sx={{ width: { xs: "100%", md: "60%" } }}>
           <Card elevation={0} sx={{ width: "100%", position: "relative" }}>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   Box,
+  Button,
   Card,
   CardActionArea,
   CardMedia,
@@ -10,16 +11,17 @@ import {
   DialogTitle,
   Grid,
   IconButton,
-  Link,
   Stack,
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
-import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import DesignServicesIcon from "@mui/icons-material/DesignServices";
 import OpenLAPISCAbstract from "../../../assets/home/abstract-isc.png";
+import { useNavigate } from "react-router-dom";
 
 const ISCCreatorFeature = () => {
+  const navigate = useNavigate();
   const [openDialog, setOpenDialog] = useState(false);
 
   const toggleOpenDialog = () => setOpenDialog((p) => !p);
@@ -78,36 +80,32 @@ const ISCCreatorFeature = () => {
           </Card>
         </Box>
         <Box sx={{ width: { xs: "100%", md: "45%" } }}>
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ display: { xs: "none", md: "flex" } }}
-          >
-            ISC Creator
-          </Typography>
-          <Typography>
-            The ISC Creator is an intuitive learning analytics tool that
-            supports the systematic and theoretically-sound (co-)design of
-            personalized low-fidelity learning analytics indicators, using
-            Indicator Specification Cards (ISCs).
-          </Typography>
-          <Link
-            component="button"
-            color="primary"
-            fontWeight="bold"
-            sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              "& > svg": { transition: "0.2s" },
-              "&:hover > svg": { transform: "translateX(4px)" },
-            }}
-          >
-            <span>Learn more</span>
-            <ChevronRightRoundedIcon
-              fontSize="small"
-              sx={{ mt: "1px", ml: "2px" }}
-            />
-          </Link>
+          <Stack gap={4}>
+            <Box>
+              <Typography
+                variant="h4"
+                gutterBottom
+                sx={{ display: { xs: "none", md: "flex" } }}
+              >
+                ISC Creator
+              </Typography>
+              <Typography>
+                The ISC Creator is an intuitive learning analytics tool that
+                supports the systematic and theoretically-sound (co-)design of
+                personalized low-fidelity learning analytics indicators, using
+                Indicator Specification Cards (ISCs).
+              </Typography>
+            </Box>
+            <Box>
+              <Button
+                variant="contained"
+                endIcon={<DesignServicesIcon />}
+                onClick={() => navigate("/login")}
+              >
+                Design Indicators now!
+              </Button>
+            </Box>
+          </Stack>
         </Box>
       </Stack>
       <Dialog maxWidth="lg" open={openDialog} onClose={toggleOpenDialog}>

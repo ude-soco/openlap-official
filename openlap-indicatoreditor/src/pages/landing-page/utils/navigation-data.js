@@ -5,6 +5,7 @@ import YouTubeIcon from "@mui/icons-material/YouTube";
 const navigationIds = {
   HERO: uuidv4(),
   FEATURE: uuidv4(),
+  ARCHITECTURE: uuidv4(),
   NEWS: uuidv4(),
   PUBLICATION: uuidv4(),
   TEAM: uuidv4(),
@@ -12,6 +13,10 @@ const navigationIds = {
 };
 
 const navigationItems = [
+  {
+    id: navigationIds.ARCHITECTURE,
+    name: "Architecture",
+  },
   {
     id: navigationIds.FEATURE,
     name: "Features",
