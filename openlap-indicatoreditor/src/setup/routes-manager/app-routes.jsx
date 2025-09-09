@@ -20,8 +20,6 @@ import Footer from "../../common/components/footer/footer";
 import { SnackbarProvider } from "notistack";
 import IndicatorPreview from "../../pages/indicators/dashboard/components/indicator-preview";
 import CompositeIndicator from "../../pages/indicators/indicator-editor/composite-indicator/composite-indicator";
-import CompositeIndicatorOld from "../../pages/indicators/editor/composite-indicator/composite-indicator";
-import MultiLevelAnalysisIndicator from "../../pages/indicators/editor/multi-level-analysis-indicator/multi-level-analysis-indicator";
 import CsvXapiDashboard from "../../pages/csv-xapi-converter/csv-xapi-dashboard";
 import ManageLrs from "../../pages/account-manager/manage-lrs";
 import Home from "../../pages/home/home";
@@ -152,7 +150,6 @@ const AppRoutes = () => {
                     element={
                       <PrivateRoute
                         component={<CompositeIndicator />}
-                        // component={<CompositeIndicatorOld />}
                         allowedRoles={[RoleTypes.user]}
                       />
                     }
@@ -166,7 +163,7 @@ const AppRoutes = () => {
                       />
                     }
                   />
-                  <Route
+                  {/* <Route
                     path="multi-level-analysis"
                     element={
                       <PrivateRoute
@@ -174,8 +171,8 @@ const AppRoutes = () => {
                         allowedRoles={[RoleTypes.user]}
                       />
                     }
-                  />
-                  <Route
+                  /> */}
+                  {/* <Route
                     path="multi-level-analysis/edit/:id"
                     element={
                       <PrivateRoute
@@ -183,7 +180,7 @@ const AppRoutes = () => {
                         allowedRoles={[RoleTypes.user]}
                       />
                     }
-                  />
+                  /> */}
                 </Route>
                 <Route path="/indicator">
                   <Route
