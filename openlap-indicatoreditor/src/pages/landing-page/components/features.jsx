@@ -64,29 +64,28 @@ export default function Features() {
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
         {featureItems.map((item) => (
-          <Card variant="outlined" key={item.id} sx={{ width: "100%" }}>
-            <CardActionArea
-              onClick={() => handleSelect(item)}
-              sx={{
-                width: "100%",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
+          <Card
+            variant="outlined"
+            key={item.id}
+            sx={{ width: "100%", position: "relative" }}
+          >
+            <CardActionArea onClick={() => handleSelect(item)}>
               <CardMedia sx={{ height: 300 }} image={item.image} />
-              <IconButton
-                sx={{
-                  position: "absolute",
-                  top: 8,
-                  right: 8,
-                  opacity: 0,
-                  transition: "opacity 0.3s",
-                  ".MuiCard-root:hover &": { opacity: 1 },
-                }}
-              >
-                <SearchIcon />
-              </IconButton>
             </CardActionArea>
+
+            <IconButton
+              sx={{
+                position: "absolute",
+                top: 8,
+                right: 8,
+                opacity: 0,
+                transition: "opacity 0.3s",
+                "&:hover": { opacity: 1 },
+              }}
+              onClick={() => console.log("search clicked")}
+            >
+              <SearchIcon />
+            </IconButton>
             <CardContent>
               <Stack direction="row" spacing={2}>
                 <Box>

@@ -25,8 +25,6 @@ export default function News() {
     (a, b) => new Date(b.date) - new Date(a.date)
   );
 
-  console.log(isMobile);
-
   return (
     <Container
       id={navigationIds.NEWS}
@@ -71,23 +69,28 @@ export default function News() {
               {index < sortedNews.length - 1 && <TimelineConnector />}
             </TimelineSeparator>
 
-            <TimelineContent>
+            <TimelineContent component="div">
               <Typography
                 variant="body2"
                 color="textSecondary"
                 sx={{ display: { xs: "flex", sm: "none" }, mb: 2 }}
+                component="span"
               >
                 {item.date}
               </Typography>
               <Box component={Paper} sx={{ p: 2 }} variant="outlined">
-                <Typography fontWeight="medium" gutterBottom>
+                <Typography component="h6" fontWeight="medium" gutterBottom>
                   {item.title}
                 </Typography>
-                <Typography variant="body2" color="text.primary" gutterBottom>
+                <Typography variant="body2" gutterBottom component="div">
                   {item.desc}
                 </Typography>
                 {item.venue && (
-                  <Typography variant="body2" sx={{ color: "grey.600" }}>
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    component="div"
+                  >
                     {item.venue}
                   </Typography>
                 )}
