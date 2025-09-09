@@ -24,7 +24,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
 import RoleTypes from "../account-manager/utils/enums/role-types";
 import UniqueIdentifierTypes from "../account-manager/utils/enums/unique-identifier-types";
 import { requestAvailableLrsList, register } from "./register-api";
@@ -428,14 +427,16 @@ const Register = () => {
                   )}
                 </>
               )}
-              <LoadingButton
+              <Button
                 type="submit"
                 fullWidth
                 loading={loading}
                 variant="contained"
+                loadingPosition="start"
+                loadingIndicator="Preparing your account..."
               >
                 <span>Create an account</span>
-              </LoadingButton>
+              </Button>
               <Grid container justifyContent="flex-end">
                 <Link
                   component="button"

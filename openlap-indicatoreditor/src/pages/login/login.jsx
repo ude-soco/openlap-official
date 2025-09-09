@@ -13,7 +13,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
 import ToggleColorMode from "../landing-page/components/toggle-color-mode.jsx";
 
@@ -136,15 +135,17 @@ const Login = () => {
             autoComplete="current-password"
             onChange={handleFormFields}
           />
-          <LoadingButton
+          <Button
             type="submit"
             fullWidth
             loading={loading}
             variant="contained"
+            loadingPosition="start"
+            loadingIndicator="Logging in..."
             disabled={formFields.email === "" || formFields.password === ""}
           >
             <span>Login with email</span>
-          </LoadingButton>
+          </Button>
           <Grid container justifyContent="flex-end">
             {/* 
               <Link href="#" variant="body2">

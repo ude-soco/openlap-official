@@ -23,7 +23,6 @@ import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-c
 import PreviewDataTable from "./components/preview-data-table";
 import MergedDataTable from "./components/merged-data-table";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
-import { LoadingButton } from "@mui/lab";
 
 const ColumnsMerge = () => {
   const { api } = useContext(AuthContext);
@@ -189,8 +188,9 @@ const ColumnsMerge = () => {
                       analyzed data.
                     </Typography>
                     <Grid container justifyContent="center">
-                      <LoadingButton
+                      <Button
                         loading={state.isPreviewLoading}
+                        loadingPosition="start"
                         loadingIndicator="Loading…"
                         autoFocus
                         variant="contained"
@@ -198,7 +198,7 @@ const ColumnsMerge = () => {
                         onClick={handlePreviewAnalyzedData}
                       >
                         <span>Preview</span>
-                      </LoadingButton>
+                      </Button>
                       {/* {handleCheckPreviewDisabled() && (
                           <CustomTooltip
                             type="help"

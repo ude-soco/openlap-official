@@ -15,7 +15,6 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
 import {
   requestAvailableLrsInOpenLAP,
@@ -147,9 +146,10 @@ const AddLrsConsumer = ({ addLrsConsumer, toggleOpen }) => {
           <Button fullWidth onClick={toggleOpen}>
             Cancel
           </Button>
-          <LoadingButton
+          <Button
             loading={state.validation.loading}
-            loadingIndicator="Adding…"
+            loadingPosition="start"
+            loadingIndicator="Adding LRS. Please wait…"
             fullWidth
             autoFocus
             onClick={handleConfirm}
@@ -159,7 +159,7 @@ const AddLrsConsumer = ({ addLrsConsumer, toggleOpen }) => {
             }
           >
             Add LRS
-          </LoadingButton>
+          </Button>
         </DialogActions>
       </Dialog>
     </>

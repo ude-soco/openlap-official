@@ -6,7 +6,6 @@ import {
   DialogContentText,
   DialogTitle,
 } from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
 import { useState } from "react";
 
 const dialogConfig = {
@@ -52,9 +51,10 @@ const CustomDialog = ({
           <Button fullWidth onClick={toggleOpen}>
             Cancel
           </Button>
-          <LoadingButton
+          <Button
             loading={state.loading}
             loadingPosition="start"
+            loadingIndicator="Please wait..."
             onClick={handleClose}
             autoFocus
             fullWidth
@@ -62,7 +62,7 @@ const CustomDialog = ({
             color={config.color}
           >
             {config.label}
-          </LoadingButton>
+          </Button>
         </DialogActions>
       </Dialog>
     </>

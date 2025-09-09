@@ -10,7 +10,6 @@ import {
   LinearProgress,
   Typography,
 } from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
 import AnalysisSummary from "./components/analysis-summary";
 import AnalysisSelection from "./components/analysis-selection";
 import InputsSelection from "./components/inputs-selection";
@@ -129,16 +128,17 @@ export default function Analysis() {
                                     of the analyzed data.
                                   </Typography>
                                   <Grid container justifyContent="center">
-                                    <LoadingButton
+                                    <Button
                                       loading={state.loadingPreview}
-                                      loadingIndicator="Loading…"
+                                      loadingPosition="start"
+                                      loadingIndicator="Loading preview..."
                                       autoFocus
                                       variant="contained"
                                       disabled={handleCheckPreviewDisabled()}
                                       onClick={handlePreviewAnalyzedData}
                                     >
                                       <span>Preview</span>
-                                    </LoadingButton>
+                                    </Button>
                                     {handleCheckPreviewDisabled() && (
                                       <CustomTooltip
                                         type="help"

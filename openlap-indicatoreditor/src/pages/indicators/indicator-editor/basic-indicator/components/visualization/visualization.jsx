@@ -28,7 +28,6 @@ import TypeInputSelection from "./components/type-input-selection";
 import ChartPreview from "../../../components/chart-preview";
 import ChartCustomizationPanel from "./components/customization/chart-customization-panel";
 import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper";
-import { LoadingButton } from "@mui/lab";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
 import {
   requestCreateBasicIndicator,
@@ -270,16 +269,17 @@ export default function Visualization() {
             >
               Continue editing
             </Button>
-            <LoadingButton
+            <Button
               loading={state.nameIndicator.loading}
               disabled={indicator.indicatorName.length === 0}
+              loadingPosition="start"
               loadingIndicator={params.id ? "Updating..." : "Saving..."}
               fullWidth
               variant="contained"
               onClick={handleSaveIndicator}
             >
               {params.id ? "Update & Save to Dashboard" : "Save to dashboard"}
-            </LoadingButton>
+            </Button>
             {indicator.indicatorName.length === 0 && (
               <CustomTooltip
                 type="help"

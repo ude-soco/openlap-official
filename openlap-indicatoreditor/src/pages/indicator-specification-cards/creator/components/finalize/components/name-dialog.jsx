@@ -7,7 +7,6 @@ import {
   DialogTitle,
   Typography,
 } from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { requestCreateISC, requestUpdateISC } from "../utils/finalize-api.js";
@@ -95,16 +94,17 @@ const NameDialog = ({ open, toggleOpen }) => {
           <Button fullWidth color="primary" onClick={handleCloseDialog}>
             Continue editing
           </Button>
-          <LoadingButton
+          <Button
             loading={state.loading}
             loadingPosition="start"
+            loadingIndicator="Please wait..."
             fullWidth
             disabled={requirements.indicatorName === ""}
             onClick={handleSaveIndicator}
             variant="contained"
           >
             Confirm
-          </LoadingButton>
+          </Button>
         </DialogActions>
       </Dialog>
     </>

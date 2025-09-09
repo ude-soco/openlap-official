@@ -6,7 +6,6 @@ import {
   DialogContentText,
   DialogTitle,
 } from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
 import { useState } from "react";
 
 const DeleteDialog = ({ reset, open, toggleOpen, message, handleDelete }) => {
@@ -38,9 +37,10 @@ const DeleteDialog = ({ reset, open, toggleOpen, message, handleDelete }) => {
           <Button fullWidth onClick={toggleOpen}>
             Cancel
           </Button>
-          <LoadingButton
+          <Button
             loading={loading}
             loadingPosition="start"
+            loadingIndicator="Please wait..."
             onClick={handleClose}
             autoFocus
             fullWidth
@@ -48,7 +48,7 @@ const DeleteDialog = ({ reset, open, toggleOpen, message, handleDelete }) => {
             color="error"
           >
             {reset ? "Reset" : "Delete"}
-          </LoadingButton>
+          </Button>
         </DialogActions>
       </Dialog>
     </>

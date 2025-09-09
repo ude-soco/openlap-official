@@ -8,10 +8,10 @@ import {
   FormControlLabel,
   TextField,
   Typography,
+  Button,
 } from "@mui/material";
 import emailjs from "emailjs-com";
 import { useSnackbar } from "notistack";
-import { LoadingButton } from "@mui/lab";
 const emailTemplateId = import.meta.env.VITE_EMAIL_TEMPLATE_ID || "";
 const emailServiceId = import.meta.env.VITE_EMAIL_SERVICE_ID || "";
 const emailPublicKey = import.meta.env.VITE_EMAIL_PUBLIC_KEY || "";
@@ -169,16 +169,17 @@ export default function ContactUs() {
                 label="I agree to the terms of use and privacy policy."
               />
             </Grid>
-            <LoadingButton
+            <Button
               loading={loading}
               loadingPosition="start"
+              loadingIndicator="Message on its way..."
               type="submit"
               fullWidth
               variant="contained"
               disabled={!formData.agreed}
             >
-              {loading ? "Submitting" : "Submit"}
-            </LoadingButton>
+              Send Message
+            </Button>
           </Grid>
         </form>
       </Box>
