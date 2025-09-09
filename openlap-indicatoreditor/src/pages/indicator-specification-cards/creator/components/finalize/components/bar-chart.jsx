@@ -163,6 +163,9 @@ const BarChart = ({ customize = false, handleToggleCustomizePanel }) => {
               highlightDataSeries: true,
             },
           },
+          markers: {
+            colors: ["#008ffb"],
+          },
         },
     axisOptions: {
       xAxisOptions: [],
@@ -176,16 +179,16 @@ const BarChart = ({ customize = false, handleToggleCustomizePanel }) => {
 
   // * This effect is used to update the chart when the dark mode changes.
   useEffect(() => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       options: {
-        ...prevState.options,
+        ...p.options,
         chart: {
-          ...prevState.options.chart,
+          ...p.options.chart,
           foreColor: darkMode ? "#ffffff" : "#000000",
         },
         tooltip: {
-          ...prevState.options.tooltip,
+          ...p.options.tooltip,
           theme: darkMode ? "dark" : "light",
         },
       },
@@ -200,20 +203,20 @@ const BarChart = ({ customize = false, handleToggleCustomizePanel }) => {
     const numberColumns = dataset.columns.filter(
       (col) => col.type === "number"
     );
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       axisOptions: {
-        ...prevState.axisOptions,
+        ...p.axisOptions,
         xAxisOptions: stringColumns,
         yAxisOptions: numberColumns,
       },
     }));
-    setVisRef((prevVisRef) => ({
-      ...prevVisRef,
+    setVisRef((p) => ({
+      ...p,
       data: {
-        ...prevVisRef.data,
+        ...p.data,
         axisOptions: {
-          ...prevVisRef.data.axisOptions,
+          ...p.data.axisOptions,
           xAxisOptions: stringColumns,
           yAxisOptions: numberColumns,
         },
@@ -257,10 +260,10 @@ const BarChart = ({ customize = false, handleToggleCustomizePanel }) => {
         numberColumns.length > 0 ? numberColumns[0].field : "";
     }
 
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       axisOptions: {
-        ...prevState.axisOptions,
+        ...p.axisOptions,
         selectedXAxis: updatedSelectedXAxis,
         selectedYAxis: updatedSelectedYAxis,
       },
@@ -301,40 +304,40 @@ const BarChart = ({ customize = false, handleToggleCustomizePanel }) => {
       },
     ];
 
-    setState((prevState) => {
+    setState((p) => {
       let tempState = {
-        ...prevState,
+        ...p,
         series: series,
         options: {
-          ...prevState.options,
+          ...p.options,
           xaxis: {
-            ...prevState.options.xaxis,
+            ...p.options.xaxis,
             categories: categories,
             name: xAxisColumn.headerName,
             title: {
-              ...prevState.options.xaxis.title,
+              ...p.options.xaxis.title,
               text: xAxisColumn.headerName,
             },
           },
           yaxis: {
-            ...prevState.options.yaxis,
+            ...p.options.yaxis,
             categories: categories,
             title: {
-              ...prevState.options.yaxis.title,
+              ...p.options.yaxis.title,
               text: yAxisColumn.headerName,
             },
           },
         },
       };
 
-      setVisRef((prevVisRef) => ({
-        ...prevVisRef,
+      setVisRef((p) => ({
+        ...p,
         data: {
-          ...prevVisRef.data,
+          ...p.data,
           series: tempState.series,
           options: tempState.options,
           axisOptions: {
-            ...prevVisRef.data.axisOptions,
+            ...p.data.axisOptions,
             selectedXAxis: state.axisOptions.selectedXAxis,
             selectedYAxis: state.axisOptions.selectedYAxis,
           },
@@ -349,40 +352,40 @@ const BarChart = ({ customize = false, handleToggleCustomizePanel }) => {
     state.axisOptions.selectedYAxis,
   ]);
 
-  const handleXAxisChange = (event) => {
-    setState((prevState) => ({
-      ...prevState,
+  const handleXAxisChange = (e) => {
+    setState((p) => ({
+      ...p,
       axisOptions: {
-        ...prevState.axisOptions,
-        selectedXAxis: event.target.value,
+        ...p.axisOptions,
+        selectedXAxis: e.target.value,
       },
       options: {
-        ...prevState.options,
+        ...p.options,
         xaxis: {
-          ...prevState.options.xaxis,
+          ...p.options.xaxis,
           title: {
-            ...prevState.options.xaxis.title,
-            text: prevState.axisOptions.selectedXAxis,
+            ...p.options.xaxis.title,
+            text: p.axisOptions.selectedXAxis,
           },
         },
       },
     }));
   };
 
-  const handleYAxisChange = (event) => {
-    setState((prevState) => ({
-      ...prevState,
+  const handleYAxisChange = (e) => {
+    setState((p) => ({
+      ...p,
       axisOptions: {
-        ...prevState.axisOptions,
-        selectedYAxis: event.target.value,
+        ...p.axisOptions,
+        selectedYAxis: e.target.value,
       },
       options: {
-        ...prevState.options,
+        ...p.options,
         yaxis: {
-          ...prevState.options.yaxis,
+          ...p.options.yaxis,
           title: {
-            ...prevState.options.yaxis.title,
-            text: prevState.options.yaxis.selectedYAxis,
+            ...p.options.yaxis.title,
+            text: p.options.yaxis.selectedYAxis,
           },
         },
       },

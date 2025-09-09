@@ -183,18 +183,15 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
 
   // * This effect is used to update the chart when the dark mode changes.
   useEffect(() => {
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       options: {
-        ...prevState.options,
+        ...p.options,
         chart: {
-          ...prevState.options.chart,
+          ...p.options.chart,
           foreColor: darkMode ? "#ffffff" : "#000000",
         },
-        tooltip: {
-          ...prevState.options.tooltip,
-          theme: darkMode ? "dark" : "light",
-        },
+        tooltip: { ...p.options.tooltip, theme: darkMode ? "dark" : "light" },
       },
     }));
   }, [darkMode]);
@@ -206,21 +203,21 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
     const numberColumns = dataset.columns.filter(
       (col) => col.type === "number"
     );
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       axisOptions: {
-        ...prevState.axisOptions,
+        ...p.axisOptions,
         xAxisOptions: stringColumns,
         yAxisOptions: numberColumns,
         barValueOptions: stringColumns,
       },
     }));
-    setVisRef((prevVisRef) => ({
-      ...prevVisRef,
+    setVisRef((p) => ({
+      ...p,
       data: {
-        ...prevVisRef.data,
+        ...p.data,
         axisOptions: {
-          ...prevVisRef.data.axisOptions,
+          ...p.data.axisOptions,
           xAxisOptions: stringColumns,
           barValueOptions: stringColumns,
           yAxisOptions: numberColumns,
@@ -264,7 +261,7 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
       updatedSelectedYAxis =
         numberColumns.find((col) => col.field === selectedYAxis)?.field ||
         (numberColumns.length > 0
-          ? numberColumns[1]?.field
+          ? numberColumns[1]?.field || ""
           : numberColumns[0]?.field || "");
     else
       updatedSelectedYAxis =
@@ -280,13 +277,13 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
     else
       updatedSelectedBarValue =
         stringColumns.length > 0
-          ? stringColumns[1]?.field
+          ? stringColumns[1]?.field || ""
           : stringColumns[0]?.field || "";
 
-    setState((prevState) => ({
-      ...prevState,
+    setState((p) => ({
+      ...p,
       axisOptions: {
-        ...prevState.axisOptions,
+        ...p.axisOptions,
         selectedXAxis: updatedSelectedXAxis,
         selectedBarValue: updatedSelectedBarValue,
         selectedYAxis: updatedSelectedYAxis,
@@ -337,14 +334,14 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
       ),
     }));
 
-    setState((prevState) => {
+    setState((p) => {
       let tempState = {
-        ...prevState,
+        ...p,
         series: series,
         options: {
-          ...prevState.options,
+          ...p.options,
           xaxis: {
-            ...prevState.options.xaxis,
+            ...p.options.xaxis,
             categories: categories,
             title: {
               style: {
@@ -356,7 +353,7 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
             },
           },
           yaxis: {
-            ...prevState.options.yaxis,
+            ...p.options.yaxis,
             title: {
               style: {
                 cssClass: "x-y-axis-show-title",
@@ -367,22 +364,22 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
             },
           },
           plotOptions: {
-            ...prevState.options.plotOptions,
+            ...p.options.plotOptions,
             bar: {
-              ...prevState.options.plotOptions.bar,
+              ...p.options.plotOptions.bar,
               stacked: true,
             },
           },
         },
       };
-      setVisRef((prevVisRef) => ({
-        ...prevVisRef,
+      setVisRef((p) => ({
+        ...p,
         data: {
-          ...prevVisRef.data,
+          ...p.data,
           series: tempState.series,
           options: tempState.options,
           axisOptions: {
-            ...prevVisRef.data.axisOptions,
+            ...p.data.axisOptions,
             selectedXAxis: state.axisOptions.selectedXAxis,
             selectedBarValue: state.axisOptions.selectedBarValue,
             selectedYAxis: state.axisOptions.selectedYAxis,
@@ -399,10 +396,10 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
   ]);
 
   useEffect(() => {
-    setVisRef((prevVisRef) => ({
-      ...prevVisRef,
+    setVisRef((p) => ({
+      ...p,
       data: {
-        ...prevVisRef.data,
+        ...p.data,
         series: state.series,
         options: state.options,
         axisOptions: state.axisOptions,
@@ -411,34 +408,27 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
   }, [state.series, state.options, state.axisOptions]);
 
   const handleXAxisChange = (event) => {
-    setState((prevState) => ({
-      ...prevState,
-      axisOptions: {
-        ...prevState.axisOptions,
-        selectedXAxis: event.target.value,
-      },
+    setState((p) => ({
+      ...p,
+      axisOptions: { ...p.axisOptions, selectedXAxis: event.target.value },
     }));
   };
 
   const handleBarValueChange = (event) => {
-    setState((prevState) => ({
-      ...prevState,
-      axisOptions: {
-        ...prevState.axisOptions,
-        selectedBarValue: event.target.value,
-      },
+    setState((p) => ({
+      ...p,
+      axisOptions: { ...p.axisOptions, selectedBarValue: event.target.value },
     }));
   };
 
   const handleYAxisChange = (event) => {
-    setState((prevState) => ({
-      ...prevState,
-      axisOptions: {
-        ...prevState.axisOptions,
-        selectedYAxis: event.target.value,
-      },
+    setState((p) => ({
+      ...p,
+      axisOptions: { ...p.axisOptions, selectedYAxis: event.target.value },
     }));
   };
+
+  console.log(state.axisOptions.selectedBarValue);
 
   return (
     <>
