@@ -13,13 +13,13 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fontsource/open-sans": "^5.2.6",
-    "@mui/icons-material": "^6.5.0",
-    "@mui/lab": "^6.0.1-beta.36",
-    "@mui/material": "^6.5.0",
-    "@mui/styled-engine-sc": "^6.4.9",
-    "@mui/x-data-grid": "^7.29.9",
-    "@mui/x-date-pickers": "^7.29.4",
-    "apexcharts": "^4.7.0",
+    "@mui/icons-material": "^7.3.2",
+    "@mui/lab": "^7.0.0-beta.17",
+    "@mui/material": "^7.3.2",
+    "@mui/styled-engine-sc": "^7.3.2",
+    "@mui/x-data-grid": "^8.11.1",
+    "@mui/x-date-pickers": "^8.11.1",
+    "apexcharts": "^5.3.5",
     "axios": "^1.11.0",
     "dayjs": "^1.11.18",
     "emailjs-com": "^3.2.0",
@@ -33,19 +33,19 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.8.2",
     "styled-components": "^6.1.19",
-    "uuid": "^11.1.0"
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",
     "@types/react": "^18.3.24",
     "@types/react-dom": "^18.3.7",
-    "@vitejs/plugin-react-swc": "^3.11.0",
+    "@vitejs/plugin-react-swc": "^4.0.1",
     "eslint": "^9.35.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
     "rollup": "^4.50.1",
-    "vite": "^6.3.6"
+    "vite": "^7.1.5"
   }
 }
