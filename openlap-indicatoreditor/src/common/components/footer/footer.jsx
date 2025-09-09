@@ -32,7 +32,7 @@ const Footer = () => {
           <Grid container spacing={1} alignItems="center">
             <Tooltip title="Visit our YouTube channel">
               <IconButton
-                sx={{ color: "red" }}
+                color="primary"
                 onClick={() =>
                   window.open(
                     "https://www.youtube.com/channel/UCQV36Dfq-mfmAG0SqrQ_QbA"
@@ -44,7 +44,7 @@ const Footer = () => {
             </Tooltip>
             <Tooltip title="Visit our GitHub">
               <IconButton
-                sx={{ color: darkMode ? "white" : "black" }}
+                color="primary"
                 onClick={() => window.open("https://github.com/ude-soco")}
               >
                 <GitHubIcon />

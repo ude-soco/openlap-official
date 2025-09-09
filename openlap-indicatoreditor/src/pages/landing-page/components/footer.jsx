@@ -2,9 +2,9 @@ import React from "react";
 import {
   Box,
   Container,
+  Divider,
   IconButton,
   Link,
-  Grid,
   Stack,
   Typography,
 } from "@mui/material";
@@ -13,14 +13,10 @@ import EmailIcon from "@mui/icons-material/Email";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import SocoLogo from "../../../assets/home/soco-logo.svg";
-import {
-  navigationItems,
-  socialItems,
-  legalItems,
-} from "../utils/navigation-data";
+import { navigationItems, socialItems } from "../utils/navigation-data";
 
 const logoStyle = {
-  width: "140px",
+  width: "150px",
   height: "auto",
 };
 
@@ -55,176 +51,106 @@ export default function Footer() {
   };
 
   return (
-    <Container
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: { xs: 4 },
-        py: { xs: 8 },
-        textAlign: { sm: "center", md: "left" },
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          width: "100%",
-          justifyContent: "space-between",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-            minWidth: { xs: "100%", sm: "40%" },
-            pb: 5,
-          }}
-        >
-          <Box sx={{ width: { xs: "100%", sm: "60%" } }}>
-            <Box
-              component="img"
-              src={OpenLAPLogo}
-              style={logoStyle}
-              alt="logo of OpenLAP"
-              sx={{ pb: 2 }}
-            />
-            <Grid container direction="column" spacing={2}>
-              <Grid size="grow">
-                <Grid container spacing={1} alignItems="center">
+    <>
+      <Container maxWidth="lg" sx={{ py: 8, px: 4 }}>
+        <Stack gap={4}>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            justifyContent="space-between"
+            gap={10}
+            useFlexGap
+            sx={{ flexWrap: "wrap" }}
+          >
+            <Box>
+              <Box
+                component="img"
+                src={OpenLAPLogo}
+                style={logoStyle}
+                alt="logo of OpenLAP"
+                sx={{ pb: 2 }}
+              />
+              <Stack gap={2}>
+                <Stack direction="row" gap={1} alignItems="center">
                   <CallIcon color="primary" />
                   <Typography>+49 (0) 203 379-3707</Typography>
-                </Grid>
-              </Grid>
-              <Grid size="grow">
-                <Grid container spacing={1} alignItems="center">
+                </Stack>
+                <Stack direction="row" gap={1} alignItems="center">
                   <EmailIcon color="primary" />
                   <Typography>socogroup.ude@gmail.com</Typography>
-                </Grid>
-              </Grid>
-              <Grid size="grow">
-                <Grid container spacing={1}>
+                </Stack>
+                <Stack direction="row" gap={1}>
                   <LocationOnIcon color="primary" />
                   <Typography>Forsthausweg 2, 47057 Duisburg</Typography>
-                </Grid>
-              </Grid>
-            </Grid>
-          </Box>
-        </Box>
-        <Box
-          sx={{
-            display: { xs: "flex" },
-            flexDirection: "column",
-            gap: 1,
-            pb: 5,
-          }}
-        >
-          <Box
-            component="img"
-            src={SocoLogo}
-            style={logoStyle}
-            alt="Logo of Social Computing Group"
-          />
-          <Grid container direction="column" spacing={2}>
-            <Grid size="auto">
-              <Typography gutterBottom>
-                <b>Social Computing Group</b>
+                </Stack>
+              </Stack>
+            </Box>
+            <Box>
+              <Stack gap={1}>
+                <Box
+                  component="img"
+                  src={SocoLogo}
+                  style={logoStyle}
+                  alt="Logo of Social Computing Group"
+                />
+                <Typography>
+                  <b>Social Computing Group</b>
+                </Typography>
+                <Typography color="textSecondary">
+                  Faculty of Computer Science
+                  <br />
+                  University of Duisburg-Essen
+                </Typography>
+              </Stack>
+            </Box>
+            <Stack direction="column" gap={1}>
+              <Typography>
+                <b>OpenLAP</b>
               </Typography>
-              <Typography color="textSecondary">
-                Faculty of Computer Science
-                <br />
-                University of Duisburg-Essen
-              </Typography>
-            </Grid>
-          </Grid>
-        </Box>
-        <Stack
-          direction="column"
-          gap={1}
-          sx={{ display: { xs: "none", lg: "flex" } }}
-        >
-          <Typography>
-            <b>OpenLAP</b>
-          </Typography>
-          {navigationItems.map((item) => (
-            <Typography
-              key={item.id}
-              color="text.secondary"
-              onClick={() => scrollToSection(item.id)}
-              sx={{
-                "&:hover": {
-                  color: "primary.main",
-                  cursor: "pointer",
-                  textDecoration: "underline",
-                },
-              }}
-            >
-              {item.name}
-            </Typography>
-          ))}
+              {navigationItems.map((item) => (
+                <Typography
+                  key={item.id}
+                  color="text.secondary"
+                  onClick={() => scrollToSection(item.id)}
+                  sx={{
+                    "&:hover": {
+                      color: "primary.main",
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
+                  {item.name}
+                </Typography>
+              ))}
+            </Stack>
+          </Stack>
         </Stack>
-        {/* <Box
-          sx={{
-            display: { xs: "none", sm: "flex" },
-            flexDirection: "column",
-            gap: 1,
-          }}
-        >
-          <Typography variant="body2" fontWeight={600}>
-            Legal
-          </Typography>
-          {legalItems.map((item) => (
-            <Typography
-              key={item.id}
-              color="textSecondary"
-              onClick={() => navigate(item.link)}
-              sx={{
-                "&:hover": {
-                  color: "primary.main",
-                  cursor: "pointer",
-                  textDecoration: "underline",
-                },
-              }}
-            >
-              {item.name}
-            </Typography>
-          ))}
-        </Box> */}
-      </Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          pt: { xs: 4 },
-          width: "100%",
-          borderTop: "1px solid",
-          borderColor: "divider",
-        }}
-      >
-        <div>
+      </Container>
+      <Divider />
+      <Container maxWidth="lg" sx={{ p: 3 }}>
+        <Stack direction="row" justifyContent="space-between">
           <Copyright />
-        </div>
-        <Stack
-          direction="row"
-          justifyContent="left"
-          spacing={1}
-          useFlexGap
-          sx={{ color: "primary.main" }}
-        >
-          {socialItems.map((item) => (
-            <IconButton
-              key={item.id}
-              color="inherit"
-              href={item.link}
-              target="_blank"
-              sx={{ alignSelf: "center" }}
-            >
-              {React.createElement(item.icon)}
-            </IconButton>
-          ))}
+          <Stack
+            direction="row"
+            justifyContent="left"
+            spacing={1}
+            useFlexGap
+            sx={{ color: "primary.main" }}
+          >
+            {socialItems.map((item) => (
+              <IconButton
+                key={item.id}
+                color="inherit"
+                href={item.link}
+                target="_blank"
+                sx={{ alignSelf: "center" }}
+              >
+                {React.createElement(item.icon)}
+              </IconButton>
+            ))}
+          </Stack>
         </Stack>
-      </Box>
-    </Container>
+      </Container>
+    </>
   );
 }

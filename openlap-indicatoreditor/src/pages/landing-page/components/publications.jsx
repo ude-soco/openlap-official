@@ -7,7 +7,9 @@ import {
   Container,
   Grid,
   Typography,
+  Link,
 } from "@mui/material";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew"
 import publicationItems from "../utils/publication-data";
 import { navigationIds } from "../utils/navigation-data";
 
@@ -97,6 +99,23 @@ export default function Publications() {
             </Grid>
           ))}
         </Grid>
+        <Box>
+          <Link
+            component="button"
+            color="primary"
+            fontWeight="bold"
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              "& > svg": { transition: "0.2s" },
+              "&:hover > svg": { transform: "translateX(4px)" },
+            }}
+            onClick={() => window.open("https://www.uni-due.de/soco/publications.php")}
+          >
+            <span>More publications</span>
+            <OpenInNewIcon fontSize="small" sx={{ mt: "1px", ml: "2px" }} />
+          </Link>
+        </Box>
       </Container>
     </Box>
   );

@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { CssBaseline, Paper, Grid, Stack, Divider } from "@mui/material";
+import { CssBaseline, Paper, Stack, Divider, Container } from "@mui/material";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import PrivateRoute from "./private-routes";
@@ -57,21 +57,12 @@ const AppRoutes = () => {
               <Route
                 element={
                   <NavigationBar>
-                    <Stack
-                      component={Paper}
-                      elevation={0}
-                      gap={2}
-                      justifyContent="center"
-                    >
-                      <Grid
-                        container
-                        justifyContent="center"
-                        sx={{ minHeight: "89vh" }}
-                      >
-                        <Grid size={{ xs: 12, xl: 8 }}>
-                          <Outlet />
-                        </Grid>
-                      </Grid>
+                    <Container maxWidth="xl" sx={{ minHeight: "89vh" }}>
+                      <Stack component={Paper} elevation={0} gap={1}>
+                        <Outlet />
+                      </Stack>
+                    </Container>
+                    <Stack gap={2}>
                       <Divider />
                       <Footer />
                     </Stack>
