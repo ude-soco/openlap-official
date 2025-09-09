@@ -4,13 +4,13 @@ import {
   Box,
   FormControl,
   InputLabel,
+  Grid,
   MenuItem,
   Paper,
   Select,
   Tooltip,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import { analyticsInputMenuList } from "../utils/analysis-data";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 

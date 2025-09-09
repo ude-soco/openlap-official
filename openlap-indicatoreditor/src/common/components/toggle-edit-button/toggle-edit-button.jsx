@@ -1,8 +1,4 @@
-import { Button, Fab, IconButton, Tooltip, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
-import CloseIcon from "@mui/icons-material/Close";
-import EditIcon from "@mui/icons-material/Edit";
-import SettingsIcon from "@mui/icons-material/Settings";
+import { Button, IconButton, Grid, Tooltip, Typography } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 export function ToggleEditButton({ openPanel, togglePanel }) {
@@ -21,7 +17,10 @@ export function ToggleEditButton({ openPanel, togglePanel }) {
 
 export function ToggleEditIconButton({ openPanel, togglePanel }) {
   return (
-    <Tooltip arrow title={<Typography>{openPanel ? "Close" : "Edit"}</Typography>}>
+    <Tooltip
+      arrow
+      title={<Typography>{openPanel ? "Close" : "Edit"}</Typography>}
+    >
       <Grid
         container
         spacing={0.5}

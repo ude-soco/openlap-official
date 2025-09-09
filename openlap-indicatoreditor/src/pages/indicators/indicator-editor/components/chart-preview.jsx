@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import Grid from "@mui/material/Grid2";
+import { Grid } from "@mui/material";
 
 const ChartPreview = ({ previewData }) => {
   const firstCode = previewData?.displayCode?.[0];

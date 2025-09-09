@@ -3,13 +3,13 @@ import {
   Alert,
   AlertTitle,
   Breadcrumbs,
+  Grid,
   Button,
   Divider,
   Link,
   Typography,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-import Grid from "@mui/material/Grid2";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import MyIscTable from "./components/my-isc-table.jsx";

@@ -6,12 +6,12 @@ import {
   Box,
   Divider,
   Grow,
+  Grid,
   Paper,
   Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import VisualizationDescription from "./visualization-description";
 import RecommendIcon from "@mui/icons-material/Recommend";

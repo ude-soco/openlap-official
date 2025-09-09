@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Box, FormControl, FormLabel, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { Box, FormControl, Grid, FormLabel, Typography } from "@mui/material";
 
 export const StylesBar = ({
   categories,
@@ -189,13 +188,13 @@ export const StylesBar = ({
       </Grid> */}
 
       <Grid container spacing={2}>
-        <Grid size={{xs:12}}>
+        <Grid size={{ xs: 12 }}>
           <Grid container sx={{ mt: 1 }}>
             <FormControl>
               <FormLabel sx={{ mb: 1 }} id="role-label">
                 Data Colors
               </FormLabel>
-              <Grid size={{xs:12}}>
+              <Grid size={{ xs: 12 }}>
                 {chartConfiguration.seriesSingleColor && (
                   <Grid container spacing={1} item>
                     <Grid item>

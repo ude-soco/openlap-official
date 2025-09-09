@@ -1,6 +1,5 @@
 import { useContext } from "react";
-import { Paper, Collapse } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { Collapse, Grid, Paper } from "@mui/material";
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import ChoosePathSummary from "./components/choose-path-summary.jsx";
 import PathSelectors from "./components/path-selectors.jsx";

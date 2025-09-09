@@ -1,6 +1,5 @@
 import { useContext } from "react";
-import { CssBaseline, Paper } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { CssBaseline, Paper, Grid } from "@mui/material";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import PrivateRoute from "./private-routes";

@@ -1,8 +1,7 @@
 import { useContext } from "react";
-import Grid from "@mui/material/Grid2";
 import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper";
 import IndicatorsSummary from "./components/indicators-summary";
-import { Button, Collapse, Divider, Typography } from "@mui/material";
+import { Button, Collapse, Divider, Grid } from "@mui/material";
 import { CompositeContext } from "../../composite-indicator";
 import IndicatorSelection from "./components/indicator-selection";
 import { SelectedIndicatorsTable } from "./components/selected-indicators-table";

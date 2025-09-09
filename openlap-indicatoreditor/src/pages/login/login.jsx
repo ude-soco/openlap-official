@@ -7,12 +7,12 @@ import {
   Box,
   Button,
   Link,
+  Grid,
   Stack,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
 import ToggleColorMode from "../landing-page/components/toggle-color-mode.jsx";

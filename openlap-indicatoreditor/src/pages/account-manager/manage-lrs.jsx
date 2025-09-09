@@ -3,14 +3,13 @@ import {
   Breadcrumbs,
   Button,
   Divider,
+  Grid,
   Link,
-  Paper,
+  Alert,
   Skeleton,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
-import { Alert } from "@mui/material";
 import AddLrsConsumer from "./components/add-lrs-consumer";
 import { useSnackbar } from "notistack";
 import { requestUserDetails } from "./utils/account-manager-api.js";

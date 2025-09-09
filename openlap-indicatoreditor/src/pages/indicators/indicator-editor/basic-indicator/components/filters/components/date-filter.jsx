@@ -1,6 +1,5 @@
-import { Accordion, AccordionDetails, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
-import { useContext, useState } from "react";
+import { useContext } from "react";
+import { Accordion, AccordionDetails, Grid, Typography } from "@mui/material";
 import { BasicContext } from "../../../basic-indicator";
 import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";

@@ -1,11 +1,13 @@
 import React from "react";
-import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
-import IconButton from "@mui/material/IconButton";
-import Link from "@mui/material/Link";
-import Stack from "@mui/material/Stack";
-import Grid from "@mui/material/Grid2";
-import Typography from "@mui/material/Typography";
+import {
+  Box,
+  Container,
+  IconButton,
+  Link,
+  Grid,
+  Stack,
+  Typography,
+} from "@mui/material";
 import CallIcon from "@mui/icons-material/Call";
 import EmailIcon from "@mui/icons-material/Email";
 import LocationOnIcon from "@mui/icons-material/LocationOn";

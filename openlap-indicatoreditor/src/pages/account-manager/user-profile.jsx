@@ -5,6 +5,7 @@ import {
   Button,
   Chip,
   Divider,
+  Grid,
   IconButton,
   Link,
   List,
@@ -16,7 +17,6 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import { Link as RouterLink } from "react-router-dom";
 import { requestUserDetails } from "./utils/account-manager-api.js";
 import { Edit } from "@mui/icons-material";

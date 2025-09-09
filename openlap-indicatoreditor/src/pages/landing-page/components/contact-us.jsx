@@ -1,10 +1,14 @@
 import { useState } from "react";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
-import Grid from "@mui/material/Grid2";
 import { navigationIds } from "../utils/navigation-data";
-import { Button, Checkbox, FormControlLabel, TextField } from "@mui/material";
+import {
+  Box,
+  Checkbox,
+  Container,
+  Grid,
+  FormControlLabel,
+  TextField,
+  Typography,
+} from "@mui/material";
 import emailjs from "emailjs-com";
 import { useSnackbar } from "notistack";
 import { LoadingButton } from "@mui/lab";

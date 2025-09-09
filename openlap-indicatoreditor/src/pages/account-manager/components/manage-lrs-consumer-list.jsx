@@ -7,10 +7,10 @@ import {
   Box,
   Button,
   Chip,
+  Grid,
   Stack,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteDialog from "../../../common/components/delete-dialog/delete-dialog.jsx";
 import { requestDeleteLrsConsumer } from "../utils/account-manager-api.js";

@@ -3,13 +3,13 @@ import { BasicContext } from "../../../basic-indicator";
 import {
   FormControl,
   InputLabel,
+  Grid,
   MenuItem,
   Paper,
   Select,
   TextField,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 const PARAM_TYPE = { choice: "Choice", textBox: "Textbox" };

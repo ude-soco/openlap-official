@@ -6,9 +6,9 @@ import {
   Button,
   Divider,
   Link,
+  Grid,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import MyIndicatorsTable from "./components/my-indicators-table.jsx";
 import { useSnackbar } from "notistack";

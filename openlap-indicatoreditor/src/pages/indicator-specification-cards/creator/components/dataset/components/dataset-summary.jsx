@@ -1,7 +1,6 @@
 import { useContext, useState } from "react";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
-import { Chip, Collapse, IconButton, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { Chip, Collapse, IconButton, Grid, Typography } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import ToggleSummaryButton from "../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
 import DataTable from "./data-table.jsx";

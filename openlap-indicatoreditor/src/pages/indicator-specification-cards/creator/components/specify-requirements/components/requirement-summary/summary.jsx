@@ -1,5 +1,4 @@
-import Grid from "@mui/material/Grid2";
-import { Chip, Tooltip, Typography } from "@mui/material";
+import { Chip, Tooltip, Grid, Typography } from "@mui/material";
 
 const MAX_LABEL_LENGTH = 70;
 

@@ -7,12 +7,12 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  Grid,
   InputLabel,
   MenuItem,
   Select,
   TextField,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import UniqueIdentifierTypes from "../utils/enums/unique-identifier-types.js";
 import { requestCreateLRSProvider } from "../utils/account-manager-api.js";
 

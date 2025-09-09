@@ -1,5 +1,4 @@
-import Grid from "@mui/material/Grid2";
-import { Alert, AlertTitle, Typography } from "@mui/material";
+import { Alert, AlertTitle, Grid, Typography } from "@mui/material";
 
 export default function ChartAxisDropdownFeedback({
   axisName,

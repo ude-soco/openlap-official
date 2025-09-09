@@ -1,8 +1,7 @@
 import { useContext } from "react";
-import Grid from "@mui/material/Grid2";
 import CheckIcon from "@mui/icons-material/Check";
 import { CompositeContext } from "../../../composite-indicator";
-import { Button, Paper, Typography } from "@mui/material";
+import { Button, Paper, Grid, Typography } from "@mui/material";
 import ChartPreview from "../../../../components/chart-preview";
 import { handleDisplayType } from "../../../../../dashboard/utils/utils";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";

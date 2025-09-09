@@ -5,11 +5,10 @@ import {
   Box,
   Chip,
   Link,
+  Grid,
   Stack,
-  Tooltip,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import { ISCContext } from "../../../../indicator-specification-card";
 
 const VisualizationDescription = ({ columnError }) => {

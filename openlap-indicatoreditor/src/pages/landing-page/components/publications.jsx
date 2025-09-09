@@ -1,9 +1,13 @@
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Container from "@mui/material/Container";
-import Grid from "@mui/material/Grid2";
-import Typography from "@mui/material/Typography";
-import { Button, CardActions, CardContent } from "@mui/material";
+import {
+  Box,
+  Button,
+  CardActions,
+  CardContent,
+  Card,
+  Container,
+  Grid,
+  Typography,
+} from "@mui/material";
 import publicationItems from "../utils/publication-data";
 import { navigationIds } from "../utils/navigation-data";
 

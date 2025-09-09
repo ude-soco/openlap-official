@@ -1,5 +1,4 @@
 import { useContext, useState } from "react";
-import Grid from "@mui/material/Grid2";
 import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper";
 import {
   Box,
@@ -7,6 +6,7 @@ import {
   Collapse,
   Divider,
   FormControl,
+  Grid,
   FormControlLabel,
   Paper,
   Radio,

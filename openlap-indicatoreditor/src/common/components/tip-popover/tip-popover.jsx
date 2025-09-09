@@ -1,8 +1,8 @@
-import Grid from "@mui/material/Grid2";
 import {
   Box,
   Button,
   IconButton,
+  Grid,
   Popover,
   Tooltip,
   Typography,
@@ -21,7 +21,7 @@ export default function TipPopover({
         title={<Typography>Click to view helpful tips</Typography>}
       >
         <IconButton
-        size="small"
+          size="small"
           onClick={(e) => toggleTipAnchor(e.currentTarget)}
           color="warning"
         >

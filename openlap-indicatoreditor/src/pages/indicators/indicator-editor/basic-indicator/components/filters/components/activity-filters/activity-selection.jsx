@@ -1,6 +1,11 @@
-import { useContext, useState } from "react";
-import { Autocomplete, Checkbox, TextField, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { useContext } from "react";
+import {
+  Autocomplete,
+  Checkbox,
+  Grid,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { BasicContext } from "../../../../basic-indicator";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";

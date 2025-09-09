@@ -1,6 +1,5 @@
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-import { Box, Paper, Tab, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { Box, Paper, Grid, Tab, Typography } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { BasicContext } from "../../../../basic-indicator";
 import { ElementsBar } from "./components/elements-bar";

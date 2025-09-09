@@ -7,10 +7,10 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Grid,
   TextField,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import { DataTypes } from "../../../utils/data/config.js";
 import { v4 as uuidv4 } from "uuid";
 import { useSnackbar } from "notistack";

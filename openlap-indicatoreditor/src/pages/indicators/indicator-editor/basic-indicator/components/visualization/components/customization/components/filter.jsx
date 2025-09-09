@@ -4,13 +4,13 @@ import {
   Checkbox,
   Chip,
   FormControl,
+  Grid,
   FormControlLabel,
   FormLabel,
   RadioGroup,
   Radio,
   TextField,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 
 export const FiltersBar = ({
   categories,

@@ -1,16 +1,15 @@
 import OpenLAPLogo from "../../assets/brand/openlap-logo.svg";
-// import OpenLAPIcon from "../../assets/brand/openlap-icon.svg";
 import OpenLAPFull from "../../assets/home/soco-openlap-full.svg";
 import {
   Box,
   Button,
   Divider,
   Link,
+  Grid,
   Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import ToggleColorMode from "../landing-page/components/toggle-color-mode";
 import { useNavigate } from "react-router-dom";
 

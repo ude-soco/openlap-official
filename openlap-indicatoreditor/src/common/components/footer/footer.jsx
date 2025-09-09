@@ -1,5 +1,4 @@
-import { IconButton, Link, Tooltip, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { IconButton, Link, Grid, Tooltip, Typography } from "@mui/material";
 import YouTubeIcon from "@mui/icons-material/YouTube";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import { useContext } from "react";

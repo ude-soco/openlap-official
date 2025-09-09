@@ -1,17 +1,17 @@
 import { useState } from "react";
 import {
+  Alert,
   Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
+  Grid,
   TableHead,
   TablePagination,
   TableRow,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
-import { Alert } from "@mui/material";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 import { DataTypes } from "../../../../../../indicator-specification-cards/creator/utils/data/config";
 

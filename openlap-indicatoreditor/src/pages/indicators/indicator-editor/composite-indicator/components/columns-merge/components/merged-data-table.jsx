@@ -1,18 +1,22 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import {
   Paper,
   Table,
   TableBody,
   TableCell,
+  Grid,
   TableContainer,
   TableHead,
   TablePagination,
   TableRow,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 
-const MergedDataTable = ({ indicatorsToAnalyze, columnToMerge, analyzedData }) => {
+const MergedDataTable = ({
+  indicatorsToAnalyze,
+  columnToMerge,
+  analyzedData,
+}) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -61,10 +65,7 @@ const MergedDataTable = ({ indicatorsToAnalyze, columnToMerge, analyzedData }) =
                                 variant="caption"
                                 sx={{ fontStyle: "italic" }}
                               >
-                                {
-                                  indicatorsToAnalyze.indicators[index]
-                                    .name
-                                }
+                                {indicatorsToAnalyze.indicators[index].name}
                               </Typography>
                               <Typography variant="body2">{title}</Typography>
                             </TableCell>

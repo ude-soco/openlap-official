@@ -6,12 +6,12 @@ import {
   IconButton,
   LinearProgress,
   Link,
+  Grid,
   Paper,
   Skeleton,
   Tooltip,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import CodeIcon from "@mui/icons-material/Code";

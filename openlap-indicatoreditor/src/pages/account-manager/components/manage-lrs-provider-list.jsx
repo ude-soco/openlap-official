@@ -10,10 +10,10 @@ import {
   Button,
   Chip,
   IconButton,
+  Grid,
   Stack,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import DeleteDialog from "../../../common/components/delete-dialog/delete-dialog";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { ContentCopy, Edit } from "@mui/icons-material";

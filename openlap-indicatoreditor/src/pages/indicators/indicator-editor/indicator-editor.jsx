@@ -1,5 +1,4 @@
 import { useContext, useEffect, useState } from "react";
-import Grid from "@mui/material/Grid2";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -8,6 +7,7 @@ import {
   Button,
   Divider,
   Link,
+  Grid,
   Paper,
   Stack,
   Typography,

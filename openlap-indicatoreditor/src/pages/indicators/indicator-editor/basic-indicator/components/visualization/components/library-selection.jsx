@@ -1,7 +1,6 @@
 import { useContext, useEffect } from "react";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
-import { Autocomplete, TextField, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { Autocomplete, Grid, TextField, Typography } from "@mui/material";
 import {
   fetchVisualizationLibrary,
   fetchVisualizationTypeByLibraryId,

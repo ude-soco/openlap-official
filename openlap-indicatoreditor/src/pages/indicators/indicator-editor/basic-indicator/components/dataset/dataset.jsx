@@ -2,11 +2,11 @@ import {
   Autocomplete,
   Button,
   Collapse,
+  Grid,
   Divider,
   TextField,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import DatasetSummary from "./dataset-summary";
 import { useContext, useEffect, useState } from "react";
 import { BasicContext } from "../../basic-indicator";

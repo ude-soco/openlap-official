@@ -4,11 +4,11 @@ import {
   AccordionDetails,
   FormControl,
   FormControlLabel,
+  Grid,
   Radio,
   RadioGroup,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import { Condition } from "../../../../utils/indicator-data";
 import { BasicContext } from "../../../basic-indicator";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";

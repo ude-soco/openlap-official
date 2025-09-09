@@ -1,10 +1,14 @@
 import React from "react";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
-import Grid from "@mui/material/Grid2";
 import { navigationIds } from "../utils/navigation-data";
-import { Avatar, IconButton, Tooltip } from "@mui/material";
+import {
+  Avatar,
+  Box,
+  Typography,
+  Container,
+  Grid,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { memberItems, peopleItems } from "../utils/team-data";
 

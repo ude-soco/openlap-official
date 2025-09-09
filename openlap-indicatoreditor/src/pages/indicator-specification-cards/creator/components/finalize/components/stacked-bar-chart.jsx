@@ -4,6 +4,7 @@ import {
   Button,
   FormControl,
   Grow,
+  Grid,
   IconButton,
   InputLabel,
   ListSubheader,
@@ -13,7 +14,6 @@ import {
   Typography,
 } from "@mui/material";
 import Chart from "react-apexcharts";
-import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";

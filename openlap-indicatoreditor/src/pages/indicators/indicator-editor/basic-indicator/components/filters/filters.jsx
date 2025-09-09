@@ -1,5 +1,4 @@
-import { Button, Collapse, Divider } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { Button, Collapse, Grid, Divider } from "@mui/material";
 import { useContext } from "react";
 import { BasicContext } from "../../basic-indicator";
 import FiltersSummary from "./components/filters-summary";

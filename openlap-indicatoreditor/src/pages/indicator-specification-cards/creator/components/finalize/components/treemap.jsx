@@ -4,6 +4,7 @@ import {
   Button,
   FormControl,
   Grow,
+  Grid,
   IconButton,
   InputLabel,
   ListSubheader,
@@ -14,7 +15,6 @@ import {
   Typography,
 } from "@mui/material";
 import Chart from "react-apexcharts";
-import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
@@ -248,7 +248,7 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
       updatedSelectedValue =
         numberColumns.find((col) => col.field === selectedValue)?.field ||
         (numberColumns.length > 0
-          ? numberColumns[1]?.field
+          ? numberColumns[1]?.field || ""
           : numberColumns[0]?.field || "");
     else
       updatedSelectedValue =
@@ -264,7 +264,7 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
     else
       updatedSelectedCategory =
         stringColumns.length > 0
-          ? stringColumns[1]?.field
+          ? stringColumns[1]?.field || ""
           : stringColumns[0]?.field || "";
 
     setState((prevState) => ({

@@ -6,10 +6,10 @@ import {
   Button,
   Collapse,
   Divider,
+  Grid,
   LinearProgress,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import LoadingButton from "@mui/lab/LoadingButton";
 import AnalysisSummary from "./components/analysis-summary";
 import AnalysisSelection from "./components/analysis-selection";

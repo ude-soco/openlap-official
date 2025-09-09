@@ -1,9 +1,5 @@
 import { alpha, Button, Link } from "@mui/material";
-import Box from "@mui/material/Box";
-import Grid from "@mui/material/Grid2";
-import Container from "@mui/material/Container";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
+import { Box, Container, Grid, Stack, Typography } from "@mui/material";
 import { navigationIds } from "../utils/navigation-data";
 import HeroLight from "../../../assets/home/hero-light.png";
 import HeroDark from "../../../assets/home/hero-dark.png";

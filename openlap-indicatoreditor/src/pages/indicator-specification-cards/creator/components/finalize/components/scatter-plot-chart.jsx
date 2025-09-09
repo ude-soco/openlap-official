@@ -5,6 +5,7 @@ import {
   Button,
   FormControl,
   Grow,
+  Grid,
   IconButton,
   InputLabel,
   ListSubheader,
@@ -13,7 +14,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
@@ -274,13 +274,13 @@ const ScatterPlotChart = ({
       updatedSelectedYAxis =
         numberColumns.find((col) => col.field === selectedYAxis)?.field ||
         (numberColumns.length > 0
-          ? numberColumns[1]?.field
+          ? numberColumns[1]?.field || ""
           : numberColumns[0]?.field || "");
     } else {
       updatedSelectedYAxis =
         numberColumns.length > 0
-          ? numberColumns[1]?.field || numberColumns[0]?.field || ""
-          : "";
+          ? numberColumns[1]?.field || ""
+          : numberColumns[0]?.field || "";
     }
 
     setState((prevState) => ({

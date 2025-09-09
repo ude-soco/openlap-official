@@ -4,12 +4,12 @@ import {
   AccordionDetails,
   Box,
   Button,
+  Grid,
   IconButton,
   Paper,
   Tooltip,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { BasicContext } from "../../../../basic-indicator";
 import { v4 as uuidv4 } from "uuid";

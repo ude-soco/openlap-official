@@ -1,7 +1,6 @@
 import { useContext, useState } from "react";
 import { ISCContext } from "../../indicator-specification-card.jsx";
-import { Button, Divider, Paper, Collapse } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { Button, Divider, Paper, Grid, Collapse } from "@mui/material";
 import NameDialog from "./components/name-dialog.jsx";
 import VisSelection from "../visualization/components/visualization-filter/vis-selection";
 import FinalizeSummary from "./components/finalize-summary/finalize-summary";

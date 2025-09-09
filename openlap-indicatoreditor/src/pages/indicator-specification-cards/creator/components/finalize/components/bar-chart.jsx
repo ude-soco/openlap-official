@@ -9,11 +9,11 @@ import {
   InputLabel,
   ListSubheader,
   MenuItem,
+  Grid,
   Select,
   Tooltip,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";

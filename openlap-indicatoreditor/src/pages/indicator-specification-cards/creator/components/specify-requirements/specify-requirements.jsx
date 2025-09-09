@@ -4,11 +4,11 @@ import {
   Collapse,
   Divider,
   Paper,
+  Grid,
   Stack,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import Timeline from "@mui/lab/Timeline";
 import TimelineItem, { timelineItemClasses } from "@mui/lab/TimelineItem";
 import TimelineSeparator from "@mui/lab/TimelineSeparator";

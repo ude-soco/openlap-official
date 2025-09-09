@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from "react";
-import Grid from "@mui/material/Grid2";
+import { useState, useEffect, useContext } from "react";
+import { Grid } from "@mui/material";
 import Chart from "react-apexcharts";
 import { CustomThemeContext } from "../../../../setup/theme-manager/theme-context-manager";
 

@@ -7,9 +7,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Grid,
   TextField,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import { v4 as uuidv4 } from "uuid";
 
 const AddRowDialog = ({ open, toggleOpen }) => {

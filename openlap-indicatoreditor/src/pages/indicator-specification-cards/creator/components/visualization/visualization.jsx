@@ -1,6 +1,5 @@
-import { useContext, useState } from "react";
-import { Button, Collapse, Divider, Paper, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { useContext } from "react";
+import { Button, Collapse, Divider, Paper, Grid } from "@mui/material";
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import ChartTypeFilter from "./components/chart-type-filter.jsx";
 import VisualizationFilter from "./components/visualization-filter/visualization-filter";

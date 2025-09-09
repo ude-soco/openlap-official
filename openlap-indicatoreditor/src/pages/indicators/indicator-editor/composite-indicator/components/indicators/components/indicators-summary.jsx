@@ -1,6 +1,5 @@
 import { useContext, useState } from "react";
-import Grid from "@mui/material/Grid2";
-import { Chip, Collapse, Typography } from "@mui/material";
+import { Chip, Collapse, Grid, Typography } from "@mui/material";
 import { CompositeContext } from "../../../composite-indicator";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button";

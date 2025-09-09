@@ -1,6 +1,5 @@
 import { useContext, useState } from "react";
-import { Chip, Collapse, IconButton, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { Chip, Collapse, Grid, IconButton, Typography } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import { BasicContext } from "../../../basic-indicator";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button";

@@ -13,6 +13,7 @@ import {
   IconButton,
   InputLabel,
   Link,
+  Grid,
   MenuItem,
   Radio,
   RadioGroup,
@@ -23,7 +24,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import { LoadingButton } from "@mui/lab";
 import RoleTypes from "../account-manager/utils/enums/role-types";
 import UniqueIdentifierTypes from "../account-manager/utils/enums/unique-identifier-types";

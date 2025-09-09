@@ -1,7 +1,7 @@
 import {
   Box,
   Button,
-  ButtonGroup,
+  Grid,
   Collapse,
   Dialog,
   DialogActions,
@@ -12,7 +12,6 @@ import {
   Skeleton,
   TextField,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import { useContext, useEffect, useState } from "react";
 import { BasicContext } from "../../basic-indicator";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";

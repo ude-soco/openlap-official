@@ -1,5 +1,4 @@
-import { IconButton, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { IconButton, Grid, Typography } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { useContext } from "react";
 import { ISCContext } from "../../../../indicator-specification-card";

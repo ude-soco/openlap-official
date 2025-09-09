@@ -6,6 +6,7 @@ import {
   IconButton,
   InputLabel,
   ListSubheader,
+  Grid,
   MenuItem,
   Select,
   Tooltip,
@@ -13,7 +14,6 @@ import {
 } from "@mui/material";
 import Chart from "react-apexcharts";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
-import Grid from "@mui/material/Grid2";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";

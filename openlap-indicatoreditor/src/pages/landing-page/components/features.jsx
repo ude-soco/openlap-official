@@ -1,11 +1,4 @@
 import React, { useState } from "react";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Container from "@mui/material/Container";
-import Grid from "@mui/material/Grid2";
-import Link from "@mui/material/Link";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
@@ -19,6 +12,13 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  Box,
+  Card,
+  Container,
+  Grid,
+  Link,
+  Stack,
+  Typography,
 } from "@mui/material";
 
 export default function Features() {

@@ -1,9 +1,8 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager";
-import Grid from "@mui/material/Grid2";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { Breadcrumbs, Link, Typography } from "@mui/material";
+import { Breadcrumbs, Link, Grid, Typography } from "@mui/material";
+import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager";
 import Indicators from "./components/indicators/indicators";
 import ColumnsMerge from "./components/columns-merge/columns-merge";
 

@@ -1,6 +1,5 @@
 import { useContext, useState } from "react";
-import { Button, Stack, TextField, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { Button, Stack, Grid, TextField, Typography } from "@mui/material";
 import GoalList from "./goal-list";
 import { ISCContext } from "../../../../indicator-specification-card";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";

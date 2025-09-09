@@ -3,11 +3,11 @@ import {
   Autocomplete,
   FormControl,
   IconButton,
+  Grid,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import { createFilterOptions } from "@mui/material/Autocomplete";

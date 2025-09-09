@@ -1,6 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { Divider, Grow, Paper, Stack, Tab } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { Divider, Grow, Grid, Paper, Stack, Tab } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import ElementsTab from "./components/elements-tab/elements-tab.jsx";
 import StylesTab from "./components/styles-tab/styles-tab.jsx";

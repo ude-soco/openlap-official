@@ -4,13 +4,13 @@ import {
   Switch,
   RadioGroup,
   Radio,
+  Grid,
   FormLabel,
   FormControl,
   TextField,
   Checkbox,
   FormGroup,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 
 export const ElementsBar = ({ state, setState, chartConfiguration }) => {
   const [typingTimeout, setTypingTimeout] = useState(null);
@@ -129,7 +129,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
     <>
       <Grid container spacing={2}>
         {chartConfiguration.showHideLegendAvailable && (
-          <Grid size={{xs:12}}>
+          <Grid size={{ xs: 12 }}>
             <FormControlLabel
               sx={{ mt: 1 }}
               label="Show legend"
@@ -145,7 +145,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
         )}
 
         {chartConfiguration.legendPositionChangeable && (
-          <Grid size={{xs:12}}>
+          <Grid size={{ xs: 12 }}>
             <FormControl>
               <FormLabel id="role-label">Legend Position</FormLabel>
               <RadioGroup
@@ -183,7 +183,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
         )}
 
         {chartConfiguration.showHideAxesAvailable && (
-          <Grid size={{xs:12}}>
+          <Grid size={{ xs: 12 }}>
             <FormControl>
               <FormLabel id="role-label">Axes</FormLabel>
               <FormGroup row>
@@ -214,10 +214,10 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
           </Grid>
         )}
 
-        <Grid size={{xs:12}}>
+        <Grid size={{ xs: 12 }}>
           <Grid container spacing={2}>
             {chartConfiguration.chartTitleAvailable && (
-              <Grid size={{xs:12}}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   value={inputTitleValue}
                   onChange={handleChartTitle}
@@ -228,7 +228,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
               </Grid>
             )}
             {chartConfiguration.chartSubtitleAvailable && (
-              <Grid size={{xs:12}}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   value={inputSubtitleValue}
                   onChange={handleChartSubTitle}
@@ -241,7 +241,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
           </Grid>
         </Grid>
         {chartConfiguration.titleAndSubtitlePositionChangeable && (
-          <Grid size={{xs:12}}>
+          <Grid size={{ xs: 12 }}>
             <FormControl>
               <FormLabel>Title and Subtitle Position</FormLabel>
               <RadioGroup
@@ -274,7 +274,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
 
         {(chartConfiguration.labelsPositionChangeable ||
           chartConfiguration.showHideLabelsAvailable) && (
-          <Grid size={{xs:12}}>
+          <Grid size={{ xs: 12 }}>
             <FormControl>
               <FormLabel>Data Labels</FormLabel>
               <FormGroup>
@@ -309,7 +309,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
         )}
 
         {chartConfiguration.labelsPositionChangeable && (
-          <Grid size={{xs:12}}>
+          <Grid size={{ xs: 12 }}>
             <FormControl>
               <FormLabel>Labels Position</FormLabel>
               <RadioGroup

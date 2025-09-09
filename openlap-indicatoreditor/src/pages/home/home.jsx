@@ -6,12 +6,12 @@ import {
   CardMedia,
   Divider,
   LinearProgress,
+  Grid,
   Stack,
   Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import { requestUserDetails } from "../account-manager/utils/account-manager-api";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import { useNavigate } from "react-router-dom";

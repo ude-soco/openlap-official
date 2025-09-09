@@ -4,10 +4,10 @@ import {
   CircularProgress,
   Pagination,
   Skeleton,
+  Grid,
   TextField,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import SearchIcon from "@mui/icons-material/Search";
 import { requestAllMyIndicatorsWithCode } from "../utils/indicators-api";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
@@ -87,7 +87,7 @@ const IndicatorSelection = () => {
   };
 
   return (
-    <Grid container spacing={2} sx={{pt: 2}}>
+    <Grid container spacing={2} sx={{ pt: 2 }}>
       <Grid size={{ xs: 12 }}>
         <TextField
           autoFocus

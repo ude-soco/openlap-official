@@ -1,11 +1,13 @@
 import { useContext, useEffect, useState } from "react";
 import {
+  Alert,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
+  Grid,
   InputLabel,
   MenuItem,
   Select,
@@ -13,9 +15,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import { LoadingButton } from "@mui/lab";
-import { Alert } from "@mui/material";
 import { useSnackbar } from "notistack";
 import {
   requestAvailableLrsInOpenLAP,

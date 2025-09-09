@@ -1,10 +1,7 @@
 import { useContext } from "react";
 import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Grid from "@mui/material/Grid2";
+import { Box, Grid, Stack, Typography } from "@mui/material";
 import { logoItems } from "../utils/logo-data";
-import { Stack } from "@mui/material";
 
 const logoStyle = {
   height: "70px",

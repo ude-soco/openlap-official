@@ -1,6 +1,5 @@
 import { useContext, useState } from "react";
-import { Stack, TextField, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { Stack, Grid, TextField, Typography } from "@mui/material";
 
 import { ISCContext } from "../../../../indicator-specification-card";
 import DataList from "./data-list";
