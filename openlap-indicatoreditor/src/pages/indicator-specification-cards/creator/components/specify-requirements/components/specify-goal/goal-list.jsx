@@ -2,12 +2,12 @@ import { useContext, useEffect, useState } from "react";
 import {
   Autocomplete,
   FormControl,
-  Grid,
   IconButton,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import { createFilterOptions } from "@mui/material/Autocomplete";
@@ -181,46 +181,41 @@ const GoalList = () => {
             return (
               <li key={key} {...restProps}>
                 <Grid container alignItems="center">
-                  <Grid item xs>
+                  <Tooltip
+                    arrow
+                    title={
+                      option.description ? (
+                        <Typography variant="body2" sx={{ p: 1 }}>
+                          {option.description}
+                        </Typography>
+                      ) : undefined
+                    }
+                  >
+                    <Typography>{option.verb}</Typography>
+                  </Tooltip>
+                  {option.custom && (
                     <Tooltip
-                      arrow
-                      placement="right"
                       title={
-                        option.description ? (
-                          <Typography variant="body2" sx={{ p: 1 }}>
-                            {option.description}
-                          </Typography>
-                        ) : undefined
+                        <Typography variant="body2" sx={{ p: 1 }}>
+                          Remove custom goal
+                        </Typography>
                       }
                     >
-                      <Typography>{option.verb}</Typography>
-                    </Tooltip>
-                  </Grid>
-                  <Grid item>
-                    {option.custom && (
-                      <Tooltip
-                        title={
-                          <Typography variant="body2" sx={{ p: 1 }}>
-                            Remove custom goal
-                          </Typography>
-                        }
+                      <IconButton
+                        size="small"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setState((prevState) => ({
+                            goalList: prevState.goalList.filter(
+                              (goal) => goal.id !== option.id
+                            ),
+                          }));
+                        }}
                       >
-                        <IconButton
-                          size="small"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setState((prevState) => ({
-                              goalList: prevState.goalList.filter(
-                                (goal) => goal.id !== option.id
-                              ),
-                            }));
-                          }}
-                        >
-                          <CloseIcon />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </Grid>
+                        <CloseIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                 </Grid>
               </li>
             );

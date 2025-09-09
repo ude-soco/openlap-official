@@ -9,6 +9,7 @@ import {
   Divider,
   Link,
   Paper,
+  Stack,
   Typography,
 } from "@mui/material";
 import { indicatorData } from "./utils/indicator-data";
@@ -57,7 +58,7 @@ const IndicatorEditor = () => {
 
   return (
     <>
-      <Grid container spacing={2}>
+      <Stack gap={2}>
         <Breadcrumbs>
           <Link component={RouterLink} underline="hover" color="inherit" to="/">
             Home
@@ -75,82 +76,76 @@ const IndicatorEditor = () => {
           </Typography>
         </Breadcrumbs>
 
-        <Grid size={{ xs: 12 }}>
-          <Divider />
-        </Grid>
+        <Divider />
 
-        <Grid size={{ xs: 12 }}>
-          <Grid container spacing={2}>
-            <Typography gutterBottom>Choose a type of indicator</Typography>
-            <Grid size={{ xs: 12 }}>
-              <Grid container spacing={2} justifyContent="center">
-                {indicatorData.map((indicatorType, index) => (
-                  <Grid
-                    key={index}
-                    component={Paper}
-                    size={{ xs: 12, sm: 6, md: 4, xl: 3 }}
-                    onClick={() => handleCreateIndicator(indicatorType.link)}
-                    sx={{
-                      p: 3,
-                      "&:hover": { boxShadow: 5 },
-                      cursor: "pointer",
-                    }}
-                  >
-                    <Grid container spacing={1}>
-                      <Paper
-                        elevation={0}
-                        component="img"
-                        src={indicatorType.image}
-                        alt={indicatorType.imageCode}
-                        loading="lazy"
-                        sx={{
-                          width: "100%",
-                          height: "100%",
-                          backgroundColor: "white",
-                        }}
-                      />
-                      <Typography variant="h6">{indicatorType.name}</Typography>
-                      <Typography variant="body1">
-                        {indicatorType.description}
+        <Grid container spacing={2}>
+          <Typography gutterBottom>Choose a type of indicator</Typography>
+          <Grid size={{ xs: 12 }}>
+            <Grid container spacing={2} justifyContent="center">
+              {indicatorData.map((indicatorType, index) => (
+                <Grid
+                  key={index}
+                  component={Paper}
+                  size={{ xs: 12, sm: 6, md: 4, xl: 3 }}
+                  onClick={() => handleCreateIndicator(indicatorType.link)}
+                  sx={{
+                    p: 3,
+                    "&:hover": { boxShadow: 5 },
+                    cursor: "pointer",
+                  }}
+                >
+                  <Grid container spacing={1}>
+                    <Paper
+                      elevation={0}
+                      component="img"
+                      src={indicatorType.image}
+                      alt={indicatorType.imageCode}
+                      loading="lazy"
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        backgroundColor: "white",
+                      }}
+                    />
+                    <Typography variant="h6">{indicatorType.name}</Typography>
+                    <Typography variant="body1">
+                      {indicatorType.description}
+                    </Typography>
+                    {indicatorType.condition && (
+                      <Typography variant="body2">
+                        <b>Condition:</b> {indicatorType.condition}
                       </Typography>
-                      {indicatorType.condition && (
-                        <Typography variant="body2">
-                          <b>Condition:</b> {indicatorType.condition}
-                        </Typography>
-                      )}
-                    </Grid>
+                    )}
                   </Grid>
-                ))}
-              </Grid>
+                </Grid>
+              ))}
             </Grid>
           </Grid>
         </Grid>
         {state.indicatorInProgress && (
-          <Grid size={{ xs: 12 }}>
-            <Alert
-              severity="info"
-              action={
-                <Grid container spacing={1}>
-                  <Button variant="outlined" onClick={handleClearSession}>
-                    Discard
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleContinueEditing}
-                  >
-                    Continue
-                  </Button>
-                </Grid>
-              }
-            >
-              <AlertTitle>
-                You have an indicator in progress! Would you like to continue?
-              </AlertTitle>
-            </Alert>
-          </Grid>
+          <Alert
+            severity="info"
+            action={
+              <Grid container spacing={1}>
+                <Button variant="outlined" onClick={handleClearSession}>
+                  Discard
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleContinueEditing}
+                >
+                  Continue
+                </Button>
+              </Grid>
+            }
+          >
+            <AlertTitle>
+              You have an indicator in progress! Would you like to continue?
+            </AlertTitle>
+          </Alert>
         )}
-      </Grid>
+      </Stack>
     </>
   );
 };

@@ -84,26 +84,18 @@ export default function ChoosePathSummary() {
           timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
-          <Grid size={{ xs: 12 }}>
-            {requirements.selectedPath !== "" ? (
-              <Grid item xs={12}>
-                <Grid container alignItems="center" spacing={1}>
-                  <Grid item>
-                    <Typography>Selected path:</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Chip label={requirements.selectedPath} />
-                  </Grid>
-                </Grid>
-              </Grid>
-            ) : (
-              !lockedStep.path.locked && (
-                <Typography>
-                  <em>No path selected yet</em>
-                </Typography>
-              )
-            )}
-          </Grid>
+          {requirements.selectedPath !== "" ? (
+            <Grid container alignItems="center" spacing={1}>
+              <Typography>Selected path:</Typography>
+              <Chip label={requirements.selectedPath} />
+            </Grid>
+          ) : (
+            !lockedStep.path.locked && (
+              <Typography>
+                <em>No path selected yet</em>
+              </Typography>
+            )
+          )}
         </Collapse>
       </Grid>
     </>

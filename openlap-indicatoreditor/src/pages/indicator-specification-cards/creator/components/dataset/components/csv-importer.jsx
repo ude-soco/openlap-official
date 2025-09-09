@@ -2,12 +2,12 @@ import { useContext } from "react";
 import {
   AlertTitle,
   Box,
-  Grid,
   IconButton,
   Link,
   Tooltip,
   Typography,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import CloseIcon from "@mui/icons-material/Close";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
@@ -27,19 +27,11 @@ const CsvImporter = () => {
       return;
     }
 
-    setDataset((prevState) => ({
-      ...prevState,
-      file: event.target.files[0],
-    }));
+    setDataset((p) => ({ ...p, file: event.target.files[0] }));
   };
 
   const handleRemoveFile = () => {
-    setDataset((prevState) => ({
-      ...prevState,
-      file: {
-        name: "",
-      },
-    }));
+    setDataset((p) => ({ ...p, file: { name: "" } }));
   };
 
   return (
@@ -52,56 +44,38 @@ const CsvImporter = () => {
             spacing={2}
             alignItems="center"
           >
-            <Grid item xs={12}>
-              <Grid
-                container
-                spacing={2}
-                justifyContent="space-between"
-                alignItems="center"
-              >
-                <Grid item xs>
-                  <Grid container spacing={1} alignItems="center">
-                    <Grid item>
-                      <InsertDriveFileIcon color="primary" />
-                    </Grid>
-                    <Grid item xs>
-                      <Typography sx={{ fontWeight: "bold", ml: 1 }}>
-                        {dataset.file.name}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </Grid>
-                <Grid item>
-                  <Grid container spacing={2} alignItems="center">
-                    <Grid item>
-                      <Typography>{dataset.file.size} KB</Typography>
-                    </Grid>
-                    <Grid item>
-                      <Tooltip
-                        title={<Typography>Remove file</Typography>}
-                        arrow
-                      >
-                        <IconButton
-                          onClick={handleRemoveFile}
-                          size="small"
-                          color="error"
-                        >
-                          <CloseIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </Grid>
-                  </Grid>
-                </Grid>
+            <Grid
+              container
+              spacing={2}
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ width: "100%" }}
+            >
+              <Grid container spacing={1} alignItems="center">
+                <InsertDriveFileIcon color="primary" />
+                <Typography sx={{ fontWeight: "bold", ml: 1 }}>
+                  {dataset.file.name}
+                </Typography>
+              </Grid>
+              <Grid container spacing={2} alignItems="center">
+                <Typography>{dataset.file.size} KB</Typography>
+                <Tooltip title={<Typography>Remove file</Typography>} arrow>
+                  <IconButton
+                    onClick={handleRemoveFile}
+                    size="small"
+                    color="error"
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </Tooltip>
               </Grid>
             </Grid>
-            <Grid item xs={12}>
-              {(dataset.columns.length > 0 || dataset.rows.length > 0) && (
-                <Alert severity="warning">
-                  <AlertTitle>Please proceed with caution!</AlertTitle>
-                  Uploading the file will replace the existing dataset
-                </Alert>
-              )}
-            </Grid>
+            {(dataset.columns.length > 0 || dataset.rows.length > 0) && (
+              <Alert severity="warning" sx={{ width: "100%" }}>
+                <AlertTitle>Please proceed with caution!</AlertTitle>
+                Uploading the file will replace the existing dataset
+              </Alert>
+            )}
           </Grid>
         ) : (
           <Grid

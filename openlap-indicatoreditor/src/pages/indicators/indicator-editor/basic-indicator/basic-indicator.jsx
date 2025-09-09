@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
 import Grid from "@mui/material/Grid2";
-import { Breadcrumbs, Link, Typography } from "@mui/material";
+import { Breadcrumbs, Link, Stack, Typography } from "@mui/material";
 import dayjs from "dayjs";
 import { Condition } from "../utils/indicator-data";
 import Dataset from "./components/dataset/dataset";
@@ -193,7 +193,7 @@ export default function BasicIndicator() {
           handleResetIfDatasetEmpty,
         }}
       >
-        <Grid container spacing={2}>
+        <Stack gap={2}>
           <Breadcrumbs>
             <Link
               component={RouterLink}
@@ -224,19 +224,11 @@ export default function BasicIndicator() {
               Basic Indicator
             </Typography>
           </Breadcrumbs>
-          <Grid size={{ xs: 12 }}>
-            <Dataset />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <Filters />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <Analysis />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <Visualization />
-          </Grid>
-        </Grid>
+          <Dataset />
+          <Filters />
+          <Analysis />
+          <Visualization />
+        </Stack>
       </BasicContext.Provider>
     </>
   );
