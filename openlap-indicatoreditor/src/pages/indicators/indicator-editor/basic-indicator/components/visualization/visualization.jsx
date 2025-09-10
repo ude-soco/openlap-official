@@ -278,7 +278,10 @@ export default function Visualization() {
               variant="contained"
               onClick={handleSaveIndicator}
             >
-              {params.id ? "Update & Save to Dashboard" : "Save to dashboard"}
+              {!state.nameIndicator.loading &&
+                (params.id
+                  ? "Update & Save to Dashboard"
+                  : "Save to dashboard")}
             </Button>
             {indicator.indicatorName.length === 0 && (
               <CustomTooltip

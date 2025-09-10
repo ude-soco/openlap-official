@@ -10,7 +10,7 @@ import {
   Typography,
   Button,
 } from "@mui/material";
-import emailjs from '@emailjs/browser';
+import emailjs from "@emailjs/browser";
 import { useSnackbar } from "notistack";
 const emailTemplateId = import.meta.env.VITE_EMAIL_TEMPLATE_ID || "";
 const emailServiceId = import.meta.env.VITE_EMAIL_SERVICE_ID || "";
@@ -178,7 +178,7 @@ export default function ContactUs() {
               variant="contained"
               disabled={!formData.agreed}
             >
-              Send Message
+              {!loading && "Send Message"}
             </Button>
           </Grid>
         </form>

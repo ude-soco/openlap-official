@@ -435,7 +435,7 @@ const Register = () => {
                 loadingPosition="start"
                 loadingIndicator="Preparing your account..."
               >
-                <span>Create an account</span>
+                {!loading && "Create an account"}
               </Button>
               <Grid container justifyContent="flex-end">
                 <Link

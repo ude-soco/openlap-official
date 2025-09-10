@@ -61,7 +61,7 @@ const CustomDialog = ({
             variant="contained"
             color={config.color}
           >
-            {config.label}
+            {!state.loading && config.label}
           </Button>
         </DialogActions>
       </Dialog>

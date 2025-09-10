@@ -158,7 +158,7 @@ const AddLrsConsumer = ({ addLrsConsumer, toggleOpen }) => {
               !Boolean(state.lrsId.length) || !Boolean(state.uniqueIdentifier)
             }
           >
-            Add LRS
+            {!state.validation.loading && "Add LRS"}
           </Button>
         </DialogActions>
       </Dialog>

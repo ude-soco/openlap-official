@@ -144,7 +144,7 @@ const Login = () => {
             loadingIndicator="Logging in..."
             disabled={formFields.email === "" || formFields.password === ""}
           >
-            <span>Login with email</span>
+            {!loading && "Login with email"}
           </Button>
           <Grid container justifyContent="flex-end">
             {/* 

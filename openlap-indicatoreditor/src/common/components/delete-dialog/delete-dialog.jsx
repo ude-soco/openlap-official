@@ -47,7 +47,7 @@ const DeleteDialog = ({ reset, open, toggleOpen, message, handleDelete }) => {
             variant="contained"
             color="error"
           >
-            {reset ? "Reset" : "Delete"}
+            {!loading && (reset ? "Reset" : "Delete")}
           </Button>
         </DialogActions>
       </Dialog>

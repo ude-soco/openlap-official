@@ -197,7 +197,7 @@ const ColumnsMerge = () => {
                         //   disabled={handleCheckPreviewDisabled()}
                         onClick={handlePreviewAnalyzedData}
                       >
-                        <span>Preview</span>
+                        {!state.isPreviewLoading && "Preview"}
                       </Button>
                       {/* {handleCheckPreviewDisabled() && (
                           <CustomTooltip

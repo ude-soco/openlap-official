@@ -137,7 +137,7 @@ export default function Analysis() {
                                       disabled={handleCheckPreviewDisabled()}
                                       onClick={handlePreviewAnalyzedData}
                                     >
-                                      <span>Preview</span>
+                                      {!state.loadingPreview && "Preview"}
                                     </Button>
                                     {handleCheckPreviewDisabled() && (
                                       <CustomTooltip

@@ -103,7 +103,7 @@ const NameDialog = ({ open, toggleOpen }) => {
             onClick={handleSaveIndicator}
             variant="contained"
           >
-            Confirm
+            {!state.loading && "Confirm"}
           </Button>
         </DialogActions>
       </Dialog>
