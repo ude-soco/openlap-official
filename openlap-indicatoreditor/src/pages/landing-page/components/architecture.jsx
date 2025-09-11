@@ -108,15 +108,8 @@ const Architecture = () => {
           </Card>
         </Box>
       </Stack>
-      <Dialog maxWidth="lg" open={openDialog} onClose={toggleOpenDialog}>
+      <Dialog maxWidth="xl" open={openDialog} onClose={toggleOpenDialog}>
         <DialogContent>
-          <DialogTitle>
-            <Grid container justifyContent="flex-end">
-              <IconButton onClick={toggleOpenDialog}>
-                <CloseIcon />
-              </IconButton>
-            </Grid>
-          </DialogTitle>
           <Box
             component="img"
             src={OpenLAPArchitecture}

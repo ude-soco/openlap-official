@@ -1,21 +1,20 @@
 import { useState } from "react";
 import {
+  alpha,
   Box,
   Button,
   Card,
   CardActionArea,
+  CardContent,
   CardMedia,
   Container,
   Dialog,
   DialogContent,
-  DialogTitle,
-  Grid,
   IconButton,
   Stack,
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import CloseIcon from "@mui/icons-material/Close";
 import AddchartIcon from "@mui/icons-material/Addchart";
 import { useNavigate } from "react-router-dom";
 import OpenLAPIndicatorEditorAbstract from "../../../assets/home/abstract-indicators.png";
@@ -26,20 +25,21 @@ const IndicatorEditorFeature = () => {
 
   const toggleOpenDialog = () => setOpenDialog((p) => !p);
   return (
-    <Container maxWidth="lg" sx={{ pt: { xs: 4, sm: 12 }, pb: { xs: 8 } }}>
-      <Typography
-        variant="h4"
-        gutterBottom
-        sx={{ display: { xs: "flex", md: "none" } }}
-      >
-        Indicator Editor
-      </Typography>
+    <Container
+      maxWidth="lg"
+      sx={{ pt: { xs: 4, md: 12 }, pb: { xs: 10, md: 10 } }}
+    >
       <Stack
         direction={{ xs: "column-reverse", md: "row" }}
         gap={4}
         alignItems="center"
       >
-        <Box sx={{ width: { xs: "100%", md: "40%" } }}>
+        <Box
+          sx={{
+            width: { xs: "100%", md: "40%" },
+            display: { xs: "none", md: "flex" },
+          }}
+        >
           <Stack gap={4}>
             <Box>
               <Typography
@@ -70,10 +70,16 @@ const IndicatorEditorFeature = () => {
           </Stack>
         </Box>
         <Box sx={{ width: { xs: "100%", md: "60%" } }}>
-          <Card elevation={0} sx={{ width: "100%", position: "relative" }}>
+          <Card
+            elevation={0}
+            sx={{
+              width: "100%",
+              position: "relative",
+              border: { xs: "1px solid #bdbdbd", md: "none" },
+            }}
+          >
             <CardActionArea
               sx={{
-                mt: -4,
                 "&:hover + .search-icon, .search-icon:hover": {
                   opacity: 1,
                 },
@@ -89,7 +95,33 @@ const IndicatorEditorFeature = () => {
                 image={OpenLAPIndicatorEditorAbstract}
               />
             </CardActionArea>
-
+            <CardContent sx={{ display: { xs: "flex", md: "none" } }}>
+              <Stack gap={4}>
+                <Box>
+                  <Typography variant="h4" gutterBottom>
+                    Indicator Editor
+                  </Typography>
+                  <Typography>
+                    The Indicator Editor is an interactive learning analytics
+                    tool that enables stakeholders who have knowledge about data
+                    analysis and visualization to implement high-fidelity
+                    learning analytics indicators based on real xAPI-based
+                    learning activity data, by supporting them in selecting
+                    data, choosing analysis methods, and specifying
+                    visualization techniques.
+                  </Typography>
+                </Box>
+                <Box>
+                  <Button
+                    variant="contained"
+                    endIcon={<AddchartIcon />}
+                    onClick={() => navigate("/login")}
+                  >
+                    Implement indicators now!
+                  </Button>
+                </Box>
+              </Stack>
+            </CardContent>
             <IconButton
               className="search-icon"
               sx={{
@@ -111,15 +143,8 @@ const IndicatorEditorFeature = () => {
           </Card>
         </Box>
       </Stack>
-      <Dialog maxWidth="lg" open={openDialog} onClose={toggleOpenDialog}>
+      <Dialog maxWidth="xl" open={openDialog} onClose={toggleOpenDialog}>
         <DialogContent>
-          <DialogTitle>
-            <Grid container justifyContent="flex-end">
-              <IconButton onClick={toggleOpenDialog}>
-                <CloseIcon />
-              </IconButton>
-            </Grid>
-          </DialogTitle>
           <Box
             component="img"
             src={OpenLAPIndicatorEditorAbstract}

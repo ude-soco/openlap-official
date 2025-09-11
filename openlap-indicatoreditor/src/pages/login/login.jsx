@@ -12,6 +12,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Container,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import ToggleColorMode from "../landing-page/components/toggle-color-mode.jsx";
@@ -111,57 +112,56 @@ const Login = () => {
         <Typography variant="h5" align="center" color="textSecondary">
           Sign in
         </Typography>
-        <Stack
-          gap={2}
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{ maxWidth: 500, width: "100%" }}
-        >
-          <TextField
-            fullWidth
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-            placeholder="example@mail.com"
-            autoFocus
-            onChange={handleFormFields}
-          />
-          <TextField
-            fullWidth
-            name="password"
-            label="Password"
-            placeholder="Password"
-            type="password"
-            autoComplete="current-password"
-            onChange={handleFormFields}
-          />
-          <Button
-            type="submit"
-            fullWidth
-            loading={loading}
-            variant="contained"
-            loadingPosition="start"
-            loadingIndicator="Logging in..."
-            disabled={formFields.email === "" || formFields.password === ""}
-          >
-            {!loading && "Login with email"}
-          </Button>
-          <Grid container justifyContent="flex-end">
-            {/* 
+        <Container maxWidth="sm">
+          <Stack gap={2}>
+            <Stack gap={2} component="form" onSubmit={handleSubmit}>
+              <TextField
+                fullWidth
+                label="Email Address"
+                name="email"
+                autoComplete="email"
+                placeholder="example@mail.com"
+                autoFocus
+                onChange={handleFormFields}
+              />
+              <TextField
+                fullWidth
+                name="password"
+                label="Password"
+                placeholder="Password"
+                type="password"
+                autoComplete="current-password"
+                onChange={handleFormFields}
+              />
+              <Button
+                type="submit"
+                fullWidth
+                loading={loading}
+                variant="contained"
+                loadingPosition="start"
+                loadingIndicator="Logging in..."
+                disabled={formFields.email === "" || formFields.password === ""}
+              >
+                {!loading && "Login with email"}
+              </Button>
+            </Stack>
+            <Grid container justifyContent="flex-end">
+              {/* 
               <Link href="#" variant="body2">
                 Forgot password?
               </Link>
              */}
-            <Link
-              component="button"
-              onClick={() => navigate("/register")}
-              variant="body2"
-              underline="hover"
-            >
-              <span>Don't have an account? Create an account</span>
-            </Link>
-          </Grid>
-        </Stack>
+              <Link
+                component="button"
+                onClick={() => navigate("/register")}
+                variant="body2"
+                underline="hover"
+              >
+                <span>Don't have an account? Create an account</span>
+              </Link>
+            </Grid>
+          </Stack>
+        </Container>
       </Grid>
     </Box>
   );

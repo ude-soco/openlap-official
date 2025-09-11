@@ -4,18 +4,16 @@ import {
   Button,
   Card,
   CardActionArea,
+  CardContent,
   CardMedia,
   Container,
   Dialog,
   DialogContent,
-  DialogTitle,
-  Grid,
   IconButton,
   Stack,
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import CloseIcon from "@mui/icons-material/Close";
 import DesignServicesIcon from "@mui/icons-material/DesignServices";
 import OpenLAPISCAbstract from "../../../assets/home/abstract-isc.png";
 import { useNavigate } from "react-router-dom";
@@ -26,21 +24,20 @@ const ISCCreatorFeature = () => {
 
   const toggleOpenDialog = () => setOpenDialog((p) => !p);
   return (
-    <Container maxWidth="lg" sx={{ pt: { xs: 4, sm: 12 }, pb: { xs: 8 } }}>
-      <Typography
-        variant="h4"
-        gutterBottom
-        sx={{ display: { xs: "flex", md: "none" } }}
-      >
-        ISC Creator
-      </Typography>
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        gap={4}
-        alignItems="center"
-      >
+    <Container
+      maxWidth="lg"
+      sx={{ pt: { xs: 4, md: 12 }, pb: { xs: 2, md: 10 } }}
+    >
+      <Stack direction="row" gap={4} alignItems="center">
         <Box sx={{ width: { xs: "100%", md: "55%" } }}>
-          <Card elevation={0} sx={{ width: "100%", position: "relative" }}>
+          <Card
+            elevation={0}
+            sx={{
+              width: "100%",
+              border: { xs: "1px solid #bdbdbd", md: "none" },
+              position: "relative",
+            }}
+          >
             <CardActionArea
               sx={{
                 "&:hover + .search-icon, .search-icon:hover": {
@@ -58,6 +55,30 @@ const ISCCreatorFeature = () => {
                 image={OpenLAPISCAbstract}
               />
             </CardActionArea>
+            <CardContent sx={{ display: { xs: "flex", md: "none" } }}>
+              <Stack gap={4}>
+                <Box>
+                  <Typography variant="h4" gutterBottom>
+                    Indicator Specification Card Creator
+                  </Typography>
+                  <Typography>
+                    The ISC Creator is an intuitive learning analytics tool that
+                    supports the systematic and theoretically-sound (co-)design
+                    of personalized low-fidelity learning analytics indicators,
+                    using Indicator Specification Cards (ISCs).
+                  </Typography>
+                </Box>
+                <Box>
+                  <Button
+                    variant="contained"
+                    endIcon={<DesignServicesIcon />}
+                    onClick={() => navigate("/login")}
+                  >
+                    Design Indicators now!
+                  </Button>
+                </Box>
+              </Stack>
+            </CardContent>
 
             <IconButton
               className="search-icon"
@@ -79,7 +100,12 @@ const ISCCreatorFeature = () => {
             </IconButton>
           </Card>
         </Box>
-        <Box sx={{ width: { xs: "100%", md: "45%" } }}>
+        <Box
+          sx={{
+            width: { xs: "100%", md: "45%" },
+            display: { xs: "none", md: "flex" },
+          }}
+        >
           <Stack gap={4}>
             <Box>
               <Typography
@@ -87,7 +113,7 @@ const ISCCreatorFeature = () => {
                 gutterBottom
                 sx={{ display: { xs: "none", md: "flex" } }}
               >
-                ISC Creator
+                Indicator Specification Card Creator
               </Typography>
               <Typography>
                 The ISC Creator is an intuitive learning analytics tool that
@@ -108,15 +134,9 @@ const ISCCreatorFeature = () => {
           </Stack>
         </Box>
       </Stack>
-      <Dialog maxWidth="lg" open={openDialog} onClose={toggleOpenDialog}>
+
+      <Dialog maxWidth="xl" open={openDialog} onClose={toggleOpenDialog}>
         <DialogContent>
-          <DialogTitle>
-            <Grid container justifyContent="flex-end">
-              <IconButton onClick={toggleOpenDialog}>
-                <CloseIcon />
-              </IconButton>
-            </Grid>
-          </DialogTitle>
           <Box
             component="img"
             src={OpenLAPISCAbstract}

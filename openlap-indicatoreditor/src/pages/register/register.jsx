@@ -23,6 +23,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Container,
 } from "@mui/material";
 import RoleTypes from "../account-manager/utils/enums/role-types";
 import UniqueIdentifierTypes from "../account-manager/utils/enums/unique-identifier-types";
@@ -201,253 +202,259 @@ const Register = () => {
             <Typography variant="h5" align="center" color="textSecondary">
               Sign Up
             </Typography>
-            <Stack
-              gap={2}
-              component="form"
-              onSubmit={handleSubmit}
-              sx={{ maxWidth: 500, width: "100%" }}
-            >
-              <TextField
-                margin="normal"
-                fullWidth
-                label="*Name"
-                name="name"
-                autoComplete="firstname"
-                placeholder="Max Mustermann"
-                error={Boolean(errors?.name)}
-                helperText={errors?.name}
-                autoFocus
-                onChange={handleFormFields}
-              />
-              <TextField
-                fullWidth
-                label="Email Address"
-                name="email"
-                autoComplete="email"
-                placeholder="example@mail.com"
-                error={Boolean(errors?.email)}
-                helperText={errors?.email}
-                onChange={handleFormFields}
-              />
-              <TextField
-                fullWidth
-                name="password"
-                label="Password"
-                placeholder="Password"
-                type="password"
-                autoComplete="current-password"
-                error={Boolean(errors?.password)}
-                helperText={errors?.password}
-                onChange={handleFormFields}
-              />
-              <TextField
-                fullWidth
-                name="confirmPassword"
-                label="Confirm Password"
-                placeholder="Confirm password"
-                type="password"
-                error={Boolean(errors?.confirmPassword)}
-                helperText={errors?.confirmPassword}
-                onChange={handleFormFields}
-              />
-              <Grid size={{ xs: 12 }} sx={{ maxWidth: 500, width: "100%" }}>
-                <Grid
-                  container
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <Grid size="auto">
-                    <Typography color="textSecondary">
-                      Connect to a LRS?
-                    </Typography>
+            <Container maxWidth="sm">
+              <Stack gap={2}>
+                <Stack gap={2} component="form" onSubmit={handleSubmit}>
+                  <TextField
+                    margin="normal"
+                    fullWidth
+                    label="*Name"
+                    name="name"
+                    autoComplete="firstname"
+                    placeholder="Max Mustermann"
+                    error={Boolean(errors?.name)}
+                    helperText={errors?.name}
+                    autoFocus
+                    onChange={handleFormFields}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Email Address"
+                    name="email"
+                    autoComplete="email"
+                    placeholder="example@mail.com"
+                    error={Boolean(errors?.email)}
+                    helperText={errors?.email}
+                    onChange={handleFormFields}
+                  />
+                  <TextField
+                    fullWidth
+                    name="password"
+                    label="Password"
+                    placeholder="Password"
+                    type="password"
+                    autoComplete="current-password"
+                    error={Boolean(errors?.password)}
+                    helperText={errors?.password}
+                    onChange={handleFormFields}
+                  />
+                  <TextField
+                    fullWidth
+                    name="confirmPassword"
+                    label="Confirm Password"
+                    placeholder="Confirm password"
+                    type="password"
+                    error={Boolean(errors?.confirmPassword)}
+                    helperText={errors?.confirmPassword}
+                    onChange={handleFormFields}
+                  />
+                  <Grid
+                    container
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
+                    <Grid size="auto">
+                      <Typography color="textSecondary">
+                        Connect to a LRS?
+                      </Typography>
+                    </Grid>
+                    <Grid size="auto">
+                      <Switch checked={lrsConnect} onChange={handleSkipRole} />
+                    </Grid>
                   </Grid>
-                  <Grid size="auto">
-                    <Switch checked={lrsConnect} onChange={handleSkipRole} />
-                  </Grid>
-                </Grid>
-              </Grid>
-              {lrsConnect && (
-                <>
-                  <FormControl>
-                    <FormLabel id="role-label">Choose role</FormLabel>
-                    <RadioGroup
-                      row
-                      name="role"
-                      value={formFields.role}
-                      onChange={handleFormFields}
-                    >
-                      <FormControlLabel
-                        value={RoleTypes.user}
-                        control={<Radio />}
-                        label={
-                          <>
-                            <Grid
-                              container
-                              spacing={1}
-                              alignItems="center"
-                              sx={{ pr: 3 }}
-                            >
-                              <Typography>User</Typography>
-                              <Tooltip
-                                title={
-                                  <>
-                                    <Typography>
-                                      As a User, you will be able to:
-                                      <br />
-                                      • Connect to multiple Leaning Record
-                                      Stores (LRS) using your unique identifier
-                                      from your LMSs or MOOC platforms
-                                      <br />
-                                      • Create Indicator Specification Cards
-                                      <br />• Create Indicators
-                                    </Typography>
-                                  </>
-                                }
-                              >
-                                <IconButton>
-                                  <Help />
-                                </IconButton>
-                              </Tooltip>
-                            </Grid>
-                          </>
-                        }
-                      />
-                      <FormControlLabel
-                        value={RoleTypes["data provider"]}
-                        control={<Radio />}
-                        label={
-                          <>
-                            <Grid container spacing={1} alignItems="center">
-                              <Typography>Data Provider</Typography>
-                              <Tooltip
-                                title={
-                                  <>
-                                    <Typography>
-                                      As a Data Provider, you will be able to:
-                                      <br />• Create multiple Leaning Record
-                                      Store (LRS) instances
-                                      <br />• Use Basic Auth token to add data
-                                      to the LRS
-                                    </Typography>
-                                  </>
-                                }
-                              >
-                                <IconButton>
-                                  <Help />
-                                </IconButton>
-                              </Tooltip>
-                            </Grid>
-                          </>
-                        }
-                      />
-                    </RadioGroup>
-                  </FormControl>
-                  {formFields.role === RoleTypes.user && (
+                  {lrsConnect && (
                     <>
-                      <FormControl
-                        fullWidth
-                        error={Boolean(errors?.["lrsConsumerRequest.lrsId"])}
-                      >
-                        <InputLabel id="lrs-select-label">
-                          Available LRS
-                        </InputLabel>
-                        <Select
-                          variant="outlined"
-                          name="lrsId"
-                          value={lrsConsumerRequest.lrsId}
-                          label="Available LRS"
-                          onChange={handleLrsConsumerRequest}
+                      <FormControl>
+                        <FormLabel id="role-label">Choose role</FormLabel>
+                        <RadioGroup
+                          row
+                          name="role"
+                          value={formFields.role}
+                          onChange={handleFormFields}
                         >
-                          {lrsList.length > 0
-                            ? lrsList.map((lrs) => {
-                                return (
-                                  <MenuItem key={lrs.lrsId} value={lrs.lrsId}>
-                                    {lrs.title}
-                                  </MenuItem>
-                                );
-                              })
-                            : null}
-                        </Select>
-                        {Boolean(errors?.["lrsConsumerRequest.lrsId"]) && (
-                          <FormHelperText color="error">
-                            {errors?.["lrsConsumerRequest.lrsId"]}
-                          </FormHelperText>
-                        )}
-                      </FormControl>
-                      <TextField
-                        fullWidth
-                        name="uniqueIdentifier"
-                        label="Unique Identifier"
-                        error={Boolean(
-                          errors?.["lrsConsumerRequest.uniqueIdentifier"]
-                        )}
-                        helperText={
-                          errors?.["lrsConsumerRequest.uniqueIdentifier"]
-                        }
-                        onChange={handleLrsConsumerRequest}
-                      />
-                    </>
-                  )}
-
-                  {formFields.role === RoleTypes["data provider"] && (
-                    <>
-                      <TextField
-                        fullWidth
-                        name="title"
-                        label="Create an LRS"
-                        placeholder="Name your LRS"
-                        error={Boolean(errors?.["lrsProviderRequest.title"])}
-                        helperText={errors?.["lrsProviderRequest.title"]}
-                        onChange={handleLrsProviderRequest}
-                      />
-                      <FormControl fullWidth>
-                        <InputLabel id="unique-type-select-label">
-                          Unique Identifier Type
-                        </InputLabel>
-                        <Select
-                          variant="outlined"
-                          labelId="unique-type-select-label"
-                          name="uniqueIdentifierType"
-                          value={lrsProviderRequest.uniqueIdentifierType}
-                          label="Unique Identifier Type"
-                          onChange={handleLrsProviderRequest}
-                        >
-                          {Object.entries(UniqueIdentifierTypes).map(
-                            ([key, value]) => {
-                              return (
-                                <MenuItem key={key} value={value}>
-                                  {key}
-                                </MenuItem>
-                              );
+                          <FormControlLabel
+                            value={RoleTypes.user}
+                            control={<Radio />}
+                            label={
+                              <>
+                                <Grid
+                                  container
+                                  spacing={1}
+                                  alignItems="center"
+                                  sx={{ pr: 3 }}
+                                >
+                                  <Typography>User</Typography>
+                                  <Tooltip
+                                    title={
+                                      <>
+                                        <Typography>
+                                          As a User, you will be able to:
+                                          <br />
+                                          • Connect to multiple Leaning Record
+                                          Stores (LRS) using your unique
+                                          identifier from your LMSs or MOOC
+                                          platforms
+                                          <br />
+                                          • Create Indicator Specification Cards
+                                          <br />• Create Indicators
+                                        </Typography>
+                                      </>
+                                    }
+                                  >
+                                    <IconButton>
+                                      <Help />
+                                    </IconButton>
+                                  </Tooltip>
+                                </Grid>
+                              </>
                             }
-                          )}
-                        </Select>
+                          />
+                          <FormControlLabel
+                            value={RoleTypes["data provider"]}
+                            control={<Radio />}
+                            label={
+                              <>
+                                <Grid container spacing={1} alignItems="center">
+                                  <Typography>Data Provider</Typography>
+                                  <Tooltip
+                                    title={
+                                      <>
+                                        <Typography>
+                                          As a Data Provider, you will be able
+                                          to:
+                                          <br />• Create multiple Leaning Record
+                                          Store (LRS) instances
+                                          <br />• Use Basic Auth token to add
+                                          data to the LRS
+                                        </Typography>
+                                      </>
+                                    }
+                                  >
+                                    <IconButton>
+                                      <Help />
+                                    </IconButton>
+                                  </Tooltip>
+                                </Grid>
+                              </>
+                            }
+                          />
+                        </RadioGroup>
                       </FormControl>
+                      {formFields.role === RoleTypes.user && (
+                        <>
+                          <FormControl
+                            fullWidth
+                            error={Boolean(
+                              errors?.["lrsConsumerRequest.lrsId"]
+                            )}
+                          >
+                            <InputLabel id="lrs-select-label">
+                              Available LRS
+                            </InputLabel>
+                            <Select
+                              variant="outlined"
+                              name="lrsId"
+                              value={lrsConsumerRequest.lrsId}
+                              label="Available LRS"
+                              onChange={handleLrsConsumerRequest}
+                            >
+                              {lrsList.length > 0
+                                ? lrsList.map((lrs) => {
+                                    return (
+                                      <MenuItem
+                                        key={lrs.lrsId}
+                                        value={lrs.lrsId}
+                                      >
+                                        {lrs.title}
+                                      </MenuItem>
+                                    );
+                                  })
+                                : null}
+                            </Select>
+                            {Boolean(errors?.["lrsConsumerRequest.lrsId"]) && (
+                              <FormHelperText color="error">
+                                {errors?.["lrsConsumerRequest.lrsId"]}
+                              </FormHelperText>
+                            )}
+                          </FormControl>
+                          <TextField
+                            fullWidth
+                            name="uniqueIdentifier"
+                            label="Unique Identifier"
+                            error={Boolean(
+                              errors?.["lrsConsumerRequest.uniqueIdentifier"]
+                            )}
+                            helperText={
+                              errors?.["lrsConsumerRequest.uniqueIdentifier"]
+                            }
+                            onChange={handleLrsConsumerRequest}
+                          />
+                        </>
+                      )}
+
+                      {formFields.role === RoleTypes["data provider"] && (
+                        <>
+                          <TextField
+                            fullWidth
+                            name="title"
+                            label="Create an LRS"
+                            placeholder="Name your LRS"
+                            error={Boolean(
+                              errors?.["lrsProviderRequest.title"]
+                            )}
+                            helperText={errors?.["lrsProviderRequest.title"]}
+                            onChange={handleLrsProviderRequest}
+                          />
+                          <FormControl fullWidth>
+                            <InputLabel id="unique-type-select-label">
+                              Unique Identifier Type
+                            </InputLabel>
+                            <Select
+                              variant="outlined"
+                              labelId="unique-type-select-label"
+                              name="uniqueIdentifierType"
+                              value={lrsProviderRequest.uniqueIdentifierType}
+                              label="Unique Identifier Type"
+                              onChange={handleLrsProviderRequest}
+                            >
+                              {Object.entries(UniqueIdentifierTypes).map(
+                                ([key, value]) => {
+                                  return (
+                                    <MenuItem key={key} value={value}>
+                                      {key}
+                                    </MenuItem>
+                                  );
+                                }
+                              )}
+                            </Select>
+                          </FormControl>
+                        </>
+                      )}
                     </>
                   )}
-                </>
-              )}
-              <Button
-                type="submit"
-                fullWidth
-                loading={loading}
-                variant="contained"
-                loadingPosition="start"
-                loadingIndicator="Preparing your account..."
-              >
-                {!loading && "Create an account"}
-              </Button>
-              <Grid container justifyContent="flex-end">
-                <Link
-                  component="button"
-                  onClick={() => navigate("/login")}
-                  variant="body2"
-                  underline="hover"
-                >
-                  Already have an account? Log in to your account
-                </Link>
-              </Grid>
-            </Stack>
+                  <Button
+                    type="submit"
+                    fullWidth
+                    loading={loading}
+                    variant="contained"
+                    loadingPosition="start"
+                    loadingIndicator="Preparing your account..."
+                  >
+                    {!loading && "Create an account"}
+                  </Button>
+                </Stack>
+                <Grid container justifyContent="flex-end">
+                  <Link
+                    component="button"
+                    onClick={() => navigate("/login")}
+                    variant="body2"
+                    underline="hover"
+                  >
+                    Already have an account? Log in to your account
+                  </Link>
+                </Grid>
+              </Stack>
+            </Container>
           </Grid>
         </Grid>
       </Grid>
