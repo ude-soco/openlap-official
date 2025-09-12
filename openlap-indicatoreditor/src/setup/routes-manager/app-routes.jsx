@@ -62,7 +62,7 @@ const AppRoutes = () => {
                         <Outlet />
                       </Stack>
                     </Container>
-                    <Stack gap={2}>
+                    <Stack gap={2} sx={{ pt: 4 }}>
                       <Divider />
                       <Footer />
                     </Stack>
