@@ -130,11 +130,6 @@ const IscPreview = () => {
     const selectedValues = selectedKeys.map(
       (key) => visRef.data.axisOptions[key]
     );
-    let data = dataset.columns
-      .filter((item) => selectedValues.includes(item.field))
-      .map((item) => item);
-    console.log(data);
-    console.log(dataset.rows);
 
     return dataset.columns
       .filter((item) => selectedValues.includes(item.field))
