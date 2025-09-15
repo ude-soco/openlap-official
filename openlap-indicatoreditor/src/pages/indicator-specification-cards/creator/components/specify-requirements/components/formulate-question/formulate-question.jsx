@@ -1,4 +1,13 @@
-import { Button, Stack, Grid, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  Grid,
+  TextField,
+  Typography,
+  Box,
+  Divider,
+  Avatar,
+} from "@mui/material";
+import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
 import { useContext, useState } from "react";
 import { ISCContext } from "../../../../indicator-specification-card";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
@@ -44,17 +53,35 @@ export default function FormulateQuestion() {
 
   return (
     <>
-      <Stack gap={2} sx={{ pb: 4 }}>
-        <Grid container spacing={1} alignItems="center">
-          <Typography>Formulate your question</Typography>
-          <TipPopover
-            tipAnchor={state.questionPopoverAnchor}
-            toggleTipAnchor={handleQuestionPopoverAnchor}
-            description={state.questionDescription}
-          />
+      <Grid container spacing={2}>
+        <Grid size="auto">
+          <Grid
+            direction="column"
+            container
+            alignItems="center"
+            sx={{ height: "100%" }}
+            spacing={1}
+          >
+            <Avatar sx={{ bgcolor: "primary.main" }}>
+              <QuestionMarkIcon />
+            </Avatar>
+            {requirements.show.indicatorName && (
+              <Grid size="grow">
+                <Divider orientation="vertical" sx={{ borderRightWidth: 2 }} />
+              </Grid>
+            )}
+          </Grid>
         </Grid>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, lg: 8 }}>
+        <Grid size="grow" sx={{ pb: 2 }}>
+          <Grid container spacing={2}>
+            <Grid container spacing={1} alignItems="center">
+              <Typography>Formulate your question</Typography>
+              <TipPopover
+                tipAnchor={state.questionPopoverAnchor}
+                toggleTipAnchor={handleQuestionPopoverAnchor}
+                description={state.questionDescription}
+              />
+            </Grid>
             <TextField
               multiline
               fullWidth
@@ -66,19 +93,19 @@ export default function FormulateQuestion() {
               onChange={handleFormData}
               error={requirements.question === ""}
             />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <Button
-              color="primary"
-              variant="contained"
-              onClick={handleToggleQuestionEdit}
-              disabled={handleDisabledFabButton()}
-            >
-              Confirm
-            </Button>
+            <Box>
+              <Button
+                color="primary"
+                variant="contained"
+                onClick={handleToggleQuestionEdit}
+                disabled={handleDisabledFabButton()}
+              >
+                Confirm
+              </Button>
+            </Box>
           </Grid>
         </Grid>
-      </Stack>
+      </Grid>
     </>
   );
 }

@@ -9,12 +9,6 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import Timeline from "@mui/lab/Timeline";
-import TimelineItem, { timelineItemClasses } from "@mui/lab/TimelineItem";
-import TimelineSeparator from "@mui/lab/TimelineSeparator";
-import TimelineConnector from "@mui/lab/TimelineConnector";
-import TimelineContent from "@mui/lab/TimelineContent";
-import TimelineDot from "@mui/lab/TimelineDot";
 import { ISCContext } from "../../indicator-specification-card";
 import SpecifyGoal from "./components/specify-goal/specify-goal";
 import ConfirmGoal from "./components/specify-goal/confirm-goal";
@@ -22,9 +16,6 @@ import FormulateQuestion from "./components/formulate-question/formulate-questio
 import ConfirmQuestion from "./components/formulate-question/confirm-question";
 import SpecifyIndicator from "./components/specify-indicator/specify-indicator";
 import RequirementSummary from "./components/requirement-summary/requirement-summary";
-import FlagIcon from "@mui/icons-material/Flag";
-import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
-import BarChartIcon from "@mui/icons-material/BarChart";
 
 const SpecifyRequirements = () => {
   const { requirements, lockedStep, setLockedStep } = useContext(ISCContext);
@@ -78,87 +69,48 @@ const SpecifyRequirements = () => {
             timeout={{ enter: 500, exit: 250 }}
             unmountOnExit
           >
-            <Stack gap={2}>
-              <Grid container justifyContent="center">
-                <Timeline
-                  sx={{
-                    display: "inline-flex",
-                    [`& .${timelineItemClasses.root}:before`]: {
-                      flex: isSmallScreen ? 0 : 0.2,
-                      p: 0,
-                    },
-                  }}
-                >
-                  <TimelineItem>
-                    <TimelineSeparator>
-                      <TimelineDot color="primary">
-                        <FlagIcon />
-                      </TimelineDot>
-                      {requirements.show.question && <TimelineConnector />}
-                    </TimelineSeparator>
-                    <TimelineContent>
-                      {requirements.edit.goal ? (
-                        <SpecifyGoal />
-                      ) : (
-                        <ConfirmGoal />
-                      )}
-                    </TimelineContent>
-                  </TimelineItem>
-
-                  {requirements.show.question && (
-                    <TimelineItem>
-                      <TimelineSeparator>
-                        <TimelineDot color="primary">
-                          <QuestionMarkIcon />
-                        </TimelineDot>
-                        {requirements.show.indicatorName && (
-                          <TimelineConnector />
-                        )}
-                      </TimelineSeparator>
-                      <TimelineContent>
-                        {requirements.edit.question ? (
-                          <FormulateQuestion />
-                        ) : (
-                          <ConfirmQuestion />
-                        )}
-                      </TimelineContent>
-                    </TimelineItem>
-                  )}
-
-                  {requirements.show.indicatorName && (
-                    <TimelineItem>
-                      <TimelineSeparator>
-                        <TimelineDot color="primary">
-                          <BarChartIcon />
-                        </TimelineDot>
-                      </TimelineSeparator>
-                      <TimelineContent>
-                        {requirements.show.indicatorName && (
-                          <SpecifyIndicator />
-                        )}
-                      </TimelineContent>
-                    </TimelineItem>
-                  )}
-                </Timeline>
+            <Grid
+              container
+              direction="column"
+              spacing={1}
+              alignItems="center"
+              sx={{ pt: 2 }}
+            >
+              <Grid size={{ xs: 12, md: 8 }}>
+                {requirements.edit.goal ? <SpecifyGoal /> : <ConfirmGoal />}
               </Grid>
-              {requirements.show.indicatorName && lockedStep.path.locked && (
-                <>
-                  <Divider />
-                  <Grid container justifyContent="center">
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        disabled={handleCheckDisabled()}
-                        onClick={handleUnlockPath}
-                      >
-                        {lockedStep.path.locked ? "Next" : "Close"}
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </>
+              {requirements.show.question && (
+                <Grid size={{ xs: 12, md: 8 }}>
+                  {requirements.edit.question ? (
+                    <FormulateQuestion />
+                  ) : (
+                    <ConfirmQuestion />
+                  )}
+                </Grid>
               )}
-            </Stack>
+              {requirements.show.indicatorName && (
+                <Grid size={{ xs: 12, md: 8 }}>
+                  <SpecifyIndicator />
+                </Grid>
+              )}
+            </Grid>
+            {requirements.show.indicatorName && lockedStep.path.locked && (
+              <Grid container spacing={2} direction="column">
+                <Divider />
+                <Grid container justifyContent="center">
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      disabled={handleCheckDisabled()}
+                      onClick={handleUnlockPath}
+                    >
+                      {lockedStep.path.locked ? "Next" : "Close"}
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Grid>
+            )}
           </Collapse>
         </Stack>
       </Paper>

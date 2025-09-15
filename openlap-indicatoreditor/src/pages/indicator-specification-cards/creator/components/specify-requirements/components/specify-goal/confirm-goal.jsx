@@ -1,6 +1,7 @@
-import { IconButton, Grid, Typography } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
 import { useContext } from "react";
+import { IconButton, Grid, Typography, Divider, Avatar } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import FlagIcon from "@mui/icons-material/Flag";
 import { ISCContext } from "../../../../indicator-specification-card";
 
 export default function ConfirmGoal() {
@@ -15,23 +16,39 @@ export default function ConfirmGoal() {
   };
 
   return (
-    <>
-      <Grid container spacing={1} sx={{ pb: 4 }}>
-        <Grid size={{ xs: 12, lg: 8 }}>
+    <Grid container spacing={2}>
+      <Grid size="auto">
+        <Grid
+          direction="column"
+          container
+          alignItems="center"
+          sx={{ height: "100%" }}
+          spacing={1}
+        >
+          <Avatar sx={{ bgcolor: "primary.main" }}>
+            <FlagIcon />
+          </Avatar>
+          {requirements.show.question && (
+            <Grid size="grow">
+              <Divider orientation="vertical" sx={{ borderRightWidth: 2 }} />
+            </Grid>
+          )}
+        </Grid>
+      </Grid>
+      <Grid size="grow" sx={{ pb: 2 }}>
+        <Grid container direction="column" spacing={1}>
           <Grid container justifyContent="space-between" alignItems="center">
-            <Typography>Your Goal</Typography>
+            <Typography>Your goal</Typography>
             <IconButton color="primary" onClick={handleToggleGoalEdit}>
               <EditIcon />
             </IconButton>
           </Grid>
-        </Grid>
-        <Grid size={{ xs: 12, lg: 8 }}>
           <Typography>
             I want to <b>{requirements.goalType.verb}</b> the{" "}
             <b>{requirements.goal}</b>
           </Typography>
         </Grid>
       </Grid>
-    </>
+    </Grid>
   );
 }

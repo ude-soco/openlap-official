@@ -52,7 +52,7 @@ const ChartTypeFilter = () => {
                       key={index}
                       component={Paper}
                       variant="outlined"
-                      size={{ xs: 6, md: 3, lg: 2 }}
+                      size={{ xs: 6, sm: 3, lg: 2 }}
                       sx={{
                         cursor: "pointer",
                         p: 1,

@@ -159,7 +159,7 @@ function NavigationBar(props) {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          pt: 3,
           width: { md: `calc(100% - ${drawerWidth}px)` },
         }}
       >

@@ -1,5 +1,14 @@
 import { useContext, useState } from "react";
-import { Button, Stack, Grid, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  Grid,
+  TextField,
+  Typography,
+  Box,
+  Avatar,
+  Divider,
+} from "@mui/material";
+import FlagIcon from "@mui/icons-material/Flag";
 import GoalList from "./goal-list";
 import { ISCContext } from "../../../../indicator-specification-card";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
@@ -46,44 +55,60 @@ export default function SpecifyGoal() {
 
   return (
     <>
-      <Stack gap={4} sx={{ pb: 4 }}>
-        <Grid container spacing={1} alignItems="center">
-          <Typography>Specify your goal</Typography>
-          <TipPopover
-            tipAnchor={state.goalPopoverAnchor}
-            toggleTipAnchor={handleGoalPopoverAnchor}
-            description={state.goalDescription}
-          />
+      <Grid container spacing={2}>
+        <Grid size="auto">
+          <Grid
+            direction="column"
+            container
+            alignItems="center"
+            sx={{ height: "100%" }}
+            spacing={1}
+          >
+            <Avatar sx={{ bgcolor: "primary.main" }}>
+              <FlagIcon />
+            </Avatar>
+            {requirements.show.question && (
+              <Grid size="grow">
+                <Divider orientation="vertical" sx={{ borderRightWidth: 2 }} />
+              </Grid>
+            )}
+          </Grid>
         </Grid>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, lg: 8 }}>
-            <Stack gap={3}>
-              <GoalList />
-              <TextField
-                required
-                fullWidth
-                name="goal"
-                multiline
-                value={requirements.goal}
-                label="Describe your goal"
-                placeholder="e.g., the usage of the learning materials in my course."
-                onChange={handleFormData}
-                error={requirements.goal === ""}
+        <Grid size="grow" sx={{ pb: 2 }}>
+          <Grid container spacing={2}>
+            <Grid container spacing={1} alignItems="center">
+              <Typography>Specify your goal</Typography>
+              <TipPopover
+                tipAnchor={state.goalPopoverAnchor}
+                toggleTipAnchor={handleGoalPopoverAnchor}
+                description={state.goalDescription}
               />
-            </Stack>
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <Button
-              color="primary"
-              variant="contained"
-              onClick={handleToggleGoalEdit}
-              disabled={handleDisabledFabButton()}
-            >
-              Confirm
-            </Button>
+            </Grid>
+            <GoalList />
+            <TextField
+              required
+              fullWidth
+              name="goal"
+              multiline
+              value={requirements.goal}
+              label="Describe your goal"
+              placeholder="e.g., the usage of the learning materials in my course."
+              onChange={handleFormData}
+              error={requirements.goal === ""}
+            />
+            <Box>
+              <Button
+                color="primary"
+                variant="contained"
+                onClick={handleToggleGoalEdit}
+                disabled={handleDisabledFabButton()}
+              >
+                Confirm
+              </Button>
+            </Box>
           </Grid>
         </Grid>
-      </Stack>
+      </Grid>
     </>
   );
 }

@@ -1,9 +1,10 @@
 import { useContext, useState } from "react";
-import { Stack, Grid, TextField, Typography } from "@mui/material";
-
+import { Grid, TextField, Typography, Avatar, Stack } from "@mui/material";
+import BarChartIcon from "@mui/icons-material/BarChart";
 import { ISCContext } from "../../../../indicator-specification-card";
 import DataList from "./data-list";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
+import { DataTypes } from "../../../../utils/data/config";
 
 export default function SpecifyIndicator() {
   const { requirements, setRequirements } = useContext(ISCContext);
@@ -11,15 +12,14 @@ export default function SpecifyIndicator() {
     indicatorPopoverAnchor: null,
     // TODO: Description needs to be updated
     indicatorDescription: `
-      <b>Step 3: Describe your indicator</b><br/>  
-      What are you trying to monitor or improve?    
-      Here are some <b>Examples</b> for inspiration:
+      There are three types of data to choose from:
       <ul>
-        <li>I want to <b>assess</b> students’ understanding of course material by analyzing quiz and test results weekly.</li>
-        <li>I want to <b>monitor</b> student engagement by tracking logins, participation in discussions, and time spent on learning activities.</li>
-        <li>I want to <b>intervene</b> early by identifying students at risk of failure using predictive models based on past performance and engagement.</li>
-      </ul>
-      You can select one of the goals from the list. You can also create your own goal by typing in this text box and then adding it to the list.     
+        ${Object.values(DataTypes)
+          .map(
+            (option) => `<li><b>${option.value}:</b> ${option.description}</li>`
+          )
+          .join("")}
+      </ul>   
     `,
   });
 
@@ -33,39 +33,45 @@ export default function SpecifyIndicator() {
   };
 
   return (
-    <Stack gap={2}>
-      <Grid container spacing={1} alignItems="center">
-        <Typography>Specify your indicator</Typography>
-        <TipPopover
-          tipAnchor={state.indicatorPopoverAnchor}
-          toggleTipAnchor={handleIndicatorPopoverAnchor}
-          description={state.indicatorDescription}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, lg: 8 }}>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12 }}>
-            <Grid container alignItems="center" spacing={2}>
-              <Grid size={{ xs: "grow" }}>
-                <TextField
-                  multiline
-                  fullWidth
-                  required
-                  name="indicatorName"
-                  value={requirements.indicatorName}
-                  label="I need an indicator showing"
-                  placeholder="e.g., the number of views of learning materials and sort by the most viewed ones."
-                  onChange={handleFormData}
-                  error={requirements.indicatorName === ""}
-                />
-              </Grid>
-            </Grid>
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <DataList />
-          </Grid>
+    <Grid container spacing={2}>
+      <Grid size="auto">
+        <Grid
+          direction="column"
+          container
+          alignItems="center"
+          sx={{ height: "100%" }}
+          spacing={1}
+        >
+          <Avatar sx={{ bgcolor: "primary.main" }}>
+            <BarChartIcon />
+          </Avatar>
         </Grid>
       </Grid>
-    </Stack>
+      <Grid size="grow" sx={{ pb: 2 }}>
+        <Stack gap={2}>
+          <Grid container spacing={1} alignItems="center">
+            <Typography>Specify your indicator</Typography>
+            <TipPopover
+              tipAnchor={state.indicatorPopoverAnchor}
+              toggleTipAnchor={handleIndicatorPopoverAnchor}
+              description={state.indicatorDescription}
+            />
+          </Grid>
+          <TextField
+            multiline
+            fullWidth
+            required
+            name="indicatorName"
+            value={requirements.indicatorName}
+            label="I need an indicator showing"
+            placeholder="e.g., the number of views of learning materials and sort by the most viewed ones."
+            onChange={handleFormData}
+            error={requirements.indicatorName === ""}
+            sx={{ pb: 2 }}
+          />
+          <DataList />
+        </Stack>
+      </Grid>
+    </Grid>
   );
 }
