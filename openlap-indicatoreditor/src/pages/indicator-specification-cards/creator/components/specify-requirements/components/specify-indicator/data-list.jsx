@@ -107,7 +107,7 @@ const DataList = () => {
             <Stack
               component={Paper}
               variant="outlined"
-              gap={1}
+              gap={3}
               key={index}
               sx={{ p: 2 }}
             >
@@ -116,22 +116,31 @@ const DataList = () => {
                 justifyContent="space-between"
                 alignItems="center"
               >
-                <Stack direction="row" alignItems="center">
-                  <Typography>Data {index + 1}</Typography>
-                  {!lockedStep.dataset.locked && (
-                    <CustomTooltip
-                      type="warning"
-                      message={`
-                        Changing the type of this data will reset the data of
-                        <b>${requirement.value}</b> column in the <b>Dataset</b> step
-                        below.<br/>
-                        It will cause the loss of data <b>only</b> in this column!
-                        Other columns remain uneffected.<br/>
-                        Please proceed with caution!                      
+                <Grid size="grow">
+                  <Stack direction="row" alignItems="center">
+                    <Typography fontWeight="500">
+                      {requirement.value
+                        ? `${requirement.value} ` +
+                          (requirement.type?.value
+                            ? `(${requirement.type?.value})`
+                            : "")
+                        : `Data ${index + 1}`}
+                    </Typography>
+                    {!lockedStep.dataset.locked && (
+                      <CustomTooltip
+                        type="warning"
+                        message={`
+                      Changing the type of this data will reset the data of
+                      <b>${requirement.value}</b> column in the <b>Dataset</b> step
+                      below.<br/>
+                      It will cause the loss of data <b>only</b> in this column!
+                      Other columns remain uneffected.<br/>
+                      Please proceed with caution!                      
                       `}
-                    />
-                  )}
-                </Stack>
+                      />
+                    )}
+                  </Stack>
+                </Grid>
                 <Tooltip
                   arrow
                   title={
