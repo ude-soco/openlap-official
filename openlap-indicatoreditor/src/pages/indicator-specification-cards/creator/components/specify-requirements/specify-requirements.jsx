@@ -62,7 +62,7 @@ const SpecifyRequirements = () => {
   return (
     <>
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack gap={2}>
+        <Stack gap={1}>
           <RequirementSummary />
           <Collapse
             in={lockedStep.requirements.openPanel}

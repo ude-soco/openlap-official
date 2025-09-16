@@ -1,10 +1,17 @@
 import { useContext, useState } from "react";
 import { ISCContext } from "../../../../indicator-specification-card";
-import { Chip, Collapse, Grid, IconButton, Typography } from "@mui/material";
+import {
+  Chip,
+  Collapse,
+  Grid,
+  IconButton,
+  Stack,
+  Typography,
+} from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
 import Summary from "./summary";
-import { ToggleEditIconButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
+import { ToggleEditButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover.jsx";
 
 export default function VisualizationSummary() {
@@ -43,58 +50,50 @@ export default function VisualizationSummary() {
 
   return (
     <>
-      <Grid container spacing={1}>
-        <Grid size={{ xs: 12 }}>
-          <Grid
-            container
-            justifyContent="space-between"
-            alignItems="center"
-            spacing={1}
-          >
-            <Grid size="grow">
-              <Grid container alignItems="center" spacing={1}>
-                {!lockedStep.visualization.locked ? (
-                  <Chip label={lockedStep.visualization.step} color="primary" />
-                ) : (
-                  <IconButton size="small">
-                    <LockIcon />
-                  </IconButton>
-                )}
-                <Typography>Choose visualization</Typography>
-                {!lockedStep.visualization.locked && (
-                  <TipPopover
-                    tipAnchor={state.tipAnchor}
-                    toggleTipAnchor={handleTipAnchor}
-                    description={state.tipDescription}
-                  />
-                )}
-                {!lockedStep.visualization.locked &&
-                  !lockedStep.visualization.openPanel && (
-                    <ToggleSummaryButton
-                      showSelections={state.showSelections}
-                      toggleShowSelection={handleToggleShowSelection}
-                    />
-                  )}
-              </Grid>
-            </Grid>
-            <ToggleEditIconButton
-              openPanel={lockedStep.visualization.openPanel}
-              togglePanel={handleTogglePanel}
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ pb: 2 }}
+      >
+        <Stack direction="row" alignItems="center" gap={1}>
+          {!lockedStep.visualization.locked ? (
+            <Chip label={lockedStep.visualization.step} color="primary" />
+          ) : (
+            <IconButton size="small">
+              <LockIcon />
+            </IconButton>
+          )}
+          <Typography>Choose visualization</Typography>
+          {!lockedStep.visualization.locked && (
+            <TipPopover
+              tipAnchor={state.tipAnchor}
+              toggleTipAnchor={handleTipAnchor}
+              description={state.tipDescription}
             />
-          </Grid>
-        </Grid>
-      </Grid>
+          )}
+          {!lockedStep.visualization.locked &&
+            !lockedStep.visualization.openPanel && (
+              <ToggleSummaryButton
+                showSelections={state.showSelections}
+                toggleShowSelection={handleToggleShowSelection}
+              />
+            )}
+        </Stack>
+        <ToggleEditButton
+          openPanel={lockedStep.visualization.openPanel}
+          togglePanel={handleTogglePanel}
+        />
+      </Stack>
       <Collapse
         in={!lockedStep.visualization.openPanel && state.showSelections}
         timeout={{ enter: 500, exit: 250 }}
         unmountOnExit
       >
-        <Grid size={{ xs: 12 }} sx={{ pt: 1 }}>
-          <Summary
-            filterType={visRef.filter.type}
-            chartType={visRef.chart.type}
-          />
-        </Grid>
+        <Summary
+          filterType={visRef.filter.type}
+          chartType={visRef.chart.type}
+        />
       </Collapse>
     </>
   );

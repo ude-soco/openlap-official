@@ -1,8 +1,8 @@
 import { useContext, useState } from "react";
 import { ISCContext } from "../../../../indicator-specification-card";
-import { Chip, IconButton, Grid, Typography } from "@mui/material";
+import { Chip, IconButton, Grid, Typography, Stack } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
-import { ToggleEditIconButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
+import { ToggleEditButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover.jsx";
 
 export default function FinalizeSummary() {
@@ -33,40 +33,29 @@ export default function FinalizeSummary() {
 
   return (
     <>
-      <Grid container spacing={1}>
-        <Grid size={{ xs: 12 }}>
-          <Grid
-            container
-            justifyContent="space-between"
-            alignItems="center"
-            spacing={1}
-          >
-            <Grid size="grow">
-              <Grid container alignItems="center" spacing={1}>
-                {!lockedStep.finalize.locked ? (
-                  <Chip label={lockedStep.finalize.step} color="primary" />
-                ) : (
-                  <IconButton size="small">
-                    <LockIcon />
-                  </IconButton>
-                )}
-                <Typography>Finalize Indicator</Typography>
-                {!lockedStep.finalize.locked && (
-                  <TipPopover
-                    tipAnchor={state.tipAnchor}
-                    toggleTipAnchor={handleTipAnchor}
-                    description={state.tipDescription}
-                  />
-                )}
-              </Grid>
-            </Grid>
-            <ToggleEditIconButton
-              openPanel={lockedStep.finalize.openPanel}
-              togglePanel={handleTogglePanel}
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Stack direction="row" alignItems="center" gap={1}>
+          {!lockedStep.finalize.locked ? (
+            <Chip label={lockedStep.finalize.step} color="primary" />
+          ) : (
+            <IconButton size="small">
+              <LockIcon />
+            </IconButton>
+          )}
+          <Typography>Finalize Indicator</Typography>
+          {!lockedStep.finalize.locked && (
+            <TipPopover
+              tipAnchor={state.tipAnchor}
+              toggleTipAnchor={handleTipAnchor}
+              description={state.tipDescription}
             />
-          </Grid>
-        </Grid>
-      </Grid>
+          )}
+        </Stack>
+        <ToggleEditButton
+          openPanel={lockedStep.finalize.openPanel}
+          togglePanel={handleTogglePanel}
+        />
+      </Stack>
     </>
   );
 }

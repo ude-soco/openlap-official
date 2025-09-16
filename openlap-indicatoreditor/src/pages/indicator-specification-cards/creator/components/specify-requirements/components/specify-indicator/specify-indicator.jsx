@@ -10,16 +10,12 @@ export default function SpecifyIndicator() {
   const { requirements, setRequirements } = useContext(ISCContext);
   const [state, setState] = useState({
     indicatorPopoverAnchor: null,
-    // TODO: Description needs to be updated
     indicatorDescription: `
-      There are three types of data to choose from:
-      <ul>
-        ${Object.values(DataTypes)
-          .map(
-            (option) => `<li><b>${option.value}:</b> ${option.description}</li>`
-          )
-          .join("")}
-      </ul>   
+      <b>Step 3: Define your indicator</b><br/>
+      How would you like to describe your indicator? Here you can specify the name of the prototype indicator you want to create. <br/>
+      You will also need to specify the name and type of data you think you will need to create this indicator.<br/>
+      There are three types of data to choose from: <br/>
+      (1) Categorical<br/>(2) Numerical, and<br/>(3) Categorical (ordinal)
     `,
   });
 
@@ -50,7 +46,7 @@ export default function SpecifyIndicator() {
       <Grid size="grow" sx={{ pb: 2 }}>
         <Stack gap={2}>
           <Grid container spacing={1} alignItems="center">
-            <Typography>Specify your indicator</Typography>
+            <Typography>Define your indicator</Typography>
             <TipPopover
               tipAnchor={state.indicatorPopoverAnchor}
               toggleTipAnchor={handleIndicatorPopoverAnchor}

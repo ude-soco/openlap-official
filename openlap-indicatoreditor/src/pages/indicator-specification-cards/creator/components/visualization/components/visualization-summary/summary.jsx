@@ -1,4 +1,4 @@
-import { Chip, Grid, Typography } from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
 import { useContext } from "react";
 import { ISCContext } from "../../../../indicator-specification-card";
 
@@ -12,33 +12,29 @@ export default function Summary({ filterType, chartType }) {
   };
   return (
     <>
-      <Grid container spacing={1}>
+      <Stack spacing={1}>
         {handleCheckFilterType() && (
-          <Grid size={{ xs: 12 }}>
-            <Grid container alignItems="center" spacing={1}>
-              <Typography>Filters applied</Typography>
-              <Chip label={filterType} />
-            </Grid>
-          </Grid>
+          <Stack direction="row" gap={1} alignItems="center">
+            <Typography>Filters applied</Typography>
+            <Chip label={filterType} />
+          </Stack>
         )}
         {handleCheckChartType() && (
-          <Grid size={{ xs: 12 }}>
-            <Grid container alignItems="center" spacing={1}>
-              <Typography>Chart selected</Typography>
-              <Chip label={chartType} />
-            </Grid>
-          </Grid>
+          <Stack direction="row" gap={1} alignItems="center">
+            <Typography>Chart selected</Typography>
+            <Chip label={chartType} />
+          </Stack>
         )}
         {!handleCheckChartType() &&
           !handleCheckChartType() &&
           !lockedStep.visualization.step && (
-            <Grid size={{ xs: 12 }}>
+            <Stack direction="row" gap={1} alignItems="center">
               <Typography>
                 <em>No visualization selected yet!</em>
               </Typography>
-            </Grid>
+            </Stack>
           )}
-      </Grid>
+      </Stack>
     </>
   );
 }

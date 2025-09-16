@@ -1,9 +1,9 @@
 import { useContext, useState } from "react";
-import { Chip, Collapse, Grid, IconButton, Typography } from "@mui/material";
+import { Chip, Collapse, IconButton, Stack, Typography } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
 import ToggleSummaryButton from "../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
-import { ToggleEditIconButton } from "../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
+import { ToggleEditButton } from "../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
 import TipPopover from "../../../../../../common/components/tip-popover/tip-popover.jsx";
 
 export default function ChoosePathSummary() {
@@ -39,64 +39,58 @@ export default function ChoosePathSummary() {
 
   return (
     <>
-      <Grid container spacing={1}>
-        <Grid size={{ xs: 12 }}>
-          <Grid
-            container
-            justifyContent="space-between"
-            alignItems="center"
-            spacing={1}
-          >
-            <Grid size="grow">
-              <Grid container alignItems="center" spacing={1}>
-                {!lockedStep.path.locked ? (
-                  <Chip label={lockedStep.path.step} color="primary" />
-                ) : (
-                  <IconButton size="small">
-                    <LockIcon />
-                  </IconButton>
-                )}
-                <Typography>How would you like to start?</Typography>
-                {!lockedStep.path.locked && (
-                  <TipPopover
-                    tipAnchor={state.tipAnchor}
-                    toggleTipAnchor={handleTipAnchor}
-                    description={state.tipDescription}
-                  />
-                )}
-                {!lockedStep.path.locked && !lockedStep.path.openPanel && (
-                  <ToggleSummaryButton
-                    showSelections={state.showSelections}
-                    toggleShowSelection={handleToggleShowSelection}
-                  />
-                )}
-              </Grid>
-            </Grid>
-            <ToggleEditIconButton
-              openPanel={lockedStep.path.openPanel}
-              togglePanel={handleTogglePanel}
-            />
-          </Grid>
-        </Grid>
-        <Collapse
-          in={!lockedStep.path.openPanel && state.showSelections}
-          timeout={{ enter: 500, exit: 250 }}
-          unmountOnExit
-        >
-          {requirements.selectedPath !== "" ? (
-            <Grid container alignItems="center" spacing={1}>
-              <Typography>Selected path:</Typography>
-              <Chip label={requirements.selectedPath} />
-            </Grid>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ pb: 2 }}
+      >
+        <Stack direction="row" alignItems="center" gap={1}>
+          {!lockedStep.path.locked ? (
+            <Chip label={lockedStep.path.step} color="primary" />
           ) : (
-            !lockedStep.path.locked && (
-              <Typography>
-                <em>No path selected yet</em>
-              </Typography>
-            )
+            <IconButton size="small">
+              <LockIcon />
+            </IconButton>
           )}
-        </Collapse>
-      </Grid>
+          <Typography>How would you like to start?</Typography>
+          {!lockedStep.path.locked && (
+            <TipPopover
+              tipAnchor={state.tipAnchor}
+              toggleTipAnchor={handleTipAnchor}
+              description={state.tipDescription}
+            />
+          )}
+          {!lockedStep.path.locked && !lockedStep.path.openPanel && (
+            <ToggleSummaryButton
+              showSelections={state.showSelections}
+              toggleShowSelection={handleToggleShowSelection}
+            />
+          )}
+        </Stack>
+        <ToggleEditButton
+          openPanel={lockedStep.path.openPanel}
+          togglePanel={handleTogglePanel}
+        />
+      </Stack>
+      <Collapse
+        in={!lockedStep.path.openPanel && state.showSelections}
+        timeout={{ enter: 500, exit: 250 }}
+        unmountOnExit
+      >
+        {requirements.selectedPath !== "" ? (
+          <Stack direction="row" alignItems="center" gap={1}>
+            <Typography>Selected path:</Typography>
+            <Chip label={requirements.selectedPath} />
+          </Stack>
+        ) : (
+          !lockedStep.path.locked && (
+            <Typography>
+              <em>No path selected yet</em>
+            </Typography>
+          )
+        )}
+      </Collapse>
     </>
   );
 }

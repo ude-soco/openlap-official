@@ -5,7 +5,7 @@ export function ToggleEditButton({ openPanel, togglePanel }) {
   return (
     <Grid size="auto">
       <Button
-        variant="outlined"
+        // variant="outlined"
         // startIcon={openPanel ? <CloseIcon /> : <SettingsIcon />}
         onClick={togglePanel}
       >

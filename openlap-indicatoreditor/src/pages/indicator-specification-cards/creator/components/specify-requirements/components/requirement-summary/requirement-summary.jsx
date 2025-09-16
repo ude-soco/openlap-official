@@ -1,9 +1,9 @@
 import { useContext, useState } from "react";
-import { Chip, Collapse, Grid, Typography } from "@mui/material";
+import { Chip, Collapse, Grid, Stack, Typography } from "@mui/material";
 import { ISCContext } from "../../../../indicator-specification-card";
 import Summary from "./summary";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
-import { ToggleEditIconButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
+import { ToggleEditButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover.jsx";
 
 export default function RequirementSummary() {
@@ -34,49 +34,45 @@ export default function RequirementSummary() {
 
   return (
     <>
-      <Grid
-        container
+      <Stack
+        direction="row"
         justifyContent="space-between"
         alignItems="center"
-        spacing={1}
+        sx={{ pb: 2 }}
       >
-        <Grid size="grow">
-          <Grid container alignItems="center" spacing={1}>
-            <Chip label={lockedStep.requirements.step} color="primary" />
-            <Typography>Specify requirements</Typography>
-            <TipPopover
-              tipAnchor={state.tipAnchor}
-              toggleTipAnchor={handleTipAnchor}
-              description={state.tipDescription}
+        <Stack direction="row" gap={1} alignItems="center">
+          <Chip label={lockedStep.requirements.step} color="primary" />
+          <Typography>Specify requirements</Typography>
+          <TipPopover
+            tipAnchor={state.tipAnchor}
+            toggleTipAnchor={handleTipAnchor}
+            description={state.tipDescription}
+          />
+          {!lockedStep.requirements.openPanel && (
+            <ToggleSummaryButton
+              showSelections={state.showSelections}
+              toggleShowSelection={handleToggleShowSelection}
             />
-            {!lockedStep.requirements.openPanel && (
-              <ToggleSummaryButton
-                showSelections={state.showSelections}
-                toggleShowSelection={handleToggleShowSelection}
-              />
-            )}
-          </Grid>
-        </Grid>
-        <ToggleEditIconButton
+          )}
+        </Stack>
+        <ToggleEditButton
           openPanel={lockedStep.requirements.openPanel}
           togglePanel={handleTogglePanel}
         />
-      </Grid>
+      </Stack>
       <Collapse
         in={!lockedStep.requirements.openPanel && state.showSelections}
         timeout={{ enter: 500, exit: 250 }}
         unmountOnExit
       >
-        <Grid size={{ xs: 12 }}>
-          <Summary
-            verb={requirements.goalType.verb}
-            goal={requirements.goal}
-            goalName={requirements.goalType.name}
-            question={requirements.question}
-            indicatorName={requirements.indicatorName}
-            indicatorData={requirements.data}
-          />
-        </Grid>
+        <Summary
+          verb={requirements.goalType.verb}
+          goal={requirements.goal}
+          goalName={requirements.goalType.name}
+          question={requirements.question}
+          indicatorName={requirements.indicatorName}
+          indicatorData={requirements.data}
+        />
       </Collapse>
     </>
   );

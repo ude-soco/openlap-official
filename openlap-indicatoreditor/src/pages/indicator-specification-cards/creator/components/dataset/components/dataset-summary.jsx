@@ -1,10 +1,17 @@
 import { useContext, useState } from "react";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
-import { Chip, Collapse, IconButton, Grid, Typography } from "@mui/material";
+import {
+  Chip,
+  Collapse,
+  IconButton,
+  Grid,
+  Typography,
+  Stack,
+} from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import ToggleSummaryButton from "../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
 import DataTable from "./data-table.jsx";
-import { ToggleEditIconButton } from "../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
+import { ToggleEditButton } from "../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
 import TipPopover from "../../../../../../common/components/tip-popover/tip-popover.jsx";
 
 export default function DatasetSummary() {
@@ -45,59 +52,47 @@ export default function DatasetSummary() {
 
   return (
     <>
-      <Grid container spacing={1}>
-        <Grid size={{ xs: 12 }}>
-          <Grid
-            container
-            justifyContent="space-between"
-            alignItems="center"
-            spacing={1}
-          >
-            <Grid size="grow">
-              <Grid container alignItems="center" spacing={1}>
-                {!lockedStep.dataset.locked ? (
-                  <Chip label={lockedStep.dataset.step} color="primary" />
-                ) : (
-                  <IconButton size="small">
-                    <LockIcon />
-                  </IconButton>
-                )}
-                <Typography>Choose Dataset</Typography>
-                {!lockedStep.dataset.locked && (
-                  <TipPopover
-                    tipAnchor={state.tipAnchor}
-                    toggleTipAnchor={handleTipAnchor}
-                    description={state.tipDescription}
-                  />
-                )}
-                {!lockedStep.dataset.locked &&
-                  !lockedStep.dataset.openPanel && (
-                    <ToggleSummaryButton
-                      showSelections={state.showSelections}
-                      toggleShowSelection={handleToggleShowSelection}
-                    />
-                  )}
-              </Grid>
-            </Grid>
-            <ToggleEditIconButton
-              openPanel={lockedStep.dataset.openPanel}
-              togglePanel={handleTogglePanel}
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{pb: 2}}>
+        <Stack direction="row" alignItems="center" gap={1}>
+          {!lockedStep.dataset.locked ? (
+            <Chip label={lockedStep.dataset.step} color="primary" />
+          ) : (
+            <IconButton size="small">
+              <LockIcon />
+            </IconButton>
+          )}
+          <Typography>Choose Dataset</Typography>
+          {!lockedStep.dataset.locked && (
+            <TipPopover
+              tipAnchor={state.tipAnchor}
+              toggleTipAnchor={handleTipAnchor}
+              description={state.tipDescription}
             />
-          </Grid>
-        </Grid>
-      </Grid>
+          )}
+          {!lockedStep.dataset.locked && !lockedStep.dataset.openPanel && (
+            <ToggleSummaryButton
+              showSelections={state.showSelections}
+              toggleShowSelection={handleToggleShowSelection}
+            />
+          )}
+        </Stack>
+        <ToggleEditButton
+          openPanel={lockedStep.dataset.openPanel}
+          togglePanel={handleTogglePanel}
+        />
+      </Stack>
       {!lockedStep.dataset.locked && (
         <Collapse
           in={!lockedStep.dataset.openPanel && state.showSelections}
           timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
-          <Grid size={{ xs: 12 }} sx={{ pt: 1 }}>
+          <Stack gap={1}>
             <Typography variant="body2" gutterBottom>
               Preview
             </Typography>
             <DataTable rows={dataset.rows} columns={dataset.columns} />
-          </Grid>
+          </Stack>
         </Collapse>
       )}
     </>

@@ -19,9 +19,28 @@ import { ISCContext } from "../../../../indicator-specification-card.jsx";
 import { DataTypes } from "../../../../utils/data/config.js";
 import { v4 as uuidv4 } from "uuid";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip.jsx";
+import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover.jsx";
 
 const DataList = () => {
   const { lockedStep, requirements, setRequirements } = useContext(ISCContext);
+  const [state, setState] = useState({
+    indicatorPopoverAnchor: null,
+    indicatorDescription: `
+      There are three types of data to choose from:
+      <ul>
+        ${Object.values(DataTypes)
+          .map(
+            (option) =>
+              `<li><b>${option.value}:</b> <br/>${option.description}</li>`
+          )
+          .join("")}
+      </ul>   
+    `,
+  });
+
+  const handleIndicatorPopoverAnchor = (param) => {
+    setState((p) => ({ ...p, indicatorPopoverAnchor: param }));
+  };
 
   const handleChangeValue = (index, event) => {
     const { name, value } = event.target;
@@ -74,7 +93,14 @@ const DataList = () => {
   return (
     <>
       <Stack gap={2} sx={{ width: "100%" }}>
-        <Typography>I need the following data</Typography>
+        <Grid container spacing={1} alignItems="center">
+          <Typography>I need the following data</Typography>
+          <TipPopover
+            tipAnchor={state.indicatorPopoverAnchor}
+            toggleTipAnchor={handleIndicatorPopoverAnchor}
+            description={state.indicatorDescription}
+          />
+        </Grid>
         {requirements.data.map((requirement, index) => {
           const isDuplicate = duplicateValues.has(requirement.value);
           return (
@@ -182,10 +208,15 @@ const DataList = () => {
             </Stack>
           );
         })}
-
-        <Button size="large" startIcon={<AddIcon />} onClick={handleAddDataRow}>
-          Add more data
-        </Button>
+        <Box>
+          <Button
+            size="large"
+            startIcon={<AddIcon />}
+            onClick={handleAddDataRow}
+          >
+            Add more data
+          </Button>
+        </Box>
       </Stack>
     </>
   );
