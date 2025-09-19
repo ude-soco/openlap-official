@@ -20,14 +20,21 @@ import {
   Container,
   Box,
   Switch,
+  ToggleButtonGroup,
+  ToggleButton,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import DatasetIcon from "@mui/icons-material/Dataset";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Link as RouterLink } from "react-router-dom";
 import PreviewChart from "./preview-chart.jsx";
 import DeleteDialog from "../../../../common/components/delete-dialog/delete-dialog.jsx";
 import { useSnackbar } from "notistack";
 import DataTable from "../../creator/components/dataset/components/data-table.jsx";
+
+const DATA = "data";
+const VIS = "vis";
 
 const IscPreview = () => {
   const { api, SESSION_ISC } = useContext(AuthContext);
@@ -47,6 +54,7 @@ const IscPreview = () => {
     dataRequiredByUser: [],
   });
   const [showDataset, setShowDataset] = useState(false);
+  const [showVisData, setShowVisData] = useState([VIS]);
 
   useEffect(() => {
     loadingISCPreviewDetails(params.id);
@@ -114,6 +122,10 @@ const IscPreview = () => {
 
   const toggleShowDataset = () => {
     setShowDataset((p) => !p);
+  };
+
+  const handleShowVisData = (events, options) => {
+    setShowVisData(options);
   };
 
   // * Helper functions
@@ -276,14 +288,29 @@ const IscPreview = () => {
                   {Object.values(visRef).length > 0 && (
                     <>
                       <Stack gap={1}>
-                        <Grid container spacing={1} alignItems="center">
-                          <Switch
-                            checked={showDataset}
-                            onChange={toggleShowDataset}
-                          />
-                          <Typography>Show dataset</Typography>
+                        <Grid
+                          container
+                          spacing={1}
+                          justifyContent="flex-end"
+                          alignItems="center"
+                        >
+                          <ToggleButtonGroup
+                            value={showVisData}
+                            onChange={handleShowVisData}
+                          >
+                            <Tooltip arrow title="Show visualization">
+                              <ToggleButton value={VIS}>
+                                <BarChartIcon />
+                              </ToggleButton>
+                            </Tooltip>
+                            <Tooltip arrow title="Show dataset">
+                              <ToggleButton value={DATA}>
+                                <DatasetIcon />
+                              </ToggleButton>
+                            </Tooltip>
+                          </ToggleButtonGroup>
                         </Grid>
-                        {showDataset && (
+                        {showVisData.find((item) => item === DATA) && (
                           <DataTable
                             rows={dataset.rows}
                             columns={dataset.columns}
@@ -291,7 +318,9 @@ const IscPreview = () => {
                         )}
                       </Stack>
                       {showDataset && <Divider />}
-                      <PreviewChart dataset={dataset} visRef={visRef} />
+                      {showVisData.find((item) => item === VIS) && (
+                        <PreviewChart dataset={dataset} visRef={visRef} />
+                      )}
                     </>
                   )}
                 </Stack>
