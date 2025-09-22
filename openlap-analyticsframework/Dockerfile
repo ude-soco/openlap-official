@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/root/.m2 \
   mvn package -DfinalName=${PACKAGE_NAME}
 
 
-FROM amazoncorretto:24
+FROM amazoncorretto:25
 WORKDIR /opt/app
 
 ARG PACKAGE_NAME=openlap-analyticsframework
