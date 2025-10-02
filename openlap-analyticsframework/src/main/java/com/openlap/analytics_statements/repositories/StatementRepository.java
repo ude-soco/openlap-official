@@ -3,10 +3,18 @@ package com.openlap.analytics_statements.repositories;
 import com.mongodb.DBObject;
 import com.openlap.analytics_statements.entities.Statement;
 import java.util.List;
+
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
+import javax.transaction.Transactional;
+
 public interface StatementRepository extends MongoRepository<Statement, String> {
+
+	@Transactional
+	@Query(value = "{ 'lrs_id': ?0 }", delete = true)
+	void deleteByLrsId(ObjectId lrsId);
 
   @Query(
       value = "{'statement.context': {$exists: true}}",

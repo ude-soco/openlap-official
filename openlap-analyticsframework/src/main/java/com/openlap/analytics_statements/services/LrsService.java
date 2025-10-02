@@ -32,4 +32,6 @@ public interface LrsService {
   List<LrsStoreResponse> getAvailableLrs();
 
   void deleteLrs(HttpServletRequest request, String lrdStoreId, boolean confirm);
+
+  void deleteLrsStatements(HttpServletRequest request, String lrdStoreId, boolean b);
 }

@@ -12,6 +12,7 @@ import com.openlap.analytics_statements.exception.LrsTitleAlreadyExistsException
 import com.openlap.analytics_statements.repositories.LrsClientRepository;
 import com.openlap.analytics_statements.repositories.LrsRoleRepository;
 import com.openlap.analytics_statements.repositories.LrsStoreRepository;
+import com.openlap.analytics_statements.repositories.StatementRepository;
 import com.openlap.analytics_statements.services.LrsService;
 import com.openlap.exception.DatabaseOperationException;
 import com.openlap.exception.ServiceException;
@@ -48,6 +49,7 @@ public class LrsServiceImpl implements LrsService {
   private final LrsRoleRepository lrsRoleRepository;
   private final LrsStoreRepository lrsStoreRepository;
   private final LrsClientRepository lrsClientRepository;
+  private final StatementRepository statementRepository;
   private final TokenService tokenService;
   private final UserRepository userRepository;
 
@@ -152,10 +154,10 @@ public class LrsServiceImpl implements LrsService {
       if (foundLrs.isEmpty()) {
         throw new LrsNotFoundException("LRS id not found");
       }
-      if (lrsStoreRepository.findByTitle(lrsUpdateRequest.getTitle()) != null) {
-        throw new LrsTitleAlreadyExistsException(
-            "LRS with this title already exist. Please choose another title.");
-      }
+      //      if (lrsStoreRepository.findByTitle(lrsUpdateRequest.getTitle()) != null) {
+      //        throw new LrsTitleAlreadyExistsException(
+      //            "LRS with this title already exist. Please choose another title.");
+      //      }
       User userFromToken = tokenService.getUserFromToken(request);
       if (userFromToken.getLrsProviderList().stream()
           .noneMatch(lrs -> Objects.equals(lrs.getLrsId(), foundLrs.get().getId()))) {
@@ -227,6 +229,9 @@ public class LrsServiceImpl implements LrsService {
       log.info("LRS store id deleted: {}", foundLrs.get().getId());
       lrsClientRepository.deleteByLrsId(new ObjectId(foundLrs.get().getId()));
       log.info("LRS client with id deleted: {}", foundLrs.get().getId());
+      statementRepository.deleteByLrsId(new ObjectId(foundLrs.get().getId()));
+      log.info(
+          "All statements related to LRS ID '{}' deleted successfully!", foundLrs.get().getId());
 
       User userFromToken = tokenService.getUserFromToken(request);
 
@@ -237,6 +242,33 @@ public class LrsServiceImpl implements LrsService {
       userFromToken.setLrsProviderList(updatedLrsProviderList);
       userRepository.save(userFromToken);
       log.info("User updated: {}", userFromToken.getEmail());
+    } catch (LrsNotFoundException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new DatabaseOperationException("Unable to delete LRS store.");
+    }
+  }
+
+  @Override
+  public void deleteLrsStatements(HttpServletRequest request, String lrdStoreId, boolean confirm) {
+    try {
+      Optional<LrsStore> foundLrs = lrsStoreRepository.findById(lrdStoreId);
+      if (foundLrs.isEmpty()) {
+        throw new LrsNotFoundException("LRS id not found");
+      }
+      if (!confirm) {
+        if (foundLrs.get().getStatementCount() > 0) {
+          throw new LrsManipulationException(
+              "The LRS store has "
+                  + foundLrs.get().getStatementCount()
+                  + " statements. Are you sure you want to delete all statements?");
+        }
+      }
+      statementRepository.deleteByLrsId(new ObjectId(foundLrs.get().getId()));
+      foundLrs.get().setStatementCount(0);
+      lrsStoreRepository.save(foundLrs.get());
+      log.info(
+          "All statements related to LRS ID '{}' deleted successfully!", foundLrs.get().getId());
     } catch (LrsNotFoundException e) {
       throw e;
     } catch (Exception e) {

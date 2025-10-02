@@ -50,6 +50,30 @@ export const requestDeleteLRSProvider = async (api, lrsId) => {
   }
 };
 
+export const requestDeleteLRSStatements = async (api, lrsId) => {
+  try {
+    const response = await api.delete(`v1/lrs/${lrsId}/statements/confirm`);
+    return response.data;
+  } catch (error) {
+    throw error.response.data; // Re-throw the error to handle it in the component
+  }
+};
+
+export const requestUpdateLRS = async (
+  api,
+  lrsId,
+  title,
+  uniqueIdentifierType
+) => {
+  try {
+    let requestBody = { title, uniqueIdentifierType };
+    const response = await api.put(`v1/lrs/${lrsId}/confirm`, requestBody);
+    return response.data;
+  } catch (error) {
+    throw error.response.data; // Re-throw the error to handle it in the component
+  }
+};
+
 export const requestCreateLRSProvider = async (
   api,
   title,

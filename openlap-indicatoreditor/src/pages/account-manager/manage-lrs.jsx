@@ -36,7 +36,6 @@ const ManageLrs = () => {
     addLRSConsumerDialog: { open: false, lrsConsumerUpdated: true },
     deleteLrsConsumerDialog: { open: false, lrsProviderId: "" },
     addLRSProviderDialog: { open: false, lrsProviderUpdated: true },
-    deleteLrsProviderDialog: { open: false, lrsProviderId: "" },
   });
   const { enqueueSnackbar } = useSnackbar();
 
@@ -69,10 +68,6 @@ const ManageLrs = () => {
           lrsProviderUpdated: false,
         },
         deleteLrsConsumerDialog: {
-          open: false,
-          lrsProviderId: "",
-        },
-        deleteLrsProviderDialog: {
           open: false,
           lrsProviderId: "",
         },

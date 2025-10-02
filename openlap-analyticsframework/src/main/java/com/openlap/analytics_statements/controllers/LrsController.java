@@ -101,4 +101,13 @@ public class LrsController {
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status).body(new ApiSuccess(status, "LRS deleted successfully."));
   }
+
+  @DeleteMapping("/{lrdStoreId}/statements/confirm")
+  public ResponseEntity<?> confirmDeleteLrsStatements(
+      HttpServletRequest request, @PathVariable String lrdStoreId) {
+    lrsService.deleteLrsStatements(request, lrdStoreId, true);
+    HttpStatus status = HttpStatus.OK;
+    return ResponseEntity.status(status)
+        .body(new ApiSuccess(status, "LRS statements deleted successfully."));
+  }
 }
