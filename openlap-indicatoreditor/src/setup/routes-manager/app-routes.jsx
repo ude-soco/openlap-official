@@ -78,6 +78,7 @@ const AppRoutes = () => {
                         RoleTypes.user,
                         RoleTypes.userWithoutLRS,
                         RoleTypes["data provider"],
+                        RoleTypes.admin,
                       ]}
                     />
                   }
@@ -91,6 +92,7 @@ const AppRoutes = () => {
                         RoleTypes.user,
                         RoleTypes.userWithoutLRS,
                         RoleTypes["data provider"],
+                        RoleTypes.admin,
                       ]}
                     />
                   }

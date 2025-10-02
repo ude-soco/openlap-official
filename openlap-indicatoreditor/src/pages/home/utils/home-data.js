@@ -11,7 +11,7 @@ const homeData = [
     description:
       "Helps to prototype your analysis and create visualization in a few steps and with beginner friendly interface.",
     image: PrototypeImage,
-    disabledRoles: [RoleTypes["data provider"]],
+    disabledRoles: [RoleTypes["data provider"], RoleTypes.admin],
     buttons: [
       {
         id: uuidv4(),
@@ -35,7 +35,11 @@ const homeData = [
     description:
       "Helps to analysis real data, create and share indicators with an intuitive interface.",
     image: PrototypeImage,
-    disabledRoles: [RoleTypes.userWithoutLRS, RoleTypes["data provider"]],
+    disabledRoles: [
+      RoleTypes.userWithoutLRS,
+      RoleTypes["data provider"],
+      RoleTypes.admin,
+    ],
     buttons: [
       {
         id: uuidv4(),
@@ -58,7 +62,7 @@ const homeData = [
     label: "Learning Record Store",
     description: "Helps manage your source of data",
     image: LRSLogo,
-    disabledRoles: [],
+    disabledRoles: [RoleTypes.admin],
     buttons: [
       {
         id: uuidv4(),

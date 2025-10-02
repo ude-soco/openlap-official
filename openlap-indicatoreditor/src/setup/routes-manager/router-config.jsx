@@ -161,6 +161,25 @@ const menus = [
       },
     ],
   },
+  {
+    key: "settings-admin",
+    title: "Settings",
+    icon: <SettingsIcon />,
+    allowedRoles: [RoleTypes.admin],
+    disabledRoles: [
+      RoleTypes.user,
+      RoleTypes.userWithoutLRS,
+      RoleTypes["data provider"],
+    ],
+    items: [
+      {
+        primary: "Account Settings",
+        secondary: "Update your profile",
+        navigate: "/account-settings",
+        icon: <PersonIcon />,
+      },
+    ],
+  },
 ];
 
 export default menus;
