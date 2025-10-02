@@ -175,7 +175,7 @@ const IndicatorPreview = () => {
           color="inherit"
           to="/indicator"
         >
-          Indicator Dashboard
+          My Indicators
         </Link>
         <Typography sx={{ color: "text.primary" }}>
           Preview Indicator

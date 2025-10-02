@@ -20,7 +20,7 @@ const menus = [
     disabledRoles: [],
     items: [
       {
-        primary: "ISC Dashboard",
+        primary: "My ISCs",
         secondary: "List of my ISCs",
         navigate: "/isc",
         icon: <DashboardIcon />,
@@ -47,7 +47,7 @@ const menus = [
     disabledRoles: [RoleTypes.userWithoutLRS],
     items: [
       {
-        primary: "Indicator Dashboard",
+        primary: "My Indicators",
         secondary: "List of my Indicators",
         navigate: "/indicator",
         icon: <DashboardIcon />,

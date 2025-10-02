@@ -161,7 +161,7 @@ const IscPreview = () => {
             color="inherit"
             to="/isc"
           >
-            ISC Dashboard
+            My ISCs
           </Link>
           <Typography sx={{ color: "text.primary" }}>Preview ISC</Typography>
         </Breadcrumbs>

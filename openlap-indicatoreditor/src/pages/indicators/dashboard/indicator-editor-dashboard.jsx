@@ -65,7 +65,7 @@ const IndicatorEditorDashboard = () => {
             Home
           </Link>
           <Typography sx={{ color: "text.primary" }}>
-            Indicator Dashboard
+            My Indicators
           </Typography>
         </Breadcrumbs>
         <Grid size={{ xs: 12 }}>

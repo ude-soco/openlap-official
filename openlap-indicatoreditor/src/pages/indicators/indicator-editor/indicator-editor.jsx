@@ -69,7 +69,7 @@ const IndicatorEditor = () => {
             color="inherit"
             to="/indicator"
           >
-            Indicator Dashboard
+            My Indicators
           </Link>
           <Typography sx={{ color: "text.primary" }}>
             Create an Indicator

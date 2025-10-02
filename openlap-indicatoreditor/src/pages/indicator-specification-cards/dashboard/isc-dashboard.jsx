@@ -51,7 +51,7 @@ const IscDashboard = () => {
           <Link component={RouterLink} underline="hover" color="inherit" to="/">
             Home
           </Link>
-          <Typography sx={{ color: "text.primary" }}>ISC Dashboard</Typography>
+          <Typography sx={{ color: "text.primary" }}>My ISCs</Typography>
         </Breadcrumbs>
 
         <Grid size={{ xs: 12 }}>

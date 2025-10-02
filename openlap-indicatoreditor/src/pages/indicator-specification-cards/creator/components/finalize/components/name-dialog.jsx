@@ -87,7 +87,7 @@ const NameDialog = ({ open, toggleOpen }) => {
           <Typography>
             You've completed all the steps. Saving now will{" "}
             {params.id ? "update" : "finalize"} the indicator and make it
-            available for use from ISC Dashboard.
+            available for use from My ISCs.
           </Typography>
         </DialogContent>
         <DialogActions>

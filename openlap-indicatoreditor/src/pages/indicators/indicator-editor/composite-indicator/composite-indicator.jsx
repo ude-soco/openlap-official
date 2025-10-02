@@ -143,7 +143,7 @@ const CompositeIndicator = () => {
             color="inherit"
             to="/indicator"
           >
-            Indicator Dashboard
+            My Indicators
           </Link>
 
           <Link

@@ -279,7 +279,7 @@ const IndicatorSpecificationCard = () => {
               color="inherit"
               to="/isc"
             >
-              ISC Dashboard
+              My ISCs
             </Link>
             <Typography sx={{ color: "text.primary" }}>
               Create an ISC
