@@ -191,96 +191,90 @@ const ManageLrsProviderList = ({ state, setState }) => {
       <Stack spacing={2}>
         {state.user.lrsProviderList?.map((lrs, index) => {
           return (
-            <Stack direction="row" spacing={2} key={lrs.lrsId}>
-              <Typography sx={{ pt: 1.5 }}>#{index + 1}</Typography>
-              <Box sx={{ width: "100%" }}>
-                <Accordion variant="outlined">
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography>{lrs.lrsTitle}</Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Grid container direction="column" spacing={2}>
-                      <Grid container spacing={1} alignItems="center">
-                        <Typography>LRS name:</Typography>
-                        <Chip label={lrs.lrsTitle} />
-                        <Tooltip title="Change LRS name" arrow>
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleOpenEditLrs(lrs)}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </Grid>
-                      <Grid container spacing={1} alignItems="center">
-                        <Typography>Unique Identifier:</Typography>
-                        <Chip
-                          label={Object.keys(UniqueIdentifierTypes).find(
-                            (item) =>
-                              UniqueIdentifierTypes[item] ===
-                              lrs.uniqueIdentifierType
-                          )}
-                        />
-                        <Tooltip title="Change Unique Identifier" arrow>
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleOpenEditLrsType(lrs)}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </Grid>
-                      <Grid container spacing={1} alignItems="center">
-                        <Typography>#Statements:</Typography>
-                        <Chip label={lrs.statementCount} />
-                        {lrs.statementCount > 0 && (
-                          <Tooltip title="Delete all statements" arrow>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => handleOpenDeleteLrsStatements(lrs)}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </Grid>
-                      <Grid container spacing={1} alignItems="center">
-                        <Typography>Created at:</Typography>
-                        <Chip label={lrs.createdAt} />
-                      </Grid>
-                      <Grid container spacing={1} alignItems="flex-start">
-                        <Typography>Basic Auth: </Typography>
-                        <Tooltip title="Copy basic auth" arrow>
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleCopyBasicAuth(lrs.basicAuth)}
-                          >
-                            <ContentCopyIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Grid size="grow">
-                          <Typography sx={{ wordBreak: "break-all" }}>
-                            {lrs.basicAuth}
-                          </Typography>
-                        </Grid>
-                      </Grid>
+            <Accordion variant="outlined" key={lrs.lrsId}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography>
+                  #{index + 1} {lrs.lrsTitle}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container direction="column" spacing={2}>
+                  <Grid container spacing={1} alignItems="center">
+                    <Typography>LRS name:</Typography>
+                    <Chip label={lrs.lrsTitle} />
+                    <Tooltip title="Change LRS name" arrow>
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => handleOpenEditLrs(lrs)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Grid>
+                  <Grid container spacing={1} alignItems="center">
+                    <Typography>Unique Identifier:</Typography>
+                    <Chip
+                      label={Object.keys(UniqueIdentifierTypes).find(
+                        (item) =>
+                          UniqueIdentifierTypes[item] ===
+                          lrs.uniqueIdentifierType
+                      )}
+                    />
+                    <Tooltip title="Change Unique Identifier" arrow>
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => handleOpenEditLrsType(lrs)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Grid>
+                  <Grid container spacing={1} alignItems="center">
+                    <Typography>#Statements:</Typography>
+                    <Chip label={lrs.statementCount} />
+                    {lrs.statementCount > 0 && (
+                      <Tooltip title="Delete all statements" arrow>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleOpenDeleteLrsStatements(lrs)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Grid>
+                  <Grid container spacing={1} alignItems="center">
+                    <Typography>Created at:</Typography>
+                    <Chip label={lrs.createdAt} />
+                  </Grid>
+                  <Grid container spacing={1} alignItems="flex-start">
+                    <Typography>Basic Auth: </Typography>
+                    <Tooltip title="Copy basic auth" arrow>
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => handleCopyBasicAuth(lrs.basicAuth)}
+                      >
+                        <ContentCopyIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Grid size="grow">
+                      <Typography sx={{ wordBreak: "break-all" }}>
+                        {lrs.basicAuth}
+                      </Typography>
                     </Grid>
-                  </AccordionDetails>
-                  <AccordionActions>
-                    <Button
-                      color="error"
-                      onClick={() => handleOpenDeleteLrs(lrs)}
-                    >
-                      Delete LRS
-                    </Button>
-                  </AccordionActions>
-                </Accordion>
-              </Box>
-            </Stack>
+                  </Grid>
+                </Grid>
+              </AccordionDetails>
+              <AccordionActions>
+                <Button color="error" onClick={() => handleOpenDeleteLrs(lrs)}>
+                  Delete LRS
+                </Button>
+              </AccordionActions>
+            </Accordion>
           );
         })}
         <DeleteDialog
@@ -320,11 +314,16 @@ const ManageLrsProviderList = ({ state, setState }) => {
         <Dialog open={editLRS.open} fullWidth maxWidth="sm">
           <DialogTitle>Edit LRS name</DialogTitle>
           <DialogContent>
-            <TextField
-              fullWidth
-              value={editLRS.newTitle}
-              onChange={handleChangeTitle}
-            />
+            <Stack gap={2}>
+              <Typography color="textSecondary" sx={{fontStyle: "italic"}}>
+                Current LRS name: {editLRS.lrs.lrsTitle}
+              </Typography>
+              <TextField
+                fullWidth
+                value={editLRS.newTitle}
+                onChange={handleChangeTitle}
+              />
+            </Stack>
           </DialogContent>
           <DialogActions>
             <Button fullWidth onClick={handleCloseEditLrs}>
@@ -340,7 +339,7 @@ const ManageLrsProviderList = ({ state, setState }) => {
               fullWidth
               onClick={handleEditLrs}
             >
-              Confirm
+              Update
             </Button>
           </DialogActions>
         </Dialog>
@@ -394,7 +393,7 @@ const ManageLrsProviderList = ({ state, setState }) => {
               disabled={editLRS.lrs.uniqueIdentifierType === editLRS.newType}
               onClick={handleEditLrs}
             >
-              Confirm
+              Update
             </Button>
           </DialogActions>
         </Dialog>

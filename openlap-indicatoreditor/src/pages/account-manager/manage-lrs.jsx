@@ -3,11 +3,12 @@ import {
   Breadcrumbs,
   Button,
   Divider,
-  Grid,
   Link,
   Alert,
   Skeleton,
   Typography,
+  Container,
+  Stack,
 } from "@mui/material";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import AddLrsConsumer from "./components/add-lrs-consumer";
@@ -119,70 +120,66 @@ const ManageLrs = () => {
 
   return (
     <>
-      <Grid container direction="column" spacing={2}>
+      <Stack gap={2}>
         <Breadcrumbs>
           <Link component={RouterLink} underline="hover" color="inherit" to="/">
             Home
           </Link>
-          <Typography sx={{ color: "text.primary" }}>Manage LRS</Typography>
+          <Typography color="textPrimary">Manage LRS</Typography>
         </Breadcrumbs>
-
         <Divider />
-
-        <Grid container justifyContent="center" sx={{ pt: 3 }}>
-          <Grid size={{ xs: 12, sm: 8 }}>
-            <Grid container justifyContent="space-between">
-              <Typography>Your LRSs</Typography>
-              <Button
-                color="primary"
-                size="small"
-                variant="contained"
-                disableElevation
-                onClick={
-                  roles.includes(RoleTypes["data provider"])
-                    ? handleToggleAddLrsProvider
-                    : handleToggleAddLrsConsumer
-                }
-              >
-                Add New LRS
-              </Button>
-              {state.addLRSConsumerDialog.open && (
-                <AddLrsConsumer
-                  addLrsConsumer={state.addLRSConsumerDialog}
-                  toggleOpen={handleToggleAddLrsConsumer}
-                />
-              )}
-              {state.addLRSProviderDialog.open && (
-                <AddLrsProvider
-                  addLrsProvider={state.addLRSProviderDialog}
-                  toggleOpen={handleToggleAddLrsProvider}
-                />
-              )}
-            </Grid>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 8 }}>
-            {state.loading ? (
-              Array.from({ length: 1 }).map((_, index) => (
-                <Skeleton
-                  key={index}
-                  variant="rectangular"
-                  height={60}
-                  width="100%"
-                />
-              ))
-            ) : state.user.lrsConsumerList.length > 0 &&
-              (roles.includes(RoleTypes.user) ||
-                roles.includes(RoleTypes.userWithoutLRS)) ? (
-              <ManageLrsConsumerList state={state} setState={setState} />
-            ) : state.user.lrsProviderList.length > 0 &&
-              roles.includes(RoleTypes["data provider"]) ? (
-              <ManageLrsProviderList state={state} setState={setState} />
-            ) : (
-              <Alert severity="info">You do not belong to any LRS yet.</Alert>
+      </Stack>
+      <Container maxWidth="lg" sx={{ pt: 2 }}>
+        <Stack gap={2}>
+          <Stack direction="row" justifyContent="space-between">
+            <Typography>Your LRSs</Typography>
+            <Button
+              color="primary"
+              size="small"
+              variant="contained"
+              disableElevation
+              onClick={
+                roles.includes(RoleTypes["data provider"])
+                  ? handleToggleAddLrsProvider
+                  : handleToggleAddLrsConsumer
+              }
+            >
+              Add New LRS
+            </Button>
+            {state.addLRSConsumerDialog.open && (
+              <AddLrsConsumer
+                addLrsConsumer={state.addLRSConsumerDialog}
+                toggleOpen={handleToggleAddLrsConsumer}
+              />
             )}
-          </Grid>
-        </Grid>
-      </Grid>
+            {state.addLRSProviderDialog.open && (
+              <AddLrsProvider
+                addLrsProvider={state.addLRSProviderDialog}
+                toggleOpen={handleToggleAddLrsProvider}
+              />
+            )}
+          </Stack>
+          {state.loading ? (
+            Array.from({ length: 1 }).map((_, index) => (
+              <Skeleton
+                key={index}
+                variant="rectangular"
+                height={60}
+                width="100%"
+              />
+            ))
+          ) : state.user.lrsConsumerList.length > 0 &&
+            (roles.includes(RoleTypes.user) ||
+              roles.includes(RoleTypes.userWithoutLRS)) ? (
+            <ManageLrsConsumerList state={state} setState={setState} />
+          ) : state.user.lrsProviderList.length > 0 &&
+            roles.includes(RoleTypes["data provider"]) ? (
+            <ManageLrsProviderList state={state} setState={setState} />
+          ) : (
+            <Alert severity="info">You do not belong to any LRS yet.</Alert>
+          )}
+        </Stack>
+      </Container>
     </>
   );
 };
