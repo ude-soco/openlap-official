@@ -1,14 +1,16 @@
 import { useContext } from "react";
-import { Button, Collapse, Divider, Paper, Grid } from "@mui/material";
+import { Button, Collapse, Divider, Paper, Grid, Stack } from "@mui/material";
 import { ISCContext } from "../../indicator-specification-card.jsx";
 import ChartTypeFilter from "./components/chart-type-filter.jsx";
 import VisualizationFilter from "./components/visualization-filter/visualization-filter";
 import VisualizationSummary from "./components/visualization-summary/visualization-summary.jsx";
 import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";
+import pathChoices from "../choose-path/utils/utils.js";
 
 const Visualization = () => {
   const { darkMode } = useContext(CustomThemeContext);
-  const { lockedStep, setLockedStep, visRef } = useContext(ISCContext);
+  const { lockedStep, setLockedStep, visRef, requirements } =
+    useContext(ISCContext);
 
   const handleTogglePanel = () => {
     setLockedStep((p) => ({
@@ -86,31 +88,36 @@ const Visualization = () => {
               timeout={{ enter: 500, exit: 250 }}
               unmountOnExit
             >
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}>
-                  <ChartTypeFilter />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
+              <Stack gap={4}>
+                {requirements.selectedPath === pathChoices.task && (
+                  <>
+                    <ChartTypeFilter />
+                    {visRef.filter.type && (
+                      <>
+                        <Divider />
+                        <VisualizationFilter />
+                      </>
+                    )}
+                  </>
+                )}
+                {requirements.selectedPath === pathChoices.vis && (
                   <VisualizationFilter />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <Divider />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <Grid container justifyContent="center">
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        disabled={handleCheckDisabled()}
-                        onClick={handleUnlockPath}
-                      >
-                        Next
-                      </Button>
-                    </Grid>
+                )}
+
+                <Divider />
+                <Grid container justifyContent="center">
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      disabled={handleCheckDisabled()}
+                      onClick={handleUnlockPath}
+                    >
+                      Next
+                    </Button>
                   </Grid>
                 </Grid>
-              </Grid>
+              </Stack>
             </Collapse>
           </Grid>
         </Grid>

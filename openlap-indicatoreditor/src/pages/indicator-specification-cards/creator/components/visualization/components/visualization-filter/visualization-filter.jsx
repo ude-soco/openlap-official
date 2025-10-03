@@ -144,125 +144,119 @@ const VisualizationFilter = () => {
 
   return (
     <>
-      <Accordion variant="outlined" defaultExpanded>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>
-            <b>Available charts</b>
-          </Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Stack gap={4}>
-            <Stack gap={4} justifyContent="center">
-              {visRef.filter.type && (
-                <Typography align="center" variant="body2">
-                  Chart(s) recommended based on chart type:{" "}
-                  <b>{visRef.filter.type}</b>
-                </Typography>
-              )}
-              <Grid container spacing={2} justifyContent="center">
-                {state.visualizationList
-                  .sort((a, b) => a.type.localeCompare(b.type))
-                  .map((visualization, index) => {
-                    if (visualization.enable) {
-                      return (
-                        <Grid
-                          key={index}
-                          component={Paper}
-                          variant="outlined"
-                          size={{ xs: 6, sm: 3, lg: 2 }}
-                          sx={{
-                            cursor: "pointer",
-                            p: 2,
-                            "&:hover": {
-                              boxShadow: 5,
-                            },
-                            border:
-                              visRef.chart.type === visualization.type
-                                ? "2px solid #F57C00"
-                                : "",
-                          }}
-                          onClick={() =>
-                            handleSelectVisualization(visualization)
+      <Stack gap={2}>
+        <Typography>
+          <b>Available charts</b>
+        </Typography>
+        <Stack gap={4}>
+          <Stack gap={4} justifyContent="center">
+            {visRef.filter.type && (
+              <Typography align="center" variant="body2">
+                Chart(s) recommended based on chart type:{" "}
+                <b>{visRef.filter.type}</b>
+              </Typography>
+            )}
+            <Grid container spacing={2} justifyContent="center">
+              {state.visualizationList
+                .sort((a, b) => a.type.localeCompare(b.type))
+                .map((visualization, index) => {
+                  if (visualization.enable) {
+                    return (
+                      <Grid
+                        key={index}
+                        component={Paper}
+                        variant="outlined"
+                        size={{ xs: 6, sm: 3, lg: 2 }}
+                        sx={{
+                          cursor: "pointer",
+                          p: 2,
+                          "&:hover": {
+                            boxShadow: 5,
+                          },
+                          border:
+                            visRef.chart.type === visualization.type
+                              ? "2px solid #F57C00"
+                              : "",
+                        }}
+                        onClick={() => handleSelectVisualization(visualization)}
+                      >
+                        <Tooltip
+                          arrow
+                          title={
+                            <Typography
+                              variant="body2"
+                              sx={{ p: 1, whiteSpace: "pre-line" }}
+                            >
+                              {visualization.description}
+                            </Typography>
                           }
                         >
-                          <Tooltip
-                            arrow
-                            title={
-                              <Typography
-                                variant="body2"
-                                sx={{ p: 1, whiteSpace: "pre-line" }}
-                              >
-                                {visualization.description}
-                              </Typography>
-                            }
+                          <Stack
+                            gap={2}
+                            alignItems="center"
+                            justifyContent="center"
                           >
-                            <Stack
-                              gap={2}
-                              alignItems="center"
-                              justifyContent="center"
-                            >
-                              <Box sx={{ position: "relative" }}>
-                                <Box
-                                  component="img"
-                                  src={visualization.image}
-                                  height="56px"
+                            <Box sx={{ position: "relative" }}>
+                              <Box
+                                component="img"
+                                src={visualization.image}
+                                height="56px"
+                              />
+                              {checkVisualizationRecommendation(
+                                visualization,
+                                columnTypes
+                              ) && (
+                                <RecommendIcon
+                                  color="success"
+                                  sx={{
+                                    borderRadius: 50,
+                                    bgcolor: "white",
+                                    position: "absolute",
+                                    top: -4,
+                                    right: -8,
+                                  }}
                                 />
-                                {checkVisualizationRecommendation(
-                                  visualization,
-                                  columnTypes
-                                ) && (
-                                  <RecommendIcon
-                                    color="success"
-                                    sx={{
-                                      borderRadius: 50,
-                                      bgcolor: "white",
-                                      position: "absolute",
-                                      top: -4,
-                                      right: -8,
-                                    }}
-                                  />
-                                )}
-                              </Box>
-                              <Typography variant="body2" align="center">
-                                {visualization.type}
-                              </Typography>
-                            </Stack>
-                          </Tooltip>
-                        </Grid>
-                      );
-                    }
-                  })}
-              </Grid>
-              {state.recommendation && (
-                <Stack
-                  gap={1}
-                  direction="row"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  <RecommendIcon
-                    color="success"
-                    sx={{ borderRadius: 50, bgcolor: "white" }}
-                  />
-                  <Typography variant="body2">
-                    Recommendations are based on your dataset
-                  </Typography>
-                </Stack>
-              )}
-            </Stack>
-            <Grow
-              in={Boolean(visRef.chart.type)}
-              timeout={{ enter: 500, exit: 0 }}
-              unmountOnExit
-            >
-              <Stack gap={4}>
-                <Divider />
-                <VisualizationDescription columnError={columnError} />
+                              )}
+                            </Box>
+                            <Typography variant="body2" align="center">
+                              {visualization.type}
+                            </Typography>
+                          </Stack>
+                        </Tooltip>
+                      </Grid>
+                    );
+                  }
+                })}
+            </Grid>
+            {state.recommendation && (
+              <Stack
+                gap={1}
+                direction="row"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <RecommendIcon
+                  color="success"
+                  sx={{ borderRadius: 50, bgcolor: "white" }}
+                />
+                <Typography variant="body2">
+                  Recommendations are based on your dataset
+                </Typography>
               </Stack>
-            </Grow>
+            )}
           </Stack>
-        </AccordionDetails>
-      </Accordion>
+          <Grow
+            in={Boolean(visRef.chart.type)}
+            timeout={{ enter: 500, exit: 0 }}
+            unmountOnExit
+          >
+            <Stack gap={4}>
+              <Divider />
+              <VisualizationDescription columnError={columnError} />
+            </Stack>
+          </Grow>
+        </Stack>
+      </Stack>
     </>
   );
 };

@@ -1,11 +1,9 @@
 import { useContext } from "react";
 import { ISCContext } from "../../../indicator-specification-card.jsx";
-import { Paper, Grid, Typography } from "@mui/material";
-import { blue, orange } from "@mui/material/colors";
+import { Paper, Grid, Typography, Stack, Tooltip } from "@mui/material";
+import { blue, orange, green } from "@mui/material/colors";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-
-const VISUALIZATION = "Visualization";
-const DATASET = "Dataset";
+import pathChoices from "../utils/utils.js";
 
 export default function PathSelectors() {
   const { requirements, setRequirements, setLockedStep } =
@@ -18,9 +16,13 @@ export default function PathSelectors() {
     }));
   };
 
-  const handleChooseVisualizationPath = () => {
+  const handleChooseVisualizationPath = (path = pathChoices.vis) => {
+    console.log(path);
     handleTogglePanel();
-    if (requirements.selectedPath !== VISUALIZATION) {
+    if (
+      requirements.selectedPath !== pathChoices.vis ||
+      requirements.selectedPath !== pathChoices.task
+    ) {
       setLockedStep((p) => ({
         ...p,
         visualization: {
@@ -41,7 +43,7 @@ export default function PathSelectors() {
           openPanel: false,
         },
       }));
-      setRequirements((p) => ({ ...p, selectedPath: VISUALIZATION }));
+      setRequirements((p) => ({ ...p, selectedPath: path }));
     } else {
       setLockedStep((p) => ({
         ...p,
@@ -52,7 +54,7 @@ export default function PathSelectors() {
 
   const handleChooseDatasetPath = () => {
     handleTogglePanel();
-    if (requirements.selectedPath !== DATASET) {
+    if (requirements.selectedPath !== pathChoices.data) {
       {
         setLockedStep((p) => ({
           ...p,
@@ -74,7 +76,7 @@ export default function PathSelectors() {
             openPanel: false,
           },
         }));
-        setRequirements((p) => ({ ...p, selectedPath: DATASET }));
+        setRequirements((p) => ({ ...p, selectedPath: pathChoices.data }));
       }
     } else {
       setLockedStep((p) => ({
@@ -84,15 +86,25 @@ export default function PathSelectors() {
     }
   };
 
-  const buttonStyle = (type = VISUALIZATION) => {
+  const buttonStyle = (type = pathChoices.task) => {
     return {
       height: 150,
       width: 150,
       border: "3px solid",
-      borderColor: type === DATASET ? blue[200] : orange[200],
+      borderColor:
+        type === pathChoices.data
+          ? blue[200]
+          : type === pathChoices.vis
+          ? orange[200]
+          : green[200],
       "&:hover": {
         boxShadow: 5,
-        borderColor: type === DATASET ? blue[900] : orange[800],
+        borderColor:
+          type === pathChoices.data
+            ? blue[900]
+            : type === pathChoices.vis
+            ? orange[800]
+            : green[200],
       },
       p: 2,
       borderRadius: 2,
@@ -105,13 +117,23 @@ export default function PathSelectors() {
 
   return (
     <>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12 }}>
-          <Grid container justifyContent="center" spacing={4} sx={{ py: 2 }}>
+      <Stack gap={2}>
+        <Typography align="center" color="textSecondary">
+          Select a path
+        </Typography>
+        <Grid container justifyContent="center" spacing={4}>
+          <Tooltip
+            arrow
+            title={
+              <Typography align="center">
+                Choose if you know how your chart should look like
+              </Typography>
+            }
+          >
             <Paper
               elevation={0}
-              sx={buttonStyle()}
-              onClick={handleChooseVisualizationPath}
+              sx={buttonStyle(pathChoices.vis)}
+              onClick={() => handleChooseVisualizationPath()}
             >
               <Grid
                 container
@@ -119,18 +141,26 @@ export default function PathSelectors() {
                 alignItems="center"
                 spacing={1}
               >
-                {requirements.selectedPath === VISUALIZATION && (
+                {requirements.selectedPath === pathChoices.vis && (
                   <CheckCircleIcon color="success" />
                 )}
                 <Typography variant="h6" align="center">
-                  Select Visualization
+                  Visualization
                 </Typography>
               </Grid>
             </Paper>
-
+          </Tooltip>
+          <Tooltip
+            arrow
+            title={
+              <Typography align="center">
+                Choose if you know how your dataset should look like
+              </Typography>
+            }
+          >
             <Paper
               variant="outlined"
-              sx={buttonStyle(DATASET)}
+              sx={buttonStyle(pathChoices.data)}
               onClick={handleChooseDatasetPath}
             >
               <Grid
@@ -139,17 +169,45 @@ export default function PathSelectors() {
                 alignItems="center"
                 spacing={1}
               >
-                {requirements.selectedPath === DATASET && (
+                {requirements.selectedPath === pathChoices.data && (
                   <CheckCircleIcon color="success" />
                 )}
                 <Typography variant="h6" align="center">
-                  Select Data
+                  Dataset
                 </Typography>
               </Grid>
             </Paper>
-          </Grid>
+          </Tooltip>
+          <Tooltip
+            arrow
+            title={
+              <Typography align="center">
+                Choose if you know why you are analyzing your data
+              </Typography>
+            }
+          >
+            <Paper
+              elevation={0}
+              sx={buttonStyle()}
+              onClick={() => handleChooseVisualizationPath(pathChoices.task)}
+            >
+              <Grid
+                container
+                direction="column"
+                alignItems="center"
+                spacing={1}
+              >
+                {requirements.selectedPath === pathChoices.task && (
+                  <CheckCircleIcon color="success" />
+                )}
+                <Typography variant="h6" align="center">
+                  Task
+                </Typography>
+              </Grid>
+            </Paper>
+          </Tooltip>
         </Grid>
-      </Grid>
+      </Stack>
     </>
   );
 }

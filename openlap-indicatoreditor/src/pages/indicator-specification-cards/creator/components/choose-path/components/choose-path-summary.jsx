@@ -15,10 +15,11 @@ export default function ChoosePathSummary() {
     <b>Tip!</b><br/>
     You can choose one of the following paths:
     <ul>
-      <li>If you have an idea what data you want to show in a table, you can start by creating or uploading a <b>Dataset</b>.</li>
-      <li>If you have a chart in mind, you can start by choosing a <b>Visualization</b>.</li>
+      <li>If you have a <b>chart</b> in mind, you can start by choosing a <b>Visualization</b>.</li>
+      <li>If you have an idea what <b>data</b> you want to show in a table, you can start by creating or uploading a <b>Dataset</b>.</li>
+      <li>If you know <b>why</b> are you analyzing your data, you can start by choosing a <b>Task</b>.</li>
     </ul>
-    Don’t worry — you’ll complete both steps either way.
+    Don’t worry — you’ll complete the steps either way.
     `,
   });
 
