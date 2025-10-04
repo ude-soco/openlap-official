@@ -49,7 +49,7 @@ export default function Summary({
       {handleCheckQuestion() && (
         <Grid size={{ xs: 12 }}>
           <Grid container alignItems="center" spacing={1}>
-            <Typography>I am interested in</Typography>
+            <Typography>I am interested in knowing</Typography>
             <Tooltip title={<Typography>{question}</Typography>} arrow>
               <Chip
                 label={truncate(question, MAX_LABEL_LENGTH)}
@@ -63,7 +63,7 @@ export default function Summary({
         <>
           <Grid size={{ xs: 12 }}>
             <Grid container alignItems="center" spacing={1}>
-              <Typography>I need an indicator showing</Typography>
+              <Typography>I need an indicator that shows</Typography>
               <Tooltip title={<Typography>{indicatorName}</Typography>} arrow>
                 <Chip
                   label={truncate(indicatorName, MAX_LABEL_LENGTH)}

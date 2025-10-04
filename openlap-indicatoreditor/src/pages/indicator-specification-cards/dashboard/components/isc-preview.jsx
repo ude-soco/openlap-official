@@ -243,7 +243,7 @@ const IscPreview = () => {
                   </Stack>
                   <Stack>
                     <Typography variant="overline">
-                      I am interested in (question)
+                      I am interested in knowing (question)
                     </Typography>
                     <Box>
                       <Chip label={requirements.question} />
@@ -251,7 +251,7 @@ const IscPreview = () => {
                   </Stack>
                   <Stack>
                     <Typography variant="overline">
-                      I need an indicator showing
+                      I need an indicator that shows
                     </Typography>
                     <Box>
                       <Chip label={requirements.indicatorName} />

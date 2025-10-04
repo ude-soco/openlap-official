@@ -59,7 +59,7 @@ export default function SpecifyIndicator() {
             required
             name="indicatorName"
             value={requirements.indicatorName}
-            label="I need an indicator showing"
+            label="I need an indicator that shows"
             placeholder="e.g., the number of views of learning materials and sort by the most viewed ones."
             onChange={handleFormData}
             error={requirements.indicatorName === ""}

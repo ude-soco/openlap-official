@@ -44,7 +44,7 @@ export default function ConfirmQuestion() {
             </IconButton>
           </Grid>
           <Typography>
-            I am interested in <b>{requirements.question}</b>
+            I am interested in knowing <b>{requirements.question}</b>
           </Typography>
         </Grid>
       </Grid>

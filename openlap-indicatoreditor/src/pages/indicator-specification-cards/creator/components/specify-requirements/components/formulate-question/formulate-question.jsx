@@ -88,8 +88,8 @@ export default function FormulateQuestion() {
               required
               name="question"
               value={requirements.question}
-              label="I am interested in"
-              placeholder="e.g., knowing how often these learning materials are viewed by my students."
+              label="I am interested in knowing"
+              placeholder="e.g., how often these learning materials are viewed by my students."
               onChange={handleFormData}
               error={requirements.question === ""}
             />
