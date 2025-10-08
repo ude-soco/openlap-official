@@ -7,6 +7,7 @@ import {
   Chip,
   Grid,
   Paper,
+  Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -103,28 +104,29 @@ const TypeSelection = () => {
                   );
 
                   const cardContent = (
-                    <Grid
-                      container
-                      spacing={1}
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      <Box
-                        component="div"
-                        dangerouslySetInnerHTML={{ __html: svg }}
-                      />
-                      <Grid size={{ xs: 12 }}>
-                        <Grid
-                          container
-                          spacing={1}
-                          alignItems="center"
-                          justifyContent="center"
-                        >
-                          {isRecommended && <RecommendIcon color="success" />}
-                          <Typography align="center">{type.name}</Typography>
-                        </Grid>
-                      </Grid>
-                    </Grid>
+                    <Stack gap={2} alignItems="center" justifyContent="center">
+                      <Box sx={{ position: "relative" }}>
+                        <Box
+                          component="div"
+                          dangerouslySetInnerHTML={{ __html: svg }}
+                        />
+                        {isRecommended && (
+                          <RecommendIcon
+                            color="success"
+                            sx={{
+                              borderRadius: 50,
+                              bgcolor: "white",
+                              position: "absolute",
+                              top: -4,
+                              right: -8,
+                            }}
+                          />
+                        )}
+                      </Box>
+                      <Typography variant="body2" align="center">
+                        {type.name}
+                      </Typography>
+                    </Stack>
                   );
                   return (
                     <Grid
