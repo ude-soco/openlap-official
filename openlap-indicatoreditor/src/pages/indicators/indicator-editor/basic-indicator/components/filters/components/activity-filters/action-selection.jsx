@@ -128,7 +128,9 @@ export default function ActionSelection({ activity }) {
                       <Typography>{option.name}</Typography>
                     </Grid>
                     <Grid size={{ xs: 12 }}>
-                      <Typography variant="body2">{option.id}</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        {option.id}
+                      </Typography>
                     </Grid>
                   </Grid>
                 </li>
