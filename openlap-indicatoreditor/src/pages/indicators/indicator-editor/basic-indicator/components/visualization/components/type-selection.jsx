@@ -72,119 +72,103 @@ const TypeSelection = () => {
   }
 
   return (
-    <>
-      <Accordion
-        defaultExpanded
-        elevation={0}
-        variant="outlined"
-        onChange={(event, expanded) => handleShowSelected(expanded)}
-      >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Grid container alignItems="center">
-            <Typography>
-              Available <b>Charts</b>
-            </Typography>
-            <CustomTooltip type="description" message={`To be decided`} />
-            {state.showTypeSelection ? (
-              visualization.selectedType.name.length ? (
-                <Chip label={visualization.selectedType.name} />
-              ) : undefined
-            ) : undefined}
-          </Grid>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Grid container spacing={2} justifyContent="center">
-            {visualization.typeList.flatMap((type, index) =>
-              Object.entries(visualizationImages)
-                .filter(([name]) => type.imageCode === name)
-                .map(([name, svg]) => {
-                  const isRecommended = isChartRecommended(
-                    type.chartInputs,
-                    analysis.analyzedData
-                  );
+    <Stack gap={2}>
+      <Grid container alignItems="center">
+        <Typography>
+          Available <b>Charts</b>
+        </Typography>
+        <CustomTooltip type="description" message={`To be decided`} />
+      </Grid>
+      <Grid container spacing={2} justifyContent="center">
+        {visualization.typeList.flatMap((type, index) =>
+          Object.entries(visualizationImages)
+            .filter(([name]) => type.imageCode === name)
+            .map(([name, svg]) => {
+              const isRecommended = isChartRecommended(
+                type.chartInputs,
+                analysis.analyzedData
+              );
 
-                  const cardContent = (
-                    <Stack gap={2} alignItems="center" justifyContent="center">
-                      <Box sx={{ position: "relative" }}>
-                        <Box
-                          component="div"
-                          dangerouslySetInnerHTML={{ __html: svg }}
-                        />
-                        {isRecommended && (
-                          <RecommendIcon
-                            color="success"
-                            sx={{
-                              borderRadius: 50,
-                              bgcolor: "white",
-                              position: "absolute",
-                              top: -4,
-                              right: -8,
-                            }}
-                          />
+              const cardContent = (
+                <Stack gap={2} alignItems="center" justifyContent="center">
+                  <Box sx={{ position: "relative" }}>
+                    <Box
+                      component="div"
+                      dangerouslySetInnerHTML={{ __html: svg }}
+                    />
+                    {isRecommended && (
+                      <RecommendIcon
+                        color="success"
+                        sx={{
+                          borderRadius: 50,
+                          bgcolor: "white",
+                          position: "absolute",
+                          top: -4,
+                          right: -8,
+                        }}
+                      />
+                    )}
+                  </Box>
+                  <Typography variant="body2" align="center">
+                    {type.name}
+                  </Typography>
+                </Stack>
+              );
+              return (
+                <Grid
+                  key={`${type.imageCode}-${name}-${index}`}
+                  container
+                  component={Paper}
+                  variant="outlined"
+                  justifyContent="center"
+                  size={{ xs: 6, sm: 3, lg: 2 }}
+                  sx={{
+                    p: 2,
+                    cursor: "pointer",
+                    "&:hover": { boxShadow: 2 },
+                    border:
+                      visualization.selectedType.id === type.id
+                        ? "2px solid #F57C00"
+                        : undefined,
+                  }}
+                  onClick={() => handleSelectVisualizationType(type)}
+                >
+                  <Grid size={{ xs: 12 }}>
+                    {isRecommended ? (
+                      <Tooltip
+                        arrow
+                        title={buildRecommendationExplanationTooltip(
+                          type,
+                          analysis.analyzedData
                         )}
-                      </Box>
-                      <Typography variant="body2" align="center">
-                        {type.name}
-                      </Typography>
-                    </Stack>
-                  );
-                  return (
-                    <Grid
-                      key={`${type.imageCode}-${name}-${index}`}
-                      container
-                      component={Paper}
-                      variant="outlined"
-                      justifyContent="center"
-                      size={{ xs: 6, sm: 4, lg: 3, xl: 2 }}
-                      sx={{
-                        p: 2,
-                        cursor: "pointer",
-                        "&:hover": { boxShadow: 2 },
-                        border:
-                          visualization.selectedType.id === type.id
-                            ? "2px solid #F57C00"
-                            : undefined,
-                      }}
-                      onClick={() => handleSelectVisualizationType(type)}
-                    >
-                      <Grid size={{ xs: 12 }}>
-                        {isRecommended ? (
-                          <Tooltip
-                            arrow
-                            title={buildRecommendationExplanationTooltip(
-                              type,
-                              analysis.analyzedData
-                            )}
-                          >
-                            <span>{cardContent}</span>
-                          </Tooltip>
-                        ) : (
-                          <Tooltip
-                            arrow
-                            title={buildRequirementsTooltip(
-                              type,
-                              analysis.analyzedData
-                            )}
-                          >
-                            <span>{cardContent}</span>
-                          </Tooltip>
+                      >
+                        <span>{cardContent}</span>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip
+                        arrow
+                        title={buildRequirementsTooltip(
+                          type,
+                          analysis.analyzedData
                         )}
-                      </Grid>
-                    </Grid>
-                  );
-                })
-            )}
-          </Grid>
+                      >
+                        <span>{cardContent}</span>
+                      </Tooltip>
+                    )}
+                  </Grid>
+                </Grid>
+              );
+            })
+        )}
+      </Grid>
 
-          <Grid container justifyContent="center" spacing={1} sx={{ pt: 2 }}>
-            <RecommendIcon color="success" />
-            <Typography>
-              Recommendation of charts is based on your analyzed data
-            </Typography>
-          </Grid>
-        </AccordionDetails>
-      </Accordion>
-    </>
+      <Grid container justifyContent="center" spacing={1} sx={{ pt: 2 }}>
+        <RecommendIcon color="success" />
+        <Typography>
+          Recommendation of charts is based on your analyzed data
+        </Typography>
+      </Grid>
+    </Stack>
   );
 };
 

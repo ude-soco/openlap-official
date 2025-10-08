@@ -7,6 +7,7 @@ import {
   MenuItem,
   Select,
   Typography,
+  Stack,
 } from "@mui/material";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
@@ -97,8 +98,15 @@ const TypeInputSelection = () => {
     return oldMappings;
   }
 
+  // Helper function
+  const formatTypeName = (type) => {
+    if (type === "Text") return "Categorical";
+    if (type === "Numeric") return "Numerical";
+    return type;
+  };
+
   return (
-    <>
+    <Stack gap={2}>
       <Typography gutterBottom sx={{ pb: 0.5 }}>
         Select <b>Inputs</b> of {visualization.selectedType.name}
       </Typography>
@@ -114,10 +122,10 @@ const TypeInputSelection = () => {
                 <Grid size="grow">
                   <FormControl fullWidth>
                     <InputLabel required={Boolean(input.required)}>
-                      {input.title}
+                      {input.title} ({formatTypeName(input.type)}) 
                     </InputLabel>
                     <Select
-                      label={input.title}
+                      label={`${input.title} (${formatTypeName(input.type)})`}
                       value={input.selectedInput?.id || ""} // store the id
                       onChange={(event) => {
                         const selectedId = event.target.value;
@@ -149,7 +157,7 @@ const TypeInputSelection = () => {
           );
         })}
       </Grid>
-    </>
+    </Stack>
   );
 };
 
