@@ -37,7 +37,7 @@ const CustomTooltip = ({ type = "description", message }) => {
         </Box>
       }
     >
-      <IconButton disableRipple color={config.color}>
+      <IconButton disableRipple color={config.color} size="small">
         {config.icon}
       </IconButton>
     </Tooltip>
