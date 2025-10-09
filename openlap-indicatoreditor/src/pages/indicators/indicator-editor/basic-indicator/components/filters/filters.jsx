@@ -1,4 +1,11 @@
-import { Button, Collapse, Grid, Divider } from "@mui/material";
+import {
+  Button,
+  Collapse,
+  Grid,
+  Divider,
+  Stack,
+  Container,
+} from "@mui/material";
 import { useContext } from "react";
 import { BasicContext } from "../../basic-indicator";
 import FiltersSummary from "./components/filters-summary";
@@ -25,53 +32,41 @@ export default function Filters() {
   return (
     <>
       <CustomPaper locked={lockedStep.filters.locked}>
-        <Grid container>
-          <Grid size={{ xs: 12 }}>
-            <FiltersSummary />
-            <Collapse
-              in={lockedStep.filters.openPanel}
-              timeout={{ enter: 500, exit: 250 }}
-              unmountOnExit
-            >
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}>
-                  <Grid container spacing={2} justifyContent="center">
-                    <Grid size={{ xs: 12, md: 10, lg: 8 }}>
-                      <Grid container spacing={2}>
-                        <Grid size={{ xs: 12, md: 7 }}>
-                          <DateFilter />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 5 }}>
-                          <UserFilter />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          <ActivityFilters />
-                        </Grid>
-                      </Grid>
-                    </Grid>
+        <Stack>
+          <FiltersSummary />
+          <Collapse
+            in={lockedStep.filters.openPanel}
+            timeout={{ enter: 500, exit: 250 }}
+            unmountOnExit
+          >
+            <Stack gap={2}>
+              <Container maxWidth="lg">
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, lg: 7 }}>
+                    <DateFilter />
                   </Grid>
-                  <Grid size={{ xs: 12 }} sx={{ py: 2 }}>
-                    <Divider />
+                  <Grid size={{ xs: 12, lg: 5 }}>
+                    <UserFilter />
                   </Grid>
                   <Grid size={{ xs: 12 }}>
-                    <Grid container justifyContent="center">
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Button
-                          fullWidth
-                          variant="contained"
-                          disabled={handleCheckDisabled()}
-                          onClick={handleUnlockPath}
-                        >
-                          Next
-                        </Button>
-                      </Grid>
-                    </Grid>
+                    <ActivityFilters />
                   </Grid>
                 </Grid>
-              </Grid>
-            </Collapse>
-          </Grid>
-        </Grid>
+              </Container>
+              <Divider />
+              <Container maxWidth="sm">
+                <Button
+                  fullWidth
+                  variant="contained"
+                  disabled={handleCheckDisabled()}
+                  onClick={handleUnlockPath}
+                >
+                  Next
+                </Button>
+              </Container>
+            </Stack>
+          </Collapse>
+        </Stack>
       </CustomPaper>
     </>
   );

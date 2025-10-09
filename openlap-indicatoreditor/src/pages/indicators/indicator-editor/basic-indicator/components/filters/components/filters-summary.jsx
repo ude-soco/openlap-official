@@ -184,12 +184,20 @@ export default function FilterSummary() {
                   <Grid size={{ xs: 12 }}>
                     <Grid container spacing={1} alignItems="center">
                       <Typography>Selected Actions</Typography>
-                      {filters.selectedActivities.map((activity) => (
-                        <ChipsWithMore
-                          key={activity.id}
-                          items={activity.selectedActionList}
-                        />
-                      ))}
+                      {filters.selectedActivities.map((activity) => {
+                        const action = activity.selectedActionList;
+                        return (
+                          action && (
+                            <Tooltip
+                              key={activity.id}
+                              arrow
+                              title={action.description || action.name}
+                            >
+                              <Chip label={action.name || "Unnamed action"} />
+                            </Tooltip>
+                          )
+                        );
+                      })}
                     </Grid>
                   </Grid>
                   <Grid size={{ xs: 12 }}>

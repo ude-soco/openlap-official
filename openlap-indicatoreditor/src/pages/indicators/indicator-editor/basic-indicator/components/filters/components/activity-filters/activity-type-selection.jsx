@@ -1,5 +1,11 @@
-import { useContext, useState } from "react";
-import { Autocomplete, Grid, TextField, Typography } from "@mui/material";
+import { useContext } from "react";
+import {
+  Autocomplete,
+  Grid,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { BasicContext } from "../../../../basic-indicator";
 import { fetchActionOnActivitiesList } from "../../utils/filters-api";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
@@ -8,13 +14,6 @@ import CustomTooltip from "../../../../../../../../common/components/custom-tool
 export default function ActivityTypeSelection({ activity }) {
   const { api } = useContext(AuthContext);
   const { dataset, filters, setFilters } = useContext(BasicContext);
-  const [state, setState] = useState({
-    tipAnchor: null,
-    tipDescription: `
-      <b>Tip!</b><br/>
-      To be decided!.
-    `,
-  });
 
   const handleSelectActivityType = (value) => {
     const loadActionList = async () => {
@@ -38,7 +37,7 @@ export default function ActivityTypeSelection({ activity }) {
                 ...a,
                 selectedActivityType: value,
                 actionList: actionList,
-                selectedActionList: [],
+                selectedActionList: null,
                 activityList: [],
                 selectedActivityList: [],
               }
@@ -57,64 +56,58 @@ export default function ActivityTypeSelection({ activity }) {
   };
 
   return (
-    <>
-      <Grid container alignItems="center">
+    <Stack gap={1}>
+      <Stack direction="row" alignItems="center">
         {handleCheckActivityTypeSelected() && (
-          <Grid size="auto">
-            <CustomTooltip
-              type="warning"
-              message={`If you have selected any <b>Actions</b> or <b>Activities</b> below, changing the <b>Activity Type</b> from this dropdown will reset both selections.`}
-            />
-          </Grid>
+          <CustomTooltip
+            type="warning"
+            message={`If you have selected an <b>Action</b> or <b>Activities</b> below, changing the <b>Activity Type</b> from this dropdown will reset both selections.`}
+          />
         )}
         <Typography>
           Select <b>Activity Type</b>
         </Typography>
-      </Grid>
-      <Grid container spacing={1} alignItems="center">
-        <Grid size="grow">
-          <Autocomplete
-            disableClearable
-            disablePortal
-            fullWidth
-            options={filters.activityTypesList}
-            getOptionLabel={(o) => o.name}
-            value={activity.selectedActivityType || null}
-            onChange={(event, value) => {
-              if (value) handleSelectActivityType(value);
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Search for a type of Activity"
-              />
-            )}
-            renderOption={(props, option) => {
-              const { key, ...restProps } = props;
-              return (
-                <li {...restProps} key={key}>
-                  <Grid container sx={{ py: 0.5 }}>
-                    <Grid size={{ xs: 12 }}>
-                      <Typography>{option.name}</Typography>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Typography variant="body2" color="textSecondary">
-                        {option.id}
-                      </Typography>
-                    </Grid>
+      </Stack>
+      <Stack direction="row" gap={1} alignItems="center">
+        <Autocomplete
+          disableClearable
+          disablePortal
+          fullWidth
+          options={filters.activityTypesList}
+          getOptionLabel={(o) => o.name}
+          value={activity.selectedActivityType || null}
+          onChange={(event, value) => {
+            if (value) handleSelectActivityType(value);
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              placeholder="Search for a type of Activity"
+            />
+          )}
+          renderOption={(props, option) => {
+            const { key, ...restProps } = props;
+            return (
+              <li {...restProps} key={key}>
+                <Grid container sx={{ py: 0.5 }}>
+                  <Grid size={{ xs: 12 }}>
+                    <Typography>{option.name}</Typography>
                   </Grid>
-                </li>
-              );
-            }}
-          />
-        </Grid>
-        <Grid size="auto">
-          <CustomTooltip
-            type="description"
-            message={`Choose the type of activity you want to filter by, such as annotations, materials, or videos.`}
-          />
-        </Grid>
-      </Grid>
-    </>
+                  <Grid size={{ xs: 12 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      {option.id}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </li>
+            );
+          }}
+        />
+        <CustomTooltip
+          type="description"
+          message={`Choose the type of activity you want to filter by, such as annotations, materials, or videos.`}
+        />
+      </Stack>
+    </Stack>
   );
 }

@@ -1,12 +1,10 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import {
-  Accordion,
-  AccordionDetails,
   Box,
   Button,
-  Grid,
   IconButton,
   Paper,
+  Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -59,7 +57,7 @@ export default function ActivityFilters() {
           id: uuidv4(),
           selectedActivityType: { name: "" },
           actionList: [],
-          selectedActionList: [],
+          selectedActionList: null,
           activityList: [],
           selectedActivityList: [],
         },
@@ -107,123 +105,108 @@ export default function ActivityFilters() {
 
   return (
     <>
-      <Accordion
-        defaultExpanded
-        sx={{
-          border: "1px solid",
-          borderColor: "divider",
-          boxShadow: "none",
-        }}
-      >
-        <AccordionDetails sx={{ pt: 2 }}>
-          <Grid container justifyContent="space-between" alignItems="center">
-            <Grid size="auto">
-              <Grid container alignItems="center">
-                <Typography>
-                  Apply <b>Activity filters</b>
-                </Typography>
-                <CustomTooltip
-                  type="description"
-                  message={`Narrow down the data by selecting specific activity types, actions, or activities to include in the analysis.`}
-                />
-              </Grid>
-            </Grid>
-            {filters.selectedActivities.length > 0 ? (
-              <Grid size="auto">
-                <Button variant="contained" onClick={handleAddMoreFilter}>
-                  Add Filter
-                </Button>
-              </Grid>
-            ) : undefined}
-          </Grid>
+      <Box component={Paper} variant="outlined" sx={{ p: 2 }}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Stack direction="row" alignItems="center">
+            <Typography>
+              Apply <b>Activity filters</b>
+            </Typography>
+            <CustomTooltip
+              type="description"
+              message={`Narrow down the data by selecting specific activity types, actions, or activities to include in the analysis.`}
+            />
+          </Stack>
+          {filters.selectedActivities.length > 0 ? (
+            <Button variant="contained" onClick={handleAddMoreFilter}>
+              Add Filter
+            </Button>
+          ) : undefined}
+        </Stack>
 
-          {filters.selectedActivities.length === 0 ? (
-            <Box
-              sx={{
-                mt: 2,
-                pb: 1,
-                p: 8,
-                border: "1px dashed",
-                borderColor: "divider",
-                borderRadius: 2,
-                textAlign: "center",
-                color: "text.secondary",
-              }}
-            >
-              <Typography variant="body1" gutterBottom>
-                No filters added. Click "Add Filter" to get started.
-              </Typography>
-              <Button variant="contained" onClick={handleAddMoreFilter}>
-                Add Filter
-              </Button>
-            </Box>
-          ) : (
-            <Box
-              ref={scrollContainerRef}
-              sx={{
-                display: "flex",
-                gap: 2,
-                overflowX: "auto",
-                mt: 2,
-                pb: 1,
-              }}
-            >
-              {filters.selectedActivities.map((activity, index) => (
-                <div key={activity.id}>
-                  <Paper
-                    sx={{
-                      width: 450,
-                      p: 2,
-                      flexShrink: 0,
-                    }}
-                    variant="outlined"
-                  >
-                    <Grid container spacing={2}>
-                      <Grid size="grow">
-                        <Grid
-                          container
-                          justifyContent="space-between"
-                          alignItems="center"
+        {filters.selectedActivities.length === 0 ? (
+          <Box
+            sx={{
+              mt: 2,
+              pb: 1,
+              p: 8,
+              border: "1px dashed",
+              borderColor: "divider",
+              borderRadius: 2,
+              textAlign: "center",
+              color: "text.secondary",
+            }}
+          >
+            <Typography variant="body1" gutterBottom>
+              No filters added. Click "Add Filter" to get started.
+            </Typography>
+            <Button variant="contained" onClick={handleAddMoreFilter}>
+              Add Filter
+            </Button>
+          </Box>
+        ) : (
+          <Box
+            ref={scrollContainerRef}
+            sx={{
+              display: "flex",
+              gap: 2,
+              overflowX: "auto",
+              mt: 2,
+              pb: 1,
+            }}
+          >
+            {filters.selectedActivities.map((activity, index) => (
+              <div key={activity.id}>
+                <Paper
+                  sx={{
+                    width: 450,
+                    p: 2,
+                    flexShrink: 0,
+                  }}
+                  variant="outlined"
+                >
+                  <Stack gap={2}>
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
+                      <Typography>Activity filter {index + 1}</Typography>
+                      <Tooltip
+                        arrow
+                        title={<Typography>Delete filter</Typography>}
+                      >
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleRemoveFilter(activity)}
                         >
-                          <Typography>Activity filter {index + 1}</Typography>
-                          <Tooltip
-                            arrow
-                            title={<Typography>Delete filter</Typography>}
-                          >
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => handleRemoveFilter(activity)}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </Grid>
-                        <CustomDialog
-                          type="delete"
-                          open={state.activityDialog.openActivityDialog}
-                          toggleOpen={handleToggleDialogOpen}
-                          content={state.activityDialog.content}
-                          handler={handleConfirmRemoveFilter}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12 }}>
-                        <ActivityTypeSelection activity={activity} />
-                      </Grid>
-                      <Grid size={{ xs: 12 }}>
-                        <ActionSelection activity={activity} />
-                      </Grid>
-                      <Grid size={{ xs: 12 }}>
-                        <ActivitySelection activity={activity} />
-                      </Grid>
-                    </Grid>
-                  </Paper>
-                </div>
-              ))}
-            </Box>
-          )}
-        </AccordionDetails>
-      </Accordion>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <CustomDialog
+                        type="delete"
+                        open={state.activityDialog.openActivityDialog}
+                        toggleOpen={handleToggleDialogOpen}
+                        content={state.activityDialog.content}
+                        handler={handleConfirmRemoveFilter}
+                      />
+                    </Stack>
+                    <Stack gap={3}>
+                      <ActivityTypeSelection activity={activity} />
+                      <ActionSelection activity={activity} />
+                      <ActivitySelection activity={activity} />
+                    </Stack>
+                  </Stack>
+                </Paper>
+              </div>
+            ))}
+          </Box>
+        )}
+      </Box>
     </>
   );
 }

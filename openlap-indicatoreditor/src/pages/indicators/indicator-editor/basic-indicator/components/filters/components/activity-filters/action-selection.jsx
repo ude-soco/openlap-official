@@ -1,5 +1,11 @@
 import { useContext } from "react";
-import { Autocomplete, Grid, TextField, Typography } from "@mui/material";
+import {
+  Autocomplete,
+  Grid,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { BasicContext } from "../../../../basic-indicator";
 import { fetchActivitiesList } from "../../utils/filters-api";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
@@ -15,9 +21,9 @@ export default function ActionSelection({ activity }) {
 
   const handleSelectActions = (value) => {
     let actionIdList = [];
-    for (let i = 0; i < value.length; i++) {
-      actionIdList.push(value[i].id);
-    }
+    // TODO:  The selectedActionList currently is taking an object NOT a list
+    //        This has to be fixed not only in the front-end, but also in the backend
+    if (value.id) actionIdList.push(value.id);
 
     const loadActivityList = async (actionIdList) => {
       try {
@@ -60,7 +66,7 @@ export default function ActionSelection({ activity }) {
           a.id === activity.id
             ? {
                 ...a,
-                selectedActionList: [],
+                selectedActionList: null,
                 activityList: [],
                 selectedActivityList: [],
               }
@@ -72,22 +78,18 @@ export default function ActionSelection({ activity }) {
   };
 
   return (
-    <>
-      <Grid container alignItems="center">
+    <Stack gap={1}>
+      <Stack direction="row" alignItems="center">
         {handleCheckActionsAvailable() ? (
-          <Grid size="auto">
-            <CustomTooltip
-              type="help"
-              message={`This dropdown is disabled because:<br/>● An <b>Activity Type</b> needs to be selected`}
-            />
-          </Grid>
+          <CustomTooltip
+            type="help"
+            message={`This dropdown is disabled because:<br/>● An <b>Activity Type</b> needs to be selected`}
+          />
         ) : (
-          <Grid size="auto">
-            <CustomTooltip
-              type="warning"
-              message={`If you have selected any <b>Activities</b> below, changing the <b>Actions</b> in this dropdown will reset your <b>Activity</b> selections.`}
-            />
-          </Grid>
+          <CustomTooltip
+            type="warning"
+            message={`If you have selected any <b>Activities</b> below, changing the <b>Action</b> in this dropdown will reset your <b>Activity</b> selections.`}
+          />
         )}
         <Typography
           color={handleCheckActionsAvailable() ? "textSecondary" : undefined}
@@ -96,63 +98,53 @@ export default function ActionSelection({ activity }) {
             "(Disabled) Actions"
           ) : (
             <>
-              Select <b>Actions</b>
+              Select an <b>Action</b>
             </>
           )}
         </Typography>
-      </Grid>
-      <Grid container spacing={1}>
-        <Grid size="grow">
-          <Autocomplete
-            disableClearable
-            disableCloseOnSelect
-            disablePortal
-            disabled={handleCheckActionsAvailable()}
-            fullWidth
-            multiple
-            options={activity.actionList}
-            getOptionLabel={(o) => o.name}
-            value={activity.selectedActionList || []}
-            onChange={(event, value) => {
-              handleSelectActions(value);
-            }}
-            renderInput={(params) => (
-              <TextField {...params} placeholder="Search for actions" />
-            )}
-            renderOption={(props, option) => {
-              const { key, ...restProps } = props;
-              return (
-                <li {...restProps} key={key}>
-                  <Grid container sx={{ py: 0.5 }}>
-                    <Grid size={{ xs: 12 }}>
-                      <Typography>{option.name}</Typography>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Typography variant="body2" color="textSecondary">
-                        {option.id}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </li>
-              );
-            }}
-          />
-
-          {!handleCheckActionsAvailable() && (
-            <Typography variant="caption" color="textSecondary" sx={{ p: 2 }}>
-              Multi select possible
-            </Typography>
+      </Stack>
+      <Stack direction="row" gap={1}>
+        <Autocomplete
+          disableClearable
+          disablePortal
+          // disableCloseOnSelect
+          fullWidth
+          disabled={handleCheckActionsAvailable()}
+          options={activity.actionList}
+          getOptionLabel={(o) => o.name}
+          value={activity.selectedActionList ?? null}
+          // value={activity.selectedActionList || []}
+          onChange={(event, value) => {
+            if (value) handleSelectActions(value);
+          }}
+          renderInput={(params) => (
+            <TextField {...params} placeholder="Search for actions" />
           )}
-        </Grid>
+          renderOption={(props, option) => {
+            const { key, ...restProps } = props;
+            return (
+              <li {...restProps} key={key}>
+                <Grid container sx={{ py: 0.5 }}>
+                  <Grid size={{ xs: 12 }}>
+                    <Typography>{option.name}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      {option.id}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </li>
+            );
+          }}
+        />
         {!handleCheckActionsAvailable() && (
-          <Grid size="auto" sx={{ pt: 1 }}>
-            <CustomTooltip
-              type="description"
-              message={`Select one or more actions performed within the chosen activity type, such as viewed, edited, or deleted.`}
-            />
-          </Grid>
+          <CustomTooltip
+            type="description"
+            message={`Select one or more actions performed within the chosen activity type, such as viewed, edited, or deleted.`}
+          />
         )}
-      </Grid>
-    </>
+      </Stack>
+    </Stack>
   );
 }

@@ -1,8 +1,10 @@
 import { useContext } from "react";
 import {
   Autocomplete,
+  Box,
   Checkbox,
   Grid,
+  Stack,
   TextField,
   Typography,
 } from "@mui/material";
@@ -36,15 +38,13 @@ export default function ActivitySelection({ activity }) {
   };
 
   return (
-    <>
-      <Grid container alignItems="center">
+    <Stack gap={1}>
+      <Stack direction="row" alignItems="center">
         {handleCheckActivityAvailable() && (
-          <Grid size="auto">
-            <CustomTooltip
-              type="help"
-              message={`This dropdown is disabled because:<br />● At least one <b>Action</b> needs to be selected`}
-            />
-          </Grid>
+          <CustomTooltip
+            type="help"
+            message={`This dropdown is disabled because:<br />● At least one <b>Action</b> needs to be selected`}
+          />
         )}
         <Typography
           color={handleCheckActivityAvailable() ? "textSecondary" : undefined}
@@ -57,10 +57,11 @@ export default function ActivitySelection({ activity }) {
             </>
           )}
         </Typography>
-      </Grid>
-      <Grid container spacing={1}>
-        <Grid size="grow">
+      </Stack>
+      <Stack gap={1}>
+        <Stack direction="row" gap={1} alignItems="flex-start">
           <Autocomplete
+            fullWidth
             disabled={handleCheckActivityAvailable()}
             disableClearable
             disableCloseOnSelect
@@ -118,22 +119,21 @@ export default function ActivitySelection({ activity }) {
             )}
             value={activity.selectedActivityList || []}
           />
-
-          {!handleCheckActivityAvailable() && (
-            <Typography variant="caption" color="textSecondary" sx={{ pl: 2 }}>
-              Multi select possible
-            </Typography>
-          )}
-        </Grid>
+          <Box sx={{pt: 1.25}}>
+            {!handleCheckActivityAvailable() && (
+              <CustomTooltip
+                type="description"
+                message={`Pick specific activities or resources that match your chosen type and actions.<br/>Multiple selections are allowed.`}
+              />
+            )}
+          </Box>
+        </Stack>
         {!handleCheckActivityAvailable() && (
-          <Grid size="auto" sx={{ pt: 1 }}>
-            <CustomTooltip
-              type="description"
-              message={`Pick specific activities or resources that match your chosen type and actions.<br/>Multiple selections are allowed.`}
-            />
-          </Grid>
+          <Typography variant="caption" color="textSecondary" sx={{ pl: 2 }}>
+            Multi select possible
+          </Typography>
         )}
-      </Grid>
-    </>
+      </Stack>
+    </Stack>
   );
 }
