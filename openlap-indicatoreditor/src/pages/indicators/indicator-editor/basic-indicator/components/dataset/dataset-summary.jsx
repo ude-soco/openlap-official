@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { Chip, Collapse, Grid, Typography } from "@mui/material";
+import { Chip, Collapse, Grid, Stack, Typography } from "@mui/material";
 import { BasicContext } from "../../basic-indicator";
 import ToggleSummaryButton from "../../../../../../common/components/toggle-summary-button/toggle-summary-button";
 import { ToggleEditIconButton } from "../../../../../../common/components/toggle-edit-button/toggle-edit-button";
@@ -37,57 +37,51 @@ export default function DatasetSummary() {
 
   return (
     <>
-      <Grid container>
-        <Grid size={{ xs: 12 }}>
-          <Grid container justifyContent="space-between" spacing={1}>
-            <Grid size="grow">
-              <Grid container alignItems="center" spacing={1}>
-                <Chip label={lockedStep.dataset.step} color="primary" />
-                <Typography>Dataset</Typography>
-                <TipPopover
-                  tipAnchor={state.tipAnchor}
-                  toggleTipAnchor={handleTipAnchor}
-                  description={state.tipDescription}
-                />
-                {!lockedStep.dataset.openPanel && (
-                  <ToggleSummaryButton
-                    showSelections={state.showSelections}
-                    toggleShowSelection={handleToggleShowSelection}
-                  />
-                )}
-              </Grid>
-            </Grid>
-            <ToggleEditIconButton
-              openPanel={lockedStep.dataset.openPanel}
-              togglePanel={handleTogglePanel}
+      <Stack gap={2}>
+        <Stack direction="row" justifyContent="space-between" gap={1}>
+          <Grid container alignItems="center" spacing={1}>
+            <Chip label={lockedStep.dataset.step} color="primary" />
+            <Typography>Dataset</Typography>
+            <TipPopover
+              tipAnchor={state.tipAnchor}
+              toggleTipAnchor={handleTipAnchor}
+              description={state.tipDescription}
             />
+            {!lockedStep.dataset.openPanel && (
+              <ToggleSummaryButton
+                showSelections={state.showSelections}
+                toggleShowSelection={handleToggleShowSelection}
+              />
+            )}
           </Grid>
-        </Grid>
+          <ToggleEditIconButton
+            openPanel={lockedStep.dataset.openPanel}
+            togglePanel={handleTogglePanel}
+          />
+        </Stack>
         <Collapse
           in={!lockedStep.dataset.openPanel && state.showSelections}
           timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
-          <Grid size={{ xs: 12 }}>
-            <Grid container spacing={1} alignItems="center">
-              {handleCheckDatasetSelected() ? (
-                <>
-                  <Typography>Source of data:</Typography>
-                  {dataset.selectedLRSList.map((lrs) => (
-                    <Grid key={lrs.id}>
-                      <Chip label={lrs.lrsTitle} />
-                    </Grid>
-                  ))}
-                </>
-              ) : (
-                <Typography sx={{ fontStyle: "italic" }}>
-                  No source selected yet!
-                </Typography>
-              )}
-            </Grid>
+          <Grid container spacing={1} alignItems="center">
+            {handleCheckDatasetSelected() ? (
+              <>
+                <Typography>Source of data:</Typography>
+                {dataset.selectedLRSList.map((lrs) => (
+                  <Grid key={lrs.id}>
+                    <Chip label={lrs.lrsTitle} />
+                  </Grid>
+                ))}
+              </>
+            ) : (
+              <Typography sx={{ fontStyle: "italic" }}>
+                No source selected yet!
+              </Typography>
+            )}
           </Grid>
         </Collapse>
-      </Grid>
+      </Stack>
     </>
   );
 }
