@@ -4,12 +4,12 @@ import {
   Box,
   FormControl,
   InputLabel,
-  Grid,
   MenuItem,
   Paper,
   Select,
   Tooltip,
   Typography,
+  Stack,
 } from "@mui/material";
 import { analyticsInputMenuList } from "../utils/analysis-data";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
@@ -26,6 +26,8 @@ export default function InputsSelection() {
       );
       let tempInputs = [...p.inputs];
       const item = tempInputs.find((item) => input.id === item.id);
+      console.log(item);
+
       if (item) item.selectedInput = value;
       return {
         ...p,
@@ -58,14 +60,8 @@ export default function InputsSelection() {
   }
 
   return (
-    <Grid
-      container
-      spacing={2}
-      component={Paper}
-      variant="outlined"
-      sx={{ p: 2 }}
-    >
-      <Grid container spacing={0} alignItems="center">
+    <Stack gap={2} component={Paper} variant="outlined" sx={{ p: 2 }}>
+      <Stack direction="row" alignItems="center">
         <Typography>
           Select <b>Inputs</b> of the method
         </Typography>
@@ -73,59 +69,46 @@ export default function InputsSelection() {
           type="description"
           message={`Each method has input parameter(s). You can decide which data should be assigned to which analysis input parameter.`}
         />
-      </Grid>
-      <Grid size={{ xs: 12 }}>
-        <Grid container spacing={2} alignItems="center">
-          {analysis.inputs.map((input, index) => (
-            <Grid size={{ xs: 12 }} key={index}>
-              <Grid container spacing={1} alignItems="center">
-                <Grid size="grow">
-                  <FormControl
-                    fullWidth
-                    error={
-                      Boolean(input.required) &&
-                      input.selectedInput === undefined
-                    }
-                  >
-                    <InputLabel>
-                      {input.title}{" "}
-                      {input.required ? "(Required)" : "(Optional)"}
-                    </InputLabel>
+      </Stack>
+      {analysis.inputs.map((input, index) => (
+        <Stack direction="row" key={index} gap={1} alignItems="center">
+          <FormControl
+            fullWidth
+            error={Boolean(input.required) && input.selectedInput === undefined}
+          >
+            <InputLabel>
+              {input.title} {input.required ? "(Required)" : "(Optional)"}
+            </InputLabel>
 
-                    <Select
-                      label={`${input.title} ${
-                        input.required ? "(Required)" : "(Optional)"
-                      }`}
-                      value={input.selectedInput || ""}
-                      onChange={(event) =>
-                        handleSelectInputs(input, event.target.value)
-                      }
-                    >
-                      {analyticsInputMenuList.map((menu) => (
-                        <MenuItem value={menu} key={menu.id}>
-                          <Tooltip
-                            arrow
-                            title={<Typography>{menu.description}</Typography>}
-                            placement="right"
-                          >
-                            <Box sx={{ width: "100%" }}>{menu.name}</Box>
-                          </Tooltip>
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size="auto">
-                  <CustomTooltip
-                    type="description"
-                    message={input.description}
-                  />
-                </Grid>
-              </Grid>
-            </Grid>
-          ))}
-        </Grid>
-      </Grid>
-    </Grid>
+            <Select
+              label={`${input.title} ${
+                input.required ? "(Required)" : "(Optional)"
+              }`}
+              value={input.selectedInput?.id || ""}
+              onChange={(event) => {
+                const selectedMenu = analyticsInputMenuList.find(
+                  (menu) => menu.id === event.target.value
+                );
+                handleSelectInputs(input, selectedMenu);
+              }}
+            >
+              {analyticsInputMenuList.map((menu) => (
+                <MenuItem value={menu.id} key={menu.id}>
+                  <Tooltip
+                    arrow
+                    title={<Typography>{menu.description}</Typography>}
+                    placement="right"
+                  >
+                    <Box sx={{ width: "100%" }}>{menu.name}</Box>
+                  </Tooltip>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <CustomTooltip type="description" message={input.description} />
+        </Stack>
+      ))}
+    </Stack>
   );
 }
