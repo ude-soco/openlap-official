@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useState } from "react";
 import {
   Box,
   Button,
@@ -29,25 +29,6 @@ export default function ActivityFilters() {
       pendingActivity: null,
     },
   });
-
-  const scrollContainerRef = useRef(null);
-  const prevLengthRef = useRef(filters.selectedActivities.length);
-
-  useEffect(() => {
-    const prevLength = prevLengthRef.current;
-    const newLength = filters.selectedActivities.length;
-
-    if (newLength > prevLength) {
-      if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollTo({
-          left: scrollContainerRef.current.scrollWidth,
-          behavior: "smooth",
-        });
-      }
-    }
-
-    prevLengthRef.current = newLength;
-  }, [filters.selectedActivities]);
 
   const handleAddMoreFilter = () => {
     setFilters((p) => {
@@ -105,7 +86,7 @@ export default function ActivityFilters() {
 
   return (
     <>
-      <Box component={Paper} variant="outlined" sx={{ p: 2 }}>
+      <Stack gap={2} component={Paper} variant="outlined" sx={{ p: 2 }}>
         <Stack
           direction="row"
           justifyContent="space-between"
@@ -149,64 +130,60 @@ export default function ActivityFilters() {
           </Box>
         ) : (
           <Box
-            ref={scrollContainerRef}
             sx={{
               display: "flex",
+              flexDirection: "row",
               gap: 2,
               overflowX: "auto",
-              mt: 2,
-              pb: 1,
+              pb: 2,
             }}
           >
             {filters.selectedActivities.map((activity, index) => (
-              <div key={activity.id}>
-                <Paper
-                  sx={{
-                    width: 450,
-                    p: 2,
-                    flexShrink: 0,
-                  }}
-                  variant="outlined"
+              <Stack
+                key={activity.id}
+                gap={2}
+                component={Paper}
+                sx={{
+                  maxWidth: 400,
+                  minWidth: 360,
+                  flexShrink: 0,
+                  p: 2,
+                }}
+                variant="outlined"
+              >
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
                 >
-                  <Stack gap={2}>
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
+                  <Typography>Activity filter {index + 1}</Typography>
+                  <Tooltip arrow title={<Typography>Delete filter</Typography>}>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleRemoveFilter(activity)}
                     >
-                      <Typography>Activity filter {index + 1}</Typography>
-                      <Tooltip
-                        arrow
-                        title={<Typography>Delete filter</Typography>}
-                      >
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleRemoveFilter(activity)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <CustomDialog
-                        type="delete"
-                        open={state.activityDialog.openActivityDialog}
-                        toggleOpen={handleToggleDialogOpen}
-                        content={state.activityDialog.content}
-                        handler={handleConfirmRemoveFilter}
-                      />
-                    </Stack>
-                    <Stack gap={3}>
-                      <ActivityTypeSelection activity={activity} />
-                      <ActionSelection activity={activity} index={index} />
-                      <ActivitySelection activity={activity} />
-                    </Stack>
-                  </Stack>
-                </Paper>
-              </div>
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <CustomDialog
+                    type="delete"
+                    open={state.activityDialog.openActivityDialog}
+                    toggleOpen={handleToggleDialogOpen}
+                    content={state.activityDialog.content}
+                    handler={handleConfirmRemoveFilter}
+                  />
+                </Stack>
+                <Stack gap={3}>
+                  <ActivityTypeSelection activity={activity} />
+                  <ActionSelection activity={activity} index={index} />
+                  <ActivitySelection activity={activity} />
+                </Stack>
+              </Stack>
             ))}
           </Box>
         )}
-      </Box>
+      </Stack>
     </>
   );
 }

@@ -42,10 +42,10 @@ export default function Filters() {
             <Stack gap={2}>
               <Container maxWidth="lg">
                 <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, lg: 7 }}>
+                  <Grid size={{ xs: 12, lg: 6 }}>
                     <DateFilter />
                   </Grid>
-                  <Grid size={{ xs: 12, lg: 5 }}>
+                  <Grid size={{ xs: 12, lg: 6 }}>
                     <UserFilter />
                   </Grid>
                   <Grid size={{ xs: 12 }}>

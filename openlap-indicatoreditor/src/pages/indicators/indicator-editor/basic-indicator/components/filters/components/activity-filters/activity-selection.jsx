@@ -119,14 +119,14 @@ export default function ActivitySelection({ activity }) {
             )}
             value={activity.selectedActivityList || []}
           />
-          <Box sx={{pt: 1.25}}>
-            {!handleCheckActivityAvailable() && (
+          {!handleCheckActivityAvailable() && (
+            <Box sx={{ pt: 1.25 }}>
               <CustomTooltip
                 type="description"
                 message={`Pick specific activities or resources that match your chosen type and actions.<br/>Multiple selections are allowed.`}
               />
-            )}
-          </Box>
+            </Box>
+          )}
         </Stack>
         {!handleCheckActivityAvailable() && (
           <Typography variant="caption" color="textSecondary" sx={{ pl: 2 }}>

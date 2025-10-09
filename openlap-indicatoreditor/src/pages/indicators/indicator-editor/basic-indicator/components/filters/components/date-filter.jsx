@@ -1,5 +1,12 @@
 import { useContext } from "react";
-import { Accordion, AccordionDetails, Grid, Typography } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  Grid,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { BasicContext } from "../../../basic-indicator";
 import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -21,56 +28,41 @@ export default function DateFilter() {
 
   return (
     <>
-      <Accordion
-        defaultExpanded
-        sx={{
-          border: "1px solid",
-          borderColor: "divider",
-          boxShadow: "none",
-        }}
-      >
-        <AccordionDetails>
-          <Grid container alignItems="center">
-            <Typography>
-              Select <b>Date range</b>
-            </Typography>
-            <CustomTooltip
-              type="description"
-              message={`Choose the start and end dates to define the period of data you want to include in your analysis.`}
+      <Stack gap={1} component={Paper} variant="outlined" sx={{ p: 2 }}>
+        <Stack direction="row" alignItems="center">
+          <Typography>
+            Select <b>Date range</b>
+          </Typography>
+          <CustomTooltip
+            type="description"
+            message={`Choose the start and end dates to define the period of data you want to include in your analysis.`}
+          />
+        </Stack>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DemoContainer components={["DatePicker"]}>
+            <DatePicker
+              format="DD MMM YYYY"
+              fullWidth
+              label="Start date"
+              maxDate={dayjs(filters.selectedTime.until)}
+              onChange={(value) => handleUpdateDate(value, "from")}
+              value={dayjs(filters.selectedTime.from)}
             />
-          </Grid>
-          <Grid container spacing={2}>
-            <Grid size="auto">
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DemoContainer components={["DatePicker"]}>
-                  <DatePicker
-                    format="DD MMM YYYY"
-                    fullWidth
-                    label="Start date"
-                    maxDate={dayjs(filters.selectedTime.until)}
-                    onChange={(value) => handleUpdateDate(value, "from")}
-                    value={dayjs(filters.selectedTime.from)}
-                  />
-                </DemoContainer>
-              </LocalizationProvider>
-            </Grid>
-            <Grid size="auto">
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DemoContainer components={["DatePicker"]}>
-                  <DatePicker
-                    format="DD MMM YYYY"
-                    fullWidth
-                    label="End date"
-                    minDate={dayjs(filters.selectedTime.from)}
-                    onChange={(value) => handleUpdateDate(value, "until")}
-                    value={dayjs(filters.selectedTime.until)}
-                  />
-                </DemoContainer>
-              </LocalizationProvider>
-            </Grid>
-          </Grid>
-        </AccordionDetails>
-      </Accordion>
+          </DemoContainer>
+        </LocalizationProvider>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DemoContainer components={["DatePicker"]}>
+            <DatePicker
+              format="DD MMM YYYY"
+              fullWidth
+              label="End date"
+              minDate={dayjs(filters.selectedTime.from)}
+              onChange={(value) => handleUpdateDate(value, "until")}
+              value={dayjs(filters.selectedTime.until)}
+            />
+          </DemoContainer>
+        </LocalizationProvider>
+      </Stack>
     </>
   );
 }

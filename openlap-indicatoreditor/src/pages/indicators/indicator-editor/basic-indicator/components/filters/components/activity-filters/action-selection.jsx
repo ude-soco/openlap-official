@@ -19,13 +19,13 @@ export default function ActionSelection({ activity, index }) {
     return activity.actionList.length === 0;
   };
 
-  const handleSelectActions = (value) => {
+  const handleSelectActions = async (value) => {
     let actionIdList = [];
     // TODO:  The selectedActionList currently is taking an object NOT a list
     //        This has to be fixed not only in the front-end, but also in the backend
     if (value.id) actionIdList.push(value.id);
 
-    const loadActivityList = async (actionIdList) => {
+    if (actionIdList.length > 0) {
       try {
         const activityList = await fetchActivitiesList(
           api,
@@ -33,50 +33,42 @@ export default function ActionSelection({ activity, index }) {
           activity.selectedActivityType.id,
           actionIdList
         );
-        return activityList;
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    if (actionIdList.length > 0) {
-      loadActivityList(actionIdList).then((activityList) => {
         setFilters((p) => {
           let updatedActivities;
           updatedActivities = p.selectedActivities.map((a) =>
             a.id === activity.id
               ? {
                   ...a,
-                  selectedActionList: [value],
+                  selectedActionList: [...a.selectedActionList, value],
                   activityList: activityList,
                   selectedActivityList: [],
                 }
               : a
           );
-          console.log(updatedActivities);
-
           return {
             ...p,
             selectedActivities: updatedActivities,
           };
         });
-      });
-    } else {
-      setFilters((p) => {
-        let updatedActivities;
-        updatedActivities = p.selectedActivities.map((a) =>
-          a.id === activity.id
-            ? {
-                ...a,
-                selectedActionList: [],
-                activityList: [],
-                selectedActivityList: [],
-              }
-            : a
-        );
-        return { ...p, selectedActivities: updatedActivities };
-      });
+        return;
+      } catch (error) {
+        console.error(error);
+      }
     }
+    setFilters((p) => {
+      let updatedActivities;
+      updatedActivities = p.selectedActivities.map((a) =>
+        a.id === activity.id
+          ? {
+              ...a,
+              selectedActionList: [],
+              activityList: [],
+              selectedActivityList: [],
+            }
+          : a
+      );
+      return { ...p, selectedActivities: updatedActivities };
+    });
   };
 
   return (

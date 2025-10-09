@@ -62,7 +62,8 @@ export default function Visualization() {
   useEffect(() => {
     if (
       visualization.inputs.length !== 0 &&
-      allInputsHaveSelected(visualization.inputs)
+      allInputsHaveSelected(visualization.inputs) &&
+      Object.keys(analysis.analyzedData).length > 0
     )
       handleLoadPreviewVisualization().then((previewData) => {
         setVisualization((p) => ({
@@ -152,6 +153,14 @@ export default function Visualization() {
     }
   };
 
+  const handleCheckDisabled = () => {
+    return (
+      visualization.inputs.length === 0 ||
+      !allInputsHaveSelected(visualization.inputs) ||
+      Object.keys(analysis.analyzedData).length === 0
+    );
+  };
+
   // * Helper function
   function allInputsHaveSelected(chartInputs) {
     return chartInputs.every((input) => {
@@ -185,7 +194,8 @@ export default function Visualization() {
                   <LinearProgress />
                 )
               ) : undefined}
-              {visualization.inputs.length > 0 ? (
+              {visualization.inputs.length > 0 &&
+              Object.keys(analysis.analyzedData).length > 0 ? (
                 <>
                   <TypeInputSelection />
                   <Grid container spacing={2}>
@@ -208,8 +218,7 @@ export default function Visualization() {
                 <Button
                   fullWidth
                   variant="contained"
-                  // TODO: A check required, if lrs, filters (activities) are selected, required analysis mapping are selected, visualization inputs are selected
-                  // disabled={handleCheckDisabled()}
+                  disabled={handleCheckDisabled()}
                   onClick={handleToggleNameIndicator}
                 >
                   Save Indicator
