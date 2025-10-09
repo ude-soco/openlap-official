@@ -81,7 +81,7 @@ export default function Analysis() {
             unmountOnExit
           >
             <Stack gap={2}>
-              <Container maxWidth="md">
+              <Container maxWidth="lg">
                 <Stack gap={3}>
                   <AnalysisSelection />
                   {analysis.inputs.length !== 0 ? (
@@ -135,7 +135,7 @@ export default function Analysis() {
                             <CustomTooltip
                               type="help"
                               message={`The button is disabled because:<br/>
-                              ● The required <b>Input(s)</b> of the analytics method may not selected.<br/>
+                              ● The required <b>Input(s)</b> of the analytics method is/are not selected.<br/>
                               ● In <b>Filters</b>, under all <b>Activity filters</b>, none of the <b>Activities</b> are possibly not selected.
                               `}
                             />
