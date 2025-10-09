@@ -2,10 +2,11 @@ import {
   Autocomplete,
   Button,
   Collapse,
-  Grid,
   Divider,
   TextField,
   Typography,
+  Stack,
+  Container,
 } from "@mui/material";
 import DatasetSummary from "./dataset-summary";
 import { useContext, useEffect, useState } from "react";
@@ -115,83 +116,64 @@ export default function Dataset() {
   return (
     <>
       <CustomPaper sx={{ p: 2 }}>
-        <Grid container>
-          <Grid size={{ xs: 12 }}>
-            <DatasetSummary />
-            <Collapse
-              in={lockedStep.dataset.openPanel}
-              timeout={{ enter: 500, exit: 250 }}
-              unmountOnExit
-            >
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}>
-                  <Grid container spacing={2} justifyContent="center">
-                    <Grid size={{ xs: 12, lg: 8 }}>
-                      <Grid container spacing={1}>
-                        <Grid size="grow">
-                          <Typography>Source of data</Typography>
-                        </Grid>
-
-                        <Grid size={{ xs: 12 }}>
-                          <Grid container spacing={2} alignItems="center">
-                            <Grid size="grow">
-                              <Autocomplete
-                                autoFocus
-                                disablePortal
-                                disableClearable
-                                disableCloseOnSelect
-                                fullWidth
-                                getOptionLabel={(option) => option.lrsTitle}
-                                value={dataset.selectedLRSList}
-                                multiple
-                                options={handleShowOptions()}
-                                renderInput={(params) => (
-                                  <TextField
-                                    {...params}
-                                    placeholder="Search for Learning Record Stores (LRS)"
-                                  />
-                                )}
-                                renderOption={(props, option) => {
-                                  const { key, ...restProps } = props;
-                                  return (
-                                    <li {...restProps} key={key}>
-                                      {option.lrsTitle}
-                                    </li>
-                                  );
-                                }}
-                                onChange={(event, value) => {
-                                  if (value) handleSelectLRS(value);
-                                }}
-                              />
-                            </Grid>
-                            <CustomTooltip
-                              type="description"
-                              message={`To be decided!`}
-                            />
-                          </Grid>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                    <Grid size={{ xs: 12 }} sx={{ pt: 2 }}>
-                      <Divider />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Grid container justifyContent="center">
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                          <Button
-                            fullWidth
-                            variant="contained"
-                            disabled={handleCheckDisabled()}
-                            onClick={handleUnlockPath}
-                          >
-                            Next
-                          </Button>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                </Grid>
-              </Grid>
+        <Stack gap={2}>
+          <DatasetSummary />
+          <Collapse
+            in={lockedStep.dataset.openPanel}
+            timeout={{ enter: 500, exit: 250 }}
+            unmountOnExit
+          >
+            <Stack gap={2}>
+              <Container maxWidth="lg">
+                <Stack gap={2}>
+                  <Typography>Source of data</Typography>
+                  <Stack gap={2} direction="row" alignItems="center">
+                    <Autocomplete
+                      autoFocus
+                      disablePortal
+                      disableClearable
+                      disableCloseOnSelect
+                      fullWidth
+                      getOptionLabel={(option) => option.lrsTitle}
+                      value={dataset.selectedLRSList}
+                      multiple
+                      options={handleShowOptions()}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          placeholder="Search for Learning Record Stores (LRS)"
+                        />
+                      )}
+                      renderOption={(props, option) => {
+                        const { key, ...restProps } = props;
+                        return (
+                          <li {...restProps} key={key}>
+                            {option.lrsTitle}
+                          </li>
+                        );
+                      }}
+                      onChange={(event, value) => {
+                        if (value) handleSelectLRS(value);
+                      }}
+                    />
+                    <CustomTooltip
+                      type="description"
+                      message={`To be decided!`}
+                    />
+                  </Stack>
+                </Stack>
+              </Container>
+              <Divider />
+              <Container maxWidth="sm">
+                <Button
+                  fullWidth
+                  variant="contained"
+                  disabled={handleCheckDisabled()}
+                  onClick={handleUnlockPath}
+                >
+                  Next
+                </Button>
+              </Container>
               <CustomDialog
                 type="delete"
                 open={state.lrsDialog.openDialogLRS}
@@ -199,9 +181,9 @@ export default function Dataset() {
                 content={state.lrsDialog.content}
                 handler={handleConfirmRemoveLRS}
               />
-            </Collapse>
-          </Grid>
-        </Grid>
+            </Stack>
+          </Collapse>
+        </Stack>
       </CustomPaper>
     </>
   );

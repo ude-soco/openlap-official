@@ -88,51 +88,44 @@ export default function AnalysisSummary() {
           timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
-          <Grid container spacing={1}>
+          <Stack gap={1}>
+            <Typography variant="overline">Selection summary</Typography>
             {handleCheckAnalyticsMethodSelected("method") && (
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Typography>Selected Analytics Method</Typography>
-                  <Chip label={analysis.selectedAnalyticsMethod.method.name} />
-                </Grid>
+              <Grid container spacing={1} alignItems="center">
+                <Typography>Analytics Method:</Typography>
+                <Chip label={analysis.selectedAnalyticsMethod.method.name} />
               </Grid>
             )}
             {handleCheckAnalyticsMethodSelected("inputs") && (
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Typography>Selected Inputs</Typography>
-                  {analysis.inputs.map((input) => {
-                    if (input.selectedInput) {
-                      return (
-                        <Chip
-                          key={input.id}
-                          label={`${input.title} (${input.selectedInput.name})`}
-                        />
-                      );
-                    }
-                  })}
-                </Grid>
+              <Grid container spacing={1} alignItems="center">
+                <Typography>Inputs:</Typography>
+                {analysis.inputs.map((input) => {
+                  if (input.selectedInput) {
+                    return (
+                      <Chip
+                        key={input.id}
+                        label={`${input.title} (${input.selectedInput.name})`}
+                      />
+                    );
+                  }
+                })}
               </Grid>
             )}
             {handleCheckAnalyticsMethodSelected("method") && (
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Typography>Selected Params</Typography>
-                  {analysis.params.map((param) => (
-                    <Chip
-                      key={param.id}
-                      label={`${param.title} (${param.value})`}
-                    />
-                  ))}
-                </Grid>
+              <Grid container spacing={1} alignItems="center">
+                <Typography>Parameters:</Typography>
+                {analysis.params.map((param) => (
+                  <Chip
+                    key={param.id}
+                    label={`${param.title} (${param.value})`}
+                  />
+                ))}
               </Grid>
             )}
-            <Grid size={{ xs: 12 }}>
-              {Object.keys(analysis.analyzedData).length ? (
-                <AnalyzedDataTable />
-              ) : undefined}
-            </Grid>
-          </Grid>
+            {Object.keys(analysis.analyzedData).length ? (
+              <AnalyzedDataTable />
+            ) : undefined}
+          </Stack>
         </Collapse>
       </Stack>
     </>

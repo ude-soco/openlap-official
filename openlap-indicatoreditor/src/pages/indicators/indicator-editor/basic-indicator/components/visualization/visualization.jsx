@@ -11,6 +11,8 @@ import {
   LinearProgress,
   Skeleton,
   TextField,
+  Stack,
+  Container,
 } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { BasicContext } from "../../basic-indicator";
@@ -165,83 +167,57 @@ export default function Visualization() {
   return (
     <>
       <CustomPaper locked={lockedStep.visualization.locked}>
-        <Grid container>
-          <Grid size={{ xs: 12 }}>
-            <VisualizationSummary />
-            <Collapse
-              in={lockedStep.visualization.openPanel}
-              timeout={{ enter: 500, exit: 250 }}
-              unmountOnExit
-            >
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}>
-                  <Grid container spacing={2} justifyContent="center">
-                    <Grid size={{ xs: 12, lg: 8 }}>
-                      <LibrarySelection />
+        <Stack gap={2}>
+          <VisualizationSummary />
+          <Collapse
+            in={lockedStep.visualization.openPanel}
+            timeout={{ enter: 500, exit: 250 }}
+            unmountOnExit
+          >
+            <Stack gap={4}>
+              <Container maxWidth="lg">
+                <LibrarySelection />
+              </Container>
+              {visualization.selectedLibrary.id ? (
+                visualization.typeList.length > 0 ? (
+                  <TypeSelection />
+                ) : (
+                  <LinearProgress />
+                )
+              ) : undefined}
+              {visualization.inputs.length > 0 ? (
+                <>
+                  <TypeInputSelection />
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, lg: "grow", xl: 8 }}>
+                      {visualization.previewData.displayCode.length !== 0 ? (
+                        <ChartPreview previewData={visualization.previewData} />
+                      ) : (
+                        <Skeleton variant="rectangular" height={565} />
+                      )}
                     </Grid>
-                    <Grid size={{ xs: 12, lg: 8 }}>
-                      {visualization.selectedLibrary.id ? (
-                        visualization.typeList.length > 0 ? (
-                          <TypeSelection />
-                        ) : (
-                          <LinearProgress />
-                        )
-                      ) : undefined}
-                    </Grid>
-                    <>
-                      {visualization.inputs.length > 0 ? (
-                        <>
-                          <Grid size={{ xs: 12 }} sx={{ py: 2 }}>
-                            <TypeInputSelection />
-                          </Grid>
-
-                          <Grid size={{ xs: 12 }}>
-                            <Grid container spacing={2}>
-                              <Grid size={{ xs: 12, lg: "grow", xl: 8 }}>
-                                {visualization.previewData.displayCode
-                                  .length !== 0 ? (
-                                  <ChartPreview
-                                    previewData={visualization.previewData}
-                                  />
-                                ) : (
-                                  <Skeleton
-                                    variant="rectangular"
-                                    height={565}
-                                  />
-                                )}
-                              </Grid>
-                              <Grid size={{ xs: 12, md: "grow" }}>
-                                <ChartCustomizationPanel />
-                              </Grid>
-                            </Grid>
-                          </Grid>
-                        </>
-                      ) : undefined}
-                    </>
-                    <Grid size={{ xs: 12 }}>
-                      <Divider />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Grid container justifyContent="center">
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                          <Button
-                            fullWidth
-                            variant="contained"
-                            // TODO: A check required, if lrs, filters (activities) are selected, required analysis mapping are selected, visualization inputs are selected
-                            // disabled={handleCheckDisabled()}
-                            onClick={handleToggleNameIndicator}
-                          >
-                            Save Indicator
-                          </Button>
-                        </Grid>
-                      </Grid>
+                    <Grid size={{ xs: 12, md: "grow" }}>
+                      <ChartCustomizationPanel />
                     </Grid>
                   </Grid>
-                </Grid>
-              </Grid>
-            </Collapse>
-          </Grid>
-        </Grid>
+                </>
+              ) : undefined}
+
+              <Divider />
+              <Container maxWidth="sm">
+                <Button
+                  fullWidth
+                  variant="contained"
+                  // TODO: A check required, if lrs, filters (activities) are selected, required analysis mapping are selected, visualization inputs are selected
+                  // disabled={handleCheckDisabled()}
+                  onClick={handleToggleNameIndicator}
+                >
+                  Save Indicator
+                </Button>
+              </Container>
+            </Stack>
+          </Collapse>
+        </Stack>
         <Dialog
           fullWidth
           maxWidth="sm"

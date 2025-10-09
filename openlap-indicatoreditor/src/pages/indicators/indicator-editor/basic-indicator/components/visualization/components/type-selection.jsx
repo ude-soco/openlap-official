@@ -73,12 +73,12 @@ const TypeSelection = () => {
 
   return (
     <Stack gap={2}>
-      <Grid container alignItems="center">
+      <Stack direction="row" alignItems="center">
         <Typography>
           Available <b>Charts</b>
         </Typography>
         <CustomTooltip type="description" message={`To be decided`} />
-      </Grid>
+      </Stack>
       <Grid container spacing={2} justifyContent="center">
         {visualization.typeList.flatMap((type, index) =>
           Object.entries(visualizationImages)

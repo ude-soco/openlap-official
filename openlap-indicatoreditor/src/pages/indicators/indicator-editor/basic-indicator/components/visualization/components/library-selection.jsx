@@ -1,6 +1,6 @@
 import { useContext, useEffect } from "react";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
-import { Autocomplete, Grid, TextField, Typography } from "@mui/material";
+import { Autocomplete, Stack, TextField, Typography } from "@mui/material";
 import {
   fetchVisualizationLibrary,
   fetchVisualizationTypeByLibraryId,
@@ -61,50 +61,46 @@ export default function LibrarySelection() {
 
   return (
     <>
-      <Grid container>
-        <Grid size={{ xs: 12 }}>
-          <Grid container alignItems="center">
-            <Typography>
-              Select a <b>Visualization library</b>
-            </Typography>
-            <CustomTooltip type="description" message={`To be decided`} />
-          </Grid>
-        </Grid>
-        <Grid size={{ xs: 12 }}>
-          <Autocomplete
-            disableClearable
-            disablePortal
-            fullWidth
-            options={visualization.libraryList || []}
-            getOptionLabel={(o) => o.name}
-            value={visualization.selectedLibrary || null}
-            onChange={(event, value) => handleSelectVisualizationLibrary(value)}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Search for Visualization libraries"
-              />
-            )}
-            renderOption={(props, option) => {
-              const { key, ...restProps } = props;
-              return (
-                <li {...restProps} key={option.id}>
-                  <Grid container sx={{ py: 0.5 }}>
-                    <Grid size={{ xs: 12 }}>
-                      <Typography>{option.name}</Typography>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Typography variant="body2">
-                        {option.description}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </li>
-              );
-            }}
-          />
-        </Grid>
-      </Grid>
+      <Stack gap={1}>
+        <Stack direction="row" alignItems="center">
+          <Typography>
+            Select a <b>Visualization library</b>
+          </Typography>
+          <CustomTooltip type="description" message={`To be decided`} />
+        </Stack>
+        <Autocomplete
+          disableClearable
+          disablePortal
+          fullWidth
+          options={visualization.libraryList || []}
+          getOptionLabel={(o) => o.name}
+          value={visualization.selectedLibrary || null}
+          onChange={(event, value) => handleSelectVisualizationLibrary(value)}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              placeholder="Search for Visualization libraries"
+            />
+          )}
+          renderOption={(props, option) => {
+            const { key, ...restProps } = props;
+            return (
+              <li {...restProps} key={option.id}>
+                <Stack sx={{ py: 0.5 }}>
+                  <Typography>{option.name}</Typography>
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    sx={{ fontStyle: "italic" }}
+                  >
+                    {option.description}
+                  </Typography>
+                </Stack>
+              </li>
+            );
+          }}
+        />
+      </Stack>
     </>
   );
 }

@@ -64,22 +64,25 @@ export default function DatasetSummary() {
           timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
-          <Grid container spacing={1} alignItems="center">
-            {handleCheckDatasetSelected() ? (
-              <>
-                <Typography>Source of data:</Typography>
-                {dataset.selectedLRSList.map((lrs) => (
-                  <Grid key={lrs.id}>
-                    <Chip label={lrs.lrsTitle} />
-                  </Grid>
-                ))}
-              </>
-            ) : (
-              <Typography sx={{ fontStyle: "italic" }}>
-                No source selected yet!
-              </Typography>
-            )}
-          </Grid>
+          <Stack gap={1}>
+            <Typography variant="overline">Selection summary</Typography>
+            <Grid container spacing={1} alignItems="center">
+              {handleCheckDatasetSelected() ? (
+                <>
+                  <Typography>Source of data:</Typography>
+                  {dataset.selectedLRSList.map((lrs) => (
+                    <Grid key={lrs.id}>
+                      <Chip label={lrs.lrsTitle} />
+                    </Grid>
+                  ))}
+                </>
+              ) : (
+                <Typography sx={{ fontStyle: "italic" }}>
+                  No source selected yet!
+                </Typography>
+              )}
+            </Grid>
+          </Stack>
         </Collapse>
       </Stack>
     </>

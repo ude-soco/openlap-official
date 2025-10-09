@@ -149,18 +149,16 @@ export default function Analysis() {
                 </Stack>
               </Container>
               <Divider />
-              <Grid container justifyContent="center">
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    disabled={handleCheckDisabled()}
-                    onClick={handleUnlockPath}
-                  >
-                    Next
-                  </Button>
-                </Grid>
-              </Grid>
+              <Container maxWidth="sm">
+                <Button
+                  fullWidth
+                  variant="contained"
+                  disabled={handleCheckDisabled()}
+                  onClick={handleUnlockPath}
+                >
+                  Next
+                </Button>
+              </Container>
             </Stack>
           </Collapse>
         </Stack>

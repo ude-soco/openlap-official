@@ -139,68 +139,59 @@ export default function FilterSummary() {
           timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
-          <Grid container spacing={1}>
-            <Grid size={{ xs: 12 }}>
-              <Grid container spacing={1} alignItems="center">
-                <Typography>Selected users</Typography>
-                <Chip label={getUserFilterLabel()} />
-              </Grid>
+          <Stack gap={1}>
+            <Typography variant="overline">Selection summary</Typography>
+            <Grid container spacing={1} alignItems="center">
+              <Typography>User(s):</Typography>
+              <Chip label={getUserFilterLabel()} />
             </Grid>
 
-            <Grid size={{ xs: 12 }}>
-              <Grid container spacing={1} alignItems="center">
-                <Typography>Timeframe</Typography>
-                <Chip
-                  label={`From (${dayjs(filters.selectedTime.from).format(
-                    "DD MMM YYYY"
-                  )})`}
-                />
-                <Chip
-                  label={`Until (${dayjs(filters.selectedTime.until).format(
-                    "DD MMM YYYY"
-                  )})`}
-                />
-              </Grid>
+            <Grid container spacing={1} alignItems="center">
+              <Typography>Timeframe:</Typography>
+              <Chip
+                label={`From (${dayjs(filters.selectedTime.from).format(
+                  "DD MMM YYYY"
+                )})`}
+              />
+              <Chip
+                label={`Until (${dayjs(filters.selectedTime.until).format(
+                  "DD MMM YYYY"
+                )})`}
+              />
             </Grid>
             {handleCheckFiltersSelected() && (
               <>
-                <Grid size={{ xs: 12 }}>
-                  <Grid container spacing={1} alignItems="center">
-                    <Typography>Selected Activity Types</Typography>
-                    {filters.selectedActivities.map((activity) => (
-                      <Chip
-                        key={activity.id}
-                        label={activity.selectedActivityType.name}
-                      />
-                    ))}
-                  </Grid>
+                <Grid container spacing={1} alignItems="center">
+                  <Typography>Activity Types:</Typography>
+                  {filters.selectedActivities.map((activity) => (
+                    <Chip
+                      key={activity.id}
+                      label={activity.selectedActivityType.name}
+                    />
+                  ))}
                 </Grid>
 
-                <Grid size={{ xs: 12 }}>
-                  <Grid container spacing={1} alignItems="center">
-                    <Typography>Selected Actions</Typography>
-                    {filters.selectedActivities.map((activity) => (
-                      <ChipsWithMore
-                        key={activity.id}
-                        items={activity.selectedActionList}
-                      />
-                    ))}
-                  </Grid>
+                <Grid container spacing={1} alignItems="center">
+                  <Typography>Actions:</Typography>
+                  {filters.selectedActivities.map((activity) => (
+                    <ChipsWithMore
+                      key={activity.id}
+                      items={activity.selectedActionList}
+                    />
+                  ))}
                 </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <Grid container spacing={1} alignItems="center">
-                    <Typography>Selected Activities</Typography>
-                    {filters.selectedActivities.map((activity) => (
-                      <ChipsWithMore
-                        key={activity.id}
-                        items={activity.selectedActivityList}
-                      />
-                    ))}
-                  </Grid>
+                <Grid container spacing={1} alignItems="center">
+                  <Typography>Activities:</Typography>
+                  {filters.selectedActivities.map((activity) => (
+                    <ChipsWithMore
+                      key={activity.id}
+                      items={activity.selectedActivityList}
+                    />
+                  ))}
                 </Grid>
               </>
             )}
-          </Grid>
+          </Stack>
         </Collapse>
       </Stack>
     </>
