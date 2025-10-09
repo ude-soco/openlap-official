@@ -57,7 +57,7 @@ export default function ActivityFilters() {
           id: uuidv4(),
           selectedActivityType: { name: "" },
           actionList: [],
-          selectedActionList: null,
+          selectedActionList: [],
           activityList: [],
           selectedActivityList: [],
         },
@@ -197,7 +197,7 @@ export default function ActivityFilters() {
                     </Stack>
                     <Stack gap={3}>
                       <ActivityTypeSelection activity={activity} />
-                      <ActionSelection activity={activity} />
+                      <ActionSelection activity={activity} index={index} />
                       <ActivitySelection activity={activity} />
                     </Stack>
                   </Stack>

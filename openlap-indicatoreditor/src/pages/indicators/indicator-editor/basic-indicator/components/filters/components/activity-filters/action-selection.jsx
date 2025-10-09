@@ -11,7 +11,7 @@ import { fetchActivitiesList } from "../../utils/filters-api";
 import { AuthContext } from "../../../../../../../../setup/auth-context-manager/auth-context-manager";
 import CustomTooltip from "../../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
-export default function ActionSelection({ activity }) {
+export default function ActionSelection({ activity, index }) {
   const { api } = useContext(AuthContext);
   const { dataset, setFilters } = useContext(BasicContext);
 
@@ -47,12 +47,14 @@ export default function ActionSelection({ activity }) {
             a.id === activity.id
               ? {
                   ...a,
-                  selectedActionList: value,
+                  selectedActionList: [value],
                   activityList: activityList,
                   selectedActivityList: [],
                 }
               : a
           );
+          console.log(updatedActivities);
+
           return {
             ...p,
             selectedActivities: updatedActivities,
@@ -66,7 +68,7 @@ export default function ActionSelection({ activity }) {
           a.id === activity.id
             ? {
                 ...a,
-                selectedActionList: null,
+                selectedActionList: [],
                 activityList: [],
                 selectedActivityList: [],
               }
@@ -112,10 +114,9 @@ export default function ActionSelection({ activity }) {
           disabled={handleCheckActionsAvailable()}
           options={activity.actionList}
           getOptionLabel={(o) => o.name}
-          value={activity.selectedActionList ?? null}
-          // value={activity.selectedActionList || []}
+          value={activity.selectedActionList[index] || null}
           onChange={(event, value) => {
-            if (value) handleSelectActions(value);
+            handleSelectActions(value);
           }}
           renderInput={(params) => (
             <TextField {...params} placeholder="Search for actions" />

@@ -6,6 +6,7 @@ import {
   Grid,
   Tooltip,
   Typography,
+  Stack,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import { BasicContext } from "../../../basic-indicator";
@@ -99,41 +100,36 @@ export default function FilterSummary() {
 
   return (
     <>
-      <Grid container>
-        <Grid size={{ xs: 12 }}>
-          <Grid container justifyContent="space-between" spacing={1}>
-            <Grid size="grow">
-              <Grid container alignItems="center" spacing={1}>
-                {!lockedStep.filters.locked ? (
-                  <Chip label={lockedStep.filters.step} color="primary" />
-                ) : (
-                  <IconButton size="small">
-                    <LockIcon />
-                  </IconButton>
-                )}
-                <Typography>Filters</Typography>
-                {!lockedStep.filters.locked && (
-                  <TipPopover
-                    tipAnchor={state.tipAnchor}
-                    toggleTipAnchor={handleTipAnchor}
-                    description={state.tipDescription}
-                  />
-                )}
-                {!lockedStep.filters.locked &&
-                  !lockedStep.filters.openPanel && (
-                    <ToggleSummaryButton
-                      showSelections={state.showSelections}
-                      toggleShowSelection={handleToggleShowSelection}
-                    />
-                  )}
-              </Grid>
-            </Grid>
-            <ToggleEditIconButton
-              openPanel={lockedStep.filters.openPanel}
-              togglePanel={handleTogglePanel}
-            />
+      <Stack gap={2}>
+        <Stack direction="row" justifyContent="space-between" gap={1}>
+          <Grid container alignItems="center" spacing={1}>
+            {!lockedStep.filters.locked ? (
+              <Chip label={lockedStep.filters.step} color="primary" />
+            ) : (
+              <IconButton size="small">
+                <LockIcon />
+              </IconButton>
+            )}
+            <Typography>Filters</Typography>
+            {!lockedStep.filters.locked && (
+              <TipPopover
+                tipAnchor={state.tipAnchor}
+                toggleTipAnchor={handleTipAnchor}
+                description={state.tipDescription}
+              />
+            )}
+            {!lockedStep.filters.locked && !lockedStep.filters.openPanel && (
+              <ToggleSummaryButton
+                showSelections={state.showSelections}
+                toggleShowSelection={handleToggleShowSelection}
+              />
+            )}
           </Grid>
-        </Grid>
+          <ToggleEditIconButton
+            openPanel={lockedStep.filters.openPanel}
+            togglePanel={handleTogglePanel}
+          />
+        </Stack>
         <Collapse
           in={
             !lockedStep.filters.locked &&
@@ -143,80 +139,70 @@ export default function FilterSummary() {
           timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
-          <Grid size={{ xs: 12 }}>
-            <Grid container spacing={1}>
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Typography>Selected users</Typography>
-                  <Chip label={getUserFilterLabel()} />
-                </Grid>
+          <Grid container spacing={1}>
+            <Grid size={{ xs: 12 }}>
+              <Grid container spacing={1} alignItems="center">
+                <Typography>Selected users</Typography>
+                <Chip label={getUserFilterLabel()} />
               </Grid>
-
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Typography>Timeframe</Typography>
-                  <Chip
-                    label={`From (${dayjs(filters.selectedTime.from).format(
-                      "DD MMM YYYY"
-                    )})`}
-                  />
-                  <Chip
-                    label={`Until (${dayjs(filters.selectedTime.until).format(
-                      "DD MMM YYYY"
-                    )})`}
-                  />
-                </Grid>
-              </Grid>
-              {handleCheckFiltersSelected() && (
-                <>
-                  <Grid size={{ xs: 12 }}>
-                    <Grid container spacing={1} alignItems="center">
-                      <Typography>Selected Activity Types</Typography>
-                      {filters.selectedActivities.map((activity) => (
-                        <Chip
-                          key={activity.id}
-                          label={activity.selectedActivityType.name}
-                        />
-                      ))}
-                    </Grid>
-                  </Grid>
-
-                  <Grid size={{ xs: 12 }}>
-                    <Grid container spacing={1} alignItems="center">
-                      <Typography>Selected Actions</Typography>
-                      {filters.selectedActivities.map((activity) => {
-                        const action = activity.selectedActionList;
-                        return (
-                          action && (
-                            <Tooltip
-                              key={activity.id}
-                              arrow
-                              title={action.description || action.name}
-                            >
-                              <Chip label={action.name || "Unnamed action"} />
-                            </Tooltip>
-                          )
-                        );
-                      })}
-                    </Grid>
-                  </Grid>
-                  <Grid size={{ xs: 12 }}>
-                    <Grid container spacing={1} alignItems="center">
-                      <Typography>Selected Activities</Typography>
-                      {filters.selectedActivities.map((activity) => (
-                        <ChipsWithMore
-                          key={activity.id}
-                          items={activity.selectedActivityList}
-                        />
-                      ))}
-                    </Grid>
-                  </Grid>
-                </>
-              )}
             </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <Grid container spacing={1} alignItems="center">
+                <Typography>Timeframe</Typography>
+                <Chip
+                  label={`From (${dayjs(filters.selectedTime.from).format(
+                    "DD MMM YYYY"
+                  )})`}
+                />
+                <Chip
+                  label={`Until (${dayjs(filters.selectedTime.until).format(
+                    "DD MMM YYYY"
+                  )})`}
+                />
+              </Grid>
+            </Grid>
+            {handleCheckFiltersSelected() && (
+              <>
+                <Grid size={{ xs: 12 }}>
+                  <Grid container spacing={1} alignItems="center">
+                    <Typography>Selected Activity Types</Typography>
+                    {filters.selectedActivities.map((activity) => (
+                      <Chip
+                        key={activity.id}
+                        label={activity.selectedActivityType.name}
+                      />
+                    ))}
+                  </Grid>
+                </Grid>
+
+                <Grid size={{ xs: 12 }}>
+                  <Grid container spacing={1} alignItems="center">
+                    <Typography>Selected Actions</Typography>
+                    {filters.selectedActivities.map((activity) => (
+                      <ChipsWithMore
+                        key={activity.id}
+                        items={activity.selectedActionList}
+                      />
+                    ))}
+                  </Grid>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <Grid container spacing={1} alignItems="center">
+                    <Typography>Selected Activities</Typography>
+                    {filters.selectedActivities.map((activity) => (
+                      <ChipsWithMore
+                        key={activity.id}
+                        items={activity.selectedActivityList}
+                      />
+                    ))}
+                  </Grid>
+                </Grid>
+              </>
+            )}
           </Grid>
         </Collapse>
-      </Grid>
+      </Stack>
     </>
   );
 }

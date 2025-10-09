@@ -37,7 +37,7 @@ export default function ActivityTypeSelection({ activity }) {
                 ...a,
                 selectedActivityType: value,
                 actionList: actionList,
-                selectedActionList: null,
+                selectedActionList: [],
                 activityList: [],
                 selectedActivityList: [],
               }
