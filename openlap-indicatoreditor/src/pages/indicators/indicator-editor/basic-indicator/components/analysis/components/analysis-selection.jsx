@@ -6,7 +6,7 @@ import {
   fetchTechniqueInputs,
   fetchTechniqueParams,
 } from "../utils/analysis-api";
-import { Autocomplete, Grid, TextField, Typography } from "@mui/material";
+import { Autocomplete, Stack, TextField, Typography } from "@mui/material";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 
 export default function AnalysisSelection() {
@@ -42,6 +42,7 @@ export default function AnalysisSelection() {
         method: value,
         mapping: { mapping: [] },
       },
+      analyzedData: {},
     }));
 
     try {
@@ -65,53 +66,46 @@ export default function AnalysisSelection() {
 
   return (
     <>
-      <Grid container>
-        <Grid size={{ xs: 12 }}>
-          <Grid container alignItems="center">
-            <Typography>
-              Select an <b>Analytics Method</b>
-            </Typography>
-            <CustomTooltip
-              type="description"
-              message={`Select the type of analysis to apply to your data.`}
-            />
-          </Grid>
-        </Grid>
-        <Grid size={{ xs: 12 }}>
-          <Autocomplete
-            disableClearable
-            disablePortal
-            fullWidth
-            options={analysis.analyticsMethodList}
-            getOptionLabel={(o) => o.name}
-            value={analysis.selectedAnalyticsMethod.method || null}
-            onChange={(event, value) => handleSelectAnalyticsMethod(value)}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Search for Analytics Methods"
-              />
-            )}
-            renderOption={(props, option) => {
-              const { key, ...restProps } = props;
-              return (
-                <li {...restProps} key={option.id}>
-                  <Grid container sx={{ py: 0.5 }}>
-                    <Grid size={{ xs: 12 }}>
-                      <Typography>{option.name}</Typography>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Typography variant="body2">
-                        {option.description}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </li>
-              );
-            }}
+      <Stack>
+        <Stack direction="row" alignItems="center">
+          <Typography>
+            Select an <b>Analytics Method</b>
+          </Typography>
+          <CustomTooltip
+            type="description"
+            message={`Select the type of analysis to apply to your data.`}
           />
-        </Grid>
-      </Grid>
+        </Stack>
+        <Autocomplete
+          disableClearable
+          disablePortal
+          fullWidth
+          options={analysis.analyticsMethodList}
+          getOptionLabel={(o) => o.name}
+          value={analysis.selectedAnalyticsMethod.method || null}
+          onChange={(event, value) => handleSelectAnalyticsMethod(value)}
+          renderInput={(params) => (
+            <TextField {...params} placeholder="Search for Analytics Methods" />
+          )}
+          renderOption={(props, option) => {
+            const { key, ...restProps } = props;
+            return (
+              <li {...restProps} key={option.id}>
+                <Stack sx={{ py: 0.5 }}>
+                  <Typography>{option.name}</Typography>
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    sx={{ fontStyle: "italic" }}
+                  >
+                    {option.description}
+                  </Typography>
+                </Stack>
+              </li>
+            );
+          }}
+        />
+      </Stack>
     </>
   );
 }

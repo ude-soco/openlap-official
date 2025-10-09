@@ -5,9 +5,11 @@ import {
   Box,
   Button,
   Collapse,
+  Container,
   Divider,
   Grid,
   LinearProgress,
+  Stack,
   Typography,
 } from "@mui/material";
 import AnalysisSummary from "./components/analysis-summary";
@@ -71,119 +73,97 @@ export default function Analysis() {
   return (
     <>
       <CustomPaper locked={lockedStep.analysis.locked}>
-        <Grid container>
-          <Grid size={{ xs: 12 }}>
-            <AnalysisSummary />
-            <Collapse
-              in={lockedStep.analysis.openPanel}
-              timeout={{ enter: 500, exit: 250 }}
-              unmountOnExit
-            >
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12 }}>
-                  <Grid container spacing={2} justifyContent="center">
-                    <Grid size={{ xs: 12, lg: 8 }}>
-                      <Grid container spacing={3}>
-                        <Grid size={{ xs: 12 }}>
-                          <AnalysisSelection />
+        <Stack>
+          <AnalysisSummary />
+          <Collapse
+            in={lockedStep.analysis.openPanel}
+            timeout={{ enter: 500, exit: 250 }}
+            unmountOnExit
+          >
+            <Stack gap={2}>
+              <Container maxWidth="md">
+                <Stack gap={3}>
+                  <AnalysisSelection />
+                  {analysis.inputs.length !== 0 ? (
+                    <>
+                      <Grid container spacing={2}>
+                        <Grid
+                          size={{
+                            xs: 12,
+                            lg: analysis.params.length !== 0 ? 6 : 12,
+                          }}
+                        >
+                          <InputsSelection />
                         </Grid>
-
-                        {analysis.inputs.length !== 0 ? (
-                          <>
-                            <Grid size={{ xs: 12 }}>
-                              <Grid container spacing={2}>
-                                <Grid
-                                  size={{
-                                    xs: 12,
-                                    md: analysis.params.length !== 0 ? 6 : 12,
-                                  }}
-                                >
-                                  <InputsSelection />
-                                </Grid>
-                                {analysis.params.length !== 0 ? (
-                                  <Grid size={{ xs: 12, md: 6 }}>
-                                    <ParamsSelection />
-                                  </Grid>
-                                ) : undefined}
-                              </Grid>
-                            </Grid>
-                            <Grid size={{ xs: 12 }}>
-                              {Object.keys(analysis.analyzedData).length ? (
-                                <AnalyzedDataTable />
-                              ) : (
-                                <Box
-                                  sx={{
-                                    mt: 2,
-                                    pb: 1,
-                                    p: 8,
-                                    border: "1px dashed",
-                                    borderColor: "divider",
-                                    borderRadius: 2,
-                                    textAlign: "center",
-                                    color: "text.secondary",
-                                  }}
-                                >
-                                  <Typography variant="body1" gutterBottom>
-                                    Click "Preview" to run the analysis and view
-                                    of the analyzed data.
-                                  </Typography>
-                                  <Grid container justifyContent="center">
-                                    <Button
-                                      loading={state.loadingPreview}
-                                      loadingPosition="start"
-                                      loadingIndicator="Loading preview..."
-                                      autoFocus
-                                      variant="contained"
-                                      disabled={handleCheckPreviewDisabled()}
-                                      onClick={handlePreviewAnalyzedData}
-                                    >
-                                      {!state.loadingPreview && "Preview"}
-                                    </Button>
-                                    {handleCheckPreviewDisabled() && (
-                                      <CustomTooltip
-                                        type="help"
-                                        message={`The button is disabled because:<br/>
-                                        ● The required <b>Input(s)</b> of the analytics method may not selected.<br/>
-                                        ● In <b>Filters</b>, under all <b>Activity filters</b>, none of the <b>Activities</b> are possibly not selected.
-                                        `}
-                                      />
-                                    )}
-                                  </Grid>
-                                </Box>
-                              )}
-                            </Grid>
-                          </>
-                        ) : analysis.selectedAnalyticsMethod.method.id.length >
-                          0 ? (
-                          <Grid size={{ xs: 12 }}>
-                            <LinearProgress />
+                        {analysis.params.length !== 0 ? (
+                          <Grid size={{ xs: 12, lg: 6 }}>
+                            <ParamsSelection />
                           </Grid>
                         ) : undefined}
                       </Grid>
-                    </Grid>
-                  </Grid>
-                  <Grid size={{ xs: 12 }} sx={{ py: 2 }}>
-                    <Divider />
-                  </Grid>
-                  <Grid size={{ xs: 12 }}>
-                    <Grid container justifyContent="center">
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Button
-                          fullWidth
-                          variant="contained"
-                          disabled={handleCheckDisabled()}
-                          onClick={handleUnlockPath}
+                      {Object.keys(analysis.analyzedData).length ? (
+                        <AnalyzedDataTable />
+                      ) : (
+                        <Box
+                          sx={{
+                            mt: 2,
+                            pb: 1,
+                            p: 8,
+                            border: "1px dashed",
+                            borderColor: "divider",
+                            borderRadius: 2,
+                            textAlign: "center",
+                            color: "text.secondary",
+                          }}
                         >
-                          Next
-                        </Button>
-                      </Grid>
-                    </Grid>
-                  </Grid>
+                          <Typography variant="body1" gutterBottom>
+                            Click "Preview" to run the analysis and view of the
+                            analyzed data.
+                          </Typography>
+                          <Button
+                            loading={state.loadingPreview}
+                            loadingPosition="start"
+                            loadingIndicator="Please wait..."
+                            autoFocus
+                            variant="contained"
+                            disabled={handleCheckPreviewDisabled()}
+                            onClick={handlePreviewAnalyzedData}
+                          >
+                            {!state.loadingPreview && "Preview"}
+                          </Button>
+                          {handleCheckPreviewDisabled() && (
+                            <CustomTooltip
+                              type="help"
+                              message={`The button is disabled because:<br/>
+                              ● The required <b>Input(s)</b> of the analytics method may not selected.<br/>
+                              ● In <b>Filters</b>, under all <b>Activity filters</b>, none of the <b>Activities</b> are possibly not selected.
+                              `}
+                            />
+                          )}
+                        </Box>
+                      )}
+                    </>
+                  ) : analysis.selectedAnalyticsMethod.method.id.length > 0 ? (
+                    <LinearProgress />
+                  ) : undefined}
+                </Stack>
+              </Container>
+              <Divider />
+              <Grid container justifyContent="center">
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    disabled={handleCheckDisabled()}
+                    onClick={handleUnlockPath}
+                  >
+                    Next
+                  </Button>
                 </Grid>
               </Grid>
-            </Collapse>
-          </Grid>
-        </Grid>
+            </Stack>
+          </Collapse>
+        </Stack>
       </CustomPaper>
     </>
   );
