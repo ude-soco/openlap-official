@@ -141,10 +141,6 @@ export default function FilterSummary() {
         >
           <Stack gap={1}>
             <Typography variant="overline">Selection summary</Typography>
-            <Grid container spacing={1} alignItems="center">
-              <Typography>User(s):</Typography>
-              <Chip label={getUserFilterLabel()} />
-            </Grid>
 
             <Grid container spacing={1} alignItems="center">
               <Typography>Timeframe:</Typography>
@@ -158,6 +154,10 @@ export default function FilterSummary() {
                   "DD MMM YYYY"
                 )})`}
               />
+            </Grid>
+            <Grid container spacing={1} alignItems="center">
+              <Typography>User(s):</Typography>
+              <Chip label={getUserFilterLabel()} />
             </Grid>
             {handleCheckFiltersSelected() && (
               <>
