@@ -3,61 +3,88 @@ package com.openlap.visualization_methods.utilities;
 import com.openlap.template.VisualizationCodeGenerator;
 import com.openlap.template.VisualizationLibraryInfo;
 import com.openlap.visualization_methods.exceptions.VisualizationClassLoaderException;
-import org.xeustechnologies.jcl.JarClassLoader;
-import org.xeustechnologies.jcl.JclObjectFactory;
-import org.xeustechnologies.jcl.exception.JclException;
-import org.xeustechnologies.jcl.proxy.CglibProxyProvider;
-import org.xeustechnologies.jcl.proxy.ProxyProviderFactory;
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 public class VisualizerClassPathLoader {
 
-  private final JarClassLoader jcl;
-  private final JclObjectFactory factory;
+	private final URLClassLoader urlClassLoader;
 
-  public VisualizerClassPathLoader(String visualizationMethodsJarsFolder) {
+	public VisualizerClassPathLoader(String jarFilePath) {
+		try {
+			File jarFile = new File(jarFilePath);
+			if (!jarFile.exists()) {
+				throw new IllegalArgumentException("JAR file not found: " + jarFilePath);
+			}
 
-    jcl = new JarClassLoader();
-    jcl.add(visualizationMethodsJarsFolder);
-    jcl.getParentLoader().setOrder(1);
-    jcl.getLocalLoader().setOrder(2);
-    jcl.getSystemLoader().setOrder(3);
-    jcl.getThreadLoader().setOrder(4);
-    jcl.getCurrentLoader().setOrder(5);
+			URL jarUrl = jarFile.toURI().toURL();
 
-    // Set default to cglib (from version 2.2.1)
-    ProxyProviderFactory.setDefaultProxyProvider(new CglibProxyProvider());
-    factory = JclObjectFactory.getInstance(true);
-  }
+			// 👇 Use the current thread's context classloader as the parent
+			// This is crucial in Spring Boot's fat JARs (LaunchedURLClassLoader)
+			ClassLoader parent = Thread.currentThread().getContextClassLoader();
 
-  public VisualizationLibraryInfo loadLibraryInfo(String implementingClass) {
-    VisualizationLibraryInfo libraryInfo;
-    try {
-      libraryInfo = (VisualizationLibraryInfo) factory.create(jcl, implementingClass);
-      return libraryInfo;
-    } catch (JclException e) {
-      throw new VisualizationClassLoaderException(
-          "The class "
-              + implementingClass
-              + " was not found or does not implement the VisualizationLibraryInfo class.");
-    } catch (NoSuchMethodError error) {
-      throw new VisualizationClassLoaderException(
-          "The class " + implementingClass + " does not have an empty constructor.");
-    }
-  }
+			this.urlClassLoader = new URLClassLoader(new URL[]{jarUrl}, parent);
 
-  public VisualizationCodeGenerator loadTypeClass(String implementingClass) {
-    VisualizationCodeGenerator vizCodeGenerator;
-    try {
-      vizCodeGenerator = (VisualizationCodeGenerator) factory.create(jcl, implementingClass);
-      return vizCodeGenerator;
-    } catch (JclException e) {
-      throw new VisualizationClassLoaderException(
-          "The class "
-              + implementingClass
-              + " was not found or does not implement the VisualizationCodeGenerator class.");
-    } catch (NoSuchMethodError error) {
-      throw new VisualizationClassLoaderException(
-          "The class " + implementingClass + " does not have an empty constructor.");
-    }
-  }
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to initialize class loader for JAR: " + jarFilePath, e);
+		}
+	}
+
+	public VisualizationLibraryInfo loadLibraryInfo(String implementingClass) {
+		try {
+			Class<?> clazz = Class.forName(implementingClass, true, urlClassLoader);
+			if (!VisualizationLibraryInfo.class.isAssignableFrom(clazz)) {
+				throw new VisualizationClassLoaderException(
+						"Class " + implementingClass + " does not implement VisualizationLibraryInfo."
+				);
+			}
+			Constructor<?> ctor = clazz.getDeclaredConstructor();
+			ctor.setAccessible(true);
+			return (VisualizationLibraryInfo) ctor.newInstance();
+
+		} catch (ClassNotFoundException e) {
+			throw new VisualizationClassLoaderException(
+					"Class " + implementingClass + " not found in JAR.", e);
+		} catch (NoSuchMethodException e) {
+			throw new VisualizationClassLoaderException(
+					"Class " + implementingClass + " does not have a no-arg constructor.", e);
+		} catch (Exception e) {
+			throw new VisualizationClassLoaderException(
+					"Failed to load class " + implementingClass + ": " + e.getMessage(), e);
+		}
+	}
+
+	public VisualizationCodeGenerator loadTypeClass(String implementingClass) {
+		try {
+			Class<?> clazz = Class.forName(implementingClass, true, urlClassLoader);
+			if (!VisualizationCodeGenerator.class.isAssignableFrom(clazz)) {
+				throw new VisualizationClassLoaderException(
+						"Class " + implementingClass + " does not implement VisualizationCodeGenerator."
+				);
+			}
+			Constructor<?> ctor = clazz.getDeclaredConstructor();
+			ctor.setAccessible(true);
+			return (VisualizationCodeGenerator) ctor.newInstance();
+
+		} catch (ClassNotFoundException e) {
+			throw new VisualizationClassLoaderException(
+					"Class " + implementingClass + " not found in JAR.", e);
+		} catch (NoSuchMethodException e) {
+			throw new VisualizationClassLoaderException(
+					"Class " + implementingClass + " does not have a no-arg constructor.", e);
+		} catch (Exception e) {
+			throw new VisualizationClassLoaderException(
+					"Failed to load class " + implementingClass + ": " + e.getMessage(), e);
+		}
+	}
+
+	public void close() {
+		try {
+			urlClassLoader.close();
+		} catch (Exception e) {
+			// Ignore, just cleanup
+		}
+	}
 }

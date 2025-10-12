@@ -2,43 +2,68 @@ package com.openlap.analytics_technique.utilities;
 
 import com.openlap.analytics_technique.exceptions.AnalyticsMethodClassLoaderException;
 import com.openlap.template.AnalyticsMethod;
-import org.xeustechnologies.jcl.JarClassLoader;
-import org.xeustechnologies.jcl.JclObjectFactory;
-import org.xeustechnologies.jcl.exception.JclException;
-import org.xeustechnologies.jcl.proxy.CglibProxyProvider;
-import org.xeustechnologies.jcl.proxy.ProxyProviderFactory;
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.net.URL;
+import java.net.URLClassLoader;
 
-public class AnalyticsMethodsClassPathLoader {
+public class AnalyticsMethodsClassPathLoader implements AutoCloseable {
 
-  private final JarClassLoader jcl;
-  private final JclObjectFactory factory;
+  private final URLClassLoader urlClassLoader;
 
-  public AnalyticsMethodsClassPathLoader(String analyticsMethodsJarsFolder) {
+  public AnalyticsMethodsClassPathLoader(String analyticsMethodsJarPath) {
+    try {
+      File jarFile = new File(analyticsMethodsJarPath);
+      if (!jarFile.exists()) {
+        throw new IllegalArgumentException("JAR file not found: " + analyticsMethodsJarPath);
+      }
 
-    jcl = new JarClassLoader();
-    jcl.add(analyticsMethodsJarsFolder);
-    jcl.getParentLoader().setOrder(1);
-    jcl.getLocalLoader().setOrder(2);
-    jcl.getSystemLoader().setOrder(3);
-    jcl.getThreadLoader().setOrder(4);
-    jcl.getCurrentLoader().setOrder(5);
+      URL jarUrl = jarFile.toURI().toURL();
 
-    // Set default to cglib (from version 2.2.1)
-    ProxyProviderFactory.setDefaultProxyProvider(new CglibProxyProvider());
-    factory = JclObjectFactory.getInstance(true);
+      // ✅ use the thread context classloader as parent for Spring Boot compatibility
+      ClassLoader parent = Thread.currentThread().getContextClassLoader();
+
+      this.urlClassLoader = new URLClassLoader(new URL[] {jarUrl}, parent);
+
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Failed to initialize class loader for JAR: " + analyticsMethodsJarPath, e);
+    }
   }
 
   public AnalyticsMethod loadClass(String implementingClass) {
-    AnalyticsMethod abstractMethod;
     try {
-      abstractMethod = (AnalyticsMethod) factory.create(jcl, implementingClass);
-      return abstractMethod;
-    } catch (JclException e) {
+      // Load class from the external JAR using our loader
+      Class<?> clazz = Class.forName(implementingClass, true, urlClassLoader);
+
+      // Check type safety
+      if (!AnalyticsMethod.class.isAssignableFrom(clazz)) {
+        throw new AnalyticsMethodClassLoaderException(
+            "Class " + implementingClass + " does not implement AnalyticsMethod.");
+      }
+
+      // Create instance via no-arg constructor
+      Constructor<?> ctor = clazz.getDeclaredConstructor();
+      ctor.setAccessible(true);
+      return (AnalyticsMethod) ctor.newInstance();
+
+    } catch (ClassNotFoundException e) {
       throw new AnalyticsMethodClassLoaderException(
-          "The class " + implementingClass + " was not found or does not implement the framework.");
-    } catch (NoSuchMethodError error) {
+          "Class " + implementingClass + " not found in JAR.", e);
+    } catch (NoSuchMethodException e) {
       throw new AnalyticsMethodClassLoaderException(
-          "The class " + implementingClass + " does not have an empty constructor.");
+          "Class " + implementingClass + " does not have a no-arg constructor.", e);
+    } catch (Exception e) {
+      throw new AnalyticsMethodClassLoaderException(
+          "Failed to load class " + implementingClass + ": " + e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public void close() {
+    try {
+      urlClassLoader.close();
+    } catch (Exception ignored) {
     }
   }
 }
