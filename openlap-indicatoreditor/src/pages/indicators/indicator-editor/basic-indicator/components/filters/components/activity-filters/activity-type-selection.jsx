@@ -61,7 +61,7 @@ export default function ActivityTypeSelection({ activity }) {
         {handleCheckActivityTypeSelected() && (
           <CustomTooltip
             type="warning"
-            message={`If you have selected an <b>Action</b> or <b>Activities</b> below, changing the <b>Activity Type</b> from this dropdown will reset both selections.`}
+            message={`Changing your selection for <b>Activity Type</b> will reset the selections of <b>Action</b> and <b>Activities</b>.`}
           />
         )}
         <Typography>

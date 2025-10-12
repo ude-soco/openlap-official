@@ -19,6 +19,10 @@ export default function ActionSelection({ activity, index }) {
     return activity.actionList.length === 0;
   };
 
+  const handleCheckActivityAvailable = () => {
+    return activity.activityList.length !== 0;
+  };
+
   const handleSelectActions = async (value) => {
     let actionIdList = [];
     // TODO:  The selectedActionList currently is taking an object NOT a list
@@ -74,15 +78,17 @@ export default function ActionSelection({ activity, index }) {
   return (
     <Stack gap={1}>
       <Stack direction="row" alignItems="center">
-        {handleCheckActionsAvailable() ? (
+        {handleCheckActionsAvailable() && (
           <CustomTooltip
             type="help"
             message={`This dropdown is disabled because:<br/>● An <b>Activity Type</b> needs to be selected`}
           />
-        ) : (
+        )}
+
+        {handleCheckActivityAvailable() && (
           <CustomTooltip
             type="warning"
-            message={`If you have selected any <b>Activities</b> below, changing the <b>Action</b> in this dropdown will reset your <b>Activity</b> selections.`}
+            message={`Changing <b>Action</b> will reset your selections in <b>Activities</b>.`}
           />
         )}
         <Typography

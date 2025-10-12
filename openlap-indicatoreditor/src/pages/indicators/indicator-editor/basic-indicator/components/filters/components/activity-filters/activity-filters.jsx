@@ -144,8 +144,7 @@ export default function ActivityFilters() {
                 gap={2}
                 component={Paper}
                 sx={{
-                  maxWidth: 400,
-                  minWidth: 360,
+                  width: 420,
                   flexShrink: 0,
                   p: 2,
                 }}
