@@ -10,8 +10,10 @@ services:
       MONGODB_PRIMARY_URI: mongodb://mongo:27017
       MONGODB_SECONDARY_URI: mongodb://mongo:27017
       OPENLAP_MONGODB_DB: openlap
-      PORT: 8090
+      # PORT: 8090
       WEBAPP_URL: http://localhost:5173
+    ports:
+      - "8090:8090"
     depends_on:
       mongo:
         condition: service_healthy
@@ -22,6 +24,8 @@ services:
     volumes:
     - mongo:/data/db
     restart: always
+    ports:
+      - "27017:27017"
     healthcheck:
       test: "mongosh --nodb --eval 'disableTelemetry()'; echo 'db.runCommand({ping: 1}).ok' | mongosh localhost:27017/test --quiet"
       start_period: 2s

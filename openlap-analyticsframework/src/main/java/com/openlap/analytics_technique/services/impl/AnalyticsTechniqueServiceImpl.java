@@ -19,6 +19,8 @@ import com.openlap.dynamicparam.OpenLAPDynamicParam;
 import com.openlap.exception.DatabaseOperationException;
 import com.openlap.exception.ServiceException;
 import com.openlap.template.AnalyticsMethod;
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +29,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.transaction.Transactional;
+
+import com.openlap.visualization_methods.exceptions.VisualizationClassLoaderException;
+import com.openlap.visualization_methods.utilities.VisualizerClassPathLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,11 +75,30 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
   public AnalyticsMethod loadAnalyticsMethodInstance(String techniqueId) {
     log.info("Loading analytics technique instance with id: {}", techniqueId);
     AnalyticsTechnique foundTechnique = fetchAnalyticsTechniqueMethod(techniqueId);
-    AnalyticsMethod analyticsMethod =
-        this.getFolderNameFromResourcesFromJarFile(null)
-            .loadClass(foundTechnique.getImplementingClass());
-    log.info("Found analytics technique {}", foundTechnique);
-    return analyticsMethod;
+    String className = foundTechnique.getImplementingClass();
+    File folder = new File(analyticsMethodsJarsFolder);
+    File[] jars = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
+    if (jars == null || jars.length == 0) {
+      throw new ServiceException("No analytics method JARs found in " + analyticsMethodsJarsFolder);
+    }
+    for (File jar : jars) {
+      try (AnalyticsMethodsClassPathLoader loader =
+          new AnalyticsMethodsClassPathLoader(jar.getAbsolutePath())) {
+        return loader.loadClass(className);
+      } catch (AnalyticsMethodClassLoaderException e) {
+        if (!e.getMessage().contains("not found")) throw e;
+      } catch (Exception e) {
+        // ignore and try next
+      }
+    }
+
+    //    AnalyticsMethod analyticsMethod =
+    //        this.getFolderNameFromResourcesFromJarFile(null)
+    //            .loadClass(foundTechnique.getImplementingClass());
+    //    log.info("Found analytics technique {}", foundTechnique);
+    //    return analyticsMethod;
+    throw new ServiceException(
+        "Could not find class " + className + " in any analytics method JAR");
   }
 
   @Override
