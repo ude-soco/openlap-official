@@ -16,4 +16,6 @@ public interface VisualizationTypeService {
 
   List<VisualizationTypeResponse> getAllVisualizationTypesByVisualizationLibraryId(
       String libraryId);
+
+  void deleteVisualizationType(String typeId);
 }

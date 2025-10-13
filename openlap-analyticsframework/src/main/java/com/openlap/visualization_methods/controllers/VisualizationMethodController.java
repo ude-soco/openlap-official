@@ -36,6 +36,14 @@ public class VisualizationMethodController {
                 visualizationLibraryService.getVisualizationLibrary(libraryId)));
   }
 
+  @DeleteMapping("/libraries/{libraryId}")
+  public ResponseEntity<?> deleteVisualizationLibrary(@PathVariable String libraryId) {
+    visualizationLibraryService.deleteVisualizationLibrary(libraryId);
+    HttpStatus status = HttpStatus.OK;
+    return ResponseEntity.status(status)
+        .body(new ApiSuccess(status, "Visualization library deleted successfully."));
+  }
+
   @GetMapping("/libraries")
   public ResponseEntity<?> getAllVisualizationLibraries() {
     List<VisualizationLibraryResponse> allVisualizationLibraries =
@@ -84,6 +92,14 @@ public class VisualizationMethodController {
                 status,
                 "Visualization type found.",
                 visualizationTypeService.getVisualizationType(typeId)));
+  }
+
+  @DeleteMapping("/types/{typeId}")
+  public ResponseEntity<?> deleteVisualizationType(@PathVariable String typeId) {
+    visualizationTypeService.deleteVisualizationType(typeId);
+    HttpStatus status = HttpStatus.OK;
+    return ResponseEntity.status(status)
+        .body(new ApiSuccess(status, "Chart deleted successfully."));
   }
 
   @GetMapping("/types/{typeId}/inputs")

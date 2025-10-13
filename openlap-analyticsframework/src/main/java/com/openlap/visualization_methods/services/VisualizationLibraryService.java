@@ -7,4 +7,6 @@ public interface VisualizationLibraryService {
   VisualizationLibraryResponse getVisualizationLibrary(String libraryId);
 
   List<VisualizationLibraryResponse> getAllVisualizationLibraries();
+
+  void deleteVisualizationLibrary(String libraryId);
 }

@@ -17,7 +17,7 @@ export const requestVisualizationLibraries = async (api) => {
     };
   } catch (error) {
     console.error("Failed to fetch visualization library data");
-    throw error; // Re-throw the error to handle it in the component
+    throw error;
   }
 };
 
@@ -31,7 +31,33 @@ export const requestVisualizationTypesByLibraryId = async (api, libraryId) => {
       data: response.data.data,
     };
   } catch (error) {
-    console.error("Failed to fetch visualization type data");
-    throw error; // Re-throw the error to handle it in the component
+    console.error("Failed to fetch charts");
+    throw error;
+  }
+};
+
+export const requestDeleteVisualizationLibraryById = async (api, libraryId) => {
+  try {
+    const response = await api.delete(
+      `v1/visualizations/libraries/${libraryId}`
+    );
+    return {
+      message: response.data.message,
+    };
+  } catch (error) {
+    console.error("Failed to delete visualization library");
+    throw error;
+  }
+};
+
+export const requestDeleteVisualizationTypeById = async (api, typeId) => {
+  try {
+    const response = await api.delete(`v1/visualizations/types/${typeId}`);
+    return {
+      message: response.data.message,
+    };
+  } catch (error) {
+    console.error("Failed to delete chart");
+    throw error;
   }
 };

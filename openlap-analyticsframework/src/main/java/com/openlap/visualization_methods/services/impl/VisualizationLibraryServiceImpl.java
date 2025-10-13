@@ -3,7 +3,9 @@ package com.openlap.visualization_methods.services.impl;
 import com.openlap.exception.DatabaseOperationException;
 import com.openlap.visualization_methods.dto.VisualizationLibraryResponse;
 import com.openlap.visualization_methods.entities.VisLibrary;
+import com.openlap.visualization_methods.entities.VisType;
 import com.openlap.visualization_methods.repositories.VisualizationLibraryRepository;
+import com.openlap.visualization_methods.repositories.VisualizationTypeRepository;
 import com.openlap.visualization_methods.services.VisualizationLibraryService;
 import com.openlap.visualization_methods.services.VisualizationMethodUtilityService;
 import java.util.ArrayList;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class VisualizationLibraryServiceImpl implements VisualizationLibraryService {
   private final VisualizationLibraryRepository visualizationLibraryRepository;
   private final VisualizationMethodUtilityService visualizationMethodUtilityService;
+  private final VisualizationTypeRepository visualizationTypeRepository;
 
   @Override
   public List<VisualizationLibraryResponse> getAllVisualizationLibraries() {
@@ -38,6 +41,17 @@ public class VisualizationLibraryServiceImpl implements VisualizationLibraryServ
       throw new DatabaseOperationException(
           "Could not access database to get visualization libraries", e);
     }
+  }
+
+  @Override
+  public void deleteVisualizationLibrary(String libraryId) {
+    VisLibrary foundVisLibrary =
+        visualizationMethodUtilityService.fetchVisualizationLibraryMethod(libraryId);
+    List<VisType> visualizationTypes = foundVisLibrary.getVisualizationTypes();
+    if (visualizationTypes != null && !visualizationTypes.isEmpty()) {
+      visualizationTypeRepository.deleteAll(visualizationTypes);
+    }
+    visualizationLibraryRepository.delete(foundVisLibrary);
   }
 
   @Override

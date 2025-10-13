@@ -12,15 +12,21 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { Link as RouterLink } from "react-router-dom";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import { useSnackbar } from "notistack";
 import {
+  requestDeleteVisualizationLibraryById,
   requestUploadAnalyticsJar,
   requestVisualizationLibraries,
   requestVisualizationTypesByLibraryId,
 } from "./utils/manage-apis";
+import VisualizationTypeTable from "./visualization-type-table";
+import CustomDialog from "../../common/components/custom-dialog/custom-dialog";
 
 const ManageVisualization = () => {
   const { api } = useContext(AuthContext);
@@ -29,6 +35,8 @@ const ManageVisualization = () => {
     loadingUpload: false,
     libraryList: [],
     loadingLibraries: false,
+    selectedLibrary: {},
+    openDeleteDialog: false,
     typeList: [],
     loadingTypes: false,
   });
@@ -61,7 +69,11 @@ const ManageVisualization = () => {
         value.id
       );
       enqueueSnackbar(typeList.message, { variant: "success" });
-      setState((p) => ({ ...p, typeList: typeList.data }));
+      setState((p) => ({
+        ...p,
+        selectedLibrary: value,
+        typeList: typeList.data,
+      }));
     } catch (error) {
       enqueueSnackbar("Error loading charts", { variant: "error" });
     } finally {
@@ -69,12 +81,49 @@ const ManageVisualization = () => {
     }
   };
 
-  // Trigger hidden file input
+  const handleToggleDelete = () => {
+    setState((p) => ({ ...p, openDeleteDialog: !p.openDeleteDialog }));
+  };
+
+  const handleDeleteLibrary = async () => {
+    setState((p) => ({ ...p, isLoading: true }));
+    try {
+      const response = await requestDeleteVisualizationLibraryById(
+        api,
+        state.selectedLibrary.id
+      );
+      const filteredLibrary = [...state.libraryList].filter(
+        (item) => item.id !== state.selectedLibrary.id
+      );
+      setState((p) => ({
+        ...p,
+        selectedLibrary: {},
+        libraryList: filteredLibrary,
+        typeList: [],
+      }));
+      enqueueSnackbar(response.message, { variant: "success" });
+    } catch (error) {
+      enqueueSnackbar("Failed to delete visualization library", {
+        variant: "error",
+      });
+    } finally {
+      setState((p) => ({ ...p, isLoading: false }));
+    }
+  };
+
+  const handleDeleteType = (typeId) => {
+    setState((p) => {
+      const newTypeList = [...state.typeList].filter(
+        (item) => item.id !== typeId
+      );
+      return { ...p, typeList: newTypeList };
+    });
+  };
+
   const handleUploadClick = () => {
     fileInputRef.current.click();
   };
 
-  // Handle the actual file
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -159,22 +208,57 @@ const ManageVisualization = () => {
               {!state.loadingUpload && "Upload JAR"}
             </Button>
           </Box>
-          <FormControl fullWidth>
-            <InputLabel>Visualization Library</InputLabel>
-            <Select
-              label="Visualization Library"
-              onChange={handleSelectLibrary}
-            >
-              {state.libraryList.map((item) => {
-                return (
-                  <MenuItem key={item.id} value={item}>
-                    {item.name}
-                  </MenuItem>
-                );
-              })}
-            </Select>
-          </FormControl>
+          {state.libraryList.length > 0 && (
+            <FormControl fullWidth>
+              <InputLabel>Visualization Library</InputLabel>
+              <Select
+                label="Visualization Library"
+                onChange={handleSelectLibrary}
+              >
+                {state.libraryList.map((item) => {
+                  return (
+                    <MenuItem key={item.id} value={item}>
+                      {item.name}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
+          )}
+          {Object.keys(state.selectedLibrary).length !== 0 && (
+            <>
+              <Stack direction="row" gap={1} alignItems="center">
+                <Typography>
+                  Selected Visualization Library:{" "}
+                  <b>{state.selectedLibrary.name}</b>
+                </Typography>
+                <Tooltip
+                  arrow
+                  title={<Typography>Delete Visualization Library</Typography>}
+                >
+                  <IconButton
+                    color="error"
+                    size="small"
+                    onClick={handleToggleDelete}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+              <VisualizationTypeTable
+                typeList={state.typeList}
+                handleDeleteType={handleDeleteType}
+              />
+            </>
+          )}
         </Stack>
+        <CustomDialog
+          type="delete"
+          content={`This will delete the visualization libary permanently.`}
+          open={state.openDeleteDialog}
+          toggleOpen={handleToggleDelete}
+          handler={handleDeleteLibrary}
+        />
       </Container>
     </>
   );

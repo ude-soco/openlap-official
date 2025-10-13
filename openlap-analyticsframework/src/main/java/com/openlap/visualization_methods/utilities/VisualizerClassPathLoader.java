@@ -8,7 +8,7 @@ import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.net.URLClassLoader;
 
-public class VisualizerClassPathLoader {
+public class VisualizerClassPathLoader implements AutoCloseable {
 
 	private final URLClassLoader urlClassLoader;
 
