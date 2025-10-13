@@ -46,4 +46,6 @@ public interface AnalyticsTechniqueService {
   List<AnalyticsTechniqueFileNameResponse> getAllAnalyticsTechniqueFileNames();
 
   List<AnalyticsTechniqueResponse> getAllAnalyticsTechniqueByFileName(String fileName);
+
+  void deleteAnalyticsMethod(String analyticsId);
 }

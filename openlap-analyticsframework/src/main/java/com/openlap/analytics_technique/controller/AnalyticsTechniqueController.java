@@ -53,6 +53,14 @@ public class AnalyticsTechniqueController {
                 analyticsTechniqueService.getAllAnalyticsTechniques()));
   }
 
+  @DeleteMapping("/{analyticsId}")
+  public ResponseEntity<?> deleteAnalyticsMethod(@PathVariable String analyticsId) {
+    analyticsTechniqueService.deleteAnalyticsMethod(analyticsId);
+    HttpStatus status = HttpStatus.OK;
+    return ResponseEntity.status(status)
+        .body(new ApiSuccess(status, "Analytics method deleted successfully."));
+  }
+
   @GetMapping("/populate")
   public ResponseEntity<?> populateAnalyticsTechniques() {
     HttpStatus status = HttpStatus.OK;

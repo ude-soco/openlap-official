@@ -21,7 +21,7 @@ import { AuthContext } from "../../setup/auth-context-manager/auth-context-manag
 import { useSnackbar } from "notistack";
 import {
   requestDeleteVisualizationLibraryById,
-  requestUploadAnalyticsJar,
+  requestUploadVisualizationJar,
   requestVisualizationLibraries,
   requestVisualizationTypesByLibraryId,
 } from "./utils/manage-apis";
@@ -141,7 +141,7 @@ const ManageVisualization = () => {
       const formData = new FormData();
       formData.append("file", file);
 
-      const messageUpload = await requestUploadAnalyticsJar(api, formData);
+      const messageUpload = await requestUploadVisualizationJar(api, formData);
 
       enqueueSnackbar(messageUpload, { variant: "success" });
 

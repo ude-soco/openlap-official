@@ -342,4 +342,10 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     }
     return responses;
   }
+
+  @Override
+  public void deleteAnalyticsMethod(String analyticsId) {
+    AnalyticsTechnique analyticsTechnique = fetchAnalyticsTechniqueMethod(analyticsId);
+    analyticsTechniqueRepository.delete(analyticsTechnique);
+  }
 }
