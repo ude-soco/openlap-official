@@ -31,6 +31,8 @@ import BasicIndicator from "../../pages/indicators/indicator-editor/basic-indica
 import NavigationBar from "../../common/components/navigation-bar/navigation-bar";
 import LandingPage from "../../pages/landing-page/landing-page.jsx";
 import PrivacyPolicy from "../../pages/privacy-policy/privacy-policy.jsx";
+import ManageVisualization from "../../pages/admin/manage-visualization.jsx";
+import ManageAnalytics from "../../pages/admin/manage-analytics.jsx";
 
 const AppRoutes = () => {
   const { theme } = useContext(CustomThemeContext);
@@ -299,6 +301,24 @@ const AppRoutes = () => {
                     <PrivateRoute
                       component={<CsvXapiDashboard />}
                       allowedRoles={[RoleTypes.user]}
+                    />
+                  }
+                />
+                <Route
+                  path="/manage-analytics"
+                  element={
+                    <PrivateRoute
+                      component={<ManageAnalytics />}
+                      allowedRoles={[RoleTypes.admin]}
+                    />
+                  }
+                />
+                <Route
+                  path="/manage-visualization"
+                  element={
+                    <PrivateRoute
+                      component={<ManageVisualization />}
+                      allowedRoles={[RoleTypes.admin]}
                     />
                   }
                 />
