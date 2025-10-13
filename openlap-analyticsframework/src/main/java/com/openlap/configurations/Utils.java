@@ -96,6 +96,26 @@ public class Utils {
     }
   }
 
+  public static void deleteJarFile(String fileName) {
+    File fileToDelete = new File(fileName);
+    boolean deleted = fileToDelete.delete();
+
+    // Check if the file was successfully marked for deletion
+    if (deleted) {
+      log.info("File '{}' marked for deletion", fileName);
+    } else {
+      log.warn("Failed to mark file '{}' for deletion.", fileName);
+      throw new ServiceException("File do not exist");
+    }
+
+    // Verify if the file actually exists after attempting deletion
+    if (!fileToDelete.exists()) {
+      log.info("Confirmed: File '{}' deleted.", fileName);
+    } else {
+      log.warn("File '{}' still exists even after deletion attempt", fileName);
+    }
+  }
+
   public static Optional<String> findJarFile(String fileName, String folderPath)
       throws IOException {
     try (Stream<Path> paths = Files.list(Paths.get(folderPath))) {

@@ -254,7 +254,7 @@ const ManageVisualization = () => {
         </Stack>
         <CustomDialog
           type="delete"
-          content={`This will delete the visualization libary permanently.`}
+          content={`This will delete the visualization libary and the JAR file permanently.`}
           open={state.openDeleteDialog}
           toggleOpen={handleToggleDelete}
           handler={handleDeleteLibrary}

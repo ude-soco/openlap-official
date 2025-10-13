@@ -1,5 +1,6 @@
 package com.openlap.visualization_methods.services.impl;
 
+import com.openlap.configurations.Utils;
 import com.openlap.exception.DatabaseOperationException;
 import com.openlap.visualization_methods.dto.VisualizationLibraryResponse;
 import com.openlap.visualization_methods.entities.VisLibrary;
@@ -51,6 +52,7 @@ public class VisualizationLibraryServiceImpl implements VisualizationLibraryServ
     if (visualizationTypes != null && !visualizationTypes.isEmpty()) {
       visualizationTypeRepository.deleteAll(visualizationTypes);
     }
+    Utils.deleteJarFile(foundVisLibrary.getFrameworkLocation());
     visualizationLibraryRepository.delete(foundVisLibrary);
   }
 
