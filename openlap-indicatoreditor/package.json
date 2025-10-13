@@ -23,7 +23,7 @@
     "apexcharts": "^5.3.5",
     "axios": "^1.12.2",
     "dayjs": "^1.11.18",
-    "html-react-parser": "^5.2.6",
+    "html-react-parser": "^5.2.7",
     "jwt-decode": "^4.0.0",
     "notistack": "^3.0.2",
     "openlap-indicatoreditor": "file:",
