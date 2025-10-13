@@ -8,6 +8,7 @@ import {
 } from "../utils/analysis-api";
 import { Autocomplete, Stack, TextField, Typography } from "@mui/material";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
+import fetchWithRetry from "../utils/helper";
 
 export default function AnalysisSelection() {
   const { api } = useContext(AuthContext);
@@ -47,8 +48,8 @@ export default function AnalysisSelection() {
 
     try {
       const [inputs, params] = await Promise.all([
-        fetchTechniqueInputs(api, methodId),
-        fetchTechniqueParams(api, methodId),
+        fetchWithRetry(fetchTechniqueInputs, [api, methodId]),
+        fetchWithRetry(fetchTechniqueParams, [api, methodId]),
       ]);
 
       // Assign default values to params
