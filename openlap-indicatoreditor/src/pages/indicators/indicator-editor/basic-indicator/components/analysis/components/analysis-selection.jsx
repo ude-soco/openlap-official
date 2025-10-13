@@ -4,11 +4,11 @@ import { BasicContext } from "../../../basic-indicator";
 import {
   fetchAnalyticsMethods,
   fetchTechniqueInputs,
+  fetchTechniqueInputsAndParams,
   fetchTechniqueParams,
 } from "../utils/analysis-api";
 import { Autocomplete, Stack, TextField, Typography } from "@mui/material";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
-import fetchWithRetry from "../utils/helper";
 
 export default function AnalysisSelection() {
   const { api } = useContext(AuthContext);
@@ -47,10 +47,9 @@ export default function AnalysisSelection() {
     }));
 
     try {
-      const [inputs, params] = await Promise.all([
-        fetchWithRetry(fetchTechniqueInputs, [api, methodId]),
-        fetchWithRetry(fetchTechniqueParams, [api, methodId]),
-      ]);
+      const response = await fetchTechniqueInputsAndParams(api, methodId);
+      const inputs = response.inputs;
+      const params = response.params;
 
       // Assign default values to params
       const initializedParams = params.map((param) => ({

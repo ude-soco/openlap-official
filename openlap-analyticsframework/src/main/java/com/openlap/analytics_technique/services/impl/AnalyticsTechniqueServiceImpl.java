@@ -2,6 +2,7 @@ package com.openlap.analytics_technique.services.impl;
 
 import com.openlap.analytics_technique.dto.request.AnalyticsTechniqueRequest;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueFileNameResponse;
+import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueInputParamResponse;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueResponse;
 import com.openlap.analytics_technique.entities.AnalyticsTechnique;
 import com.openlap.analytics_technique.exceptions.AnalyticsMethodClassLoaderException;
@@ -371,5 +372,15 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
   public void deleteAnalyticsMethod(String analyticsId) {
     AnalyticsTechnique analyticsTechnique = fetchAnalyticsTechniqueMethod(analyticsId);
     analyticsTechniqueRepository.delete(analyticsTechnique);
+  }
+
+  @Override
+  public AnalyticsTechniqueInputParamResponse getAnalyticsTechniqueInputsAndParams(
+      String methodId) {
+    AnalyticsMethod method = loadAnalyticsMethodInstance(methodId);
+    List<OpenLAPColumnConfigData> ports = method.getInputPorts();
+    ports.sort(Comparator.comparing(OpenLAPColumnConfigData::getTitle));
+    List<OpenLAPDynamicParam> paramsAsList = method.getParams().getParamsAsList(false);
+    return new AnalyticsTechniqueInputParamResponse(ports, paramsAsList);
   }
 }

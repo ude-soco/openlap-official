@@ -94,6 +94,17 @@ public class AnalyticsTechniqueController {
                 analyticsTechniqueService.getAnalyticsTechniqueOutputs(methodId)));
   }
 
+  @GetMapping("/input-params/{methodId}")
+  public ResponseEntity<?> getAnalyticsTechniqueInputsAndParams(@PathVariable String methodId) {
+    HttpStatus status = HttpStatus.OK;
+    return ResponseEntity.status(status)
+        .body(
+            new ApiSuccess(
+                status,
+                "Parameters for analytics method found.",
+                analyticsTechniqueService.getAnalyticsTechniqueInputsAndParams(methodId)));
+  }
+
   @GetMapping("/params/{methodId}")
   public ResponseEntity<?> getAnalyticsTechniqueParams(@PathVariable String methodId) {
     HttpStatus status = HttpStatus.OK;

@@ -2,6 +2,7 @@ package com.openlap.analytics_technique.services;
 
 import com.openlap.analytics_technique.dto.request.AnalyticsTechniqueRequest;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueFileNameResponse;
+import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueInputParamResponse;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueResponse;
 import com.openlap.analytics_technique.entities.AnalyticsTechnique;
 import com.openlap.dataset.OpenLAPColumnConfigData;
@@ -48,4 +49,6 @@ public interface AnalyticsTechniqueService {
   List<AnalyticsTechniqueResponse> getAllAnalyticsTechniqueByFileName(String fileName);
 
   void deleteAnalyticsMethod(String analyticsId);
+
+  AnalyticsTechniqueInputParamResponse getAnalyticsTechniqueInputsAndParams(String methodId);
 }
