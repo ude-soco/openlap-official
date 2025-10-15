@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -81,19 +82,24 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
     }
   }
 
+  private final Map<String, VisualizerClassPathLoader> loaderCache = new ConcurrentHashMap<>();
+
   @Override
   public VisualizationCodeGenerator loadVisTypeInstance(String visTypeId) {
     VisType visType = fetchVisualizationTypeMethod(visTypeId);
     String className = visType.getImplementingClass();
-    // Try each JAR in the visualizer folder
+
     File folder = new File(visualizerJarsFolder);
     File[] jars = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
     if (jars == null || jars.length == 0) {
       throw new ServiceException("No visualizer JARs found in " + visualizerJarsFolder);
     }
+
     for (File jar : jars) {
-      try (VisualizerClassPathLoader loader =
-          new VisualizerClassPathLoader(jar.getAbsolutePath())) {
+      try {
+        VisualizerClassPathLoader loader =
+            loaderCache.computeIfAbsent(
+                jar.getAbsolutePath(), path -> new VisualizerClassPathLoader(path));
         return loader.loadTypeClass(className);
       } catch (VisualizationClassLoaderException e) {
         if (!e.getMessage().contains("not found")) throw e;
@@ -101,8 +107,32 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
         // ignore and try next
       }
     }
+
     throw new ServiceException("Could not find class " + className + " in any visualizer JAR");
   }
+
+//    @Override
+//    public VisualizationCodeGenerator loadVisTypeInstance(String visTypeId) {
+//      VisType visType = fetchVisualizationTypeMethod(visTypeId);
+//      String className = visType.getImplementingClass();
+//      // Try each JAR in the visualizer folder
+//      File folder = new File(visualizerJarsFolder);
+//      File[] jars = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
+//      if (jars == null || jars.length == 0) {
+//        throw new ServiceException("No visualizer JARs found in " + visualizerJarsFolder);
+//      }
+//      for (File jar : jars) {
+//        try (VisualizerClassPathLoader loader =
+//            new VisualizerClassPathLoader(jar.getAbsolutePath())) {
+//          return loader.loadTypeClass(className);
+//        } catch (VisualizationClassLoaderException e) {
+//          if (!e.getMessage().contains("not found")) throw e;
+//        } catch (Exception e) {
+//          // ignore and try next
+//        }
+//      }
+//      throw new ServiceException("Could not find class " + className + " in any visualizer JAR");
+//    }
 
   @Override
   public void populateVisualizationMethods() {

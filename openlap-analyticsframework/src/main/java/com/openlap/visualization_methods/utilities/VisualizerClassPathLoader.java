@@ -7,6 +7,7 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
 
 public class VisualizerClassPathLoader implements AutoCloseable {
 
@@ -18,12 +19,9 @@ public class VisualizerClassPathLoader implements AutoCloseable {
 			if (!jarFile.exists()) {
 				throw new IllegalArgumentException("JAR file not found: " + jarFilePath);
 			}
-
 			URL jarUrl = jarFile.toURI().toURL();
-
-			// 👇 Use the current thread's context classloader as the parent
-			// This is crucial in Spring Boot's fat JARs (LaunchedURLClassLoader)
-			ClassLoader parent = Thread.currentThread().getContextClassLoader();
+//			ClassLoader parent = Thread.currentThread().getContextClassLoader();
+			ClassLoader parent = ClassLoader.getSystemClassLoader();
 
 			this.urlClassLoader = new URLClassLoader(new URL[]{jarUrl}, parent);
 
@@ -58,6 +56,7 @@ public class VisualizerClassPathLoader implements AutoCloseable {
 
 	public VisualizationCodeGenerator loadTypeClass(String implementingClass) {
 		try {
+			System.out.println("Loading " + implementingClass + " from: " + Arrays.toString(urlClassLoader.getURLs()));
 			Class<?> clazz = Class.forName(implementingClass, true, urlClassLoader);
 			if (!VisualizationCodeGenerator.class.isAssignableFrom(clazz)) {
 				throw new VisualizationClassLoaderException(
