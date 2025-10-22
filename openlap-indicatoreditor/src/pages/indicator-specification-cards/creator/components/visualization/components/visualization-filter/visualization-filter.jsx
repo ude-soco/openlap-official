@@ -1,8 +1,5 @@
 import { useState, useContext, useEffect } from "react";
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
   Divider,
   Grow,
@@ -12,7 +9,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import VisualizationDescription from "./visualization-description";
 import RecommendIcon from "@mui/icons-material/Recommend";
 import { DataTypes, visualizations } from "../../../../utils/data/config";

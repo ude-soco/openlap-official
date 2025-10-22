@@ -103,6 +103,13 @@ const Visualization = () => {
                 {requirements.selectedPath === pathChoices.vis && (
                   <VisualizationFilter />
                 )}
+                {requirements.selectedPath === pathChoices.data && (
+                  <>
+                    <ChartTypeFilter />
+                    <Divider />
+                    <VisualizationFilter />
+                  </>
+                )}
 
                 <Divider />
                 <Grid container justifyContent="center">

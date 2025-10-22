@@ -8,17 +8,9 @@ const ChartTypeFilter = () => {
 
   const handleSelectFilter = (filter) => {
     if (visRef.filter.type !== filter.type) {
-      setVisRef((prevState) => ({
-        ...prevState,
-        filter: filter,
-      }));
+      setVisRef((p) => ({ ...p, filter: filter }));
     } else {
-      setVisRef((prevState) => ({
-        ...prevState,
-        filter: {
-          type: "",
-        },
-      }));
+      setVisRef((p) => ({ ...p, filter: { type: "" } }));
     }
   };
 
