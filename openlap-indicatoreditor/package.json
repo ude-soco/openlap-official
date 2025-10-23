@@ -19,7 +19,7 @@
     "@mui/material": "^7.3.4",
     "@mui/styled-engine-sc": "^7.3.3",
     "@mui/x-data-grid": "^8.14.0",
-    "@mui/x-date-pickers": "^8.14.0",
+    "@mui/x-date-pickers": "^8.15.0",
     "apexcharts": "^5.3.5",
     "axios": "^1.12.2",
     "dayjs": "^1.11.18",
