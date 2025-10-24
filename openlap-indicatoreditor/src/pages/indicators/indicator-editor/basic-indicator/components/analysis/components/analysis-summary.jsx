@@ -84,7 +84,11 @@ export default function AnalysisSummary() {
           />
         </Stack>
         <Collapse
-          in={!lockedStep.analysis.openPanel && state.showSelections}
+          in={
+            !lockedStep.analysis.locked &&
+            !lockedStep.analysis.openPanel &&
+            state.showSelections
+          }
           timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
