@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +22,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class Utils {
   public static List<String> getClassNamesFromJar(String jarName, String directoryInJar) {
     List<String> listOfClasses = new ArrayList<>();
-    try (JarInputStream jarFile = new JarInputStream(new FileInputStream(jarName))) {
+    try (JarInputStream jarFile =
+        new JarInputStream(new FileInputStream(new File(jarName).getAbsolutePath()))) {
       JarEntry jarEntry;
 
       while ((jarEntry = jarFile.getNextJarEntry()) != null) {
@@ -40,33 +42,52 @@ public class Utils {
     return listOfClasses;
   }
 
+  //  public static void saveFile(MultipartFile fileToSave, String savingFolder, String fileName) {
+  //    createFolderIfNotExisting(savingFolder);
+  //    byte[] bytes;
+  //    try {
+  //      bytes = fileToSave.getBytes();
+  //      BufferedOutputStream stream =
+  //          new BufferedOutputStream(new FileOutputStream(new File(savingFolder + fileName)));
+  //
+  //      stream.write(bytes);
+  //      stream.close();
+  //    } catch (IOException e) {
+  //      e.printStackTrace();
+  //    }
+  //    log.info("File '{}' saved in '{}'", fileName, savingFolder);
+  //  }
+
   public static void saveFile(MultipartFile fileToSave, String savingFolder, String fileName) {
-    createFolderIfNotExisting(savingFolder);
-    byte[] bytes;
+    Path dir = Paths.get(savingFolder).toAbsolutePath().normalize();
     try {
-      bytes = fileToSave.getBytes();
-      BufferedOutputStream stream =
-          new BufferedOutputStream(new FileOutputStream(new File(savingFolder + fileName)));
+      Files.createDirectories(dir); // mkdirs()
+      Path target = dir.resolve(fileName);
 
-      stream.write(bytes);
-      stream.close();
+      try (BufferedOutputStream out =
+          new BufferedOutputStream(
+              Files.newOutputStream(
+                  target, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+        out.write(fileToSave.getBytes());
+      }
+      log.info("File '{}' saved in '{}'", fileName, target);
     } catch (IOException e) {
-      e.printStackTrace();
-    }
-    log.info("File '{}' saved in '{}'", fileName, savingFolder);
-  }
-
-  private static void createFolderIfNotExisting(String savingFolder) throws SecurityException {
-    File theDir = new File(savingFolder);
-    if (!theDir.exists()) {
-      theDir.mkdir();
-      log.info("Folder created: {}", savingFolder);
+      log.error("Failed to save file '{}' in '{}'", fileName, dir, e);
+      throw new ServiceException("Failed to save file", e);
     }
   }
 
-  public static void deleteFolder(String deletionFolder) {
-    deleteFile(deletionFolder, "");
-  }
+  //  private static void createFolderIfNotExisting(String savingFolder) throws SecurityException {
+  //    File theDir = new File(savingFolder);
+  //    if (!theDir.exists()) {
+  //      theDir.mkdir();
+  //      log.info("Folder created: {}", savingFolder);
+  //    }
+  //  }
+
+  //  public static void deleteFolder(String deletionFolder) {
+  //    deleteFile(deletionFolder, "");
+  //  }
 
   public static String capitalizeFirstLetter(String str) {
     if (str == null || str.isEmpty()) {
@@ -116,13 +137,25 @@ public class Utils {
     }
   }
 
+  //  public static Optional<String> findJarFile(String fileName, String folderPath)
+  //      throws IOException {
+  //    try (Stream<Path> paths = Files.list(Paths.get(folderPath))) {
+  //      return paths
+  //          .filter(Files::isRegularFile)
+  //          .map(Path::toString)
+  //          .filter(path -> Paths.get(path).getFileName().toString().equals(fileName))
+  //          .findFirst();
+  //    }
+  //  }
   public static Optional<String> findJarFile(String fileName, String folderPath)
       throws IOException {
-    try (Stream<Path> paths = Files.list(Paths.get(folderPath))) {
+    Path dir = Paths.get(folderPath).toAbsolutePath().normalize();
+    log.info("Scanning for JAR '{}' in '{}'", fileName, dir);
+    try (Stream<Path> paths = Files.list(dir)) {
       return paths
           .filter(Files::isRegularFile)
-          .map(Path::toString)
-          .filter(path -> Paths.get(path).getFileName().toString().equals(fileName))
+          .filter(p -> p.getFileName().toString().equals(fileName))
+          .map(p -> p.toAbsolutePath().toString())
           .findFirst();
     }
   }
