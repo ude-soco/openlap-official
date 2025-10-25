@@ -27,10 +27,10 @@ The Open Learning Analytics Platform (OpenLAP) lays the foundation for a Do-it-y
 
 Download and install the following software:
 
-- Node.js on [Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubuntu-22-04)/[Windows](https://nodejs.org/dist/v20.17.0/)
+- Node.js on [Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubuntu-22-04)/[Windows](https://nodejs.org/dist/v22.18.0/)
   - Preferred to install Node Version Manager (NVM) for [Ubuntu](https://tecadmin.net/how-to-install-nvm-on-ubuntu-22-04/)/[Windows](https://github.com/coreybutler/nvm-windows/releases).
-  - Open a terminal and then type `nvm install 20.17.0` to install Node.js v20.17.0
-  - Then type `nvm use 20.17.0` to use the Node.js v20.17.0 to install node packages
+  - Open a terminal and then type `nvm install 22.18.0` to install Node.js v22.18.0
+  - Then type `nvm use 22.18.0` to use the Node.js v22.18.0 to install node packages
 - [Java 11](https://www.oracle.com/java/technologies/javase/jdk11-archive-downloads.html)
 - Preferred IDE IntelliJ Ultimate [Ubuntu](https://www.golinuxcloud.com/install-maven-ubuntu/)/[Windows](https://www.jetbrains.com/de-de/idea/download/#section=windows)
 - Maven (latest) on [Ubuntu](https://www.golinuxcloud.com/install-maven-ubuntu/)/[Windows](https://phoenixnap.com/kb/install-maven-windows)
