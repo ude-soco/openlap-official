@@ -27,8 +27,8 @@ The Open Learning Analytics Platform (OpenLAP) lays the foundation for a Do-it-y
 
 Download and install the following software:
 
-- Node.js on [Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubuntu-22-04)/[Windows](https://nodejs.org/dist/v22.18.0/)
-  - Preferred to install Node Version Manager (NVM) for [Ubuntu](https://tecadmin.net/how-to-install-nvm-on-ubuntu-22-04/)/[Windows](https://github.com/coreybutler/nvm-windows/releases).
+- Node.js version 22.18.0 on [Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubuntu-22-04)/[Windows](https://nodejs.org/dist/v22.18.0/)
+  - It is preferred to install Node Version Manager (NVM) for [Ubuntu](https://tecadmin.net/how-to-install-nvm-on-ubuntu-22-04/)/[Windows](https://github.com/coreybutler/nvm-windows/releases) instead of standalone Node.js.
   - Open a terminal and then type `nvm install 22.18.0` to install Node.js v22.18.0
   - Then type `nvm use 22.18.0` to use the Node.js v22.18.0 to install node packages
 - [Java 11](https://www.oracle.com/java/technologies/javase/jdk11-archive-downloads.html)

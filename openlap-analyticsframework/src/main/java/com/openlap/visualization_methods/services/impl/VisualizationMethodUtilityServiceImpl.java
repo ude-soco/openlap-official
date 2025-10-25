@@ -111,28 +111,29 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
     throw new ServiceException("Could not find class " + className + " in any visualizer JAR");
   }
 
-//    @Override
-//    public VisualizationCodeGenerator loadVisTypeInstance(String visTypeId) {
-//      VisType visType = fetchVisualizationTypeMethod(visTypeId);
-//      String className = visType.getImplementingClass();
-//      // Try each JAR in the visualizer folder
-//      File folder = new File(visualizerJarsFolder);
-//      File[] jars = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
-//      if (jars == null || jars.length == 0) {
-//        throw new ServiceException("No visualizer JARs found in " + visualizerJarsFolder);
-//      }
-//      for (File jar : jars) {
-//        try (VisualizerClassPathLoader loader =
-//            new VisualizerClassPathLoader(jar.getAbsolutePath())) {
-//          return loader.loadTypeClass(className);
-//        } catch (VisualizationClassLoaderException e) {
-//          if (!e.getMessage().contains("not found")) throw e;
-//        } catch (Exception e) {
-//          // ignore and try next
-//        }
-//      }
-//      throw new ServiceException("Could not find class " + className + " in any visualizer JAR");
-//    }
+  //    @Override
+  //    public VisualizationCodeGenerator loadVisTypeInstance(String visTypeId) {
+  //      VisType visType = fetchVisualizationTypeMethod(visTypeId);
+  //      String className = visType.getImplementingClass();
+  //      // Try each JAR in the visualizer folder
+  //      File folder = new File(visualizerJarsFolder);
+  //      File[] jars = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
+  //      if (jars == null || jars.length == 0) {
+  //        throw new ServiceException("No visualizer JARs found in " + visualizerJarsFolder);
+  //      }
+  //      for (File jar : jars) {
+  //        try (VisualizerClassPathLoader loader =
+  //            new VisualizerClassPathLoader(jar.getAbsolutePath())) {
+  //          return loader.loadTypeClass(className);
+  //        } catch (VisualizationClassLoaderException e) {
+  //          if (!e.getMessage().contains("not found")) throw e;
+  //        } catch (Exception e) {
+  //          // ignore and try next
+  //        }
+  //      }
+  //      throw new ServiceException("Could not find class " + className + " in any visualizer
+  // JAR");
+  //    }
 
   @Override
   public void populateVisualizationMethods() {
@@ -159,44 +160,44 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
       String jarFile,
       List<VisLibrary> existingLibraries,
       List<VisType> existingVisualizationTypes) {
+
     List<String> classNames = Utils.getClassNamesFromJar(jarFile, visualizerClassDirectory);
 
-    VisualizerClassPathLoader classPathLoader = new VisualizerClassPathLoader(jarFile);
-    VisLibrary visualizationLibrary = null;
-    List<VisType> newTypes = new ArrayList<>();
+    try (VisualizerClassPathLoader loader = new VisualizerClassPathLoader(jarFile)) {
 
-    for (String className : classNames) {
-      try {
-        VisualizationLibraryInfo libraryInfo = classPathLoader.loadLibraryInfo(className);
-        visualizationLibrary = findOrCreateLibrary(libraryInfo, existingLibraries, jarFile);
-      } catch (Exception e) {
-        log.warn(
-            "Class {} is not a visualization library or could not be loaded: {}",
-            className,
-            e.getMessage());
-      }
-
-      try {
-        VisualizationCodeGenerator visualizationType = classPathLoader.loadTypeClass(className);
-        if (visualizationType != null
-            && !isTypeAlreadyAdded(existingVisualizationTypes, className)) {
-          VisType newVizType = createNewVisType(visualizationType, className, visualizationLibrary);
-          newTypes.add(newVizType);
+      // Pass 1: find library info
+      VisualizationLibraryInfo libInfo = null;
+      for (String cn : classNames) {
+        try {
+          libInfo = loader.loadLibraryInfo(cn);
+          break; // found one; stop
+        } catch (Exception ignore) {
+          // not a library info class — keep scanning
         }
-      } catch (Exception e) {
-        log.warn(
-            "Class {} does not inherit 'VisualizationCodeGenerator' or could not be loaded: {}",
-            className,
-            e.getMessage());
       }
-    }
 
-    if (visualizationLibrary != null) {
-      saveVisualizationLibrary(visualizationLibrary, newTypes);
-    } else {
-      log.warn(
-          "No implementation of 'VisualizationLibraryInfo' abstract class found in JAR file: {}",
-          jarFile);
+      if (libInfo == null) {
+        log.warn("No VisualizationLibraryInfo implementation found in JAR: {}", jarFile);
+        return;
+      }
+
+      VisLibrary visLibrary = findOrCreateLibrary(libInfo, existingLibraries, jarFile);
+
+      // Pass 2: collect *new* types
+      List<VisType> newTypes = new ArrayList<>();
+      for (String cn : classNames) {
+        try {
+          VisualizationCodeGenerator gen = loader.loadTypeClass(cn);
+          if (gen != null && !isTypeAlreadyAdded(existingVisualizationTypes, cn)) {
+            newTypes.add(createNewVisType(gen, cn, visLibrary));
+          }
+        } catch (Exception e) {
+          log.debug("Skipping non-type class {}: {}", cn, e.getMessage());
+        }
+      }
+
+      // Persist
+      saveVisualizationLibrary(visLibrary, newTypes);
     }
   }
 

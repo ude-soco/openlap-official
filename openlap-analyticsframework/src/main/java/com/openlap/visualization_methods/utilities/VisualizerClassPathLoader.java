@@ -20,8 +20,8 @@ public class VisualizerClassPathLoader implements AutoCloseable {
 				throw new IllegalArgumentException("JAR file not found: " + jarFilePath);
 			}
 			URL jarUrl = jarFile.toURI().toURL();
-//			ClassLoader parent = Thread.currentThread().getContextClassLoader();
-			ClassLoader parent = ClassLoader.getSystemClassLoader();
+			ClassLoader parent = Thread.currentThread().getContextClassLoader();
+//			ClassLoader parent = ClassLoader.getSystemClassLoader();
 
 			this.urlClassLoader = new URLClassLoader(new URL[]{jarUrl}, parent);
 
