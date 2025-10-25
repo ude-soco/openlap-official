@@ -195,26 +195,25 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   private void processAnalyticsTechniqueJarFile(
       String jarFile, List<AnalyticsTechnique> existingAnalyticsMethods) {
-    List<String> classNames = Utils.getClassNamesFromJar(jarFile, analyticsMethodsClassDirectory);
-    AnalyticsMethodsClassPathLoader classPathLoader =
-        getFolderNameFromResourcesFromJarFile(jarFile);
-    List<AnalyticsTechnique> newMethods = new ArrayList<>();
 
-    for (String className : classNames) {
-      try {
-        // validation required
-        com.openlap.template.AnalyticsMethod method = classPathLoader.loadClass(className);
-        if (isClassAlreadyProcessed(className, existingAnalyticsMethods)) {
-          continue;
+    List<String> classNames = Utils.getClassNamesFromJar(jarFile, analyticsMethodsClassDirectory);
+
+    try (AnalyticsMethodsClassPathLoader classPathLoader =
+        getFolderNameFromResourcesFromJarFile(jarFile)) {
+      List<AnalyticsTechnique> newMethods = new ArrayList<>();
+
+      for (String className : classNames) {
+        try {
+          com.openlap.template.AnalyticsMethod method = classPathLoader.loadClass(className);
+          if (isClassAlreadyProcessed(className, existingAnalyticsMethods)) continue;
+          AnalyticsTechnique analyticsMethod = addNewAnalyticsTechnique(method, jarFile, className);
+          newMethods.add(analyticsMethod);
+        } catch (Exception e) {
+          log.error("Failed to load '{}': {}", className, e.toString(), e);
         }
-        AnalyticsTechnique analyticsMethod = addNewAnalyticsTechnique(method, jarFile, className);
-        newMethods.add(analyticsMethod);
-      } catch (Exception e) {
-        // Log the exception instead of ignoring it
-        e.printStackTrace();
       }
+      analyticsTechniqueRepository.saveAll(newMethods);
     }
-    analyticsTechniqueRepository.saveAll(newMethods);
   }
 
   private boolean isClassAlreadyProcessed(
