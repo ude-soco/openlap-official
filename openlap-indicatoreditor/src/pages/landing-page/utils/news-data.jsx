@@ -4,6 +4,38 @@ import { v4 as uuidv4 } from "uuid";
 const newsItems = [
   {
     id: uuidv4(),
+    date: "September 2025",
+    title: "SoCo @ ICETC 2025",
+    desc: (
+      <Typography variant="body2" color="textSecondary">
+        {`We participated in the 17th International Conference on Education Technology and Computers (`}
+        <Link href="https://www.icetc.org/index.html" target="_blank">
+          ICETC 2025
+        </Link>
+        {`) Barcelona, Spain, on September 18-21, 2025. `}
+        <Link
+          href="https://www.uni-due.de/soco/people/shoeb-joarder.php"
+          target="_blank"
+        >
+          Shoeb Joarder
+        </Link>
+        {` presented our platform `}
+        <Link
+          href="https://www.uni-due.de/soco/research/projects/openlap.php"
+          target="_blank"
+        >
+          OpenLAP
+        </Link>
+        {` to the ICETC community, highlighting its unique features to democratize learning analytics and support learning analytics stakeholders to co-design their own indicators. He presented our paper "The ISC Creator: Human-Centered Deisgn of Learning Analytics Interactive Indicator Specification Cards", which presents the systematic design, implementation, and evaluation details of the no-code, co-design tool, the OpenLAP ISC Creator, which allows low-cost and flexible design of LA indicators. The paper is available on arXiv `}
+        <Link href="https://arxiv.org/pdf/2504.07811" target="_blank">
+          here
+        </Link>
+        {`.`}
+      </Typography>
+    ),
+  },
+  {
+    id: uuidv4(),
     date: "March 2025",
     title: "New Publication in ICETC 2025",
     desc: (

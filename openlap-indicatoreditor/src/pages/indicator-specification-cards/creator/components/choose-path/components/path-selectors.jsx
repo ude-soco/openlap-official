@@ -6,7 +6,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import pathChoices from "../utils/utils.js";
 
 export default function PathSelectors() {
-  const { requirements, setRequirements, setLockedStep } =
+  const { requirements, setVisRef, setRequirements, setLockedStep } =
     useContext(ISCContext);
 
   const handleTogglePanel = () => {
@@ -43,7 +43,12 @@ export default function PathSelectors() {
           openPanel: false,
         },
       }));
-      setRequirements((p) => ({ ...p, selectedPath: path }));
+
+      setRequirements((p) => {
+        if (p.selectedPath !== path)
+          setVisRef((p) => ({ ...p, filter: { type: "" } }));
+        return { ...p, selectedPath: path };
+      });
     } else {
       setLockedStep((p) => ({
         ...p,

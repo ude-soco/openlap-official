@@ -6,11 +6,11 @@ services:
       ADMIN_NAME: admin
       ADMIN_PASSWORD: 1234qweR
       JWT_SECRET_KEY: secret
-      LRS_MONGODB_DB: learninglocker_v2
-      MONGODB_PRIMARY_URI: mongodb://mongo:27017
-      MONGODB_SECONDARY_URI: mongodb://mongo:27017
-      OPENLAP_MONGODB_DB: openlap
       PORT: 8090
+      # OPENLAP_MONGODB_DB: openlap_v2
+      MONGODB_PRIMARY_URI: mongodb://mongo:27017/openlap_v2
+      # LRS_MONGODB_DB: learninglocker_v2
+      MONGODB_SECONDARY_URI: mongodb://mongo:27017/learninglocker_v2
       WEBAPP_URL: http://localhost:5173
     depends_on:
       mongo:
