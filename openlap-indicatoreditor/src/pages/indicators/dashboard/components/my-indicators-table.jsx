@@ -389,9 +389,12 @@ const MyIndicatorsTable = () => {
                         "&:hover .time-text": { opacity: 0 },
                       }}
                     >
-                      <TableCell onClick={() => handlePreview(indicator.id)}>
+                      <TableCell>
                         <Grid container justifyContent="space-between">
-                          <Grid size="grow">
+                          <Grid
+                            size="grow"
+                            onClick={() => handlePreview(indicator.id)}
+                          >
                             <Typography component="span">
                               <b>{toSentenceCase(indicator.indicatorName)}</b>
                               <br />
