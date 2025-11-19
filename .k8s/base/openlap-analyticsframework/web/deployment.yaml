@@ -22,13 +22,9 @@ spec:
         - name: PORT
           value: "8090"
         - name: MONGODB_PRIMARY_URI
-          value: "mongodb://$(OPENLAP_OFFICIAL_OPENLAP_ANALYTICSFRAMEWORK_MONGO_SERVICE):27017"
+          value: "mongodb://$(OPENLAP_OFFICIAL_OPENLAP_ANALYTICSFRAMEWORK_MONGO_SERVICE):27017/openlap_v2"
         - name: MONGODB_SECONDARY_URI
-          value: "mongodb://$(LEARNINGLOCKER_MONGO_SERVICE):27017"
-        - name: OPENLAP_MONGODB_DB
-          value: openlap
-        - name: LRS_MONGODB_DB
-          value: learninglocker_v2
+          value: "mongodb://$(LEARNINGLOCKER_MONGO_SERVICE):27017/learninglocker_v2"
         ports:
         - containerPort: 8090
 
