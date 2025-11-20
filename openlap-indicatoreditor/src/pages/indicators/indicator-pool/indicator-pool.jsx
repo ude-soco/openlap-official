@@ -1,5 +1,6 @@
 import { Breadcrumbs, Divider, Link, Stack, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
+import AllIndicatorsTable from "./components/all-indicators-table.jsx";//imports AllIndicatorsTable component responisible for displaying the table of indicators
 
 const IndicatorPool = () => {
   return (
@@ -12,7 +13,14 @@ const IndicatorPool = () => {
           <Typography>Indicator Pool</Typography>
         </Breadcrumbs>
         <Divider />
-        <Typography>Under Construction!</Typography>
+        <Typography variant="h5" component="h1" gutterBottom>
+          Indicator Pool
+        </Typography>
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+          Browse and explore all available indicators created by the community.
+        </Typography>
+        <Divider />
+        <AllIndicatorsTable />
       </Stack>
     </>
   );

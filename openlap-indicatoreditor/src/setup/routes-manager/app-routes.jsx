@@ -33,6 +33,7 @@ import LandingPage from "../../pages/landing-page/landing-page.jsx";
 import PrivacyPolicy from "../../pages/privacy-policy/privacy-policy.jsx";
 import ManageVisualization from "../../pages/admin/manage-visualization.jsx";
 import ManageAnalytics from "../../pages/admin/manage-analytics.jsx";
+import IndicatorPoolPreview from "../../pages/indicators/indicator-pool/components/indicator-pool-preview.jsx";
 
 const AppRoutes = () => {
   const { theme } = useContext(CustomThemeContext);
@@ -197,15 +198,26 @@ const AppRoutes = () => {
                     }
                   />
                 </Route>
-                <Route
-                  path="/indicator/pool"
-                  element={
-                    <PrivateRoute
-                      component={<IndicatorPool />}
-                      allowedRoles={[RoleTypes.user]}
-                    />
-                  }
-                />
+                <Route path="/indicator/pool">
+                  <Route
+                    index
+                    element={
+                      <PrivateRoute
+                        component={<IndicatorPool />}
+                        allowedRoles={[RoleTypes.user, RoleTypes.userWithoutLRS]}
+                      />
+                    }
+                  />
+                  <Route
+                    path=":id"
+                    element={
+                      <PrivateRoute
+                        component={<IndicatorPoolPreview />}
+                        allowedRoles={[RoleTypes.user, RoleTypes.userWithoutLRS]}
+                      />
+                    }
+                  />
+                </Route>
                 <Route path="/isc">
                   <Route
                     index
