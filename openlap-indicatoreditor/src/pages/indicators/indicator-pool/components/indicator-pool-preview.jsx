@@ -1,108 +1,116 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
-  Box,
   Breadcrumbs,
-  Button,
   Chip,
   Divider,
-  Grid,
-  Link,
+  IconButton,
   LinearProgress,
+  Link,
+  Grid,
   Paper,
-  Stack,
+  Skeleton,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import { Link as RouterLink, useNavigate, useParams } from "react-router-dom";
+import CodeIcon from "@mui/icons-material/Code";
+import { useParams, Link as RouterLink } from "react-router-dom";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import { requestIndicatorFullDetail } from "../../dashboard/utils/indicator-dashboard-api.js";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import {
+  requestIndicatorFullDetail,
+  requestIndicatorCode,
+} from "../../dashboard/utils/indicator-dashboard-api.js";
 import ChartPreview from "../../indicator-editor/components/chart-preview.jsx";
+import { useSnackbar } from "notistack";
 
 const IndicatorPoolPreview = () => {
   const { api } = useContext(AuthContext);
-  const navigate = useNavigate();
-  const { id } = useParams();
+  const params = useParams();
+  const { enqueueSnackbar } = useSnackbar();
   const [state, setState] = useState({
-    indicator: null,
-    loading: true,
-    error: null,
+    loading: false,
+    indicatorName: "",
+    type: "",
+    createdOn: "",
+    createdBy: "",
+    analyticsMethod: "",
+    library: "",
+    chart: "",
+    previewData: {
+      displayCode: [],
+      scriptData: "",
+    },
+    isLoading: {
+      status: false,
+    },
   });
 
+  const loadIndicatorDetail = async () => {
+    setState((p) => ({ ...p, loading: true }));
+    try {
+      const indicatorData = await requestIndicatorFullDetail(api, params.id);
+      setState((p) => ({ ...p, ...indicatorData, loading: false }));
+    } catch (error) {
+      console.error("Error loading indicator details", error);
+      setState((p) => ({ ...p, loading: false }));
+    }
+  };
+
   useEffect(() => {
-    const loadIndicatorDetails = async () => {
-      setState((p) => ({ ...p, loading: true, error: null }));
-      try {
-        const indicatorData = await requestIndicatorFullDetail(api, id);// Fetch full details of the indicator using its ID
-        
-        setState((p) => ({
-          ...p,
-          indicator: indicatorData,
-          loading: false,
-        }));
-      } catch (error) {
-        console.error("Error loading indicator details", error);
-        setState((p) => ({
-          ...p,
-          loading: false,
-          error: "Failed to load indicator details",
-        }));
-      }
-    };
+    loadIndicatorDetail();
+  }, []);
 
-    if (id) {
-      loadIndicatorDetails();
-    }
-  }, [id, api]);
-
-  const handleDisplayType = (type) => {
-    switch (type) {
-      case "BASIC":
-        return <Chip label="Basic" variant="outlined" color="success" />;
-      case "COMPOSITE":
-        return <Chip label="Composite" variant="outlined" color="info" />;
-      case "MULTI_LEVEL":
-        return <Chip label="Multi Level" variant="outlined" color="warning" />;
-      default:
-        return <Chip label={type} variant="outlined" color="default" />;
+  const handleCopyEmbedCode = async () => {
+    setState((p) => ({
+      ...p,
+      isLoading: { ...p.isLoading, status: true },
+    }));
+    try {
+      const indicatorCode = await requestIndicatorCode(api, params.id);
+      await navigator.clipboard.writeText(indicatorCode.data);
+      enqueueSnackbar(indicatorCode.message, { variant: "success" });
+      setState((p) => ({
+        ...p,
+        isLoading: { ...p.isLoading, status: false },
+      }));
+    } catch (error) {
+      setState((p) => ({
+        ...p,
+        isLoading: { ...p.isLoading, status: false },
+      }));
+      console.error("Error copying indicator code", error);
+      enqueueSnackbar("Failed to copy indicator code", { variant: "error" });
     }
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  if (state.loading) {// Loading state=true displays a message while the indicator details are being fetched
-    return (
-      <Box sx={{ width: "100%" }}>
-        <LinearProgress />
-        <Typography sx={{ mt: 2, textAlign: "center" }}>
-          Loading indicator...
-        </Typography>
-      </Box>
-    );
+  // Helper functions
+  function toSentenceCase(str) {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   }
 
-  if (state.error || !state.indicator) {// Error state displays an error message if fetching fails and displays a back button to return to the indicator pool
-    return (
-      <Stack spacing={2}>
-        <Typography color="error">{state.error || "Indicator not found"}</Typography>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate("/indicator/pool")}
-        >
-          Back to Indicator Pool
-        </Button>
-      </Stack>
-    );
+  function changeTimeFormat(time) {
+    return new Date(time).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
+  function handleDisplayType(type) {
+    switch (type) {
+      case "BASIC":
+        return "Basic";
+      case "COMPOSITE":
+        return "Composite";
+      case "MULTI_LEVEL":
+        return "Multi Level";
+      default:
+        return type;
+    }
   }
 
   return (
-    <Stack spacing={2}>
+    <Grid container spacing={2}>
       <Breadcrumbs>
         <Link component={RouterLink} underline="hover" color="inherit" to="/">
           Home
@@ -115,108 +123,117 @@ const IndicatorPoolPreview = () => {
         >
           Indicator Pool
         </Link>
-        <Typography>{state.indicator.indicatorName}</Typography>
+        <Typography sx={{ color: "text.primary" }}>
+          Preview Indicator
+        </Typography>
       </Breadcrumbs>
+      <Grid size={{ xs: 12 }}>
+        <Divider />
+      </Grid>
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate("/indicator/pool")}
-          variant="outlined"
-        >
-          Back
-        </Button>
-      </Box>
+      <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+        <Grid container justifyContent="center">
+          <Grid size={{ xs: 12, lg: 10, xl: 7 }}>
+            {state.loading ? (
+              <Skeleton variant="rounded" height={500} />
+            ) : (
+              <>
+                {state.isLoading.status && <LinearProgress />}
+                <Paper variant="outlined" sx={{ p: 2 }}>
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12 }}>
+                      <Grid container spacing={1}>
+                        <Grid size="grow">
+                          <Typography variant="h5" gutterBottom>
+                            {toSentenceCase(state.indicatorName)}
+                          </Typography>
+                          <Typography gutterBottom variant="body2">
+                            {handleDisplayType(state.type)} ● Created on:{" "}
+                            {changeTimeFormat(state.createdOn)} ● Created by:{" "}
+                            {state.createdBy}
+                          </Typography>
+                        </Grid>
 
-      <Divider />
-
-      <Paper sx={{ p: 3 }}>
-        <Stack spacing={2}>
-          <Typography variant="h4" component="h1">
-            {state.indicator.indicatorName}
-          </Typography>
-
-          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-            {handleDisplayType(state.indicator.type)}
-          </Box>
-
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Created By:</strong> {state.indicator.createdBy}
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Created On:</strong>{" "}
-                {formatDate(state.indicator.createdOn)}
-              </Typography>
-            </Grid>
-            {state.indicator.analyticsMethod && (
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Analytics Method:</strong>{" "}
-                  {state.indicator.analyticsMethod}
-                </Typography>
-              </Grid>
-            )}
-            {state.indicator.library && (
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Visualization Library:</strong>{" "}
-                  {state.indicator.library}
-                </Typography>
-              </Grid>
-            )}
-            {state.indicator.chart && (
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Chart Type:</strong> {state.indicator.chart}
-                </Typography>
-              </Grid>
+                        <Grid size="auto">
+                          <Tooltip
+                            arrow
+                            title={
+                              <>
+                                <Typography gutterBottom>
+                                  Copy ICC code
+                                </Typography>
+                                <Typography>
+                                  What's an ICC code?
+                                  <br />
+                                  An Interactive Indicator Code (ICC) is an
+                                  iFrame code snippet you can embed in any web
+                                  application that supports iFrames.
+                                  <br />
+                                  It lets you display real-time analytics
+                                  directly within your website.
+                                </Typography>
+                              </>
+                            }
+                          >
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={handleCopyEmbedCode}
+                                disabled={state.isLoading.status}
+                              >
+                                <CodeIcon />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Divider />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Grid container spacing={3}>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Typography variant="overline">
+                          Analytics method used
+                        </Typography>
+                        <Grid size={{ xs: 12 }}>
+                          <Chip label={state.analyticsMethod} />
+                        </Grid>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant="overline">
+                          Visualization Library
+                        </Typography>
+                        <Grid size={{ xs: 12 }}>
+                          <Chip label={state.library} />
+                        </Grid>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant="overline">Chart</Typography>
+                        <Grid size={{ xs: 12 }}>
+                          <Chip label={state.chart} />
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Divider />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Grid container justifyContent="center">
+                      <ChartPreview previewData={state.previewData} />
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Paper>
+              </>
             )}
           </Grid>
-
-          <Divider />
-
-          <Typography variant="h6">Visualization Preview</Typography>
-
-          {state.indicator.previewData && state.indicator.previewData.displayCode ? ( // If preview data && display code is available  -> render the indicator using ChartPreview component
-            <Box
-              sx={{
-                border: 1,
-                borderColor: "divider",
-                borderRadius: 1,
-                minHeight: 400,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <ChartPreview previewData={state.indicator.previewData} />
-            </Box>
-          ) : (
-            <Box
-              sx={{
-                border: 1,
-                borderColor: "divider",
-                borderRadius: 1,
-                p: 2,
-                minHeight: 400,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              //In case no preview data is available -> display a message to the user 
-            > 
-              <Typography color="text.secondary">
-                No visualization preview available
-              </Typography>
-            </Box>
-          )} 
-        </Stack>
-      </Paper>
-    </Stack>
+        </Grid>
+      </Grid>
+    </Grid>
   );
 };
 

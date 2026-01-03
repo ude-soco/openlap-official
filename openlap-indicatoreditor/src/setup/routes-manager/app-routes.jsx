@@ -34,6 +34,8 @@ import PrivacyPolicy from "../../pages/privacy-policy/privacy-policy.jsx";
 import ManageVisualization from "../../pages/admin/manage-visualization.jsx";
 import ManageAnalytics from "../../pages/admin/manage-analytics.jsx";
 import IndicatorPoolPreview from "../../pages/indicators/indicator-pool/components/indicator-pool-preview.jsx";
+import PublicIndicatorsOverview from "../../pages/indicators/public-overview/public-indicators-overview.jsx";
+import PublicIndicatorPreview from "../../pages/indicators/public-overview/components/public-indicator-preview.jsx";
 
 const AppRoutes = () => {
   const { theme } = useContext(CustomThemeContext);
@@ -52,6 +54,8 @@ const AppRoutes = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/indicators/overview" element={<PublicIndicatorsOverview />} />
+                <Route path="/indicators/overview/:id" element={<PublicIndicatorPreview />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </>
             )}
