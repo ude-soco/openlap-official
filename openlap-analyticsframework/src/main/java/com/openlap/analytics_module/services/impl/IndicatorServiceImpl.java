@@ -261,7 +261,7 @@ public class IndicatorServiceImpl implements IndicatorService {
   @Override
   public String requestInteractiveIndicatorCode(String indicatorId, HttpServletRequest request) {
     Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
-    String baseUrl = String.format("%s://%s", request.getScheme(), request.getServerName());
+    String baseUrl = String.format("%s://%s:%d", request.getScheme(), request.getServerName(),request.getServerPort());
     String apiUrl = "/api/v1/code/indicators?indicatorId=";
     String metaDataUrl = "' frameborder='0' height='500px' width='500px'";
 

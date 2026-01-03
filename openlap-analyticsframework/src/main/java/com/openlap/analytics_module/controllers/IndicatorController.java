@@ -129,6 +129,52 @@ public class IndicatorController {
     return ResponseEntity.status(status).body(new ApiSuccess(status, message, allIndicators));
   }
 
+    /**
+     * This API is to provide the list of all available Indicators, on the public accessiable page for the users coming from CourseMapper.
+     * @param sortBy possible options: name, createdBy, indicatorType, createdOn.
+     * @param sortDirection possible options: asc, dsc.
+     */
+  @GetMapping("/public")
+  public ResponseEntity<?> getPublicIndicators(
+          @RequestParam(defaultValue = "0") int page,
+          @RequestParam(defaultValue = "10") int size,
+          @RequestParam(defaultValue = "createdOn") String sortBy,
+          @RequestParam(defaultValue = "asc") String sortDirection){
+      int minSize = 1;
+      int maxSize = 100;
+      if (size < minSize) {
+      size = minSize;
+      } else if (size > maxSize) {
+          size = maxSize;
+      }
+      Page<IndicatorResponse> allPublicIndicators=
+              indicatorService.getAllIndicators(page, size, sortBy, sortDirection);
+      String message =
+              allPublicIndicators.getContent().isEmpty() ? "No indicators found." : "Indicators found.";
+      HttpStatus status = HttpStatus.OK;
+      return ResponseEntity.status(status).body(new ApiSuccess(status, message, allPublicIndicators));
+  }
+    @GetMapping("/public/{indicatorId}")//new public endpoint for previewing the indicators in the indicator public pool (for unsigned users)
+    public ResponseEntity<?> getIndicatorByIdPublic(@PathVariable String indicatorId) {
+        HttpStatus status = HttpStatus.OK;
+        return ResponseEntity.status(status)
+                .body(
+                        new ApiSuccess(
+                                status, "Indicator found.", indicatorService.getIndicatorById(indicatorId)));
+    }
+
+    @GetMapping("/public/{indicatorId}/code") // new public endpoint for copying the code of an indicator (for unsigned users)
+    public ResponseEntity<?> requestInteractiveIndicatorCodePublic(
+            @PathVariable String indicatorId, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.OK;
+        return ResponseEntity.status(status)
+                .body(
+                        new ApiSuccess(
+                                status,
+                                "Interactive Indicator Code copied successfully.",
+                                indicatorService.requestInteractiveIndicatorCode(indicatorId, request)));
+    }
+
   /**
    * This API provides the full detail of an indicator.
    *

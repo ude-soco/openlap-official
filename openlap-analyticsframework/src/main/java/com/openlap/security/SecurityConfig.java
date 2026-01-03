@@ -21,6 +21,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import javax.websocket.Endpoint;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -64,6 +66,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             RoleType.ROLE_SUPER_ADMIN.toString(),
             RoleType.ROLE_DATA_PROVIDER.toString());
     http.authorizeRequests()
+            .antMatchers("/v1/indicators/public").permitAll() /*Public accessiable Endpoint for displaying all indicators*/
+            .antMatchers("/v1/indicators/public/**").permitAll() // public endpoint for previewing / copying indicator code  
         .antMatchers("/v1/indicators/**", "/v1/questions/**", "/v1/statements/**")
         .hasAnyAuthority(RoleType.ROLE_USER.toString());
     http.authorizeRequests()
