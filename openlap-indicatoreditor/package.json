@@ -18,7 +18,7 @@
     "@mui/lab": "^7.0.1-beta.21",
     "@mui/material": "^7.3.7",
     "@mui/styled-engine-sc": "^7.3.7",
-    "@mui/x-data-grid": "^8.24.0",
+    "@mui/x-data-grid": "^8.25.0",
     "@mui/x-date-pickers": "^8.24.0",
     "apexcharts": "^5.3.6",
     "axios": "^1.13.2",
