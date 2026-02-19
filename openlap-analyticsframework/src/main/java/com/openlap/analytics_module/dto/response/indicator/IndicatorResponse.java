@@ -17,4 +17,5 @@ public class IndicatorResponse {
   private String createdBy;
   private String indicatorName;
   private LocalDateTime createdOn;
+  private String CreatedByEmail;
 }

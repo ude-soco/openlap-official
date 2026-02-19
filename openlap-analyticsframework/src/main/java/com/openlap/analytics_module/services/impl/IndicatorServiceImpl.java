@@ -437,7 +437,9 @@ public class IndicatorServiceImpl implements IndicatorService {
               indicator.getIndicatorType(),
               indicator.getCreatedBy().getName(),
               indicator.getName(),
-              indicator.getCreatedOn()));
+              indicator.getCreatedOn(),
+                  indicator.getCreatedByEmail()
+          ));
     }
     return indicatorResponse;
   }
@@ -639,65 +641,100 @@ public class IndicatorServiceImpl implements IndicatorService {
     return null;
   }
 
-  @Override
-  public void duplicateIndicator(HttpServletRequest request, String indicatorId) {
-    Gson gson = new Gson();
-    User foundUser = tokenService.getUserFromToken(request);
-    Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
-    String statementRequestStringify = "";
-    List<IndicatorsToMerge> indicatorsToMergeList = new ArrayList<>();
-    if (foundIndicator.getIndicatorType() == IndicatorType.BASIC) {
-      statementRequestStringify = getStatementRequestStringify(foundIndicator, foundUser);
-    } else {
-      List<Indicator> indicatorList = new ArrayList<>();
-      for (IndicatorsToMerge indicatorsToMerge : foundIndicator.getIndicators()) {
-        Indicator indicator = indicatorsToMerge.getIndicator();
-        String tempStatementRequestStringify = getStatementRequestStringify(indicator, foundUser);
-        String columnToMergeStringify = gson.toJson(indicator.getColumnToMerge());
-        // TODO: Validate if the indicator exists by user id
-        Indicator newIndicator =
-            new Indicator(
-                null,
-                indicatorUtilityService.fetchUserIndicatorForCopyMethod(
-                    foundUser.getId(), indicator.getName()),
-                indicator.getIndicatorType(),
-                foundUser,
-                indicator.getVisualizationTechniqueReference(),
-                LocalDateTime.now(),
-                0,
-                indicator.getGoalRef(),
-                indicator.getConfigurationRequest(),
-                tempStatementRequestStringify.isEmpty() ? null : tempStatementRequestStringify,
-                indicator.getAnalyticsTechniqueReference(),
-                columnToMergeStringify,
-                indicator.getIndicators());
-        indicatorList.add(newIndicator);
-        indicatorsToMergeList.add(
-            new IndicatorsToMerge(newIndicator, indicatorsToMerge.getColumnToMerge()));
-      }
-      // Saving the basic indicators required to create the composite & multi-level indicator
-      indicatorRepository.saveAll(indicatorList);
-    }
+    @Override
+    public void duplicateIndicator(HttpServletRequest request, String indicatorId) {
+        Gson gson = new Gson();
+        User foundUser = tokenService.getUserFromToken(request);
+        Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
 
-    // Saving the indicator
-    Indicator indicator =
-        new Indicator(
-            null,
-            indicatorUtilityService.fetchUserIndicatorForCopyMethod(
-                foundUser.getId(), foundIndicator.getName()),
-            foundIndicator.getIndicatorType(),
-            foundUser,
-            foundIndicator.getVisualizationTechniqueReference(),
-            LocalDateTime.now(),
-            0,
-            foundIndicator.getGoalRef(),
-            foundIndicator.getConfigurationRequest(),
-            statementRequestStringify.isEmpty() ? null : statementRequestStringify,
-            foundIndicator.getAnalyticsTechniqueReference(),
-            foundIndicator.getColumnToMerge(),
-            indicatorsToMergeList.isEmpty() ? null : indicatorsToMergeList);
-    indicatorRepository.save(indicator);
-  }
+        String statementRequestStringify = "";
+        List<IndicatorsToMerge> indicatorsToMergeList = new ArrayList<>();
+
+        // Logic to handle saving Sub-Indicators (if Composite/Multi-Level)
+        if (foundIndicator.getIndicatorType() == IndicatorType.BASIC) {
+            statementRequestStringify = getStatementRequestStringify(foundIndicator, foundUser);
+        } else {
+            List<Indicator> indicatorList = new ArrayList<>();
+
+            for (IndicatorsToMerge indicatorsToMerge : foundIndicator.getIndicators()) {
+                Indicator subIndicator = indicatorsToMerge.getIndicator(); // The original sub-indicator
+
+                String tempStatementRequestStringify = getStatementRequestStringify(subIndicator, foundUser);
+                String columnToMergeStringify = gson.toJson(subIndicator.getColumnToMerge());
+
+                // --- FIX 1: Use Setters for the Sub-Indicator ---
+                Indicator newSubIndicator = new Indicator();
+
+                // Set Basic Info
+                newSubIndicator.setName(indicatorUtilityService.fetchUserIndicatorForCopyMethod(
+                        foundUser.getId(), subIndicator.getName()));
+                newSubIndicator.setIndicatorType(subIndicator.getIndicatorType());
+
+                // Set User & Email
+                newSubIndicator.setCreatedBy(foundUser);
+                newSubIndicator.setCreatedByEmail(foundUser.getEmail()); // <--- New Field
+
+                // Set Metadata
+                newSubIndicator.setVisualizationTechniqueReference(subIndicator.getVisualizationTechniqueReference());
+                newSubIndicator.setCreatedOn(LocalDateTime.now());
+                newSubIndicator.setTimesExecuted(0); // or setExecutionCount(0) depending on your getter/setter name
+
+                // Set References
+                newSubIndicator.setGoalRef(subIndicator.getGoalRef());
+                newSubIndicator.setConfigurationRequest(subIndicator.getConfigurationRequest());
+
+                // Set Complex Logic Fields
+                newSubIndicator.setIndicatorQuery(
+                        tempStatementRequestStringify.isEmpty() ? null : tempStatementRequestStringify
+                );
+                newSubIndicator.setAnalyticsTechniqueReference(subIndicator.getAnalyticsTechniqueReference());
+                newSubIndicator.setColumnToMerge(columnToMergeStringify);
+                newSubIndicator.setIndicators(subIndicator.getIndicators());
+
+                // Add to lists
+                indicatorList.add(newSubIndicator);
+                indicatorsToMergeList.add(
+                        new IndicatorsToMerge(newSubIndicator, indicatorsToMerge.getColumnToMerge())
+                );
+            }
+            // Save all the new sub-indicators
+            indicatorRepository.saveAll(indicatorList);
+        }
+
+        // --- FIX 2: Use Setters for the Main Indicator ---
+        Indicator newMainIndicator = new Indicator();
+
+        // Set Basic Info
+        newMainIndicator.setName(indicatorUtilityService.fetchUserIndicatorForCopyMethod(
+                foundUser.getId(), foundIndicator.getName()));
+        newMainIndicator.setIndicatorType(foundIndicator.getIndicatorType());
+
+        // Set User & Email
+        newMainIndicator.setCreatedBy(foundUser);
+        newMainIndicator.setCreatedByEmail(foundUser.getEmail()); // <--- New Field
+
+        // Set Metadata
+        newMainIndicator.setVisualizationTechniqueReference(foundIndicator.getVisualizationTechniqueReference());
+        newMainIndicator.setCreatedOn(LocalDateTime.now());
+        newMainIndicator.setTimesExecuted(0);
+
+        // Set References
+        newMainIndicator.setGoalRef(foundIndicator.getGoalRef());
+        newMainIndicator.setConfigurationRequest(foundIndicator.getConfigurationRequest());
+
+        // Set Complex Logic Fields
+        newMainIndicator.setIndicatorQuery(
+                statementRequestStringify.isEmpty() ? null : statementRequestStringify
+        );
+        newMainIndicator.setAnalyticsTechniqueReference(foundIndicator.getAnalyticsTechniqueReference());
+        newMainIndicator.setColumnToMerge(foundIndicator.getColumnToMerge());
+
+        // Attach the list of new sub-indicators (if any)
+        newMainIndicator.setIndicators(indicatorsToMergeList.isEmpty() ? null : indicatorsToMergeList);
+
+        // Save the final indicator
+        indicatorRepository.save(newMainIndicator);
+    }
 
   @Override
   public void saveIndicatorDraft(

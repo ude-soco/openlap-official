@@ -108,8 +108,9 @@ const PublicIndicatorsTable = () => {
       // Mark indicators as "MY INDICATOR" if created by URL userId or logged-in user
       const enrichedList = (indicatorList.content || []).map((indicator) => {
         const isMyIndicator =
-          (urlUserId && indicator.createdBy === urlUserId) ||
-          (user?.email && indicator.createdBy === user.email) ||
+          (urlUserId && indicator.createdById === urlUserId) ||
+          (user?.email && indicator.createdByEmail && user.email === indicator.createdByEmail) ||
+          (user?.sub && indicator.createdByEmail && user.sub === indicator.createdByEmail) ||
           (user?.id && indicator.createdById === user.id);
         
         return {

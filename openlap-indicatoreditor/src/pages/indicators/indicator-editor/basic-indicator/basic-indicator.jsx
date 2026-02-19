@@ -190,6 +190,7 @@ export default function BasicIndicator() {
           setVisualization,
           setIndicator,
           handleResetIfDatasetEmpty,
+          isCreator: false,
         }}
       >
         <Stack gap={2}>

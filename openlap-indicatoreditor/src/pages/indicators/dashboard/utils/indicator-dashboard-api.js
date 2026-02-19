@@ -30,6 +30,7 @@ export const requestIndicatorFullDetail = async (api, indicatorId) => {
       type: response.data.data.type,
       createdOn: response.data.data.createdOn,
       createdBy: response.data.data.createdBy,
+      createdByEmail: response.data.data.createdByEmail,
       analyticsMethod: response.data.data.analyticsTechnique,
       library: response.data.data.visualizationLibrary,
       chart: response.data.data.visualizationType,

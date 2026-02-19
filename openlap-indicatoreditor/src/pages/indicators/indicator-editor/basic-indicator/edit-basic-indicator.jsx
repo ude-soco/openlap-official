@@ -26,7 +26,7 @@ import { BasicContext } from "./basic-indicator";
 export default function EditBasicIndicator() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { SESSION_INDICATOR, api } = useContext(AuthContext);
+  const { SESSION_INDICATOR, api, user } = useContext(AuthContext);
   const { enqueueSnackbar } = useSnackbar();
 
   // Current (editable) state
@@ -84,6 +84,7 @@ export default function EditBasicIndicator() {
 
   const [loading, setLoading] = useState(true);
   const [hasDatasetChanged, setHasDatasetChanged] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
 
   // Detect dataset changes and reset downstream configurations
   useEffect(() => {
@@ -170,6 +171,16 @@ export default function EditBasicIndicator() {
       }
 
       const indicatorData = JSON.parse(savedState);
+      
+      // Check if the current user is the creator of this indicator
+      const savedIndicatorCreator = indicatorData.indicator?.createdByEmail || indicatorData.indicator?.createdBy;
+      if (savedIndicatorCreator && user) {
+        const isUserCreator = 
+          (user.email && savedIndicatorCreator && user.email === savedIndicatorCreator) ||
+          (user.sub && savedIndicatorCreator && user.sub === savedIndicatorCreator);
+        setIsCreator(isUserCreator);
+      
+      }
 
       // Store previous data for comparison (deep clone to avoid reference issues)
       setPreviousIndicatorData({
@@ -278,6 +289,7 @@ export default function EditBasicIndicator() {
           expandedStep,
           handleNextStep,
           hasDatasetChanged,
+          isCreator,
         }}
       >
         <Stack gap={2}>

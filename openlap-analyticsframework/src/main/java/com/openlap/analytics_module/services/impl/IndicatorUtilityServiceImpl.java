@@ -150,6 +150,7 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       HttpServletRequest request, IndicatorReference indicatorReference, Indicator indicator) {
     log.info("Preparing indicator '{}'.", indicatorReference.getName());
     Gson gson = new Gson();
+    User userFromToken = tokenService.getUserFromToken(request);
     try {
       // Indicator Metadata
       indicator.setName(indicatorReference.getName());
@@ -158,7 +159,7 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       //      Set<String> uniquePlatforms = new HashSet<>();
       // Indicator creator validation
       indicator.setCreatedBy(tokenService.getUserFromToken(request));
-
+      indicator.setCreatedByEmail(userFromToken.getEmail());
       if (indicatorReference.getIndicatorType() == IndicatorType.BASIC) {
         // TODO: Extract platform information and add it to an attribute
         indicator.setIndicatorQuery(gson.toJson(indicatorReference.getIndicatorQuery()));

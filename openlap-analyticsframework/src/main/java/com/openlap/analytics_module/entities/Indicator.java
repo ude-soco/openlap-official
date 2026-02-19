@@ -29,6 +29,16 @@ public class Indicator {
   private String name;
   private IndicatorType indicatorType;
   @DBRef private User createdBy;
+
+    public String getCreatedByEmail() {
+        return CreatedByEmail;
+    }
+
+    public void setCreatedByEmail(String createdByEmail) {
+        CreatedByEmail = createdByEmail;
+    }
+
+    private String CreatedByEmail;
   private VisualizationTechniqueReference visualizationTechniqueReference;
   private LocalDateTime createdOn;
   private Integer timesExecuted;

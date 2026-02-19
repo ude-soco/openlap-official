@@ -34,13 +34,14 @@ import CodeIcon from "@mui/icons-material/Code";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import PersonIcon from "@mui/icons-material/Person";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { handleDisplayType } from "../utils/utils.js";
 import CustomDialog from "../../../../common/components/custom-dialog/custom-dialog.jsx";
 
 const MyIndicatorsTable = () => {
-  const { api, SESSION_INDICATOR } = useContext(AuthContext);
+  const { api, SESSION_INDICATOR, user } = useContext(AuthContext);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [state, setState] = useState({
@@ -152,7 +153,12 @@ const MyIndicatorsTable = () => {
       let configuration = JSON.parse(indicator.configuration);
       let updatedConfiguration = {
         ...configuration,
-        indicator: { ...configuration.indicator, id: state.onHoverIndicatorId },
+        indicator: { 
+          ...configuration.indicator, 
+          id: state.onHoverIndicatorId,
+          createdBy: indicator.createdBy,
+          createdByEmail: indicator.createdByEmail,
+        },
       };
       sessionStorage.setItem(
         SESSION_INDICATOR,
@@ -393,7 +399,12 @@ const MyIndicatorsTable = () => {
                         <Grid container justifyContent="space-between">
                           <Grid size="grow">
                             <Typography component="span">
-                              <b>{toSentenceCase(indicator.indicatorName)}</b>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <b>{toSentenceCase(indicator.indicatorName)}</b>
+                                <Tooltip title="You created this indicator" arrow>
+                                  <PersonIcon fontSize="small" color="primary" />
+                                </Tooltip>
+                              </Box>
                               <br />
                               <Typography component="span" variant="caption">
                                 {handleDisplayType(indicator.type)} ● Created

@@ -30,6 +30,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CodeIcon from "@mui/icons-material/Code";
 import CloseIcon from "@mui/icons-material/Close";
+import PersonIcon from "@mui/icons-material/Person";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { handleDisplayType } from "../../dashboard/utils/utils.js";
@@ -149,7 +150,12 @@ const AllIndicatorsTable = () => {
       let configuration = JSON.parse(indicator.configuration);
       let updatedConfiguration = {
         ...configuration,
-        indicator: { ...configuration.indicator, id: state.onHoverIndicatorId },
+        indicator: { 
+          ...configuration.indicator, 
+          id: state.onHoverIndicatorId,
+          createdBy: indicator.createdBy,
+          createdByEmail: indicator.createdByEmail,
+        },
       };
       sessionStorage.setItem(
         SESSION_INDICATOR,
@@ -319,7 +325,13 @@ const AllIndicatorsTable = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {state.filteredIndicatorList.map((indicator) => (
+                {state.filteredIndicatorList.map((indicator) => {
+                  // Check that both values exist AND match
+                  const isCreator = (
+                    (user?.email && indicator.createdByEmail && user.email === indicator.createdByEmail) ||
+                    (user?.sub && indicator.createdByEmail && user.sub === indicator.createdByEmail)
+                  );
+                  return (
                   <React.Fragment key={indicator.id}>
                     <TableRow
                       onMouseEnter={() => handleOnHoverIndicator(indicator.id)}
@@ -335,7 +347,14 @@ const AllIndicatorsTable = () => {
                         <Grid container justifyContent="space-between">
                           <Grid size="grow">
                             <Typography component="span">
-                              <b>{toSentenceCase(indicator.indicatorName)}</b>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <b>{toSentenceCase(indicator.indicatorName)}</b>
+                                {isCreator && (
+                                  <Tooltip title="You created this indicator" arrow>
+                                    <PersonIcon fontSize="small" color="primary" />
+                                  </Tooltip>
+                                )}
+                              </Box>
                               <br />
                               <Typography component="span" variant="caption">
                                 {handleDisplayType(indicator.type)} ● Created
@@ -425,7 +444,7 @@ const AllIndicatorsTable = () => {
                                 </span>
                               </Tooltip>
 
-                              {user?.email === indicator.createdBy && (
+                              {isCreator && (
                                 <>
                                   <Divider
                                     orientation="vertical"
@@ -465,7 +484,8 @@ const AllIndicatorsTable = () => {
                         </TableRow>
                       )}
                   </React.Fragment>
-                ))}
+                  );
+                })}
                 {state.loadingIndicatorList && (
                   <TableRow>
                     <TableCell colSpan={3} sx={{ padding: 0 }}>
