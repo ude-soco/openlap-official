@@ -6,7 +6,7 @@ import { ToggleEditIconButton } from "../../../../../../common/components/toggle
 import TipPopover from "../../../../../../common/components/tip-popover/tip-popover";
 
 export default function DatasetSummary() {
-  const { dataset, lockedStep, setLockedStep } = useContext(BasicContext);
+  const { dataset, lockedStep, setLockedStep, previousIndicatorData } = useContext(BasicContext);
   const [state, setState] = useState({
     tipAnchor: false,
     showSelections: true,
@@ -33,6 +33,22 @@ export default function DatasetSummary() {
 
   const handleCheckDatasetSelected = () => {
     return dataset.selectedLRSList.length !== 0;
+  };
+
+  // Check if a specific LRS is new (not in previous selection)
+  const isNewLRS = (lrsId) => {
+    if (!previousIndicatorData?.dataset?.selectedLRSList) return false;
+    return !previousIndicatorData.dataset.selectedLRSList.some(
+      (prevLRS) => prevLRS.id === lrsId
+    );
+  };
+
+  // Check if a specific LRS was removed (in previous but not in current)
+  const getRemovedLRS = () => {
+    if (!previousIndicatorData?.dataset?.selectedLRSList) return [];
+    return previousIndicatorData.dataset.selectedLRSList.filter(
+      (prevLRS) => !dataset.selectedLRSList.some((lrs) => lrs.id === prevLRS.id)
+    );
   };
 
   return (
@@ -72,9 +88,30 @@ export default function DatasetSummary() {
                   <Typography>Source of data:</Typography>
                   {dataset.selectedLRSList.map((lrs) => (
                     <Grid key={lrs.id}>
-                      <Chip label={lrs.lrsTitle} />
+                      <Chip 
+                        label={lrs.lrsTitle}
+                        color={isNewLRS(lrs.id) ? "success" : "default"}
+                        variant={isNewLRS(lrs.id) ? "filled" : "outlined"}
+                      />
                     </Grid>
                   ))}
+                  {getRemovedLRS().length > 0 && (
+                    <>
+                      <Typography sx={{ ml: 2, color: "error.main" }}>
+                        Removed:
+                      </Typography>
+                      {getRemovedLRS().map((lrs) => (
+                        <Grid key={lrs.id}>
+                          <Chip 
+                            label={lrs.lrsTitle}
+                            color="error"
+                            variant="outlined"
+                            sx={{ textDecoration: "line-through" }}
+                          />
+                        </Grid>
+                      ))}
+                    </>
+                  )}
                 </>
               ) : (
                 <Typography sx={{ fontStyle: "italic" }}>

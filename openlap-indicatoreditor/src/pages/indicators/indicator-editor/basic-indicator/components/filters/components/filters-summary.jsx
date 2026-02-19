@@ -7,8 +7,10 @@ import {
   Tooltip,
   Typography,
   Stack,
+  Alert,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { BasicContext } from "../../../basic-indicator";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button";
 import { ToggleEditIconButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button";
@@ -57,7 +59,7 @@ function ChipsWithMore({ items }) {
 }
 
 export default function FilterSummary() {
-  const { filters, lockedStep, setLockedStep } = useContext(BasicContext);
+  const { filters, lockedStep, setLockedStep, hasDatasetChanged } = useContext(BasicContext);
   const [state, setState] = useState({
     tipAnchor: false,
     showSelections: true,
@@ -111,6 +113,15 @@ export default function FilterSummary() {
               </IconButton>
             )}
             <Typography>Filters</Typography>
+            {hasDatasetChanged && !lockedStep.filters.locked && (
+              <Chip 
+                icon={<WarningAmberIcon />}
+                label="Reset Required"
+                color="warning"
+                size="small"
+                variant="outlined"
+              />
+            )}
             {!lockedStep.filters.locked && (
               <TipPopover
                 tipAnchor={state.tipAnchor}

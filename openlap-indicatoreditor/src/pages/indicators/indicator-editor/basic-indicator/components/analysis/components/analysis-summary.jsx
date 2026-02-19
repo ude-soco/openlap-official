@@ -8,6 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { BasicContext } from "../../../basic-indicator";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button";
@@ -15,7 +16,7 @@ import { ToggleEditIconButton } from "../../../../../../../common/components/tog
 import AnalyzedDataTable from "./analyzed-data-table";
 
 export default function AnalysisSummary() {
-  const { analysis, lockedStep, setLockedStep } = useContext(BasicContext);
+  const { analysis, lockedStep, setLockedStep, hasDatasetChanged } = useContext(BasicContext);
   const [state, setState] = useState({
     tipAnchor: false,
     showSelections: true,
@@ -64,6 +65,15 @@ export default function AnalysisSummary() {
               </IconButton>
             )}
             <Typography>Analysis</Typography>
+            {hasDatasetChanged && !lockedStep.analysis.locked && (
+              <Chip 
+                icon={<WarningAmberIcon />}
+                label="Reset Required"
+                color="warning"
+                size="small"
+                variant="outlined"
+              />
+            )}
             {!lockedStep.analysis.locked && (
               <TipPopover
                 tipAnchor={state.tipAnchor}

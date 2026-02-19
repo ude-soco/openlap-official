@@ -1,13 +1,14 @@
 import { useContext, useState } from "react";
 import { Chip, Collapse, Grid, IconButton, Typography } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { BasicContext } from "../../../basic-indicator";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button";
 import { ToggleEditIconButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 
 export default function VisualizationSummary() {
-  const { visualization, lockedStep, setLockedStep } = useContext(BasicContext);
+  const { visualization, lockedStep, setLockedStep, hasDatasetChanged } = useContext(BasicContext);
   const [state, setState] = useState({
     tipAnchor: false,
     showSelections: true,
@@ -62,6 +63,15 @@ export default function VisualizationSummary() {
                   </IconButton>
                 )}
                 <Typography>Visualization</Typography>
+                {hasDatasetChanged && !lockedStep.visualization.locked && (
+                  <Chip 
+                    icon={<WarningAmberIcon />}
+                    label="Reset Required"
+                    color="warning"
+                    size="small"
+                    variant="outlined"
+                  />
+                )}
                 {!lockedStep.visualization.locked && (
                   <TipPopover
                     tipAnchor={state.tipAnchor}

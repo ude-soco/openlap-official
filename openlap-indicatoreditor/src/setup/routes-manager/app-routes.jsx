@@ -28,6 +28,7 @@ import IscPreview from "../../pages/indicator-specification-cards/dashboard/comp
 
 import IndicatorEditor from "../../pages/indicators/indicator-editor/indicator-editor";
 import BasicIndicator from "../../pages/indicators/indicator-editor/basic-indicator/basic-indicator";
+import EditBasicIndicator from "../../pages/indicators/indicator-editor/basic-indicator/edit-basic-indicator";
 import NavigationBar from "../../common/components/navigation-bar/navigation-bar";
 import LandingPage from "../../pages/landing-page/landing-page.jsx";
 import PrivacyPolicy from "../../pages/privacy-policy/privacy-policy.jsx";
@@ -140,7 +141,7 @@ const AppRoutes = () => {
                     path="basic/edit/:id"
                     element={
                       <PrivateRoute
-                        component={<BasicIndicator />}
+                        component={<EditBasicIndicator />}
                         allowedRoles={[RoleTypes.user]}
                       />
                     }

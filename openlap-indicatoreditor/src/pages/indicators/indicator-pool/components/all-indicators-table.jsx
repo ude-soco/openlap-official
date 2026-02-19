@@ -36,7 +36,7 @@ import { handleDisplayType } from "../../dashboard/utils/utils.js";
 import CustomDialog from "../../../../common/components/custom-dialog/custom-dialog.jsx";
 
 const AllIndicatorsTable = () => {
-  const { api, user } = useContext(AuthContext);
+  const { api, user, SESSION_INDICATOR } = useContext(AuthContext);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [state, setState] = useState({
@@ -152,7 +152,7 @@ const AllIndicatorsTable = () => {
         indicator: { ...configuration.indicator, id: state.onHoverIndicatorId },
       };
       sessionStorage.setItem(
-        "SESSION_INDICATOR",
+        SESSION_INDICATOR,
         JSON.stringify(updatedConfiguration)
       );
       const baseRoutes = {

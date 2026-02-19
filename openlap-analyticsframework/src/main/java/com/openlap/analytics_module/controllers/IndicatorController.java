@@ -134,7 +134,7 @@ public class IndicatorController {
      * @param sortBy possible options: name, createdBy, indicatorType, createdOn.
      * @param sortDirection possible options: asc, dsc.
      */
-  @GetMapping("/public")
+  @GetMapping("/public") //new public endpoint to retrieve indicators from the database to be displayed on Public pool
   public ResponseEntity<?> getPublicIndicators(
           @RequestParam(defaultValue = "0") int page,
           @RequestParam(defaultValue = "10") int size,
@@ -154,7 +154,7 @@ public class IndicatorController {
       HttpStatus status = HttpStatus.OK;
       return ResponseEntity.status(status).body(new ApiSuccess(status, message, allPublicIndicators));
   }
-    @GetMapping("/public/{indicatorId}")//new public endpoint for previewing the indicators in the indicator public pool (for unsigned users)
+    @GetMapping("/public/{indicatorId}") //new public endpoint for previewing the indicators in the indicator public pool (public users)
     public ResponseEntity<?> getIndicatorByIdPublic(@PathVariable String indicatorId) {
         HttpStatus status = HttpStatus.OK;
         return ResponseEntity.status(status)
@@ -163,7 +163,7 @@ public class IndicatorController {
                                 status, "Indicator found.", indicatorService.getIndicatorById(indicatorId)));
     }
 
-    @GetMapping("/public/{indicatorId}/code") // new public endpoint for copying the code of an indicator (for unsigned users)
+    @GetMapping("/public/{indicatorId}/code") // new public endpoint for copying the code of an indicator (public users)
     public ResponseEntity<?> requestInteractiveIndicatorCodePublic(
             @PathVariable String indicatorId, HttpServletRequest request) {
         HttpStatus status = HttpStatus.OK;
