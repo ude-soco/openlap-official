@@ -40,7 +40,7 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
 export default function Visualization() {
   const params = useParams();
-  const { api, SESSION_INDICATOR } = useContext(AuthContext);
+  const { api, SESSION_INDICATOR, user } = useContext(AuthContext);
   const {
     indicator,
     dataset,
@@ -50,12 +50,14 @@ export default function Visualization() {
     lockedStep,
     setVisualization,
     setIndicator,
+    isCreator,
   } = useContext(BasicContext);
   const [state, setState] = useState({
     nameIndicator: {
       openDialog: false,
       loading: false,
     },
+    saveMode: null, // 'update' or 'new'
   });
   const navigate = useNavigate();
 
@@ -64,18 +66,23 @@ export default function Visualization() {
       visualization.inputs.length !== 0 &&
       allInputsHaveSelected(visualization.inputs) &&
       Object.keys(analysis.analyzedData).length > 0
-    )
+    ) {
       handleLoadPreviewVisualization().then((previewData) => {
-        setVisualization((p) => ({
-          ...p,
-          previewData: {
-            ...p.previewData,
-            displayCode: previewData.displayCode,
-            scriptData: previewData.scriptData,
-          },
-        }));
+        if (previewData) {
+          setVisualization((p) => ({
+            ...p,
+            previewData: {
+              ...p.previewData,
+              displayCode: previewData.displayCode,
+              scriptData: previewData.scriptData,
+            },
+          }));
+        }
+      }).catch((error) => {
+        console.error("Error loading visualization preview:", error);
       });
-  }, [visualization.inputs, visualization.params]);
+    }
+  }, [visualization.inputs, visualization.params, visualization.selectedType.id, analysis.analyzedData]);
 
   const handleLoadPreviewVisualization = async () => {
     let indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
@@ -94,18 +101,29 @@ export default function Visualization() {
   };
 
   const handleToggleNameIndicator = () => {
-    setState((p) => ({ ...p, openDialog: !p.openDialog }));
+    setState((p) => ({ ...p, openDialog: !p.openDialog, saveMode: null }));
   };
 
   const handleOnChangeNameIndicator = (event) => {
     setIndicator((p) => ({ ...p, indicatorName: event.target.value }));
   };
 
-  const handleSaveIndicator = async () => {
+  const handleSaveIndicator = async (saveMode = state.saveMode) => {
     setState((p) => ({
       ...p,
       nameIndicator: { ...p.nameIndicator, loading: true },
+      saveMode: saveMode, // Update state with the mode being used
     }));
+    
+    // Ensure we have preview data before saving
+    if (!visualization.previewData.displayCode || visualization.previewData.displayCode.length === 0) {
+      setState((p) => ({
+        ...p,
+        nameIndicator: { ...p.nameIndicator, loading: false },
+      }));
+      return;
+    }
+    
     let indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
     let analysisRef = buildAnalysisRef(analysis);
     let visRef = buildVisRef(visualization);
@@ -118,7 +136,10 @@ export default function Visualization() {
       lockedStep,
     });
     try {
-      if (params.id) {
+      // Determine if we should update or create new
+      const shouldUpdate = params.id && saveMode === 'update';
+      if (shouldUpdate) {
+        // Update existing indicator
         await requestUpdateBasicIndicator(
           api,
           params.id,
@@ -129,6 +150,7 @@ export default function Visualization() {
           configuration
         );
       } else {
+        // Save as new indicator (either no ID or explicitly requested)
         await requestCreateBasicIndicator(
           api,
           indicatorQuery,
@@ -157,7 +179,9 @@ export default function Visualization() {
     return (
       visualization.inputs.length === 0 ||
       !allInputsHaveSelected(visualization.inputs) ||
-      Object.keys(analysis.analyzedData).length === 0
+      Object.keys(analysis.analyzedData).length === 0 ||
+      !visualization.previewData.displayCode ||
+      visualization.previewData.displayCode.length === 0
     );
   };
 
@@ -233,7 +257,13 @@ export default function Visualization() {
           open={!!state.openDialog}
           onClose={handleToggleNameIndicator}
         >
-          <DialogTitle>Provide a name to the indicator</DialogTitle>
+          <DialogTitle>
+            {params.id && isCreator
+              ? "Save Indicator - Choose an Option"
+              : params.id && !isCreator
+              ? "Save as New Indicator"
+              : "Provide a name to the indicator"}
+          </DialogTitle>
           <DialogContent>
             <Box sx={{ py: 1 }}>
               <TextField
@@ -246,28 +276,92 @@ export default function Visualization() {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={handleToggleNameIndicator}
-              disabled={state.nameIndicator.loading}
-            >
-              Continue editing
-            </Button>
-            <Button
-              loading={state.nameIndicator.loading}
-              disabled={indicator.indicatorName.length === 0}
-              loadingPosition="start"
-              loadingIndicator={params.id ? "Updating..." : "Saving..."}
-              fullWidth
-              variant="contained"
-              onClick={handleSaveIndicator}
-            >
-              {!state.nameIndicator.loading &&
-                (params.id
-                  ? "Update & Save to Dashboard"
-                  : "Save to dashboard")}
-            </Button>
+            {/* If not in edit mode - simple save */}
+            {!params.id && (
+              <>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={handleToggleNameIndicator}
+                  disabled={state.nameIndicator.loading}
+                >
+                  Continue editing
+                </Button>
+                <Button
+                  loading={state.nameIndicator.loading}
+                  disabled={indicator.indicatorName.length === 0}
+                  loadingPosition="start"
+                  loadingIndicator="Saving..."
+                  fullWidth
+                  variant="contained"
+                  onClick={handleSaveIndicator}
+                >
+                  {!state.nameIndicator.loading && "Save to dashboard"}
+                </Button>
+              </>
+            )}
+
+            {/* If in edit mode and IS creator - show both update and save as new options */}
+            {params.id && isCreator && (
+              <>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={handleToggleNameIndicator}
+                  disabled={state.nameIndicator.loading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  loading={state.nameIndicator.loading && state.saveMode === 'update'}
+                  disabled={indicator.indicatorName.length === 0}
+                  loadingPosition="start"
+                  loadingIndicator="Updating..."
+                  fullWidth
+                  variant="contained"
+                  onClick={() => handleSaveIndicator('update')}
+                >
+                  {!state.nameIndicator.loading && "Update Existing"}
+                </Button>
+                <Button
+                  loading={state.nameIndicator.loading && state.saveMode === 'new'}
+                  disabled={indicator.indicatorName.length === 0}
+                  loadingPosition="start"
+                  loadingIndicator="Saving..."
+                  fullWidth
+                  variant="outlined"
+                  onClick={() => handleSaveIndicator('new')}
+                >
+                  {!state.nameIndicator.loading && "Save as New"}
+                </Button>
+              </>
+            )}
+
+            {/* If in edit mode and NOT creator - only show save as new */}
+            {params.id && !isCreator && (
+              <>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={handleToggleNameIndicator}
+                  disabled={state.nameIndicator.loading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  loading={state.nameIndicator.loading}
+                  disabled={indicator.indicatorName.length === 0}
+                  loadingPosition="start"
+                  loadingIndicator="Saving..."
+                  fullWidth
+                  variant="contained"
+                  onClick={() => handleSaveIndicator('new')}
+                >
+                  {!state.nameIndicator.loading && "Save as New Indicator"}
+                </Button>
+              </>
+            )}
+
             {indicator.indicatorName.length === 0 && (
               <CustomTooltip
                 type="help"

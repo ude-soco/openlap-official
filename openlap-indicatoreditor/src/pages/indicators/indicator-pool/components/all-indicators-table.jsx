@@ -143,6 +143,11 @@ const AllIndicatorsTable = () => {
       },
     }));
     try {
+      // Find the indicator from the list to get createdByEmail
+      const indicatorFromList = state.indicatorList.find(
+        ind => ind.id === state.onHoverIndicatorId
+      );
+      
       const indicator = await requestIndicatorFullDetail(
         api,
         state.onHoverIndicatorId
@@ -154,7 +159,8 @@ const AllIndicatorsTable = () => {
           ...configuration.indicator, 
           id: state.onHoverIndicatorId,
           createdBy: indicator.createdBy,
-          createdByEmail: indicator.createdByEmail,
+          // Use createdByEmail from list if API doesn't provide it
+          createdByEmail: indicator.createdByEmail || indicatorFromList?.createdByEmail,
         },
       };
       sessionStorage.setItem(

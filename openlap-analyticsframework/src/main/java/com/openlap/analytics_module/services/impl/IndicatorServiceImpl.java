@@ -165,6 +165,7 @@ public class IndicatorServiceImpl implements IndicatorService {
     indicatorFullDetailResponse.setName(foundIndicator.getName());
     indicatorFullDetailResponse.setType(indicatorType);
     indicatorFullDetailResponse.setCreatedBy(foundIndicator.getCreatedBy().getName());
+    indicatorFullDetailResponse.setCreatedByEmail(foundIndicator.getCreatedByEmail());
     indicatorFullDetailResponse.setIndicatorCode(
         generateIndicatorCode(foundIndicator.getId(), true));
     //    indicatorFullDetailResponse.setPlatforms(foundIndicator.getPlatforms());

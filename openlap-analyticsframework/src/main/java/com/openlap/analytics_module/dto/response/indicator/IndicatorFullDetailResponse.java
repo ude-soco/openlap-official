@@ -24,6 +24,7 @@ public class IndicatorFullDetailResponse {
   private String name;
   private IndicatorType type;
   private String createdBy;
+  private String CreatedByEmail;
   private LocalDateTime createdOn;
   //  private Set<String> platforms;
   private String configuration;
