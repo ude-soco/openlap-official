@@ -210,8 +210,19 @@ const PublicIndicatorsTable = () => {
   };
 
   const handlePreview = (id) => {
-    // Navigate to public preview page
-    navigate(`/indicators/overview/${id}`);
+    // Build URL with preserved query parameters for CourseMapper integration
+    let url = `/indicators/overview/${id}`;
+    
+    const params = new URLSearchParams();
+    if (urlUserId) params.append('userId', urlUserId);
+    if (urlLrsId) params.append('lrsId', urlLrsId);
+    if (urlPlatform) params.append('platform', urlPlatform);
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+    
+    navigate(url);
   };
 
   const handlePageChange = (event, newPage) => {

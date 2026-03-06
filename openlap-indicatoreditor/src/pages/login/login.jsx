@@ -1,6 +1,6 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import OpenLAPLogo from "../../assets/brand/openlap-logo.svg";
 import OpenLAPIcon from "../../assets/brand/openlap-icon.svg";
 import {
@@ -29,7 +29,7 @@ const iconStyle = {
 };
 
 const Login = () => {
-  const { login } = useContext(AuthContext);
+  const { login, user } = useContext(AuthContext);
   const [formFields, setFormFields] = useState({
     email: "",
     password: "",
@@ -37,6 +37,20 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || "/dashboard";
+  
+  // Extract CourseMapper integration parameters
+  const userId = location.state?.userId;
+  const lrsId = location.state?.lrsId;
+  const platform = location.state?.platform;
+
+  // Redirect if already logged in (visiting login page while authenticated)
+  useEffect(() => {
+    if (user) {
+      navigate(from, { replace: true });
+    }
+  }, []); // Empty dependency - only run on mount
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,8 +58,9 @@ const Login = () => {
     try {
       await login(formFields.email, formFields.password);
       enqueueSnackbar("Login successful!", { variant: "success" });
-      navigate("/dashboard");
+      // AppRoutes useEffect will handle the redirect after user state updates
     } catch (error) {
+      setLoading(false);
       if (error.status === 401) {
         enqueueSnackbar(error.data.message, { variant: "error" });
       } else {
@@ -53,8 +68,6 @@ const Login = () => {
           variant: "error",
         });
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -87,7 +100,13 @@ const Login = () => {
                 disableElevation
                 variant="contained"
                 size="small"
-                onClick={() => navigate("/register")}
+                onClick={() => {
+                  const state = { from };
+                  if (userId) state.userId = userId;
+                  if (lrsId) state.lrsId = lrsId;
+                  if (platform) state.platform = platform;
+                  navigate("/register", { state });
+                }}
               >
                 Sign up
               </Button>
@@ -153,7 +172,13 @@ const Login = () => {
              */}
               <Link
                 component="button"
-                onClick={() => navigate("/register")}
+                onClick={() => {
+                  const state = { from };
+                  if (userId) state.userId = userId;
+                  if (lrsId) state.lrsId = lrsId;
+                  if (platform) state.platform = platform;
+                  navigate("/register", { state });
+                }}
                 variant="body2"
                 underline="hover"
               >

@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import OpenLAPLogo from "../../assets/brand/openlap-logo.svg";
 import OpenLAPIcon from "../../assets/brand/openlap-icon.svg";
 import {
@@ -46,7 +46,10 @@ const iconStyle = {
 const Register = () => {
   const { api } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { enqueueSnackbar } = useSnackbar();
+  const from = location.state?.from;
   const [formFields, setFormFields] = useState({
     name: "",
     email: "",
@@ -70,6 +73,41 @@ const Register = () => {
   useEffect(() => {
     loadLRSData();
   }, []);
+
+  // Auto-fill LRS connection details from CourseMapper integration
+  useEffect(() => {
+    // Try location.state first, then fall back to URL search params
+    const userId = location.state?.userId || searchParams.get('userId');
+    const lrsId = location.state?.lrsId || searchParams.get('lrsId');
+    const platform = location.state?.platform || searchParams.get('platform');
+    
+    if (userId && lrsId && lrsList.length > 0) {
+      //  CourseMapper - auto-filling LRS connection
+  
+      // Check if the provided lrsId exists in the available LRS list
+      const lrsExists = lrsList.some(lrs => lrs.lrsId === lrsId);
+      
+      if (lrsExists) {
+        // Enable LRS connection toggle
+        setLrsConnect(true);
+        setFormFields(prev => ({
+          ...prev,
+          role: RoleTypes.user
+        }));
+        
+        // Auto-fill LRS consumer request
+        setLrsConsumerRequest({
+          lrsId: lrsId,
+          uniqueIdentifier: userId
+        });
+        
+        enqueueSnackbar(`LRS connection pre-filled from ${platform || "external platform"}`, { variant: "info" });
+      } else {
+        console.warn("Provided lrsId not found in available LRS list");
+        enqueueSnackbar("LRS not found. Please select manually.", { variant: "warning" });
+      }
+    }
+  }, [lrsList, location.state, searchParams]);
 
   const loadLRSData = async () => {
     try {
@@ -139,10 +177,11 @@ const Register = () => {
           : null
       );
       if (response.status === 201) {
-        enqueueSnackbar("Account created successfully!", {
+        enqueueSnackbar("Account created successfully! Please login.", {
           variant: "success",
         });
-        navigate("/login");
+        // Pass the intended destination to login page
+        navigate("/login", { state: { from } });
       }
     } catch (error) {
       if (error.status === 400) {
@@ -179,7 +218,7 @@ const Register = () => {
                 disableElevation
                 variant="contained"
                 size="small"
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/login", { state: { from } })}
               >
                 Sign in
               </Button>
@@ -381,6 +420,7 @@ const Register = () => {
                             fullWidth
                             name="uniqueIdentifier"
                             label="Unique Identifier"
+                            value={lrsConsumerRequest.uniqueIdentifier}
                             error={Boolean(
                               errors?.["lrsConsumerRequest.uniqueIdentifier"]
                             )}
@@ -446,7 +486,7 @@ const Register = () => {
                 <Grid container justifyContent="flex-end">
                   <Link
                     component="button"
-                    onClick={() => navigate("/login")}
+                    onClick={() => navigate("/login", { state: { from } })}
                     variant="body2"
                     underline="hover"
                   >

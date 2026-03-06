@@ -9,20 +9,40 @@ import {
   Typography,
   Alert,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import LoginIcon from "@mui/icons-material/Login";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import PublicIndicatorsTable from "./components/public-indicators-table.jsx";
 
 const PublicIndicatorsOverview = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  // Extract CourseMapper integration parameters
+  const userId = searchParams.get('userId');
+  const lrsId = searchParams.get('lrsId');
+  const platform = searchParams.get('platform');
 
   const handleSignUp = () => {
-    navigate("/register");
+    const state = {};
+    if (userId) state.userId = userId;
+    if (lrsId) state.lrsId = lrsId;
+    if (platform) state.platform = platform;
+    
+    navigate("/register", { 
+      state: Object.keys(state).length > 0 ? state : undefined 
+    });
   };
 
   const handleLogin = () => {
-    navigate("/login");
+    const state = {};
+    if (userId) state.userId = userId;
+    if (lrsId) state.lrsId = lrsId;
+    if (platform) state.platform = platform;
+    
+    navigate("/login", { 
+      state: Object.keys(state).length > 0 ? state : undefined 
+    });
   };
 
   return (

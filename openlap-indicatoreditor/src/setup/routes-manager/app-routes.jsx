@@ -1,6 +1,6 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { CssBaseline, Paper, Stack, Divider, Container } from "@mui/material";
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import PrivateRoute from "./private-routes";
 import UserProfile from "../../pages/account-manager/user-profile";
@@ -41,6 +41,18 @@ import PublicIndicatorPreview from "../../pages/indicators/public-overview/compo
 const AppRoutes = () => {
   const { theme } = useContext(CustomThemeContext);
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  // Handle post-login redirect
+  useEffect(() => {
+    if (user) {
+      const redirectDestination = sessionStorage.getItem('redirectAfterLogin');
+      if (redirectDestination) {
+        sessionStorage.removeItem('redirectAfterLogin');
+        navigate(redirectDestination, { replace: true });
+      }
+    }
+  }, [user, navigate]);
 
   return (
     <>

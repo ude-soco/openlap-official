@@ -156,56 +156,112 @@ export default function EditBasicIndicator() {
     }
   }, [dataset.selectedLRSList]);
 
-  // Load indicator data from sessionStorage (set by edit button click)
+  // Load indicator data from sessionStorage (set by edit button click) OR from API (if coming from public view after login)
   useEffect(() => {
-    try {
-      setLoading(true);
-      
-      // Get data from sessionStorage (stored by the edit button handler)
-      const savedState = sessionStorage.getItem(SESSION_INDICATOR);
-      
-      if (!savedState) {
-        enqueueSnackbar("No indicator data found. Please try again.", { variant: "error" });
+    const loadIndicatorData = async () => {
+      try {
+        setLoading(true);
+        
+        // First try to get data from sessionStorage (stored by the edit button handler)
+        const savedState = sessionStorage.getItem(SESSION_INDICATOR);
+        
+        if (savedState) {
+          // Data exists in session storage - use it
+          const indicatorData = JSON.parse(savedState);
+          
+          // Check if the current user is the creator of this indicator
+          const savedIndicatorCreator = indicatorData.indicator?.createdByEmail || indicatorData.indicator?.createdBy;
+          
+          if (savedIndicatorCreator && user) {
+            const isUserCreator = 
+              (user.email && savedIndicatorCreator && user.email === savedIndicatorCreator) ||
+              (user.sub && savedIndicatorCreator && user.sub === savedIndicatorCreator);
+            
+            setIsCreator(isUserCreator);
+          } else {
+            setIsCreator(false);
+          }
+
+          // Store previous data for comparison (deep clone to avoid reference issues)
+          setPreviousIndicatorData({
+            indicator: indicatorData.indicator ? { ...indicatorData.indicator } : null,
+            dataset: indicatorData.dataset ? { ...indicatorData.dataset } : null,
+            filters: indicatorData.filters ? { ...indicatorData.filters } : null,
+            analysis: indicatorData.analysis ? { ...indicatorData.analysis } : null,
+            visualization: indicatorData.visualization ? { ...indicatorData.visualization } : null,
+          });
+
+          // Initialize current state with loaded data
+          setIndicator(indicatorData.indicator || indicator);
+          setDataset(indicatorData.dataset || dataset);
+          setFilters(indicatorData.filters || filters);
+          setAnalysis(indicatorData.analysis || analysis);
+          setVisualization(indicatorData.visualization || visualization);
+
+          enqueueSnackbar("Indicator loaded successfully", { variant: "success" });
+        } else if (id) {
+          // No session storage but ID exists (likely coming from public view after login)
+          // Import the API function at the top of the file: import { requestIndicatorFullDetail } from "../../dashboard/utils/indicator-dashboard-api.js";
+          const { requestIndicatorFullDetail } = await import("../../dashboard/utils/indicator-dashboard-api.js");
+          const indicatorFullDetail = await requestIndicatorFullDetail(api, id);
+          
+          // Parse the configuration to get the full indicator structure
+          const configuration = JSON.parse(indicatorFullDetail.configuration);
+          
+          // Add metadata from API response
+          configuration.indicator = {
+            ...configuration.indicator,
+            id: id,
+            createdBy: indicatorFullDetail.createdBy,
+            createdByEmail: indicatorFullDetail.createdByEmail,
+          };
+          
+          // Store in session storage for future use
+          sessionStorage.setItem(SESSION_INDICATOR, JSON.stringify(configuration));
+          
+          // Check creator status
+          const savedIndicatorCreator = indicatorFullDetail.createdByEmail || indicatorFullDetail.createdBy;
+          if (savedIndicatorCreator && user) {
+            const isUserCreator = 
+              (user.email && savedIndicatorCreator && user.email === savedIndicatorCreator) ||
+              (user.sub && savedIndicatorCreator && user.sub === savedIndicatorCreator);
+            setIsCreator(isUserCreator);
+          } else {
+            setIsCreator(false);
+          }
+          
+          // Store previous data
+          setPreviousIndicatorData({
+            indicator: configuration.indicator,
+            dataset: configuration.dataset,
+            filters: configuration.filters,
+            analysis: configuration.analysis,
+            visualization: configuration.visualization,
+          });
+          
+          // Initialize state
+          setIndicator(configuration.indicator || indicator);
+          setDataset(configuration.dataset || dataset);
+          setFilters(configuration.filters || filters);
+          setAnalysis(configuration.analysis || analysis);
+          setVisualization(configuration.visualization || visualization);
+          
+          enqueueSnackbar("Indicator loaded from public view", { variant: "info" });
+        } else {
+          // No session storage and no ID - error state
+          enqueueSnackbar("No indicator data found. Please try again.", { variant: "error" });
+          navigate("/indicator");
+        }
+      } catch (error) {
+        console.error("Failed to load indicator data", error);
+        enqueueSnackbar("Failed to load indicator data", { variant: "error" });
         navigate("/indicator");
-        return;
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const indicatorData = JSON.parse(savedState);
-      
-      // Check if the current user is the creator of this indicator
-      const savedIndicatorCreator = indicatorData.indicator?.createdByEmail || indicatorData.indicator?.createdBy;
-      if (savedIndicatorCreator && user) {
-        const isUserCreator = 
-          (user.email && savedIndicatorCreator && user.email === savedIndicatorCreator) ||
-          (user.sub && savedIndicatorCreator && user.sub === savedIndicatorCreator);
-        setIsCreator(isUserCreator);
-      
-      }
-
-      // Store previous data for comparison (deep clone to avoid reference issues)
-      setPreviousIndicatorData({
-        indicator: indicatorData.indicator ? { ...indicatorData.indicator } : null,
-        dataset: indicatorData.dataset ? { ...indicatorData.dataset } : null,
-        filters: indicatorData.filters ? { ...indicatorData.filters } : null,
-        analysis: indicatorData.analysis ? { ...indicatorData.analysis } : null,
-        visualization: indicatorData.visualization ? { ...indicatorData.visualization } : null,
-      });
-
-      // Initialize current state with loaded data
-      setIndicator(indicatorData.indicator || indicator);
-      setDataset(indicatorData.dataset || dataset);
-      setFilters(indicatorData.filters || filters);
-      setAnalysis(indicatorData.analysis || analysis);
-      setVisualization(indicatorData.visualization || visualization);
-
-      enqueueSnackbar("Indicator loaded successfully", { variant: "success" });
-    } catch (error) {
-      console.error("Failed to load indicator data", error);
-      enqueueSnackbar("Failed to parse indicator data", { variant: "error" });
-      navigate("/indicator");
-    } finally {
-      setLoading(false);
-    }
+    loadIndicatorData();
   }, [id]);
 
   const handleResetIfDatasetEmpty = () => {

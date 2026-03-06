@@ -13,9 +13,10 @@ import {
   Typography,
   Button,
 } from "@mui/material";
-import { useParams, Link as RouterLink, useNavigate } from "react-router-dom";
+import { useParams, Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
 import CodeIcon from "@mui/icons-material/Code";
 import LoginIcon from "@mui/icons-material/Login";
+import EditIcon from "@mui/icons-material/Edit";
 import ChartPreview from "../../../indicators/indicator-editor/components/chart-preview.jsx";
 import { useSnackbar } from "notistack";
 import {
@@ -26,7 +27,23 @@ import {
 const PublicIndicatorPreview = () => {
   const params = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { enqueueSnackbar } = useSnackbar();
+  
+  // Extract CourseMapper integration parameters from URL
+  const userId = searchParams.get('userId');
+  const lrsId = searchParams.get('lrsId');
+  const platform = searchParams.get('platform');
+  
+  // Debug: Log extracted parameters
+  useEffect(() => {
+    // if (userId || lrsId || platform) {
+    //   console.log("CourseMapper parameters detected in preview page:");
+    //   console.log("   Platform:", platform);
+    //   console.log("   userId:", userId);
+    //   console.log("   lrsId:", lrsId);
+    // }
+  }, [userId, lrsId, platform]);
   const [state, setState] = useState({
     loading: false,
     indicatorName: "",
@@ -198,12 +215,55 @@ const PublicIndicatorPreview = () => {
 
                             <Tooltip
                               arrow
-                              title={<Typography>Login to edit or create your own</Typography>}
+                              title={<Typography>Edit this indicator</Typography>}
                             >
                               <span>
                                 <IconButton
+                                  size="small"
                                   color="primary"
-                                  onClick={() => navigate("/login")}
+                                  onClick={() => {
+                                    const destination = `/indicator/editor/basic/edit/${params.id}`;
+                                    // Store intended destination in sessionStorage
+                                    sessionStorage.setItem('redirectAfterLogin', destination);
+                                    
+                                    // Prepare navigation state with CourseMapper integration data
+                                    const navigationState = { 
+                                      from: destination,
+                                      indicatorId: params.id
+                                    };
+                                    
+                                    // Include userId and lrsId if present (CourseMapper integration)
+                                    if (userId) navigationState.userId = userId;
+                                    if (lrsId) navigationState.lrsId = lrsId;
+                                    if (platform) navigationState.platform = platform;
+                                    
+                                    navigate(`/login`, { state: navigationState });
+                                  }}
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+
+                            <Tooltip
+                              arrow
+                              title={<Typography>Login to create your own</Typography>}
+                            >
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={() => {
+                                    // Prepare navigation state with CourseMapper integration data
+                                    const navigationState = {};
+                                    if (userId) navigationState.userId = userId;
+                                    if (lrsId) navigationState.lrsId = lrsId;
+                                    if (platform) navigationState.platform = platform;
+                                    
+                                    navigate("/login", { 
+                                      state: Object.keys(navigationState).length > 0 ? navigationState : undefined 
+                                    });
+                                  }}
                                 >
                                   <LoginIcon />
                                 </IconButton>
