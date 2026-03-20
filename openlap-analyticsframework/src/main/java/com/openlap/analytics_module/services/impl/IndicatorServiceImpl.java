@@ -642,6 +642,64 @@ public class IndicatorServiceImpl implements IndicatorService {
     return null;
   }
 
+  @Override
+  public String previewPublicIndicatorWithData(String indicatorId, String lrsId, String userId) {
+    Gson gson = new Gson();
+    Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
+
+    if (foundIndicator.getIndicatorType() != IndicatorType.BASIC) {
+      throw new PreviewNotPossibleException(
+          "Preview with personal data is currently only supported for Basic indicators.");
+    }
+
+    // Deserialize stored analytics technique configuration
+    String analyticsTechniqueId =
+        foundIndicator.getAnalyticsTechniqueReference().getAnalyticsTechnique().getId();
+    OpenLAPPortConfig analyticsTechniqueMapping =
+        gson.fromJson(
+            foundIndicator.getAnalyticsTechniqueReference().getQueryToAnalyticsTechniqueMapping(),
+            OpenLAPPortConfig.class);
+    List<OpenLAPDynamicParam> analyticsTechniqueParams =
+        gson.fromJson(
+            foundIndicator.getAnalyticsTechniqueReference().getAdditionalParams(),
+            new TypeToken<List<OpenLAPDynamicParam>>() {}.getType());
+    if (analyticsTechniqueParams == null) {
+      analyticsTechniqueParams = new ArrayList<>();
+    }
+
+    // Reconstruct the original query, replacing only lrsStores with the caller's LRS and userId
+    StatementsRequest originalQuery =
+        gson.fromJson(foundIndicator.getIndicatorQuery(), StatementsRequest.class);
+    StatementsRequest userQuery =
+        new StatementsRequest(
+            Collections.singletonList(new LrsStoresStatementRequest(lrsId, userId)),
+            originalQuery.getActivityTypes(),
+            originalQuery.getActionOnActivities(),
+            originalQuery.getActivities(),
+            originalQuery.getDuration(),
+            originalQuery.getOutputs(),
+            originalQuery.getUserQueryCondition());
+
+    IndicatorBasicPreviewRequest previewRequest =
+        new IndicatorBasicPreviewRequest(
+            foundIndicator.getVisualizationTechniqueReference().getVisLibrary().getId(),
+            foundIndicator.getVisualizationTechniqueReference().getVisType().getId(),
+            gson.fromJson(
+                foundIndicator.getVisualizationTechniqueReference().getAdditionalParams(),
+                Object.class),
+            gson.fromJson(
+                foundIndicator
+                    .getVisualizationTechniqueReference()
+                    .getAnalyticsTechniqueToVisualizationMapping(),
+                OpenLAPPortConfig.class),
+            userQuery,
+            analyticsTechniqueId,
+            analyticsTechniqueMapping,
+            analyticsTechniqueParams);
+
+    return indicatorBasicService.previewIndicator(previewRequest);
+  }
+
     @Override
     public void duplicateIndicator(HttpServletRequest request, String indicatorId) {
         Gson gson = new Gson();

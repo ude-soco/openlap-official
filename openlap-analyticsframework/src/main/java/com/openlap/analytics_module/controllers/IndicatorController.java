@@ -2,6 +2,7 @@ package com.openlap.analytics_module.controllers;
 
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorDraftRequest;
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorsToAnalyzeRequest;
+import com.openlap.analytics_module.dto.requests.indicator.PublicPreviewRequest;
 import com.openlap.analytics_module.dto.response.indicator.*;
 import com.openlap.analytics_module.services.IndicatorService;
 import com.openlap.response.ApiSuccess;
@@ -173,6 +174,27 @@ public class IndicatorController {
                                 status,
                                 "Interactive Indicator Code copied successfully.",
                                 indicatorService.requestInteractiveIndicatorCode(indicatorId, request)));
+    }
+
+    /**
+     * Generates a preview of a public indicator using a specific LRS store and user ID supplied by
+     * an external platform No authentication is required.
+     *
+     * @param indicatorId ID of the public indicator whose configuration is reused
+     * @param request     Body containing {@code lrsId} and {@code userId} from the calling platform
+     */
+    @PostMapping("/public/{indicatorId}/preview")
+    public ResponseEntity<?> previewPublicIndicatorWithData(
+            @PathVariable String indicatorId,
+            @RequestBody @Valid PublicPreviewRequest request) {
+        HttpStatus status = HttpStatus.OK;
+        return ResponseEntity.status(status)
+                .body(
+                        new ApiSuccess(
+                                status,
+                                "Indicator preview generated.",
+                                indicatorService.previewPublicIndicatorWithData(
+                                        indicatorId, request.getLrsId(), request.getUserId())));
     }
 
   /**

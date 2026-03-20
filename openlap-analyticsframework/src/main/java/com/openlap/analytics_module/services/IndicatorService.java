@@ -48,4 +48,6 @@ public interface IndicatorService {
   void saveIndicatorDraft(HttpServletRequest request, IndicatorDraftRequest indicatorDraftRequest);
 
   IndicatorsAnalyzedResponse getAnalyzedIndicators(IndicatorsToAnalyzeRequest indicatorList);
+
+  String previewPublicIndicatorWithData(String indicatorId, String lrsId, String userId);
 }
