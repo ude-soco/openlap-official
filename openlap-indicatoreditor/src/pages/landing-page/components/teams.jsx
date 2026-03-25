@@ -1,4 +1,3 @@
-import React from "react";
 import { navigationIds } from "../utils/navigation-data";
 import {
   Avatar,
@@ -104,9 +103,9 @@ export default function Teams() {
                   >
                     <IconButton
                       color="primary"
-                      onClick={() => window.open(social.link)}
+                      onClick={() => window.open(social.link, "_blank", "noopener,noreferrer")}
                     >
-                      {React.createElement(social.icon)}
+                      <social.icon />
                     </IconButton>
                   </Tooltip>
                 ))}

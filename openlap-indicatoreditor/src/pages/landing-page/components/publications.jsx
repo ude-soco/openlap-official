@@ -9,13 +9,13 @@ import {
   Typography,
   Link,
 } from "@mui/material";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew"
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import publicationItems from "../utils/publication-data";
 import { navigationIds } from "../utils/navigation-data";
 
 export default function Publications() {
   const handleClick = (link) => {
-    window.open(link);
+    window.open(link, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -110,7 +110,7 @@ export default function Publications() {
               "& > svg": { transition: "0.2s" },
               "&:hover > svg": { transform: "translateX(4px)" },
             }}
-            onClick={() => window.open("https://www.uni-due.de/soco/publications.php")}
+            onClick={() => window.open("https://www.uni-due.de/soco/publications.php", "_blank", "noopener,noreferrer")}
           >
             <span>More publications</span>
             <OpenInNewIcon fontSize="small" sx={{ mt: "1px", ml: "2px" }} />

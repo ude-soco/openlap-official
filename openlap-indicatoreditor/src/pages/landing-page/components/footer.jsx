@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Box,
   Container,
@@ -27,7 +26,7 @@ function Copyright() {
       <Link
         sx={{ cursor: "pointer" }}
         underline="hover"
-        onClick={() => window.open("https://www.uni-due.de/soco/")}
+        onClick={() => window.open("https://www.uni-due.de/soco/", "_blank", "noopener,noreferrer")}
       >
         Social Computing Group
       </Link>
@@ -145,7 +144,7 @@ export default function Footer() {
                 target="_blank"
                 sx={{ alignSelf: "center" }}
               >
-                {React.createElement(item.icon)}
+                {<item.icon />}
               </IconButton>
             ))}
           </Stack>

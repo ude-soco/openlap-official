@@ -7,14 +7,11 @@ import {
   Container,
   Dialog,
   DialogContent,
-  DialogTitle,
-  Grid,
   IconButton,
   Stack,
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import CloseIcon from "@mui/icons-material/Close";
 import OpenLAPArchitecture from "../../../assets/home/abstract-architecture.png";
 import { navigationIds } from "../utils/navigation-data";
 
@@ -108,7 +105,7 @@ const Architecture = () => {
           </Card>
         </Box>
       </Stack>
-      <Dialog maxWidth="xl" open={openDialog} onClose={toggleOpenDialog}>
+      <Dialog aria-label="OpenLAP Architecture diagram" maxWidth="xl" open={openDialog} onClose={toggleOpenDialog}>
         <DialogContent>
           <Box
             component="img"
