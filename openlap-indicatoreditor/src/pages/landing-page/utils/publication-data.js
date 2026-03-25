@@ -2,6 +2,30 @@ import { v4 as uuidv4 } from "uuid";
 const publicationItems = [
   {
     id: uuidv4(),
+    year: "2026",
+    authors: "Shoeb Joarder and Mohamed Amine Chatti",
+    title:
+      "Human-Centred Development of Indicators for Self-Service Learning Analytics: A Transparency through Exploration Approach",
+    venue:
+      "Journal of Learning Analytics, Special Issue on Human-Centered Learning Analytics",
+    pdfLink:
+      "https://learning-analytics.info/index.php/JLA/article/view/8921/7969",
+    details: "https://learning-analytics.info/index.php/JLA",
+  },
+  {
+    id: uuidv4(),
+    year: "2026",
+    authors: "Shoeb Joarder, Mohamed Amine Chatti, and Louis Born",
+    title:
+      "Usability Evaluation and Improvement of a Tool for Self-Service Learning Analytics",
+    venue:
+      "In Proceedings of the 18th International Conference on Computer Supported Education (CSEDU ’26)",
+    pdfLink:
+      "https://learning-analytics.info/index.php/JLA/article/view/8921/7969",
+    details: "https://csedu.scitevents.org/",
+  },
+  {
+    id: uuidv4(),
     year: "2025",
     authors: "Shoeb Joarder and Mohamed Amine Chatti",
     title:
