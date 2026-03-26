@@ -20,8 +20,7 @@ const publicationItems = [
       "Usability Evaluation and Improvement of a Tool for Self-Service Learning Analytics",
     venue:
       "In Proceedings of the 18th International Conference on Computer Supported Education (CSEDU ’26)",
-    pdfLink:
-      "https://learning-analytics.info/index.php/JLA/article/view/8921/7969",
+    pdfLink: "https://arxiv.org/pdf/2603.24321",
     details: "https://csedu.scitevents.org/",
   },
   {

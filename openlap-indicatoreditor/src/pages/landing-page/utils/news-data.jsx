@@ -34,7 +34,7 @@ const newsItems = [
           CSEDU 2026
         </Link>
         {`. A link to the paper on arXiv is available `}
-        <Link href="https://arxiv.org/pdf/2504.07811" target="_blank">
+        <Link href="https://arxiv.org/pdf/2603.24321" target="_blank">
           here
         </Link>
         {`.`}
