@@ -53,4 +53,6 @@ public class IndicatorBasicRequest {
 
   @NotBlank(message = "Configuration is mandatory")
   private String configuration;
+
+  private String platform;
 }

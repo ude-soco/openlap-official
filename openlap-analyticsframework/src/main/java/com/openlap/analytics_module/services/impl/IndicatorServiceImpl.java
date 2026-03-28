@@ -280,6 +280,10 @@ public class IndicatorServiceImpl implements IndicatorService {
     indicator.setName(indicatorName);
     indicator.setIndicatorType(foundIndicator.getIndicatorType());
     indicator.setCreatedBy(createdBy);
+    indicator.setPlatform(
+      foundIndicator.getPlatform() == null || foundIndicator.getPlatform().isBlank()
+        ? "OpenLAP"
+        : foundIndicator.getPlatform());
     indicator.setVisualizationTechniqueReference(
         foundIndicator.getVisualizationTechniqueReference());
     indicator.setCreatedOn(LocalDateTime.now());
@@ -439,7 +443,8 @@ public class IndicatorServiceImpl implements IndicatorService {
               indicator.getCreatedBy().getName(),
               indicator.getName(),
               indicator.getCreatedOn(),
-                  indicator.getCreatedByEmail()
+                  indicator.getCreatedByEmail(),
+                  indicator.getPlatform()
           ));
     }
     return indicatorResponse;

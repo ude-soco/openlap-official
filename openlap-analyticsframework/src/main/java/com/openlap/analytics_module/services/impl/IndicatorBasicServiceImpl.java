@@ -195,6 +195,7 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
   @Override
   public void createBasicIndicator(
       HttpServletRequest request, IndicatorBasicRequest indicatorBasicRequest) {
+    log.info("createBasicIndicator request platform='{}'", indicatorBasicRequest.getPlatform());
     IndicatorReference indicatorReference =
         getIndicatorReferenceForBasicIndicator(indicatorBasicRequest);
     indicatorUtilityService.createIndicator(request, indicatorReference);
@@ -203,6 +204,7 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
   @Override
   public void updateBasicIndicator(
       HttpServletRequest request, IndicatorBasicRequest indicatorBasicRequest, String indicatorId) {
+    log.info("updateBasicIndicator request platform='{}'", indicatorBasicRequest.getPlatform());
     IndicatorReference indicatorReference =
         getIndicatorReferenceForBasicIndicator(indicatorBasicRequest);
     indicatorUtilityService.updateIndicator(request, indicatorReference, indicatorId);
@@ -223,6 +225,7 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
         indicatorBasicRequest.getAnalyticsTechniqueMapping());
     indicatorReference.setAnalyticsTechniqueParams(
         indicatorBasicRequest.getAnalyticsTechniqueParams());
+    indicatorReference.setPlatform(indicatorBasicRequest.getPlatform());
     indicatorReference.setConfigurationRequest(indicatorBasicRequest.getConfiguration());
     return indicatorReference;
   }

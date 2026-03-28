@@ -18,6 +18,7 @@ public class IndicatorReference {
   // For BASIC, COMPOSITE & MULTI
   private String name;
   private IndicatorType indicatorType;
+  private String platform;
 
   // VisualizationTechniqueReference
   private String visualizationLibraryId;

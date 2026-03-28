@@ -30,6 +30,8 @@ public class Indicator {
   private IndicatorType indicatorType;
   @DBRef private User createdBy;
 
+  private String platform;
+
     public String getCreatedByEmail() {
         return CreatedByEmail;
     }
