@@ -3,6 +3,10 @@ import {
   Alert,
   Breadcrumbs,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   IconButton,
   LinearProgress,
@@ -10,6 +14,7 @@ import {
   Grid,
   Paper,
   Skeleton,
+  TextField,
   Tooltip,
   Typography,
   Button,
@@ -20,6 +25,7 @@ import LoginIcon from "@mui/icons-material/Login";
 import EditIcon from "@mui/icons-material/Edit";
 import InsightsIcon from "@mui/icons-material/Insights";
 import ChartPreview from "../../../indicators/indicator-editor/components/chart-preview.jsx";
+import ChartErrorState from "./chart-error-state.jsx";
 import { useSnackbar } from "notistack";
 import {
   fetchPublicIndicatorDetail,
@@ -30,6 +36,8 @@ import {
   PENDING_PERSONALIZED_SAVE_KEY,
   createPendingPersonalizedSave,
 } from "../../utils/personalized-save";
+
+const PENDING_INDICATOR_NAME_KEY = "pendingIndicatorName";
 
 const PublicIndicatorPreview = () => {
   const params = useParams();
@@ -64,10 +72,13 @@ const PublicIndicatorPreview = () => {
     error: null,
     previewData: null,
   });
+  const [showMyDataChartError, setShowMyDataChartError] = useState(false);
 
   const [previewMode, setPreviewMode] = useState("DEFAULT");
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [saveNameDialogOpen, setSaveNameDialogOpen] = useState(false);
+  const [pendingIndicatorName, setPendingIndicatorName] = useState("");
 
   const activeChartData =
     previewMode === "MY_DATA" && myDataPreview.previewData
@@ -113,6 +124,7 @@ const PublicIndicatorPreview = () => {
     }
   };
   const handlePreviewWithMyData = async () => {
+    setShowMyDataChartError(false);
     setMyDataPreview((prev) => ({ ...prev, loading: true, error: null }));
 
   try {
@@ -163,15 +175,17 @@ const PublicIndicatorPreview = () => {
       setMyDataPreview({
         loading: false,
         error: hasLikelyNoChartData
-          ? "No chart data was returned for the selected LRS/user context. Showing the default preview instead."
+          ? "No chart data was returned for the selected LRS/user context. Please try Edit Indicator to adjust the data source or filters."
           : 'Preview with your data is not available. Please click "Edit Indicator" to manually configure the data source.',
         previewData: null,
       });
+      setShowMyDataChartError(true);
       setPreviewMode("DEFAULT");
       return;
     }
 
     setMyDataPreview({ loading: false, error: null, previewData: data });
+    setShowMyDataChartError(false);
     setSaveError(null);
     setPreviewMode("MY_DATA");
 
@@ -190,6 +204,7 @@ const PublicIndicatorPreview = () => {
           : `Unable to generate preview with your data${serverMsg ? `: ${serverMsg}` : ""}. Please click "Edit Indicator" to manually configure the data source.`,
       previewData: null,
     });
+    setShowMyDataChartError(true);
     setPreviewMode("DEFAULT");
   }
   };
@@ -200,14 +215,21 @@ const PublicIndicatorPreview = () => {
       return;
     }
     setSaveError(null);
+    setPendingIndicatorName(state.indicatorName || "");
+    setSaveNameDialogOpen(true);
+  };
+
+  const handleConfirmSaveToDashboard = async () => {
+    if (!pendingIndicatorName.trim()) return;
 
     setSaveLoading(true);
+    localStorage.setItem(PENDING_INDICATOR_NAME_KEY, pendingIndicatorName.trim());
     sessionStorage.setItem(
       PENDING_PERSONALIZED_SAVE_KEY,
       JSON.stringify(
         createPendingPersonalizedSave({
           indicatorId: params.id,
-          indicatorName: state.indicatorName,
+          indicatorName: pendingIndicatorName.trim(),
           indicatorType: state.type,
           userId,
           lrsId,
@@ -216,6 +238,7 @@ const PublicIndicatorPreview = () => {
       )
     );
     sessionStorage.setItem("redirectAfterLogin", "/");
+    setSaveNameDialogOpen(false);
     setSaveLoading(false);
     navigate("/login");
   };
@@ -223,6 +246,8 @@ const PublicIndicatorPreview = () => {
   const handleBackToDefault = () => {
     setPreviewMode("DEFAULT");
     setSaveError(null);
+    setShowMyDataChartError(false);
+    setMyDataPreview((prev) => ({ ...prev, error: null }));
   };
 
   // Helper functions
@@ -430,20 +455,8 @@ const PublicIndicatorPreview = () => {
                     <Grid size={{ xs: 12 }}>
                       <Divider />
                     </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Grid container justifyContent="center">
-                        <ChartPreview
-                          key={previewMode}
-                          previewData={activeChartData}
-                        />
-                      </Grid>
-                    </Grid>
-
                     {userId && lrsId && (
                       <>
-                        <Grid size={{ xs: 12 }}>
-                          <Divider />
-                        </Grid>
                         <Grid size={{ xs: 12 }}>
                           {previewMode === "MY_DATA" ? (
                             <Alert
@@ -502,7 +515,18 @@ const PublicIndicatorPreview = () => {
                         )}
                         {myDataPreview.error && (
                           <Grid size={{ xs: 12 }}>
-                            <Alert severity="warning">{myDataPreview.error}</Alert>
+                            <Alert
+                              severity="warning"
+                              action={
+                                showMyDataChartError ? (
+                                  <Button color="inherit" size="small" onClick={handleBackToDefault}>
+                                    Back to Default
+                                  </Button>
+                                ) : null
+                              }
+                            >
+                              {myDataPreview.error}
+                            </Alert>
                           </Grid>
                         )}
                         {saveError && (
@@ -514,6 +538,22 @@ const PublicIndicatorPreview = () => {
                         )}
                       </>
                     )}
+
+                    <Grid size={{ xs: 12 }}>
+                      <Divider />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <Grid container justifyContent="center">
+                        {showMyDataChartError ? (
+                          <ChartErrorState />
+                        ) : (
+                          <ChartPreview
+                            key={previewMode}
+                            previewData={activeChartData}
+                          />
+                        )}
+                      </Grid>
+                    </Grid>
                   </Grid>
                 </Paper>
               </>
@@ -521,6 +561,40 @@ const PublicIndicatorPreview = () => {
           </Grid>
         </Grid>
       </Grid>
+
+      <Dialog fullWidth maxWidth="sm" open={saveNameDialogOpen} onClose={() => setSaveNameDialogOpen(false)}>
+        <DialogTitle>Provide a name to the indicator</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            You were previewing a public indicator with your data. Provide a name to save it to your dashboard.
+          </Typography>
+          <TextField
+            fullWidth
+            label="Indicator name"
+            value={pendingIndicatorName}
+            onChange={(e) => setPendingIndicatorName(e.target.value)}
+            autoFocus
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={() => setSaveNameDialogOpen(false)}
+            disabled={saveLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={handleConfirmSaveToDashboard}
+            disabled={pendingIndicatorName.trim().length === 0 || saveLoading}
+          >
+            {saveLoading ? "Saving..." : "Continue to login"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Grid>
   );
 };

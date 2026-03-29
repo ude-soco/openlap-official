@@ -30,6 +30,8 @@ import {
   buildPersonalizedCreatePayload,
 } from "../indicators/utils/personalized-save";
 
+const PENDING_INDICATOR_NAME_KEY = "pendingIndicatorName";
+
 export default function Home() {
   const {
     api,
@@ -80,10 +82,21 @@ export default function Home() {
           pendingSave,
         });
 
+        const storedIndicatorName = (localStorage.getItem(PENDING_INDICATOR_NAME_KEY) || "").trim();
+        const resolvedIndicatorName = storedIndicatorName || preparedPayload.name;
+
         setPendingPersonalizedSave(preparedPayload);
-        setIndicatorName(preparedPayload.name);
+        setIndicatorName(resolvedIndicatorName);
         setSaveError("");
-        setSaveDialogOpen(true);
+
+        if (storedIndicatorName) {
+          setSaveDialogOpen(false);
+          setTimeout(() => {
+            handlePendingSave(storedIndicatorName, preparedPayload);
+          }, 0);
+        } else {
+          setSaveDialogOpen(true);
+        }
       } catch (error) {
         if (error instanceof SyntaxError) {
           console.error("Failed to parse pendingPersonalizedSave payload", error);
@@ -105,21 +118,24 @@ export default function Home() {
     preparePendingSave();
   }, [api, enqueueSnackbar, user]);
 
-  const handlePendingSave = async () => {
-    if (!indicatorName.trim() || !pendingPersonalizedSave) return;
+  const handlePendingSave = async (overrideName, overridePendingSave) => {
+    const finalName = (overrideName ?? indicatorName).trim();
+    const effectivePendingSave = overridePendingSave ?? pendingPersonalizedSave;
+
+    if (!finalName || !effectivePendingSave) return;
 
     setSaveLoading(true);
     setSaveError("");
 
     try {
       const originalIndicator = buildCreatePayloadWithIndicatorName(
-        pendingPersonalizedSave,
-        indicatorName.trim()
+        effectivePendingSave,
+        finalName
       );
       const rawPendingSave = sessionStorage.getItem(PENDING_PERSONALIZED_SAVE_KEY);
       const parsedPendingSave = rawPendingSave ? JSON.parse(rawPendingSave) : null;
-      const pendingLrsId = pendingPersonalizedSave?.lrsId || parsedPendingSave?.lrsId;
-      const pendingUserId = pendingPersonalizedSave?.userId || parsedPendingSave?.userId;
+      const pendingLrsId = effectivePendingSave?.lrsId || parsedPendingSave?.lrsId;
+      const pendingUserId = effectivePendingSave?.userId || parsedPendingSave?.userId;
 
       if (!pendingLrsId || !pendingUserId) {
         throw new Error("Missing personalized save LRS context.");
@@ -127,9 +143,9 @@ export default function Home() {
 
       const createPayload = {
         ...originalIndicator,
-        name: indicatorName.trim(),
+        name: finalName,
         platform:
-          pendingPersonalizedSave?.platform ||
+          effectivePendingSave?.platform ||
           parsedPendingSave?.platform ||
           sessionStorage.getItem("externalPlatform") ||
           "CourseMapper",
@@ -168,7 +184,7 @@ export default function Home() {
 
         const recentIndicators = listResponse?.data?.data?.content || [];
         const matchByName = recentIndicators.find(
-          (item) => item?.indicatorName === indicatorName.trim()
+          (item) => item?.indicatorName === finalName
         );
         newIndicatorId = matchByName?.id;
       }
@@ -177,8 +193,9 @@ export default function Home() {
       setPendingPersonalizedSave(null);
       setIndicatorName("");
       sessionStorage.removeItem(PENDING_PERSONALIZED_SAVE_KEY);
+      localStorage.removeItem(PENDING_INDICATOR_NAME_KEY);
 
-      sessionStorage.setItem("pendingToast", `Indicator "${indicatorName.trim()}" saved successfully.`);
+      sessionStorage.setItem("pendingToast", `Indicator "${finalName}" saved successfully.`);
 
       navigate(newIndicatorId ? `/indicator/${newIndicatorId}` : "/indicator");
     } catch (error) {
