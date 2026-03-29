@@ -18,10 +18,24 @@ import CustomTooltip from "../../../../../../../common/components/custom-tooltip
 export default function DateFilter() {
   const { filters, setFilters, setAnalysis } = useContext(BasicContext);
 
+  const isValidDate = (value) => {
+    if (!value) return false;
+    return dayjs(value).isValid();
+  };
+
+  const toPickerDate = (value) => {
+    if (!isValidDate(value)) return null;
+    return dayjs(value);
+  };
+
   const handleUpdateDate = (value, name) => {
+    const hasValidDate = isValidDate(value);
     setFilters((p) => ({
       ...p,
-      selectedTime: { ...p.selectedTime, [name]: value.toISOString() },
+      selectedTime: {
+        ...p.selectedTime,
+        [name]: hasValidDate ? dayjs(value).toISOString() : null,
+      },
     }));
     setAnalysis((p) => ({ ...p, analyzedData: {} }));
   };
@@ -45,9 +59,9 @@ export default function DateFilter() {
                 format="DD MMM YYYY"
                 fullWidth
                 label="Start date"
-                maxDate={dayjs(filters.selectedTime.until)}
+                maxDate={toPickerDate(filters?.selectedTime?.until)}
                 onChange={(value) => handleUpdateDate(value, "from")}
-                value={dayjs(filters.selectedTime.from)}
+                value={toPickerDate(filters?.selectedTime?.from)}
               />
             </DemoContainer>
           </LocalizationProvider>
@@ -57,9 +71,9 @@ export default function DateFilter() {
                 format="DD MMM YYYY"
                 fullWidth
                 label="End date"
-                minDate={dayjs(filters.selectedTime.from)}
+                minDate={toPickerDate(filters?.selectedTime?.from)}
                 onChange={(value) => handleUpdateDate(value, "until")}
-                value={dayjs(filters.selectedTime.until)}
+                value={toPickerDate(filters?.selectedTime?.until)}
               />
             </DemoContainer>
           </LocalizationProvider>

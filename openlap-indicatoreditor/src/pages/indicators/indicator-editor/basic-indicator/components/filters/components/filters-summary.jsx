@@ -58,6 +58,16 @@ function ChipsWithMore({ items }) {
   );
 }
 
+const isValidDate = (value) => {
+  if (!value) return false;
+  return dayjs(value).isValid();
+};
+
+const formatDateOrEmpty = (value) => {
+  if (!isValidDate(value)) return "";
+  return dayjs(value).format("DD MMM YYYY");
+};
+
 export default function FilterSummary() {
   const { filters, lockedStep, setLockedStep, hasDatasetChanged } = useContext(BasicContext);
   const [state, setState] = useState({
@@ -156,14 +166,10 @@ export default function FilterSummary() {
             <Grid container spacing={1} alignItems="center">
               <Typography>Timeframe:</Typography>
               <Chip
-                label={`From (${dayjs(filters.selectedTime.from).format(
-                  "DD MMM YYYY"
-                )})`}
+                label={`From (${formatDateOrEmpty(filters?.selectedTime?.from)})`}
               />
               <Chip
-                label={`Until (${dayjs(filters.selectedTime.until).format(
-                  "DD MMM YYYY"
-                )})`}
+                label={`Until (${formatDateOrEmpty(filters?.selectedTime?.until)})`}
               />
             </Grid>
             <Grid container spacing={1} alignItems="center">
