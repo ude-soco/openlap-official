@@ -58,7 +58,7 @@ const Login = () => {
     try {
       await login(formFields.email, formFields.password);
       enqueueSnackbar("Login successful!", { variant: "success" });
-      // AppRoutes useEffect will handle the redirect after user state updates
+      navigate(from, { replace: true });
     } catch (error) {
       setLoading(false);
       if (error.status === 401) {

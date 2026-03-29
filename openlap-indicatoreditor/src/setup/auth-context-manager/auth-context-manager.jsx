@@ -1,7 +1,6 @@
 import React, { createContext, useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
-import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext(undefined);
@@ -63,12 +62,16 @@ const AuthProvider = ({ children }) => {
     const tokens = JSON.parse(localStorage.getItem(AuthTokens));
     if (!tokens) {
       navigate("/login");
+      return;
     }
+    const refreshToken = tokens?.refresh_token;
+    if (!refreshToken) return;
+
     try {
       localStorage.removeItem(AuthTokens);
       const response = await axios.get(BackendURL + "v1/token/refresh", {
         headers: {
-          Authorization: `Bearer ${tokens.refresh_token}`,
+          Authorization: `Bearer ${refreshToken}`,
         },
       });
       const newTokens = response.data.data;
@@ -97,7 +100,7 @@ const AuthProvider = ({ children }) => {
     (response) => response,
     async (error) => {
       const originalRequest = error.config;
-      if (error.response.status === 403 && !originalRequest._retry) {
+      if (error?.response?.status === 403 && !originalRequest._retry) {
         originalRequest._retry = true;
         const newTokens = await refreshAccessToken();
         if (newTokens) {

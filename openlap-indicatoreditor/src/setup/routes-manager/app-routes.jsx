@@ -43,17 +43,6 @@ const AppRoutes = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // Handle post-login redirect
-  useEffect(() => {
-    if (user) {
-      const redirectDestination = sessionStorage.getItem('redirectAfterLogin');
-      if (redirectDestination) {
-        sessionStorage.removeItem('redirectAfterLogin');
-        navigate(redirectDestination, { replace: true });
-      }
-    }
-  }, [user, navigate]);
-
   return (
     <>
       <ThemeProvider theme={theme}>

@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { isValidElement, useEffect, useState } from "react";
 import {
+  Alert,
   Breadcrumbs,
   Chip,
   Divider,
@@ -17,33 +18,29 @@ import { useParams, Link as RouterLink, useNavigate, useSearchParams } from "rea
 import CodeIcon from "@mui/icons-material/Code";
 import LoginIcon from "@mui/icons-material/Login";
 import EditIcon from "@mui/icons-material/Edit";
+import InsightsIcon from "@mui/icons-material/Insights";
 import ChartPreview from "../../../indicators/indicator-editor/components/chart-preview.jsx";
 import { useSnackbar } from "notistack";
 import {
   fetchPublicIndicatorDetail,
   fetchPublicIndicatorCode,
+  fetchPublicPreviewWithData,
 } from "../utils/public-indicators-api.js";
+import {
+  PENDING_PERSONALIZED_SAVE_KEY,
+  createPendingPersonalizedSave,
+} from "../../utils/personalized-save";
 
 const PublicIndicatorPreview = () => {
   const params = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { enqueueSnackbar } = useSnackbar();
-  
+
   // Extract CourseMapper integration parameters from URL
-  const userId = searchParams.get('userId');
-  const lrsId = searchParams.get('lrsId');
-  const platform = searchParams.get('platform');
-  
-  // Debug: Log extracted parameters
-  useEffect(() => {
-    // if (userId || lrsId || platform) {
-    //   console.log("CourseMapper parameters detected in preview page:");
-    //   console.log("   Platform:", platform);
-    //   console.log("   userId:", userId);
-    //   console.log("   lrsId:", lrsId);
-    // }
-  }, [userId, lrsId, platform]);
+  const userId = searchParams.get("userId");
+  const lrsId = searchParams.get("lrsId");
+  const platform = searchParams.get("platform");
   const [state, setState] = useState({
     loading: false,
     indicatorName: "",
@@ -61,6 +58,21 @@ const PublicIndicatorPreview = () => {
       status: false,
     },
   });
+
+  const [myDataPreview, setMyDataPreview] = useState({
+    loading: false,
+    error: null,
+    previewData: null,
+  });
+
+  const [previewMode, setPreviewMode] = useState("DEFAULT");
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  const activeChartData =
+    previewMode === "MY_DATA" && myDataPreview.previewData
+      ? myDataPreview.previewData
+      : state.previewData;
 
   const loadIndicatorDetail = async () => {
     setState((p) => ({ ...p, loading: true }));
@@ -100,6 +112,118 @@ const PublicIndicatorPreview = () => {
       enqueueSnackbar("Failed to copy indicator code", { variant: "error" });
     }
   };
+  const handlePreviewWithMyData = async () => {
+    setMyDataPreview((prev) => ({ ...prev, loading: true, error: null }));
+
+  try {
+    const data = await fetchPublicPreviewWithData(
+      params.id,
+      lrsId,
+      userId,
+      platform
+    );
+
+    const firstEl = data?.displayCode?.[0];
+    const hasDisplayCode = Array.isArray(data?.displayCode) && data.displayCode.length > 0;
+    const normalizedDisplay = typeof firstEl === "string" ? firstEl.trim() : "";
+    const scriptData = typeof data?.scriptData === "string" ? data.scriptData : "";
+
+    // Check A: raw HTML path (iframe or div with content)
+    const hasIframeContent = /<iframe\b[\s\S]*?>[\s\S]*?<\/iframe>|<iframe\b/i.test(normalizedDisplay);
+    let hasDivWithContent = false;
+    const divMatch = normalizedDisplay.match(/<div\b([^>]*)>([\s\S]*?)<\/div>/i);
+    if (divMatch) {
+      const inner = (divMatch[2] || "").trim();
+      const attrs = divMatch[1] || "";
+      hasDivWithContent = inner.length > 0 || /id=|class=|data-|style=|role=|aria-/i.test(attrs);
+    }
+    const checkAHasHtmlContent = hasIframeContent || hasDivWithContent;
+
+    // Check B: script-based chart path
+    const checkBHasMeaningfulScript =
+      (isValidElement(firstEl) || typeof firstEl === "object" || /<div\b/i.test(normalizedDisplay)) &&
+      scriptData.trim().length > 80;
+
+    // No-data signal detection
+    const hasLikelyNoChartData =
+      /series\s*:\s*\[\s*\]/i.test(scriptData) ||
+      /data\s*:\s*\[\s*\]/i.test(scriptData) ||
+      /\bno\s*data\b/i.test(scriptData);
+
+    const hasCriticalEmptyValues =
+      !hasDisplayCode ||
+      ((firstEl == null || normalizedDisplay.length === 0) && scriptData.length === 0);
+
+    const isDataValid =
+      !hasCriticalEmptyValues &&
+      !hasLikelyNoChartData &&
+      (checkAHasHtmlContent || checkBHasMeaningfulScript);
+
+    if (!isDataValid) {
+      setMyDataPreview({
+        loading: false,
+        error: hasLikelyNoChartData
+          ? "No chart data was returned for the selected LRS/user context. Showing the default preview instead."
+          : 'Preview with your data is not available. Please click "Edit Indicator" to manually configure the data source.',
+        previewData: null,
+      });
+      setPreviewMode("DEFAULT");
+      return;
+    }
+
+    setMyDataPreview({ loading: false, error: null, previewData: data });
+    setSaveError(null);
+    setPreviewMode("MY_DATA");
+
+  } catch (err) {
+    const serverMsg =
+      err?.response?.data?.message ||
+      err?.response?.data?.error ||
+      err?.message;
+    const statusCode = err?.response?.status;
+
+    setMyDataPreview({
+      loading: false,
+      error:
+        statusCode === 404
+          ? "Preview endpoint not found. Please ensure the backend is running with the latest changes."
+          : `Unable to generate preview with your data${serverMsg ? `: ${serverMsg}` : ""}. Please click "Edit Indicator" to manually configure the data source.`,
+      previewData: null,
+    });
+    setPreviewMode("DEFAULT");
+  }
+  };
+
+  const handleSaveToDashboard = async () => {
+    if (!lrsId || !userId) {
+      setSaveError("Missing CourseMapper user context. Please reopen this indicator from CourseMapper.");
+      return;
+    }
+    setSaveError(null);
+
+    setSaveLoading(true);
+    sessionStorage.setItem(
+      PENDING_PERSONALIZED_SAVE_KEY,
+      JSON.stringify(
+        createPendingPersonalizedSave({
+          indicatorId: params.id,
+          indicatorName: state.indicatorName,
+          indicatorType: state.type,
+          userId,
+          lrsId,
+          platform,
+        })
+      )
+    );
+    sessionStorage.setItem("redirectAfterLogin", "/");
+    setSaveLoading(false);
+    navigate("/login");
+  };
+
+  const handleBackToDefault = () => {
+    setPreviewMode("DEFAULT");
+    setSaveError(null);
+  };
 
   // Helper functions
   function toSentenceCase(str) {
@@ -138,7 +262,7 @@ const PublicIndicatorPreview = () => {
           component={RouterLink}
           underline="hover"
           color="inherit"
-          to="/indicators/overview"
+          to={`/indicators/overview${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
         >
           Public Indicators
         </Link>
@@ -302,14 +426,94 @@ const PublicIndicatorPreview = () => {
                         </Grid>
                       </Grid>
                     </Grid>
+
                     <Grid size={{ xs: 12 }}>
                       <Divider />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                       <Grid container justifyContent="center">
-                        <ChartPreview previewData={state.previewData} />
+                        <ChartPreview
+                          key={previewMode}
+                          previewData={activeChartData}
+                        />
                       </Grid>
                     </Grid>
+
+                    {userId && lrsId && (
+                      <>
+                        <Grid size={{ xs: 12 }}>
+                          <Divider />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                          {previewMode === "MY_DATA" ? (
+                            <Alert
+                              severity="info"
+                              action={
+                                <>
+                                  <Button
+                                    color="inherit"
+                                    size="small"
+                                    onClick={handleSaveToDashboard}
+                                    disabled={saveLoading || myDataPreview.loading}
+                                    sx={{ mr: 1 }}
+                                  >
+                                    {saveLoading ? "Saving..." : "Save"}
+                                  </Button>
+                                  <Button
+                                    color="inherit"
+                                    size="small"
+                                    onClick={handleBackToDefault}
+                                    disabled={saveLoading}
+                                  >
+                                    Back
+                                  </Button>
+                                </>
+                              }
+                            >
+                              Previewing this indicator with your CourseMapper data.
+                            </Alert>
+                          ) : (
+                            <Grid container spacing={1} alignItems="center">
+                              <Grid size="grow">
+                                <Typography variant="subtitle2">
+                                  CourseMapper Integration
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  Preview this indicator using data from your course.
+                                </Typography>
+                              </Grid>
+                              <Grid size="auto">
+                                <Button
+                                  variant="contained"
+                                  startIcon={<InsightsIcon />}
+                                  onClick={handlePreviewWithMyData}
+                                  disabled={myDataPreview.loading}
+                                >
+                                  Preview with My Data
+                                </Button>
+                              </Grid>
+                            </Grid>
+                          )}
+                        </Grid>
+                        {myDataPreview.loading && (
+                          <Grid size={{ xs: 12 }}>
+                            <LinearProgress />
+                          </Grid>
+                        )}
+                        {myDataPreview.error && (
+                          <Grid size={{ xs: 12 }}>
+                            <Alert severity="warning">{myDataPreview.error}</Alert>
+                          </Grid>
+                        )}
+                        {saveError && (
+                          <Grid size={{ xs: 12 }}>
+                            <Alert severity="error" onClose={() => setSaveError(null)}>
+                              {saveError}
+                            </Alert>
+                          </Grid>
+                        )}
+                      </>
+                    )}
                   </Grid>
                 </Paper>
               </>

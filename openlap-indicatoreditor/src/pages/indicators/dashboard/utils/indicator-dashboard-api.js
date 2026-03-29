@@ -75,3 +75,17 @@ export const requestMyIndicatorDuplication = async (api, indicatorId) => {
     throw error.response.data;
   }
 };
+
+/**
+ * Duplicates a public indicator (not owned by the current user) into the user's own dashboard.
+ * Uses POST /v1/indicators/{indicatorId}/duplicate — no ownership check required.
+ */
+export const requestIndicatorDuplication = async (api, indicatorId) => {
+  try {
+    const response = await api.get(`v1/indicators/${indicatorId}/duplicate`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to duplicate indicator from pool");
+    throw error.response?.data ?? error;
+  }
+};

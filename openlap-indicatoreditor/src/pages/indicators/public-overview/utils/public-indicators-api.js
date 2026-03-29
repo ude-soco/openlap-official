@@ -63,6 +63,45 @@ export const fetchPublicIndicatorDetail = async (indicatorId) => {
 };
 
 /**
+ * Previews a public indicator using a specific LRS store and user ID.
+ * Calls the public preview endpoint so no authentication is required.
+ * @param {string} indicatorId - Indicator ID
+ * @param {string} lrsId - LRS store ID from the URL (CourseMapper integration)
+ * @param {string} userId - User ID from the URL (CourseMapper integration)
+ * @param {string} platform - Platform name from the URL (CourseMapper integration)
+ * @returns {Promise<Object>} - Preview chart data { displayCode, scriptData }
+ */
+export const fetchPublicPreviewWithData = async (
+  indicatorId,
+  lrsId,
+  userId,
+  platform
+) => {
+  try {
+    const response = await publicApiClient.post(
+      `v1/indicators/public/${indicatorId}/preview`,
+      {
+        lrsId,
+        userId,
+        platform: platform || "CourseMapper",
+      }
+    );
+    const unescapedVizCode = decodeURIComponent(response.data.data);
+    let displayCode = parse(unescapedVizCode);
+    let scriptData;
+    try {
+      scriptData = displayCode[1].props.dangerouslySetInnerHTML.__html;
+    } catch (e) {
+      console.error("Error extracting script code from preview response", e);
+    }
+    return { displayCode, scriptData };
+  } catch (error) {
+    console.error("Failed to preview indicator with user data", error);
+    throw error;
+  }
+};
+
+/**
  * Fetches public indicator embed code without authentication
  * @param {string} indicatorId - Indicator ID
  * @returns {Promise<Object>} - Indicator embed code

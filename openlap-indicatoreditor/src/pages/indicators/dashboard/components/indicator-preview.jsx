@@ -65,6 +65,13 @@ const IndicatorPreview = () => {
 
   useEffect(() => {
     loadIndicatorDetail();
+
+    // Handle post-save toast notification
+    const pendingToast = sessionStorage.getItem("pendingToast");
+    if (pendingToast) {
+      enqueueSnackbar(pendingToast, { variant: "success" });
+      sessionStorage.removeItem("pendingToast");
+    }
   }, []);
 
   const handleEditIndicator = () => {

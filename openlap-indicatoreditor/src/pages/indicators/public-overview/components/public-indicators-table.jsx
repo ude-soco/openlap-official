@@ -156,13 +156,13 @@ const PublicIndicatorsTable = () => {
     const selectedPlatforms = Object.keys(state.filters.platform).filter(
       (key) => state.filters.platform[key]
     );
-    if (selectedPlatforms.length > 0) {
-      filtered = filtered.filter((indicator) =>
-        selectedPlatforms.some(
-          (platform) => indicator.platform === platform
-        )
-      );
-    }
+    filtered = filtered.filter((indicator) => {
+      const indicatorPlatform = indicator?.platform || "OpenLAP";
+      const matchesPlatform =
+        selectedPlatforms.length === 0 ||
+        selectedPlatforms.includes(indicatorPlatform);
+      return matchesPlatform;
+    });
 
     // Apply indicator type filter
     const selectedTypes = Object.keys(state.filters.indicatorType).filter(

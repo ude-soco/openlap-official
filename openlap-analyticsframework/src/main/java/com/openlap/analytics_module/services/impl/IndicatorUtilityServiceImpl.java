@@ -160,6 +160,12 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       // Indicator creator validation
       indicator.setCreatedBy(tokenService.getUserFromToken(request));
       indicator.setCreatedByEmail(userFromToken.getEmail());
+      String platform = indicatorReference.getPlatform();
+      if (platform == null || platform.isBlank()) {
+        platform = "OpenLAP";
+      }
+      log.info("prepareIndicator platform='{}'", platform);
+      indicator.setPlatform(platform);
       if (indicatorReference.getIndicatorType() == IndicatorType.BASIC) {
         // TODO: Extract platform information and add it to an attribute
         indicator.setIndicatorQuery(gson.toJson(indicatorReference.getIndicatorQuery()));

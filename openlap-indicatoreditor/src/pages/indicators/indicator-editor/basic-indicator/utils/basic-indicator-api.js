@@ -7,6 +7,7 @@ export const requestCreateBasicIndicator = async (
   configuration
 ) => {
   try {
+    const externalPlatform = sessionStorage.getItem("externalPlatform");
     const requestBody = {
       name: indicator.indicatorName,
       indicatorType: indicator.type,
@@ -14,6 +15,7 @@ export const requestCreateBasicIndicator = async (
       ...analysisRef,
       ...visRef,
       configuration: configuration,
+      platform: externalPlatform || "CourseMapper",
     };
     const response = await api.post("v1/indicators/basic/create", requestBody);
     return response.data;
@@ -33,6 +35,7 @@ export const requestUpdateBasicIndicator = async (
   configuration
 ) => {
   try {
+    const externalPlatform = sessionStorage.getItem("externalPlatform");
     const requestBody = {
       name: indicator.indicatorName,
       indicatorType: indicator.type,
@@ -40,6 +43,7 @@ export const requestUpdateBasicIndicator = async (
       ...analysisRef,
       ...visRef,
       configuration: configuration,
+      platform: externalPlatform || "CourseMapper",
     };
     const response = await api.put(
       `v1/indicators/basic/${indicatorId}/update`,
