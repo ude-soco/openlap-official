@@ -12,18 +12,23 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import CodeIcon from "@mui/icons-material/Code";
-import { useParams, Link as RouterLink } from "react-router-dom";
+import { useNavigate, useParams, Link as RouterLink } from "react-router-dom";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import {
   requestIndicatorFullDetail,
   requestIndicatorCode,
+  requestIndicatorDeletion,
 } from "../../dashboard/utils/indicator-dashboard-api.js";
 import ChartPreview from "../../indicator-editor/components/chart-preview.jsx";
 import { useSnackbar } from "notistack";
+import CustomDialog from "../../../../common/components/custom-dialog/custom-dialog.jsx";
 
 const IndicatorPoolPreview = () => {
-  const { api } = useContext(AuthContext);
+  const { api, user, SESSION_INDICATOR } = useContext(AuthContext);
+  const navigate = useNavigate();
   const params = useParams();
   const { enqueueSnackbar } = useSnackbar();
   const [state, setState] = useState({
@@ -32,6 +37,7 @@ const IndicatorPoolPreview = () => {
     type: "",
     createdOn: "",
     createdBy: "",
+    createdByEmail: "",
     analyticsMethod: "",
     library: "",
     chart: "",
@@ -39,9 +45,11 @@ const IndicatorPoolPreview = () => {
       displayCode: [],
       scriptData: "",
     },
+    configuration: "",
     isLoading: {
       status: false,
     },
+    openDeleteDialog: false,
   });
 
   const loadIndicatorDetail = async () => {
@@ -82,6 +90,66 @@ const IndicatorPoolPreview = () => {
     }
   };
 
+  const handleEditIndicator = () => {
+    setState((p) => ({
+      ...p,
+      isLoading: { ...p.isLoading, status: true },
+    }));
+    sessionStorage.setItem(SESSION_INDICATOR, state.configuration);
+    let route;
+    if (state.type) {
+      switch (state.type) {
+        case "BASIC":
+          navigate(`/indicator/editor/basic/edit/${params.id}`);
+          break;
+        case "COMPOSITE":
+          navigate(`/indicator/editor/composite/edit/${params.id}`);
+          break;
+        case "MULTI_LEVEL":
+          navigate(`/indicator/editor/multi-level-analysis/edit/${params.id}`);
+          break;
+        default:
+          route = "Unknown";
+      }
+    } else {
+      setState((p) => ({
+        ...p,
+        isLoading: { ...p.isLoading, status: false },
+      }));
+      enqueueSnackbar("Something went wrong. Try again later", {
+        variant: "error",
+      });
+    }
+  };
+
+  const handleToggleDelete = () => {
+    setState((p) => ({ ...p, openDeleteDialog: !p.openDeleteDialog }));
+  };
+
+  const handleDeleteIndicator = async () => {
+    setState((p) => ({
+      ...p,
+      isLoading: {
+        ...p.isLoading,
+        status: true,
+      },
+    }));
+    try {
+      await requestIndicatorDeletion(api, params.id);
+      enqueueSnackbar("Indicator deleted!", { variant: "success" });
+      navigate("/indicator/pool");
+    } catch (error) {
+      setState((p) => ({
+        isLoading: {
+          ...p.isLoading,
+          status: false,
+          type: undefined,
+        },
+      }));
+      enqueueSnackbar(error.message, { variant: "error" });
+    }
+  };
+
   // Helper functions
   function toSentenceCase(str) {
     if (!str) return "";
@@ -108,6 +176,12 @@ const IndicatorPoolPreview = () => {
         return type;
     }
   }
+
+  // Check if current user is the creator
+  const isCreator = (
+    (user?.email && state.createdByEmail && user.email === state.createdByEmail) ||
+    (user?.sub && state.createdByEmail && user.sub === state.createdByEmail)
+  );
 
   return (
     <Grid container spacing={2}>
@@ -155,37 +229,86 @@ const IndicatorPoolPreview = () => {
                         </Grid>
 
                         <Grid size="auto">
-                          <Tooltip
-                            arrow
-                            title={
+                          <Grid container>
+                            <Tooltip
+                              arrow
+                              title={
+                                <>
+                                  <Typography gutterBottom>
+                                    Copy ICC code
+                                  </Typography>
+                                  <Typography>
+                                    What's an ICC code?
+                                    <br />
+                                    An Interactive Indicator Code (ICC) is an
+                                    iFrame code snippet you can embed in any web
+                                    application that supports iFrames.
+                                    <br />
+                                    It lets you display real-time analytics
+                                    directly within your website.
+                                  </Typography>
+                                </>
+                              }
+                            >
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  onClick={handleCopyEmbedCode}
+                                  disabled={state.isLoading.status}
+                                >
+                                  <CodeIcon />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+
+                            <Tooltip
+                              arrow
+                              title={<Typography>Edit indicator</Typography>}
+                            >
+                              <span>
+                                <IconButton
+                                  color="primary"
+                                  onClick={handleEditIndicator}
+                                  disabled={state.isLoading.status}
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+
+                            {isCreator && (
                               <>
-                                <Typography gutterBottom>
-                                  Copy ICC code
-                                </Typography>
-                                <Typography>
-                                  What's an ICC code?
-                                  <br />
-                                  An Interactive Indicator Code (ICC) is an
-                                  iFrame code snippet you can embed in any web
-                                  application that supports iFrames.
-                                  <br />
-                                  It lets you display real-time analytics
-                                  directly within your website.
-                                </Typography>
+                                <Divider
+                                  orientation="vertical"
+                                  flexItem
+                                  sx={{ mx: 1 }}
+                                />
+
+                                <Tooltip
+                                  arrow
+                                  title={<Typography>Delete indicator</Typography>}
+                                >
+                                  <span>
+                                    <IconButton
+                                      color="error"
+                                      disabled={state.isLoading.status}
+                                      onClick={handleToggleDelete}
+                                    >
+                                      <DeleteIcon />
+                                    </IconButton>
+                                  </span>
+                                </Tooltip>
+                                <CustomDialog
+                                  type="delete"
+                                  content={`This will delete the indicator permanently from your dashboard.`}
+                                  open={state.openDeleteDialog}
+                                  toggleOpen={handleToggleDelete}
+                                  handler={handleDeleteIndicator}
+                                />
                               </>
-                            }
-                          >
-                            <span>
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={handleCopyEmbedCode}
-                                disabled={state.isLoading.status}
-                              >
-                                <CodeIcon />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
+                            )}
+                          </Grid>
                         </Grid>
                       </Grid>
                     </Grid>

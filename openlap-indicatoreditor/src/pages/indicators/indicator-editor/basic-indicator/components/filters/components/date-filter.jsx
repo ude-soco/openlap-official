@@ -8,7 +8,6 @@ import {
   Typography,
 } from "@mui/material";
 import { BasicContext } from "../../../basic-indicator";
-import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -52,32 +51,34 @@ export default function DateFilter() {
             message={`Choose the start and end dates to define the period of data you want to include in your analysis.`}
           />
         </Stack>
-        <Stack gap={2} justifyContent="center" direction={{ xs: "column", lg: "row" }}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DemoContainer components={["DatePicker"]}>
-              <DatePicker
-                format="DD MMM YYYY"
-                fullWidth
-                label="Start date"
-                maxDate={toPickerDate(filters?.selectedTime?.until)}
-                onChange={(value) => handleUpdateDate(value, "from")}
-                value={toPickerDate(filters?.selectedTime?.from)}
-              />
-            </DemoContainer>
-          </LocalizationProvider>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DemoContainer components={["DatePicker"]}>
-              <DatePicker
-                format="DD MMM YYYY"
-                fullWidth
-                label="End date"
-                minDate={toPickerDate(filters?.selectedTime?.from)}
-                onChange={(value) => handleUpdateDate(value, "until")}
-                value={toPickerDate(filters?.selectedTime?.until)}
-              />
-            </DemoContainer>
-          </LocalizationProvider>
-        </Stack>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <Stack gap={2} justifyContent="center" direction={{ xs: "column", lg: "row" }}>
+            <DatePicker
+              format="DD MMM YYYY"
+              label="Start date"
+              maxDate={toPickerDate(filters?.selectedTime?.until)}
+              onChange={(value) => handleUpdateDate(value, "from")}
+              value={toPickerDate(filters?.selectedTime?.from)}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                },
+              }}
+            />
+            <DatePicker
+              format="DD MMM YYYY"
+              label="End date"
+              minDate={toPickerDate(filters?.selectedTime?.from)}
+              onChange={(value) => handleUpdateDate(value, "until")}
+              value={toPickerDate(filters?.selectedTime?.until)}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                },
+              }}
+            />
+          </Stack>
+        </LocalizationProvider>
       </Stack>
     </>
   );

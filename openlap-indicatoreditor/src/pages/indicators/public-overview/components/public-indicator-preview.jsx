@@ -485,6 +485,19 @@ const PublicIndicatorPreview = () => {
                             >
                               Previewing this indicator with your CourseMapper data.
                             </Alert>
+                          ) : myDataPreview.error ? (
+                            <Alert
+                              severity="warning"
+                              action={
+                                showMyDataChartError ? (
+                                  <Button color="inherit" size="small" onClick={handleBackToDefault}>
+                                    Back to Default
+                                  </Button>
+                                ) : null
+                              }
+                            >
+                              {myDataPreview.error}
+                            </Alert>
                           ) : (
                             <Grid container spacing={1} alignItems="center">
                               <Grid size="grow">
@@ -511,22 +524,6 @@ const PublicIndicatorPreview = () => {
                         {myDataPreview.loading && (
                           <Grid size={{ xs: 12 }}>
                             <LinearProgress />
-                          </Grid>
-                        )}
-                        {myDataPreview.error && (
-                          <Grid size={{ xs: 12 }}>
-                            <Alert
-                              severity="warning"
-                              action={
-                                showMyDataChartError ? (
-                                  <Button color="inherit" size="small" onClick={handleBackToDefault}>
-                                    Back to Default
-                                  </Button>
-                                ) : null
-                              }
-                            >
-                              {myDataPreview.error}
-                            </Alert>
                           </Grid>
                         )}
                         {saveError && (
