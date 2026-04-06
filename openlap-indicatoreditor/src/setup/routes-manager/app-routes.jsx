@@ -1,6 +1,6 @@
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { CssBaseline, Paper, Stack, Divider, Container } from "@mui/material";
-import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import PrivateRoute from "./private-routes";
 import UserProfile from "../../pages/account-manager/user-profile";
@@ -38,10 +38,33 @@ import IndicatorPoolPreview from "../../pages/indicators/indicator-pool/componen
 import PublicIndicatorsOverview from "../../pages/indicators/public-overview/public-indicators-overview.jsx";
 import PublicIndicatorPreview from "../../pages/indicators/public-overview/components/public-indicator-preview.jsx";
 
+const PostLoginRedirect = () => {
+  const location = useLocation();
+  const redirectKey = "redirectAfterLogin";
+  const storedPath = sessionStorage.getItem(redirectKey);
+  const stateFrom = location.state?.from;
+
+  const hasValidStoredPath =
+    Boolean(storedPath) && storedPath !== "/" && storedPath !== "/login";
+  const hasValidStateFrom =
+    Boolean(stateFrom) && stateFrom !== "/" && stateFrom !== "/login";
+  
+  // Clear the stored path after using it to prevent unintended future redirects  
+  if (hasValidStoredPath) {
+    sessionStorage.removeItem(redirectKey);
+  }
+  const target = hasValidStoredPath
+    ? storedPath
+    : hasValidStateFrom
+      ? stateFrom
+      : "/dashboard";
+
+  return <Navigate to={target} replace />;
+};
+
 const AppRoutes = () => {
   const { theme } = useContext(CustomThemeContext);
   const { user } = useContext(AuthContext);
-  const navigate = useNavigate();
 
   return (
     <>
@@ -78,6 +101,10 @@ const AppRoutes = () => {
                   </NavigationBar>
                 }
               >
+                <Route
+                  path="/login"
+                  element={<PostLoginRedirect />}
+                />
                 <Route
                   path="/account-settings"
                   element={
