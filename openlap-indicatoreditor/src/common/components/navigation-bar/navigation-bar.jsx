@@ -21,6 +21,7 @@ import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-m
 import SidePanel from "../side-panel/side-panel";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
 import { useSnackbar } from "notistack";
+import { useLocation, useMatch, useNavigate } from "react-router-dom";
 
 const drawerWidth = 280;
 
@@ -30,9 +31,19 @@ function NavigationBar(props) {
   const { darkMode, toggleDarkMode, handleLightMode } =
     useContext(CustomThemeContext);
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [menu, setMenu] = useState(null);
+
+  const isBasicEditRoute = useMatch("/indicator/editor/basic/edit/:id");
+  const isCompositeEditRoute = useMatch("/indicator/editor/composite/edit/:id");
+  const isGenericEditRoute = /\/edit\/[^/]+$/.test(location.pathname);
+  const hideSidebar = Boolean(
+    isBasicEditRoute || isCompositeEditRoute || isGenericEditRoute
+  );
+  const effectiveDrawerWidth = hideSidebar ? 0 : drawerWidth;
 
   const handleDrawerClose = () => {
     setIsClosing(true);
@@ -65,8 +76,8 @@ function NavigationBar(props) {
         position="fixed"
         elevation={1}
         sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
+          width: { md: `calc(100% - ${effectiveDrawerWidth}px)` },
+          ml: { md: `${effectiveDrawerWidth}px` },
           bgcolor: darkMode ? undefined : "white",
         }}
       >
@@ -121,7 +132,7 @@ function NavigationBar(props) {
       </AppBar>
       <Box
         component="nav"
-        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
+        sx={{ width: { md: effectiveDrawerWidth }, flexShrink: { md: 0 } }}
         aria-label="mailbox folders"
       >
         <Drawer
@@ -132,7 +143,7 @@ function NavigationBar(props) {
           onClose={handleDrawerClose}
           ModalProps={{ keepMounted: true }}
           sx={{
-            display: { xs: "block", md: "none" },
+            display: hideSidebar ? "none" : { xs: "block", md: "none" },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
@@ -144,10 +155,10 @@ function NavigationBar(props) {
         <Drawer
           variant="permanent"
           sx={{
-            display: { xs: "none", md: "block" },
+            display: hideSidebar ? "none" : { xs: "none", md: "block" },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
-              width: drawerWidth,
+              width: effectiveDrawerWidth,
             },
           }}
           open
@@ -160,7 +171,7 @@ function NavigationBar(props) {
         sx={{
           flexGrow: 1,
           pt: 3,
-          width: { md: `calc(100% - ${drawerWidth}px)` },
+          width: { md: `calc(100% - ${effectiveDrawerWidth}px)` },
         }}
       >
         <Toolbar />

@@ -89,7 +89,11 @@ const AppRoutes = () => {
               <Route
                 element={
                   <NavigationBar>
-                    <Container maxWidth="xl" sx={{ minHeight: "89vh" }}>
+                    <Container
+                      maxWidth={false}
+                      disableGutters
+                      sx={{ minHeight: "89vh", px: { xs: 1, md: 2 } }}
+                    >
                       <Stack component={Paper} elevation={0} gap={1}>
                         <Outlet />
                       </Stack>
