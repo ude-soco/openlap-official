@@ -31,7 +31,6 @@ const ChartCustomizationPanel = () => {
       setVisualization((p) => ({
         ...p,
         params: { ...p.params, ...state },
-        previewData: { displayCode: [], scriptData: {} },
       }));
       setState((p) => ({ ...p, edited: false }));
     }
@@ -66,7 +65,10 @@ const ChartCustomizationPanel = () => {
               </TabList>
             </Box>
             <TabPanel value="1">
-              <Box height={HEIGHT} sx={{ overflowY: "scroll", px: 1 }}>
+              <Box
+                height={HEIGHT}
+                sx={{ overflowY: "auto", scrollbarGutter: "stable", px: 1 }}
+              >
                 <ElementsBar
                   state={state}
                   setState={setState}
@@ -77,7 +79,10 @@ const ChartCustomizationPanel = () => {
               </Box>
             </TabPanel>
             <TabPanel value="2">
-              <Box height={HEIGHT} sx={{ overflowY: "scroll", px: 1 }}>
+              <Box
+                height={HEIGHT}
+                sx={{ overflowY: "auto", scrollbarGutter: "stable", px: 1 }}
+              >
                 <StylesBar
                   categories={analysis.analyzedData?.item_name?.data}
                   state={state}
@@ -89,7 +94,10 @@ const ChartCustomizationPanel = () => {
               </Box>
             </TabPanel>
             <TabPanel value="3">
-              <Box height={HEIGHT} sx={{ overflowY: "scroll", px: 1 }}>
+              <Box
+                height={HEIGHT}
+                sx={{ overflowY: "auto", scrollbarGutter: "stable", px: 1 }}
+              >
                 <FiltersBar
                   categories={analysis.analyzedData?.item_name?.data}
                   state={state}

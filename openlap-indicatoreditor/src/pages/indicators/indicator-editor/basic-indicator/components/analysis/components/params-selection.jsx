@@ -40,7 +40,12 @@ export default function ParamsSelection() {
         />
       </Stack>
       {analysis.params.map((param, index) => (
-        <Stack gap={1} direction="row" alignItems="center">
+        <Stack
+          key={param.id || `${param.title}-${index}`}
+          gap={1}
+          direction="row"
+          alignItems="center"
+        >
           <FormControl fullWidth>
             {param.type === PARAM_TYPE.choice && (
               <>
@@ -56,8 +61,8 @@ export default function ParamsSelection() {
                   }
                   onChange={(event) => handleChangeParam(event, param)}
                 >
-                  {param.possibleValues.split(",").map((value, index) => (
-                    <MenuItem key={index} value={value}>
+                  {param.possibleValues.split(",").map((value, valueIndex) => (
+                    <MenuItem key={`${param.id || param.title}-${value}-${valueIndex}`} value={value}>
                       {value}
                     </MenuItem>
                   ))}

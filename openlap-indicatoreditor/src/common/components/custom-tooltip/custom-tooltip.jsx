@@ -30,10 +30,10 @@ const CustomTooltip = ({ type = "description", message }) => {
       arrow
       title={
         <Box sx={{ p: 1 }}>
-          <Typography>
+          <Typography component="div">
             <b>{config.label}</b>
           </Typography>
-          <Typography component="span" dangerouslySetInnerHTML={{ __html: message }} />
+          <Box dangerouslySetInnerHTML={{ __html: message }} />
         </Box>
       }
     >

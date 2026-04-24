@@ -59,7 +59,7 @@ const PublicIndicatorsOverview = () => {
         {/* Page Header */}
         <Box>
           <Typography variant="h5" component="h2" gutterBottom fontWeight="600">
-            Public Indicators Overview
+            Public Indicators Pool
           </Typography>
           <Typography variant="body1" color="text.secondary" paragraph>
             Browse through our collection of learning analytics indicators created by the OpenLAP community. 

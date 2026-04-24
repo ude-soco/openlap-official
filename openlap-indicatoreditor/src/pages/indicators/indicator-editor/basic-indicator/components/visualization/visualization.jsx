@@ -51,6 +51,7 @@ export default function Visualization() {
     setVisualization,
     setIndicator,
     isCreator,
+    isReferenceView,
   } = useContext(BasicContext);
   const [state, setState] = useState({
     nameIndicator: {
@@ -62,13 +63,17 @@ export default function Visualization() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (
-      visualization.inputs.length !== 0 &&
-      allInputsHaveSelected(visualization.inputs) &&
-      Object.keys(analysis.analyzedData).length > 0
-    ) {
-      handleLoadPreviewVisualization().then((previewData) => {
-        if (previewData) {
+    let isCancelled = false;
+
+    const analyzedDataKeys = Object.keys(analysis.analyzedData || {}).length;
+    const hasInputs = visualization.inputs.length !== 0;
+    const hasAllSelectedInputs = allInputsHaveSelected(visualization.inputs);
+
+    if (hasInputs && hasAllSelectedInputs && analyzedDataKeys > 0) {
+      handleLoadPreviewVisualization()
+        .then((previewData) => {
+          if (isCancelled || !previewData) return;
+
           setVisualization((p) => ({
             ...p,
             previewData: {
@@ -77,12 +82,22 @@ export default function Visualization() {
               scriptData: previewData.scriptData,
             },
           }));
-        }
-      }).catch((error) => {
-        console.error("Error loading visualization preview:", error);
-      });
+        })
+        .catch((error) => {
+          console.error("Error loading visualization preview:", error);
+        });
     }
-  }, [visualization.inputs, visualization.params, visualization.selectedType.id, analysis.analyzedData]);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    visualization.inputs,
+    visualization.params,
+    visualization.selectedType.id,
+    analysis.analyzedData,
+    isReferenceView,
+  ]);
 
   const handleLoadPreviewVisualization = async () => {
     let indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
@@ -224,11 +239,16 @@ export default function Visualization() {
                   <TypeInputSelection />
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 12, lg: "grow", xl: 8 }}>
-                      {visualization.previewData.displayCode.length !== 0 ? (
-                        <ChartPreview previewData={visualization.previewData} />
-                      ) : (
-                        <Skeleton variant="rectangular" height={565} />
-                      )}
+                      <Box sx={{ minHeight: 565 }}>
+                        {visualization.previewData.displayCode.length !== 0 ? (
+                          <ChartPreview
+                            previewData={visualization.previewData}
+                            isReferenceView={!!isReferenceView}
+                          />
+                        ) : (
+                          <Skeleton variant="rectangular" height={565} />
+                        )}
+                      </Box>
                     </Grid>
                     <Grid size={{ xs: 12, md: "grow" }}>
                       <ChartCustomizationPanel />

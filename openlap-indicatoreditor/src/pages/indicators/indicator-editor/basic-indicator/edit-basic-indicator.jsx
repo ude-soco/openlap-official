@@ -182,7 +182,6 @@ export default function EditBasicIndicator() {
             setIsCreator(false);
           }
 
-          // Store previous data for comparison (deep clone to avoid reference issues)
           setPreviousIndicatorData({
             indicator: indicatorData.indicator ? { ...indicatorData.indicator } : null,
             dataset: indicatorData.dataset ? { ...indicatorData.dataset } : null,
@@ -230,7 +229,6 @@ export default function EditBasicIndicator() {
             setIsCreator(false);
           }
           
-          // Store previous data
           setPreviousIndicatorData({
             indicator: configuration.indicator,
             dataset: configuration.dataset,
@@ -328,6 +326,7 @@ export default function EditBasicIndicator() {
       <BasicContext.Provider
         value={{
           api,
+          isReferenceView: false,
           lockedStep,
           setLockedStep,
           dataset,
@@ -380,14 +379,34 @@ export default function EditBasicIndicator() {
           {/* Column Headers */}
           <Grid container spacing={3} sx={{ mb: 2 }}>
             <Grid size={{ xs: 12, lg: 6 }}>
-              <Typography variant="h6" color="primary" fontWeight="bold" align="center">
-                Current Selection
-              </Typography>
+             <Box sx={{ display: 'flex', flexDirection: 'column' , alignItems: 'center', textAlign: 'center'}}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="h6" color="primary" fontWeight="bold" align="center">
+                     Current Selection
+                  </Typography>
+                  <Box sx={{ bgcolor: 'primary.main', color: 'white', px: 1, py: 0.25, borderRadius: 10, fontSize: '0.75rem' }}>
+                    Active
+                  </Box>
+                </Box>
+                <Typography variant="caption" sx={{ color: '#888' }}>
+                  Make your changes here
+                </Typography>
+              </Box>
             </Grid>
             <Grid size={{ xs: 12, lg: 6 }}>
-              <Typography variant="h6" color="text.secondary" fontWeight="bold" align="center">
-                Previous Selection
-              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column' , alignItems: 'center', textAlign: 'center'}}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="h6" align="center" sx={{ color: '#666', fontWeight: 'normal' }}>
+                   Previous Selection
+                  </Typography>
+                  <Box sx={{ bgcolor: '#e0e0e0', color: '#424242', px: 1, py: 0.25, borderRadius: 10, fontSize: '0.75rem' }}>
+                    Read-only
+                  </Box>
+                </Box>
+                <Typography variant="caption" sx={{ color: '#888' }}>
+                  Your original configuration
+                </Typography>
+              </Box>
             </Grid>
           </Grid>
 
@@ -421,13 +440,17 @@ export default function EditBasicIndicator() {
                     <BasicContext.Provider
                       value={{
                         api,
+                        isReferenceView: true,
                         lockedStep: lockedStep,
                         setLockedStep: () => {},
                         dataset: previousIndicatorData.dataset,
                         setDataset: () => {},
                         filters: previousIndicatorData.filters || filters,
                         setFilters: () => {},
-                        analysis: previousIndicatorData.analysis || analysis,
+                        analysis: {
+                          ...(previousIndicatorData.analysis || analysis),
+                          analyzedData: analysis.analyzedData,
+                        },
                         setAnalysis: () => {},
                         visualization: previousIndicatorData.visualization || visualization,
                         setVisualization: () => {},
@@ -444,13 +467,17 @@ export default function EditBasicIndicator() {
                     <BasicContext.Provider
                       value={{
                         api,
+                        isReferenceView: true,
                         lockedStep: lockedStep,
                         setLockedStep: () => {},
                         dataset: previousIndicatorData.dataset || dataset,
                         setDataset: () => {},
                         filters: previousIndicatorData.filters,
                         setFilters: () => {},
-                        analysis: previousIndicatorData.analysis || analysis,
+                        analysis: {
+                          ...(previousIndicatorData.analysis || analysis),
+                          analyzedData: analysis.analyzedData,
+                        },
                         setAnalysis: () => {},
                         visualization: previousIndicatorData.visualization || visualization,
                         setVisualization: () => {},
@@ -467,6 +494,7 @@ export default function EditBasicIndicator() {
                     <BasicContext.Provider
                       value={{
                         api,
+                        isReferenceView: true,
                         lockedStep: lockedStep,
                         setLockedStep: () => {},
                         dataset: previousIndicatorData.dataset || dataset,
@@ -490,16 +518,49 @@ export default function EditBasicIndicator() {
                     <BasicContext.Provider
                       value={{
                         api,
+                        isReferenceView: true,
                         lockedStep: lockedStep,
                         setLockedStep: () => {},
                         dataset: previousIndicatorData.dataset || dataset,
                         setDataset: () => {},
                         filters: previousIndicatorData.filters || filters,
                         setFilters: () => {},
-                        analysis: previousIndicatorData.analysis || analysis,
+                        analysis: {
+                          ...(previousIndicatorData.analysis || analysis),
+                          analyzedData: analysis.analyzedData,
+                        },
                         setAnalysis: () => {},
                         visualization: previousIndicatorData.visualization,
-                        setVisualization: () => {},
+                        setVisualization: (nextVisualization) => {
+                          setPreviousIndicatorData((prev) => {
+                            const currentVisualization = prev.visualization || {};
+                            const resolvedVisualization =
+                              typeof nextVisualization === "function"
+                                ? nextVisualization(currentVisualization)
+                                : nextVisualization;
+
+                            if (!resolvedVisualization || typeof resolvedVisualization !== "object") {
+                              return prev;
+                            }
+
+                            const incomingPreviewData = resolvedVisualization.previewData;
+                            const hasIncomingPreview =
+                              incomingPreviewData &&
+                              Array.isArray(incomingPreviewData.displayCode) &&
+                              incomingPreviewData.displayCode.length > 0;
+
+                            return {
+                              ...prev,
+                              visualization: {
+                                ...currentVisualization,
+                                previewData: hasIncomingPreview
+                                  ? incomingPreviewData
+                                  : currentVisualization.previewData ||
+                                    { displayCode: [], scriptData: {} },
+                              },
+                            };
+                          });
+                        },
                         indicator: previousIndicatorData.indicator || indicator,
                         setIndicator: () => {},
                         handleResetIfDatasetEmpty: () => {},
