@@ -9,7 +9,7 @@ const newsItems = [
     desc: (
       <Typography variant="body2" color="textSecondary">
         {`Our paper “Human-Centered Development of Indicators for Self-Service Learning Analytics: A Transparency through Exploration Approach,” has been published in early access in the Journal of Learning Analytics. The paper is available `}
-        <Link href="https://arxiv.org/pdf/2504.07811" target="_blank">
+        <Link href="https://learning-analytics.info/index.php/JLA/article/view/8921/7969" target="_blank">
           here
         </Link>
         {`.`}

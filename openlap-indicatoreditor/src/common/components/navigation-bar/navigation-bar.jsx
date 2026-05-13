@@ -12,6 +12,7 @@ import {
   MenuItem,
   Switch,
   Toolbar,
+  Tooltip,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -21,6 +22,7 @@ import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-m
 import SidePanel from "../side-panel/side-panel";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
 import { useSnackbar } from "notistack";
+import ToggleColorMode from "../../../pages/landing-page/components/toggle-color-mode";
 
 const drawerWidth = 280;
 
@@ -91,32 +93,13 @@ function NavigationBar(props) {
             alt="Soco logo"
           />
           <span style={{ flexGrow: 1 }}></span>
-          <IconButton
-            color="primary"
-            onClick={(event) => setMenu(event.currentTarget)}
-          >
-            <SettingsIcon />
-          </IconButton>
-
-          <Menu
-            anchorEl={menu}
-            open={Boolean(menu)}
-            onClose={() => setMenu(null)}
-            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-            transformOrigin={{ vertical: "top", horizontal: "right" }}
-          >
-            <ListItem divider>
-              <ListItemText sx={{ mr: 6 }}>Dark Mode</ListItemText>
-              <Switch checked={darkMode} onChange={toggleDarkMode} />
-            </ListItem>
-
-            <MenuItem sx={{ py: 1.5 }} onClick={handleSignOut}>
-              <ListItemText>Sign out</ListItemText>
-              <ListItemIcon>
-                <LogoutIcon color="primary" />
-              </ListItemIcon>
-            </MenuItem>
-          </Menu>
+          <ToggleColorMode />
+          <span style={{ width: "8px" }}></span>
+          <Tooltip title="Sign out">
+            <IconButton color="primary" onClick={handleSignOut}>
+              <LogoutIcon color="primary" />
+            </IconButton>
+          </Tooltip>
         </Toolbar>
       </AppBar>
       <Box
