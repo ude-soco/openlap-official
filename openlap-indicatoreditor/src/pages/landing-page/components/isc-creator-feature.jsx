@@ -94,7 +94,7 @@ const ISCCreatorFeature = () => {
                   backgroundColor: "rgba(255, 255, 255, 1)",
                 },
               }}
-              onClick={() => console.log("search clicked")}
+              onClick={toggleOpenDialog}
             >
               <SearchIcon />
             </IconButton>
@@ -135,7 +135,7 @@ const ISCCreatorFeature = () => {
         </Box>
       </Stack>
 
-      <Dialog maxWidth="xl" open={openDialog} onClose={toggleOpenDialog}>
+      <Dialog aria-label="ISC Creator abstract" maxWidth="xl" open={openDialog} onClose={toggleOpenDialog}>
         <DialogContent>
           <Box
             component="img"

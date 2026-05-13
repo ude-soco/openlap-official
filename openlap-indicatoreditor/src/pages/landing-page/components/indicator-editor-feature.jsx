@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  alpha,
   Box,
   Button,
   Card,
@@ -136,14 +135,14 @@ const IndicatorEditorFeature = () => {
                   backgroundColor: "rgba(255, 255, 255, 1)",
                 },
               }}
-              onClick={() => console.log("search clicked")}
+              onClick={toggleOpenDialog}
             >
               <SearchIcon />
             </IconButton>
           </Card>
         </Box>
       </Stack>
-      <Dialog maxWidth="xl" open={openDialog} onClose={toggleOpenDialog}>
+      <Dialog aria-label="Indicator Editor abstract" maxWidth="xl" open={openDialog} onClose={toggleOpenDialog}>
         <DialogContent>
           <Box
             component="img"

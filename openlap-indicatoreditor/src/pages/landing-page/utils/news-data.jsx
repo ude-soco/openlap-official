@@ -4,6 +4,45 @@ import { v4 as uuidv4 } from "uuid";
 const newsItems = [
   {
     id: uuidv4(),
+    date: "March 2026",
+    title: "New publication in Journal of Learning Analytics",
+    desc: (
+      <Typography variant="body2" color="textSecondary">
+        {`Our paper “Human-Centered Development of Indicators for Self-Service Learning Analytics: A Transparency through Exploration Approach,” has been published in early access in the Journal of Learning Analytics. The paper is available `}
+        <Link href="https://arxiv.org/pdf/2504.07811" target="_blank">
+          here
+        </Link>
+        {`.`}
+      </Typography>
+    ),
+  },
+  {
+    id: uuidv4(),
+    date: "March 2026",
+    title: "New Publication in CSEDU 2026",
+    desc: (
+      <Typography variant="body2" color="textSecondary">
+        {`Our paper "Usability Evaluation and Improvement of a Tool for Self-Service Learning Analytics" by `}
+        <Link
+          href="https://www.uni-due.de/soco/people/shoeb-joarder.php"
+          target="_blank"
+        >
+          Shoeb Joarder
+        </Link>
+        {` got accepted as a research paper on the 18th International Conference on Computer Supported Education `}
+        <Link href="https://csedu.scitevents.org/" target="_blank">
+          CSEDU 2026
+        </Link>
+        {`. A link to the paper on arXiv is available `}
+        <Link href="https://arxiv.org/pdf/2603.24321" target="_blank">
+          here
+        </Link>
+        {`.`}
+      </Typography>
+    ),
+  },
+  {
+    id: uuidv4(),
     date: "September 2025",
     title: "SoCo @ ICETC 2025",
     desc: (

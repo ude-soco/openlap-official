@@ -1,13 +1,15 @@
-import { useContext, useState } from "react";
-import Box from "@mui/material/Box";
-import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
-import Button from "@mui/material/Button";
-import Container from "@mui/material/Container";
-import Divider from "@mui/material/Divider";
-import Typography from "@mui/material/Typography";
-import MenuItem from "@mui/material/MenuItem";
-import Drawer from "@mui/material/Drawer";
+import { useState } from "react";
+import {
+  AppBar,
+  Box,
+  Button,
+  Container,
+  Divider,
+  Drawer,
+  MenuItem,
+  Toolbar,
+  Typography,
+} from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import ToggleColorMode from "./toggle-color-mode";
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -23,7 +25,6 @@ const logoStyle = {
 };
 
 const AppAppBar = () => {
-  const { darkMode, toggleDarkMode } = useContext(CustomThemeContext);
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
@@ -162,10 +163,7 @@ const AppAppBar = () => {
                       flexGrow: 1,
                     }}
                   >
-                    <ToggleColorMode
-                      mode={darkMode}
-                      toggleColorMode={toggleDarkMode}
-                    />
+                    <ToggleColorMode />
                   </Box>
                   {navigationItems.map((item) => (
                     <MenuItem

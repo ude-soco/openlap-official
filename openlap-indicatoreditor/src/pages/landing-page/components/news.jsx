@@ -1,7 +1,5 @@
-import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
-import Typography from "@mui/material/Typography";
-import { Link, Paper } from "@mui/material";
+import { Box, Container, Link, Paper, Typography } from "@mui/material";
+import { useMediaQuery, useTheme } from "@mui/material";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import {
   Timeline,
@@ -14,8 +12,6 @@ import {
 } from "@mui/lab";
 import { navigationIds } from "../utils/navigation-data";
 import { newsItems } from "../utils/news-data";
-import { useTheme } from "@mui/material/styles";
-import useMediaQuery from "@mui/material/useMediaQuery";
 
 export default function News() {
   const theme = useTheme();
@@ -111,7 +107,7 @@ export default function News() {
             "& > svg": { transition: "0.2s" },
             "&:hover > svg": { transform: "translateX(4px)" },
           }}
-          onClick={() => window.open("https://www.uni-due.de/soco/news.php")}
+          onClick={() => window.open("https://www.uni-due.de/soco/news.php", "_blank", "noopener,noreferrer")}
         >
           <span>More News</span>
           <OpenInNewIcon fontSize="small" sx={{ mt: "1px", ml: "2px" }} />

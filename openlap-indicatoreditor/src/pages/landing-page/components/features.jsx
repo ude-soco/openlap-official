@@ -8,7 +8,7 @@ export default function Features() {
       id={navigationIds.FEATURE}
       sx={{ pt: { xs: 8, sm: 12 } }}
     >
-      <Stack container alignItems={{xs: "none", md: "center"}}>
+      <Stack alignItems={{ xs: "flex-start", md: "center" }}>
         <Typography component="h2" variant="h4">
           OpenLAP Features
         </Typography>

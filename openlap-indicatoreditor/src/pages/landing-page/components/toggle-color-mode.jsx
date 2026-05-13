@@ -1,6 +1,5 @@
 import { useContext } from "react";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import { Box, Button } from "@mui/material";
 import WbSunnyRoundedIcon from "@mui/icons-material/WbSunnyRounded";
 import ModeNightRoundedIcon from "@mui/icons-material/ModeNightRounded";
 import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager";
