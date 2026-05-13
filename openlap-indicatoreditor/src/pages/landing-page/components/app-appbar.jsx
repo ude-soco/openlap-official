@@ -10,6 +10,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Drawer from "@mui/material/Drawer";
 import MenuIcon from "@mui/icons-material/Menu";
 import ToggleColorMode from "./toggle-color-mode";
+import LightModeIcon from '@mui/icons-material/LightMode';
 import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import { useNavigate } from "react-router-dom";
