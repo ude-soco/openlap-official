@@ -410,10 +410,16 @@ export default function EditBasicIndicator() {
             </Grid>
           </Grid>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={3} alignItems="flex-start" sx={{ width: "100%" }}>
             {/* Left Column: Current Selection */}
-            <Grid size={{ xs: 12, lg: 6 }}>
-              <Stack gap={2}>
+            <Grid
+              size={{ xs: 12, lg: 6 }}
+              sx={{ display: "flex", width: "100%", minWidth: 0 }}
+            >
+              <Stack
+                gap={2}
+                sx={{ width: "100%", flexGrow: 1, minWidth: 0, alignSelf: "stretch" }}
+              >
                 <Dataset />
                 <Filters />
                 <Analysis />
@@ -422,17 +428,25 @@ export default function EditBasicIndicator() {
             </Grid>
 
             {/* Right Column: Previous Selection (Read-Only) */}
-            <Grid size={{ xs: 12, lg: 6 }}>
+            <Grid
+              size={{ xs: 12, lg: 6 }}
+              sx={{ display: "flex", width: "100%", minWidth: 0 }}
+            >
               <Box
                 sx={{
+                  width: "100%",
+                  flexGrow: 1,
+                  minWidth: 0,
                   pl: { lg: 3 },
-                  borderLeft: { lg: '2px solid' },
-                  borderColor: { lg: 'grey.300' },
+                  borderLeft: { lg: 1 },
+                  borderColor: { lg: "divider" },
+                  borderRadius: { lg: 2 },
+                  py: { lg: 1 },
                   pointerEvents: "none",//makes the right column unclickable
-                  opacity: 0.6,// styling to indicate read-only state
+                  opacity: 0.6,
                   userSelect: "none",
-                  "& .MuiButton-root": { display: "none" },
-                  "& .MuiIconButton-root": { display: "none" },// hide all buttons
+                  "& .MuiButton-root": { visibility: "hidden" },
+                  "& .MuiIconButton-root": { visibility: "hidden" },// hide all buttons
                 }}
               >
                 <Stack gap={2}>

@@ -21,7 +21,7 @@ import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-m
 import SidePanel from "../side-panel/side-panel";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
 import { useSnackbar } from "notistack";
-import { useLocation, useMatch, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const drawerWidth = 280;
 
@@ -32,18 +32,11 @@ function NavigationBar(props) {
     useContext(CustomThemeContext);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
-  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [menu, setMenu] = useState(null);
 
-  const isBasicEditRoute = useMatch("/indicator/editor/basic/edit/:id");
-  const isCompositeEditRoute = useMatch("/indicator/editor/composite/edit/:id");
-  const isGenericEditRoute = /\/edit\/[^/]+$/.test(location.pathname);
-  const hideSidebar = Boolean(
-    isBasicEditRoute || isCompositeEditRoute || isGenericEditRoute
-  );
-  const effectiveDrawerWidth = hideSidebar ? 0 : drawerWidth;
+  const effectiveDrawerWidth = drawerWidth;
 
   const handleDrawerClose = () => {
     setIsClosing(true);
@@ -143,7 +136,7 @@ function NavigationBar(props) {
           onClose={handleDrawerClose}
           ModalProps={{ keepMounted: true }}
           sx={{
-            display: hideSidebar ? "none" : { xs: "block", md: "none" },
+            display: { xs: "block", md: "none" },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
@@ -155,7 +148,7 @@ function NavigationBar(props) {
         <Drawer
           variant="permanent"
           sx={{
-            display: hideSidebar ? "none" : { xs: "none", md: "block" },
+            display: { xs: "none", md: "block" },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: effectiveDrawerWidth,

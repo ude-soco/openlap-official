@@ -9,12 +9,11 @@ import {
   Container,
 } from "@mui/material";
 import DatasetSummary from "./dataset-summary";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { BasicContext } from "../../basic-indicator";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
 import { fetchActivityTypesList, fetchUserLRSList } from "./utils/dataset-api";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
-import CustomDialog from "../../../../../../common/components/custom-dialog/custom-dialog";
 import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper";
 
 export default function Dataset() {
@@ -27,19 +26,6 @@ export default function Dataset() {
     setFilters,
     handleResetIfDatasetEmpty,
   } = useContext(BasicContext);
-  const [state, setState] = useState({
-    lrsDialog: {
-      openDialogLRS: false,
-      // TODO: Ideally, if user decides to remove it, it should analyze and visualize with the remaining filters
-      content: `Removing an LRS from the list will have the following effects:<br/>
-      • All chosen activity filters in <b>Filters</b> will be removed<br/>
-      • Analyzed data in <b>Analysis</b> will be deleted<br/>
-      • Chosen visualization and its customizations in <b>Visualization</b> will be lost<br/><br/>
-      Please confirm before proceeding.
-      `,
-      pendingLRSList: null,
-    },
-  });
 
   useEffect(() => {
     const loadMyLearningRecordStores = async () => {
@@ -60,26 +46,7 @@ export default function Dataset() {
     );
   };
 
-  const handleToggleDialogOpen = (pendingLRSList = null) => {
-    setState((p) => ({
-      ...p,
-      lrsDialog: {
-        ...p.lrsDialog,
-        openDialogLRS: !p.lrsDialog.openDialogLRS,
-        pendingLRSList,
-      },
-    }));
-  };
-
   const handleSelectLRS = async (selectedLRSList) => {
-    const isRemoving =
-      dataset.selectedLRSList.length > selectedLRSList.length &&
-      !lockedStep.filters.locked &&
-      !state.lrsDialog.openDialogLRS;
-    if (isRemoving) {
-      handleToggleDialogOpen(selectedLRSList);
-      return;
-    }
     setDataset((p) => ({ ...p, selectedLRSList: selectedLRSList }));
     if (selectedLRSList.length !== 0) {
       try {
@@ -94,11 +61,6 @@ export default function Dataset() {
     } else {
       handleResetIfDatasetEmpty();
     }
-  };
-
-  const handleConfirmRemoveLRS = async () => {
-    await handleSelectLRS(state.lrsDialog.pendingLRSList);
-    handleToggleDialogOpen();
   };
 
   const handleCheckDisabled = () => {
@@ -174,13 +136,6 @@ export default function Dataset() {
                   Next
                 </Button>
               </Container>
-              <CustomDialog
-                type="delete"
-                open={state.lrsDialog.openDialogLRS}
-                toggleOpen={handleToggleDialogOpen}
-                content={state.lrsDialog.content}
-                handler={handleConfirmRemoveLRS}
-              />
             </Stack>
           </Collapse>
         </Stack>

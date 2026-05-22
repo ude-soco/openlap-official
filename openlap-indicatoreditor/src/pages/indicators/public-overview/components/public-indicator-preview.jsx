@@ -240,7 +240,14 @@ const PublicIndicatorPreview = () => {
     sessionStorage.setItem("redirectAfterLogin", "/");
     setSaveNameDialogOpen(false);
     setSaveLoading(false);
-    navigate("/login");
+    const navigationState = {};
+    if (userId) navigationState.userId = userId;
+    if (lrsId) navigationState.lrsId = lrsId;
+    if (platform) navigationState.platform = platform;
+
+    navigate("/login", {
+      state: Object.keys(navigationState).length ? navigationState : undefined,
+    });
   };
 
   const handleBackToDefault = () => {
