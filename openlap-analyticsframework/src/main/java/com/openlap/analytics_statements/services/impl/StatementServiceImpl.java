@@ -72,8 +72,7 @@ public class StatementServiceImpl implements StatementService {
       }
     }
     // Sort platforms by name directly in Java
-    Collections.sort(
-        platforms, Comparator.comparing(map -> ((Map<String, Object>) map).get("name").toString()));
+    Collections.sort(platforms, Comparator.comparing(StatementServiceImpl::getNameForSort));
 
     return platforms;
   }
@@ -143,9 +142,12 @@ public class StatementServiceImpl implements StatementService {
       }
     }
     Collections.sort(
-        definitionTypes,
-        Comparator.comparing(map -> ((Map<String, Object>) map).get("name").toString()));
+        definitionTypes, Comparator.comparing(StatementServiceImpl::getNameForSort));
     return definitionTypes;
+  }
+
+  private static String getNameForSort(Object item) {
+    return ((Map<?, ?>) item).get("name").toString();
   }
 
   private List<Document> getDocuments(Aggregation aggregation) {
@@ -189,8 +191,7 @@ public class StatementServiceImpl implements StatementService {
       }
     }
     Collections.sort(
-        activitiesList,
-        Comparator.comparing(map -> ((Map<String, Object>) map).get("name").toString()));
+        activitiesList, Comparator.comparing(StatementServiceImpl::getNameForSort));
     return activitiesList;
   }
 
@@ -257,8 +258,7 @@ public class StatementServiceImpl implements StatementService {
       }
     }
     Collections.sort(
-        actionOnActivitiesList,
-        Comparator.comparing(map -> ((Map<String, Object>) map).get("name").toString()));
+        actionOnActivitiesList, Comparator.comparing(StatementServiceImpl::getNameForSort));
     return actionOnActivitiesList;
   }
 
