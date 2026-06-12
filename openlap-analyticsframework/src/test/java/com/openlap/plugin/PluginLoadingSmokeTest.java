@@ -24,6 +24,8 @@ import com.openlap.template.model.TransformedData;
 import com.openlap.visualization_methods.utilities.VisualizerClassPathLoader;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -56,6 +58,8 @@ public class PluginLoadingSmokeTest {
       "org.openlap.smoke.visualization.SmokeVisualizationLibrary";
   private static final String VISUALIZATION_CLASS =
       "org.openlap.smoke.visualization.SmokeVisualization";
+  private static final String CONTEXT_VISUALIZATION_CLASS =
+      "org.openlap.smoke.contextvisualization.ContextDependencyVisualization";
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -132,7 +136,48 @@ public class PluginLoadingSmokeTest {
     }
   }
 
+  @Test
+  public void visualizationPluginLoaderUsesThreadContextClassLoaderForRuntimeDependencies()
+      throws Exception {
+    Path runtimeDependencyJar =
+        compileJar(
+            "runtime-only-dependency.jar",
+            source(
+                "org/openlap/smoke/runtime/RuntimeOnlyDependency.java",
+                runtimeOnlyDependencySource()));
+    Path jarPath =
+        compileJar(
+            "context-visualization-plugin.jar",
+            Collections.singletonList(runtimeDependencyJar),
+            source(
+                "org/openlap/smoke/contextvisualization/ContextDataTransformer.java",
+                contextVisualizationTransformerSource()),
+            source(
+                "org/openlap/smoke/contextvisualization/ContextDependencyVisualization.java",
+                contextDependencyVisualizationSource()));
+
+    ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+    try (URLClassLoader contextClassLoader =
+        new URLClassLoader(
+            new URL[] {runtimeDependencyJar.toUri().toURL()}, originalContextClassLoader)) {
+      Thread.currentThread().setContextClassLoader(contextClassLoader);
+
+      try (VisualizerClassPathLoader loader = new VisualizerClassPathLoader(jarPath.toString())) {
+        VisualizationCodeGenerator visualization = loader.loadTypeClass(CONTEXT_VISUALIZATION_CLASS);
+
+        assertEquals("Context Dependency Visualization context-only", visualization.getName());
+      }
+    } finally {
+      Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+    }
+  }
+
   private Path compileJar(String jarName, SourceFile... sources) throws Exception {
+    return compileJar(jarName, Collections.<Path>emptyList(), sources);
+  }
+
+  private Path compileJar(String jarName, List<Path> extraClassPathEntries, SourceFile... sources)
+      throws Exception {
     Path workspace = temporaryFolder.newFolder(jarName.replace(".jar", "")).toPath();
     Path sourceRoot = workspace.resolve("src");
     Path classesRoot = workspace.resolve("classes");
@@ -160,7 +205,7 @@ public class PluginLoadingSmokeTest {
               "--release",
               "11",
               "-classpath",
-              compilerClassPath(),
+              compilerClassPath(extraClassPathEntries),
               "-d",
               classesRoot.toString());
 
@@ -174,7 +219,7 @@ public class PluginLoadingSmokeTest {
     return jarPath;
   }
 
-  private String compilerClassPath() throws URISyntaxException {
+  private String compilerClassPath(List<Path> extraClassPathEntries) throws URISyntaxException {
     Set<String> entries = new LinkedHashSet<>();
     addClassPath(entries, System.getProperty("java.class.path"));
     addClassPath(entries, System.getProperty("surefire.test.class.path"));
@@ -185,6 +230,9 @@ public class PluginLoadingSmokeTest {
     addCodeSource(entries, ChartConfiguration.class);
     addCodeSource(entries, TransformedData.class);
     addCodeSource(entries, OpenLAPDataSet.class);
+    for (Path extraClassPathEntry : extraClassPathEntries) {
+      entries.add(extraClassPathEntry.toString());
+    }
     return String.join(File.pathSeparator, entries);
   }
 
@@ -419,6 +467,91 @@ public class PluginLoadingSmokeTest {
         + "    return \"<script>window.openlapSmokeLabel='\"\n"
         + "        + VisualizationEscaper.escapeJavaScriptString(smokeTransformer.getFirstLabel())\n"
         + "        + \"';</script>\";\n"
+        + "  }\n"
+        + "}\n";
+  }
+
+  private String runtimeOnlyDependencySource() {
+    return ""
+        + "package org.openlap.smoke.runtime;\n"
+        + "\n"
+        + "public final class RuntimeOnlyDependency {\n"
+        + "  private RuntimeOnlyDependency() {\n"
+        + "  }\n"
+        + "\n"
+        + "  public static String label() {\n"
+        + "    return \"context-only\";\n"
+        + "  }\n"
+        + "}\n";
+  }
+
+  private String contextVisualizationTransformerSource() {
+    return ""
+        + "package org.openlap.smoke.contextvisualization;\n"
+        + "\n"
+        + "import com.openlap.dataset.OpenLAPDataSet;\n"
+        + "import com.openlap.exceptions.UnTransformableData;\n"
+        + "import com.openlap.template.DataTransformer;\n"
+        + "import com.openlap.template.model.TransformedData;\n"
+        + "\n"
+        + "public class ContextDataTransformer implements DataTransformer {\n"
+        + "  public TransformedData<?> transformData(OpenLAPDataSet openLAPDataSet)\n"
+        + "      throws UnTransformableData {\n"
+        + "    TransformedData<String> transformedData = new TransformedData<String>();\n"
+        + "    transformedData.setData(\"ok\");\n"
+        + "    return transformedData;\n"
+        + "  }\n"
+        + "}\n";
+  }
+
+  private String contextDependencyVisualizationSource() {
+    return ""
+        + "package org.openlap.smoke.contextvisualization;\n"
+        + "\n"
+        + "import com.openlap.dataset.OpenLAPDataSet;\n"
+        + "import com.openlap.exceptions.VisualizationCodeGenerationException;\n"
+        + "import com.openlap.template.DataTransformer;\n"
+        + "import com.openlap.template.VisualizationCodeGenerator;\n"
+        + "import com.openlap.template.model.ChartConfiguration;\n"
+        + "import java.util.Map;\n"
+        + "import org.openlap.smoke.runtime.RuntimeOnlyDependency;\n"
+        + "\n"
+        + "public class ContextDependencyVisualization extends VisualizationCodeGenerator {\n"
+        + "  private final String dependencyValue;\n"
+        + "\n"
+        + "  public ContextDependencyVisualization() {\n"
+        + "    this.dependencyValue = RuntimeOnlyDependency.label();\n"
+        + "  }\n"
+        + "\n"
+        + "  public String getName() {\n"
+        + "    return \"Context Dependency Visualization \" + dependencyValue;\n"
+        + "  }\n"
+        + "\n"
+        + "  public ChartConfiguration getConfiguration() {\n"
+        + "    return new ChartConfiguration(\n"
+        + "        false, false, false, false, false, false,\n"
+        + "        false, false, false, false, false, false,\n"
+        + "        false, false, false, false, false, false,\n"
+        + "        false, false, false, false, false, false,\n"
+        + "        false, false, false, false);\n"
+        + "  }\n"
+        + "\n"
+        + "  public void initializeDataSetConfiguration() {\n"
+        + "    setInput(new OpenLAPDataSet());\n"
+        + "    setOutput(new OpenLAPDataSet());\n"
+        + "  }\n"
+        + "\n"
+        + "  public Class getDataTransformer() {\n"
+        + "    return ContextDataTransformer.class;\n"
+        + "  }\n"
+        + "\n"
+        + "  public String visualizationLibraryScript() {\n"
+        + "    return \"\";\n"
+        + "  }\n"
+        + "\n"
+        + "  public String visualizationCode(DataTransformer dataTransformer,\n"
+        + "      Map<String, Object> additionalParams) throws VisualizationCodeGenerationException {\n"
+        + "    return dependencyValue;\n"
         + "  }\n"
         + "}\n";
   }
