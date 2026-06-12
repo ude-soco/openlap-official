@@ -51,11 +51,10 @@ public class IndicatorCompositeServiceImpl implements IndicatorCompositeService 
         combinedAnalyzedDataSet = gson.fromJson(gson.toJson(analyzedDataSet), OpenLAPDataSet.class);
       } else {
         for (OpenLAPColumnConfigData columnConfigData : columnConfigDataList) {
-          combinedAnalyzedDataSet
-              .getColumns()
-              .get(columnConfigData.getId())
-              .getData()
-              .addAll(analyzedDataSet.getColumns().get(columnConfigData.getId()).getData());
+          addAllColumnData(
+              combinedAnalyzedDataSet,
+              columnConfigData.getId(),
+              getColumnData(analyzedDataSet, columnConfigData.getId()));
         }
       }
       Map<String, List<?>> dataMap = new HashMap<>();
@@ -111,7 +110,7 @@ public class IndicatorCompositeServiceImpl implements IndicatorCompositeService 
     for (Map<String, List<?>> dataMap : analyticsHashMapList) {
       Map<String, ArrayList<?>> outputHashMap = new HashMap<>();
       Map<String, Object> mergedMap = new TreeMap<>();
-      List<String> itemNames = (List<String>) dataMap.get(columnToMergeId);
+      List<?> itemNames = dataMap.get(columnToMergeId);
 
       for (OpenLAPColumnConfigData port : outputPorts) {
         if (!port.getId().equals(columnToMergeId)) {
@@ -122,22 +121,23 @@ public class IndicatorCompositeServiceImpl implements IndicatorCompositeService 
       for (Map.Entry<String, ArrayList<?>> entry : outputHashMap.entrySet()) {
         if (entry.getKey().equals(columnToMergeId)) continue;
         for (int i = 0; i < itemNames.size(); i++) {
+          String itemName = (String) itemNames.get(i);
           Object value = entry.getValue().get(i);
           if (value instanceof String) {
             try {
               Integer intValue = Integer.parseInt((String) value);
-              mergedMap.put(itemNames.get(i), intValue);
+              mergedMap.put(itemName, intValue);
             } catch (NumberFormatException e) {
-              mergedMap.put(itemNames.get(i), value);
+              mergedMap.put(itemName, value);
             }
           } else if (value instanceof Integer) {
-            mergedMap.put(itemNames.get(i), value);
+            mergedMap.put(itemName, value);
           } else if (value instanceof Double) {
             Number number = (Number) entry.getValue().get(i);
-            mergedMap.put(itemNames.get(i), number.intValue());
+            mergedMap.put(itemName, number.intValue());
           } else {
             // Handle other data types if necessary
-            mergedMap.put(itemNames.get(i), value.toString());
+            mergedMap.put(itemName, value.toString());
           }
         }
       }
@@ -170,14 +170,24 @@ public class IndicatorCompositeServiceImpl implements IndicatorCompositeService 
       if (!port.getId().equals(columnToMergeId)
           && !port.getType().equals(OpenLAPColumnDataType.Text)) {
         combinedDataSet.getColumns().get(port.getId()).getData().clear();
-        combinedDataSet.getColumns().get(port.getId()).getData().addAll(values);
+        addAllColumnData(combinedDataSet, port.getId(), values);
         continue;
       }
       combinedDataSet.getColumns().get(port.getId()).getData().clear();
-      combinedDataSet.getColumns().get(port.getId()).getData().addAll(allKeys);
+      addAllColumnData(combinedDataSet, port.getId(), allKeys);
     }
 
     return combinedDataSet;
+  }
+
+  private static Collection<?> getColumnData(OpenLAPDataSet dataSet, String columnId) {
+    return dataSet.getColumns().get(columnId).getData();
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void addAllColumnData(
+      OpenLAPDataSet dataSet, String columnId, Collection<?> values) {
+    dataSet.getColumns().get(columnId).getData().addAll(values);
   }
 
   @Override
