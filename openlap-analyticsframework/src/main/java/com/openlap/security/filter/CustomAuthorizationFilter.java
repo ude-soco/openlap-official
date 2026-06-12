@@ -55,7 +55,6 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
               new UsernamePasswordAuthenticationToken(
                   tokenRequest.getUserEmail(), null, authorities);
           SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-          filterChain.doFilter(request, response);
         } catch (Exception e) {
           log.error("Error logging in: {}", e.getMessage());
           response.setHeader("error", e.getMessage());
@@ -67,7 +66,9 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
           error.put("message", "You need to login.");
           response.setContentType(APPLICATION_JSON_VALUE);
           new ObjectMapper().writeValue(response.getOutputStream(), error);
+          return;
         }
+        filterChain.doFilter(request, response);
       } else {
         filterChain.doFilter(request, response);
       }
