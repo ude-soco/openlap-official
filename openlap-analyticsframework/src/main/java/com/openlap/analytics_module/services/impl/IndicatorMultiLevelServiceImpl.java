@@ -116,7 +116,7 @@ public class IndicatorMultiLevelServiceImpl implements IndicatorMultiLevelServic
           indicatorMultiLevelMergeRequest.getIndicators().get(i);
       String columnToMergeId = indicatorMultiLevelRequest.getColumnToMerge().getId();
       Map<String, ArrayList<?>> outputHashMap = new HashMap<>();
-      List<String> itemNames = (List<String>) dataMap.get(columnToMergeId);
+      List<?> itemNames = dataMap.get(columnToMergeId);
       List<OpenLAPColumnConfigData> outputPorts =
           indicatorUtilityService.fetchAnalyticsTechniqueOutputsByIndicatorIdMethod(
               indicatorMultiLevelRequest.getIndicatorId());
@@ -131,23 +131,24 @@ public class IndicatorMultiLevelServiceImpl implements IndicatorMultiLevelServic
         Map<String, Object> mergedMap = new TreeMap<>();
         if (entry.getKey().equals(columnToMergeId)) continue;
         for (int j = 0; j < itemNames.size(); j++) {
+          String itemName = (String) itemNames.get(j);
           Object value = entry.getValue().get(j);
 
           if (value instanceof String) {
             try {
               Integer intValue = Integer.parseInt((String) value);
-              mergedMap.put(itemNames.get(j), intValue);
+              mergedMap.put(itemName, intValue);
             } catch (NumberFormatException e) {
-              mergedMap.put(itemNames.get(j), value);
+              mergedMap.put(itemName, value);
             }
           } else if (value instanceof Integer) {
-            mergedMap.put(itemNames.get(j), value);
+            mergedMap.put(itemName, value);
           } else if (value instanceof Double) {
             Number number = (Number) entry.getValue().get(j);
-            mergedMap.put(itemNames.get(j), number.intValue());
+            mergedMap.put(itemName, number.intValue());
           } else {
             // Handle other data types if necessary
-            mergedMap.put(itemNames.get(j), value.toString());
+            mergedMap.put(itemName, value.toString());
           }
         }
         analyticsTreeMaps.add(mergedMap);
