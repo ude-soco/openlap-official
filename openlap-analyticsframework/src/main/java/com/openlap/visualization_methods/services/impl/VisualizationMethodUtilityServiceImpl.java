@@ -4,6 +4,7 @@ import com.openlap.configurations.Utils;
 import com.openlap.dataset.OpenLAPDataSetConfigValidationResult;
 import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.exception.DatabaseOperationException;
+import com.openlap.exception.InvalidPluginException;
 import com.openlap.exception.ServiceException;
 import com.openlap.template.VisualizationCodeGenerator;
 import com.openlap.template.VisualizationLibraryInfo;
@@ -147,7 +148,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
               .collect(Collectors.toList());
 
       for (String jarFile : jarFiles) {
-        processVisualizerJarFile(
+        registerVisualizerJarFile(
             jarFile, existingVisualizationLibraries, existingVisualizationTypes);
       }
     } catch (IOException e) {
@@ -155,7 +156,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
     }
   }
 
-  private void processVisualizerJarFile(
+  private VisualizationPluginRegistrationResult registerVisualizerJarFile(
       String jarFile,
       List<VisLibrary> existingLibraries,
       List<VisType> existingVisualizationTypes) {
@@ -164,10 +165,13 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
     VisualizerClassPathLoader classPathLoader = new VisualizerClassPathLoader(jarFile);
     VisLibrary visualizationLibrary = null;
     List<VisType> newTypes = new ArrayList<>();
+    int validLibraryCount = 0;
+    int validTypeCount = 0;
 
     for (String className : classNames) {
       try {
         VisualizationLibraryInfo libraryInfo = classPathLoader.loadLibraryInfo(className);
+        validLibraryCount++;
         visualizationLibrary = findOrCreateLibrary(libraryInfo, existingLibraries, jarFile);
       } catch (Exception e) {
         log.warn(
@@ -178,6 +182,9 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
 
       try {
         VisualizationCodeGenerator visualizationType = classPathLoader.loadTypeClass(className);
+        if (visualizationType != null) {
+          validTypeCount++;
+        }
         if (visualizationType != null
             && !isTypeAlreadyAdded(existingVisualizationTypes, className)) {
           VisType newVizType = createNewVisType(visualizationType, className, visualizationLibrary);
@@ -191,13 +198,14 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
       }
     }
 
-    if (visualizationLibrary != null) {
+    if (visualizationLibrary != null && validTypeCount > 0) {
       saveVisualizationLibrary(visualizationLibrary, newTypes);
     } else {
       log.warn(
-          "No implementation of 'VisualizationLibraryInfo' abstract class found in JAR file: {}",
+          "No complete visualization plugin found in JAR file: {}",
           jarFile);
     }
+    return new VisualizationPluginRegistrationResult(validLibraryCount, validTypeCount);
   }
 
   private VisLibrary findOrCreateLibrary(
@@ -284,18 +292,29 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
     String fileName = file.getOriginalFilename();
     Utils.saveFile(file, visualizerJarsFolder, fileName);
 
-    findJarAndAddVisualizerMethod(fileName);
+    VisualizationPluginRegistrationResult result = findJarAndAddVisualizerMethod(fileName);
+    if (!result.hasValidPluginContent()) {
+      throw new InvalidPluginException(
+          "File '"
+              + fileName
+              + "' was uploaded, but no valid visualization plugin was found. Ensure the JAR"
+              + " contains a VisualizationLibraryInfo implementation and at least one"
+              + " VisualizationCodeGenerator under '"
+              + visualizerClassDirectory
+              + "'.");
+    }
   }
 
-  private void findJarAndAddVisualizerMethod(String fileName) {
+  private VisualizationPluginRegistrationResult findJarAndAddVisualizerMethod(String fileName) {
     List<VisLibrary> existingVisualizationLibraries = visualizationLibraryRepository.findAll();
     List<VisType> existingVisualizationTypes = visualizationTypeRepository.findAll();
     try {
       Optional<String> jarFilePath = Utils.findJarFile(fileName, visualizerJarsFolder);
-      jarFilePath.ifPresent(
-          jarFile ->
-              processVisualizerJarFile(
-                  jarFile, existingVisualizationLibraries, existingVisualizationTypes));
+      if (jarFilePath.isPresent()) {
+        return registerVisualizerJarFile(
+            jarFilePath.get(), existingVisualizationLibraries, existingVisualizationTypes);
+      }
+      return VisualizationPluginRegistrationResult.empty();
     } catch (IOException e) {
       throw new DatabaseOperationException("Error populating visualization techniques", e);
     }
@@ -358,5 +377,23 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
               visLibrary.getDescription()));
     }
     return responses;
+  }
+
+  private static final class VisualizationPluginRegistrationResult {
+    private final int validLibraryCount;
+    private final int validTypeCount;
+
+    private VisualizationPluginRegistrationResult(int validLibraryCount, int validTypeCount) {
+      this.validLibraryCount = validLibraryCount;
+      this.validTypeCount = validTypeCount;
+    }
+
+    private static VisualizationPluginRegistrationResult empty() {
+      return new VisualizationPluginRegistrationResult(0, 0);
+    }
+
+    private boolean hasValidPluginContent() {
+      return validLibraryCount > 0 && validTypeCount > 0;
+    }
   }
 }

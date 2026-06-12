@@ -71,6 +71,14 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(apiError, apiError.getHttpStatus());
   }
 
+  @ExceptionHandler(InvalidPluginException.class)
+  public ResponseEntity<?> handleInvalidPluginException(InvalidPluginException ex) {
+    Map<String, Object> errors = new HashMap<>();
+    errors.put("pluginUploadError", ex.getMessage());
+    ApiError apiError = new ApiError(HttpStatus.UNPROCESSABLE_ENTITY, errors);
+    return new ResponseEntity<>(apiError, apiError.getHttpStatus());
+  }
+
   @ExceptionHandler(VisualizationClassLoaderException.class)
   public ResponseEntity<?> handleVisualizationClassLoaderException(
       VisualizationClassLoaderException ex) {

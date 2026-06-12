@@ -19,6 +19,7 @@ import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.dynamicparam.OpenLAPDynamicParam;
 import com.openlap.dynamicparam.OpenLAPDynamicParams;
 import com.openlap.exception.DatabaseOperationException;
+import com.openlap.exception.InvalidPluginException;
 import com.openlap.exception.ServiceException;
 import com.openlap.template.AnalyticsMethod;
 
@@ -185,7 +186,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
           paths.filter(Files::isRegularFile).map(Path::toString).collect(Collectors.toList());
 
       for (String jarFile : jarFiles) {
-        processAnalyticsTechniqueJarFile(jarFile, existingAnalyticsMethods);
+        registerAnalyticsTechniqueJarFile(jarFile, existingAnalyticsMethods);
       }
     } catch (IOException e) {
       throw new DatabaseOperationException("Error populating analytics techniques", e);
@@ -194,17 +195,19 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     return true;
   }
 
-  private void processAnalyticsTechniqueJarFile(
+  private int registerAnalyticsTechniqueJarFile(
       String jarFile, List<AnalyticsTechnique> existingAnalyticsMethods) {
     List<String> classNames = Utils.getClassNamesFromJar(jarFile, analyticsMethodsClassDirectory);
     AnalyticsMethodsClassPathLoader classPathLoader =
         getFolderNameFromResourcesFromJarFile(jarFile);
     List<AnalyticsTechnique> newMethods = new ArrayList<>();
+    int validMethodCount = 0;
 
     for (String className : classNames) {
       try {
         // validation required
         com.openlap.template.AnalyticsMethod method = classPathLoader.loadClass(className);
+        validMethodCount++;
         if (isClassAlreadyProcessed(className, existingAnalyticsMethods)) {
           continue;
         }
@@ -215,7 +218,10 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
         e.printStackTrace();
       }
     }
-    analyticsTechniqueRepository.saveAll(newMethods);
+    if (!newMethods.isEmpty()) {
+      analyticsTechniqueRepository.saveAll(newMethods);
+    }
+    return validMethodCount;
   }
 
   private boolean isClassAlreadyProcessed(
@@ -302,15 +308,26 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     String fileName = file.getOriginalFilename();
     Utils.saveFile(file, analyticsMethodsJarsFolder, fileName);
     List<AnalyticsTechnique> existingAnalyticsMethods = fetchAllAnalyticsTechniquesMethod();
-    findJarAndAddMethod(fileName, existingAnalyticsMethods);
+    int validMethodCount = findJarAndAddMethod(fileName, existingAnalyticsMethods);
+    if (validMethodCount == 0) {
+      throw new InvalidPluginException(
+          "File '"
+              + fileName
+              + "' was uploaded, but no valid analytics methods were found. Ensure the JAR"
+              + " contains classes under '"
+              + analyticsMethodsClassDirectory
+              + "' that extend AnalyticsMethod.");
+    }
   }
 
-  private void findJarAndAddMethod(
+  private int findJarAndAddMethod(
       String fileName, List<AnalyticsTechnique> existingAnalyticsMethods) {
     try {
       Optional<String> jarFilePath = Utils.findJarFile(fileName, analyticsMethodsJarsFolder);
-      jarFilePath.ifPresent(
-          jarFile -> processAnalyticsTechniqueJarFile(jarFile, existingAnalyticsMethods));
+      if (jarFilePath.isPresent()) {
+        return registerAnalyticsTechniqueJarFile(jarFilePath.get(), existingAnalyticsMethods);
+      }
+      return 0;
     } catch (IOException e) {
       throw new DatabaseOperationException("Error populating analytics techniques", e);
     }
