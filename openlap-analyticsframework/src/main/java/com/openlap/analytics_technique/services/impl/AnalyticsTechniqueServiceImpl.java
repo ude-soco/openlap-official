@@ -17,6 +17,7 @@ import com.openlap.dataset.OpenLAPColumnDataType;
 import com.openlap.dataset.OpenLAPDataSetConfigValidationResult;
 import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.dynamicparam.OpenLAPDynamicParam;
+import com.openlap.dynamicparam.OpenLAPDynamicParams;
 import com.openlap.exception.DatabaseOperationException;
 import com.openlap.exception.ServiceException;
 import com.openlap.template.AnalyticsMethod;
@@ -268,7 +269,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
   @Override
   public List<OpenLAPDynamicParam> getAnalyticsTechniqueParams(String techniqueId) {
     AnalyticsMethod method = loadAnalyticsMethodInstance(techniqueId);
-    List<OpenLAPDynamicParam> paramsAsList = method.getParams().getParamsAsList(false);
+    List<OpenLAPDynamicParam> paramsAsList = getParamsAsList(method);
     log.info("Found analytics technique parameter");
     return paramsAsList;
   }
@@ -380,7 +381,15 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     AnalyticsMethod method = loadAnalyticsMethodInstance(methodId);
     List<OpenLAPColumnConfigData> ports = method.getInputPorts();
     ports.sort(Comparator.comparing(OpenLAPColumnConfigData::getTitle));
-    List<OpenLAPDynamicParam> paramsAsList = method.getParams().getParamsAsList(false);
+    List<OpenLAPDynamicParam> paramsAsList = getParamsAsList(method);
     return new AnalyticsTechniqueInputParamResponse(ports, paramsAsList);
+  }
+
+  private List<OpenLAPDynamicParam> getParamsAsList(AnalyticsMethod method) {
+    OpenLAPDynamicParams params = method.getParams();
+    if (params == null || params.getParams() == null) {
+      return new ArrayList<>();
+    }
+    return params.getParamsAsList(false);
   }
 }
