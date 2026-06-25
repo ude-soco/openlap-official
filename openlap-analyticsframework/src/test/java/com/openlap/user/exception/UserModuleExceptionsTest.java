@@ -24,12 +24,13 @@ public class UserModuleExceptionsTest {
   public void mapToPreservedStatusAndStableCode() {
     assertMapping(new UserNotFoundException("x"), HttpStatus.NOT_FOUND, "USER_NOT_FOUND");
     assertMapping(new RoleNotFoundException("x"), HttpStatus.NOT_FOUND, "ROLE_NOT_FOUND");
-    assertMapping(new InvalidLrsUserException("x"), HttpStatus.NOT_FOUND, "INVALID_LRS_USER");
     assertMapping(new EmailAlreadyTakenException("x"), HttpStatus.CONFLICT, "EMAIL_ALREADY_TAKEN");
     assertMapping(new RoleAlreadyExistsException("x"), HttpStatus.CONFLICT, "ROLE_ALREADY_EXISTS");
-    assertMapping(new PasswordsDoNotMatchException("x"), HttpStatus.CONFLICT, "PASSWORDS_DO_NOT_MATCH");
-    assertMapping(new InvalidUserDetailsException("x"), HttpStatus.CONFLICT, "INVALID_USER_DETAILS");
-    assertMapping(new RoleNotAllowedException("x"), HttpStatus.CONFLICT, "ROLE_NOT_ALLOWED");
+    // PR4.1 normalized statuses:
+    assertMapping(new PasswordsDoNotMatchException("x"), HttpStatus.BAD_REQUEST, "PASSWORDS_DO_NOT_MATCH");
+    assertMapping(new InvalidUserDetailsException("x"), HttpStatus.BAD_REQUEST, "INVALID_USER_DETAILS");
+    assertMapping(new InvalidLrsUserException("x"), HttpStatus.BAD_REQUEST, "INVALID_LRS_USER");
+    assertMapping(new RoleNotAllowedException("x"), HttpStatus.FORBIDDEN, "ROLE_NOT_ALLOWED");
   }
 
   @Test

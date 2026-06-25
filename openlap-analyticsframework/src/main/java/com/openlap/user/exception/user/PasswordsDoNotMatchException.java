@@ -1,15 +1,13 @@
 package com.openlap.user.exception.user;
 
-import com.openlap.infrastructure.exception.ConflictException;
+import com.openlap.infrastructure.exception.ValidationException;
 
 /**
- * Password and confirmation do not match.
+ * Password and confirmation do not match → HTTP 400 (validation error).
  *
- * <p>Status is preserved at HTTP 409 (its prior mapping) by extending {@code ConflictException}.
- * Semantically this is a validation failure (400); status normalization is deferred — see the PR4
- * report.
+ * <p>Normalized from the legacy 409 mapping in PR4.1.
  */
-public class PasswordsDoNotMatchException extends ConflictException {
+public class PasswordsDoNotMatchException extends ValidationException {
   public PasswordsDoNotMatchException(String message) {
     super("PASSWORDS_DO_NOT_MATCH", message);
   }

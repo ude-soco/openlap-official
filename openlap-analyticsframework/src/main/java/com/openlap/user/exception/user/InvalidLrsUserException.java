@@ -1,15 +1,13 @@
 package com.openlap.user.exception.user;
 
-import com.openlap.infrastructure.exception.NotFoundException;
+import com.openlap.infrastructure.exception.ValidationException;
 
 /**
- * The supplied user/identifier does not belong to the LRS.
+ * The supplied user/identifier does not belong to the LRS → HTTP 400 (validation error).
  *
- * <p>Status is preserved at HTTP 404 (its prior mapping) by extending {@code NotFoundException}.
- * Semantically this is a validation failure (400); status normalization is deferred — see the PR4
- * report.
+ * <p>Normalized from the legacy 404 mapping in PR4.1.
  */
-public class InvalidLrsUserException extends NotFoundException {
+public class InvalidLrsUserException extends ValidationException {
   public InvalidLrsUserException(String message) {
     super("INVALID_LRS_USER", message);
   }

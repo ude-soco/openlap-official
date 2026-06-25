@@ -6,6 +6,7 @@ import com.openlap.analytics_statements.entities.LrsStore;
 import com.openlap.analytics_statements.services.LrsService;
 import com.openlap.analytics_statements.services.StatementService;
 import com.openlap.exception.ServiceException;
+import com.openlap.infrastructure.exception.OpenLapException;
 import com.openlap.user.dto.request.TokenRequest;
 import com.openlap.user.dto.response.UserResponse;
 import com.openlap.user.dto.response.utils.LrsConsumerResponse;
@@ -30,6 +31,7 @@ import org.bson.types.ObjectId;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -46,7 +48,15 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
   @Override
   public UserDetails loadUserByUsername(String userEmail) {
-    User user = getUserByEmail(userEmail);
+    User user;
+    try {
+      user = getUserByEmail(userEmail);
+    } catch (UserNotFoundException e) {
+      // Preserve existing login behaviour: a UserDetailsService signals a missing user with
+      // UsernameNotFoundException, which Spring converts to a generic 401 (no user enumeration).
+      // Without this, the getUserByEmail fix below would surface as a 404 on the login path.
+      throw new UsernameNotFoundException(e.getMessage(), e);
+    }
     Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
     user.getRoles()
         .forEach(
@@ -62,13 +72,17 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     try {
       User user = userRepository.findByEmail(userEmail);
       if (user == null) {
-        log.error("User with email '{}' not found.", userEmail);
         throw new UserNotFoundException("User not found.");
       }
       log.info("User with email '{}' found.", user.getEmail());
       return user;
+    } catch (OpenLapException e) {
+      // Domain exceptions (e.g. UserNotFoundException -> 404 USER_NOT_FOUND) must propagate as-is,
+      // not be wrapped into a 500. This fixes the prior 404->500 bug.
+      throw e;
     } catch (Exception e) {
-      throw new ServiceException("Error getting email.", e);
+      // Only genuine, unexpected failures are wrapped as an infrastructure error.
+      throw new ServiceException("Error looking up user by email.", e);
     }
   }
 

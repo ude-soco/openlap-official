@@ -92,25 +92,27 @@ public class UserModuleErrorMappingMockMvcTest {
     assertUnifiedError("/role-exists", 409, "ROLE_ALREADY_EXISTS", "Role already exists");
   }
 
+  // --- PR4.1 normalized statuses ---
+
   @Test
-  public void passwordMismatch() throws Exception {
-    assertUnifiedError("/password-mismatch", 409, "PASSWORDS_DO_NOT_MATCH", "Passwords do not match");
+  public void passwordMismatchNowReturns400() throws Exception {
+    assertUnifiedError("/password-mismatch", 400, "PASSWORDS_DO_NOT_MATCH", "Passwords do not match");
   }
 
   @Test
-  public void invalidUserDetails() throws Exception {
+  public void invalidUserDetailsNowReturns400() throws Exception {
     assertUnifiedError(
-        "/invalid-details", 409, "INVALID_USER_DETAILS",
+        "/invalid-details", 400, "INVALID_USER_DETAILS",
         "Only one of LRS provider/consumer should be provided");
   }
 
   @Test
-  public void invalidLrsUser() throws Exception {
-    assertUnifiedError("/invalid-lrs", 404, "INVALID_LRS_USER", "Not a valid LRS user.");
+  public void invalidLrsUserNowReturns400() throws Exception {
+    assertUnifiedError("/invalid-lrs", 400, "INVALID_LRS_USER", "Not a valid LRS user.");
   }
 
   @Test
-  public void roleNotAllowed() throws Exception {
-    assertUnifiedError("/role-not-allowed", 409, "ROLE_NOT_ALLOWED", "Role not allowed");
+  public void roleNotAllowedNowReturns403() throws Exception {
+    assertUnifiedError("/role-not-allowed", 403, "ROLE_NOT_ALLOWED", "Role not allowed");
   }
 }

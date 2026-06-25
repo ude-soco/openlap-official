@@ -1,15 +1,14 @@
 package com.openlap.user.exception.user;
 
-import com.openlap.infrastructure.exception.ConflictException;
+import com.openlap.infrastructure.exception.ValidationException;
 
 /**
- * Mutually-exclusive user details supplied (e.g. both LRS provider and consumer).
+ * Mutually-exclusive user details supplied (e.g. both LRS provider and consumer) → HTTP 400
+ * (validation error).
  *
- * <p>Status is preserved at HTTP 409 (its prior mapping) by extending {@code ConflictException}.
- * Semantically this is a validation failure (400); status normalization is deferred — see the PR4
- * report.
+ * <p>Normalized from the legacy 409 mapping in PR4.1.
  */
-public class InvalidUserDetailsException extends ConflictException {
+public class InvalidUserDetailsException extends ValidationException {
   public InvalidUserDetailsException(String message) {
     super("INVALID_USER_DETAILS", message);
   }

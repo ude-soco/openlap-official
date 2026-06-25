@@ -1,15 +1,13 @@
 package com.openlap.user.exception.role;
 
-import com.openlap.infrastructure.exception.ConflictException;
+import com.openlap.infrastructure.exception.ForbiddenException;
 
 /**
- * A role that is not permitted for the requested operation.
+ * A role that is not permitted for the requested operation → HTTP 403 (forbidden).
  *
- * <p>Status is preserved at HTTP 409 (its prior mapping) by extending {@code ConflictException}.
- * Semantically this is a forbidden operation (403); status normalization is deferred — see the PR4
- * report.
+ * <p>Normalized from the legacy 409 mapping in PR4.1.
  */
-public class RoleNotAllowedException extends ConflictException {
+public class RoleNotAllowedException extends ForbiddenException {
   public RoleNotAllowedException(String message) {
     super("ROLE_NOT_ALLOWED", message);
   }
