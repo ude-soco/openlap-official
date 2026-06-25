@@ -68,6 +68,9 @@ public class SecurityAuthorizationMockMvcTest {
   @MockBean private UserRoleService userRoleService;
   @MockBean private EngineService engineService;
 
+  // The new global error advice is auto-detected by @WebMvcTest; satisfy its dependency.
+  @MockBean private com.openlap.infrastructure.error.ApiErrorResponseFactory apiErrorResponseFactory;
+
   @Test
   public void protectedEndpointWithoutTokenIsDenied() throws Exception {
     mockMvc.perform(get("/v1/users/my")).andExpect(status().isForbidden());

@@ -136,6 +136,37 @@ curl http://localhost:8090/api/v1/analytics/methods \
 
 Public (no-auth) routes: `/api/login`, `/api/v1/register`, `/api/v1/token/refresh`, `/api/v1/code`.
 
+## Error responses & request tracing
+
+The framework is adopting a **unified error envelope** for API errors:
+
+```json
+{
+  "timestamp": "2026-06-25T20:31:08.082Z",
+  "status": 400,
+  "error": "BAD_REQUEST",
+  "code": "VALIDATION_FAILED",
+  "message": "Request validation failed.",
+  "path": "/api/v1/register",
+  "traceId": "6bbd5bf6-d3c3-4a85-872b-bde905aab69a",
+  "details": { "fieldErrors": [ { "field": "email", "message": "Email is mandatory" } ] }
+}
+```
+
+- **Request tracing:** every request gets a correlation id. Send your own via the
+  `X-Request-Id` (or `X-Correlation-Id`) header, or one is generated. It is returned on the
+  `X-Request-Id` response header, included as `traceId` in error bodies, and printed in the logs —
+  so a failing response can be traced to its log lines.
+- **Legacy compatibility:** while modules migrate, error bodies also include the legacy aliases
+  `httpStatus` and `errors`. This is controlled by `openlap.api.error.legacy-compat` (env
+  `API_ERROR_LEGACY_COMPAT`, default `true`); set it to `false` once clients consume the new fields.
+- **`cause` is intentionally no longer exposed.** Exception causes / stack traces are logged
+  server-side only and are never serialized into a client response.
+
+> Migration note: this is foundation-only. New framework errors (validation, malformed JSON,
+> unmapped 500s, and the new `OpenLapException` hierarchy) use the unified envelope; existing
+> module-specific handlers still return their current shapes until each module is migrated.
+
 ## Environment variables
 
 All settings have local-development defaults, so no configuration is required to run.
