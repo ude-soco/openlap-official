@@ -1,8 +1,8 @@
 package com.openlap.infrastructure.web;
 
+import com.openlap.analytics_module.exceptions.indicator.IndicatorNotFoundException;
 import com.openlap.exception.ServiceException;
 import com.openlap.infrastructure.exception.NotFoundException;
-import com.openlap.user.exception.user.UserNotFoundException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import lombok.Data;
@@ -52,10 +52,13 @@ public class ErrorTestController {
     throw new ServiceException("legacy service failure");
   }
 
-  /** Routed by the legacy module UserExceptionHandler (ExceptionResponse), not the new handler. */
-  @GetMapping("/legacy-user")
-  public void legacyUser() {
-    throw new UserNotFoundException("legacy user not found");
+  /**
+   * Routed by a still-unmigrated module's legacy advice (IndicatorExceptionHandler →
+   * ExceptionResponse), not the new handler.
+   */
+  @GetMapping("/legacy-indicator")
+  public void legacyIndicator() {
+    throw new IndicatorNotFoundException("legacy indicator not found");
   }
 
   @Data

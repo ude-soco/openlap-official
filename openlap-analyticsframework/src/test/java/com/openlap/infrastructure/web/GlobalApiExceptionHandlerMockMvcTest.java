@@ -139,13 +139,15 @@ public class GlobalApiExceptionHandlerMockMvcTest {
 
   @Test
   public void legacyModuleAdviceStillOwnsDomainException() throws Exception {
-    // legacy UserExceptionHandler -> ExceptionResponse {message, httpStatus}; NOT the new envelope.
+    // An unmigrated module's legacy advice (IndicatorExceptionHandler) -> ExceptionResponse
+    // {message, httpStatus}; NOT the new envelope. (The user module is now migrated, so its
+    // exceptions use the unified envelope — see UserModuleErrorMappingMockMvcTest.)
     mockMvc
-        .perform(get("/test/legacy-user"))
+        .perform(get("/test/legacy-indicator"))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").doesNotExist())
         .andExpect(jsonPath("$.timestamp").doesNotExist())
-        .andExpect(jsonPath("$.message").value("legacy user not found"))
+        .andExpect(jsonPath("$.message").value("legacy indicator not found"))
         .andExpect(jsonPath("$.cause").doesNotExist());
   }
 }
