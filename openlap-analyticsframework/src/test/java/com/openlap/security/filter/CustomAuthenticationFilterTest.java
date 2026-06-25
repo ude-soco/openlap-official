@@ -7,7 +7,10 @@ import static org.mockito.Mockito.mock;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openlap.infrastructure.error.ApiErrorResponseFactory;
+import com.openlap.infrastructure.error.ErrorResponseWriter;
 import java.util.Map;
 import org.junit.Test;
 import org.springframework.mock.web.MockFilterChain;
@@ -30,9 +33,12 @@ public class CustomAuthenticationFilterTest {
   private static final String SECRET = "test-secret-key-that-is-long-enough-1234567890";
 
   private final AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
-  private final CustomAuthenticationFilter filter =
-      new CustomAuthenticationFilter(authenticationManager, SECRET);
   private final ObjectMapper objectMapper = new ObjectMapper();
+  private final CustomAuthenticationFilter filter =
+      new CustomAuthenticationFilter(
+          authenticationManager,
+          SECRET,
+          new ErrorResponseWriter(new ApiErrorResponseFactory(true), objectMapper));
 
   @Test
   @SuppressWarnings("unchecked")
@@ -59,8 +65,7 @@ public class CustomAuthenticationFilterTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
-  public void unsuccessfulAuthenticationReturns401WithGenericError() throws Exception {
+  public void unsuccessfulAuthenticationReturns401UnifiedEnvelope() throws Exception {
     MockHttpServletRequest request = new MockHttpServletRequest("POST", "/login");
     MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -68,7 +73,9 @@ public class CustomAuthenticationFilterTest {
         request, response, new BadCredentialsException("Bad credentials"));
 
     assertThat(response.getStatus()).isEqualTo(401);
-    Map<String, String> body = objectMapper.readValue(response.getContentAsByteArray(), Map.class);
-    assertThat(body.get("error")).isEqualTo("Authentication failed");
+    JsonNode body = objectMapper.readTree(response.getContentAsByteArray());
+    assertThat(body.get("code").asText()).isEqualTo("AUTHENTICATION_FAILED");
+    assertThat(body.get("error").asText()).isEqualTo("UNAUTHORIZED");
+    assertThat(body.has("cause")).isFalse();
   }
 }

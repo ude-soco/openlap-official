@@ -1,11 +1,11 @@
 package com.openlap.user.controller;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import com.auth0.jwt.JWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openlap.infrastructure.error.ErrorResponseWriter;
 import com.openlap.user.dto.request.TokenRequest;
 import com.openlap.user.entities.User;
 import com.openlap.user.services.TokenService;
@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,6 +35,7 @@ public class TokenController {
 
   private final UserService userService;
   private final TokenService tokenService;
+  private final ErrorResponseWriter errorResponseWriter;
 
   /** This API is to refresh the access token if the access token gets expired. */
   @GetMapping("/refresh")
@@ -65,12 +67,11 @@ public class TokenController {
 
         new ObjectMapper().writeValue(response.getOutputStream(), messageDetails);
       } catch (Exception e) {
-        response.setHeader("error", e.getMessage());
-        response.setStatus(FORBIDDEN.value());
-        Map<String, String> error = new HashMap<>();
-        error.put("message", e.getMessage());
-        response.setContentType(APPLICATION_JSON_VALUE);
-        new ObjectMapper().writeValue(response.getOutputStream(), error);
+        // Refresh algorithm unchanged; only the failure rendering is unified. Status preserved
+        // (403); the internal exception message is no longer leaked.
+        log.warn("Token refresh failed: {}", e.getMessage());
+        errorResponseWriter.write(
+            request, response, HttpStatus.FORBIDDEN, "REFRESH_FAILED", "Token refresh failed.");
       }
     } else {
       throw new RuntimeException("Refresh token is missing");

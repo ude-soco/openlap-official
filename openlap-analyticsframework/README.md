@@ -163,9 +163,11 @@ The framework is adopting a **unified error envelope** for API errors:
 - **`cause` is intentionally no longer exposed.** Exception causes / stack traces are logged
   server-side only and are never serialized into a client response.
 
-> Migration note: this is foundation-only. New framework errors (validation, malformed JSON,
-> unmapped 500s, and the new `OpenLapException` hierarchy) use the unified envelope; existing
-> module-specific handlers still return their current shapes until each module is migrated.
+> Migration note: framework errors (validation, malformed JSON, unmapped 500s, the new
+> `OpenLapException` hierarchy) **and all authentication/authorization failures** (missing/invalid/
+> expired token, login failure, access denied, refresh failure) use the unified envelope. Existing
+> business-module exception handlers still return their current shapes until each module is
+> migrated. HTTP status codes for security failures are unchanged.
 
 ## Environment variables
 

@@ -1,8 +1,7 @@
 package com.openlap.infrastructure.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.openlap.infrastructure.error.ApiErrorResponse;
 import com.openlap.infrastructure.error.ApiErrorResponseFactory;
+import com.openlap.infrastructure.error.ErrorResponseWriter;
 import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -11,7 +10,6 @@ import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.ModelAndView;
@@ -23,20 +21,18 @@ import org.springframework.web.servlet.ModelAndView;
  * and central handlers). It therefore handles only genuinely unhandled exceptions and can never
  * steal an exception that an existing handler already owns.
  *
- * <p>Renders the unified {@link ApiErrorResponse} envelope as a generic HTTP 500, logging the full
- * exception server-side with the {@code traceId}.
+ * <p>Rendering is delegated to the shared {@link ErrorResponseWriter} so there is one mechanism for
+ * producing error responses across the application.
  */
 @Slf4j
 @Component
 @Order(Ordered.LOWEST_PRECEDENCE)
 public class CatchAllExceptionResolver implements HandlerExceptionResolver {
 
-  private final ApiErrorResponseFactory factory;
-  private final ObjectMapper objectMapper;
+  private final ErrorResponseWriter errorResponseWriter;
 
-  public CatchAllExceptionResolver(ApiErrorResponseFactory factory, ObjectMapper objectMapper) {
-    this.factory = factory;
-    this.objectMapper = objectMapper;
+  public CatchAllExceptionResolver(ErrorResponseWriter errorResponseWriter) {
+    this.errorResponseWriter = errorResponseWriter;
   }
 
   @Override
@@ -45,18 +41,12 @@ public class CatchAllExceptionResolver implements HandlerExceptionResolver {
     if (response.isCommitted()) {
       return null;
     }
-    HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
     String traceId = MDC.get(ApiErrorResponseFactory.TRACE_ID_MDC_KEY);
     log.error(
         "[{}] Unhandled exception for {} {} -> 500", traceId, request.getMethod(), request.getRequestURI(), ex);
-
-    ApiErrorResponse body =
-        factory.create(
-            status, "INTERNAL_ERROR", "An unexpected error occurred.", request.getRequestURI(), null);
     try {
-      response.setStatus(status.value());
-      response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-      objectMapper.writeValue(response.getWriter(), body);
+      errorResponseWriter.write(
+          request, response, HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "An unexpected error occurred.");
     } catch (IOException io) {
       log.error("Failed to write catch-all error response", io);
     }

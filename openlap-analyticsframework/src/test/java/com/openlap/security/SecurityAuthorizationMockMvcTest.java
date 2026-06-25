@@ -4,11 +4,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.openlap.analytics_engine.services.EngineService;
 import com.openlap.analytics_statements.services.LrsService;
 import com.openlap.analytics_statements.services.StatementService;
+import com.openlap.infrastructure.error.ApiErrorResponseFactory;
+import com.openlap.infrastructure.error.ErrorResponseWriter;
+import com.openlap.infrastructure.security.RestAccessDeniedHandler;
+import com.openlap.infrastructure.security.RestAuthenticationEntryPoint;
 import com.openlap.user.dto.request.TokenRequest;
 import com.openlap.user.dto.response.UserResponse;
 import com.openlap.user.services.TokenService;
@@ -42,7 +47,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
       com.openlap.user.controller.UserController.class,
       com.openlap.user.controller.UserRegisterController.class
     })
-@Import(SecurityConfig.class)
+@Import({
+  SecurityConfig.class,
+  ApiErrorResponseFactory.class,
+  ErrorResponseWriter.class,
+  RestAuthenticationEntryPoint.class,
+  RestAccessDeniedHandler.class
+})
 @TestPropertySource(
     properties = {
       "server.token=test-secret-key-that-is-long-enough-1234567890",
@@ -68,12 +79,27 @@ public class SecurityAuthorizationMockMvcTest {
   @MockBean private UserRoleService userRoleService;
   @MockBean private EngineService engineService;
 
-  // The new global error advice is auto-detected by @WebMvcTest; satisfy its dependency.
-  @MockBean private com.openlap.infrastructure.error.ApiErrorResponseFactory apiErrorResponseFactory;
+  @Test
+  public void protectedEndpointWithoutTokenUsesUnifiedEntryPoint() throws Exception {
+    // missing token -> RestAuthenticationEntryPoint (status preserved at 403)
+    mockMvc
+        .perform(get("/v1/users/my"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("AUTH_REQUIRED"))
+        .andExpect(jsonPath("$.cause").doesNotExist());
+  }
 
   @Test
-  public void protectedEndpointWithoutTokenIsDenied() throws Exception {
-    mockMvc.perform(get("/v1/users/my")).andExpect(status().isForbidden());
+  public void insufficientRoleUsesUnifiedAccessDeniedHandler() throws Exception {
+    // valid token but a role that matches no rule -> RestAccessDeniedHandler (403)
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_NOBODY"}, "tok", null));
+
+    mockMvc
+        .perform(get("/v1/users/my").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
+        .andExpect(jsonPath("$.cause").doesNotExist());
   }
 
   @Test

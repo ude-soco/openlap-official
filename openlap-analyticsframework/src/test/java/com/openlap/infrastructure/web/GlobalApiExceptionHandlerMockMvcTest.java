@@ -33,7 +33,11 @@ import org.springframework.test.web.servlet.MockMvc;
     excludeFilters =
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
 @AutoConfigureMockMvc(addFilters = false)
-@Import({ApiErrorResponseFactory.class, CatchAllExceptionResolver.class})
+@Import({
+  ApiErrorResponseFactory.class,
+  com.openlap.infrastructure.error.ErrorResponseWriter.class,
+  CatchAllExceptionResolver.class
+})
 @TestPropertySource(properties = "openlap.api.error.legacy-compat=true")
 public class GlobalApiExceptionHandlerMockMvcTest {
 
