@@ -20,8 +20,14 @@ public class VisualizerClassPathLoader implements AutoCloseable {
 				throw new IllegalArgumentException("JAR file not found: " + jarFilePath);
 			}
 			URL jarUrl = jarFile.toURI().toURL();
-//			ClassLoader parent = Thread.currentThread().getContextClassLoader();
-			ClassLoader parent = ClassLoader.getSystemClassLoader();
+			// Use the thread context classloader (the Spring Boot application
+			// classloader at runtime) as the parent so plugin classes can resolve
+			// framework types such as VisualizationCodeGenerator from the
+			// application classpath. The system classloader cannot see classes
+			// packaged inside a Spring Boot fat jar (BOOT-INF/lib, BOOT-INF/classes),
+			// which caused NoClassDefFoundError when a generated plugin JAR was
+			// reloaded on restart. Mirrors AnalyticsMethodsClassPathLoader.
+			ClassLoader parent = Thread.currentThread().getContextClassLoader();
 
 			this.urlClassLoader = new URLClassLoader(new URL[]{jarUrl}, parent);
 

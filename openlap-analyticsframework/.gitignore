@@ -1,12 +1,26 @@
 .env
 .env.*
+# Keep the tracked environment template (negates the .env.* rule above)
+!.env.example
 *.csv
 .settings
 .classpath
 .project
-.vscode
+
+# VS Code: ignore local/per-user files but keep the shared project configs
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
+!.vscode/extensions.json
+
 .DS_Store
 .idea/
 /target/
 /ObjectStore/
 /bin/
+
+# Analytics/visualization plugin JARs generated at runtime by EngineService.
+# The app repopulates these on startup; the folders are kept via .gitkeep.
+/jars/analytics_techniques/*.jar
+/jars/visualization_methods/*.jar

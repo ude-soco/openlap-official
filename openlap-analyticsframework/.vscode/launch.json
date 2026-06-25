@@ -1,0 +1,32 @@
+{
+  // Launches the Spring Boot backend directly with the VS Code Java debugger (F5).
+  // Requires the "Extension Pack for Java". Start MongoDB first (see tasks / compose.yaml).
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Run AnalyticsFramework (Spring Boot)",
+      "request": "launch",
+      "mainClass": "com.openlap.AnalyticsFramework",
+      "projectName": "AnalyticsFramework",
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      // Local run config. The Mongo database name is taken from
+      // OPENLAP_MONGODB_DB / LRS_MONGODB_DB by Primary/SecondaryMongoConfig; the
+      // URI also carries it for clarity. All values mirror the defaults.
+      "env": {
+        "MONGODB_PRIMARY_URI": "mongodb://127.0.0.1:27017/openlap_v2",
+        "MONGODB_SECONDARY_URI": "mongodb://127.0.0.1:27017/learninglocker_v2",
+        "OPENLAP_MONGODB_DB": "openlap_v2",
+        "LRS_MONGODB_DB": "learninglocker_v2",
+        "PORT": "8090",
+        "WEBAPP_URL": "http://localhost:5173",
+        "ADMIN_NAME": "admin",
+        "ADMIN_EMAIL": "admin@mail.com",
+        "ADMIN_PASSWORD": "1234qweR",
+        "JWT_SECRET_KEY": "secret",
+        "LOG_LEVEL": "INFO"
+      }
+    }
+  ]
+}

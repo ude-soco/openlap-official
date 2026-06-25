@@ -1,0 +1,9 @@
+{
+  // Recommended extensions for working on this Spring Boot backend.
+  "recommendations": [
+    "vscjava.vscode-java-pack",
+    "vmware.vscode-spring-boot",
+    "vscjava.vscode-spring-boot-dashboard",
+    "ms-azuretools.vscode-docker"
+  ]
+}
