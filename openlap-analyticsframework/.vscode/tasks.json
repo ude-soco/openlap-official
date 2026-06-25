@@ -25,6 +25,9 @@
       "command": "./mvnw",
       "args": ["spring-boot:run"],
       "isBackground": true,
+      // LOCAL DEV ONLY: waive the P0 fail-fast guard so the app boots with the
+      // default dev secrets. NEVER enable ALLOW_INSECURE_DEFAULTS in production.
+      "options": { "env": { "ALLOW_INSECURE_DEFAULTS": "true" } },
       "problemMatcher": []
     },
     {

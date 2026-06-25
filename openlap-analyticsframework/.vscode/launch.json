@@ -25,6 +25,11 @@
         "ADMIN_EMAIL": "admin@mail.com",
         "ADMIN_PASSWORD": "1234qweR",
         "JWT_SECRET_KEY": "secret",
+        // LOCAL DEV ONLY: the two secrets above use their insecure defaults, so the
+        // P0 fail-fast guard (SecurityDefaultsValidator) would otherwise refuse to
+        // start. This waiver keeps F5 frictionless. NEVER set it in production —
+        // production deployments must supply strong JWT_SECRET_KEY / ADMIN_PASSWORD.
+        "ALLOW_INSECURE_DEFAULTS": "true",
         "LOG_LEVEL": "INFO"
       }
     }

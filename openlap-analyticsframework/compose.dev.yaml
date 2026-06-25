@@ -28,3 +28,9 @@ services:
       # Mongo connection) while keeping the framework quiet. See
       # application.properties -> logging.level.com.openlap.
       OPENLAP_LOG_LEVEL: info
+      # Allow the app to boot with the insecure dev defaults (JWT_SECRET_KEY=secret,
+      # ADMIN_PASSWORD=1234qweR) set in the base compose.yaml. The P0 fail-fast guard
+      # (SecurityDefaultsValidator) otherwise refuses to start. This downgrades the
+      # failure to a warning and must NEVER be set in a real deployment — it lives
+      # here in the dev-only override, not in the base compose.yaml.
+      ALLOW_INSECURE_DEFAULTS: "true"

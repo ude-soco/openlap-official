@@ -1,0 +1,93 @@
+package com.openlap.security;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.openlap.analytics_engine.services.EngineService;
+import com.openlap.analytics_statements.services.LrsService;
+import com.openlap.analytics_statements.services.StatementService;
+import com.openlap.user.dto.request.TokenRequest;
+import com.openlap.user.dto.response.UserResponse;
+import com.openlap.user.services.TokenService;
+import com.openlap.user.services.UserRegisterService;
+import com.openlap.user.services.UserRoleService;
+import com.openlap.user.services.UserService;
+import java.util.Collections;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+/**
+ * Characterization tests for the authorization rules in {@link SecurityConfig}, driven through the
+ * real security filter chain via a sliced MockMvc context (no MongoDB, no plugin loading).
+ *
+ * <p>Documents three behaviours the P0 work must preserve: protected endpoints require a token,
+ * a valid token with a sufficient role is allowed through, and public endpoints stay open.
+ */
+@RunWith(SpringRunner.class)
+@WebMvcTest(
+    controllers = {
+      com.openlap.user.controller.UserController.class,
+      com.openlap.user.controller.UserRegisterController.class
+    })
+@Import(SecurityConfig.class)
+@TestPropertySource(
+    properties = {
+      "server.token=test-secret-key-that-is-long-enough-1234567890",
+      "frontend.urls=http://localhost:5173"
+    })
+public class SecurityAuthorizationMockMvcTest {
+
+  @Autowired private MockMvc mockMvc;
+
+  // SecurityConfig collaborators
+  @MockBean private UserDetailsService userDetailsService;
+  @MockBean private TokenService tokenService;
+  @MockBean private BCryptPasswordEncoder bCryptPasswordEncoder;
+  @MockBean private UrlBasedCorsConfigurationSource corsConfigurationSource;
+
+  // Controller collaborators
+  @MockBean private UserService userService;
+  @MockBean private UserRegisterService userRegisterService;
+  @MockBean private StatementService statementService;
+  @MockBean private LrsService lrsService;
+
+  // Bootstrap CommandLineRunner safety net (prevents any MongoDB access if it is invoked)
+  @MockBean private UserRoleService userRoleService;
+  @MockBean private EngineService engineService;
+
+  @Test
+  public void protectedEndpointWithoutTokenIsDenied() throws Exception {
+    mockMvc.perform(get("/v1/users/my")).andExpect(status().isForbidden());
+  }
+
+  @Test
+  public void protectedEndpointWithValidRoleTokenIsAllowed() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+    given(userService.getUserDetails(any())).willReturn(new UserResponse());
+
+    mockMvc
+        .perform(get("/v1/users/my").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  public void publicEndpointStaysAccessibleWithoutToken() throws Exception {
+    given(lrsService.getAvailableLrs()).willReturn(Collections.emptyList());
+
+    mockMvc.perform(get("/v1/register/lrs")).andExpect(status().isOk());
+  }
+}
