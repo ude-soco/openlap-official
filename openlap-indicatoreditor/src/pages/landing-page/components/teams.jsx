@@ -11,8 +11,8 @@ import {
 import GitHubIcon from "@mui/icons-material/GitHub";
 import SchoolIcon from "@mui/icons-material/School";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
-import { navigationIds } from "../utils/navigation-data";
-import { memberItems, peopleItems } from "../utils/team-data";
+import { navigationIds } from "../data/navigation-data";
+import { memberItems, peopleItems } from "../data/team-data";
 import Section from "./shared/section";
 import SectionHeading from "./shared/section-heading";
 import ProfileAvatar from "./shared/profile-avatar";

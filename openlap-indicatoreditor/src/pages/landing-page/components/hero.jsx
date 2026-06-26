@@ -10,7 +10,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
-import { navigationIds } from "../utils/navigation-data";
+import { navigationIds } from "../data/navigation-data";
 import { scrollToSection } from "../../../common/utils/scroll-to-section";
 import { entrance, fadeUp } from "./shared/motion";
 import HeroLight from "../../../assets/home/hero-light.png";
@@ -22,7 +22,7 @@ export default function Hero() {
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const accent = isDark ? "primary.light" : "primary.main";
+  const accent = theme.custom.colors.accent;
 
   // Smoothly scroll to an in-page section; `highlight` briefly flags arrival.
   const handleScroll = (id, highlight) => (e) => {

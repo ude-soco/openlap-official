@@ -4,7 +4,7 @@ import DesignServicesIcon from "@mui/icons-material/DesignServices";
 import InsightsIcon from "@mui/icons-material/Insights";
 import StorageIcon from "@mui/icons-material/Storage";
 import OpenLAPArchitecture from "../../../assets/home/abstract-architecture.png";
-import { navigationIds } from "../utils/navigation-data";
+import { navigationIds } from "../data/navigation-data";
 import Section from "./shared/section";
 import SectionHeading from "./shared/section-heading";
 import ZoomableImageCard from "./shared/zoomable-image-card";
@@ -35,7 +35,7 @@ const components = [
 const Architecture = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const accent = isDark ? "primary.light" : "primary.main";
+  const accent = theme.custom.colors.accent;
 
   return (
     <Section id={navigationIds.ARCHITECTURE}>

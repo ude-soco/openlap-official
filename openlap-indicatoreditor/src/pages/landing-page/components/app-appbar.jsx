@@ -17,7 +17,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import ToggleColorMode from "../../../common/components/toggle-color-mode/toggle-color-mode";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import { useNavigate } from "react-router-dom";
-import { navigationIds, navigationItems } from "../utils/navigation-data";
+import { navigationIds, navigationItems } from "../data/navigation-data";
 import { scrollToSection } from "../../../common/utils/scroll-to-section";
 import { entrance, fadeDown } from "./shared/motion";
 

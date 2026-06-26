@@ -15,7 +15,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import emailjs from "@emailjs/browser";
 import { useSnackbar } from "notistack";
-import { navigationIds } from "../utils/navigation-data";
+import { navigationIds } from "../data/navigation-data";
 import Section from "./shared/section";
 import SectionHeading from "./shared/section-heading";
 import Reveal from "./shared/reveal";
@@ -25,8 +25,7 @@ const emailPublicKey = import.meta.env.VITE_EMAIL_PUBLIC_KEY || "";
 
 export default function ContactUs() {
   const theme = useTheme();
-  const accent =
-    theme.palette.mode === "dark" ? "primary.light" : "primary.main";
+  const accent = theme.custom.colors.accent;
   const { enqueueSnackbar } = useSnackbar();
   const [formData, setFormData] = useState({
     firstName: "",

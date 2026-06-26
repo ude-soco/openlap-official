@@ -55,10 +55,4 @@ const socialItems = [
   },
 ];
 
-const legalItems = [
-  { id: "privacy-policy", name: "Privacy Policy", link: "/privacy" },
-  { id: "terms-of-service", name: "Terms of Service", link: "/" },
-  { id: "contact", name: "Contact", link: "/" },
-];
-
-export { navigationIds, navigationItems, socialItems, legalItems };
+export { navigationIds, navigationItems, socialItems };

@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager";
 import { Box, Container, Stack, Typography } from "@mui/material";
-import { logoItems } from "../utils/logo-data";
+import { logoItems } from "../data/logo-data";
 import Reveal from "./shared/reveal";
 
 export default function LogoCollection() {

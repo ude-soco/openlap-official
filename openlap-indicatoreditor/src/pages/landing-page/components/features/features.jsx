@@ -12,8 +12,8 @@ import { useTheme } from "@mui/material/styles";
 import DesignServicesIcon from "@mui/icons-material/DesignServices";
 import AddchartIcon from "@mui/icons-material/Addchart";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import { navigationIds } from "../../utils/navigation-data";
-import { featureItems } from "../../utils/features-data";
+import { navigationIds } from "../../data/navigation-data";
+import { featureItems } from "../../data/features-data";
 import { scrollToSection } from "../../../../common/utils/scroll-to-section";
 import Section from "../shared/section";
 import SectionHeading from "../shared/section-heading";
@@ -45,7 +45,7 @@ const TOOLS = [
 const ToolsOverview = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const accent = isDark ? "primary.light" : "primary.main";
+  const accent = theme.custom.colors.accent;
 
   return (
     <Stack

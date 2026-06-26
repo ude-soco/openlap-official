@@ -13,7 +13,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import SocoLogo from "../../../assets/home/soco-logo.svg";
-import { navigationItems, socialItems } from "../utils/navigation-data";
+import { navigationItems, socialItems } from "../data/navigation-data";
 import { scrollToSection } from "../../../common/utils/scroll-to-section";
 import Reveal from "./shared/reveal";
 

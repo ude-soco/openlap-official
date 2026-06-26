@@ -9,8 +9,8 @@ import {
   Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { navigationIds } from "../utils/navigation-data";
-import { newsItems } from "../utils/news-data";
+import { navigationIds } from "../data/navigation-data";
+import newsItems from "../data/news-data.json";
 import Section from "./shared/section";
 import SectionHeading from "./shared/section-heading";
 import MoreLink from "./shared/more-link";
@@ -55,8 +55,7 @@ const renderNewsBody = (body) =>
 
 export default function News() {
   const theme = useTheme();
-  const accent =
-    theme.palette.mode === "dark" ? "primary.light" : "primary.main";
+  const accent = theme.custom.colors.accent;
 
   const sortedNews = [...newsItems].sort((a, b) =>
     b.date.localeCompare(a.date)

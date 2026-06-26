@@ -24,8 +24,7 @@ const featureShape = PropTypes.shape({
 // Purpose eyebrow + title + description + CTA. Rendered once per row.
 const FeatureText = ({ feature, onClick }) => {
   const theme = useTheme();
-  const accent =
-    theme.palette.mode === "dark" ? "primary.light" : "primary.main";
+  const accent = theme.custom.colors.accent;
   const ButtonIcon = feature.buttonIcon;
 
   return (

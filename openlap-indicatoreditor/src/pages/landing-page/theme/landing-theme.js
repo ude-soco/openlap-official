@@ -68,6 +68,12 @@ export const createLandingTheme = (base) => {
     radii,
     shadows,
     motion,
+    colors: {
+      // Mode-aware accent used for eyebrows, icon badges and highlights.
+      accent: isDark
+        ? base.palette.primary.light
+        : base.palette.primary.main,
+    },
     appBar: {
       height: 64,
       blur: 12,

@@ -12,8 +12,8 @@ import {
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import publicationItems from "../utils/publication-data.json";
-import { navigationIds } from "../utils/navigation-data";
+import publicationItems from "../data/publication-data.json";
+import { navigationIds } from "../data/navigation-data";
 import SectionHeading from "./shared/section-heading";
 import MoreLink from "./shared/more-link";
 import Reveal from "./shared/reveal";
