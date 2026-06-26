@@ -30,10 +30,11 @@ const ZoomableImageCard = ({ image, alt = "", dialogLabel, sx, children }) => {
           onClick={toggleOpen}
         >
           <CardMedia
-            role="img"
-            aria-label={alt}
-            sx={{ width: "100%", aspectRatio: "16/9", objectFit: "contain" }}
+            component="img"
             image={image}
+            alt={alt}
+            loading="lazy"
+            sx={{ width: "100%", aspectRatio: "16/9", objectFit: "contain" }}
           />
         </CardActionArea>
         {children}

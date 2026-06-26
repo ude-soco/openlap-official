@@ -159,12 +159,14 @@ export default function Hero() {
                 component="img"
                 src={OpenLAPFull}
                 alt="OpenLAP"
+                loading="lazy"
                 sx={{ height: 48 }}
               />
               <Box
                 component="img"
                 src={LAY}
                 alt="LAY project"
+                loading="lazy"
                 sx={{ height: 48 }}
               />
             </Stack>
@@ -193,7 +195,13 @@ export default function Hero() {
               component="img"
               src={isDark ? HeroDark : HeroLight}
               alt="The OpenLAP platform interface for designing and visualizing learning analytics indicators"
-              sx={{ display: "block", width: "100%", height: "auto" }}
+              fetchPriority="high"
+              sx={{
+                display: "block",
+                width: "100%",
+                height: "auto",
+                aspectRatio: "2304 / 1400",
+              }}
             />
           </Box>
         </Box>

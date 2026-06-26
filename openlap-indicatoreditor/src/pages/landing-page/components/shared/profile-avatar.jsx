@@ -14,7 +14,12 @@ const ProfileAvatar = ({ image, name, link, size, iconFontSize }) => (
       "&:hover .profile-overlay": { opacity: 1 },
     }}
   >
-    <Avatar src={image} alt={name} sx={{ width: "100%", height: "100%" }} />
+    <Avatar
+      src={image}
+      alt={name}
+      imgProps={{ loading: "lazy" }}
+      sx={{ width: "100%", height: "100%" }}
+    />
     <Tooltip arrow title={`View ${name}'s profile`}>
       <Box
         component="a"

@@ -44,6 +44,7 @@ export default function LogoCollection() {
                 component="img"
                 src={darkMode ? logo.imageDark : logo.imageLight}
                 alt={logo.name}
+                loading="lazy"
                 sx={{ height: 34 }}
               />
               <Typography sx={{ fontWeight: 600, fontSize: "0.95rem" }}>

@@ -51,6 +51,7 @@ export default function Footer() {
                   src={OpenLAPLogo}
                   style={openLapLogoStyle}
                   alt="logo of OpenLAP"
+                  loading="lazy"
                 />
                 <Typography variant="body2" color="text.secondary">
                   Do-it-yourself learning analytics — design and implement your
@@ -67,6 +68,7 @@ export default function Footer() {
                   src={SocoLogo}
                   style={socoLogoStyle}
                   alt="Logo of Social Computing Group"
+                  loading="lazy"
                 />
                 <Box>
                   <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
