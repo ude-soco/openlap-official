@@ -2,7 +2,7 @@ import { useContext, useMemo } from "react";
 import { Box } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import { CustomThemeContext } from "../../setup/theme-manager/theme-context-manager";
-import { createLandingTheme } from "./theme/landing-theme";
+import { createScopedTheme } from "../../common/theme/scoped-theme";
 import AppAppBar from "./components/app-appbar";
 import Hero from "./components/hero";
 import Features from "./components/features/features";
@@ -18,7 +18,7 @@ const LandingPage = () => {
   // Layer the landing design system on top of the app's base (light/dark)
   // theme, scoped to this subtree only via the nested ThemeProvider.
   const { theme } = useContext(CustomThemeContext);
-  const landingTheme = useMemo(() => createLandingTheme(theme), [theme]);
+  const landingTheme = useMemo(() => createScopedTheme(theme), [theme]);
 
   return (
     <ThemeProvider theme={landingTheme}>

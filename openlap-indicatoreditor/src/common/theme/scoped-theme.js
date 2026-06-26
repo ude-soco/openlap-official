@@ -4,15 +4,13 @@ import "@fontsource/inter/500.css";
 import "@fontsource/inter/600.css";
 import "@fontsource/inter/700.css";
 
-// Landing-page design system.
+// Shared scoped design system for the PUBLIC pages (landing, login, register,
+// privacy).
 //
-// This produces a theme that LAYERS modern design tokens on top of the app's
-// base theme (light/dark). It is applied only to the public landing page via a
-// nested ThemeProvider, so the authenticated app is unaffected.
-//
-// Phase 5A intentionally defines the system (tokens + primitive component
-// styles). Section layouts are NOT restructured here — later phases consume
-// theme.custom.* (radii, shadows, motion, appBar, layout, link).
+// It LAYERS modern design tokens on top of the app's base theme (light/dark)
+// and is applied via a nested ThemeProvider, so the authenticated app keeps its
+// own default theme and is unaffected. Components read tokens from
+// theme.custom.* (radii, shadows, motion, colors, appBar, layout, link).
 
 const FONT_FAMILY = [
   "'Inter'",
@@ -60,7 +58,7 @@ const radii = {
   pill: 999,
 };
 
-export const createLandingTheme = (base) => {
+export const createScopedTheme = (base) => {
   const isDark = base.palette.mode === "dark";
   const shadows = isDark ? darkShadows : lightShadows;
 
@@ -82,15 +80,14 @@ export const createLandingTheme = (base) => {
       shadow: shadows.sm,
     },
     layout: {
-      // MUI spacing units (×8px). Defined here; applied in later phases.
+      // MUI spacing units (×8px).
       sectionPy: { xs: 8, md: 12 },
       sectionGap: { xs: 4, md: 6 },
       cardPadding: 3,
       gridGap: { xs: 2, md: 3 },
       containerMaxWidth: "lg",
     },
-    // Opt-in sx for an animated hover/focus underline on text links. Applied
-    // per-link in later phases (not globally, to avoid affecting icon links).
+    // Opt-in sx for an animated hover/focus underline on text links.
     link: {
       animatedUnderline: {
         textDecoration: "none",

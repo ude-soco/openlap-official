@@ -14,8 +14,6 @@ own scoped MUI theme and only reads from its own `data/` folder.
 ```
 src/pages/landing-page/
 ├─ landing-page.jsx          # Composition: wraps sections in the scoped ThemeProvider
-├─ theme/
-│  └─ landing-theme.js       # Scoped design system (tokens + MUI component overrides)
 ├─ components/               # Presentation only (no content literals beyond labels)
 │  ├─ app-appbar.jsx         # Frosted floating nav bar (scroll-aware)
 │  ├─ hero.jsx               # Headline, CTAs, trust strip, product screenshot
@@ -55,7 +53,7 @@ src/pages/landing-page/
 ## Architecture overview
 
 - **`landing-page.jsx`** composes the sections top-to-bottom and wraps them in a
-  nested `ThemeProvider` using `createLandingTheme(baseTheme)`.
+  nested `ThemeProvider` using `createScopedTheme(baseTheme)` (shared design system in `src/common/theme/scoped-theme.js`).
 - **Sections** (`components/*.jsx`) are presentation only. They import their
   content from `data/` and render it with shared building blocks.
 - **Shared building blocks** (`components/shared/`) keep the sections consistent
@@ -173,11 +171,12 @@ Motion timings/easings live in the theme at `theme.custom.motion`.
 `landing-page.jsx` wraps the page in a nested `ThemeProvider`:
 ```jsx
 const { theme } = useContext(CustomThemeContext);          // app base (light/dark)
-const landingTheme = useMemo(() => createLandingTheme(theme), [theme]);
+const landingTheme = useMemo(() => createScopedTheme(theme), [theme]);
 return <ThemeProvider theme={landingTheme}>…</ThemeProvider>;
 ```
-`createLandingTheme(baseTheme)` (in `theme/landing-theme.js`) **layers** the
-landing design system on top of the app's base theme: Inter typography scale,
+`createScopedTheme(baseTheme)` (in `src/common/theme/scoped-theme.js`, shared
+with the login/register/privacy pages) **layers** the
+design system on top of the app's base theme: Inter typography scale,
 border radii, soft shadows, motion tokens, the accent color, AppBar tokens, and
 MUI component overrides (Button/Card/Input/Dialog/Link/Chip). Because it's a
 nested provider, **the authenticated app keeps its own default theme.**

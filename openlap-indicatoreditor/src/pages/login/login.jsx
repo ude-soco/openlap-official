@@ -1,32 +1,9 @@
 import { useContext, useState } from "react";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
 import { useNavigate } from "react-router-dom";
-import OpenLAPLogo from "../../assets/brand/openlap-logo.svg";
-import OpenLAPIcon from "../../assets/brand/openlap-icon.svg";
-import {
-  Box,
-  Button,
-  Link,
-  Grid,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-  Container,
-} from "@mui/material";
+import { Box, Button, Link, Stack, TextField } from "@mui/material";
 import { useSnackbar } from "notistack";
-import ToggleColorMode from "../../common/components/toggle-color-mode/toggle-color-mode.jsx";
-
-const logoStyle = {
-  width: "120px",
-  height: "auto",
-  cursor: "pointer",
-};
-
-const iconStyle = {
-  width: "60px",
-  height: "auto",
-};
+import AuthLayout from "../../common/components/auth-layout/auth-layout";
 
 const Login = () => {
   const { login } = useContext(AuthContext);
@@ -67,103 +44,53 @@ const Login = () => {
   };
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Grid container justifyContent="center">
-        <Grid size={{ xs: 12, md: 8, xl: 6 }}>
-          <Grid container justifyContent="space-between">
-            <Tooltip title="To homepage">
-              <Box
-                component="img"
-                style={logoStyle}
-                src={OpenLAPLogo}
-                alt="Soco logo"
-                onClick={() => navigate("/")}
-              />
-            </Tooltip>
-
-            <Grid container spacing={2}>
-              <ToggleColorMode />
-              <Button
-                disableElevation
-                variant="contained"
-                size="small"
-                onClick={() => navigate("/register")}
-              >
-                Sign up
-              </Button>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
-      <Grid
-        container
-        direction="column"
-        justifyContent="center"
-        alignItems="center"
-        spacing={2}
-        sx={{ height: "75vh" }}
-      >
-        <Box
-          component="img"
-          style={iconStyle}
-          src={OpenLAPIcon}
-          alt="Soco logo"
+    <AuthLayout
+      title="Sign in"
+      subtitle="Welcome back to OpenLAP"
+      crossLink={{ label: "Sign up", to: "/register" }}
+    >
+      <Stack gap={2} component="form" onSubmit={handleSubmit}>
+        <TextField
+          fullWidth
+          label="Email Address"
+          name="email"
+          autoComplete="email"
+          placeholder="example@mail.com"
+          autoFocus
+          onChange={handleFormFields}
         />
-        <Typography variant="h5" align="center" color="textSecondary">
-          Sign in
-        </Typography>
-        <Container maxWidth="sm">
-          <Stack gap={2}>
-            <Stack gap={2} component="form" onSubmit={handleSubmit}>
-              <TextField
-                fullWidth
-                label="Email Address"
-                name="email"
-                autoComplete="email"
-                placeholder="example@mail.com"
-                autoFocus
-                onChange={handleFormFields}
-              />
-              <TextField
-                fullWidth
-                name="password"
-                label="Password"
-                placeholder="Password"
-                type="password"
-                autoComplete="current-password"
-                onChange={handleFormFields}
-              />
-              <Button
-                type="submit"
-                fullWidth
-                loading={loading}
-                variant="contained"
-                loadingPosition="start"
-                loadingIndicator="Logging in..."
-                disabled={formFields.email === "" || formFields.password === ""}
-              >
-                {!loading && "Login with email"}
-              </Button>
-            </Stack>
-            <Grid container justifyContent="flex-end">
-              {/* 
-              <Link href="#" variant="body2">
-                Forgot password?
-              </Link>
-             */}
-              <Link
-                component="button"
-                onClick={() => navigate("/register")}
-                variant="body2"
-                underline="hover"
-              >
-                <span>Don't have an account? Create an account</span>
-              </Link>
-            </Grid>
-          </Stack>
-        </Container>
-      </Grid>
-    </Box>
+        <TextField
+          fullWidth
+          name="password"
+          label="Password"
+          placeholder="Password"
+          type="password"
+          autoComplete="current-password"
+          onChange={handleFormFields}
+        />
+        <Button
+          type="submit"
+          fullWidth
+          loading={loading}
+          variant="contained"
+          loadingPosition="start"
+          loadingIndicator="Logging in..."
+          disabled={formFields.email === "" || formFields.password === ""}
+        >
+          {!loading && "Login with email"}
+        </Button>
+      </Stack>
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+        <Link
+          component="button"
+          onClick={() => navigate("/register")}
+          variant="body2"
+          underline="hover"
+        >
+          Don&apos;t have an account? Create an account
+        </Link>
+      </Box>
+    </AuthLayout>
   );
 };
 

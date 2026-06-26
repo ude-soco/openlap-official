@@ -1,23 +1,10 @@
-import OpenLAPLogo from "../../assets/brand/openlap-logo.svg";
+import { useContext, useMemo } from "react";
 import OpenLAPFull from "../../assets/home/soco-openlap-full.svg";
-import {
-  Box,
-  Button,
-  Divider,
-  Link,
-  Grid,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import ToggleColorMode from "../../common/components/toggle-color-mode/toggle-color-mode";
-import { useNavigate } from "react-router-dom";
-
-const logoStyle = {
-  width: "120px",
-  height: "auto",
-  cursor: "pointer",
-};
+import { Box, Divider, Link, Grid, Stack, Typography } from "@mui/material";
+import { ThemeProvider } from "@mui/material/styles";
+import { CustomThemeContext } from "../../setup/theme-manager/theme-context-manager";
+import { createScopedTheme } from "../../common/theme/scoped-theme";
+import AuthHeader from "../../common/components/auth-header/auth-header";
 
 const fullLogoStyle = {
   width: "240px",
@@ -25,46 +12,29 @@ const fullLogoStyle = {
 };
 
 const PrivacyPolicy = () => {
-  const navigate = useNavigate();
+  const { theme } = useContext(CustomThemeContext);
+  const scopedTheme = useMemo(() => createScopedTheme(theme), [theme]);
   return (
-    <>
-      <Box sx={{ p: 4 }}>
-        <Grid container justifyContent="center" spacing={5}>
-          <Grid size={{ xs: 12, md: 8, xl: 6 }}>
-            <Stack spacing={2}>
-              <Grid container justifyContent="space-between">
-                <Tooltip title="To homepage">
-                  <Box
-                    component="img"
-                    style={logoStyle}
-                    src={OpenLAPLogo}
-                    alt="Soco logo"
-                    onClick={() => navigate("/")}
-                  />
-                </Tooltip>
-                <Grid container spacing={2}>
-                  <ToggleColorMode />
-                  <Button
-                    disableElevation
-                    variant="contained"
-                    size="small"
-                    onClick={() => navigate("/login")}
-                  >
-                    Sign in
-                  </Button>
-                </Grid>
-              </Grid>
-              <Grid size={{ xs: 12 }} sx={{ py: 5 }}>
+    <ThemeProvider theme={scopedTheme}>
+      <Box sx={{ minHeight: "100dvh", bgcolor: "background.default" }}>
+        <AuthHeader crossLink={{ label: "Sign in", to: "/login" }} />
+        <Box sx={{ p: 4 }}>
+          <Grid container justifyContent="center">
+            <Grid size={{ xs: 12, md: 8, xl: 6 }}>
+              <Stack spacing={2}>
+              <Grid size={{ xs: 12 }} sx={{ py: 3 }}>
                 <Grid container justifyContent="center">
                   <Box
                     component="img"
                     style={fullLogoStyle}
                     src={OpenLAPFull}
-                    alt="OpenLAP Full Logo"
+                    alt="OpenLAP"
                   />
                 </Grid>
               </Grid>
-              <Typography variant="h5">Privacy Policy</Typography>
+              <Typography variant="h4" component="h1">
+                Privacy Policy
+              </Typography>
               <Typography>
                 Responsible in accordance with the EU General Data Protection
                 Regulation (GDPR) and other national data protection laws of the
@@ -185,7 +155,9 @@ const PrivacyPolicy = () => {
               </Typography>
               <Divider />
 
-              <Typography variant="h5">Data Collection and Use</Typography>
+              <Typography variant="h5" component="h2">
+                Data Collection and Use
+              </Typography>
               <Typography>
                 We collect and use personal data of our users only to the extent
                 necessary for providing OpenLAP. This is done for the purpose of
@@ -291,7 +263,9 @@ const PrivacyPolicy = () => {
                 </ul>
               </Typography>
               <Divider />
-              <Typography variant="h5">Supervisory Authority</Typography>
+              <Typography variant="h5" component="h2">
+                Supervisory Authority
+              </Typography>
               <Typography>
                 You have the right to lodge a complaint with the responsible
                 supervisory authority:
@@ -318,8 +292,9 @@ const PrivacyPolicy = () => {
             </Stack>
           </Grid>
         </Grid>
+        </Box>
       </Box>
-    </>
+    </ThemeProvider>
   );
 };
 
