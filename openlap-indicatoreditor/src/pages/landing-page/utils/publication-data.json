@@ -2,6 +2,7 @@
   {
     "id": "joarder-2026-jla-self-service-indicators",
     "year": "2026",
+    "type": "Journal",
     "authors": "Shoeb Joarder and Mohamed Amine Chatti",
     "title": "Human-Centred Development of Indicators for Self-Service Learning Analytics: A Transparency through Exploration Approach",
     "venue": "Journal of Learning Analytics, Special Issue on Human-Centered Learning Analytics",
@@ -11,6 +12,7 @@
   {
     "id": "joarder-2026-csedu-usability-evaluation",
     "year": "2026",
+    "type": "Conference",
     "authors": "Shoeb Joarder, Mohamed Amine Chatti, and Louis Born",
     "title": "Usability Evaluation and Improvement of a Tool for Self-Service Learning Analytics",
     "venue": "In Proceedings of the 18th International Conference on Computer Supported Education (CSEDU ’26)",
@@ -20,6 +22,7 @@
   {
     "id": "joarder-2025-icetc-isc-creator",
     "year": "2025",
+    "type": "Conference",
     "authors": "Shoeb Joarder and Mohamed Amine Chatti",
     "title": "The ISC Creator: Human-Centered Design of Learning Analytics Interactive Indicator Specification Cards",
     "venue": "In Proceedings of the 17th International Conference on Education Technology and Computers (ICETC ’25)",
@@ -29,6 +32,7 @@
   {
     "id": "joarder-2024-lak24-no-code-environment",
     "year": "2024",
+    "type": "Conference",
     "authors": "Shoeb Joarder, Mohamed Amine Chatti, and Ao Sun",
     "title": "A No-Code Environment for Implementing Human-Centered Learning Analytics Indicators",
     "venue": "In Companion Proceedings of the 14th International Learning Analytics and Knowledge Conference (LAK’24)",
@@ -38,6 +42,7 @@
   {
     "id": "joarder-2023-hcla-quick-and-dirty-indicators",
     "year": "2023",
+    "type": "Workshop",
     "authors": "Shoeb Joarder, Mohamed Amine Chatti, Seyedemarzie Mirhashemi, and Qurat Ul Ain",
     "title": "Towards a Flexible User Interface for 'Quick and Dirty' Learning Analytics Indicator Design",
     "venue": "In Proceedings of the Fourth International Workshop on Human-Centered Learning Analytics (HCLA) at the LAK'23 conference.",
@@ -47,6 +52,7 @@
   {
     "id": "chatti-2022-theory-driven-srl-applications",
     "year": "2022",
+    "type": "Book chapter",
     "authors": "Mohamed Amine Chatti, Volkan Yücepur, Arham Muslim, Mouadh Guesmi, Shoeb Joarder",
     "title": "Designing Theory-Driven Analytics-Enhanced Self-Regulated Learning Applications",
     "venue": "In: Sahin M., Ifenthaler D. (eds) Visualizations and Dashboards for Learning Analytics. Advances in Analytics for Learning and Teaching (pp. 47-68). Springer, Cham. https://doi.org/10.1007/978-3-030-81222-5_3",
@@ -56,6 +62,7 @@
   {
     "id": "chatti-2020-ectel-effective-indicators",
     "year": "2020",
+    "type": "Conference",
     "authors": "Mohamed Amine Chatti, Arham Muslim, Mouadh Guesmi, Florian Richtscheid, Dawood Nasimi, Amin Shahin, and Ritesh Damera",
     "title": "How to Design Effective Learning Analytics Indicators? A Human-Centered Design Approach",
     "venue": "In Proceedings of the Fifteenth European Conference on Technology Enhanced Learning (ECTEL'20), pp. 303-317, 2020.",
@@ -65,6 +72,7 @@
   {
     "id": "chatti-2020-lava-model",
     "year": "2020",
+    "type": "Book chapter",
     "authors": "Mohamed Amine Chatti, Arham Muslim, Manpriya Guliani, Mouadh Guesmi",
     "title": "The LAVA Model: Learning Analytics Meets Visual Analytics",
     "venue": "In D. Ifenthaler & D. Gibson (Eds.), Adoption of Data Analytics in Higher Education Learning and Teaching (pp. 71-93). Cham: Springer.",
@@ -74,6 +82,7 @@
   {
     "id": "muslim-2020-open-learning-analytics-review",
     "year": "2020",
+    "type": "Book chapter",
     "authors": "Arham Muslim, Mohamed Amine Chatti, Mouadh Guesmi",
     "title": "Open Learning Analytics: A Systematic Literature Review and Future Perspectives",
     "venue": "In N. Pinkwart & S. Liu (Eds.), Artificial Intelligence Supported Educational Technologies (pp. 3-29). Cham: Springer.",
