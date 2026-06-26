@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import {
   Box,
   Button,
@@ -8,6 +9,19 @@ import {
 import { useNavigate } from "react-router-dom";
 import Section from "../shared/section";
 import ZoomableImageCard from "../shared/zoomable-image-card";
+
+const featureShape = PropTypes.shape({
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string.isRequired,
+  image: PropTypes.string.isRequired,
+  dialogLabel: PropTypes.string,
+  buttonLabel: PropTypes.string.isRequired,
+  buttonIcon: PropTypes.elementType.isRequired,
+  to: PropTypes.string.isRequired,
+  imageSide: PropTypes.oneOf(["left", "right"]).isRequired,
+  imageWidth: PropTypes.string.isRequired,
+  pb: PropTypes.object,
+});
 
 // Title + description + call-to-action for a feature. Rendered once and placed
 // in both the desktop side column and the card's mobile content, so the markup
@@ -29,6 +43,11 @@ const FeatureText = ({ feature, onClick }) => {
       </Box>
     </Stack>
   );
+};
+
+FeatureText.propTypes = {
+  feature: featureShape.isRequired,
+  onClick: PropTypes.func.isRequired,
 };
 
 // One feature presented as an image card beside a text column. The image sits
@@ -87,6 +106,10 @@ const FeatureRow = ({ feature }) => {
       </Stack>
     </Section>
   );
+};
+
+FeatureRow.propTypes = {
+  feature: featureShape.isRequired,
 };
 
 export default FeatureRow;

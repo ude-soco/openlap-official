@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import { Box, Typography } from "@mui/material";
 
 // Standard section heading: an h2 title with an optional subtitle.
@@ -22,5 +23,13 @@ const SectionHeading = ({
     )}
   </Box>
 );
+
+SectionHeading.propTypes = {
+  title: PropTypes.node.isRequired,
+  subtitle: PropTypes.node,
+  subtitleColor: PropTypes.string,
+  align: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  sx: PropTypes.oneOfType([PropTypes.object, PropTypes.array, PropTypes.func]),
+};
 
 export default SectionHeading;

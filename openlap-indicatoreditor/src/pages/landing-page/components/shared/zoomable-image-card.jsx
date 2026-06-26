@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import {
   Box,
   Card,
@@ -68,6 +69,13 @@ const ZoomableImageCard = ({ image, dialogLabel, sx, children }) => {
       </Dialog>
     </>
   );
+};
+
+ZoomableImageCard.propTypes = {
+  image: PropTypes.string.isRequired,
+  dialogLabel: PropTypes.string,
+  sx: PropTypes.oneOfType([PropTypes.object, PropTypes.array, PropTypes.func]),
+  children: PropTypes.node,
 };
 
 export default ZoomableImageCard;

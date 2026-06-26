@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import { Container } from "@mui/material";
 
 // Standard section wrapper: consistent container width and vertical padding.
@@ -13,5 +14,12 @@ const Section = ({ id, maxWidth = "lg", sx, children, ...rest }) => (
     {children}
   </Container>
 );
+
+Section.propTypes = {
+  id: PropTypes.string,
+  maxWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+  sx: PropTypes.oneOfType([PropTypes.object, PropTypes.array, PropTypes.func]),
+  children: PropTypes.node,
+};
 
 export default Section;

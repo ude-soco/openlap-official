@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import { Avatar, Box, Tooltip } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
@@ -39,5 +40,13 @@ const ProfileAvatar = ({ image, name, link, size, iconFontSize }) => (
     </Tooltip>
   </Box>
 );
+
+ProfileAvatar.propTypes = {
+  image: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  link: PropTypes.string.isRequired,
+  size: PropTypes.number,
+  iconFontSize: PropTypes.string,
+};
 
 export default ProfileAvatar;

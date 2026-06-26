@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import { Box, Link } from "@mui/material";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
@@ -22,5 +23,10 @@ const MoreLink = ({ label, href }) => (
     </Link>
   </Box>
 );
+
+MoreLink.propTypes = {
+  label: PropTypes.node.isRequired,
+  href: PropTypes.string.isRequired,
+};
 
 export default MoreLink;
