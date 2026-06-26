@@ -27,10 +27,12 @@ export default function Publications() {
     <Box
       id={navigationIds.PUBLICATION}
       sx={{
-        pt: { xs: 4, sm: 12 },
-        pb: { xs: 8, sm: 16 },
+        py: { xs: 6, sm: 8, md: 11 },
         color: "common.white",
         bgcolor: "#06090a",
+        borderTop: "1px solid",
+        borderBottom: "1px solid",
+        borderColor: "grey.800",
       }}
     >
       <Container

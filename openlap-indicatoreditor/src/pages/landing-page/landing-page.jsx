@@ -1,5 +1,5 @@
 import { useContext, useMemo } from "react";
-import { Box, Divider } from "@mui/material";
+import { Box } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import { CustomThemeContext } from "../../setup/theme-manager/theme-context-manager";
 import { createLandingTheme } from "./theme/landing-theme";
@@ -27,17 +27,11 @@ const LandingPage = () => {
         <Hero />
         <Architecture />
         <LogoCollection />
-        <Divider />
         <Features />
-        <Divider />
         <Teams />
-        <Divider />
         <News />
-        <Divider />
         <Publications />
-        <Divider />
         <ContactUs />
-        <Divider />
         <Footer />
       </Box>
     </ThemeProvider>

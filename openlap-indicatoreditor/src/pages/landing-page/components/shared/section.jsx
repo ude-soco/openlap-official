@@ -8,7 +8,7 @@ const Section = ({ id, maxWidth = "lg", sx, children, ...rest }) => (
   <Container
     id={id}
     maxWidth={maxWidth}
-    sx={{ pt: { xs: 4, sm: 12 }, pb: { xs: 8, sm: 16 }, ...sx }}
+    sx={{ py: { xs: 6, sm: 8, md: 11 }, ...sx }}
     {...rest}
   >
     {children}

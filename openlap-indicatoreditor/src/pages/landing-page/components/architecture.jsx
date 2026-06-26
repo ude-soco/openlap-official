@@ -43,6 +43,7 @@ const Architecture = () => {
         <SectionHeading
           title="OpenLAP Architecture"
           subtitle="Three core components work together to turn raw learning activity data into meaningful, actionable indicators."
+          sx={{ width: { sm: "100%", md: "70%" }, mx: "auto" }}
         />
       </Reveal>
 

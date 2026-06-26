@@ -115,11 +115,12 @@ const ToolsOverview = () => {
 export default function Features() {
   return (
     <>
-      <Section id={navigationIds.FEATURE} sx={{ pt: { xs: 8, sm: 12 }, pb: 0 }}>
+      <Section id={navigationIds.FEATURE} sx={{ pt: { xs: 6, sm: 8, md: 11 }, pb: 0 }}>
         <Reveal>
           <SectionHeading
             title="OpenLAP Features"
             subtitle="Two complementary no-code tools — design your learning analytics indicators, then implement them with real data."
+            sx={{ width: { sm: "100%", md: "70%" }, mx: "auto" }}
           />
         </Reveal>
         <Reveal delay={80}>

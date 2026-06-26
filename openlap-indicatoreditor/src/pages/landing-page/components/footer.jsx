@@ -39,7 +39,7 @@ function Copyright() {
 
 export default function Footer() {
   return (
-    <Box component="footer">
+    <Box component="footer" sx={{ borderTop: "1px solid", borderColor: "divider" }}>
       <Container maxWidth="lg" sx={{ py: { xs: 6, md: 8 } }}>
         <Reveal>
           <Grid container spacing={{ xs: 5, md: 4 }}>
