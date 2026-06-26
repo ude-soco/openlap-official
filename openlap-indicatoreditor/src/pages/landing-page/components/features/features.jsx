@@ -1,18 +1,28 @@
 import { Fragment } from "react";
-import { alpha, Box, Card, CardContent, Stack, Typography } from "@mui/material";
+import {
+  alpha,
+  Box,
+  Card,
+  CardActionArea,
+  CardContent,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import DesignServicesIcon from "@mui/icons-material/DesignServices";
 import AddchartIcon from "@mui/icons-material/Addchart";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { navigationIds } from "../../utils/navigation-data";
 import { featureItems } from "../../utils/features-data";
+import { scrollToSection } from "../../../../common/utils/scroll-to-section";
 import Section from "../shared/section";
 import SectionHeading from "../shared/section-heading";
 import Reveal from "../shared/reveal";
 import FeatureRow from "./feature-row";
 
 // Two complementary tools: design indicators first (ISC Creator), then
-// implement them with real data (Indicator Editor).
+// implement them with real data (Indicator Editor). `target` is the anchor id
+// of the matching detailed feature section below.
 const TOOLS = [
   {
     icon: DesignServicesIcon,
@@ -20,6 +30,7 @@ const TOOLS = [
     title: "Design Learning Analytics Indicators",
     description:
       "Low-fidelity, conceptual, and theoretically grounded specification of indicators with the ISC Creator.",
+    target: "isc-creator",
   },
   {
     icon: AddchartIcon,
@@ -27,6 +38,7 @@ const TOOLS = [
     title: "Implement Learning Analytics Indicators",
     description:
       "High-fidelity implementation using datasets, filters, analysis methods, and visualizations with the Indicator Editor.",
+    target: "indicator-editor",
   },
 ];
 
@@ -48,8 +60,13 @@ const ToolsOverview = () => {
         return (
           <Fragment key={tool.eyebrow}>
             <Card sx={{ flex: 1 }}>
-              <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                <Stack spacing={2}>
+              <CardActionArea
+                onClick={() => scrollToSection(tool.target, { highlight: true })}
+                aria-label={`Go to ${tool.title}`}
+                sx={{ height: "100%" }}
+              >
+                <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                  <Stack spacing={2}>
                   <Box
                     aria-hidden
                     sx={{
@@ -90,8 +107,9 @@ const ToolsOverview = () => {
                       {tool.description}
                     </Typography>
                   </Box>
-                </Stack>
-              </CardContent>
+                  </Stack>
+                </CardContent>
+              </CardActionArea>
             </Card>
             {i < TOOLS.length - 1 && (
               <Stack

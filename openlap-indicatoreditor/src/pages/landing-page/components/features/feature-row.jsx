@@ -6,6 +6,7 @@ import Section from "../shared/section";
 import ZoomableImageCard from "../shared/zoomable-image-card";
 
 const featureShape = PropTypes.shape({
+  id: PropTypes.string,
   title: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
   image: PropTypes.string.isRequired,
@@ -71,7 +72,7 @@ const FeatureRow = ({ feature }) => {
   const textWidth = `${100 - parseInt(feature.imageWidth, 10)}%`;
 
   return (
-    <Section sx={{ pt: { xs: 4, md: 10 }, pb: feature.pb }}>
+    <Section id={feature.id} sx={{ pt: { xs: 4, md: 10 }, pb: feature.pb }}>
       <Stack
         direction={{
           xs: "column",

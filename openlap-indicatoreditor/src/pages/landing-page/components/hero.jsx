@@ -24,9 +24,10 @@ export default function Hero() {
   const isDark = theme.palette.mode === "dark";
   const accent = isDark ? "primary.light" : "primary.main";
 
-  const goToFeatures = (e) => {
+  // Smoothly scroll to an in-page section; `highlight` briefly flags arrival.
+  const handleScroll = (id, highlight) => (e) => {
     if (e) e.preventDefault();
-    scrollToSection(navigationIds.FEATURE);
+    scrollToSection(id, { highlight });
   };
 
   // Layered, soft elevation so the product preview reads as the centerpiece.
@@ -98,16 +99,16 @@ export default function Hero() {
             students, and researchers design and implement their own indicators
             — no code required — through the{" "}
             <Link
-              href={`#${navigationIds.FEATURE}`}
-              onClick={goToFeatures}
+              href="#isc-creator"
+              onClick={handleScroll("isc-creator", true)}
               sx={{ cursor: "pointer" }}
             >
               ISC Creator
             </Link>{" "}
             and the{" "}
             <Link
-              href={`#${navigationIds.FEATURE}`}
-              onClick={goToFeatures}
+              href="#indicator-editor"
+              onClick={handleScroll("indicator-editor", true)}
               sx={{ cursor: "pointer" }}
             >
               Indicator Editor
@@ -133,7 +134,7 @@ export default function Hero() {
               variant="outlined"
               size="large"
               href={`#${navigationIds.FEATURE}`}
-              onClick={goToFeatures}
+              onClick={handleScroll(navigationIds.FEATURE, false)}
             >
               Explore features
             </Button>
@@ -158,13 +159,13 @@ export default function Hero() {
                 component="img"
                 src={OpenLAPFull}
                 alt="OpenLAP"
-                sx={{ height: 26 }}
+                sx={{ height: 48 }}
               />
               <Box
                 component="img"
                 src={LAY}
                 alt="LAY project"
-                sx={{ height: 26 }}
+                sx={{ height: 48 }}
               />
             </Stack>
           </Stack>
