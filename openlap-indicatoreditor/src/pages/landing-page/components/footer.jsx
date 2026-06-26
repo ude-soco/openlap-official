@@ -25,9 +25,10 @@ function Copyright() {
     <Typography variant="body2" color="textSecondary" mt={1}>
       {"Copyright © "}
       <Link
-        sx={{ cursor: "pointer" }}
+        href="https://www.uni-due.de/soco/"
+        target="_blank"
+        rel="noopener noreferrer"
         underline="hover"
-        onClick={() => window.open("https://www.uni-due.de/soco/", "_blank", "noopener,noreferrer")}
       >
         Social Computing Group
       </Link>

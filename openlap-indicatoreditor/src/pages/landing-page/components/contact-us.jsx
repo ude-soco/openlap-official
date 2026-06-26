@@ -5,6 +5,7 @@ import {
   Checkbox,
   Grid,
   FormControlLabel,
+  Link,
   TextField,
   Button,
 } from "@mui/material";
@@ -165,7 +166,21 @@ export default function ContactUs() {
                     onChange={handleChange}
                   />
                 }
-                label="I agree to the terms of use and privacy policy."
+                label={
+                  <span>
+                    I agree to the terms of use and{" "}
+                    <Link
+                      href="/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      underline="hover"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      privacy policy
+                    </Link>
+                    .
+                  </span>
+                }
               />
             </Grid>
             <Button

@@ -84,8 +84,17 @@ const AppAppBar = () => {
                 src={OpenLAPLogo}
                 style={logoStyle}
                 alt="logo of OpenLAP"
+                role="button"
+                tabIndex={0}
+                aria-label="OpenLAP, back to top"
                 sx={{ mr: 2 }}
                 onClick={() => handleNav(navigationIds.HERO)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleNav(navigationIds.HERO);
+                  }
+                }}
               />
               <Box sx={{ display: { xs: "none", md: "flex" } }}>
                 {navigationItems.map((item) => (
