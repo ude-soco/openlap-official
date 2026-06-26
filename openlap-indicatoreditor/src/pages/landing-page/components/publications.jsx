@@ -7,11 +7,11 @@ import {
   Container,
   Grid,
   Typography,
-  Link,
 } from "@mui/material";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import publicationItems from "../utils/publication-data.json";
 import { navigationIds } from "../utils/navigation-data";
+import SectionHeading from "./shared/section-heading";
+import MoreLink from "./shared/more-link";
 
 export default function Publications() {
   const handleClick = (link) => {
@@ -37,19 +37,12 @@ export default function Publications() {
           gap: { xs: 3, sm: 6 },
         }}
       >
-        <Box
-          sx={{
-            width: { sm: "100%", md: "60%" },
-            textAlign: { sm: "left", md: "center" },
-          }}
-        >
-          <Typography component="h2" variant="h4">
-            Publications
-          </Typography>
-          <Typography variant="body1" sx={{ color: "grey.400" }}>
-            Discover our papers on Open Learning Analytics Platform
-          </Typography>
-        </Box>
+        <SectionHeading
+          title="Publications"
+          subtitle="Discover our papers on Open Learning Analytics Platform"
+          subtitleColor="grey.400"
+          sx={{ width: { sm: "100%", md: "60%" } }}
+        />
         <Grid container spacing={1.5}>
           {publicationItems.map((item) => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
@@ -99,23 +92,10 @@ export default function Publications() {
             </Grid>
           ))}
         </Grid>
-        <Box>
-          <Link
-            component="button"
-            color="primary"
-            fontWeight="bold"
-            sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              "& > svg": { transition: "0.2s" },
-              "&:hover > svg": { transform: "translateX(4px)" },
-            }}
-            onClick={() => window.open("https://www.uni-due.de/soco/publications.php", "_blank", "noopener,noreferrer")}
-          >
-            <span>More publications</span>
-            <OpenInNewIcon fontSize="small" sx={{ mt: "1px", ml: "2px" }} />
-          </Link>
-        </Box>
+        <MoreLink
+          label="More publications"
+          href="https://www.uni-due.de/soco/publications.php"
+        />
       </Container>
     </Box>
   );

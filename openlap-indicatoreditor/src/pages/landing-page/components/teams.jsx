@@ -1,18 +1,12 @@
-import { navigationIds } from "../utils/navigation-data";
-import {
-  Avatar,
-  Box,
-  Typography,
-  Container,
-  Grid,
-  IconButton,
-  Tooltip,
-} from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
+import { Typography, Grid, IconButton, Tooltip } from "@mui/material";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import SchoolIcon from "@mui/icons-material/School";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import { navigationIds } from "../utils/navigation-data";
 import { memberItems, peopleItems } from "../utils/team-data";
+import Section from "./shared/section";
+import SectionHeading from "./shared/section-heading";
+import ProfileAvatar from "./shared/profile-avatar";
 
 const SOCIAL_ICONS = {
   linkedin: LinkedInIcon,
@@ -22,11 +16,9 @@ const SOCIAL_ICONS = {
 
 export default function Teams() {
   return (
-    <Container
+    <Section
       id={navigationIds.TEAM}
       sx={{
-        pt: { xs: 4, sm: 12 },
-        pb: { xs: 8, sm: 16 },
         position: "relative",
         display: "flex",
         flexDirection: "column",
@@ -34,20 +26,11 @@ export default function Teams() {
         gap: { xs: 3, sm: 6 },
       }}
     >
-      <Box
-        sx={{
-          width: { sm: "100%", md: "60%" },
-          textAlign: { sm: "left", md: "center" },
-        }}
-      >
-        <Typography component="h2" variant="h4" color="text.primary">
-          Team
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Meet the minds building OpenLAP and shaping the future of open and
-          personalized learning analytics
-        </Typography>
-      </Box>
+      <SectionHeading
+        title="Team"
+        subtitle="Meet the minds building OpenLAP and shaping the future of open and personalized learning analytics"
+        sx={{ width: { sm: "100%", md: "60%" } }}
+      />
       <Grid
         container
         spacing={10}
@@ -57,46 +40,13 @@ export default function Teams() {
         {memberItems.map((item) => (
           <Grid size={{ xs: 12, sm: 4, md: 3 }} key={item.id}>
             <Grid container direction="column" alignItems="center">
-              <Box
-                sx={{
-                  position: "relative",
-                  width: 148,
-                  height: 148,
-                  mb: 2,
-                  "&:hover .overlay-member": {
-                    opacity: 1,
-                  },
-                }}
-              >
-                <Avatar
-                  src={item.image}
-                  sx={{ width: "100%", height: "100%" }}
-                />
-
-                <Tooltip arrow title={`View ${item.name}'s profile`}>
-                  <Box
-                    className="overlay-member"
-                    sx={{
-                      position: "absolute",
-                      cursor: "pointer",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      bgcolor: "rgba(0,0,0,0.5)",
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      opacity: 0,
-                      transition: "opacity 0.3s ease",
-                    }}
-                    onClick={() => window.open(item.link, "_blank")}
-                  >
-                    <SearchIcon fontSize="large" sx={{ color: "white" }} />
-                  </Box>
-                </Tooltip>
-              </Box>
+              <ProfileAvatar
+                image={item.image}
+                name={item.name}
+                link={item.link}
+                size={148}
+                iconFontSize="large"
+              />
               <Typography variant="body2" color="textSecondary" align="center">
                 {item.name}
               </Typography>
@@ -137,47 +87,12 @@ export default function Teams() {
           .map((item) => (
             <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={item.id}>
               <Grid container direction="column" alignItems="center">
-                <Box
-                  sx={{
-                    position: "relative",
-                    width: 96,
-                    height: 96,
-                    mb: 2,
-                    "&:hover .overlay-people": {
-                      opacity: 1,
-                    },
-                  }}
-                >
-                  <Avatar
-                    src={item.image}
-                    sx={{ width: "100%", height: "100%" }}
-                  />
-
-                  <Tooltip arrow title={`View ${item.name}'s profile`}>
-                    <Box
-                      className="overlay-people"
-                      sx={{
-                        position: "absolute",
-                        cursor: "pointer",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        height: "100%",
-                        bgcolor: "rgba(0,0,0,0.5)",
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        opacity: 0,
-                        transition: "opacity 0.3s ease",
-                      }}
-                      onClick={() => window.open(item.link, "_blank")}
-                    >
-                      <SearchIcon sx={{ color: "white" }} />
-                    </Box>
-                  </Tooltip>
-                </Box>
-
+                <ProfileAvatar
+                  image={item.image}
+                  name={item.name}
+                  link={item.link}
+                  size={96}
+                />
                 <Typography
                   variant="body2"
                   color="textSecondary"
@@ -185,7 +100,6 @@ export default function Teams() {
                 >
                   {item.name}
                 </Typography>
-
                 {item.title && (
                   <Typography
                     variant="body2"
@@ -199,6 +113,6 @@ export default function Teams() {
             </Grid>
           ))}
       </Grid>
-    </Container>
+    </Section>
   );
 }

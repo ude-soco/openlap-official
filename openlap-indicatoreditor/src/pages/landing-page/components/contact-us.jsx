@@ -3,15 +3,15 @@ import { navigationIds } from "../utils/navigation-data";
 import {
   Box,
   Checkbox,
-  Container,
   Grid,
   FormControlLabel,
   TextField,
-  Typography,
   Button,
 } from "@mui/material";
 import emailjs from "@emailjs/browser";
 import { useSnackbar } from "notistack";
+import Section from "./shared/section";
+import SectionHeading from "./shared/section-heading";
 const emailTemplateId = import.meta.env.VITE_EMAIL_TEMPLATE_ID || "";
 const emailServiceId = import.meta.env.VITE_EMAIL_SERVICE_ID || "";
 const emailPublicKey = import.meta.env.VITE_EMAIL_PUBLIC_KEY || "";
@@ -77,11 +77,9 @@ export default function ContactUs() {
   };
 
   return (
-    <Container
+    <Section
       id={navigationIds.CONTACT}
       sx={{
-        pt: { xs: 4, sm: 12 },
-        pb: { xs: 8, sm: 16 },
         position: "relative",
         display: "flex",
         flexDirection: "column",
@@ -89,19 +87,11 @@ export default function ContactUs() {
         gap: { xs: 3, sm: 6 },
       }}
     >
-      <Box
-        sx={{
-          width: { sm: "100%", md: "60%" },
-          textAlign: { sm: "left", md: "center" },
-        }}
-      >
-        <Typography component="h2" variant="h4" color="text.primary">
-          Let's talk about the future
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          We're here to answer your questions and discuss future collaboration.
-        </Typography>
-      </Box>
+      <SectionHeading
+        title="Let's talk about the future"
+        subtitle="We're here to answer your questions and discuss future collaboration."
+        sx={{ width: { sm: "100%", md: "60%" } }}
+      />
       <Box sx={{ width: { sm: "100%", md: "50%" } }}>
         <form onSubmit={handleSubmit}>
           <Grid container spacing={2} justifyContent="center">
@@ -183,6 +173,6 @@ export default function ContactUs() {
           </Grid>
         </form>
       </Box>
-    </Container>
+    </Section>
   );
 }

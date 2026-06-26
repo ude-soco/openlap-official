@@ -1,50 +1,28 @@
-import { useState } from "react";
-import {
-  Box,
-  Card,
-  CardActionArea,
-  CardMedia,
-  Container,
-  Dialog,
-  DialogContent,
-  IconButton,
-  Stack,
-  Typography,
-} from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
+import { Box, Stack, Typography } from "@mui/material";
 import OpenLAPArchitecture from "../../../assets/home/abstract-architecture.png";
 import { navigationIds } from "../utils/navigation-data";
+import Section from "./shared/section";
+import ZoomableImageCard from "./shared/zoomable-image-card";
 
 const Architecture = () => {
-  const [openDialog, setOpenDialog] = useState(false);
+  // Defined once and placed in both the mobile (above the image) and desktop
+  // (inside the text column) slots, so the heading markup is not duplicated.
+  const heading = (
+    <Typography variant="h4" gutterBottom>
+      OpenLAP Architecture
+    </Typography>
+  );
 
-  const toggleOpenDialog = () => setOpenDialog((p) => !p);
   return (
-    <Container
-      id={navigationIds.ARCHITECTURE}
-      maxWidth="lg"
-      sx={{ pt: { xs: 4, sm: 12 }, pb: { xs: 8 } }}
-    >
-      <Typography
-        variant="h4"
-        gutterBottom
-        sx={{ display: { xs: "flex", md: "none" } }}
-      >
-        OpenLAP Architecture
-      </Typography>
+    <Section id={navigationIds.ARCHITECTURE} sx={{ pb: { xs: 8 } }}>
+      <Box sx={{ display: { xs: "block", md: "none" } }}>{heading}</Box>
       <Stack
         direction={{ xs: "column-reverse", md: "row" }}
         gap={4}
         alignItems="center"
       >
         <Box sx={{ width: { xs: "100%", md: "40%" } }}>
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ display: { xs: "none", md: "flex" } }}
-          >
-            OpenLAP Architecture
-          </Typography>
+          <Box sx={{ display: { xs: "none", md: "block" } }}>{heading}</Box>
           <Typography>
             The three main components of OpenLAP
             <ul>
@@ -66,55 +44,13 @@ const Architecture = () => {
           </Typography>
         </Box>
         <Box sx={{ width: { xs: "100%", md: "60%" } }}>
-          <Card elevation={0} sx={{ width: "100%", position: "relative" }}>
-            <CardActionArea
-              sx={{
-                "&:hover + .search-icon, .search-icon:hover": {
-                  opacity: 1,
-                },
-              }}
-              onClick={toggleOpenDialog}
-            >
-              <CardMedia
-                sx={{
-                  width: "100%",
-                  aspectRatio: "16/9",
-                  objectFit: "contain",
-                }}
-                image={OpenLAPArchitecture}
-              />
-            </CardActionArea>
-
-            <IconButton
-              className="search-icon"
-              sx={{
-                position: "absolute",
-                top: 8,
-                right: 8,
-                opacity: 0,
-                transition: "opacity 0.3s",
-                backgroundColor: "rgba(255, 255, 255, 0.8)",
-                "&:hover": {
-                  opacity: 1,
-                  backgroundColor: "rgba(255, 255, 255, 1)",
-                },
-              }}
-            >
-              <SearchIcon />
-            </IconButton>
-          </Card>
+          <ZoomableImageCard
+            image={OpenLAPArchitecture}
+            dialogLabel="OpenLAP Architecture diagram"
+          />
         </Box>
       </Stack>
-      <Dialog aria-label="OpenLAP Architecture diagram" maxWidth="xl" open={openDialog} onClose={toggleOpenDialog}>
-        <DialogContent>
-          <Box
-            component="img"
-            src={OpenLAPArchitecture}
-            sx={{ width: "100%", objectFit: "contain" }}
-          />
-        </DialogContent>
-      </Dialog>
-    </Container>
+    </Section>
   );
 };
 

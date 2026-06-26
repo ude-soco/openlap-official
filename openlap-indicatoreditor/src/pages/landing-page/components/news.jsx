@@ -1,6 +1,5 @@
-import { Box, Container, Link, Paper, Typography } from "@mui/material";
+import { Box, Link, Paper, Typography } from "@mui/material";
 import { useMediaQuery, useTheme } from "@mui/material";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import {
   Timeline,
   TimelineItem,
@@ -12,6 +11,9 @@ import {
 } from "@mui/lab";
 import { navigationIds } from "../utils/navigation-data";
 import { newsItems } from "../utils/news-data";
+import Section from "./shared/section";
+import SectionHeading from "./shared/section-heading";
+import MoreLink from "./shared/more-link";
 
 // Formats an ISO date (YYYY-MM-DD) as e.g. "March 2026". Parsed from the
 // string parts to avoid timezone shifts that can flip the month.
@@ -49,11 +51,9 @@ export default function News() {
   );
 
   return (
-    <Container
+    <Section
       id={navigationIds.NEWS}
       sx={{
-        pt: { xs: 4, sm: 12 },
-        pb: { xs: 8, sm: 16 },
         position: "relative",
         display: "flex",
         flexDirection: "column",
@@ -61,20 +61,11 @@ export default function News() {
         gap: { xs: 3 },
       }}
     >
-      <Box
-        sx={{
-          width: { sm: "100%", md: "60%" },
-          textAlign: { sm: "left", md: "center" },
-        }}
-      >
-        <Typography component="h2" variant="h4" color="text.primary">
-          News
-        </Typography>
-        <Typography variant="body1" color="textSecondary">
-          All the updates, announcements, and stories from Open Learning
-          Analytics Platform
-        </Typography>
-      </Box>
+      <SectionHeading
+        title="News"
+        subtitle="All the updates, announcements, and stories from Open Learning Analytics Platform"
+        sx={{ width: { sm: "100%", md: "60%" } }}
+      />
 
       <Timeline position={isMobile ? "right" : "alternate"}>
         {sortedNews.map((item, index) => (
@@ -128,23 +119,7 @@ export default function News() {
         ))}
       </Timeline>
 
-      <Box>
-        <Link
-          component="button"
-          color="primary"
-          fontWeight="bold"
-          sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            "& > svg": { transition: "0.2s" },
-            "&:hover > svg": { transform: "translateX(4px)" },
-          }}
-          onClick={() => window.open("https://www.uni-due.de/soco/news.php", "_blank", "noopener,noreferrer")}
-        >
-          <span>More News</span>
-          <OpenInNewIcon fontSize="small" sx={{ mt: "1px", ml: "2px" }} />
-        </Link>
-      </Box>
-    </Container>
+      <MoreLink label="More News" href="https://www.uni-due.de/soco/news.php" />
+    </Section>
   );
 }

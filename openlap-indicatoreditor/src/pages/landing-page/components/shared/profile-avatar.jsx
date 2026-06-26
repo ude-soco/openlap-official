@@ -1,0 +1,43 @@
+import { Avatar, Box, Tooltip } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+
+// Circular avatar that reveals a clickable "view profile" overlay on hover.
+// `size` sets the avatar dimensions; `iconFontSize` sizes the overlay icon.
+const ProfileAvatar = ({ image, name, link, size, iconFontSize }) => (
+  <Box
+    sx={{
+      position: "relative",
+      width: size,
+      height: size,
+      mb: 2,
+      "&:hover .profile-overlay": { opacity: 1 },
+    }}
+  >
+    <Avatar src={image} sx={{ width: "100%", height: "100%" }} />
+    <Tooltip arrow title={`View ${name}'s profile`}>
+      <Box
+        className="profile-overlay"
+        sx={{
+          position: "absolute",
+          cursor: "pointer",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          bgcolor: "rgba(0,0,0,0.5)",
+          borderRadius: "50%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          opacity: 0,
+          transition: "opacity 0.3s ease",
+        }}
+        onClick={() => window.open(link, "_blank")}
+      >
+        <SearchIcon fontSize={iconFontSize} sx={{ color: "white" }} />
+      </Box>
+    </Tooltip>
+  </Box>
+);
+
+export default ProfileAvatar;
