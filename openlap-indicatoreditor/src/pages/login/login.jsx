@@ -1,9 +1,10 @@
 import { useContext, useState } from "react";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
 import { useNavigate } from "react-router-dom";
-import { Box, Button, Link, Stack, TextField } from "@mui/material";
+import { Box, Button, Link, Stack, TextField, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import AuthLayout from "../../common/components/auth-layout/auth-layout";
+import OpenLAPIcon from "../../assets/brand/openlap-icon.svg";
 
 const Login = () => {
   const { login } = useContext(AuthContext);
@@ -45,11 +46,20 @@ const Login = () => {
 
   return (
     <AuthLayout
-      title="Sign in"
-      subtitle="Welcome back to OpenLAP"
+      animate
+      icon={
+        <Box
+          component="img"
+          src={OpenLAPIcon}
+          alt=""
+          sx={{ height: 48, width: "auto" }}
+        />
+      }
+      title="Welcome back"
+      subtitle="Sign in to your OpenLAP account"
       crossLink={{ label: "Sign up", to: "/register" }}
     >
-      <Stack gap={2} component="form" onSubmit={handleSubmit}>
+      <Stack gap={2.5} component="form" onSubmit={handleSubmit}>
         <TextField
           fullWidth
           label="Email Address"
@@ -71,25 +81,43 @@ const Login = () => {
         <Button
           type="submit"
           fullWidth
+          size="large"
           loading={loading}
           variant="contained"
           loadingPosition="start"
           loadingIndicator="Logging in..."
           disabled={formFields.email === "" || formFields.password === ""}
         >
-          {!loading && "Login with email"}
+          {!loading && "Sign in"}
         </Button>
       </Stack>
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        align="center"
+        sx={{ mt: 3 }}
+      >
+        Don&apos;t have an account?{" "}
         <Link
           component="button"
+          type="button"
           onClick={() => navigate("/register")}
-          variant="body2"
           underline="hover"
+          sx={{ fontWeight: 600 }}
         >
-          Don&apos;t have an account? Create an account
+          Create an account
         </Link>
-      </Box>
+      </Typography>
+
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        align="center"
+        sx={{ display: "block", mt: 3 }}
+      >
+        Part of the OpenLAP learning analytics ecosystem
+      </Typography>
     </AuthLayout>
   );
 };

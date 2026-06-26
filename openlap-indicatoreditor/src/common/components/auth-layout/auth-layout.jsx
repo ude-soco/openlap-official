@@ -2,19 +2,29 @@ import { useContext, useMemo } from "react";
 import PropTypes from "prop-types";
 import { alpha, Box, Paper, Stack, Typography } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
+import { keyframes } from "@mui/system";
 import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager";
 import { createScopedTheme } from "../../theme/scoped-theme";
 import AuthHeader from "../auth-header/auth-header";
+
+// Subtle on-mount entrance for the card (opt-in via `animate`). CSS keyframes
+// only; respects prefers-reduced-motion.
+const fadeUp = keyframes({
+  from: { opacity: 0, transform: "translateY(12px)" },
+  to: { opacity: 1, transform: "translateY(0)" },
+});
 
 // Shared layout for the public auth pages. Applies the scoped design system
 // (Inter, radii, shadows, dark-mode polish) via a nested ThemeProvider — so the
 // authenticated app is unaffected — and centers the form inside a polished card
 // over a subtle landing-style background.
 const AuthLayout = ({
+  icon,
   title,
   subtitle,
   crossLink,
   maxWidth = 460,
+  animate = false,
   children,
 }) => {
   const { theme } = useContext(CustomThemeContext);
@@ -47,7 +57,19 @@ const AuthLayout = ({
             py: { xs: 4, md: 6 },
           }}
         >
-          <Box sx={{ width: "100%", maxWidth, mx: "auto" }}>
+          <Box
+            sx={{
+              width: "100%",
+              maxWidth,
+              mx: "auto",
+              ...(animate && {
+                animation: `${fadeUp} 500ms cubic-bezier(0, 0, 0.2, 1) both`,
+                "@media (prefers-reduced-motion: reduce)": {
+                  animation: "none",
+                },
+              }),
+            }}
+          >
             <Paper
               elevation={0}
               sx={(t) => ({
@@ -57,8 +79,13 @@ const AuthLayout = ({
                 p: { xs: 3, md: 4 },
               })}
             >
-              {(title || subtitle) && (
-                <Stack spacing={1} sx={{ mb: 3, textAlign: "center" }}>
+              {(icon || title || subtitle) && (
+                <Stack
+                  spacing={1.5}
+                  alignItems="center"
+                  sx={{ mb: 3, textAlign: "center" }}
+                >
+                  {icon}
                   {title && (
                     <Typography variant="h4" component="h1">
                       {title}
@@ -81,6 +108,7 @@ const AuthLayout = ({
 };
 
 AuthLayout.propTypes = {
+  icon: PropTypes.node,
   title: PropTypes.string,
   subtitle: PropTypes.string,
   crossLink: PropTypes.shape({
@@ -88,6 +116,7 @@ AuthLayout.propTypes = {
     to: PropTypes.string.isRequired,
   }),
   maxWidth: PropTypes.number,
+  animate: PropTypes.bool,
   children: PropTypes.node,
 };
 
