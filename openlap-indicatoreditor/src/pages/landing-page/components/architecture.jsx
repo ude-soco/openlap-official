@@ -8,7 +8,7 @@ const Architecture = () => {
   // Defined once and placed in both the mobile (above the image) and desktop
   // (inside the text column) slots, so the heading markup is not duplicated.
   const heading = (
-    <Typography variant="h4" gutterBottom>
+    <Typography variant="h4" component="h2" gutterBottom>
       OpenLAP Architecture
     </Typography>
   );
@@ -46,6 +46,7 @@ const Architecture = () => {
         <Box sx={{ width: { xs: "100%", md: "60%" } }}>
           <ZoomableImageCard
             image={OpenLAPArchitecture}
+            alt="Diagram of the OpenLAP architecture showing the Indicator Engine, Analytics Framework, and Data Collection and Management components"
             dialogLabel="OpenLAP Architecture diagram"
           />
         </Box>

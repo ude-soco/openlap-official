@@ -64,6 +64,7 @@ export default function Teams() {
                     >
                       <IconButton
                         color="primary"
+                        aria-label={`View ${item.name}'s ${social.name} profile`}
                         onClick={() => window.open(social.link, "_blank", "noopener,noreferrer")}
                       >
                         {SocialIcon ? <SocialIcon /> : null}

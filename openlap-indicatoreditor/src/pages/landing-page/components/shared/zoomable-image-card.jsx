@@ -15,7 +15,7 @@ import SearchIcon from "@mui/icons-material/Search";
 // `sx` is merged onto the Card (e.g. for the responsive border used by the
 // Feature rows). `children` (optional) render below the image, inside the card
 // (used for the Feature rows' mobile text block).
-const ZoomableImageCard = ({ image, dialogLabel, sx, children }) => {
+const ZoomableImageCard = ({ image, alt = "", dialogLabel, sx, children }) => {
   const [open, setOpen] = useState(false);
   const toggleOpen = () => setOpen((prev) => !prev);
 
@@ -23,12 +23,15 @@ const ZoomableImageCard = ({ image, dialogLabel, sx, children }) => {
     <>
       <Card elevation={0} sx={{ width: "100%", position: "relative", ...sx }}>
         <CardActionArea
+          aria-label={alt ? `Enlarge image: ${alt}` : "Enlarge image"}
           sx={{
             "&:hover + .search-icon, .search-icon:hover": { opacity: 1 },
           }}
           onClick={toggleOpen}
         >
           <CardMedia
+            role="img"
+            aria-label={alt}
             sx={{ width: "100%", aspectRatio: "16/9", objectFit: "contain" }}
             image={image}
           />
@@ -36,6 +39,7 @@ const ZoomableImageCard = ({ image, dialogLabel, sx, children }) => {
         {children}
         <IconButton
           className="search-icon"
+          aria-label={alt ? `Enlarge image: ${alt}` : "Enlarge image"}
           sx={{
             position: "absolute",
             top: 8,
@@ -43,7 +47,7 @@ const ZoomableImageCard = ({ image, dialogLabel, sx, children }) => {
             opacity: 0,
             transition: "opacity 0.3s",
             backgroundColor: "rgba(255, 255, 255, 0.8)",
-            "&:hover": {
+            "&:hover, &:focus-visible": {
               opacity: 1,
               backgroundColor: "rgba(255, 255, 255, 1)",
             },
@@ -63,6 +67,7 @@ const ZoomableImageCard = ({ image, dialogLabel, sx, children }) => {
           <Box
             component="img"
             src={image}
+            alt={alt}
             sx={{ width: "100%", objectFit: "contain" }}
           />
         </DialogContent>
@@ -73,6 +78,7 @@ const ZoomableImageCard = ({ image, dialogLabel, sx, children }) => {
 
 ZoomableImageCard.propTypes = {
   image: PropTypes.string.isRequired,
+  alt: PropTypes.string,
   dialogLabel: PropTypes.string,
   sx: PropTypes.oneOfType([PropTypes.object, PropTypes.array, PropTypes.func]),
   children: PropTypes.node,

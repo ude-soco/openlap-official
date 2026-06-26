@@ -14,13 +14,19 @@ const ProfileAvatar = ({ image, name, link, size, iconFontSize }) => (
       "&:hover .profile-overlay": { opacity: 1 },
     }}
   >
-    <Avatar src={image} sx={{ width: "100%", height: "100%" }} />
+    <Avatar src={image} alt={name} sx={{ width: "100%", height: "100%" }} />
     <Tooltip arrow title={`View ${name}'s profile`}>
       <Box
+        component="a"
+        href={link}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`View ${name}'s profile`}
         className="profile-overlay"
         sx={{
           position: "absolute",
           cursor: "pointer",
+          textDecoration: "none",
           top: 0,
           left: 0,
           width: "100%",
@@ -32,8 +38,8 @@ const ProfileAvatar = ({ image, name, link, size, iconFontSize }) => (
           justifyContent: "center",
           opacity: 0,
           transition: "opacity 0.3s ease",
+          "&:focus-visible": { opacity: 1 },
         }}
-        onClick={() => window.open(link, "_blank")}
       >
         <SearchIcon fontSize={iconFontSize} sx={{ color: "white" }} />
       </Box>

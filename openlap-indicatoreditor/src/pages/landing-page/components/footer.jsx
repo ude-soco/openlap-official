@@ -96,10 +96,18 @@ export default function Footer() {
               {navigationItems.map((item) => (
                 <Typography
                   key={item.id}
+                  role="button"
+                  tabIndex={0}
                   color="text.secondary"
                   onClick={() => scrollToSection(item.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      scrollToSection(item.id);
+                    }
+                  }}
                   sx={{
-                    "&:hover": {
+                    "&:hover, &:focus-visible": {
                       color: "primary.main",
                       cursor: "pointer",
                       textDecoration: "underline",
@@ -128,8 +136,10 @@ export default function Footer() {
               <IconButton
                 key={item.id}
                 color="inherit"
+                aria-label={`OpenLAP on ${item.name}`}
                 href={item.link}
                 target="_blank"
+                rel="noopener noreferrer"
                 sx={{ alignSelf: "center" }}
               >
                 {<item.icon />}

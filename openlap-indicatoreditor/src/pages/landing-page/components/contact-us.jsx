@@ -115,38 +115,47 @@ export default function ContactUs() {
                 onChange={handleChange}
               />
             </Grid>
-            <TextField
-              name="email"
-              label="Email address"
-              fullWidth
-              required
-              value={formData.email}
-              onChange={handleChange}
-            />
-            <TextField
-              name="company"
-              label="Company"
-              fullWidth
-              value={formData.company}
-              onChange={handleChange}
-            />
-            <TextField
-              name="subject"
-              label="Subject"
-              fullWidth
-              value={formData.subject}
-              onChange={handleChange}
-            />
-            <TextField
-              name="message"
-              label="Message"
-              fullWidth
-              multiline
-              rows={5}
-              required
-              value={formData.message}
-              onChange={handleChange}
-            />
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                name="email"
+                label="Email address"
+                type="email"
+                fullWidth
+                required
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                name="company"
+                label="Company"
+                fullWidth
+                value={formData.company}
+                onChange={handleChange}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                name="subject"
+                label="Subject"
+                fullWidth
+                value={formData.subject}
+                onChange={handleChange}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                name="message"
+                label="Message"
+                fullWidth
+                multiline
+                rows={5}
+                required
+                value={formData.message}
+                onChange={handleChange}
+              />
+            </Grid>
             <Grid size={{ xs: 12 }}>
               <FormControlLabel
                 control={

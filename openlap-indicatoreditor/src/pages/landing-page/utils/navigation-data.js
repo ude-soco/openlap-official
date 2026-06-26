@@ -41,9 +41,15 @@ const navigationItems = [
 ];
 
 const socialItems = [
-  { id: "github", icon: GitHubIcon, link: "https://github.com/ude-soco" },
+  {
+    id: "github",
+    name: "GitHub",
+    icon: GitHubIcon,
+    link: "https://github.com/ude-soco",
+  },
   {
     id: "youtube",
+    name: "YouTube",
     icon: YouTubeIcon,
     link: "https://www.youtube.com/channel/UCQV36Dfq-mfmAG0SqrQ_QbA",
   },

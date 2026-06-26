@@ -66,7 +66,7 @@ export default function Publications() {
                   >
                     {item.year}
                   </Typography>
-                  <Typography fontWeight="medium" gutterBottom>
+                  <Typography component="h3" fontWeight="medium" gutterBottom>
                     {item.title}
                   </Typography>
                   <Typography

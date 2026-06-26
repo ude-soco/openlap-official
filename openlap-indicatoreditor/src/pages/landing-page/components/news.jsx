@@ -93,7 +93,7 @@ export default function News() {
                 {formatNewsDate(item.date)}
               </Typography>
               <Box component={Paper} sx={{ p: 2 }} variant="outlined">
-                <Typography component="h6" fontWeight="medium" gutterBottom>
+                <Typography component="h3" fontWeight="medium" gutterBottom>
                   {item.title}
                 </Typography>
                 <Typography

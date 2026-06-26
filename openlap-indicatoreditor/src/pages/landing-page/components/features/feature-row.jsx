@@ -14,6 +14,7 @@ const featureShape = PropTypes.shape({
   title: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
   image: PropTypes.string.isRequired,
+  imageAlt: PropTypes.string,
   dialogLabel: PropTypes.string,
   buttonLabel: PropTypes.string.isRequired,
   buttonIcon: PropTypes.elementType.isRequired,
@@ -31,7 +32,7 @@ const FeatureText = ({ feature, onClick }) => {
   return (
     <Stack gap={4}>
       <Box>
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h4" component="h3" gutterBottom>
           {feature.title}
         </Typography>
         <Typography>{feature.description}</Typography>
@@ -64,6 +65,7 @@ const FeatureRow = ({ feature }) => {
     <Box sx={{ width: { xs: "100%", md: feature.imageWidth } }}>
       <ZoomableImageCard
         image={feature.image}
+        alt={feature.imageAlt}
         dialogLabel={feature.dialogLabel}
         sx={{ border: { xs: "1px solid #bdbdbd", md: "none" } }}
       >

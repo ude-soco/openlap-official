@@ -36,6 +36,7 @@ export default function Hero() {
         <Stack spacing={2} useFlexGap sx={{ width: { xs: "100%", sm: "70%" } }}>
           <Typography
             variant="h4"
+            component="p"
             sx={{
               display: "flex",
               flexDirection: { xs: "column", md: "row" },
@@ -80,16 +81,24 @@ export default function Hero() {
             implementation process, using no-code-environments, namely the{" "}
             <Link
               underline="hover"
+              href={`#${navigationIds.FEATURE}`}
               sx={{ cursor: "pointer" }}
-              onClick={() => scrollToSection(navigationIds.FEATURE)}
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection(navigationIds.FEATURE);
+              }}
             >
               Indicator Specification Card (ISC) Creator
             </Link>{" "}
             and the{" "}
             <Link
               underline="hover"
+              href={`#${navigationIds.FEATURE}`}
               sx={{ cursor: "pointer" }}
-              onClick={() => scrollToSection(navigationIds.FEATURE)}
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection(navigationIds.FEATURE);
+              }}
             >
               Indicator Editor
             </Link>
@@ -124,6 +133,8 @@ export default function Hero() {
         </Grid>
         <Box
           id="image"
+          role="img"
+          aria-label="Preview of the OpenLAP platform interface"
           sx={(theme) => ({
             alignSelf: "center",
             height: { xs: 200, sm: 700 },
