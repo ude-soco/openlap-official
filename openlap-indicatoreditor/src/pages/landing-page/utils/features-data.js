@@ -9,6 +9,7 @@ import Indicator from "../../../assets/home/abstract-indicators.png";
 const featureItems = [
   {
     id: "isc-creator",
+    step: "Design",
     title: "Indicator Specification Card Creator",
     description:
       "The ISC Creator is an intuitive learning analytics tool that supports the systematic and theoretically-sound (co-)design of personalized low-fidelity learning analytics indicators, using Indicator Specification Cards (ISCs).",
@@ -24,6 +25,7 @@ const featureItems = [
   },
   {
     id: "indicator-editor",
+    step: "Implement",
     title: "Indicator Editor",
     description:
       "The Indicator Editor is an interactive learning analytics tool that enables stakeholders who have knowledge about data analysis and visualization to implement high-fidelity learning analytics indicators based on real xAPI-based learning activity data, by supporting them in selecting data, choosing analysis methods, and specifying visualization techniques.",

@@ -1,11 +1,6 @@
 import PropTypes from "prop-types";
-import {
-  Box,
-  Button,
-  CardContent,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { alpha, Box, Button, Stack, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import Section from "../shared/section";
 import ZoomableImageCard from "../shared/zoomable-image-card";
@@ -19,26 +14,42 @@ const featureShape = PropTypes.shape({
   buttonLabel: PropTypes.string.isRequired,
   buttonIcon: PropTypes.elementType.isRequired,
   to: PropTypes.string.isRequired,
+  step: PropTypes.string,
   imageSide: PropTypes.oneOf(["left", "right"]).isRequired,
   imageWidth: PropTypes.string.isRequired,
   pb: PropTypes.object,
 });
 
-// Title + description + call-to-action for a feature. Rendered once and placed
-// in both the desktop side column and the card's mobile content, so the markup
-// is not duplicated.
+// Purpose eyebrow + title + description + CTA. Rendered once per row.
 const FeatureText = ({ feature, onClick }) => {
+  const theme = useTheme();
+  const accent =
+    theme.palette.mode === "dark" ? "primary.light" : "primary.main";
   const ButtonIcon = feature.buttonIcon;
+
   return (
-    <Stack gap={4}>
-      <Box>
-        <Typography variant="h4" component="h3" gutterBottom>
+    <Stack spacing={3}>
+      <Stack spacing={1.5}>
+        {feature.step && (
+          <Typography
+            variant="overline"
+            sx={{ color: accent, fontWeight: 600, letterSpacing: "0.1em" }}
+          >
+            {feature.step}
+          </Typography>
+        )}
+        <Typography variant="h4" component="h3">
           {feature.title}
         </Typography>
-        <Typography>{feature.description}</Typography>
-      </Box>
+        <Typography color="text.secondary">{feature.description}</Typography>
+      </Stack>
       <Box>
-        <Button variant="contained" endIcon={<ButtonIcon />} onClick={onClick}>
+        <Button
+          variant="contained"
+          size="large"
+          endIcon={<ButtonIcon />}
+          onClick={onClick}
+        >
           {feature.buttonLabel}
         </Button>
       </Box>
@@ -51,60 +62,44 @@ FeatureText.propTypes = {
   onClick: PropTypes.func.isRequired,
 };
 
-// One feature presented as an image card beside a text column. The image sits
-// on the left or right per `feature.imageSide`; on mobile only the card shows
-// (with the text inside it).
+// One feature presented as a framed image card beside a text column. The image
+// alternates left/right per `feature.imageSide`; on mobile it stacks above the
+// text.
 const FeatureRow = ({ feature }) => {
   const navigate = useNavigate();
-  const text = (
-    <FeatureText feature={feature} onClick={() => navigate(feature.to)} />
-  );
+  const theme = useTheme();
   const textWidth = `${100 - parseInt(feature.imageWidth, 10)}%`;
 
-  const imageColumn = (
-    <Box sx={{ width: { xs: "100%", md: feature.imageWidth } }}>
-      <ZoomableImageCard
-        image={feature.image}
-        alt={feature.imageAlt}
-        dialogLabel={feature.dialogLabel}
-        sx={{ border: { xs: "1px solid #bdbdbd", md: "none" } }}
-      >
-        <CardContent sx={{ display: { xs: "flex", md: "none" } }}>
-          {text}
-        </CardContent>
-      </ZoomableImageCard>
-    </Box>
-  );
-
-  const textColumn = (
-    <Box
-      sx={{
-        width: { xs: "100%", md: textWidth },
-        display: { xs: "none", md: "flex" },
-      }}
-    >
-      {text}
-    </Box>
-  );
-
   return (
-    <Section sx={{ pt: { xs: 4, md: 12 }, pb: feature.pb }}>
+    <Section sx={{ pt: { xs: 4, md: 10 }, pb: feature.pb }}>
       <Stack
-        direction={{ xs: "column-reverse", md: "row" }}
-        gap={4}
+        direction={{
+          xs: "column",
+          md: feature.imageSide === "left" ? "row" : "row-reverse",
+        }}
+        spacing={{ xs: 4, md: 6 }}
+        useFlexGap
         alignItems="center"
       >
-        {feature.imageSide === "left" ? (
-          <>
-            {imageColumn}
-            {textColumn}
-          </>
-        ) : (
-          <>
-            {textColumn}
-            {imageColumn}
-          </>
-        )}
+        <Box sx={{ width: { xs: "100%", md: feature.imageWidth } }}>
+          <ZoomableImageCard
+            image={feature.image}
+            alt={feature.imageAlt}
+            dialogLabel={feature.dialogLabel}
+            sx={{
+              border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+              boxShadow: theme.custom.shadows.md,
+              transition: `box-shadow ${theme.custom.motion.duration.normal}ms ${theme.custom.motion.easing.standard}, transform ${theme.custom.motion.duration.hover}ms ${theme.custom.motion.easing.standard}`,
+              "&:hover": {
+                boxShadow: theme.custom.shadows.cardHover,
+                transform: "translateY(-2px)",
+              },
+            }}
+          />
+        </Box>
+        <Box sx={{ width: { xs: "100%", md: textWidth }, display: "flex" }}>
+          <FeatureText feature={feature} onClick={() => navigate(feature.to)} />
+        </Box>
       </Stack>
     </Section>
   );
