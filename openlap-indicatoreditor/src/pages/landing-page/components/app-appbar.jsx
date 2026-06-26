@@ -11,10 +11,11 @@ import {
   Typography,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import ToggleColorMode from "./toggle-color-mode";
+import ToggleColorMode from "../../../common/components/toggle-color-mode/toggle-color-mode";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import { useNavigate } from "react-router-dom";
 import { navigationIds, navigationItems } from "../utils/navigation-data";
+import { scrollToSection } from "../../../common/utils/scroll-to-section";
 
 const logoStyle = {
   width: "120px",
@@ -30,18 +31,9 @@ const AppAppBar = () => {
     setOpen(newOpen);
   };
 
-  const scrollToSection = (sectionId) => {
-    const sectionElement = document.getElementById(sectionId);
-    const offset = 128;
-    if (sectionElement) {
-      const targetScroll = sectionElement.offsetTop - offset;
-      sectionElement.scrollIntoView({ behavior: "smooth" });
-      window.scrollTo({
-        top: targetScroll,
-        behavior: "smooth",
-      });
-      setOpen(false);
-    }
+  const handleNav = (sectionId) => {
+    scrollToSection(sectionId);
+    setOpen(false);
   };
 
   return (
@@ -93,13 +85,13 @@ const AppAppBar = () => {
                 style={logoStyle}
                 alt="logo of OpenLAP"
                 sx={{ mr: 2 }}
-                onClick={() => scrollToSection(navigationIds.HERO)}
+                onClick={() => handleNav(navigationIds.HERO)}
               />
               <Box sx={{ display: { xs: "none", md: "flex" } }}>
                 {navigationItems.map((item) => (
                   <MenuItem
                     key={item.id}
-                    onClick={() => scrollToSection(item.id)}
+                    onClick={() => handleNav(item.id)}
                     sx={{ py: 1, px: 1.5 }}
                   >
                     <Typography variant="body2" color="text.primary">
@@ -166,7 +158,7 @@ const AppAppBar = () => {
                   {navigationItems.map((item) => (
                     <MenuItem
                       key={item.id}
-                      onClick={() => scrollToSection(item.id)}
+                      onClick={() => handleNav(item.id)}
                     >
                       {item.name}
                     </MenuItem>

@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import LearningLockerLight from "../../../assets/home/logo/learning-locker-light.svg";
 import LearningLockerDark from "../../../assets/home/logo/learning-locker-dark.svg";
 import MaterialUILight from "../../../assets/home/logo/material-ui-light.svg";
@@ -12,31 +11,31 @@ import SpringDark from "../../../assets/home/logo/spring-dark.svg";
 
 const logoItems = [
   {
-    id: uuidv4(),
+    id: "learning-locker",
     name: "Learning Locker",
     imageLight: LearningLockerLight,
     imageDark: LearningLockerDark,
   },
   {
-    id: uuidv4(),
+    id: "material-ui",
     name: "Material UI",
     imageLight: MaterialUILight,
     imageDark: MaterialUIDark,
   },
   {
-    id: uuidv4(),
+    id: "react",
     name: "React",
     imageLight: ReactLight,
     imageDark: ReactDark,
   },
   {
-    id: uuidv4(),
+    id: "spring",
     name: "Spring",
     imageLight: SpringLight,
     imageDark: SpringDark,
   },
   {
-    id: uuidv4(),
+    id: "mongodb",
     name: "MongoDB",
     imageLight: MongoDBLight,
     imageDark: MongoDBDark,

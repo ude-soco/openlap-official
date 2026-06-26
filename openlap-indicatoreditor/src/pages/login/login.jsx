@@ -15,7 +15,7 @@ import {
   Container,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
-import ToggleColorMode from "../landing-page/components/toggle-color-mode.jsx";
+import ToggleColorMode from "../../common/components/toggle-color-mode/toggle-color-mode.jsx";
 
 const logoStyle = {
   width: "120px",

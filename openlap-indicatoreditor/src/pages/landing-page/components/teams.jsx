@@ -9,7 +9,16 @@ import {
   Tooltip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import SchoolIcon from "@mui/icons-material/School";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import { memberItems, peopleItems } from "../utils/team-data";
+
+const SOCIAL_ICONS = {
+  linkedin: LinkedInIcon,
+  scholar: SchoolIcon,
+  github: GitHubIcon,
+};
 
 export default function Teams() {
   return (
@@ -95,20 +104,23 @@ export default function Teams() {
                 {item.title}
               </Typography>
               <Grid container spacing={1}>
-                {item.social?.map((social) => (
-                  <Tooltip
-                    key={social.id}
-                    arrow
-                    title={`View ${social.name} profile`}
-                  >
-                    <IconButton
-                      color="primary"
-                      onClick={() => window.open(social.link, "_blank", "noopener,noreferrer")}
+                {item.social?.map((social) => {
+                  const SocialIcon = SOCIAL_ICONS[social.type];
+                  return (
+                    <Tooltip
+                      key={social.id}
+                      arrow
+                      title={`View ${social.name} profile`}
                     >
-                      <social.icon />
-                    </IconButton>
-                  </Tooltip>
-                ))}
+                      <IconButton
+                        color="primary"
+                        onClick={() => window.open(social.link, "_blank", "noopener,noreferrer")}
+                      >
+                        {SocialIcon ? <SocialIcon /> : null}
+                      </IconButton>
+                    </Tooltip>
+                  );
+                })}
               </Grid>
             </Grid>
           </Grid>

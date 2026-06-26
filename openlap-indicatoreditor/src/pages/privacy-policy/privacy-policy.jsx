@@ -10,7 +10,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import ToggleColorMode from "../landing-page/components/toggle-color-mode";
+import ToggleColorMode from "../../common/components/toggle-color-mode/toggle-color-mode";
 import { useNavigate } from "react-router-dom";
 
 const logoStyle = {

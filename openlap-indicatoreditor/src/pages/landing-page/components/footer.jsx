@@ -13,6 +13,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import SocoLogo from "../../../assets/home/soco-logo.svg";
 import { navigationItems, socialItems } from "../utils/navigation-data";
+import { scrollToSection } from "../../../common/utils/scroll-to-section";
 
 const logoStyle = {
   width: "150px",
@@ -36,19 +37,6 @@ function Copyright() {
 }
 
 export default function Footer() {
-  const scrollToSection = (sectionId) => {
-    const sectionElement = document.getElementById(sectionId);
-    const offset = 128;
-    if (sectionElement) {
-      const targetScroll = sectionElement.offsetTop - offset;
-      sectionElement.scrollIntoView({ behavior: "smooth" });
-      window.scrollTo({
-        top: targetScroll,
-        behavior: "smooth",
-      });
-    }
-  };
-
   return (
     <>
       <Container maxWidth="lg" sx={{ py: 8, px: 4 }}>

@@ -6,21 +6,10 @@ import OpenLAPFull from "../../../assets/home/soco-openlap-full.svg";
 import LAY from "../../../assets/home/soco-lay.png";
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 import { useNavigate } from "react-router-dom";
+import { scrollToSection } from "../../../common/utils/scroll-to-section";
 
 export default function Hero() {
   const navigate = useNavigate();
-  const scrollToSection = (sectionId) => {
-    const sectionElement = document.getElementById(sectionId);
-    const offset = 128;
-    if (sectionElement) {
-      const targetScroll = sectionElement.offsetTop - offset;
-      sectionElement.scrollIntoView({ behavior: "smooth" });
-      window.scrollTo({
-        top: targetScroll,
-        behavior: "smooth",
-      });
-    }
-  };
 
   return (
     <Box

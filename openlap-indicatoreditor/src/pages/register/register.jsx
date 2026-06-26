@@ -30,7 +30,7 @@ import UniqueIdentifierTypes from "../account-manager/utils/enums/unique-identif
 import { requestAvailableLrsList, register } from "./register-api";
 import { Help } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
-import ToggleColorMode from "../landing-page/components/toggle-color-mode";
+import ToggleColorMode from "../../common/components/toggle-color-mode/toggle-color-mode";
 
 const logoStyle = {
   width: "120px",

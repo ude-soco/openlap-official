@@ -10,7 +10,7 @@ import {
   Link,
 } from "@mui/material";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import publicationItems from "../utils/publication-data";
+import publicationItems from "../utils/publication-data.json";
 import { navigationIds } from "../utils/navigation-data";
 
 export default function Publications() {

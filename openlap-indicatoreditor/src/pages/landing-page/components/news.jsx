@@ -13,12 +13,39 @@ import {
 import { navigationIds } from "../utils/navigation-data";
 import { newsItems } from "../utils/news-data";
 
+// Formats an ISO date (YYYY-MM-DD) as e.g. "March 2026". Parsed from the
+// string parts to avoid timezone shifts that can flip the month.
+const formatNewsDate = (iso) => {
+  const [year, month] = iso.split("-").map(Number);
+  return new Date(year, month - 1, 1).toLocaleString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+};
+
+// Renders a news body (array of strings / { text, href } link parts) inline.
+const renderNewsBody = (body) =>
+  body.map((part, index) =>
+    typeof part === "string" ? (
+      part
+    ) : (
+      <Link
+        key={index}
+        href={part.href}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {part.text}
+      </Link>
+    )
+  );
+
 export default function News() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const sortedNews = [...newsItems].sort(
-    (a, b) => new Date(b.date) - new Date(a.date)
+  const sortedNews = [...newsItems].sort((a, b) =>
+    b.date.localeCompare(a.date)
   );
 
   return (
@@ -51,13 +78,13 @@ export default function News() {
 
       <Timeline position={isMobile ? "right" : "alternate"}>
         {sortedNews.map((item, index) => (
-          <TimelineItem key={item.id} sx={{ pb: 1 }}>
+          <TimelineItem key={item.slug} sx={{ pb: 1 }}>
             <TimelineOppositeContent
               color="textSecondary"
               sx={{ display: { xs: "none", sm: "grid" } }}
             >
               <Typography variant="body2" color="textSecondary" gutterBottom>
-                {item.date}
+                {formatNewsDate(item.date)}
               </Typography>
             </TimelineOppositeContent>
             <TimelineSeparator>
@@ -72,14 +99,19 @@ export default function News() {
                 sx={{ display: { xs: "flex", sm: "none" }, mb: 2 }}
                 component="span"
               >
-                {item.date}
+                {formatNewsDate(item.date)}
               </Typography>
               <Box component={Paper} sx={{ p: 2 }} variant="outlined">
                 <Typography component="h6" fontWeight="medium" gutterBottom>
                   {item.title}
                 </Typography>
-                <Typography variant="body2" gutterBottom component="div">
-                  {item.desc}
+                <Typography
+                  variant="body2"
+                  color="textSecondary"
+                  gutterBottom
+                  component="div"
+                >
+                  {renderNewsBody(item.body)}
                 </Typography>
                 {item.venue && (
                   <Typography
