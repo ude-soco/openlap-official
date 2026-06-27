@@ -77,11 +77,15 @@ const IscDashboard = () => {
     });
   };
 
+  // Backend-backed drafts now appear as rows in My ISCs, so the banner is only
+  // for LEGACY local-recovery drafts that have no backend draft id (e.g. a
+  // pre-deploy session, or a brand-new draft before its first autosave landed).
+  const showRecoveryBanner = Boolean(draft) && !draft.draftId;
   const draftTitle = !draft
     ? ""
-    : draft.isEdit
-      ? `You have unfinished edits for “${draft.name || "an existing ISC"}”.`
-      : "You have an unfinished ISC draft.";
+    : draft.name
+      ? `Local recovery draft: “${draft.name}”`
+      : "You have a local recovery draft";
 
   return (
     <Stack gap={2}>
@@ -108,12 +112,12 @@ const IscDashboard = () => {
           variant="outlined"
           label={`${stats.total} ISC${stats.total === 1 ? "" : "s"}`}
         />
-        {draft && (
+        {showRecoveryBanner && (
           <Chip
             icon={<HistoryEduOutlinedIcon />}
             color="info"
             variant="outlined"
-            label="Draft in progress"
+            label="Local recovery draft"
           />
         )}
         {stats.latest && (
@@ -127,8 +131,8 @@ const IscDashboard = () => {
 
       <Divider />
 
-      {/* Structured draft banner: icon + title | explanation | actions */}
-      {draft && (
+      {/* Local-recovery banner (legacy drafts without a backend id only). */}
+      {showRecoveryBanner && (
         <Paper
           variant="outlined"
           sx={(t) => ({

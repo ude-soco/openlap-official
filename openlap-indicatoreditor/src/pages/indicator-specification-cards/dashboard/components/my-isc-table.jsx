@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -7,6 +7,11 @@ import {
   CardActionArea,
   CardContent,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   FormControl,
   Grid,
@@ -31,9 +36,12 @@ import SearchIcon from "@mui/icons-material/Search";
 import PreviewIcon from "@mui/icons-material/Preview";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import ViewListRoundedIcon from "@mui/icons-material/ViewListRounded";
 import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
 import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
+import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
 import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
 import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded";
 import { useNavigate } from "react-router-dom";
@@ -44,25 +52,47 @@ import {
   requestISCDetails,
   requestMyISCs,
 } from "../utils/dashboard-api";
-import { createOrGetEditDraft } from "../../creator/utils/isc-draft-api.js";
-import CustomDialog from "../../../../common/components/custom-dialog/custom-dialog";
+import {
+  createOrGetEditDraft,
+  discardDraft,
+} from "../../creator/utils/isc-draft-api.js";
 
 const SORT_OPTIONS = [
-  { value: "newest", label: "Newest first" },
-  { value: "oldest", label: "Oldest first" },
-  { value: "nameAsc", label: "Name A–Z" },
-  { value: "nameDesc", label: "Name Z–A" },
+  { value: "newest", label: "Newest first", sortBy: "createdOn", dir: "desc" },
+  { value: "oldest", label: "Oldest first", sortBy: "createdOn", dir: "asc" },
+  { value: "nameAsc", label: "Name A–Z", sortBy: "indicatorName", dir: "asc" },
+  { value: "nameDesc", label: "Name Z–A", sortBy: "indicatorName", dir: "desc" },
+];
+
+const FILTER_OPTIONS = [
+  { value: "", label: "All" },
+  { value: "SAVED", label: "Saved" },
+  { value: "DRAFT", label: "Drafts" },
 ];
 
 const toSentenceCase = (str) =>
   !str ? "" : str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 
 const formatDate = (time) =>
-  new Date(time).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  time
+    ? new Date(time).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "";
+
+// Lifecycle classification from backend fields.
+const lifecycleOf = (item) => {
+  const status = item.status || "SAVED";
+  if (status === "DRAFT" && (item.draftKind === "EDIT_DRAFT" || item.sourceId)) {
+    return { key: "editDraft", label: "Editing draft", color: "warning" };
+  }
+  if (status === "DRAFT") {
+    return { key: "draft", label: "Draft", color: "info" };
+  }
+  return { key: "saved", label: "Saved", color: "success" };
+};
 
 export default function MyIscTable({ onStats }) {
   const { api, SESSION_ISC } = useContext(AuthContext);
@@ -72,18 +102,20 @@ export default function MyIscTable({ onStats }) {
   const [indicatorList, setIndicatorList] = useState([]);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
-  // Server-side params: page, size, and createdOn ordering are honored by the
-  // backend. (Name sorting + search are client-side — see notes below.)
+  // All server-side now: page, size, createdOn/indicatorName sort, status filter,
+  // and search (indicatorName regex).
   const [params, setParams] = useState({
     page: 0,
     size: 10,
     sortBy: "createdOn",
     sortDirection: "desc",
+    status: "",
+    search: "",
   });
   const [sort, setSort] = useState("newest");
   const [searchTerm, setSearchTerm] = useState("");
   const [view, setView] = useState("list");
-  const [editingId, setEditingId] = useState(null);
+  const [busyId, setBusyId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   const loadMyISCList = async (query) => {
@@ -94,12 +126,10 @@ export default function MyIscTable({ onStats }) {
       const content = response.content ?? [];
       setIndicatorList(content);
       setTotalElements(response.totalElements ?? 0);
-      // Report real stats up to the dashboard header (no invented numbers).
-      const latest = content.reduce(
-        (max, i) =>
-          !max || new Date(i.createdOn) > new Date(max) ? i.createdOn : max,
-        null
-      );
+      const latest = content.reduce((max, i) => {
+        const t = i.updatedOn || i.createdOn;
+        return !max || new Date(t) > new Date(max) ? t : max;
+      }, null);
       onStats?.({ total: response.totalElements ?? 0, latest });
     } catch {
       enqueueSnackbar("Error requesting my indicators", { variant: "error" });
@@ -108,42 +138,44 @@ export default function MyIscTable({ onStats }) {
     }
   };
 
-  // Refetch whenever server-side query params change (fixes the previous bug
-  // where page/size/sort changes never re-requested data).
   useEffect(() => {
     loadMyISCList(params);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.page, params.size, params.sortBy, params.sortDirection]);
+  }, [
+    params.page,
+    params.size,
+    params.sortBy,
+    params.sortDirection,
+    params.status,
+    params.search,
+  ]);
 
-  // Client-side search + name sort over the LOADED page only (the /my endpoint
-  // has no search param and cannot sort by indicatorName — it is not a stored
-  // field). See report for this limitation.
-  const visibleList = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    let list = term
-      ? indicatorList.filter((i) =>
-          (i.indicatorName ?? "").toLowerCase().includes(term)
-        )
-      : [...indicatorList];
-    if (sort === "nameAsc" || sort === "nameDesc") {
-      list.sort((a, b) =>
-        (a.indicatorName ?? "").localeCompare(b.indicatorName ?? "")
+  // Debounce the free-text search into the server query.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setParams((p) =>
+        p.search === searchTerm ? p : { ...p, search: searchTerm, page: 0 }
       );
-      if (sort === "nameDesc") list.reverse();
-    }
-    return list;
-  }, [indicatorList, searchTerm, sort]);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
   const handleSortChange = (event) => {
     const value = event.target.value;
     setSort(value);
-    if (value === "newest") {
-      setParams((p) => ({ ...p, sortBy: "createdOn", sortDirection: "desc", page: 0 }));
-    } else if (value === "oldest") {
-      setParams((p) => ({ ...p, sortBy: "createdOn", sortDirection: "asc", page: 0 }));
+    const opt = SORT_OPTIONS.find((o) => o.value === value);
+    if (opt) {
+      setParams((p) => ({
+        ...p,
+        sortBy: opt.sortBy,
+        sortDirection: opt.dir,
+        page: 0,
+      }));
     }
-    // name sorts are applied client-side without refetching.
   };
+
+  const handleFilterChange = (event) =>
+    setParams((p) => ({ ...p, status: event.target.value, page: 0 }));
 
   const handlePageChange = (event, newPage) =>
     setParams((p) => ({ ...p, page: newPage }));
@@ -152,13 +184,62 @@ export default function MyIscTable({ onStats }) {
     setParams((p) => ({ ...p, size: parseInt(event.target.value, 10), page: 0 }));
 
   const handlePreview = (id) => navigate(`/isc/${id}`);
+  const handlePreviewSource = (sourceId) => navigate(`/isc/${sourceId}`);
 
-  // Edit bootstrap (Frontend Phase 1): create/find a backend EDIT_DRAFT linked to
-  // the saved ISC, load THAT draft into the creator, and tag the session with
-  // draft metadata. The saved source is never mutated until publish. If the
-  // draft endpoint is unavailable, fall back to the legacy in-session edit.
+  // Parse + stash an ISC's slices into the session, then route into the creator.
+  const loadIntoCreator = (parsedData, draftMeta, route) => {
+    parsedData.visRef.edit = true;
+    sessionStorage.setItem(
+      SESSION_ISC,
+      JSON.stringify({
+        id: null,
+        requirements: parsedData.requirements,
+        dataset: parsedData.dataset,
+        visRef: parsedData.visRef,
+        lockedStep: parsedData.lockedStep,
+        draftMeta,
+      })
+    );
+    navigate(route);
+  };
+
+  const parseDetails = (responseData) => {
+    const parsed = JSON.parse(JSON.stringify(responseData));
+    parsed.requirements = JSON.parse(parsed.requirements);
+    parsed.dataset = JSON.parse(parsed.dataset);
+    parsed.visRef = JSON.parse(parsed.visRef);
+    parsed.lockedStep = JSON.parse(parsed.lockedStep);
+    return parsed;
+  };
+
+  // Continue an existing backend draft (new or edit) by its own draft id.
+  const handleContinueDraft = async (item) => {
+    setBusyId(item.id);
+    try {
+      const parsed = parseDetails(await requestISCDetails(api, item.id));
+      const isEdit = item.draftKind === "EDIT_DRAFT" || Boolean(item.sourceId);
+      loadIntoCreator(
+        parsed,
+        {
+          mode: isEdit ? "EDIT_DRAFT" : "NEW_DRAFT",
+          draftId: item.id,
+          sourceId: item.sourceId || null,
+          status: "DRAFT",
+          lastAutosavedAt: null,
+          autosaveError: null,
+        },
+        isEdit ? `/isc/creator/edit/${item.sourceId}` : "/isc/creator"
+      );
+    } catch (error) {
+      console.error("Could not open draft", error);
+      enqueueSnackbar("Could not open this draft", { variant: "error" });
+      setBusyId(null);
+    }
+  };
+
+  // Edit a SAVED ISC → create/find its edit draft (Phase 1 behavior).
   const handleEditIndicator = async (id) => {
-    setEditingId(id);
+    setBusyId(id);
     try {
       let draftId = null;
       try {
@@ -167,120 +248,189 @@ export default function MyIscTable({ onStats }) {
       } catch (draftError) {
         console.warn("Edit-draft endpoint unavailable; using legacy edit", draftError);
       }
-
-      const responseData = await requestISCDetails(api, draftId || id);
-      const parsedData = JSON.parse(JSON.stringify(responseData));
-      parsedData.requirements = JSON.parse(parsedData.requirements);
-      parsedData.dataset = JSON.parse(parsedData.dataset);
-      parsedData.visRef = JSON.parse(parsedData.visRef);
-      parsedData.lockedStep = JSON.parse(parsedData.lockedStep);
-      parsedData.visRef.edit = true;
-
+      const parsed = parseDetails(await requestISCDetails(api, draftId || id));
       if (draftId) {
-        sessionStorage.setItem(
-          SESSION_ISC,
-          JSON.stringify({
-            id: null,
-            requirements: parsedData.requirements,
-            dataset: parsedData.dataset,
-            visRef: parsedData.visRef,
-            lockedStep: parsedData.lockedStep,
-            draftMeta: {
-              mode: "EDIT_DRAFT",
-              draftId,
-              sourceId: id,
-              status: "DRAFT",
-              lastAutosavedAt: null,
-              autosaveError: null,
-            },
-          })
+        loadIntoCreator(
+          parsed,
+          {
+            mode: "EDIT_DRAFT",
+            draftId,
+            sourceId: id,
+            status: "DRAFT",
+            lastAutosavedAt: null,
+            autosaveError: null,
+          },
+          `/isc/creator/edit/${id}`
         );
       } else {
-        // Legacy fallback: keep the source id so publish uses the update path.
-        sessionStorage.setItem(SESSION_ISC, JSON.stringify(parsedData));
+        // Legacy fallback: keep source id so publish uses the update path.
+        parsed.visRef.edit = true;
+        sessionStorage.setItem(
+          SESSION_ISC,
+          JSON.stringify({ ...parsed, id })
+        );
+        navigate(`/isc/creator/edit/${id}`);
       }
-      navigate(`/isc/creator/edit/${id}`);
     } catch (error) {
-      console.error("Error requesting indicator details", error);
+      console.error("Error opening indicator for editing", error);
       enqueueSnackbar("Could not open this indicator for editing", {
         variant: "error",
       });
-    } finally {
-      setEditingId(null);
+      setBusyId(null);
     }
   };
 
-  const handleOpenDelete = (indicator) => setDeleteTarget(indicator);
-  const handleCloseDelete = () => setDeleteTarget(null);
-
-  const handleDeleteIndicator = async () => {
+  const handleConfirmRemove = async () => {
     if (!deleteTarget) return;
+    const life = lifecycleOf(deleteTarget);
     try {
-      await requestDeleteISC(api, deleteTarget.id);
-      enqueueSnackbar("Indicator deleted successfully", { variant: "success" });
-      handleCloseDelete();
+      if (life.key === "saved") {
+        await requestDeleteISC(api, deleteTarget.id);
+        enqueueSnackbar("Indicator deleted successfully", { variant: "success" });
+      } else {
+        await discardDraft(api, deleteTarget.id);
+        enqueueSnackbar("Draft discarded", { variant: "success" });
+      }
+      setDeleteTarget(null);
       loadMyISCList(params);
     } catch (error) {
       console.error(error);
-      enqueueSnackbar("Could not delete this indicator", { variant: "error" });
+      enqueueSnackbar("Could not complete that action", { variant: "error" });
     }
   };
 
-  // "Create new ISC" keeps existing behavior: clear any draft, then open the
-  // creator. (Confirm-before-discard belongs to Phase A — see report.)
   const handleCreateNew = () => {
+    // Leaves any existing backend draft intact (it remains visible in the list);
+    // only clears the local recovery copy. Confirm-before-discard is Phase A.
     sessionStorage.removeItem(SESSION_ISC);
     navigate("/isc/creator");
   };
 
-  const isEmpty = !loading && visibleList.length === 0;
-  const searching = Boolean(searchTerm.trim());
+  const isEmpty = !loading && indicatorList.length === 0;
+  const searching = Boolean(params.search.trim());
 
-  // Actions block. `stop` prevents the wrapping clickable row/card from also
-  // triggering Preview when an action button is pressed.
-  const renderActions = (indicator) => {
+  const removeDialog = (() => {
+    if (!deleteTarget) return { title: "", content: "", confirmLabel: "" };
+    const life = lifecycleOf(deleteTarget);
+    if (life.key === "saved") {
+      return {
+        title: "Delete indicator?",
+        content: "This will delete the indicator permanently from your dashboard.",
+        confirmLabel: "Delete indicator",
+      };
+    }
+    if (life.key === "editDraft") {
+      return {
+        title: "Discard changes?",
+        content: "Discard these changes? The saved ISC will remain unchanged.",
+        confirmLabel: "Discard changes",
+      };
+    }
+    return {
+      title: "Discard draft?",
+      content: "Discard this draft? This will delete the unfinished ISC draft.",
+      confirmLabel: "Discard draft",
+    };
+  })();
+
+  // Lifecycle-aware action buttons (always visible, keyboard-accessible).
+  const renderActions = (item) => {
+    const life = lifecycleOf(item);
     const stop = (fn) => (e) => {
       e.stopPropagation();
       fn();
     };
+    const disabled = Boolean(busyId);
+    const name = item.indicatorName;
+
+    if (life.key === "saved") {
+      return (
+        <Stack direction="row" gap={0.5} alignItems="center">
+          <Tooltip arrow title="Preview">
+            <span>
+              <IconButton
+                size="small"
+                color="primary"
+                aria-label={`Preview ${name}`}
+                onClick={stop(() => handlePreview(item.id))}
+                disabled={disabled}
+              >
+                <PreviewIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip arrow title="Edit">
+            <span>
+              <IconButton
+                size="small"
+                color="primary"
+                aria-label={`Edit ${name}`}
+                onClick={stop(() => handleEditIndicator(item.id))}
+                disabled={disabled}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip arrow title="Delete">
+            <span>
+              <IconButton
+                size="small"
+                color="error"
+                aria-label={`Delete ${name}`}
+                onClick={stop(() => setDeleteTarget(item))}
+                disabled={disabled}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Stack>
+      );
+    }
+
+    // draft or editDraft
+    const isEdit = life.key === "editDraft";
     return (
       <Stack direction="row" gap={0.5} alignItems="center">
-        <Tooltip arrow title="Preview">
+        <Tooltip arrow title={isEdit ? "Continue editing" : "Continue"}>
           <span>
             <IconButton
               size="small"
               color="primary"
-              aria-label={`Preview ${indicator.indicatorName}`}
-              onClick={stop(() => handlePreview(indicator.id))}
-              disabled={Boolean(editingId)}
+              aria-label={`${isEdit ? "Continue editing" : "Continue"} ${name}`}
+              onClick={stop(() => handleContinueDraft(item))}
+              disabled={disabled}
             >
-              <PreviewIcon fontSize="small" />
+              <PlayArrowRoundedIcon fontSize="small" />
             </IconButton>
           </span>
         </Tooltip>
-        <Tooltip arrow title="Edit">
-          <span>
-            <IconButton
-              size="small"
-              color="primary"
-              aria-label={`Edit ${indicator.indicatorName}`}
-              onClick={stop(() => handleEditIndicator(indicator.id))}
-              disabled={Boolean(editingId)}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip arrow title="Delete">
+        {isEdit && item.sourceId && (
+          <Tooltip arrow title="Preview saved version">
+            <span>
+              <IconButton
+                size="small"
+                color="primary"
+                aria-label={`Preview saved version of ${name}`}
+                onClick={stop(() => handlePreviewSource(item.sourceId))}
+                disabled={disabled}
+              >
+                <PreviewIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        )}
+        <Tooltip arrow title={isEdit ? "Discard changes" : "Discard draft"}>
           <span>
             <IconButton
               size="small"
               color="error"
-              aria-label={`Delete ${indicator.indicatorName}`}
-              onClick={stop(() => handleOpenDelete(indicator))}
-              disabled={Boolean(editingId)}
+              aria-label={`${isEdit ? "Discard changes for" : "Discard draft"} ${name}`}
+              onClick={stop(() => setDeleteTarget(item))}
+              disabled={disabled}
             >
-              <DeleteIcon fontSize="small" />
+              <DeleteOutlineIcon fontSize="small" />
             </IconButton>
           </span>
         </Tooltip>
@@ -288,19 +438,54 @@ export default function MyIscTable({ onStats }) {
     );
   };
 
+  // Primary click target (whole row/card): Preview for saved, Continue for drafts.
+  const handlePrimary = (item) => {
+    const life = lifecycleOf(item);
+    if (life.key === "saved") handlePreview(item.id);
+    else handleContinueDraft(item);
+  };
+
+  const metaChips = (item) => {
+    const life = lifecycleOf(item);
+    const date = item.updatedOn || item.createdOn;
+    const dateLabel = item.updatedOn ? "Updated" : "Created";
+    return (
+      <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+        <Chip size="small" color={life.color} variant="outlined" label={life.label} />
+        {item.visualizationType && (
+          <Chip
+            size="small"
+            variant="outlined"
+            icon={<InsightsOutlinedIcon />}
+            label={item.visualizationType}
+          />
+        )}
+        {item.datasetRows != null && item.datasetColumns != null && (
+          <Chip
+            size="small"
+            variant="outlined"
+            icon={<TableChartOutlinedIcon />}
+            label={`${item.datasetRows}×${item.datasetColumns}`}
+          />
+        )}
+        <Typography variant="body2" color="text.secondary">
+          {dateLabel} {formatDate(date)}
+        </Typography>
+        {item.createdBy && (
+          <Stack direction="row" gap={0.5} alignItems="center" sx={{ color: "text.secondary" }}>
+            <PersonOutlineRoundedIcon fontSize="inherit" />
+            <Typography variant="body2">{item.createdBy}</Typography>
+          </Stack>
+        )}
+      </Stack>
+    );
+  };
+
   return (
     <Stack gap={2}>
-      {/* Control bar: Create (left) · search/sort/view (right) */}
-      <Paper
-        variant="outlined"
-        sx={(t) => ({ p: 2, borderRadius: `${t.custom?.radii?.card ?? 8}px` })}
-      >
-        <Grid
-          container
-          spacing={2}
-          alignItems="center"
-          justifyContent="space-between"
-        >
+      {/* Control bar */}
+      <Paper variant="outlined" sx={(t) => ({ p: 2, borderRadius: `${t.custom?.radii?.card ?? 8}px` })}>
+        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
           <Grid size={{ xs: 12, md: "auto" }}>
             <Button
               startIcon={<AddIcon />}
@@ -331,6 +516,21 @@ export default function MyIscTable({ onStats }) {
                   ),
                 }}
               />
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel id="isc-filter-label">Show</InputLabel>
+                <Select
+                  labelId="isc-filter-label"
+                  label="Show"
+                  value={params.status}
+                  onChange={handleFilterChange}
+                >
+                  {FILTER_OPTIONS.map((o) => (
+                    <MenuItem key={o.value} value={o.value}>
+                      {o.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               <FormControl size="small" sx={{ minWidth: 150 }}>
                 <InputLabel id="isc-sort-label">Sort</InputLabel>
                 <Select
@@ -363,35 +563,19 @@ export default function MyIscTable({ onStats }) {
             </Stack>
           </Grid>
         </Grid>
-        {searching && (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ display: "block", mt: 1 }}
-          >
-            Search applies to the currently loaded page.
-          </Typography>
-        )}
       </Paper>
 
       {loading && <LinearProgress />}
 
-      {/* Empty / no-results states */}
       {isEmpty && (
         <Paper
           variant="outlined"
-          sx={(t) => ({
-            p: 6,
-            textAlign: "center",
-            borderRadius: `${t.custom?.radii?.card ?? 8}px`,
-          })}
+          sx={(t) => ({ p: 6, textAlign: "center", borderRadius: `${t.custom?.radii?.card ?? 8}px` })}
         >
           {searching ? (
             <Stack gap={1} alignItems="center">
               <SearchOffRoundedIcon color="disabled" fontSize="large" />
-              <Typography color="text.secondary">
-                No ISCs match this search on the current page.
-              </Typography>
+              <Typography color="text.secondary">No ISCs match this search.</Typography>
             </Stack>
           ) : (
             <Stack gap={1.5} alignItems="center">
@@ -401,11 +585,7 @@ export default function MyIscTable({ onStats }) {
                 Create your first Indicator Specification Card to prototype an
                 indicator before implementing it.
               </Typography>
-              <Button
-                startIcon={<AddIcon />}
-                variant="contained"
-                onClick={handleCreateNew}
-              >
+              <Button startIcon={<AddIcon />} variant="contained" onClick={handleCreateNew}>
                 Create new ISC
               </Button>
             </Stack>
@@ -413,12 +593,12 @@ export default function MyIscTable({ onStats }) {
         </Paper>
       )}
 
-      {/* List view — whole row opens Preview; action buttons are separate */}
+      {/* List view */}
       {!isEmpty && view === "list" && (
         <Stack gap={1}>
-          {visibleList.map((indicator) => (
+          {indicatorList.map((item) => (
             <Paper
-              key={indicator.id}
+              key={item.id}
               variant="outlined"
               sx={(t) => ({
                 borderRadius: `${t.custom?.radii?.card ?? 8}px`,
@@ -429,57 +609,21 @@ export default function MyIscTable({ onStats }) {
               <Grid container alignItems="center">
                 <Grid size="grow">
                   <CardActionArea
-                    onClick={() => handlePreview(indicator.id)}
-                    aria-label={`Preview ${indicator.indicatorName}`}
+                    onClick={() => handlePrimary(item)}
+                    aria-label={`Open ${item.indicatorName}`}
                     sx={{ p: 1.5 }}
                   >
-                    <Stack
-                      direction="row"
-                      gap={1}
-                      alignItems="center"
-                      flexWrap="wrap"
-                    >
-                      <Typography fontWeight={600}>
-                        {toSentenceCase(indicator.indicatorName)}
-                      </Typography>
-                      <Chip
-                        size="small"
-                        color="success"
-                        variant="outlined"
-                        label="Saved"
-                      />
-                    </Stack>
-                    <Stack
-                      direction="row"
-                      gap={1.5}
-                      alignItems="center"
-                      flexWrap="wrap"
-                      sx={{ mt: 0.5 }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        Created {formatDate(indicator.createdOn)}
-                      </Typography>
-                      {indicator.createdBy && (
-                        <Stack
-                          direction="row"
-                          gap={0.5}
-                          alignItems="center"
-                          sx={{ color: "text.secondary" }}
-                        >
-                          <PersonOutlineRoundedIcon fontSize="inherit" />
-                          <Typography variant="body2">
-                            {indicator.createdBy}
-                          </Typography>
-                        </Stack>
-                      )}
-                    </Stack>
+                    <Typography fontWeight={600}>
+                      {toSentenceCase(item.indicatorName)}
+                    </Typography>
+                    <Box sx={{ mt: 0.5 }}>{metaChips(item)}</Box>
                   </CardActionArea>
                 </Grid>
                 <Grid size="auto" sx={{ pr: 1.5 }}>
-                  {renderActions(indicator)}
+                  {renderActions(item)}
                 </Grid>
               </Grid>
-              {editingId === indicator.id && <LinearProgress />}
+              {busyId === item.id && <LinearProgress />}
             </Paper>
           ))}
         </Stack>
@@ -488,74 +632,67 @@ export default function MyIscTable({ onStats }) {
       {/* Card view */}
       {!isEmpty && view === "cards" && (
         <Grid container spacing={2}>
-          {visibleList.map((indicator) => (
-            <Grid
-              key={indicator.id}
-              size={{ xs: 12, sm: 6, lg: 4 }}
-              sx={{ display: "flex" }}
-            >
-              <Card
-                variant="outlined"
-                sx={(t) => ({
-                  width: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  borderRadius: `${t.custom?.radii?.card ?? 8}px`,
-                })}
-              >
-                <CardActionArea
-                  onClick={() => handlePreview(indicator.id)}
-                  aria-label={`Preview ${indicator.indicatorName}`}
+          {indicatorList.map((item) => {
+            const life = lifecycleOf(item);
+            return (
+              <Grid key={item.id} size={{ xs: 12, sm: 6, lg: 4 }} sx={{ display: "flex" }}>
+                <Card
+                  variant="outlined"
+                  sx={(t) => ({
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    borderRadius: `${t.custom?.radii?.card ?? 8}px`,
+                  })}
                 >
-                  <Box
-                    sx={(t) => ({
-                      height: 104,
-                      position: "relative",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: alpha(t.palette.primary.main, 0.06),
-                    })}
+                  <CardActionArea
+                    onClick={() => handlePrimary(item)}
+                    aria-label={`Open ${item.indicatorName}`}
                   >
-                    <InsightsOutlinedIcon color="primary" sx={{ fontSize: 40 }} />
-                    <Chip
-                      size="small"
-                      label="ISC prototype"
-                      sx={{ position: "absolute", top: 8, left: 8 }}
-                    />
-                  </Box>
-                  <CardContent>
-                    <Typography fontWeight={600} noWrap gutterBottom>
-                      {toSentenceCase(indicator.indicatorName)}
-                    </Typography>
-                    <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
-                      <Chip
-                        size="small"
-                        color="success"
-                        variant="outlined"
-                        label="Saved"
-                      />
-                      <Typography variant="body2" color="text.secondary">
-                        {formatDate(indicator.createdOn)}
+                    <Box
+                      sx={(t) => ({
+                        height: 96,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: alpha(t.palette.primary.main, 0.06),
+                      })}
+                    >
+                      <InsightsOutlinedIcon color="primary" sx={{ fontSize: 36 }} />
+                    </Box>
+                    <CardContent>
+                      <Typography fontWeight={600} noWrap gutterBottom>
+                        {toSentenceCase(item.indicatorName)}
                       </Typography>
-                    </Stack>
-                  </CardContent>
-                </CardActionArea>
-                <Box sx={{ mt: "auto" }}>
-                  <Divider />
-                  <Box
-                    sx={{
-                      p: 1,
-                      display: "flex",
-                      justifyContent: "flex-end",
-                    }}
-                  >
-                    {renderActions(indicator)}
+                      <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+                        <Chip size="small" color={life.color} variant="outlined" label={life.label} />
+                        {item.visualizationType && (
+                          <Chip size="small" variant="outlined" label={item.visualizationType} />
+                        )}
+                        {item.datasetRows != null && item.datasetColumns != null && (
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={`${item.datasetRows}×${item.datasetColumns}`}
+                          />
+                        )}
+                      </Stack>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        {item.updatedOn ? "Updated" : "Created"}{" "}
+                        {formatDate(item.updatedOn || item.createdOn)}
+                      </Typography>
+                    </CardContent>
+                  </CardActionArea>
+                  <Box sx={{ mt: "auto" }}>
+                    <Divider />
+                    <Box sx={{ p: 1, display: "flex", justifyContent: "flex-end" }}>
+                      {renderActions(item)}
+                    </Box>
                   </Box>
-                </Box>
-              </Card>
-            </Grid>
-          ))}
+                </Card>
+              </Grid>
+            );
+          })}
         </Grid>
       )}
 
@@ -569,13 +706,34 @@ export default function MyIscTable({ onStats }) {
         rowsPerPageOptions={[5, 10, 20, 50]}
       />
 
-      <CustomDialog
-        type="delete"
-        content="This will delete the indicator permanently from your dashboard."
+      <Dialog
         open={Boolean(deleteTarget)}
-        toggleOpen={handleCloseDelete}
-        handler={handleDeleteIndicator}
-      />
+        onClose={() => setDeleteTarget(null)}
+        aria-labelledby="isc-remove-title"
+        aria-describedby="isc-remove-description"
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle id="isc-remove-title">{removeDialog.title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="isc-remove-description">
+            {removeDialog.content}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteTarget(null)} variant="outlined" fullWidth>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmRemove}
+            variant="contained"
+            color="error"
+            fullWidth
+          >
+            {removeDialog.confirmLabel}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }
