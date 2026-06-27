@@ -51,15 +51,8 @@ import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager";
-import {
-  requestDeleteISC,
-  requestISCDetails,
-  requestMyISCs,
-} from "../utils/dashboard-api";
-import {
-  createOrGetEditDraft,
-  discardDraft,
-} from "../../creator/utils/isc-draft-api.js";
+import { requestDeleteISC, requestMyISCs } from "../utils/dashboard-api";
+import { discardDraft } from "../../creator/utils/isc-draft-api.js";
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest first", sortBy: "createdOn", dir: "desc" },
@@ -119,7 +112,6 @@ export default function MyIscTable({ onStats }) {
   const [sort, setSort] = useState("newest");
   const [searchTerm, setSearchTerm] = useState("");
   const [view, setView] = useState("list");
-  const [busyId, setBusyId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [menu, setMenu] = useState({ anchorEl: null, item: null });
 
@@ -191,99 +183,10 @@ export default function MyIscTable({ onStats }) {
   const handlePreview = (id) => navigate(`/isc/${id}`);
   const handlePreviewSource = (sourceId) => navigate(`/isc/${sourceId}`);
 
-  // Parse + stash an ISC's slices into the session, then route into the creator.
-  const loadIntoCreator = (parsedData, draftMeta, route) => {
-    parsedData.visRef.edit = true;
-    sessionStorage.setItem(
-      SESSION_ISC,
-      JSON.stringify({
-        id: null,
-        requirements: parsedData.requirements,
-        dataset: parsedData.dataset,
-        visRef: parsedData.visRef,
-        lockedStep: parsedData.lockedStep,
-        draftMeta,
-      })
-    );
-    navigate(route);
-  };
-
-  const parseDetails = (responseData) => {
-    const parsed = JSON.parse(JSON.stringify(responseData));
-    parsed.requirements = JSON.parse(parsed.requirements);
-    parsed.dataset = JSON.parse(parsed.dataset);
-    parsed.visRef = JSON.parse(parsed.visRef);
-    parsed.lockedStep = JSON.parse(parsed.lockedStep);
-    return parsed;
-  };
-
-  // Continue an existing backend draft (new or edit) by its own draft id.
-  const handleContinueDraft = async (item) => {
-    setBusyId(item.id);
-    try {
-      const parsed = parseDetails(await requestISCDetails(api, item.id));
-      const isEdit = item.draftKind === "EDIT_DRAFT" || Boolean(item.sourceId);
-      loadIntoCreator(
-        parsed,
-        {
-          mode: isEdit ? "EDIT_DRAFT" : "NEW_DRAFT",
-          draftId: item.id,
-          sourceId: item.sourceId || null,
-          status: "DRAFT",
-          lastAutosavedAt: null,
-          autosaveError: null,
-        },
-        isEdit ? `/isc/creator/edit/${item.sourceId}` : "/isc/creator"
-      );
-    } catch (error) {
-      console.error("Could not open draft", error);
-      enqueueSnackbar("Could not open this draft", { variant: "error" });
-      setBusyId(null);
-    }
-  };
-
-  // Edit a SAVED ISC → create/find its edit draft (Phase 1 behavior).
-  const handleEditIndicator = async (id) => {
-    setBusyId(id);
-    try {
-      let draftId = null;
-      try {
-        const editDraft = await createOrGetEditDraft(api, id);
-        draftId = editDraft.id;
-      } catch (draftError) {
-        console.warn("Edit-draft endpoint unavailable; using legacy edit", draftError);
-      }
-      const parsed = parseDetails(await requestISCDetails(api, draftId || id));
-      if (draftId) {
-        loadIntoCreator(
-          parsed,
-          {
-            mode: "EDIT_DRAFT",
-            draftId,
-            sourceId: id,
-            status: "DRAFT",
-            lastAutosavedAt: null,
-            autosaveError: null,
-          },
-          `/isc/creator/edit/${id}`
-        );
-      } else {
-        // Legacy fallback: keep source id so publish uses the update path.
-        parsed.visRef.edit = true;
-        sessionStorage.setItem(
-          SESSION_ISC,
-          JSON.stringify({ ...parsed, id })
-        );
-        navigate(`/isc/creator/edit/${id}`);
-      }
-    } catch (error) {
-      console.error("Error opening indicator for editing", error);
-      enqueueSnackbar("Could not open this indicator for editing", {
-        variant: "error",
-      });
-      setBusyId(null);
-    }
-  };
+  // Route-authoritative (Phase 3): the loader routes own the bootstrap. Continue
+  // a draft by its id; edit a saved ISC via the create-or-get-edit-draft route.
+  const handleContinueDraft = (item) => navigate(`/isc/drafts/${item.id}`);
+  const handleEditIndicator = (id) => navigate(`/isc/${id}/edit`);
 
   const handleConfirmRemove = async () => {
     if (!deleteTarget) return;
@@ -305,10 +208,11 @@ export default function MyIscTable({ onStats }) {
   };
 
   const handleCreateNew = () => {
-    // Leaves any existing backend draft intact (it remains visible in the list);
-    // only clears the local recovery copy. Confirm-before-discard is Phase A.
+    // Clear the local recovery copy so /isc/new starts a genuinely fresh draft.
+    // Any existing backend draft stays in the list (confirm-before-discard is
+    // a later phase).
     sessionStorage.removeItem(SESSION_ISC);
-    navigate("/isc/creator");
+    navigate("/isc/new");
   };
 
   const isEmpty = !loading && indicatorList.length === 0;
@@ -362,7 +266,6 @@ export default function MyIscTable({ onStats }) {
       e.stopPropagation();
       fn();
     };
-    const disabled = Boolean(busyId);
     const name = item.indicatorName;
 
     return (
@@ -374,7 +277,6 @@ export default function MyIscTable({ onStats }) {
               color="primary"
               aria-label={`${primary.label} ${name}`}
               onClick={stop(primary.run)}
-              disabled={disabled}
             >
               <PrimaryIcon fontSize="small" />
             </IconButton>
@@ -391,7 +293,6 @@ export default function MyIscTable({ onStats }) {
                 e.preventDefault();
                 setMenu({ anchorEl: e.currentTarget, item });
               }}
-              disabled={disabled}
             >
               <MoreVertRoundedIcon fontSize="small" />
             </IconButton>
@@ -640,7 +541,6 @@ export default function MyIscTable({ onStats }) {
                   {renderActions(item)}
                 </Grid>
               </Grid>
-              {busyId === item.id && <LinearProgress />}
             </Paper>
           ))}
         </Stack>

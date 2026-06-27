@@ -72,6 +72,22 @@ const IscPreview = lazy(() =>
     "../../pages/indicator-specification-cards/dashboard/components/isc-preview"
   )
 );
+// Route-authoritative lifecycle entry points (Phase 3).
+const IscNewRoute = lazy(() =>
+  import("../../pages/indicator-specification-cards/creator/isc-route-loaders").then(
+    (m) => ({ default: m.IscNewRoute })
+  )
+);
+const IscDraftLoader = lazy(() =>
+  import("../../pages/indicator-specification-cards/creator/isc-route-loaders").then(
+    (m) => ({ default: m.IscDraftLoader })
+  )
+);
+const IscEditBootstrap = lazy(() =>
+  import("../../pages/indicator-specification-cards/creator/isc-route-loaders").then(
+    (m) => ({ default: m.IscEditBootstrap })
+  )
+);
 const IndicatorEditor = lazy(() =>
   import("../../pages/indicators/indicator-editor/indicator-editor")
 );
@@ -91,7 +107,11 @@ const ManageAnalytics = lazy(() =>
 // card) and render full-bleed instead — for editor/workspace pages where the
 // card-in-card framing is undesirable (e.g. the ISC Creator workspace, whose
 // own panels already provide framing). Other authenticated routes are unaffected.
-const FULL_BLEED_PATH_PREFIXES = ["/isc/creator"];
+const FULL_BLEED_PATH_PREFIXES = ["/isc/creator", "/isc/new", "/isc/drafts"];
+// Full-bleed also for the edit bootstrap route /isc/:id/edit.
+const isFullBleedPath = (pathname) =>
+  FULL_BLEED_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
+  /^\/isc\/[^/]+\/edit\/?$/.test(pathname);
 
 // The authenticated content region. Renders the matched route via <Outlet/>,
 // wrapped in the content sheet by default, or full-bleed for editor routes.
@@ -99,9 +119,7 @@ const FULL_BLEED_PATH_PREFIXES = ["/isc/creator"];
 // remounts the shell (top bar / sidebar / drawer state are preserved).
 const AuthenticatedContent = () => {
   const { pathname } = useLocation();
-  const fullBleed = FULL_BLEED_PATH_PREFIXES.some((prefix) =>
-    pathname.startsWith(prefix)
-  );
+  const fullBleed = isFullBleedPath(pathname);
 
   return (
     <Container maxWidth="xl" sx={{ minHeight: "89vh" }}>
@@ -321,11 +339,48 @@ const AppRoutes = () => {
                       />
                     }
                   />
+                  {/* Lifecycle entry points (static segments rank above :id) */}
+                  <Route
+                    path="new"
+                    element={
+                      <PrivateRoute
+                        component={<IscNewRoute />}
+                        allowedRoles={[
+                          RoleTypes.user,
+                          RoleTypes.userWithoutLRS,
+                        ]}
+                      />
+                    }
+                  />
+                  <Route
+                    path="drafts/:draftId"
+                    element={
+                      <PrivateRoute
+                        component={<IscDraftLoader />}
+                        allowedRoles={[
+                          RoleTypes.user,
+                          RoleTypes.userWithoutLRS,
+                        ]}
+                      />
+                    }
+                  />
                   <Route
                     path=":id"
                     element={
                       <PrivateRoute
                         component={<IscPreview />}
+                        allowedRoles={[
+                          RoleTypes.user,
+                          RoleTypes.userWithoutLRS,
+                        ]}
+                      />
+                    }
+                  />
+                  <Route
+                    path=":id/edit"
+                    element={
+                      <PrivateRoute
+                        component={<IscEditBootstrap />}
                         allowedRoles={[
                           RoleTypes.user,
                           RoleTypes.userWithoutLRS,

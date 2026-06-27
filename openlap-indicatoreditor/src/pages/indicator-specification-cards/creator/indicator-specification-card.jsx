@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Stack, Typography } from "@mui/material";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { v4 as uuidv4 } from "uuid";
 import SpecifyRequirements from "./components/specify-requirements/specify-requirements.jsx";
@@ -15,7 +15,13 @@ import { LEGACY_STEP_CODE } from "./utils/isc-constants.js";
 import { getWorkflowSteps, getCurrentStep } from "./utils/isc-selectors.js";
 import { withOnlyStepExpanded } from "./utils/isc-workflow-ui.js";
 import { getDefaultVisRef } from "./utils/isc-workflow-reset.js";
-import { createDraft, updateDraft } from "./utils/isc-draft-api.js";
+import {
+  createDraft,
+  discardDraft,
+  publishDraft,
+  updateDraft,
+} from "./utils/isc-draft-api.js";
+import LeaveEditDialog from "./components/leave-edit-dialog.jsx";
 import { ISCContext } from "./isc-context.js";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 
@@ -66,6 +72,7 @@ const IndicatorSpecificationCard = () => {
   const { SESSION_ISC, api } = useContext(AuthContext);
   const { enqueueSnackbar } = useSnackbar();
   const { id: routeId } = useParams();
+  const navigate = useNavigate();
   // `id` is only initialized from the restored draft; it is never set via state
   // afterwards (the setter was unused), so no setter is destructured.
   const [id] = useState(() => {
@@ -341,6 +348,85 @@ const IndicatorSpecificationCard = () => {
     );
   };
 
+  // ---- Leave-page protection for EDIT drafts (Phase 3) ----
+  // Only edit drafts guard navigation (publishing merges into the saved source).
+  // New drafts already live in My ISCs once autosaved, so leaving is harmless.
+  const isEditDraft = draftMeta.mode === "EDIT_DRAFT";
+  const [leaveTo, setLeaveTo] = useState(null);
+  const [leaving, setLeaving] = useState(false);
+
+  // Browser-level guard (refresh / tab close / external URL). Generic prompt.
+  useEffect(() => {
+    if (!isEditDraft) return undefined;
+    const handler = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isEditDraft]);
+
+  // Intercept the creator's own breadcrumb navigation while editing a draft.
+  const guardCrumb = (to) =>
+    isEditDraft
+      ? (e) => {
+          e.preventDefault();
+          setLeaveTo(to);
+        }
+      : undefined;
+
+  const proceedLeave = (to) => {
+    setLeaveTo(null);
+    navigate(to);
+  };
+
+  const handleSaveAndLeave = async () => {
+    const to = leaveTo;
+    if (!draftMeta.draftId) {
+      proceedLeave(to);
+      return;
+    }
+    setLeaving(true);
+    try {
+      const domain = { requirements, dataset, visRef, lockedStep };
+      await updateDraft(api, draftMeta.draftId, domain);
+      await publishDraft(api, draftMeta.draftId);
+      sessionStorage.removeItem(SESSION_ISC);
+      enqueueSnackbar("Indicator updated — it's now available in My ISCs.", {
+        variant: "success",
+      });
+      setLeaving(false);
+      proceedLeave(to);
+    } catch (error) {
+      enqueueSnackbar(error?.message || "Could not save changes", {
+        variant: "error",
+      });
+      setLeaving(false); // keep dialog open so the user can retry / keep / discard
+    }
+  };
+
+  const handleKeepAndLeave = () => {
+    const to = leaveTo;
+    sessionStorage.removeItem(SESSION_ISC); // backend draft remains; local copy cleared
+    proceedLeave(to);
+  };
+
+  const handleDiscardAndLeave = async () => {
+    const to = leaveTo;
+    setLeaving(true);
+    try {
+      if (draftMeta.draftId) await discardDraft(api, draftMeta.draftId);
+      sessionStorage.removeItem(SESSION_ISC);
+      setLeaving(false);
+      proceedLeave(to);
+    } catch (error) {
+      enqueueSnackbar(error?.message || "Could not discard draft", {
+        variant: "error",
+      });
+      setLeaving(false);
+    }
+  };
+
   return (
     <>
       <ISCContext.Provider
@@ -361,8 +447,8 @@ const IndicatorSpecificationCard = () => {
         <ISCWorkspace
           title={routeId ? "Edit ISC" : "ISC Creator"}
           breadcrumbs={[
-            { label: "Home", to: "/" },
-            { label: "My ISCs", to: "/isc" },
+            { label: "Home", to: "/", onClick: guardCrumb("/") },
+            { label: "My ISCs", to: "/isc", onClick: guardCrumb("/isc") },
           ]}
           stepper={
             <WorkflowStepper
@@ -392,6 +478,14 @@ const IndicatorSpecificationCard = () => {
           </Stack>
         </ISCWorkspace>
       </ISCContext.Provider>
+      <LeaveEditDialog
+        open={Boolean(leaveTo)}
+        saving={leaving}
+        onSave={handleSaveAndLeave}
+        onKeep={handleKeepAndLeave}
+        onDiscard={handleDiscardAndLeave}
+        onCancel={() => setLeaveTo(null)}
+      />
     </>
   );
 };

@@ -25,6 +25,7 @@ const PageHeader = ({ title, breadcrumbs = [], subtitle = null, actions = null }
             key={crumb.label}
             component={RouterLink}
             to={crumb.to}
+            onClick={crumb.onClick}
             underline="hover"
             color="inherit"
           >
@@ -62,6 +63,9 @@ PageHeader.propTypes = {
     PropTypes.shape({
       label: PropTypes.string.isRequired,
       to: PropTypes.string.isRequired,
+      // Optional click interceptor (e.g. a leave-edit guard). If it calls
+      // event.preventDefault(), RouterLink navigation is suppressed.
+      onClick: PropTypes.func,
     })
   ),
   subtitle: PropTypes.node,
