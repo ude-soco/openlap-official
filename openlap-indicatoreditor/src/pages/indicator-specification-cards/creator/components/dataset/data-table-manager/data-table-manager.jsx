@@ -7,8 +7,9 @@ import Footer from "./components/footer.jsx";
 import NoRowsOverlay from "./components/no-rows-overlay.jsx";
 import ColumnMenu from "./column-menu/column-menu.jsx";
 import TableSideBar from "./components/table-side-bar.jsx";
-import ExampleDatasetTable from "./components/example-dataset-table.jsx";
+import ExampleDatasetOnboarding from "./components/example-dataset-onboarding.jsx";
 import { isExampleDatasetActive } from "../utils/example-dataset.js";
+import { createBlankRows, INITIAL_MANUAL_ROWS } from "../utils/dataset-rows.js";
 
 const DataTableManager = () => {
   const { dataset, setDataset, id } = useContext(ISCContext);
@@ -20,6 +21,17 @@ const DataTableManager = () => {
     dataset,
     isExistingIsc: Boolean(id),
   });
+
+  // "Start with an empty table": replace the pristine auto-seeded placeholder
+  // rows with genuinely empty rows and drop straight into the editable grid
+  // (this exits Example Mode, since the rows are no longer all-default). Uses
+  // the existing setDataset rows path — no persistence/shape change.
+  const handleStartEmpty = () => {
+    setDataset((p) => ({
+      ...p,
+      rows: createBlankRows(p.columns, INITIAL_MANUAL_ROWS),
+    }));
+  };
   const [state, setState] = useState({
     cellModesModel: {},
     selectionModel: [],
@@ -138,7 +150,10 @@ const DataTableManager = () => {
         </Grid>
         <Grid size="grow">
           {exampleActive ? (
-            <ExampleDatasetTable columns={dataset.columns} />
+            <ExampleDatasetOnboarding
+              columns={dataset.columns}
+              onStartEmpty={handleStartEmpty}
+            />
           ) : (
           <DataGrid
             columns={dataset.columns}

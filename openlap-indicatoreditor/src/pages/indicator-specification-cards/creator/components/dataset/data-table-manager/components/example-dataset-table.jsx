@@ -1,14 +1,17 @@
 import { useMemo } from "react";
 import PropTypes from "prop-types";
-import { Alert, AlertTitle, Box, Chip } from "@mui/material";
+import { Box, Chip, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { DataGrid } from "@mui/x-data-grid";
 import ScienceOutlinedIcon from "@mui/icons-material/ScienceOutlined";
 import { generateExampleDataset } from "../../utils/example-dataset.js";
 
-// Example Dataset Mode table (Phase 4C). Read-only and purely illustrative —
-// it renders generated sample rows so the user can see what good data looks
-// like. It never touches dataset.rows, setDataset, or any persistence.
+// Example Dataset Mode table (Phase 4C). Read-only and purely illustrative — it
+// renders generated sample rows so the user can see what good data looks like.
+// It never touches dataset.rows, setDataset, or any persistence. The
+// surrounding onboarding card (ExampleDatasetOnboarding) carries the
+// explanation + the "how do I start" CTAs; this component is just the labelled
+// preview.
 const ExampleDatasetTable = ({ columns }) => {
   const rows = useMemo(() => generateExampleDataset(columns), [columns]);
 
@@ -27,41 +30,31 @@ const ExampleDatasetTable = ({ columns }) => {
   );
 
   return (
-    <Box component="section" aria-label="Example dataset">
-      <Alert
-        severity="info"
-        icon={<ScienceOutlinedIcon />}
-        variant="outlined"
-        sx={{ mb: 1.5 }}
-      >
-        <AlertTitle sx={{ fontWeight: 600 }}>Example dataset</AlertTitle>
-        This example illustrates the kind of data expected for your indicator. It
-        is not part of your dataset and will never be saved.
-      </Alert>
-
-      <Box
-        sx={(t) => ({
-          position: "relative",
-          p: 1,
-          borderRadius: `${t.custom.radii.card}px`,
-          border: `1px dashed ${alpha(t.palette.info.main, 0.5)}`,
-          backgroundColor: alpha(t.palette.info.main, 0.04),
-        })}
-      >
+    <Box
+      component="section"
+      aria-label="Example dataset (illustrative, read-only)"
+    >
+      <Stack direction="row" gap={1} alignItems="center" sx={{ mb: 1 }}>
         <Chip
           size="small"
           color="info"
           variant="outlined"
           icon={<ScienceOutlinedIcon />}
           label="Example"
-          sx={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            zIndex: 1,
-            backgroundColor: "background.paper",
-          }}
         />
+        <Typography variant="caption" color="text.secondary">
+          Illustrative values — read-only and never saved.
+        </Typography>
+      </Stack>
+
+      <Box
+        sx={(t) => ({
+          p: 1,
+          borderRadius: `${t.custom.radii.card}px`,
+          border: `1px dashed ${alpha(t.palette.info.main, 0.5)}`,
+          backgroundColor: alpha(t.palette.info.main, 0.04),
+        })}
+      >
         <DataGrid
           aria-label="Example dataset, illustrative only and not part of your data"
           columns={exampleColumns}

@@ -229,9 +229,15 @@ const DatasetRequirementsRail = () => {
             })}
           >
             <ScienceOutlinedIcon fontSize="small" color="info" sx={{ mt: "2px" }} />
-            <Typography variant="body2">
-              You are currently viewing an example dataset.
-            </Typography>
+            <Box>
+              <Typography variant="body2">
+                You are currently viewing an example dataset.
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Upload a CSV or start with an empty table to create your real
+                dataset.
+              </Typography>
+            </Box>
           </Stack>
         )}
 
