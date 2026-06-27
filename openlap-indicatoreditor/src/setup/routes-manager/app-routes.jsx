@@ -16,7 +16,7 @@ import { CustomThemeContext } from "../theme-manager/theme-context-manager";
 import { AuthContext } from "../auth-context-manager/auth-context-manager";
 import Footer from "../../common/components/footer/footer";
 import { SnackbarProvider } from "notistack";
-import NavigationBar from "../../common/components/navigation-bar/navigation-bar";
+import AppShell from "../../common/components/app-shell/app-shell";
 import LandingPage from "../../pages/landing-page/landing-page.jsx";
 
 // Route components are code-split so anonymous landing-page visitors don't
@@ -125,7 +125,7 @@ const AppRoutes = () => {
             {user && (
               <Route
                 element={
-                  <NavigationBar>
+                  <AppShell>
                     <Container maxWidth="xl" sx={{ minHeight: "89vh" }}>
                       <Stack component={Paper} elevation={0} gap={1}>
                         <Outlet />
@@ -135,7 +135,7 @@ const AppRoutes = () => {
                       <Divider />
                       <Footer />
                     </Stack>
-                  </NavigationBar>
+                  </AppShell>
                 }
               >
                 <Route

@@ -1,10 +1,9 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext } from "react";
 import {
   Button,
   Card,
   CardContent,
   CardMedia,
-  Divider,
   LinearProgress,
   Grid,
   Stack,
@@ -12,56 +11,36 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { requestUserDetails } from "../account-manager/utils/account-manager-api";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import { useNavigate } from "react-router-dom";
+import { useUserDetails } from "../account-manager/hooks/use-user-details";
+import PageHeader from "../../common/components/page-header/page-header";
 import homeData from "./utils/home-data";
 
 export default function Home() {
   const {
-    api,
     user: { roles },
   } = useContext(AuthContext);
   const navigate = useNavigate();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("lg"));
-  const [state, setState] = useState({
-    loading: false,
-    user: { name: "", lrsProviderList: [], lrsConsumerList: [] },
-  });
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
-    setState((p) => ({ ...p, loading: true }));
-    try {
-      const userData = await requestUserDetails(api);
-      setState((p) => ({ ...p, user: { ...p.user, ...userData } }));
-    } catch (error) {
-      console.error("Failed to load user data", error);
-    } finally {
-      setState((p) => ({ ...p, loading: false }));
-    }
-  };
+  const { loading, user } = useUserDetails();
 
   return (
     <>
       <Stack gap={2}>
-        <Typography color="textPrimary">Home</Typography>
-        <Divider />
+        <PageHeader title="Home" />
 
-        {state.loading && (
+        {loading && (
           <>
             <Typography gutterBottom>Loading</Typography>
             <LinearProgress />
           </>
         )}
-        {!state.loading && (
+        {!loading && (
           <>
             <Typography variant="h4" gutterBottom>
-              Hello, {state.user.name}
+              Hello, {user.name}
             </Typography>
             <Grid container spacing={2}>
               {homeData.map((home) => {

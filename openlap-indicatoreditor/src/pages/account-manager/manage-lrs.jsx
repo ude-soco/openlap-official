@@ -1,12 +1,8 @@
 import { useContext, useEffect, useState } from "react";
 import {
-  Breadcrumbs,
   Button,
-  Divider,
-  Link,
   Alert,
   Skeleton,
-  Typography,
   Container,
   Stack,
 } from "@mui/material";
@@ -18,7 +14,7 @@ import ManageLrsConsumerList from "./components/manage-lrs-consumer-list";
 import ManageLrsProviderList from "./components/manage-lrs-provider-list";
 import RoleTypes from "./utils/enums/role-types.js";
 import AddLrsProvider from "./components/add-lrs-provider";
-import { Link as RouterLink } from "react-router-dom";
+import PageHeader from "../../common/components/page-header/page-header";
 
 const ManageLrs = () => {
   const {
@@ -120,45 +116,39 @@ const ManageLrs = () => {
 
   return (
     <>
-      <Stack gap={2}>
-        <Breadcrumbs>
-          <Link component={RouterLink} underline="hover" color="inherit" to="/">
-            Home
-          </Link>
-          <Typography color="textPrimary">Manage LRS</Typography>
-        </Breadcrumbs>
-        <Divider />
-      </Stack>
+      <PageHeader
+        title="Manage LRS"
+        breadcrumbs={[{ label: "Home", to: "/" }]}
+        actions={
+          <Button
+            color="primary"
+            size="small"
+            variant="contained"
+            disableElevation
+            onClick={
+              roles.includes(RoleTypes["data provider"])
+                ? handleToggleAddLrsProvider
+                : handleToggleAddLrsConsumer
+            }
+          >
+            Add New LRS
+          </Button>
+        }
+      />
+      {state.addLRSConsumerDialog.open && (
+        <AddLrsConsumer
+          addLrsConsumer={state.addLRSConsumerDialog}
+          toggleOpen={handleToggleAddLrsConsumer}
+        />
+      )}
+      {state.addLRSProviderDialog.open && (
+        <AddLrsProvider
+          addLrsProvider={state.addLRSProviderDialog}
+          toggleOpen={handleToggleAddLrsProvider}
+        />
+      )}
       <Container maxWidth="lg" sx={{ pt: 2 }}>
         <Stack gap={2}>
-          <Stack direction="row" justifyContent="space-between">
-            <Typography>Your LRSs</Typography>
-            <Button
-              color="primary"
-              size="small"
-              variant="contained"
-              disableElevation
-              onClick={
-                roles.includes(RoleTypes["data provider"])
-                  ? handleToggleAddLrsProvider
-                  : handleToggleAddLrsConsumer
-              }
-            >
-              Add New LRS
-            </Button>
-            {state.addLRSConsumerDialog.open && (
-              <AddLrsConsumer
-                addLrsConsumer={state.addLRSConsumerDialog}
-                toggleOpen={handleToggleAddLrsConsumer}
-              />
-            )}
-            {state.addLRSProviderDialog.open && (
-              <AddLrsProvider
-                addLrsProvider={state.addLRSProviderDialog}
-                toggleOpen={handleToggleAddLrsProvider}
-              />
-            )}
-          </Stack>
           {state.loading ? (
             Array.from({ length: 1 }).map((_, index) => (
               <Skeleton
