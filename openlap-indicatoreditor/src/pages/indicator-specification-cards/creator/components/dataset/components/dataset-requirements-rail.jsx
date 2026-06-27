@@ -27,6 +27,7 @@ import {
   getMissingSummary,
 } from "../../visualization/utils/chart-compatibility.js";
 import { isExampleDatasetActive } from "../utils/example-dataset.js";
+import { ISC_PATHS } from "../../../utils/isc-constants.js";
 
 // Step 4 dataset guidance rail (Phase 4B).
 //
@@ -85,13 +86,22 @@ SectionHeading.propTypes = {
 };
 
 const DatasetRequirementsRail = () => {
-  const { dataset, visRef, id } = useContext(ISCContext);
+  const { dataset, visRef, requirements: iscRequirements, id } =
+    useContext(ISCContext);
   const [showWhy, setShowWhy] = useState(false);
 
   const chart = visRef.chart;
   const task = visRef.filter.type;
   const columns = dataset.columns;
   const rows = dataset.rows;
+
+  // In the Dataset-first path, Step 4 comes BEFORE visualization, so any
+  // "choose a visualization in Step 3" copy is misleading. When no chart is set
+  // yet and the user chose the Dataset path, point them to the *next* step
+  // instead. (Copy only — no workflow/order change.)
+  const datasetFirstNoChart =
+    !visRef.chart?.type &&
+    iscRequirements?.selectedPath === ISC_PATHS.DATASET;
 
   // While Example Mode is active the rows on screen are illustrative, not the
   // user's data — so the status must not count them as real rows (the example
@@ -148,7 +158,9 @@ const DatasetRequirementsRail = () => {
       color: "default",
       Icon: InsightsOutlinedIcon,
       tone: "neutral",
-      action: "Choose a visualization in Step 3 first.",
+      action: datasetFirstNoChart
+        ? "Continue to the visualization step after preparing your dataset."
+        : "Choose a visualization in Step 3 first.",
     },
   }[statusKey];
 
@@ -230,12 +242,10 @@ const DatasetRequirementsRail = () => {
           >
             <ScienceOutlinedIcon fontSize="small" color="info" sx={{ mt: "2px" }} />
             <Box>
-              <Typography variant="body2">
-                You are currently viewing an example dataset.
-              </Typography>
+              <Typography variant="body2">Your dataset is empty.</Typography>
               <Typography variant="body2" color="text.secondary">
-                Upload a CSV or start with an empty table to create your real
-                dataset.
+                Generate an example dataset, start empty, or import existing data
+                to create your real dataset.
               </Typography>
             </Box>
           </Stack>
@@ -297,7 +307,9 @@ const DatasetRequirementsRail = () => {
             )
           ) : (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Select a visualization in Step 3 to see the columns it needs.
+              {datasetFirstNoChart
+                ? "Choose a visualization in the next step to check compatibility."
+                : "Select a visualization in Step 3 to see the columns it needs."}
             </Typography>
           )}
         </Box>

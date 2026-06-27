@@ -10,6 +10,7 @@ import TableSideBar from "./components/table-side-bar.jsx";
 import ExampleDatasetOnboarding from "./components/example-dataset-onboarding.jsx";
 import { isExampleDatasetActive } from "../utils/example-dataset.js";
 import { createBlankRows, INITIAL_MANUAL_ROWS } from "../utils/dataset-rows.js";
+import { generatePrototypeRows } from "../utils/generated-dataset.js";
 
 const DataTableManager = () => {
   const { dataset, setDataset, id } = useContext(ISCContext);
@@ -30,6 +31,16 @@ const DataTableManager = () => {
     setDataset((p) => ({
       ...p,
       rows: createBlankRows(p.columns, INITIAL_MANUAL_ROWS),
+    }));
+  };
+
+  // "Generate dataset": an explicit user action that turns the generated rows
+  // into REAL editable data (replacing the pristine auto-seeded placeholders).
+  // From this point they autosave/save/edit/delete exactly like typed data.
+  const handleGenerate = () => {
+    setDataset((p) => ({
+      ...p,
+      rows: generatePrototypeRows(p.columns),
     }));
   };
   const [state, setState] = useState({
@@ -152,6 +163,7 @@ const DataTableManager = () => {
           {exampleActive ? (
             <ExampleDatasetOnboarding
               columns={dataset.columns}
+              onGenerate={handleGenerate}
               onStartEmpty={handleStartEmpty}
             />
           ) : (
