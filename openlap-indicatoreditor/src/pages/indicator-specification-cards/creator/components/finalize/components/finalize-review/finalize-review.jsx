@@ -5,8 +5,7 @@ import { Box, Divider, Grid, Paper, Stack, Typography } from "@mui/material";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
 import { ISCContext } from "../../../../isc-context.js";
-import { validateDataset } from "../../../dataset/utils/dataset-validation.js";
-import { getChartCompatibility } from "../../../visualization/utils/chart-compatibility.js";
+import { getFinalizeReadiness } from "../../utils/finalize-readiness.js";
 
 // Step 5B finalize review (read-only).
 //
@@ -86,82 +85,13 @@ const FinalizeReview = () => {
   const columnCount = dataset?.columns?.length ?? 0;
   const rowCount = dataset?.rows?.length ?? 0;
 
-  // ---- Reused helpers (no logic duplicated) ----
-  const validation = validateDataset(dataset);
-  const hasChart = Boolean(visRef?.chart?.type);
-  const compatibility = hasChart
-    ? getChartCompatibility(visRef.chart, dataset.columns)
-    : null;
-
-  // ---- Grouped, actionable readiness checks ----
-  const hasName = Boolean(requirements?.indicatorName);
-  const hasGoal = Boolean(requirements?.goal);
-  const hasQuestion = Boolean(requirements?.question);
-  const definitionOk = hasName && hasGoal && hasQuestion;
-
-  const groups = [
-    {
-      key: "definition",
-      title: "Indicator definition",
-      checks: [
-        {
-          ok: definitionOk,
-          text: definitionOk
-            ? "Goal, question, and name are defined."
-            : "Complete the goal, question, and name in the requirements step.",
-        },
-      ],
-    },
-    {
-      key: "dataset",
-      title: "Dataset",
-      checks: [
-        {
-          ok: validation.meaningfulRowCount > 0,
-          text:
-            validation.meaningfulRowCount > 0
-              ? `Has data — ${validation.meaningfulRowCount} row${
-                  validation.meaningfulRowCount === 1 ? "" : "s"
-                } ready.`
-              : "Add at least one row in the dataset step.",
-        },
-        {
-          ok: validation.invalidCellCount === 0,
-          text:
-            validation.invalidCellCount === 0
-              ? "All cell values are valid."
-              : `Fix ${validation.invalidCellCount} invalid number${
-                  validation.invalidCellCount === 1 ? "" : "s"
-                } in the dataset step.`,
-        },
-      ],
-    },
-    {
-      key: "visualization",
-      title: "Visualization",
-      checks: [
-        {
-          ok: hasChart,
-          text: hasChart
-            ? `Visualization selected — ${chartType}.`
-            : "Choose a visualization below.",
-        },
-        // Only meaningful once a chart is selected.
-        ...(hasChart
-          ? [
-              {
-                ok: compatibility.compatible,
-                text: compatibility.compatible
-                  ? "Required columns are available for this visualization."
-                  : "Add the missing required columns for this visualization.",
-              },
-            ]
-          : []),
-      ],
-    },
-  ];
-
-  const allOk = groups.every((g) => g.checks.every((c) => c.ok));
+  // Readiness checks come from the shared helper so this review and the save
+  // dialog can never disagree (no validation logic duplicated here).
+  const { groups, ready: allOk } = getFinalizeReadiness({
+    requirements,
+    dataset,
+    visRef,
+  });
 
   return (
     <Stack gap={2}>
