@@ -2,6 +2,8 @@ import { useContext } from "react";
 import { ISCContext } from "../../isc-context.js";
 import { Button, Collapse, Divider, Grid, Stack } from "@mui/material";
 import DatasetSummary from "./components/dataset-summary.jsx";
+import DatasetIntro from "./components/dataset-intro.jsx";
+import DatasetRequirementsRail from "./components/dataset-requirements-rail.jsx";
 import DataTableManager from "./data-table-manager/data-table-manager";
 import WorkflowSection from "../workflow-section/workflow-section.jsx";
 import { isDatasetComplete } from "../../utils/isc-selectors.js";
@@ -74,7 +76,29 @@ const Dataset = () => {
           unmountOnExit
         >
           <Stack gap={2} sx={{ py: 2 }}>
-            <DataTableManager />
+            <DatasetIntro />
+            <Divider />
+            {/*
+              Data workspace: the table is the main area; the read-only
+              requirements/compatibility rail sits beside it on desktop and
+              above it on mobile (via responsive `order`). The table and its
+              action bar (Insert Column / Insert Rows / Upload CSV / Reset) keep
+              their existing logic — only the surrounding frame is new.
+            */}
+            <Grid container spacing={2}>
+              <Grid
+                size={{ xs: 12, md: 8, lg: 9 }}
+                sx={{ order: { xs: 2, md: 1 } }}
+              >
+                <DataTableManager />
+              </Grid>
+              <Grid
+                size={{ xs: 12, md: 4, lg: 3 }}
+                sx={{ order: { xs: 1, md: 2 } }}
+              >
+                <DatasetRequirementsRail />
+              </Grid>
+            </Grid>
             <Divider />
             <Grid container justifyContent="center">
               <Grid size={{ xs: 12, sm: 6 }}>
