@@ -31,31 +31,13 @@ import {
   CancelRounded,
   CheckCircleRounded,
   Help,
-  RadioButtonUncheckedRounded,
   Visibility,
   VisibilityOff,
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import AuthLayout from "../../common/components/auth-layout/auth-layout";
-import {
-  ALLOWED_SPECIAL_CHARACTERS,
-  getPasswordCriteria,
-} from "../../common/utils/password-policy";
+import PasswordChecklist from "../../common/components/password-checklist/password-checklist";
 import OpenLAPIcon from "../../assets/brand/openlap-icon.svg";
-
-// Screen-reader-only style: exposes each criterion's met/unmet state to
-// assistive tech without changing the visual design.
-const srOnly = {
-  position: "absolute",
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: "hidden",
-  clip: "rect(0 0 0 0)",
-  whiteSpace: "nowrap",
-  border: 0,
-};
 
 // Returns slotProps that add an accessible show/hide toggle to a password field.
 const visibilityAdornment = (visible, toggle) => ({
@@ -193,10 +175,6 @@ const Register = () => {
     }
   };
 
-  // Live password criteria mirror the backend policy (source of truth) for user
-  // guidance only — see common/utils/password-policy.js. Does not gate submit.
-  const passwordCriteria = getPasswordCriteria(formFields.password);
-
   return (
     <AuthLayout
       animate
@@ -259,63 +237,7 @@ const Register = () => {
                 setShowPassword((s) => !s)
               )}
             />
-            <Box
-              sx={(t) => ({
-                border: `1px solid ${t.palette.divider}`,
-                borderRadius: `${t.custom.radii.input}px`,
-                px: 2,
-                py: 1.5,
-              })}
-            >
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", mb: 1, fontWeight: 600 }}
-              >
-                Password requirements:
-              </Typography>
-              <Stack
-                spacing={0.75}
-                role="list"
-                aria-label="Password requirements"
-              >
-                {passwordCriteria.map((c) => (
-                  <Stack
-                    key={c.id}
-                    role="listitem"
-                    direction="row"
-                    spacing={1}
-                    alignItems="center"
-                  >
-                    {c.met ? (
-                      <CheckCircleRounded
-                        sx={{ fontSize: 18, color: "success.main" }}
-                      />
-                    ) : (
-                      <RadioButtonUncheckedRounded
-                        sx={{ fontSize: 18, color: "text.disabled" }}
-                      />
-                    )}
-                    <Typography
-                      variant="caption"
-                      color={c.met ? "text.primary" : "text.secondary"}
-                    >
-                      {c.label}
-                      <Box component="span" sx={srOnly}>
-                        {c.met ? " — met" : " — not met"}
-                      </Box>
-                    </Typography>
-                  </Stack>
-                ))}
-              </Stack>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", mt: 1.5 }}
-              >
-                {`Allowed special characters: ${ALLOWED_SPECIAL_CHARACTERS}`}
-              </Typography>
-            </Box>
+            <PasswordChecklist password={formFields.password} />
           </Stack>
           <Stack gap={0.75}>
             <TextField
