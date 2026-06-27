@@ -386,7 +386,11 @@ export default function MyIscTable({ onStats }) {
               size="small"
               aria-label={`More actions for ${name}`}
               aria-haspopup="true"
-              onClick={stop((e) => setMenu({ anchorEl: e.currentTarget, item }))}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setMenu({ anchorEl: e.currentTarget, item });
+              }}
               disabled={disabled}
             >
               <MoreVertRoundedIcon fontSize="small" />
@@ -721,7 +725,7 @@ export default function MyIscTable({ onStats }) {
 
       <Menu
         anchorEl={menu.anchorEl}
-        open={Boolean(menu.anchorEl)}
+        open={Boolean(menu.anchorEl && menu.item)}
         onClose={() => setMenu({ anchorEl: null, item: null })}
       >
         {menuItemsFor(menu.item).map((mi) => (
