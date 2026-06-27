@@ -13,21 +13,54 @@ export const requestUserDetails = async (api) => {
   return response.data.data;
 };
 
+export const updateProfile = async (api, { name }) => {
+  try {
+    const response = await api.patch("v1/users/my/profile", { name });
+    return response.data.data;
+  } catch (error) {
+    throw error.response?.data ?? error; // ApiErrorResponse envelope when available
+  }
+};
+
+export const updateEmail = async (api, { newEmail, currentPassword }) => {
+  try {
+    const response = await api.patch("v1/users/my/email", {
+      newEmail,
+      currentPassword,
+    });
+    return response.data.data;
+  } catch (error) {
+    throw error.response?.data ?? error; // ApiErrorResponse envelope when available
+  }
+};
+
+export const changePassword = async (
+  api,
+  { currentPassword, newPassword, confirmNewPassword }
+) => {
+  try {
+    const response = await api.patch("v1/users/my/password", {
+      currentPassword,
+      newPassword,
+      confirmNewPassword,
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data ?? error; // ApiErrorResponse envelope when available
+  }
+};
+
 export const requestLrsConsumerValidation = async (
   api,
   lrsId,
   uniqueIdentifier
 ) => {
-  try {
-    let requestBody = {
-      lrsId,
-      uniqueIdentifier,
-    };
-    const response = await api.post("v1/users/my/lrs/add", requestBody);
-    return response.data;
-  } catch (error) {
-    throw error; // Re-throw the error to handle it in the component
-  }
+  const requestBody = {
+    lrsId,
+    uniqueIdentifier,
+  };
+  const response = await api.post("v1/users/my/lrs/add", requestBody);
+  return response.data;
 };
 
 export const requestDeleteLrsConsumer = async (api, lrsConsumerId) => {

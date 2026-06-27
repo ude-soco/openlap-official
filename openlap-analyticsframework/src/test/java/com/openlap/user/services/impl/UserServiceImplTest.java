@@ -27,7 +27,8 @@ public class UserServiceImplTest {
           mock(TokenService.class),
           mock(LrsService.class),
           mock(StatementService.class),
-          mock(UserRoleService.class));
+          mock(UserRoleService.class),
+          mock(org.springframework.security.crypto.password.PasswordEncoder.class));
 
   @Test
   public void getUserByEmailPropagatesUserNotFoundAs404NotServiceException() {

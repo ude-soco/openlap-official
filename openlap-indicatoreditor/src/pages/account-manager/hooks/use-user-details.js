@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
 import { requestUserDetails } from "../utils/account-manager-api";
 
@@ -10,13 +10,11 @@ const EMPTY_USER = {
 };
 
 /**
- * Loads the current user's details once on mount.
+ * Loads the current user's details on mount and exposes a `reload` to refetch
+ * (e.g. after a profile update). Behaviour is otherwise unchanged: fetch,
+ * log on failure, expose `loading`/`error`. The API call itself is unchanged.
  *
- * Extracted from the duplicated `loadUserData` logic that lived in Home and
- * UserProfile. Behaviour is intentionally identical: fetch on mount, log on
- * failure, expose a `loading` flag. The API call itself is unchanged.
- *
- * @returns {{ loading: boolean, error: boolean, user: object }}
+ * @returns {{ loading: boolean, error: boolean, user: object, reload: () => Promise<void> }}
  */
 export const useUserDetails = () => {
   const { api } = useContext(AuthContext);
@@ -24,30 +22,25 @@ export const useUserDetails = () => {
   const [error, setError] = useState(false);
   const [user, setUser] = useState(EMPTY_USER);
 
-  useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      setLoading(true);
-      setError(false);
-      try {
-        const data = await requestUserDetails(api);
-        if (active) setUser((prev) => ({ ...prev, ...data }));
-      } catch (err) {
-        console.error("Failed to load user data", err);
-        if (active) setError(true);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    load();
-    return () => {
-      active = false;
-    };
+  const reload = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const data = await requestUserDetails(api);
+      setUser((prev) => ({ ...prev, ...data }));
+    } catch (err) {
+      console.error("Failed to load user data", err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
   }, [api]);
 
-  return { loading, error, user };
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  return { loading, error, user, reload };
 };
 
 export default useUserDetails;

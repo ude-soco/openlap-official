@@ -7,7 +7,10 @@ import com.openlap.analytics_statements.services.LrsService;
 import com.openlap.analytics_statements.services.StatementService;
 import com.openlap.exception.ServiceException;
 import com.openlap.infrastructure.exception.OpenLapException;
+import com.openlap.user.dto.request.ChangePasswordRequest;
 import com.openlap.user.dto.request.TokenRequest;
+import com.openlap.user.dto.request.UpdateEmailRequest;
+import com.openlap.user.dto.request.UpdateProfileRequest;
 import com.openlap.user.dto.response.UserResponse;
 import com.openlap.user.dto.response.utils.LrsConsumerResponse;
 import com.openlap.user.dto.response.utils.LrsProviderResponse;
@@ -29,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -45,6 +49,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
   private final LrsService lrsService;
   private final StatementService statementService;
   private final UserRoleService userRoleService;
+  private final PasswordEncoder passwordEncoder;
 
   @Override
   public UserDetails loadUserByUsername(String userEmail) {
@@ -91,15 +96,73 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     try {
       TokenRequest tokenRequest = tokenService.verifyToken(request);
       User foundUser = getUserByEmail(tokenRequest.getUserEmail());
-      UserResponse userResponse = new UserResponse();
-      userResponse.setName(foundUser.getName());
-      userResponse.setEmail(foundUser.getEmail());
-      userResponse.setLrsProviderList(generateLrsProviderResponseMethod(foundUser));
-      userResponse.setLrsConsumerList(generateLrsConsumerResponseMethod(foundUser));
-      return userResponse;
+      return toUserResponse(foundUser);
     } catch (Exception e) {
       throw new ServiceException("Error getting user details", e);
     }
+  }
+
+  /** Builds the public user response from a user entity (name, email, LRS lists). */
+  private UserResponse toUserResponse(User foundUser) {
+    UserResponse userResponse = new UserResponse();
+    userResponse.setName(foundUser.getName());
+    userResponse.setEmail(foundUser.getEmail());
+    userResponse.setLrsProviderList(generateLrsProviderResponseMethod(foundUser));
+    userResponse.setLrsConsumerList(generateLrsConsumerResponseMethod(foundUser));
+    return userResponse;
+  }
+
+  /** Resolves the authenticated user from the request's bearer token (existing pattern). */
+  private User resolveCurrentUser(HttpServletRequest request) {
+    TokenRequest tokenRequest = tokenService.verifyToken(request);
+    return getUserByEmail(tokenRequest.getUserEmail());
+  }
+
+  @Override
+  public UserResponse updateProfile(
+      HttpServletRequest request, UpdateProfileRequest updateProfileRequest) {
+    User foundUser = resolveCurrentUser(request);
+    foundUser.setName(updateProfileRequest.getName());
+    User savedUser = userRepository.save(foundUser);
+    log.info("Profile updated for user '{}'.", savedUser.getEmail());
+    return toUserResponse(savedUser);
+  }
+
+  @Override
+  public UserResponse updateEmail(
+      HttpServletRequest request, UpdateEmailRequest updateEmailRequest) {
+    User foundUser = resolveCurrentUser(request);
+    if (!passwordEncoder.matches(updateEmailRequest.getCurrentPassword(), foundUser.getPassword())) {
+      throw new IncorrectPasswordException("Current password is incorrect.");
+    }
+    String newEmail = updateEmailRequest.getNewEmail();
+    if (!newEmail.equals(foundUser.getEmail())) {
+      if (userRepository.existsByEmail(newEmail)) {
+        throw new EmailAlreadyTakenException("Email already taken.");
+      }
+      foundUser.setEmail(newEmail);
+      foundUser = userRepository.save(foundUser);
+      log.info("Email updated for user. New email '{}'.", foundUser.getEmail());
+    }
+    return toUserResponse(foundUser);
+  }
+
+  @Override
+  public void changePassword(
+      HttpServletRequest request, ChangePasswordRequest changePasswordRequest) {
+    User foundUser = resolveCurrentUser(request);
+    if (!passwordEncoder.matches(
+        changePasswordRequest.getCurrentPassword(), foundUser.getPassword())) {
+      throw new IncorrectPasswordException("Current password is incorrect.");
+    }
+    if (!changePasswordRequest
+        .getNewPassword()
+        .equals(changePasswordRequest.getConfirmNewPassword())) {
+      throw new PasswordsDoNotMatchException("Passwords do not match");
+    }
+    foundUser.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
+    userRepository.save(foundUser);
+    log.info("Password changed for user '{}'.", foundUser.getEmail());
   }
 
   private List<LrsProviderResponse> generateLrsProviderResponseMethod(User foundUser) {
