@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
+  Divider,
   FormControl,
   FormControlLabel,
   FormHelperText,
@@ -28,6 +29,7 @@ import { requestAvailableLrsList, register } from "./register-api";
 import { Help } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import AuthLayout from "../../common/components/auth-layout/auth-layout";
+import OpenLAPIcon from "../../assets/brand/openlap-icon.svg";
 
 const Register = () => {
   const { api } = useContext(AuthContext);
@@ -147,212 +149,260 @@ const Register = () => {
 
   return (
     <AuthLayout
-      title="Sign up"
-      subtitle="Create your OpenLAP account"
+      animate
+      icon={
+        <Box
+          component="img"
+          src={OpenLAPIcon}
+          alt=""
+          sx={{ height: 48, width: "auto" }}
+        />
+      }
+      title="Create your account"
+      subtitle="Join OpenLAP to design and implement your learning analytics indicators"
       crossLink={{ label: "Sign in", to: "/login" }}
       maxWidth={560}
     >
-      <Stack gap={2} component="form" onSubmit={handleSubmit}>
-        <TextField
-          fullWidth
-          label="*Name"
-          name="name"
-          autoComplete="name"
-          placeholder="Max Mustermann"
-          error={Boolean(errors?.name)}
-          helperText={errors?.name}
-          autoFocus
-          onChange={handleFormFields}
-        />
-        <TextField
-          fullWidth
-          label="Email Address"
-          name="email"
-          autoComplete="email"
-          placeholder="example@mail.com"
-          error={Boolean(errors?.email)}
-          helperText={errors?.email}
-          onChange={handleFormFields}
-        />
-        <TextField
-          fullWidth
-          name="password"
-          label="Password"
-          placeholder="Password"
-          type="password"
-          autoComplete="new-password"
-          error={Boolean(errors?.password)}
-          helperText={errors?.password}
-          onChange={handleFormFields}
-        />
-        <TextField
-          fullWidth
-          name="confirmPassword"
-          label="Confirm Password"
-          placeholder="Confirm password"
-          type="password"
-          autoComplete="new-password"
-          error={Boolean(errors?.confirmPassword)}
-          helperText={errors?.confirmPassword}
-          onChange={handleFormFields}
-        />
-        <FormControlLabel
-          control={<Switch checked={lrsConnect} onChange={handleSkipRole} />}
-          label="Connect to a Learning Record Store (LRS)?"
-          labelPlacement="start"
-          sx={{ ml: 0, mr: 0, justifyContent: "space-between" }}
-        />
-        {lrsConnect && (
-          <>
-            <FormControl>
-              <FormLabel id="role-label">Choose role</FormLabel>
-              <RadioGroup
-                row
-                name="role"
-                value={formFields.role}
-                onChange={handleFormFields}
-              >
-                <FormControlLabel
-                  value={RoleTypes.user}
-                  control={<Radio />}
-                  label={
-                    <Grid
-                      container
-                      spacing={1}
-                      alignItems="center"
-                      sx={{ pr: 3 }}
-                    >
-                      <Typography>User</Typography>
-                      <Tooltip
-                        title={
-                          <Typography>
-                            As a User, you will be able to:
-                            <br />
-                            • Connect to multiple Learning Record Stores (LRS)
-                            using your unique identifier from your LMSs or MOOC
-                            platforms
-                            <br />
-                            • Create Indicator Specification Cards
-                            <br />• Create Indicators
-                          </Typography>
-                        }
-                      >
-                        <IconButton aria-label="What a User can do">
-                          <Help />
-                        </IconButton>
-                      </Tooltip>
-                    </Grid>
-                  }
-                />
-                <FormControlLabel
-                  value={RoleTypes["data provider"]}
-                  control={<Radio />}
-                  label={
-                    <Grid container spacing={1} alignItems="center">
-                      <Typography>Data Provider</Typography>
-                      <Tooltip
-                        title={
-                          <Typography>
-                            As a Data Provider, you will be able to:
-                            <br />• Create multiple Learning Record Store (LRS)
-                            instances
-                            <br />• Use Basic Auth token to add data to the LRS
-                          </Typography>
-                        }
-                      >
-                        <IconButton aria-label="What a Data Provider can do">
-                          <Help />
-                        </IconButton>
-                      </Tooltip>
-                    </Grid>
-                  }
-                />
-              </RadioGroup>
-            </FormControl>
-            {formFields.role === RoleTypes.user && (
-              <>
-                <FormControl
-                  fullWidth
-                  error={Boolean(errors?.["lrsConsumerRequest.lrsId"])}
+      <Stack gap={3} component="form" onSubmit={handleSubmit}>
+        {/* Account details */}
+        <Stack gap={2}>
+          <Typography
+            variant="overline"
+            color="text.secondary"
+            sx={{ letterSpacing: "0.08em" }}
+          >
+            Account details
+          </Typography>
+          <TextField
+            fullWidth
+            label="*Name"
+            name="name"
+            autoComplete="name"
+            placeholder="Max Mustermann"
+            error={Boolean(errors?.name)}
+            helperText={errors?.name}
+            autoFocus
+            onChange={handleFormFields}
+          />
+          <TextField
+            fullWidth
+            label="Email Address"
+            name="email"
+            autoComplete="email"
+            placeholder="example@mail.com"
+            error={Boolean(errors?.email)}
+            helperText={errors?.email}
+            onChange={handleFormFields}
+          />
+          <TextField
+            fullWidth
+            name="password"
+            label="Password"
+            placeholder="Password"
+            type="password"
+            autoComplete="new-password"
+            error={Boolean(errors?.password)}
+            helperText={errors?.password}
+            onChange={handleFormFields}
+          />
+          <TextField
+            fullWidth
+            name="confirmPassword"
+            label="Confirm Password"
+            placeholder="Confirm password"
+            type="password"
+            autoComplete="new-password"
+            error={Boolean(errors?.confirmPassword)}
+            helperText={errors?.confirmPassword}
+            onChange={handleFormFields}
+          />
+        </Stack>
+
+        <Divider />
+
+        {/* Learning Record Store connection */}
+        <Stack gap={2}>
+          <Typography
+            variant="overline"
+            color="text.secondary"
+            sx={{ letterSpacing: "0.08em" }}
+          >
+            Learning Record Store connection
+          </Typography>
+          <Box
+            sx={(t) => ({
+              border: `1px solid ${t.palette.divider}`,
+              borderRadius: `${t.custom.radii.input}px`,
+              px: 2,
+              py: 0.5,
+            })}
+          >
+            <FormControlLabel
+              control={
+                <Switch checked={lrsConnect} onChange={handleSkipRole} />
+              }
+              label="Connect to a Learning Record Store (LRS)?"
+              labelPlacement="start"
+              sx={{ ml: 0, mr: 0, width: "100%", justifyContent: "space-between" }}
+            />
+          </Box>
+          {lrsConnect && (
+            <>
+              <FormControl>
+                <FormLabel id="role-label">Choose role</FormLabel>
+                <RadioGroup
+                  row
+                  name="role"
+                  value={formFields.role}
+                  onChange={handleFormFields}
                 >
-                  <InputLabel id="lrs-select-label">Available LRS</InputLabel>
-                  <Select
-                    variant="outlined"
-                    name="lrsId"
-                    value={lrsConsumerRequest.lrsId}
-                    label="Available LRS"
-                    onChange={handleLrsConsumerRequest}
+                  <FormControlLabel
+                    value={RoleTypes.user}
+                    control={<Radio />}
+                    label={
+                      <Grid
+                        container
+                        spacing={1}
+                        alignItems="center"
+                        sx={{ pr: 3 }}
+                      >
+                        <Typography>User</Typography>
+                        <Tooltip
+                          title={
+                            <Typography>
+                              As a User, you will be able to:
+                              <br />
+                              • Connect to multiple Learning Record Stores (LRS)
+                              using your unique identifier from your LMSs or MOOC
+                              platforms
+                              <br />
+                              • Create Indicator Specification Cards
+                              <br />• Create Indicators
+                            </Typography>
+                          }
+                        >
+                          <IconButton size="small" aria-label="What a User can do">
+                            <Help fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Grid>
+                    }
+                  />
+                  <FormControlLabel
+                    value={RoleTypes["data provider"]}
+                    control={<Radio />}
+                    label={
+                      <Grid container spacing={1} alignItems="center">
+                        <Typography>Data Provider</Typography>
+                        <Tooltip
+                          title={
+                            <Typography>
+                              As a Data Provider, you will be able to:
+                              <br />• Create multiple Learning Record Store (LRS)
+                              instances
+                              <br />• Use Basic Auth token to add data to the LRS
+                            </Typography>
+                          }
+                        >
+                          <IconButton
+                            size="small"
+                            aria-label="What a Data Provider can do"
+                          >
+                            <Help fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Grid>
+                    }
+                  />
+                </RadioGroup>
+              </FormControl>
+              {formFields.role === RoleTypes.user && (
+                <>
+                  <FormControl
+                    fullWidth
+                    error={Boolean(errors?.["lrsConsumerRequest.lrsId"])}
                   >
-                    {lrsList.length > 0
-                      ? lrsList.map((lrs) => {
+                    <InputLabel id="lrs-select-label">Available LRS</InputLabel>
+                    <Select
+                      variant="outlined"
+                      name="lrsId"
+                      value={lrsConsumerRequest.lrsId}
+                      label="Available LRS"
+                      onChange={handleLrsConsumerRequest}
+                    >
+                      {lrsList.length > 0
+                        ? lrsList.map((lrs) => {
+                            return (
+                              <MenuItem key={lrs.lrsId} value={lrs.lrsId}>
+                                {lrs.title}
+                              </MenuItem>
+                            );
+                          })
+                        : null}
+                    </Select>
+                    {Boolean(errors?.["lrsConsumerRequest.lrsId"]) && (
+                      <FormHelperText color="error">
+                        {errors?.["lrsConsumerRequest.lrsId"]}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                  <TextField
+                    fullWidth
+                    name="uniqueIdentifier"
+                    label="Unique Identifier"
+                    error={Boolean(
+                      errors?.["lrsConsumerRequest.uniqueIdentifier"]
+                    )}
+                    helperText={errors?.["lrsConsumerRequest.uniqueIdentifier"]}
+                    onChange={handleLrsConsumerRequest}
+                  />
+                </>
+              )}
+
+              {formFields.role === RoleTypes["data provider"] && (
+                <>
+                  <TextField
+                    fullWidth
+                    name="title"
+                    label="Create an LRS"
+                    placeholder="Name your LRS"
+                    error={Boolean(errors?.["lrsProviderRequest.title"])}
+                    helperText={errors?.["lrsProviderRequest.title"]}
+                    onChange={handleLrsProviderRequest}
+                  />
+                  <FormControl fullWidth>
+                    <InputLabel id="unique-type-select-label">
+                      Unique Identifier Type
+                    </InputLabel>
+                    <Select
+                      variant="outlined"
+                      labelId="unique-type-select-label"
+                      name="uniqueIdentifierType"
+                      value={lrsProviderRequest.uniqueIdentifierType}
+                      label="Unique Identifier Type"
+                      onChange={handleLrsProviderRequest}
+                    >
+                      {Object.entries(UniqueIdentifierTypes).map(
+                        ([key, value]) => {
                           return (
-                            <MenuItem key={lrs.lrsId} value={lrs.lrsId}>
-                              {lrs.title}
+                            <MenuItem key={key} value={value}>
+                              {key}
                             </MenuItem>
                           );
-                        })
-                      : null}
-                  </Select>
-                  {Boolean(errors?.["lrsConsumerRequest.lrsId"]) && (
-                    <FormHelperText color="error">
-                      {errors?.["lrsConsumerRequest.lrsId"]}
-                    </FormHelperText>
-                  )}
-                </FormControl>
-                <TextField
-                  fullWidth
-                  name="uniqueIdentifier"
-                  label="Unique Identifier"
-                  error={Boolean(
-                    errors?.["lrsConsumerRequest.uniqueIdentifier"]
-                  )}
-                  helperText={errors?.["lrsConsumerRequest.uniqueIdentifier"]}
-                  onChange={handleLrsConsumerRequest}
-                />
-              </>
-            )}
+                        }
+                      )}
+                    </Select>
+                  </FormControl>
+                </>
+              )}
+            </>
+          )}
+        </Stack>
 
-            {formFields.role === RoleTypes["data provider"] && (
-              <>
-                <TextField
-                  fullWidth
-                  name="title"
-                  label="Create an LRS"
-                  placeholder="Name your LRS"
-                  error={Boolean(errors?.["lrsProviderRequest.title"])}
-                  helperText={errors?.["lrsProviderRequest.title"]}
-                  onChange={handleLrsProviderRequest}
-                />
-                <FormControl fullWidth>
-                  <InputLabel id="unique-type-select-label">
-                    Unique Identifier Type
-                  </InputLabel>
-                  <Select
-                    variant="outlined"
-                    labelId="unique-type-select-label"
-                    name="uniqueIdentifierType"
-                    value={lrsProviderRequest.uniqueIdentifierType}
-                    label="Unique Identifier Type"
-                    onChange={handleLrsProviderRequest}
-                  >
-                    {Object.entries(UniqueIdentifierTypes).map(
-                      ([key, value]) => {
-                        return (
-                          <MenuItem key={key} value={value}>
-                            {key}
-                          </MenuItem>
-                        );
-                      }
-                    )}
-                  </Select>
-                </FormControl>
-              </>
-            )}
-          </>
-        )}
         <Button
           type="submit"
           fullWidth
+          size="large"
           loading={loading}
           variant="contained"
           loadingPosition="start"
@@ -361,16 +411,33 @@ const Register = () => {
           {!loading && "Create an account"}
         </Button>
       </Stack>
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        align="center"
+        sx={{ mt: 3 }}
+      >
+        Already have an account?{" "}
         <Link
           component="button"
+          type="button"
           onClick={() => navigate("/login")}
-          variant="body2"
           underline="hover"
+          sx={{ fontWeight: 600 }}
         >
-          Already have an account? Log in to your account
+          Log in to your account
         </Link>
-      </Box>
+      </Typography>
+
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        align="center"
+        sx={{ display: "block", mt: 3 }}
+      >
+        Part of the OpenLAP learning analytics ecosystem
+      </Typography>
     </AuthLayout>
   );
 };
