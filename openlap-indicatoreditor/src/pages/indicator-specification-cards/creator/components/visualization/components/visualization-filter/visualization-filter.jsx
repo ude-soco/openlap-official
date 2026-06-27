@@ -1,8 +1,10 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext } from "react";
 import {
   Box,
+  Button,
   ButtonBase,
   Chip,
+  Collapse,
   Divider,
   Grow,
   Grid,
@@ -13,20 +15,17 @@ import {
 } from "@mui/material";
 import VisualizationDescription from "./visualization-description";
 import RecommendIcon from "@mui/icons-material/Recommend";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { visualizations } from "../../../../utils/data/config";
 import { ISCContext } from "../../../../isc-context.js";
-import {
-  getChartGroups,
-  getMissingSummary,
-  getMissingRequirementMessages,
-} from "../../utils/chart-compatibility.js";
+import { getChartGroups, getMissingSummary } from "../../utils/chart-compatibility.js";
 
 const VisualizationFilter = () => {
   const { dataset, visRef, setVisRef } = useContext(ISCContext);
-  const [columnError, setColumnError] = useState({
-    hasError: false,
-    errorMessages: [],
-  });
+  // The "Requires additional data" group is collapsed by default — most users
+  // only need the recommended or alternative charts.
+  const [showIncompatible, setShowIncompatible] = useState(false);
 
   const handleSelectVisualization = (chart) => {
     // TODO: Recheck this
@@ -38,13 +37,6 @@ const VisualizationFilter = () => {
       setVisRef((p) => ({ ...p, chart: { type: "" } }));
     }
   };
-
-  // Requirements/error panel uses the SAME compatibility rule as the gallery.
-  useEffect(() => {
-    if (!visRef.chart || !visRef.chart.dataTypes || !dataset.columns) return;
-    const messages = getMissingRequirementMessages(visRef.chart, dataset.columns);
-    setColumnError({ hasError: messages.length > 0, errorMessages: messages });
-  }, [visRef.chart, dataset.columns]);
 
   const { recommended, otherCompatible, notCompatible } = getChartGroups(
     visualizations,
@@ -71,7 +63,7 @@ const VisualizationFilter = () => {
           label="Recommended"
         />
       ) : status === "compatible" ? (
-        <Chip size="small" variant="outlined" color="success" label="Compatible" />
+        <Chip size="small" variant="outlined" label="Compatible" />
       ) : (
         <Chip size="small" variant="outlined" color="warning" label="Needs data" />
       );
@@ -161,7 +153,30 @@ const VisualizationFilter = () => {
         <Stack gap={4}>
           {renderGroup("Recommended for your data", recommended, "recommended")}
           {renderGroup("Alternative visualizations", otherCompatible, "compatible")}
-          {renderGroup("Requires additional data", notCompatible, "incompatible")}
+
+          {notCompatible.length > 0 && (
+            <Stack gap={1.5}>
+              <Button
+                variant="text"
+                color="inherit"
+                onClick={() => setShowIncompatible((s) => !s)}
+                aria-expanded={showIncompatible}
+                startIcon={
+                  showIncompatible ? <ExpandLessIcon /> : <ExpandMoreIcon />
+                }
+                sx={{ alignSelf: "flex-start", textTransform: "none" }}
+              >
+                Requires additional data ({notCompatible.length})
+              </Button>
+              <Collapse in={showIncompatible} unmountOnExit>
+                <Grid container spacing={2}>
+                  {sortByType(notCompatible).map((chart) =>
+                    renderChartCard(chart, "incompatible")
+                  )}
+                </Grid>
+              </Collapse>
+            </Stack>
+          )}
 
           <Grow
             in={Boolean(visRef.chart.type)}
@@ -170,7 +185,7 @@ const VisualizationFilter = () => {
           >
             <Stack gap={4}>
               <Divider />
-              <VisualizationDescription columnError={columnError} />
+              <VisualizationDescription />
             </Stack>
           </Grow>
         </Stack>
