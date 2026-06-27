@@ -1,9 +1,10 @@
 import { useContext, useState } from "react";
 import { ISCContext } from "../../isc-context.js";
-import { Button, Divider, Grid, Collapse } from "@mui/material";
+import { Button, Divider, Grid, Collapse, Stack, Typography } from "@mui/material";
 import NameDialog from "./components/name-dialog.jsx";
 import VisSelection from "../visualization/components/visualization-filter/vis-selection";
 import FinalizeSummary from "./components/finalize-summary/finalize-summary";
+import FinalizeReview from "./components/finalize-review/finalize-review.jsx";
 import WorkflowSection from "../workflow-section/workflow-section.jsx";
 import { useParams } from "react-router-dom";
 
@@ -56,6 +57,32 @@ const Finalize = () => {
             >
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12 }}>
+                  <Stack gap={0.5} sx={{ mb: 1 }}>
+                    <Typography variant="h6" component="h3">
+                      Finalize your indicator
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Review the indicator, confirm the data and visualization,
+                      then save it.
+                    </Typography>
+                  </Stack>
+                </Grid>
+
+                {/* 1. Review + 2. Checks */}
+                <Grid size={{ xs: 12 }}>
+                  <FinalizeReview />
+                </Grid>
+
+                {/* 3. Preview and customize — the existing chart editor, unchanged */}
+                <Grid size={{ xs: 12 }}>
+                  <Typography
+                    variant="subtitle1"
+                    component="h3"
+                    fontWeight={600}
+                    gutterBottom
+                  >
+                    Preview and customize
+                  </Typography>
                   <VisSelection
                     customize={showCustomize}
                     handleToggleCustomizePanel={handleToggleCustomizePanel}
