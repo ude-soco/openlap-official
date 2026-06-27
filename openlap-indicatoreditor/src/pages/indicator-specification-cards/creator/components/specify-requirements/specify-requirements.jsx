@@ -1,8 +1,20 @@
 import { useContext } from "react";
-import { Button, Collapse, Divider, Grid, Stack } from "@mui/material";
+import {
+  Alert,
+  Button,
+  Collapse,
+  Divider,
+  Grid,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { ISCContext } from "../../isc-context.js";
 import WorkflowSection from "../workflow-section/workflow-section.jsx";
 import { isRequirementsComplete } from "../../utils/isc-selectors.js";
+import {
+  isRequirementStepComplete,
+  getMissingRequirementLabels,
+} from "../../utils/requirements-validation.js";
 import SpecifyGoal from "./components/specify-goal/specify-goal";
 import ConfirmGoal from "./components/specify-goal/confirm-goal";
 import FormulateQuestion from "./components/formulate-question/formulate-question";
@@ -33,22 +45,11 @@ const SpecifyRequirements = () => {
     }
   };
 
-  const handleCheckDisabled = () => {
-    return (
-      requirements.goalType.verb === "" ||
-      requirements.goal === "" ||
-      requirements.question === "" ||
-      requirements.indicatorName === "" ||
-      requirements.data.some(
-        (item) =>
-          typeof item.value !== "string" ||
-          item.value.trim() === "" ||
-          !item.type ||
-          typeof item.type.type !== "string" ||
-          item.type.type.trim() === ""
-      )
-    );
-  };
+  // Next is disabled exactly when the step is not complete — both derived from
+  // the shared validation helper so they can never diverge.
+  const handleCheckDisabled = () => !isRequirementStepComplete(requirements);
+
+  const missingRequirements = getMissingRequirementLabels(requirements);
 
   const status = lockedStep.requirements.openPanel
     ? "active"
@@ -74,6 +75,13 @@ const SpecifyRequirements = () => {
               sx={{ pt: 2 }}
             >
               <Grid size={{ xs: 12, md: 8 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Specify what you want to measure. Work through your goal, the
+                  question behind it, the indicator you need, and the data it
+                  requires — one part at a time.
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, md: 8 }}>
                 {requirements.edit.goal ? <SpecifyGoal /> : <ConfirmGoal />}
               </Grid>
               {requirements.show.question && (
@@ -94,6 +102,16 @@ const SpecifyRequirements = () => {
             {requirements.show.indicatorName && lockedStep.path.locked && (
               <Grid container spacing={2} direction="column">
                 <Divider />
+                {missingRequirements.length > 0 && (
+                  <Grid container justifyContent="center">
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Alert severity="info" variant="outlined">
+                        To continue, please provide:{" "}
+                        {missingRequirements.join(", ")}.
+                      </Alert>
+                    </Grid>
+                  </Grid>
+                )}
                 <Grid container justifyContent="center">
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Button

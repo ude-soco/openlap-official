@@ -15,6 +15,7 @@ import TipPopover from "../../../../../../../common/components/tip-popover/tip-p
 
 export default function SpecifyGoal() {
   const { requirements, setRequirements } = useContext(ISCContext);
+  const [goalTouched, setGoalTouched] = useState(false);
   const [state, setState] = useState({
     goalPopoverAnchor: null,
     goalDescription: `
@@ -77,13 +78,19 @@ export default function SpecifyGoal() {
         <Grid size="grow" sx={{ pb: 2 }}>
           <Grid container spacing={2}>
             <Grid container spacing={1} alignItems="center">
-              <Typography>Specify your goal</Typography>
+              <Typography component="h3" variant="subtitle2">
+                Specify your goal
+              </Typography>
               <TipPopover
                 tipAnchor={state.goalPopoverAnchor}
                 toggleTipAnchor={handleGoalPopoverAnchor}
                 description={state.goalDescription}
               />
             </Grid>
+            <Typography variant="body2" color="text.secondary">
+              Pick an action and describe what you want to achieve — for example,
+              monitor how learning materials are used in your course.
+            </Typography>
             <GoalList />
             <TextField
               required
@@ -94,7 +101,11 @@ export default function SpecifyGoal() {
               label="Describe your goal"
               placeholder="e.g., the usage of the learning materials in my course."
               onChange={handleFormData}
-              error={requirements.goal === ""}
+              onBlur={() => setGoalTouched(true)}
+              error={goalTouched && requirements.goal === ""}
+              helperText={
+                goalTouched && requirements.goal === "" ? "Required" : ""
+              }
             />
             <Box>
               <Button
