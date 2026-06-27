@@ -14,6 +14,7 @@ import { DataTypes } from "./utils/data/config.js";
 import { LEGACY_STEP_CODE } from "./utils/isc-constants.js";
 import { getWorkflowSteps, getCurrentStep } from "./utils/isc-selectors.js";
 import { withOnlyStepExpanded } from "./utils/isc-workflow-ui.js";
+import { getDefaultVisRef } from "./utils/isc-workflow-reset.js";
 import { ISCContext } from "./isc-context.js";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 
@@ -89,37 +90,7 @@ const IndicatorSpecificationCard = () => {
 
   const [visRef, setVisRef] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION_ISC);
-    return savedState
-      ? JSON.parse(savedState).visRef
-      : {
-          filter: {
-            type: "",
-          },
-          chart: {
-            type: "",
-          },
-          data: {
-            series: [],
-            options: {},
-            axisOptions: {
-              selectedXAxis: "",
-              selectedYAxis: "",
-              selectedLabel: "", // * StackedBar/Line
-              selectedBarValue: "", // * StackedBar/Line
-              selectedCategory: "", // * TreeMap
-              selectedXValue: "", // * TreeMap
-              selectedValue: "", // * TreeMap
-              xAxisOptions: [],
-              yAxisOptions: [],
-              labelOptions: [], // * StackedBar/Line
-              barValueOptions: [], // * StackedBar/Line
-              categoryOptions: [], // * TreeMap
-              xValueOptions: [], // * TreeMap
-              valueOptions: [], // * TreeMap
-            },
-          },
-          edit: false,
-        };
+    return savedState ? JSON.parse(savedState).visRef : getDefaultVisRef();
   });
 
   const [lockedStep, setLockedStep] = useState(() => {

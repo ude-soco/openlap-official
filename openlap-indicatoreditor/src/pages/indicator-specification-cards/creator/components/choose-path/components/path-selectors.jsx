@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { ISCContext } from "../../../isc-context.js";
 import {
   Alert,
@@ -16,10 +16,18 @@ import StorageIcon from "@mui/icons-material/Storage";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import pathChoices, { PATH_META } from "../utils/utils.js";
 import { LEGACY_STEP_CODE } from "../../../utils/isc-constants.js";
+import {
+  hasDownstreamWorkflowState,
+  resetDownstreamWorkflowState,
+} from "../../../utils/isc-workflow-reset.js";
+import PathChangeDialog from "./path-change-dialog.jsx";
 
 export default function PathSelectors() {
-  const { requirements, setVisRef, setRequirements, setLockedStep } =
+  const { requirements, visRef, setVisRef, setRequirements, setLockedStep } =
     useContext(ISCContext);
+
+  // Pending target path while the change-confirmation dialog is open.
+  const [pendingPath, setPendingPath] = useState(null);
 
   const handleTogglePanel = () => {
     setLockedStep((p) => ({
@@ -28,100 +36,97 @@ export default function PathSelectors() {
     }));
   };
 
-  const handleChooseVisualizationPath = (path = pathChoices.vis) => {
-    handleTogglePanel();
-    if (
-      requirements.selectedPath !== pathChoices.vis ||
-      requirements.selectedPath !== pathChoices.task
-    ) {
-      setLockedStep((p) => ({
-        ...p,
-        visualization: {
-          ...p.visualization,
-          locked: false,
-          openPanel: true,
-          step: LEGACY_STEP_CODE.FIRST_MIDDLE,
-        },
-        dataset: {
-          ...p.dataset,
-          locked: true,
-          openPanel: false,
-          step: LEGACY_STEP_CODE.SECOND_MIDDLE,
-        },
-        finalize: {
-          ...p.finalize,
-          locked: true,
-          openPanel: false,
-        },
-      }));
-
-      setRequirements((p) => {
-        if (p.selectedPath !== path)
-          setVisRef((p) => ({ ...p, filter: { type: "" } }));
-        return { ...p, selectedPath: path };
-      });
-    } else {
-      setLockedStep((p) => ({
-        ...p,
-        visualization: { ...p.visualization, openPanel: true },
-      }));
-    }
+  // Place the lockedStep for the chosen path. Dataset path → Dataset is the
+  // first middle step; Visualization/Task path → Visualization is first. This
+  // matches the previous transitions exactly (only the reset is new).
+  const placeStepsForPath = (targetPath) => {
+    const datasetFirst = targetPath === pathChoices.data;
+    setLockedStep((p) => ({
+      ...p,
+      visualization: {
+        ...p.visualization,
+        locked: datasetFirst,
+        openPanel: !datasetFirst,
+        step: datasetFirst
+          ? LEGACY_STEP_CODE.SECOND_MIDDLE
+          : LEGACY_STEP_CODE.FIRST_MIDDLE,
+      },
+      dataset: {
+        ...p.dataset,
+        locked: !datasetFirst,
+        openPanel: datasetFirst,
+        step: datasetFirst
+          ? LEGACY_STEP_CODE.FIRST_MIDDLE
+          : LEGACY_STEP_CODE.SECOND_MIDDLE,
+      },
+      finalize: { ...p.finalize, locked: true, openPanel: false },
+    }));
   };
 
-  const handleChooseDatasetPath = () => {
+  // Actually switch the path: collapse Choose Path, re-place the middle steps,
+  // record the new path, and reset the downstream (visualization/finalize)
+  // state. Requirements + dataset are preserved.
+  const commitPathChange = (targetPath) => {
     handleTogglePanel();
-    if (requirements.selectedPath !== pathChoices.data) {
-      {
-        setLockedStep((p) => ({
-          ...p,
-          dataset: {
-            ...p.dataset,
-            locked: false,
-            openPanel: true,
-            step: LEGACY_STEP_CODE.FIRST_MIDDLE,
-          },
-          visualization: {
-            ...p.visualization,
-            locked: true,
-            openPanel: false,
-            step: LEGACY_STEP_CODE.SECOND_MIDDLE,
-          },
-          finalize: {
-            ...p.finalize,
-            locked: true,
-            openPanel: false,
-          },
-        }));
-        setRequirements((p) => ({ ...p, selectedPath: pathChoices.data }));
-      }
-    } else {
-      setLockedStep((p) => ({
-        ...p,
-        dataset: { ...p.dataset, openPanel: true },
-      }));
-    }
+    placeStepsForPath(targetPath);
+    setRequirements((p) => ({ ...p, selectedPath: targetPath }));
+    resetDownstreamWorkflowState({ setVisRef });
   };
 
-  // Presentation config. Handlers above are unchanged — these cards call the
-  // exact same functions the previous boxes did.
+  // Re-selecting the path you're already on: just (re)open its current middle
+  // step. No reset, no re-locking of progress.
+  const reopenCurrentPath = (targetPath) => {
+    handleTogglePanel();
+    const stepKey =
+      targetPath === pathChoices.data ? "dataset" : "visualization";
+    setLockedStep((p) => ({
+      ...p,
+      [stepKey]: { ...p[stepKey], openPanel: true },
+    }));
+  };
+
+  const handleSelectPath = (targetPath) => {
+    // Same path → just reopen it.
+    if (requirements.selectedPath === targetPath) {
+      reopenCurrentPath(targetPath);
+      return;
+    }
+    // Different path with reset-worthy downstream state → confirm first.
+    if (hasDownstreamWorkflowState(visRef)) {
+      setPendingPath(targetPath);
+      return;
+    }
+    // Different path, nothing to lose → switch immediately.
+    commitPathChange(targetPath);
+  };
+
+  const handleCancelPathChange = () => setPendingPath(null);
+
+  const handleConfirmPathChange = () => {
+    if (pendingPath) commitPathChange(pendingPath);
+    setPendingPath(null);
+  };
+
+  // Presentation config. Each card routes through the single handleSelectPath,
+  // which decides whether to reopen, confirm, or switch immediately.
   const pathOptions = [
     {
       value: pathChoices.vis,
       title: "Visualization",
       icon: BarChartIcon,
-      onSelect: () => handleChooseVisualizationPath(),
+      onSelect: () => handleSelectPath(pathChoices.vis),
     },
     {
       value: pathChoices.data,
       title: "Dataset",
       icon: StorageIcon,
-      onSelect: handleChooseDatasetPath,
+      onSelect: () => handleSelectPath(pathChoices.data),
     },
     {
       value: pathChoices.task,
       title: "Task",
       icon: TrackChangesIcon,
-      onSelect: () => handleChooseVisualizationPath(pathChoices.task),
+      onSelect: () => handleSelectPath(pathChoices.task),
     },
   ];
 
@@ -221,6 +226,12 @@ export default function PathSelectors() {
           Select an option above to continue.
         </Typography>
       )}
+
+      <PathChangeDialog
+        open={Boolean(pendingPath)}
+        onCancel={handleCancelPathChange}
+        onConfirm={handleConfirmPathChange}
+      />
     </Stack>
   );
 }
