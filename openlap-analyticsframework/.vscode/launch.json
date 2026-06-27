@@ -16,7 +16,7 @@
       // URI also carries it for clarity. All values mirror the defaults.
       "env": {
         "MONGODB_PRIMARY_URI": "mongodb://127.0.0.1:27017/openlap_v2",
-        "MONGODB_SECONDARY_URI": "mongodb://127.0.0.1:27017/learninglocker_v2",
+        "MONGODB_SECONDARY_URI": "mongodb://127.0.0.1:27018/learninglocker_v2",
         "OPENLAP_MONGODB_DB": "openlap_v2",
         "LRS_MONGODB_DB": "learninglocker_v2",
         "PORT": "8090",
