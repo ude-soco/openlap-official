@@ -127,7 +127,17 @@ const AppRoutes = () => {
                 element={
                   <AppShell>
                     <Container maxWidth="xl" sx={{ minHeight: "89vh" }}>
-                      <Stack component={Paper} elevation={0} gap={1}>
+                      <Stack
+                        component={Paper}
+                        elevation={0}
+                        gap={1}
+                        sx={{
+                          p: { xs: 2, md: 3 },
+                          borderRadius: (t) => `${t.custom.radii.card}px`,
+                          border: (t) => `1px solid ${t.palette.divider}`,
+                          bgcolor: "background.paper",
+                        }}
+                      >
                         <Outlet />
                       </Stack>
                     </Container>

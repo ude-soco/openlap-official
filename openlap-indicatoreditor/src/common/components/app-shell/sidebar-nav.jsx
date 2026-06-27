@@ -15,7 +15,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import { alpha, styled } from "@mui/material/styles";
 import { useLocation, useNavigate } from "react-router-dom";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import menus from "../../../setup/routes-manager/router-config.jsx";
@@ -24,10 +24,38 @@ import { AuthContext } from "../../../setup/auth-context-manager/auth-context-ma
 const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
-  padding: theme.spacing(0, 1),
+  padding: theme.spacing(0, 2),
   ...theme.mixins.toolbar,
-  justifyContent: "center",
+  justifyContent: "flex-start",
 }));
+
+// Rounded, compact nav item with a clear primary-tinted active state and a
+// visible keyboard focus ring. Shared by the Home item, group headers and
+// nested links so the sidebar reads consistently.
+const itemSx = (theme) => ({
+  borderRadius: 10,
+  mx: 1.5,
+  my: 0.25,
+  "& .MuiListItemIcon-root": { minWidth: 38 },
+  "&:focus-visible": {
+    outline: `2px solid ${theme.palette.primary.main}`,
+    outlineOffset: -2,
+  },
+  "&.Mui-selected": {
+    backgroundColor: alpha(
+      theme.palette.primary.main,
+      theme.palette.mode === "dark" ? 0.24 : 0.12
+    ),
+    color: theme.palette.primary.main,
+    "& .MuiListItemIcon-root": { color: theme.palette.primary.main },
+    "&:hover": {
+      backgroundColor: alpha(
+        theme.palette.primary.main,
+        theme.palette.mode === "dark" ? 0.32 : 0.18
+      ),
+    },
+  },
+});
 
 // Initial open/closed state is derived from `defaultOpen` in the nav config so
 // there are no hardcoded menu keys to keep in sync (a single source of truth).
@@ -94,14 +122,26 @@ const SidebarNav = ({ onItemClick }) => {
           ) : undefined
         }
       >
-        <List>
+        <List disablePadding sx={{ mt: 0.5 }}>
           <ListItemButton
             onClick={() => handleToggle(menu.key)}
             disabled={disabled}
+            sx={itemSx}
           >
             <ListItemIcon>{disabled ? <LockIcon /> : menu.icon}</ListItemIcon>
-            <ListItemText primary={menu.title} />
-            {openMenus[menu.key] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            <ListItemText
+              primary={menu.title}
+              primaryTypographyProps={{
+                variant: "body2",
+                fontWeight: 600,
+                noWrap: true,
+              }}
+            />
+            {openMenus[menu.key] ? (
+              <ExpandLessIcon fontSize="small" />
+            ) : (
+              <ExpandMoreIcon fontSize="small" />
+            )}
           </ListItemButton>
           <Collapse in={openMenus[menu.key]} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
@@ -110,18 +150,21 @@ const SidebarNav = ({ onItemClick }) => {
                 return (
                   <ListItemButton
                     key={item.navigate}
-                    sx={{ pl: 4 }}
                     onClick={() => handleNavigate(item.navigate)}
                     disabled={disabled}
                     selected={active}
                     aria-current={active ? "page" : undefined}
+                    sx={(theme) => ({ ...itemSx(theme), pl: 3 })}
                   >
                     <ListItemIcon>
                       {disabled ? <LockIcon /> : item.icon}
                     </ListItemIcon>
                     <ListItemText
                       primary={item.primary}
-                      secondary={item.secondary}
+                      primaryTypographyProps={{
+                        variant: "body2",
+                        noWrap: true,
+                      }}
                     />
                   </ListItemButton>
                 );
@@ -136,11 +179,11 @@ const SidebarNav = ({ onItemClick }) => {
   const dashboardActive = location.pathname === "/dashboard";
 
   return (
-    <div>
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <DrawerHeader>
         <Box
           component="img"
-          sx={{ height: 40, cursor: "pointer" }}
+          sx={{ height: 36, cursor: "pointer" }}
           onClick={() => handleNavigate("/dashboard")}
           src={OpenLAPLogo}
           alt="OpenLAP"
@@ -148,20 +191,26 @@ const SidebarNav = ({ onItemClick }) => {
       </DrawerHeader>
 
       <Divider />
-      <List component="div" disablePadding>
-        <ListItemButton
-          onClick={() => handleNavigate("/dashboard")}
-          selected={dashboardActive}
-          aria-current={dashboardActive ? "page" : undefined}
-        >
-          <ListItemIcon>
-            <DashboardIcon />
-          </ListItemIcon>
-          <ListItemText primary="Home" />
-        </ListItemButton>
-      </List>
-      {menus.map((menu) => renderMenu(menu))}
-    </div>
+      <Box sx={{ flexGrow: 1, overflowY: "auto", py: 1 }}>
+        <List disablePadding>
+          <ListItemButton
+            onClick={() => handleNavigate("/dashboard")}
+            selected={dashboardActive}
+            aria-current={dashboardActive ? "page" : undefined}
+            sx={itemSx}
+          >
+            <ListItemIcon>
+              <DashboardIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary="Home"
+              primaryTypographyProps={{ variant: "body2", fontWeight: 600 }}
+            />
+          </ListItemButton>
+        </List>
+        {menus.map((menu) => renderMenu(menu))}
+      </Box>
+    </Box>
   );
 };
 
