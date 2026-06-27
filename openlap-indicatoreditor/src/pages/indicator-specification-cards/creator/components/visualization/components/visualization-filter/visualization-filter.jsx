@@ -1,6 +1,8 @@
 import { useState, useContext, useEffect } from "react";
 import {
   Box,
+  ButtonBase,
+  Chip,
   Divider,
   Grow,
   Grid,
@@ -11,16 +13,16 @@ import {
 } from "@mui/material";
 import VisualizationDescription from "./visualization-description";
 import RecommendIcon from "@mui/icons-material/Recommend";
-import { DataTypes, visualizations } from "../../../../utils/data/config";
+import { visualizations } from "../../../../utils/data/config";
 import { ISCContext } from "../../../../isc-context.js";
+import {
+  getChartGroups,
+  getMissingSummary,
+  getMissingRequirementMessages,
+} from "../../utils/chart-compatibility.js";
 
 const VisualizationFilter = () => {
   const { dataset, visRef, setVisRef } = useContext(ISCContext);
-  const [state, setState] = useState({
-    openFilters: false,
-    visualizationList: [],
-    recommendation: false,
-  });
   const [columnError, setColumnError] = useState({
     hasError: false,
     errorMessages: [],
@@ -37,210 +39,130 @@ const VisualizationFilter = () => {
     }
   };
 
+  // Requirements/error panel uses the SAME compatibility rule as the gallery.
   useEffect(() => {
     if (!visRef.chart || !visRef.chart.dataTypes || !dataset.columns) return;
-
-    const validTypeValues = new Set(
-      Object.values(DataTypes).map((dt) => dt.value)
-    );
-
-    const requiredTypes = visRef.chart.dataTypes.reduce((acc, dt) => {
-      if (dt.required > 0) acc[dt.type.value] = dt.required;
-      return acc;
-    }, {});
-
-    const availableTypes = dataset.columns.reduce((acc, col) => {
-      const colType = col.dataType.value;
-      if (validTypeValues.has(colType)) acc[colType] = (acc[colType] || 0) + 1;
-      return acc;
-    }, {});
-
-    const messages = [];
-
-    Object.entries(requiredTypes).forEach(([type, requiredCount]) => {
-      const availableCount = availableTypes[type] || 0;
-      const sufficient = availableCount >= requiredCount;
-      if (!sufficient) {
-        messages.push(
-          `<b>${requiredCount}</b> <b>${type}</b> data column(s) required, but found <b>${availableCount}</b>`
-        );
-      }
-    });
-
-    if (messages.length > 0) {
-      setColumnError({ hasError: true, errorMessages: messages });
-    } else {
-      setColumnError({ hasError: false, errorMessages: [] });
-    }
+    const messages = getMissingRequirementMessages(visRef.chart, dataset.columns);
+    setColumnError({ hasError: messages.length > 0, errorMessages: messages });
   }, [visRef.chart, dataset.columns]);
 
-  useEffect(() => {
-    if (visRef.filter.type === "") {
-      setState((p) => ({ ...p, visualizationList: visualizations }));
-    } else {
-      let tempVisualizationList = [];
-      visualizations.forEach((visualization) => {
-        if (visualization.filters.includes(visRef.filter.type)) {
-          tempVisualizationList.push(visualization);
-        }
-      });
-      setState((p) => ({ ...p, visualizationList: tempVisualizationList }));
-    }
-  }, [visRef.filter.type]);
+  const { recommended, otherCompatible, notCompatible } = getChartGroups(
+    visualizations,
+    dataset.columns,
+    visRef.filter.type
+  );
 
-  useEffect(() => {
-    setState((p) => ({
-      ...p,
-      recommendation: checkRecommendation(p.visualizationList),
-    }));
-  }, [dataset.columns]);
+  const sortByType = (list) =>
+    [...list].sort((a, b) => a.type.localeCompare(b.type));
 
-  const columnTypes = dataset.columns.map((col) => col.type);
+  const renderChartCard = (chart, status) => {
+    const selected = visRef.chart.type === chart.type;
+    const incompatible = status === "incompatible";
+    const missingSummary = incompatible
+      ? getMissingSummary(chart, dataset.columns)
+      : "";
 
-  const checkRecommendation = (visualizations) => {
-    for (let viz of visualizations) {
-      if (checkVisualizationRecommendation(viz, columnTypes)) {
-        return true;
-      }
-    }
-    return false;
+    const statusChip =
+      status === "recommended" ? (
+        <Chip
+          size="small"
+          color="success"
+          icon={<RecommendIcon />}
+          label="Recommended"
+        />
+      ) : status === "compatible" ? (
+        <Chip size="small" variant="outlined" color="success" label="Compatible" />
+      ) : (
+        <Chip size="small" variant="outlined" color="warning" label="Needs data" />
+      );
+
+    const ariaLabel = `${chart.type}. ${
+      status === "recommended"
+        ? "Recommended for your data."
+        : status === "compatible"
+          ? "Compatible with your data."
+          : `Requires ${missingSummary}.`
+    } ${chart.description}`;
+
+    return (
+      <Grid
+        key={chart.type}
+        component={Paper}
+        variant="outlined"
+        size={{ xs: 6, sm: 4, lg: 3 }}
+        sx={{
+          p: 0,
+          overflow: "hidden",
+          borderRadius: 1,
+          opacity: incompatible ? 0.75 : 1,
+          borderStyle: incompatible ? "dashed" : "solid",
+          "&:hover": { boxShadow: 5 },
+          border: selected ? "2px solid #F57C00" : undefined,
+        }}
+      >
+        <Tooltip
+          arrow
+          title={
+            <Typography variant="body2" sx={{ p: 1, whiteSpace: "pre-line" }}>
+              {chart.description}
+              {incompatible ? `\n\nRequires ${missingSummary}.` : ""}
+            </Typography>
+          }
+        >
+          <ButtonBase
+            onClick={() => handleSelectVisualization(chart)}
+            aria-pressed={selected}
+            aria-label={ariaLabel}
+            sx={{ width: "100%", height: "100%", p: 2 }}
+          >
+            <Stack gap={1} alignItems="center" justifyContent="flex-start" sx={{ height: "100%" }}>
+              <Box component="img" src={chart.image} height="56px" alt="" />
+              <Typography variant="body2" align="center" fontWeight={600}>
+                {chart.type}
+              </Typography>
+              {statusChip}
+              {incompatible && missingSummary && (
+                <Typography variant="caption" color="text.secondary" align="center">
+                  Requires {missingSummary}
+                </Typography>
+              )}
+            </Stack>
+          </ButtonBase>
+        </Tooltip>
+      </Grid>
+    );
   };
 
-  const checkVisualizationRecommendation = (visualization, columnTypes) => {
-    // Count the total required columns for each type
-    let requiredCategorical = 0;
-    let requiredNumerical = 0;
-    let requiredCatOrdered = 0;
-
-    visualization.dataTypes.forEach((dataType) => {
-      if (dataType.type === DataTypes.categorical) {
-        requiredCategorical += dataType.required;
-      } else if (dataType.type === DataTypes.numerical) {
-        requiredNumerical += dataType.required;
-      } else if (dataType.type === DataTypes.catOrdered) {
-        requiredCatOrdered += dataType.required;
-      }
-    });
-
-    // Count the available columns of each type in the dataset
-    const availableStrings = columnTypes.filter(
-      (type) => type === "string"
-    ).length;
-    const availableNumbers = columnTypes.filter(
-      (type) => type === "number"
-    ).length;
-
-    // Check if the dataset meets the visualization requirements
-    const hasRequiredStrings =
-      availableStrings >= requiredCategorical + requiredCatOrdered;
-    const hasRequiredNumbers = availableNumbers >= requiredNumerical;
-
-    return hasRequiredStrings && hasRequiredNumbers;
-  };
+  const renderGroup = (title, charts, status) =>
+    charts.length > 0 ? (
+      <Stack gap={1.5} key={title}>
+        <Typography variant="subtitle2" component="h4">
+          {title}
+        </Typography>
+        <Grid container spacing={2}>
+          {sortByType(charts).map((chart) => renderChartCard(chart, status))}
+        </Grid>
+      </Stack>
+    ) : null;
 
   return (
     <>
       <Stack gap={2}>
-        <Typography>
-          <b>Available charts</b>
-        </Typography>
+        <Box>
+          <Typography variant="subtitle1" component="h3" fontWeight={600}>
+            Choose a visualization
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Charts are grouped by how well they fit your data
+            {visRef.filter.type ? " and selected task" : ""}.
+          </Typography>
+        </Box>
+
         <Stack gap={4}>
-          <Stack gap={4} justifyContent="center">
-            {visRef.filter.type && (
-              <Typography align="center" variant="body2">
-                Chart(s) recommended based on chart type:{" "}
-                <b>{visRef.filter.type}</b>
-              </Typography>
-            )}
-            <Grid container spacing={2} justifyContent="center">
-              {state.visualizationList
-                .sort((a, b) => a.type.localeCompare(b.type))
-                .map((visualization, index) => {
-                  if (visualization.enable) {
-                    return (
-                      <Grid
-                        key={index}
-                        component={Paper}
-                        variant="outlined"
-                        size={{ xs: 6, sm: 3, lg: 2 }}
-                        sx={{
-                          cursor: "pointer",
-                          p: 2,
-                          "&:hover": {
-                            boxShadow: 5,
-                          },
-                          border:
-                            visRef.chart.type === visualization.type
-                              ? "2px solid #F57C00"
-                              : "",
-                        }}
-                        onClick={() => handleSelectVisualization(visualization)}
-                      >
-                        <Tooltip
-                          arrow
-                          title={
-                            <Typography
-                              variant="body2"
-                              sx={{ p: 1, whiteSpace: "pre-line" }}
-                            >
-                              {visualization.description}
-                            </Typography>
-                          }
-                        >
-                          <Stack
-                            gap={2}
-                            alignItems="center"
-                            justifyContent="center"
-                          >
-                            <Box sx={{ position: "relative" }}>
-                              <Box
-                                component="img"
-                                src={visualization.image}
-                                height="56px"
-                              />
-                              {checkVisualizationRecommendation(
-                                visualization,
-                                columnTypes
-                              ) && (
-                                <RecommendIcon
-                                  color="success"
-                                  sx={{
-                                    borderRadius: 50,
-                                    bgcolor: "white",
-                                    position: "absolute",
-                                    top: -4,
-                                    right: -8,
-                                  }}
-                                />
-                              )}
-                            </Box>
-                            <Typography variant="body2" align="center">
-                              {visualization.type}
-                            </Typography>
-                          </Stack>
-                        </Tooltip>
-                      </Grid>
-                    );
-                  }
-                })}
-            </Grid>
-            {state.recommendation && (
-              <Stack
-                gap={1}
-                direction="row"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <RecommendIcon
-                  color="success"
-                  sx={{ borderRadius: 50, bgcolor: "white" }}
-                />
-                <Typography variant="body2">
-                  Recommendations are based on your dataset
-                </Typography>
-              </Stack>
-            )}
-          </Stack>
+          {renderGroup("Recommended for your data", recommended, "recommended")}
+          {renderGroup("Alternative visualizations", otherCompatible, "compatible")}
+          {renderGroup("Requires additional data", notCompatible, "incompatible")}
+
           <Grow
             in={Boolean(visRef.chart.type)}
             timeout={{ enter: 500, exit: 0 }}
