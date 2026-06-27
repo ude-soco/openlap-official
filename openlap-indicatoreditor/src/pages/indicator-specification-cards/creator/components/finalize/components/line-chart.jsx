@@ -455,9 +455,17 @@ const LineChart = ({ customize = false, handleToggleCustomizePanel }) => {
         </Grid>
         {!customize && (
           <Grid size={{ xs: 12 }}>
-            <Grid container spacing={2} justifyContent="flex-end">
+            <Grid
+              container
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Typography variant="subtitle2" component="h4">
+                Chart preview
+              </Typography>
               <Button
-                aria-expanded={customize} startIcon={<PaletteIcon />}
+                aria-expanded={customize}
+                startIcon={<PaletteIcon />}
                 variant="contained"
                 onClick={handleToggleCustomizePanel}
               >
@@ -481,6 +489,9 @@ const LineChart = ({ customize = false, handleToggleCustomizePanel }) => {
 
         <Grow in={customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>
           <Grid size={{ xs: 12, md: 8 }} sx={{ minHeight: 600 }}>
+            <Typography variant="subtitle2" component="h4" gutterBottom>
+              Chart preview
+            </Typography>
             <Chart
               ref={chartRef}
               options={state.options}
@@ -496,9 +507,14 @@ const LineChart = ({ customize = false, handleToggleCustomizePanel }) => {
               container
               spacing={2}
               justifyContent="space-between"
-              alignItems="center"
+              alignItems="flex-start"
             >
-              <Typography>Chart appearance</Typography>
+              <Grid>
+                <Typography component="h4">Chart appearance</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Optional settings for labels, colors, legend, and filters.
+                </Typography>
+              </Grid>
               <Tooltip title="Close">
                 <IconButton aria-label="Close customization" onClick={handleToggleCustomizePanel}>
                   <CloseIcon color="primary" />
