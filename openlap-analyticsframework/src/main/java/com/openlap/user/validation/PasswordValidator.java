@@ -8,7 +8,7 @@ import javax.validation.ConstraintValidatorContext;
  * Enforces the OpenLAP password policy:
  *
  * <ul>
- *   <li>at least {@value #MIN_LENGTH} characters
+ *   <li>between {@value #MIN_LENGTH} and {@value #MAX_LENGTH} characters
  *   <li>at least one uppercase letter
  *   <li>at least one lowercase letter
  *   <li>at least one number
@@ -24,6 +24,7 @@ import javax.validation.ConstraintValidatorContext;
 public class PasswordValidator implements ConstraintValidator<ValidPassword, String> {
 
   static final int MIN_LENGTH = 12;
+  static final int MAX_LENGTH = 64;
 
   /** Allowed special characters: ! " § $ % &amp; / ( ) = ? * + # - _ . : , ; @ ("§" is U+00A7). */
   static final String ALLOWED_SPECIALS = "!\"§$%&/()=?*+#-_.:,;@";
@@ -46,6 +47,9 @@ public class PasswordValidator implements ConstraintValidator<ValidPassword, Str
   static String firstViolation(String password) {
     if (password.length() < MIN_LENGTH) {
       return "Password must be at least " + MIN_LENGTH + " characters long";
+    }
+    if (password.length() > MAX_LENGTH) {
+      return "Password must be at most " + MAX_LENGTH + " characters long";
     }
     if (!contains(password, Character::isUpperCase)) {
       return "Password must contain at least one uppercase letter";

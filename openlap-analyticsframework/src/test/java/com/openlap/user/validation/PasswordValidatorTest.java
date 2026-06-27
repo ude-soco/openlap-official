@@ -15,6 +15,18 @@ public class PasswordValidatorTest {
   }
 
   @Test
+  public void rejectsTooLong() {
+    // 65 characters, otherwise valid (upper, lower, digit, special, allowed chars).
+    assertNotNull(PasswordValidator.firstViolation("A1@" + "a".repeat(62)));
+  }
+
+  @Test
+  public void acceptsMaxLengthPassword() {
+    // exactly 64 characters
+    assertNull(PasswordValidator.firstViolation("A1@" + "a".repeat(61)));
+  }
+
+  @Test
   public void rejectsMissingUppercase() {
     assertNotNull(PasswordValidator.firstViolation("abcdefgh1@jk"));
   }

@@ -189,6 +189,10 @@ const Register = () => {
     );
   const passwordCriteria = [
     { label: "At least 12 characters", met: password.length >= 12 },
+    {
+      label: "At most 64 characters",
+      met: password.length > 0 && password.length <= 64,
+    },
     { label: "At least 1 uppercase letter", met: /[A-Z]/.test(password) },
     { label: "At least 1 lowercase letter", met: /[a-z]/.test(password) },
     { label: "At least 1 number", met: /[0-9]/.test(password) },
