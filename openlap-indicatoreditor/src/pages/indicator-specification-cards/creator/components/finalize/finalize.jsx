@@ -15,7 +15,9 @@ const Finalize = () => {
     openSaveDialog: false,
   });
 
-  const [showCustomize, setShowCustomize] = useState(true);
+  // Preview first, customize only if needed (Phase 5D): the customization panel
+  // starts collapsed so the chart preview uses the full available width.
+  const [showCustomize, setShowCustomize] = useState(false);
 
   const handleOpenSaveDialog = () => {
     setState((prevState) => ({

@@ -554,11 +554,11 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
           <Grid size={{ xs: 12 }}>
             <Grid container spacing={2} justifyContent="flex-end">
               <Button
-                startIcon={<PaletteIcon />}
+                aria-expanded={customize} startIcon={<PaletteIcon />}
                 variant="contained"
                 onClick={handleToggleCustomizePanel}
               >
-                Customize
+                Customize chart
               </Button>
             </Grid>
           </Grid>
@@ -595,9 +595,9 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
               justifyContent="space-between"
               alignItems="center"
             >
-              <Typography>Customization panel</Typography>
+              <Typography>Chart appearance</Typography>
               <Tooltip title="Close">
-                <IconButton onClick={handleToggleCustomizePanel}>
+                <IconButton aria-label="Close customization" onClick={handleToggleCustomizePanel}>
                   <CloseIcon color="primary" />
                 </IconButton>
               </Tooltip>
