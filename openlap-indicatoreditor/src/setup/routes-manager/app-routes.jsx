@@ -8,7 +8,7 @@ import {
   Divider,
   Container,
 } from "@mui/material";
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import PrivateRoute from "./private-routes";
 import RoleTypes from "../../pages/account-manager/utils/enums/role-types.js";
@@ -87,6 +87,45 @@ const ManageAnalytics = lazy(() =>
   import("../../pages/admin/manage-analytics.jsx")
 );
 
+// Routes that opt out of the standard "content sheet" (Container + padded Paper
+// card) and render full-bleed instead — for editor/workspace pages where the
+// card-in-card framing is undesirable (e.g. the ISC Creator workspace, whose
+// own panels already provide framing). Other authenticated routes are unaffected.
+const FULL_BLEED_PATH_PREFIXES = ["/isc/creator"];
+
+// The authenticated content region. Renders the matched route via <Outlet/>,
+// wrapped in the content sheet by default, or full-bleed for editor routes.
+// Lives inside AppShell so switching between sheet and full-bleed routes never
+// remounts the shell (top bar / sidebar / drawer state are preserved).
+const AuthenticatedContent = () => {
+  const { pathname } = useLocation();
+  const fullBleed = FULL_BLEED_PATH_PREFIXES.some((prefix) =>
+    pathname.startsWith(prefix)
+  );
+
+  return (
+    <Container maxWidth="xl" sx={{ minHeight: "89vh" }}>
+      {fullBleed ? (
+        <Outlet />
+      ) : (
+        <Stack
+          component={Paper}
+          elevation={0}
+          gap={1}
+          sx={{
+            p: { xs: 2, md: 3 },
+            borderRadius: (t) => `${t.custom.radii.card}px`,
+            border: (t) => `1px solid ${t.palette.divider}`,
+            bgcolor: "background.paper",
+          }}
+        >
+          <Outlet />
+        </Stack>
+      )}
+    </Container>
+  );
+};
+
 const RouteFallback = () => (
   <Box
     sx={{
@@ -126,21 +165,7 @@ const AppRoutes = () => {
               <Route
                 element={
                   <AppShell>
-                    <Container maxWidth="xl" sx={{ minHeight: "89vh" }}>
-                      <Stack
-                        component={Paper}
-                        elevation={0}
-                        gap={1}
-                        sx={{
-                          p: { xs: 2, md: 3 },
-                          borderRadius: (t) => `${t.custom.radii.card}px`,
-                          border: (t) => `1px solid ${t.palette.divider}`,
-                          bgcolor: "background.paper",
-                        }}
-                      >
-                        <Outlet />
-                      </Stack>
-                    </Container>
+                    <AuthenticatedContent />
                     <Stack gap={2} sx={{ pt: 4 }}>
                       <Divider />
                       <Footer />

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { Breadcrumbs, Divider, Link, Stack, Typography } from "@mui/material";
-import { Link as RouterLink } from "react-router-dom";
+import { Stack, Typography } from "@mui/material";
+import { useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { v4 as uuidv4 } from "uuid";
 import SpecifyRequirements from "./components/specify-requirements/specify-requirements.jsx";
@@ -8,6 +8,7 @@ import ChoosePath from "./components/choose-path/choose-path.jsx";
 import Visualization from "./components/visualization/visualization.jsx";
 import Dataset from "./components/dataset/dataset.jsx";
 import Finalize from "./components/finalize/finalize.jsx";
+import ISCWorkspace from "./components/isc-workspace/isc-workspace.jsx";
 import { DataTypes } from "./utils/data/config.js";
 import { LEGACY_STEP_CODE } from "./utils/isc-constants.js";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
@@ -17,6 +18,7 @@ export const ISCContext = createContext(undefined);
 const IndicatorSpecificationCard = () => {
   const { SESSION_ISC } = useContext(AuthContext);
   const { enqueueSnackbar } = useSnackbar();
+  const { id: routeId } = useParams();
   // `id` is only initialized from the restored draft; it is never set via state
   // afterwards (the setter was unused), so no setter is destructured.
   const [id] = useState(() => {
@@ -266,46 +268,32 @@ const IndicatorSpecificationCard = () => {
           setDataset,
         }}
       >
-        <Stack gap={2}>
-          <Breadcrumbs>
-            <Link
-              component={RouterLink}
-              underline="hover"
-              color="inherit"
-              to="/"
-            >
-              Home
-            </Link>
-            <Link
-              component={RouterLink}
-              underline="hover"
-              color="inherit"
-              to="/isc"
-            >
-              My ISCs
-            </Link>
-            <Typography sx={{ color: "text.primary" }}>
-              Create an ISC
-            </Typography>
-          </Breadcrumbs>
-          <Divider />
-          <SpecifyRequirements />
-          <ChoosePath />
-          {lockedStep.visualization.step === LEGACY_STEP_CODE.FIRST_MIDDLE && (
-            <Visualization />
-          )}
-          {lockedStep.dataset.step === LEGACY_STEP_CODE.SECOND_MIDDLE && (
-            <Dataset />
-          )}
-          {lockedStep.dataset.step === LEGACY_STEP_CODE.FIRST_MIDDLE && (
-            <Dataset />
-          )}
-          {lockedStep.visualization.step === LEGACY_STEP_CODE.SECOND_MIDDLE && (
-            <Visualization />
-          )}
-          {lockedStep.visualization.step !== LEGACY_STEP_CODE.NONE &&
-            lockedStep.dataset.step !== LEGACY_STEP_CODE.NONE && <Finalize />}
-        </Stack>
+        <ISCWorkspace
+          title={routeId ? "Edit ISC" : "Create an ISC"}
+          breadcrumbs={[
+            { label: "Home", to: "/" },
+            { label: "My ISCs", to: "/isc" },
+          ]}
+        >
+          <Stack gap={2}>
+            <SpecifyRequirements />
+            <ChoosePath />
+            {lockedStep.visualization.step === LEGACY_STEP_CODE.FIRST_MIDDLE && (
+              <Visualization />
+            )}
+            {lockedStep.dataset.step === LEGACY_STEP_CODE.SECOND_MIDDLE && (
+              <Dataset />
+            )}
+            {lockedStep.dataset.step === LEGACY_STEP_CODE.FIRST_MIDDLE && (
+              <Dataset />
+            )}
+            {lockedStep.visualization.step === LEGACY_STEP_CODE.SECOND_MIDDLE && (
+              <Visualization />
+            )}
+            {lockedStep.visualization.step !== LEGACY_STEP_CODE.NONE &&
+              lockedStep.dataset.step !== LEGACY_STEP_CODE.NONE && <Finalize />}
+          </Stack>
+        </ISCWorkspace>
       </ISCContext.Provider>
     </>
   );
