@@ -1,8 +1,10 @@
 import { useContext, useEffect, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import {
   Button,
   FormControl,
+  FormHelperText,
   Grow,
   IconButton,
   InputLabel,
@@ -20,11 +22,13 @@ import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 import { ISCContext } from "../../../isc-context.js";
 import ChartAxisDropdownFeedback from "./chart-axis-dropdown-feedback.jsx";
 import { DataTypes } from "../../../utils/data/config.js";
+import { AXIS_INTRO, getAxisLabels } from "../utils/axis-labels.js";
 
 const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
   const { darkMode } = useContext(CustomThemeContext);
   const { visRef, setVisRef, dataset } = useContext(ISCContext);
   const chartRef = useRef(null);
+  const axisLabels = getAxisLabels("pie");
 
   const [state, setState] = useState({
     series: [],
@@ -339,18 +343,25 @@ const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
   return (
     <>
       <Grid container spacing={2}>
+        <Grid size={{ xs: 12 }}>
+          <Typography variant="body2" color="text.secondary">
+            {AXIS_INTRO}
+          </Typography>
+        </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <FormControl
             fullWidth
             error={state.axisOptions.selectedXAxis.length === 0}
           >
-            <InputLabel id="x-axis-select-label">Categories</InputLabel>
+            <InputLabel id="x-axis-select-label">
+              {axisLabels.category.label}
+            </InputLabel>
             <Select
               labelId="x-axis-select-label"
               id="x-axis-select"
               value={state.axisOptions.selectedXAxis}
               onChange={handleXAxisChange}
-              label="Categories"
+              label={axisLabels.category.label}
               variant="outlined"
             >
               <ListSubheader>
@@ -365,9 +376,10 @@ const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
               ))}
             </Select>
 
+            <FormHelperText>{axisLabels.category.help}</FormHelperText>
             {state.axisOptions.selectedXAxis.length === 0 && (
               <ChartAxisDropdownFeedback
-                axisName="Categories"
+                axisName={axisLabels.category.label}
                 columnTypeValue={state.axisOptions.xAxisType.value}
               />
             )}
@@ -378,13 +390,15 @@ const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
             fullWidth
             error={state.axisOptions.selectedYAxis.length === 0}
           >
-            <InputLabel id="y-axis-select-label">Values</InputLabel>
+            <InputLabel id="y-axis-select-label">
+              {axisLabels.value.label}
+            </InputLabel>
             <Select
               labelId="y-axis-select-label"
               id="y-axis-select"
               value={state.axisOptions.selectedYAxis}
               onChange={handleYAxisChange}
-              label="Values"
+              label={axisLabels.value.label}
               variant="outlined"
             >
               <ListSubheader>
@@ -398,9 +412,10 @@ const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+            <FormHelperText>{axisLabels.value.help}</FormHelperText>
             {state.axisOptions.selectedYAxis.length === 0 && (
               <ChartAxisDropdownFeedback
-                axisName="Values"
+                axisName={axisLabels.value.label}
                 columnTypeValue={state.axisOptions.yAxisType.value}
               />
             )}
@@ -464,6 +479,11 @@ const PieChart = ({ customize = false, handleToggleCustomizePanel }) => {
       </Grid>
     </>
   );
+};
+
+PieChart.propTypes = {
+  customize: PropTypes.bool,
+  handleToggleCustomizePanel: PropTypes.func,
 };
 
 export default PieChart;

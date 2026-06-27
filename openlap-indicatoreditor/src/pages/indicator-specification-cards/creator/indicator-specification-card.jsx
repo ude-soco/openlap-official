@@ -256,7 +256,7 @@ const IndicatorSpecificationCard = () => {
         }}
       >
         <ISCWorkspace
-          title={routeId ? "Edit ISC" : "Create an ISC"}
+          title={routeId ? "Edit ISC" : "ISC Creator"}
           breadcrumbs={[
             { label: "Home", to: "/" },
             { label: "My ISCs", to: "/isc" },

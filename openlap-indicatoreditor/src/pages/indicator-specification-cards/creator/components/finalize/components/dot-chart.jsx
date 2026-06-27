@@ -28,7 +28,7 @@ const DotChart = ({ customize = false, handleToggleCustomizePanel }) => {
   const { darkMode } = useContext(CustomThemeContext);
   const { visRef, setVisRef, dataset } = useContext(ISCContext);
   const chartRef = useRef(null);
-  const axisLabels = getAxisLabels(visRef.chart.code);
+  const axisLabels = getAxisLabels("dot");
 
   const [state, setState] = useState({
     series: [],
