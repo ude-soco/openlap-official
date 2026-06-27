@@ -4,6 +4,7 @@ import { Paper, Grid, Typography, Stack, Tooltip } from "@mui/material";
 import { blue, orange, green } from "@mui/material/colors";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import pathChoices from "../utils/utils.js";
+import { LEGACY_STEP_CODE } from "../../../utils/isc-constants.js";
 
 export default function PathSelectors() {
   const { requirements, setVisRef, setRequirements, setLockedStep } =
@@ -17,7 +18,6 @@ export default function PathSelectors() {
   };
 
   const handleChooseVisualizationPath = (path = pathChoices.vis) => {
-    console.log(path);
     handleTogglePanel();
     if (
       requirements.selectedPath !== pathChoices.vis ||
@@ -29,13 +29,13 @@ export default function PathSelectors() {
           ...p.visualization,
           locked: false,
           openPanel: true,
-          step: "3",
+          step: LEGACY_STEP_CODE.FIRST_MIDDLE,
         },
         dataset: {
           ...p.dataset,
           locked: true,
           openPanel: false,
-          step: "4",
+          step: LEGACY_STEP_CODE.SECOND_MIDDLE,
         },
         finalize: {
           ...p.finalize,
@@ -67,13 +67,13 @@ export default function PathSelectors() {
             ...p.dataset,
             locked: false,
             openPanel: true,
-            step: "3",
+            step: LEGACY_STEP_CODE.FIRST_MIDDLE,
           },
           visualization: {
             ...p.visualization,
             locked: true,
             openPanel: false,
-            step: "4",
+            step: LEGACY_STEP_CODE.SECOND_MIDDLE,
           },
           finalize: {
             ...p.finalize,

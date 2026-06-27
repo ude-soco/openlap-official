@@ -9,6 +9,7 @@ import Visualization from "./components/visualization/visualization.jsx";
 import Dataset from "./components/dataset/dataset.jsx";
 import Finalize from "./components/finalize/finalize.jsx";
 import { DataTypes } from "./utils/data/config.js";
+import { LEGACY_STEP_CODE } from "./utils/isc-constants.js";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 
 export const ISCContext = createContext(undefined);
@@ -16,7 +17,9 @@ export const ISCContext = createContext(undefined);
 const IndicatorSpecificationCard = () => {
   const { SESSION_ISC } = useContext(AuthContext);
   const { enqueueSnackbar } = useSnackbar();
-  const [id, setId] = useState(() => {
+  // `id` is only initialized from the restored draft; it is never set via state
+  // afterwards (the setter was unused), so no setter is destructured.
+  const [id] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION_ISC);
     return savedState
       ? JSON.parse(savedState).id
@@ -123,23 +126,23 @@ const IndicatorSpecificationCard = () => {
           requirements: {
             locked: false,
             openPanel: true,
-            step: "1",
+            step: LEGACY_STEP_CODE.REQUIREMENTS,
           },
-          path: { locked: true, openPanel: false, step: "2" },
+          path: { locked: true, openPanel: false, step: LEGACY_STEP_CODE.PATH },
           visualization: {
             locked: true,
             openPanel: false,
-            step: "0",
+            step: LEGACY_STEP_CODE.NONE,
           },
           dataset: {
             locked: true,
             openPanel: false,
-            step: "0",
+            step: LEGACY_STEP_CODE.NONE,
           },
           finalize: {
             locked: true,
             openPanel: false,
-            step: "5",
+            step: LEGACY_STEP_CODE.FINALIZE,
           },
         };
   });
@@ -288,12 +291,20 @@ const IndicatorSpecificationCard = () => {
           <Divider />
           <SpecifyRequirements />
           <ChoosePath />
-          {lockedStep.visualization.step === "3" && <Visualization />}
-          {lockedStep.dataset.step === "4" && <Dataset />}
-          {lockedStep.dataset.step === "3" && <Dataset />}
-          {lockedStep.visualization.step === "4" && <Visualization />}
-          {lockedStep.visualization.step !== "0" &&
-            lockedStep.dataset.step !== "0" && <Finalize />}
+          {lockedStep.visualization.step === LEGACY_STEP_CODE.FIRST_MIDDLE && (
+            <Visualization />
+          )}
+          {lockedStep.dataset.step === LEGACY_STEP_CODE.SECOND_MIDDLE && (
+            <Dataset />
+          )}
+          {lockedStep.dataset.step === LEGACY_STEP_CODE.FIRST_MIDDLE && (
+            <Dataset />
+          )}
+          {lockedStep.visualization.step === LEGACY_STEP_CODE.SECOND_MIDDLE && (
+            <Visualization />
+          )}
+          {lockedStep.visualization.step !== LEGACY_STEP_CODE.NONE &&
+            lockedStep.dataset.step !== LEGACY_STEP_CODE.NONE && <Finalize />}
         </Stack>
       </ISCContext.Provider>
     </>
