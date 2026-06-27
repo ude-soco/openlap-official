@@ -10,6 +10,7 @@ import {
   FormHelperText,
   FormLabel,
   IconButton,
+  InputAdornment,
   InputLabel,
   Link,
   Grid,
@@ -26,10 +27,35 @@ import {
 import RoleTypes from "../account-manager/utils/enums/role-types";
 import UniqueIdentifierTypes from "../account-manager/utils/enums/unique-identifier-types";
 import { requestAvailableLrsList, register } from "./register-api";
-import { Help } from "@mui/icons-material";
+import {
+  CancelRounded,
+  CheckCircleRounded,
+  Help,
+  RadioButtonUncheckedRounded,
+  Visibility,
+  VisibilityOff,
+} from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import AuthLayout from "../../common/components/auth-layout/auth-layout";
 import OpenLAPIcon from "../../assets/brand/openlap-icon.svg";
+
+// Returns slotProps that add an accessible show/hide toggle to a password field.
+const visibilityAdornment = (visible, toggle) => ({
+  input: {
+    endAdornment: (
+      <InputAdornment position="end">
+        <IconButton
+          aria-label={visible ? "Hide password" : "Show password"}
+          onClick={toggle}
+          onMouseDown={(e) => e.preventDefault()}
+          edge="end"
+        >
+          {visible ? <VisibilityOff /> : <Visibility />}
+        </IconButton>
+      </InputAdornment>
+    ),
+  },
+});
 
 const Register = () => {
   const { api } = useContext(AuthContext);
@@ -54,6 +80,8 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [lrsConnect, setLrsConnect] = useState(false);
   const [errors, setErrors] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     loadLRSData();
@@ -147,6 +175,27 @@ const Register = () => {
     }
   };
 
+  // Live password criteria — mirrors the backend policy (source of truth) for
+  // user guidance only; it does not gate submit.
+  const password = formFields.password;
+  const allowedSpecials = "!\"§$%&/()=?*+#-_.:,;@";
+  const hasAllowedSpecial = [...password].some((ch) =>
+    allowedSpecials.includes(ch)
+  );
+  const onlyAllowedChars =
+    password.length > 0 &&
+    [...password].every(
+      (ch) => /[A-Za-z0-9]/.test(ch) || allowedSpecials.includes(ch)
+    );
+  const passwordCriteria = [
+    { label: "At least 12 characters", met: password.length >= 12 },
+    { label: "At least 1 uppercase letter", met: /[A-Z]/.test(password) },
+    { label: "At least 1 lowercase letter", met: /[a-z]/.test(password) },
+    { label: "At least 1 number", met: /[0-9]/.test(password) },
+    { label: "At least 1 allowed special character", met: hasAllowedSpecial },
+    { label: "Only allowed characters are used", met: onlyAllowedChars },
+  ];
+
   return (
     <AuthLayout
       animate
@@ -194,28 +243,109 @@ const Register = () => {
             helperText={errors?.email}
             onChange={handleFormFields}
           />
-          <TextField
-            fullWidth
-            name="password"
-            label="Password"
-            placeholder="Password"
-            type="password"
-            autoComplete="new-password"
-            error={Boolean(errors?.password)}
-            helperText={errors?.password}
-            onChange={handleFormFields}
-          />
-          <TextField
-            fullWidth
-            name="confirmPassword"
-            label="Confirm Password"
-            placeholder="Confirm password"
-            type="password"
-            autoComplete="new-password"
-            error={Boolean(errors?.confirmPassword)}
-            helperText={errors?.confirmPassword}
-            onChange={handleFormFields}
-          />
+          <Stack gap={1}>
+            <TextField
+              fullWidth
+              name="password"
+              label="Password"
+              placeholder="Password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              error={Boolean(errors?.password)}
+              helperText={errors?.password}
+              onChange={handleFormFields}
+              slotProps={visibilityAdornment(showPassword, () =>
+                setShowPassword((s) => !s)
+              )}
+            />
+            <Box
+              sx={(t) => ({
+                border: `1px solid ${t.palette.divider}`,
+                borderRadius: `${t.custom.radii.input}px`,
+                px: 2,
+                py: 1.5,
+              })}
+            >
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mb: 1, fontWeight: 600 }}
+              >
+                Password requirements:
+              </Typography>
+              <Stack spacing={0.75}>
+                {passwordCriteria.map((c) => (
+                  <Stack
+                    key={c.label}
+                    direction="row"
+                    spacing={1}
+                    alignItems="center"
+                  >
+                    {c.met ? (
+                      <CheckCircleRounded
+                        sx={{ fontSize: 18, color: "success.main" }}
+                      />
+                    ) : (
+                      <RadioButtonUncheckedRounded
+                        sx={{ fontSize: 18, color: "text.disabled" }}
+                      />
+                    )}
+                    <Typography
+                      variant="caption"
+                      color={c.met ? "text.primary" : "text.secondary"}
+                    >
+                      {c.label}
+                    </Typography>
+                  </Stack>
+                ))}
+              </Stack>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mt: 1.5 }}
+              >
+                {`Allowed special characters: ${allowedSpecials}`}
+              </Typography>
+            </Box>
+          </Stack>
+          <Stack gap={0.75}>
+            <TextField
+              fullWidth
+              name="confirmPassword"
+              label="Confirm Password"
+              placeholder="Confirm password"
+              type={showConfirmPassword ? "text" : "password"}
+              autoComplete="new-password"
+              error={Boolean(errors?.confirmPassword)}
+              helperText={errors?.confirmPassword}
+              onChange={handleFormFields}
+              slotProps={visibilityAdornment(showConfirmPassword, () =>
+                setShowConfirmPassword((s) => !s)
+              )}
+            />
+            {formFields.confirmPassword.length > 0 &&
+              !errors?.confirmPassword && (
+                <Stack direction="row" spacing={1} alignItems="center">
+                  {formFields.password === formFields.confirmPassword ? (
+                    <>
+                      <CheckCircleRounded
+                        sx={{ fontSize: 18, color: "success.main" }}
+                      />
+                      <Typography variant="caption" color="success.main">
+                        Passwords match
+                      </Typography>
+                    </>
+                  ) : (
+                    <>
+                      <CancelRounded sx={{ fontSize: 18, color: "error.main" }} />
+                      <Typography variant="caption" color="error.main">
+                        Passwords do not match
+                      </Typography>
+                    </>
+                  )}
+                </Stack>
+              )}
+          </Stack>
         </Stack>
 
         <Divider />

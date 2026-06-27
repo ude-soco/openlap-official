@@ -3,6 +3,7 @@ package com.openlap.user.dto.request;
 import com.openlap.analytics_statements.dtos.request.LrsConsumerRequest;
 import com.openlap.analytics_statements.dtos.request.LrsProviderRequest;
 import com.openlap.user.entities.RoleType;
+import com.openlap.user.validation.ValidPassword;
 import javax.validation.Valid;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -27,11 +28,11 @@ public class UserRequest {
   private String email;
 
   @NotBlank(message = "Password is mandatory")
-  @Size(min = 5, max = 20, message = "Password must be between 5 and 20 characters")
+  @ValidPassword
   private String password;
 
   @NotBlank(message = "Password confirmation is mandatory")
-  @Size(min = 5, max = 20, message = "Password must be between 5 and 20 characters")
+  @ValidPassword
   private String confirmPassword;
 
   @NotNull(message = "Role is mandatory")

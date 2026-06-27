@@ -1,10 +1,39 @@
 import { useContext, useState } from "react";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
 import { useNavigate } from "react-router-dom";
-import { Box, Button, Link, Stack, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  IconButton,
+  InputAdornment,
+  Link,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { useSnackbar } from "notistack";
 import AuthLayout from "../../common/components/auth-layout/auth-layout";
 import OpenLAPIcon from "../../assets/brand/openlap-icon.svg";
+
+// Returns slotProps that add an accessible show/hide toggle to a password field.
+const visibilityAdornment = (visible, toggle) => ({
+  input: {
+    endAdornment: (
+      <InputAdornment position="end">
+        <IconButton
+          aria-label={visible ? "Hide password" : "Show password"}
+          onClick={toggle}
+          onMouseDown={(e) => e.preventDefault()}
+          edge="end"
+        >
+          {visible ? <VisibilityOff /> : <Visibility />}
+        </IconButton>
+      </InputAdornment>
+    ),
+  },
+});
 
 const Login = () => {
   const { login } = useContext(AuthContext);
@@ -13,6 +42,7 @@ const Login = () => {
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
@@ -74,9 +104,12 @@ const Login = () => {
           name="password"
           label="Password"
           placeholder="Password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           autoComplete="current-password"
           onChange={handleFormFields}
+          slotProps={visibilityAdornment(showPassword, () =>
+            setShowPassword((s) => !s)
+          )}
         />
         <Button
           type="submit"
