@@ -175,7 +175,7 @@ const Register = () => {
           </Typography>
           <TextField
             fullWidth
-            label="*Name"
+            label="Name"
             name="name"
             autoComplete="name"
             placeholder="Max Mustermann"
@@ -255,6 +255,7 @@ const Register = () => {
                   name="role"
                   value={formFields.role}
                   onChange={handleFormFields}
+                  sx={{ flexWrap: "wrap" }}
                 >
                   <FormControlLabel
                     value={RoleTypes.user}

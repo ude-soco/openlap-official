@@ -4,8 +4,6 @@ import { useNavigate } from "react-router-dom";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import ToggleColorMode from "../toggle-color-mode/toggle-color-mode";
 
-const logoStyle = { width: "120px", height: "auto", cursor: "pointer" };
-
 // Shared header for the public auth pages (login/register/privacy):
 // keyboard-accessible logo back to home, theme toggle, and a cross-link button.
 const AuthHeader = ({ crossLink }) => {
@@ -30,7 +28,7 @@ const AuthHeader = ({ crossLink }) => {
           role="button"
           tabIndex={0}
           aria-label="OpenLAP, go to homepage"
-          style={logoStyle}
+          sx={{ width: { xs: 104, sm: 120 }, height: "auto", cursor: "pointer" }}
           onClick={goHome}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
