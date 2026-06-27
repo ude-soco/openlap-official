@@ -17,6 +17,7 @@ import { AuthContext } from "../auth-context-manager/auth-context-manager";
 import Footer from "../../common/components/footer/footer";
 import { SnackbarProvider } from "notistack";
 import AppShell from "../../common/components/app-shell/app-shell";
+import { NavigationGuardProvider } from "./navigation-guard.jsx";
 import LandingPage from "../../pages/landing-page/landing-page.jsx";
 
 // Route components are code-split so anonymous landing-page visitors don't
@@ -182,13 +183,15 @@ const AppRoutes = () => {
             {user && (
               <Route
                 element={
-                  <AppShell>
-                    <AuthenticatedContent />
-                    <Stack gap={2} sx={{ pt: 4 }}>
-                      <Divider />
-                      <Footer />
-                    </Stack>
-                  </AppShell>
+                  <NavigationGuardProvider>
+                    <AppShell>
+                      <AuthenticatedContent />
+                      <Stack gap={2} sx={{ pt: 4 }}>
+                        <Divider />
+                        <Footer />
+                      </Stack>
+                    </AppShell>
+                  </NavigationGuardProvider>
                 }
               >
                 <Route

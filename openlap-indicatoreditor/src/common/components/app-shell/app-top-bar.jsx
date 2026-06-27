@@ -19,14 +19,14 @@ import { alpha } from "@mui/material/styles";
 import MenuIcon from "@mui/icons-material/Menu";
 import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
-import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
+import { useGuardedNavigate } from "../../../setup/routes-manager/navigation-guard-context.js";
 
 const AppTopBar = ({ drawerWidth, onMenuToggle }) => {
-  const navigate = useNavigate();
+  const guardedNavigate = useGuardedNavigate();
   const { user, logout } = useContext(AuthContext);
   const { darkMode, toggleDarkMode, handleLightMode } =
     useContext(CustomThemeContext);
@@ -73,7 +73,7 @@ const AppTopBar = ({ drawerWidth, onMenuToggle }) => {
         <Box
           component="img"
           sx={{ height: 36, cursor: "pointer", display: { md: "none" } }}
-          onClick={() => navigate("/dashboard")}
+          onClick={() => guardedNavigate("/dashboard")}
           src={OpenLAPLogo}
           alt="OpenLAP"
         />

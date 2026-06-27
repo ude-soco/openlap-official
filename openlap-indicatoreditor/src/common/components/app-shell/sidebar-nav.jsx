@@ -16,10 +16,11 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha, styled } from "@mui/material/styles";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import menus from "../../../setup/routes-manager/router-config.jsx";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
+import { useGuardedNavigate } from "../../../setup/routes-manager/navigation-guard-context.js";
 
 const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
@@ -71,7 +72,7 @@ const SidebarNav = ({ onItemClick }) => {
   } = useContext(AuthContext);
   const [openMenus, setOpenMenus] = useState(buildInitialOpenState);
 
-  const navigate = useNavigate();
+  const guardedNavigate = useGuardedNavigate();
   const location = useLocation();
 
   // Open the groups the user can access, collapse the ones locked for their
@@ -94,7 +95,9 @@ const SidebarNav = ({ onItemClick }) => {
   };
 
   const handleNavigate = (path) => {
-    navigate(path);
+    // Routes through the navigation guard: an active edit-draft guard can
+    // intercept this and show the Leave-editing dialog before navigating.
+    guardedNavigate(path);
     if (onItemClick) onItemClick();
   };
 

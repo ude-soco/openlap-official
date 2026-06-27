@@ -22,6 +22,7 @@ import {
   updateDraft,
 } from "./utils/isc-draft-api.js";
 import LeaveEditDialog from "./components/leave-edit-dialog.jsx";
+import { useNavigationGuard } from "../../../setup/routes-manager/navigation-guard-context.js";
 import { ISCContext } from "./isc-context.js";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 
@@ -365,6 +366,22 @@ const IndicatorSpecificationCard = () => {
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [isEditDraft]);
+
+  // Internal-navigation guard: any guarded navigation (sidebar, top bar, etc.)
+  // while editing a draft is intercepted to show the Leave-editing dialog. The
+  // requested target is remembered (leaveTo) and executed after the user acts.
+  const navGuard = useNavigationGuard();
+  const registerGuard = navGuard?.registerGuard;
+  const unregisterGuard = navGuard?.unregisterGuard;
+  useEffect(() => {
+    if (!isEditDraft || !registerGuard) return undefined;
+    const guard = (to) => {
+      setLeaveTo(to);
+      return true; // intercept; navigation happens after the user chooses
+    };
+    registerGuard(guard);
+    return () => unregisterGuard(guard);
+  }, [isEditDraft, registerGuard, unregisterGuard]);
 
   // Intercept the creator's own breadcrumb navigation while editing a draft.
   const guardCrumb = (to) =>
