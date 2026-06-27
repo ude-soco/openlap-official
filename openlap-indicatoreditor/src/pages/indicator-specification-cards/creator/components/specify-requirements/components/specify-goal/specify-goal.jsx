@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import FlagIcon from "@mui/icons-material/Flag";
 import GoalList from "./goal-list";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../../isc-context.js";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 
 export default function SpecifyGoal() {

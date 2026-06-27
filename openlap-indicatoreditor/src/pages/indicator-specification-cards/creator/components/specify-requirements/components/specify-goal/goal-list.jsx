@@ -14,7 +14,7 @@ import { createFilterOptions } from "@mui/material/Autocomplete";
 import { v4 as uuidv4 } from "uuid";
 import { requestAllGoals } from "../../utils/requirements-api.js";
 import { useSnackbar } from "notistack";
-import { ISCContext } from "../../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../../isc-context.js";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 
 const filter = createFilterOptions();

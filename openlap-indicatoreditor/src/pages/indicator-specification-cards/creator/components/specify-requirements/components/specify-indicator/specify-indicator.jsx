@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { Grid, TextField, Typography, Avatar, Stack } from "@mui/material";
 import BarChartIcon from "@mui/icons-material/BarChart";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../../isc-context.js";
 import DataList from "./data-list";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 import { DataTypes } from "../../../../utils/data/config";

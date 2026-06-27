@@ -7,7 +7,7 @@ import {
   DialogTitle,
   Typography,
 } from "@mui/material";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../isc-context.js";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { requestCreateISC, requestUpdateISC } from "../utils/finalize-api.js";
 import { useSnackbar } from "notistack";

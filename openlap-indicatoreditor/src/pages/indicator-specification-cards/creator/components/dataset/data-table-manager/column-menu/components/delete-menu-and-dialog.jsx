@@ -11,7 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Delete as DeleteIcon } from "@mui/icons-material";
-import { ISCContext } from "../../../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../../../isc-context.js";
 import { useGridApiContext } from "@mui/x-data-grid";
 
 const DeleteMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {

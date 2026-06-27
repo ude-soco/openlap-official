@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
 import { useContext, useState } from "react";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../../isc-context.js";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 
 export default function FormulateQuestion() {

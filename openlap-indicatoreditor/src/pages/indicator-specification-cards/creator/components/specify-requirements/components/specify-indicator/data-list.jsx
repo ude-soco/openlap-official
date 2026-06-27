@@ -15,7 +15,7 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import WarningIcon from "@mui/icons-material/Warning";
 import AddIcon from "@mui/icons-material/Add";
-import { ISCContext } from "../../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../../isc-context.js";
 import { DataTypes } from "../../../../utils/data/config.js";
 import { v4 as uuidv4 } from "uuid";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip.jsx";

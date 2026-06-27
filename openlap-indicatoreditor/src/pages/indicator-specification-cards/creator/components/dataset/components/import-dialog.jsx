@@ -12,7 +12,7 @@ import GetAppIcon from "@mui/icons-material/GetApp";
 import Papa from "papaparse";
 import { v4 as uuidv4 } from "uuid";
 import CsvImporter from "./csv-importer.jsx";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../isc-context.js";
 import { DataTypes } from "../../../utils/data/config.js";
 
 const ImportDialog = ({ open, toggleOpen }) => {

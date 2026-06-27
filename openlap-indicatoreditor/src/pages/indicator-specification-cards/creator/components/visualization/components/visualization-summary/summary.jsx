@@ -1,6 +1,6 @@
 import { Chip, Stack, Typography } from "@mui/material";
 import { useContext } from "react";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../../isc-context.js";
 
 export default function Summary({ filterType, chartType }) {
   const { lockedStep } = useContext(ISCContext);

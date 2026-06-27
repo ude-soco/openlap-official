@@ -12,7 +12,7 @@ import {
 import VisualizationDescription from "./visualization-description";
 import RecommendIcon from "@mui/icons-material/Recommend";
 import { DataTypes, visualizations } from "../../../../utils/data/config";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../../isc-context.js";
 
 const VisualizationFilter = () => {
   const { dataset, visRef, setVisRef } = useContext(ISCContext);

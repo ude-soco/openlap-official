@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../isc-context.js";
 import { ClearAll as ClearAllIcon } from "@mui/icons-material";
 import { Grid } from "@mui/material";
 import Footer from "./components/footer.jsx";

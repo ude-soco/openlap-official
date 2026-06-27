@@ -9,7 +9,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../../isc-context.js";
 
 const VisualizationDescription = ({ columnError }) => {
   const { visRef } = useContext(ISCContext);

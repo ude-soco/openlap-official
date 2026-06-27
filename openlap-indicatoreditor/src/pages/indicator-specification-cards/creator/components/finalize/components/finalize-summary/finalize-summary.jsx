@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../../isc-context.js";
 import { Chip, IconButton, Grid, Typography, Stack } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import { ToggleEditButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";

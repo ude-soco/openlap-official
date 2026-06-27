@@ -16,7 +16,7 @@ import {
   Typography,
 } from "@mui/material";
 import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
-import { ISCContext } from "../../../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../../../isc-context.js";
 import { useGridApiContext } from "@mui/x-data-grid";
 import { DataTypes } from "../../../../../utils/data/config.js";
 

@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { ISCContext } from "../../indicator-specification-card.jsx";
+import { ISCContext } from "../../isc-context.js";
 import { Button, Collapse, Divider, Grid, Paper, Stack } from "@mui/material";
 import DatasetSummary from "./components/dataset-summary.jsx";
 import DataTableManager from "./data-table-manager/data-table-manager";

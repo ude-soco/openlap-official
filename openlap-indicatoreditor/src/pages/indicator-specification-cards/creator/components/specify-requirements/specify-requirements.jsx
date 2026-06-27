@@ -9,7 +9,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { ISCContext } from "../../indicator-specification-card";
+import { ISCContext } from "../../isc-context.js";
 import SpecifyGoal from "./components/specify-goal/specify-goal";
 import ConfirmGoal from "./components/specify-goal/confirm-goal";
 import FormulateQuestion from "./components/formulate-question/formulate-question";

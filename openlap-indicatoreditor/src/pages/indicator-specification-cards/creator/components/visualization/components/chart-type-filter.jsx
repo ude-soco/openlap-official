@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { Box, Grid, Paper, Stack, Tooltip, Typography } from "@mui/material";
 import { chartFilters } from "../../../utils/data/config.js";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../isc-context.js";
 
 const ChartTypeFilter = () => {
   const { visRef, setVisRef } = useContext(ISCContext);

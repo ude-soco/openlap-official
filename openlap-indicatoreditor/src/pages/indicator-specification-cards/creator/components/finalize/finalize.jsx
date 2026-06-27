@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { ISCContext } from "../../indicator-specification-card.jsx";
+import { ISCContext } from "../../isc-context.js";
 import { Button, Divider, Paper, Grid, Collapse } from "@mui/material";
 import NameDialog from "./components/name-dialog.jsx";
 import VisSelection from "../visualization/components/visualization-filter/vis-selection";

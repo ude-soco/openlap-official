@@ -78,6 +78,29 @@ export const isStepReachable = (domainState, step) => {
   );
 };
 
+// View-model for the WorkflowStepper. Combines the REAL runtime lock state
+// (legacy `lockedStep.<phase>.locked` — the actual gate enforced by the UI) with
+// the derived completeness/summary selectors. Kept here as a pure function so the
+// stepper stays presentational and this stays testable.
+export const getWorkflowSteps = (domainState) =>
+  ISC_STEP_ORDER.map((step) => ({
+    key: step,
+    label: getStepLabel(step),
+    locked: Boolean(domainState?.lockedStep?.[step]?.locked),
+    completed: isStepComplete(domainState, step),
+    summary: getStepSummary(domainState, step),
+  }));
+
+// The step the user should focus on: the first unlocked, not-yet-complete phase;
+// if every unlocked phase is complete, the furthest unlocked phase; else the first.
+export const getCurrentStep = (domainState) => {
+  const steps = getWorkflowSteps(domainState);
+  const actionable = steps.find((s) => !s.locked && !s.completed);
+  if (actionable) return actionable.key;
+  const lastUnlocked = [...steps].reverse().find((s) => !s.locked);
+  return lastUnlocked ? lastUnlocked.key : ISC_STEP_ORDER[0];
+};
+
 // Short, human-readable summary for a completed step (for future WorkflowSummary).
 export const getStepSummary = (domainState, step) => {
   switch (step) {

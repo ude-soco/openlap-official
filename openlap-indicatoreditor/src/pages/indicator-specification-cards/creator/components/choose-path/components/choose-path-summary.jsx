@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { Chip, Collapse, IconButton, Stack, Typography } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../isc-context.js";
 import ToggleSummaryButton from "../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
 import { ToggleEditButton } from "../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
 import TipPopover from "../../../../../../common/components/tip-popover/tip-popover.jsx";

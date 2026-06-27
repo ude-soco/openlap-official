@@ -17,7 +17,7 @@ import Chart from "react-apexcharts";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../isc-context.js";
 import ChartAxisDropdownFeedback from "./chart-axis-dropdown-feedback.jsx";
 import { DataTypes } from "../../../utils/data/config.js";
 

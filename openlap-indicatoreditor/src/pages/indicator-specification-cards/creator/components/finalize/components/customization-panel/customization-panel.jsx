@@ -4,7 +4,7 @@ import { TabContext, TabList, TabPanel } from "@mui/lab";
 import ElementsTab from "./components/elements-tab/elements-tab.jsx";
 import StylesTab from "./components/styles-tab/styles-tab.jsx";
 import FiltersTab from "./components/filters-tab.jsx";
-import { ISCContext } from "../../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../../isc-context.js";
 
 const CustomizationPanel = ({ state, setState }) => {
   const { setVisRef } = useContext(ISCContext);

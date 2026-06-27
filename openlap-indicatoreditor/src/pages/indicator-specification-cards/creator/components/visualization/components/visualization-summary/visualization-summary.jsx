@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../../isc-context.js";
 import {
   Chip,
   Collapse,

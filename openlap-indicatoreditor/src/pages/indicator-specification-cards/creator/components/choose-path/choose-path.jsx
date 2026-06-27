@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { Collapse, Grid, Paper } from "@mui/material";
-import { ISCContext } from "../../indicator-specification-card.jsx";
+import { ISCContext } from "../../isc-context.js";
 import ChoosePathSummary from "./components/choose-path-summary.jsx";
 import PathSelectors from "./components/path-selectors.jsx";
 import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";

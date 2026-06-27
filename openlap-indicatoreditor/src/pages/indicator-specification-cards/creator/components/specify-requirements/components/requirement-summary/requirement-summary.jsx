@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 import { Chip, Collapse, Grid, Stack, Typography } from "@mui/material";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../../isc-context.js";
 import Summary from "./summary";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
 import { ToggleEditButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";

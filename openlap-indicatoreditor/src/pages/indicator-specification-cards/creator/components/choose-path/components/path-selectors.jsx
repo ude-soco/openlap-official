@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../isc-context.js";
 import { Paper, Grid, Typography, Stack, Tooltip } from "@mui/material";
 import { blue, orange, green } from "@mui/material/colors";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";

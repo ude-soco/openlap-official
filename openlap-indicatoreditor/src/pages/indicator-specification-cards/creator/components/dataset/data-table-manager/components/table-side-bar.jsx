@@ -8,7 +8,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { ISCContext } from "../../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../../isc-context.js";
 import DeleteDialog from "../../../../../../../common/components/delete-dialog/delete-dialog.jsx";
 import AddColumnDialog from "../../components/add-column-dialog.jsx";
 import AddRowDialog from "../../components/add-row-dialog.jsx";

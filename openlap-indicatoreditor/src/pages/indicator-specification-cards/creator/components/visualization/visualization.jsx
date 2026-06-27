@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { Button, Collapse, Divider, Paper, Grid, Stack } from "@mui/material";
-import { ISCContext } from "../../indicator-specification-card.jsx";
+import { ISCContext } from "../../isc-context.js";
 import ChartTypeFilter from "./components/chart-type-filter.jsx";
 import VisualizationFilter from "./components/visualization-filter/visualization-filter";
 import VisualizationSummary from "./components/visualization-summary/visualization-summary.jsx";

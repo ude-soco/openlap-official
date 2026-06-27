@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Stack, Typography } from "@mui/material";
 import { useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
@@ -9,11 +9,12 @@ import Visualization from "./components/visualization/visualization.jsx";
 import Dataset from "./components/dataset/dataset.jsx";
 import Finalize from "./components/finalize/finalize.jsx";
 import ISCWorkspace from "./components/isc-workspace/isc-workspace.jsx";
+import WorkflowStepper from "./components/workflow-stepper/workflow-stepper.jsx";
 import { DataTypes } from "./utils/data/config.js";
 import { LEGACY_STEP_CODE } from "./utils/isc-constants.js";
+import { getWorkflowSteps, getCurrentStep } from "./utils/isc-selectors.js";
+import { ISCContext } from "./isc-context.js";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
-
-export const ISCContext = createContext(undefined);
 
 const IndicatorSpecificationCard = () => {
   const { SESSION_ISC } = useContext(AuthContext);
@@ -253,6 +254,12 @@ const IndicatorSpecificationCard = () => {
     return () => clearInterval(intervalId);
   }, [requirements, dataset, visRef, lockedStep]);
 
+  // Derive the (informational) workflow-stepper view from the real runtime state
+  // (lockedStep + completeness selectors). Pure read — does not affect gating.
+  const domainState = { requirements, dataset, visRef, lockedStep };
+  const workflowSteps = getWorkflowSteps(domainState);
+  const currentStep = getCurrentStep(domainState);
+
   return (
     <>
       <ISCContext.Provider
@@ -274,6 +281,9 @@ const IndicatorSpecificationCard = () => {
             { label: "Home", to: "/" },
             { label: "My ISCs", to: "/isc" },
           ]}
+          stepper={
+            <WorkflowStepper steps={workflowSteps} current={currentStep} />
+          }
         >
           <Stack gap={2}>
             <SpecifyRequirements />
