@@ -13,6 +13,7 @@ import WorkflowStepper from "./components/workflow-stepper/workflow-stepper.jsx"
 import { DataTypes } from "./utils/data/config.js";
 import { LEGACY_STEP_CODE } from "./utils/isc-constants.js";
 import { getWorkflowSteps, getCurrentStep } from "./utils/isc-selectors.js";
+import { withOnlyStepExpanded } from "./utils/isc-workflow-ui.js";
 import { ISCContext } from "./isc-context.js";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 
@@ -260,6 +261,14 @@ const IndicatorSpecificationCard = () => {
   const workflowSteps = getWorkflowSteps(domainState);
   const currentStep = getCurrentStep(domainState);
 
+  // Stepper navigation: expand the chosen (unlocked) section and collapse the
+  // others — the one-active-section model, on top of the existing lockedStep.
+  const handleSelectStep = (stepKey) => {
+    setLockedStep((p) =>
+      p[stepKey]?.locked ? p : withOnlyStepExpanded(p, stepKey)
+    );
+  };
+
   return (
     <>
       <ISCContext.Provider
@@ -282,7 +291,11 @@ const IndicatorSpecificationCard = () => {
             { label: "My ISCs", to: "/isc" },
           ]}
           stepper={
-            <WorkflowStepper steps={workflowSteps} current={currentStep} />
+            <WorkflowStepper
+              steps={workflowSteps}
+              current={currentStep}
+              onStepSelect={handleSelectStep}
+            />
           }
         >
           <Stack gap={2}>

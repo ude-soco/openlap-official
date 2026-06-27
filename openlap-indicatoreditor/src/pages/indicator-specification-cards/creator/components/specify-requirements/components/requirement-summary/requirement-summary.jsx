@@ -1,6 +1,11 @@
 import { useContext, useState } from "react";
-import { Chip, Collapse, Grid, Stack, Typography } from "@mui/material";
+import { Chip, Collapse, Stack, Typography } from "@mui/material";
 import { ISCContext } from "../../../../isc-context.js";
+import { ISC_STEPS } from "../../../../utils/isc-constants.js";
+import {
+  withOnlyStepExpanded,
+  withStepCollapsed,
+} from "../../../../utils/isc-workflow-ui.js";
 import Summary from "./summary";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
 import { ToggleEditButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
@@ -26,10 +31,12 @@ export default function RequirementSummary() {
   };
 
   const handleTogglePanel = () => {
-    setLockedStep((p) => ({
-      ...p,
-      requirements: { ...p.requirements, openPanel: !p.requirements.openPanel },
-    }));
+    // One-active-section: opening this step collapses the others.
+    setLockedStep((p) =>
+      p.requirements.openPanel
+        ? withStepCollapsed(p, ISC_STEPS.REQUIREMENTS)
+        : withOnlyStepExpanded(p, ISC_STEPS.REQUIREMENTS)
+    );
   };
 
   return (

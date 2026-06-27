@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
 import {
   Step,
+  StepButton,
   StepLabel,
   Stepper,
   Typography,
@@ -22,8 +23,10 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
  *
  * @param {{key,label,locked,completed,summary}[]} steps  view-model from getWorkflowSteps
  * @param {string} current  key of the step to mark as current
+ * @param {(stepKey: string) => void} [onStepSelect]  when provided, unlocked
+ *   steps become clickable (open that section). Locked steps stay disabled.
  */
-const WorkflowStepper = ({ steps, current }) => {
+const WorkflowStepper = ({ steps, current, onStepSelect }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const currentIndex = Math.max(
@@ -33,6 +36,7 @@ const WorkflowStepper = ({ steps, current }) => {
 
   return (
     <Stepper
+      nonLinear
       activeStep={currentIndex}
       alternativeLabel={!isMobile}
       orientation={isMobile ? "vertical" : "horizontal"}
@@ -46,6 +50,19 @@ const WorkflowStepper = ({ steps, current }) => {
           : step.locked
             ? "Locked"
             : null;
+        const optionalNode = optionalText ? (
+          <Typography
+            variant="caption"
+            color={step.locked ? "text.disabled" : "text.secondary"}
+          >
+            {optionalText}
+          </Typography>
+        ) : undefined;
+        const lockIcon = step.locked ? (
+          <LockOutlinedIcon fontSize="small" color="disabled" />
+        ) : undefined;
+        const clickable = !step.locked && typeof onStepSelect === "function";
+
         return (
           <Step
             key={step.key}
@@ -53,27 +70,25 @@ const WorkflowStepper = ({ steps, current }) => {
             active={isCurrent}
             disabled={step.locked}
           >
-            <StepLabel
-              aria-current={isCurrent ? "step" : undefined}
-              aria-disabled={step.locked || undefined}
-              icon={
-                step.locked ? (
-                  <LockOutlinedIcon fontSize="small" color="disabled" />
-                ) : undefined
-              }
-              optional={
-                optionalText ? (
-                  <Typography
-                    variant="caption"
-                    color={step.locked ? "text.disabled" : "text.secondary"}
-                  >
-                    {optionalText}
-                  </Typography>
-                ) : undefined
-              }
-            >
-              {step.label}
-            </StepLabel>
+            {clickable ? (
+              <StepButton
+                onClick={() => onStepSelect(step.key)}
+                icon={lockIcon}
+                optional={optionalNode}
+                aria-current={isCurrent ? "step" : undefined}
+              >
+                {step.label}
+              </StepButton>
+            ) : (
+              <StepLabel
+                aria-current={isCurrent ? "step" : undefined}
+                aria-disabled={step.locked || undefined}
+                icon={lockIcon}
+                optional={optionalNode}
+              >
+                {step.label}
+              </StepLabel>
+            )}
           </Step>
         );
       })}
@@ -92,6 +107,7 @@ WorkflowStepper.propTypes = {
     })
   ).isRequired,
   current: PropTypes.string,
+  onStepSelect: PropTypes.func,
 };
 
 export default WorkflowStepper;
