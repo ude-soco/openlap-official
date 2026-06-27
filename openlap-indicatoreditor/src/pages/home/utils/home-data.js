@@ -1,78 +1,48 @@
-import PrototypeImage from "../../../assets/svg/prototype.svg";
-import LRSLogo from "../../../assets/svg/learning_locker.svg";
+import StyleIcon from "@mui/icons-material/Style";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import StorageIcon from "@mui/icons-material/Storage";
 import AddIcon from "@mui/icons-material/Add";
 import RoleTypes from "../../account-manager/utils/enums/role-types";
 
-// Stable, content-derived ids (used as React keys). Avoid runtime-generated
-// uuids here: a new uuid each module load makes keys unstable across renders.
+// Dashboard "start here" cards. Each entry is self-describing data consumed by
+// <DashboardCard>; the page renders this list, so adding/editing a card means
+// editing one object here (no JSX changes). Stable string ids are used as keys.
 const homeData = [
   {
     id: "isc",
-    label: "Indicator Specifications Cards",
+    title: "Indicator Specification Cards",
     description:
-      "Helps to prototype your analysis and create visualization in a few steps and with beginner friendly interface.",
-    image: PrototypeImage,
+      "Prototype your analysis and create visualizations in a few guided steps with a beginner-friendly interface.",
+    icon: StyleIcon,
     disabledRoles: [RoleTypes["data provider"], RoleTypes.admin],
-    buttons: [
-      {
-        id: "isc-dashboard",
-        label: "To dashboard",
-        variant: "contained",
-        icon: undefined,
-        link: "/isc",
-      },
-      {
-        id: "isc-create",
-        label: "Create new",
-        variant: undefined,
-        icon: AddIcon,
-        link: "/isc/creator",
-      },
-    ],
+    primaryAction: { label: "To dashboard", to: "/isc" },
+    secondaryAction: { label: "Create new", to: "/isc/creator", icon: AddIcon },
   },
   {
     id: "indicator-editor",
-    label: "Indicator Editor",
+    title: "Indicator Editor",
     description:
-      "Helps to analysis real data, create and share indicators with an intuitive interface.",
-    image: PrototypeImage,
+      "Analyze real data, then create and share indicators with an intuitive editor.",
+    icon: BarChartIcon,
     disabledRoles: [
       RoleTypes.userWithoutLRS,
       RoleTypes["data provider"],
       RoleTypes.admin,
     ],
-    buttons: [
-      {
-        id: "indicator-dashboard",
-        label: "To dashboard",
-        variant: "contained",
-        icon: undefined,
-        link: "/indicator",
-      },
-      {
-        id: "indicator-create",
-        label: "Create new",
-        variant: undefined,
-        icon: AddIcon,
-        link: "/indicator/editor",
-      },
-    ],
+    primaryAction: { label: "To dashboard", to: "/indicator" },
+    secondaryAction: {
+      label: "Create new",
+      to: "/indicator/editor",
+      icon: AddIcon,
+    },
   },
   {
     id: "lrs",
-    label: "Learning Record Store",
-    description: "Helps manage your source of data",
-    image: LRSLogo,
+    title: "Learning Record Store",
+    description: "Connect and manage the data sources that power your analytics.",
+    icon: StorageIcon,
     disabledRoles: [RoleTypes.admin],
-    buttons: [
-      {
-        id: "lrs-manage",
-        label: "Manage LRS",
-        variant: "contained",
-        icon: undefined,
-        link: "/manage-lrs",
-      },
-    ],
+    primaryAction: { label: "Manage LRS", to: "/manage-lrs" },
   },
 ];
 
