@@ -7,9 +7,19 @@ import Footer from "./components/footer.jsx";
 import NoRowsOverlay from "./components/no-rows-overlay.jsx";
 import ColumnMenu from "./column-menu/column-menu.jsx";
 import TableSideBar from "./components/table-side-bar.jsx";
+import ExampleDatasetTable from "./components/example-dataset-table.jsx";
+import { isExampleDatasetActive } from "../utils/example-dataset.js";
 
 const DataTableManager = () => {
-  const { dataset, setDataset } = useContext(ISCContext);
+  const { dataset, setDataset, id } = useContext(ISCContext);
+
+  // Example Mode replaces the editable grid with a read-only illustrative table
+  // while the dataset is still a pristine auto-seeded draft. Read-only decision:
+  // it never alters dataset/state.
+  const exampleActive = isExampleDatasetActive({
+    dataset,
+    isExistingIsc: Boolean(id),
+  });
   const [state, setState] = useState({
     cellModesModel: {},
     selectionModel: [],
@@ -127,6 +137,9 @@ const DataTableManager = () => {
           <TableSideBar />
         </Grid>
         <Grid size="grow">
+          {exampleActive ? (
+            <ExampleDatasetTable columns={dataset.columns} />
+          ) : (
           <DataGrid
             columns={dataset.columns}
             rows={paginatedRows}
@@ -162,6 +175,7 @@ const DataTableManager = () => {
               },
             }}
           />
+          )}
         </Grid>
       </Grid>
     </>

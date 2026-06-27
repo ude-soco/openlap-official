@@ -20,11 +20,13 @@ import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import ScienceOutlinedIcon from "@mui/icons-material/ScienceOutlined";
 import { ISCContext } from "../../../isc-context.js";
 import {
   getChartCompatibility,
   getMissingSummary,
 } from "../../visualization/utils/chart-compatibility.js";
+import { isExampleDatasetActive } from "../utils/example-dataset.js";
 
 // Step 4 dataset guidance rail (Phase 4B).
 //
@@ -83,7 +85,7 @@ SectionHeading.propTypes = {
 };
 
 const DatasetRequirementsRail = () => {
-  const { dataset, visRef } = useContext(ISCContext);
+  const { dataset, visRef, id } = useContext(ISCContext);
   const [showWhy, setShowWhy] = useState(false);
 
   const chart = visRef.chart;
@@ -91,9 +93,19 @@ const DatasetRequirementsRail = () => {
   const columns = dataset.columns;
   const rows = dataset.rows;
 
+  // While Example Mode is active the rows on screen are illustrative, not the
+  // user's data — so the status must not count them as real rows (the example
+  // can never mark the dataset complete). Compatibility already depends on
+  // columns only, so it is unaffected either way.
+  const exampleActive = isExampleDatasetActive({
+    dataset,
+    isExistingIsc: Boolean(id),
+  });
+  const realRowCount = exampleActive ? 0 : rows.length;
+
   const hasChart = Boolean(chart?.type);
   const hasColumns = columns.length > 0;
-  const hasRows = rows.length > 0;
+  const hasRows = realRowCount > 0;
 
   const compatibility = hasChart ? getChartCompatibility(chart, columns) : null;
   const requirements = compatibility?.requirements ?? [];
@@ -195,7 +207,7 @@ const DatasetRequirementsRail = () => {
               />
             )}
             <MetricRow label="Columns" value={columns.length} />
-            <MetricRow label="Rows" value={rows.length} />
+            <MetricRow label="Rows" value={realRowCount} />
             <MetricRow label="Compatibility" value={compatibilityValue} />
           </Stack>
           {task && (
@@ -204,6 +216,24 @@ const DatasetRequirementsRail = () => {
             </Typography>
           )}
         </Box>
+
+        {exampleActive && (
+          <Stack
+            direction="row"
+            gap={1}
+            alignItems="flex-start"
+            sx={(t) => ({
+              p: 1,
+              borderRadius: `${t.custom.radii.card}px`,
+              backgroundColor: alpha(t.palette.info.main, 0.08),
+            })}
+          >
+            <ScienceOutlinedIcon fontSize="small" color="info" sx={{ mt: "2px" }} />
+            <Typography variant="body2">
+              You are currently viewing an example dataset.
+            </Typography>
+          </Stack>
+        )}
 
         <Divider />
 
