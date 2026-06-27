@@ -22,6 +22,7 @@ import {
   updateDraft,
 } from "./utils/isc-draft-api.js";
 import LeaveEditDialog from "./components/leave-edit-dialog.jsx";
+import { getFinalizeReadiness } from "./components/finalize/utils/finalize-readiness.js";
 import { useNavigationGuard } from "../../../setup/routes-manager/navigation-guard-context.js";
 import { ISCContext } from "./isc-context.js";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
@@ -403,6 +404,21 @@ const IndicatorSpecificationCard = () => {
       proceedLeave(to);
       return;
     }
+    // Guard against publishing an incomplete edit over a good saved ISC — the
+    // same readiness rule the Finalize Save dialog uses. If not ready, keep the
+    // dialog open so the user can Keep the draft or Discard instead.
+    const { ready } = getFinalizeReadiness({
+      requirements,
+      dataset,
+      visRef,
+    });
+    if (!ready) {
+      enqueueSnackbar(
+        "Finish the required steps before saving, or keep the draft to continue later.",
+        { variant: "warning" }
+      );
+      return;
+    }
     setLeaving(true);
     try {
       const domain = { requirements, dataset, visRef, lockedStep };
@@ -462,7 +478,7 @@ const IndicatorSpecificationCard = () => {
         }}
       >
         <ISCWorkspace
-          title={routeId ? "Edit ISC" : "ISC Creator"}
+          title={routeId || isEditDraft ? "Edit ISC" : "ISC Creator"}
           breadcrumbs={[
             { label: "Home", to: "/", onClick: guardCrumb("/") },
             { label: "My ISCs", to: "/isc", onClick: guardCrumb("/isc") },

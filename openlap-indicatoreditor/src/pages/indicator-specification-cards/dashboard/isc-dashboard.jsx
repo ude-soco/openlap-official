@@ -124,7 +124,7 @@ const IscDashboard = () => {
           <Chip
             icon={<ScheduleRoundedIcon />}
             variant="outlined"
-            label={`Latest created ${formatDate(stats.latest)}`}
+            label={`Last updated ${formatDate(stats.latest)}`}
           />
         )}
       </Stack>
