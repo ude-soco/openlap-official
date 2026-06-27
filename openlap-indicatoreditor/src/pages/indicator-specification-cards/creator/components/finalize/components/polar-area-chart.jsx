@@ -22,6 +22,7 @@ import CustomizationPanel from "./customization-panel/customization-panel.jsx";
 import { ISCContext } from "../../../isc-context.js";
 import { DataTypes } from "../../../utils/data/config.js";
 import ChartAxisDropdownFeedback from "./chart-axis-dropdown-feedback.jsx";
+import { ensureApexOptions } from "../utils/ensure-apex-options.js";
 import { AXIS_INTRO, getAxisLabels } from "../utils/axis-labels.js";
 
 const PolarAreaChart = ({ customize = false, handleToggleCustomizePanel }) => {
@@ -68,7 +69,7 @@ const PolarAreaChart = ({ customize = false, handleToggleCustomizePanel }) => {
       isCategoriesFilteringAvailable: false,
     },
     options: visRef.edit
-      ? visRef.data.options
+      ? ensureApexOptions(visRef.data.options)
       : {
           chart: {
             id: visRef.chart.code,
