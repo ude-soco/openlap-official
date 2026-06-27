@@ -15,6 +15,7 @@ import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined
 import { ISCContext } from "../../../isc-context.js";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { requestCreateISC, requestUpdateISC } from "../utils/finalize-api.js";
+import { publishDraft, updateDraft } from "../../../utils/isc-draft-api.js";
 import { getFinalizeReadiness } from "../utils/finalize-readiness.js";
 import { useSnackbar } from "notistack";
 import { useNavigate, useParams } from "react-router-dom";
@@ -34,7 +35,7 @@ SummaryLine.propTypes = { label: PropTypes.node, value: PropTypes.node };
 const NameDialog = ({ open, toggleOpen }) => {
   const params = useParams();
   const { api, SESSION_ISC } = useContext(AuthContext);
-  const { id, requirements, dataset, visRef, lockedStep } =
+  const { id, requirements, dataset, visRef, lockedStep, draftMeta } =
     useContext(ISCContext);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
@@ -42,7 +43,8 @@ const NameDialog = ({ open, toggleOpen }) => {
     loading: false,
   });
 
-  const isUpdate = Boolean(params.id);
+  const isEditDraft = draftMeta?.mode === "EDIT_DRAFT";
+  const isUpdate = Boolean(params.id) || isEditDraft;
   const { ready, issues, summary } = getFinalizeReadiness({
     requirements,
     dataset,
@@ -86,7 +88,22 @@ const NameDialog = ({ open, toggleOpen }) => {
     }));
 
     try {
-      await callISC(Boolean(id));
+      if (draftMeta?.draftId) {
+        // Backend draft → flush the latest state, then publish (new → SAVED,
+        // edit → merge into source). The database is the source of truth.
+        const domain = { requirements, dataset, visRef, lockedStep };
+        try {
+          await updateDraft(api, draftMeta.draftId, domain);
+          await publishDraft(api, draftMeta.draftId);
+        } catch (error) {
+          enqueueSnackbar(error.message, { variant: "error" });
+          throw error;
+        }
+      } else {
+        // Legacy fallback: session-only draft (no backend draftId). Preserve the
+        // previous create/update behavior keyed on the restored id.
+        await callISC(Boolean(id));
+      }
 
       enqueueSnackbar(
         `Indicator ${

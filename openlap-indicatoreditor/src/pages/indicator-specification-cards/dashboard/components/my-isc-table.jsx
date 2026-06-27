@@ -44,6 +44,7 @@ import {
   requestISCDetails,
   requestMyISCs,
 } from "../utils/dashboard-api";
+import { createOrGetEditDraft } from "../../creator/utils/isc-draft-api.js";
 import CustomDialog from "../../../../common/components/custom-dialog/custom-dialog";
 
 const SORT_OPTIONS = [
@@ -152,19 +153,52 @@ export default function MyIscTable({ onStats }) {
 
   const handlePreview = (id) => navigate(`/isc/${id}`);
 
-  // Edit bootstrap preserved verbatim (parse slices, mark visRef.edit, write the
-  // draft, navigate to the edit route) — keyed by the row's OWN id.
+  // Edit bootstrap (Frontend Phase 1): create/find a backend EDIT_DRAFT linked to
+  // the saved ISC, load THAT draft into the creator, and tag the session with
+  // draft metadata. The saved source is never mutated until publish. If the
+  // draft endpoint is unavailable, fall back to the legacy in-session edit.
   const handleEditIndicator = async (id) => {
     setEditingId(id);
     try {
-      const responseData = await requestISCDetails(api, id);
+      let draftId = null;
+      try {
+        const editDraft = await createOrGetEditDraft(api, id);
+        draftId = editDraft.id;
+      } catch (draftError) {
+        console.warn("Edit-draft endpoint unavailable; using legacy edit", draftError);
+      }
+
+      const responseData = await requestISCDetails(api, draftId || id);
       const parsedData = JSON.parse(JSON.stringify(responseData));
       parsedData.requirements = JSON.parse(parsedData.requirements);
       parsedData.dataset = JSON.parse(parsedData.dataset);
       parsedData.visRef = JSON.parse(parsedData.visRef);
       parsedData.lockedStep = JSON.parse(parsedData.lockedStep);
       parsedData.visRef.edit = true;
-      sessionStorage.setItem(SESSION_ISC, JSON.stringify(parsedData));
+
+      if (draftId) {
+        sessionStorage.setItem(
+          SESSION_ISC,
+          JSON.stringify({
+            id: null,
+            requirements: parsedData.requirements,
+            dataset: parsedData.dataset,
+            visRef: parsedData.visRef,
+            lockedStep: parsedData.lockedStep,
+            draftMeta: {
+              mode: "EDIT_DRAFT",
+              draftId,
+              sourceId: id,
+              status: "DRAFT",
+              lastAutosavedAt: null,
+              autosaveError: null,
+            },
+          })
+        );
+      } else {
+        // Legacy fallback: keep the source id so publish uses the update path.
+        sessionStorage.setItem(SESSION_ISC, JSON.stringify(parsedData));
+      }
       navigate(`/isc/creator/edit/${id}`);
     } catch (error) {
       console.error("Error requesting indicator details", error);

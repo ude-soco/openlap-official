@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Stack, Typography } from "@mui/material";
 import { useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
@@ -15,11 +15,55 @@ import { LEGACY_STEP_CODE } from "./utils/isc-constants.js";
 import { getWorkflowSteps, getCurrentStep } from "./utils/isc-selectors.js";
 import { withOnlyStepExpanded } from "./utils/isc-workflow-ui.js";
 import { getDefaultVisRef } from "./utils/isc-workflow-reset.js";
+import { createDraft, updateDraft } from "./utils/isc-draft-api.js";
 import { ISCContext } from "./isc-context.js";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 
+// How long after the last change to autosave the draft to the backend.
+const AUTOSAVE_DEBOUNCE_MS = 2000;
+
+// Derive the creator's draft metadata from a restored sessionStorage object.
+// Backend-backed drafts carry an explicit `draftMeta`; older sessions are kept
+// working via a LEGACY_SESSION fallback (publish falls back to create/update).
+const initDraftMeta = (saved) => {
+  if (saved && saved.draftMeta) {
+    return { lastAutosavedAt: null, autosaveError: null, ...saved.draftMeta };
+  }
+  if (saved && saved.id) {
+    // Legacy edit session (old behavior wrote the source id into the draft).
+    return {
+      mode: "LEGACY_SESSION",
+      draftId: null,
+      sourceId: saved.id,
+      status: "SAVED",
+      lastAutosavedAt: null,
+      autosaveError: null,
+    };
+  }
+  if (saved) {
+    // Legacy new session with no id.
+    return {
+      mode: "LEGACY_SESSION",
+      draftId: null,
+      sourceId: null,
+      status: null,
+      lastAutosavedAt: null,
+      autosaveError: null,
+    };
+  }
+  // Fresh new ISC → a backend draft will be created lazily on first autosave.
+  return {
+    mode: "NEW_DRAFT",
+    draftId: null,
+    sourceId: null,
+    status: "DRAFT",
+    lastAutosavedAt: null,
+    autosaveError: null,
+  };
+};
+
 const IndicatorSpecificationCard = () => {
-  const { SESSION_ISC } = useContext(AuthContext);
+  const { SESSION_ISC, api } = useContext(AuthContext);
   const { enqueueSnackbar } = useSnackbar();
   const { id: routeId } = useParams();
   // `id` is only initialized from the restored draft; it is never set via state
@@ -31,6 +75,18 @@ const IndicatorSpecificationCard = () => {
         ? JSON.parse(savedState).id
         : null
       : null;
+  });
+
+  // Frontend draft metadata — kept SEPARATE from the four domain slices and
+  // never sent inside the backend payload. The database is the source of truth;
+  // sessionStorage holds only a local recovery copy (incl. this metadata).
+  const [draftMeta, setDraftMeta] = useState(() => {
+    const savedState = sessionStorage.getItem(SESSION_ISC);
+    try {
+      return initDraftMeta(savedState ? JSON.parse(savedState) : null);
+    } catch {
+      return initDraftMeta(null);
+    }
   });
 
   const [requirements, setRequirements] = useState(() => {
@@ -122,11 +178,17 @@ const IndicatorSpecificationCard = () => {
         };
   });
 
-  const prevDependencies = useRef({
-    requirements,
-    dataset,
-    visRef,
-    lockedStep,
+  // ---- Autosave plumbing (refs avoid stale closures in the debounced saver) ----
+  const latestDomainRef = useRef({ requirements, dataset, visRef, lockedStep });
+  const draftMetaRef = useRef(draftMeta);
+  const savingRef = useRef(false);
+  const pendingRef = useRef(false);
+  const lastSavedRef = useRef(null); // serialized domain of the last successful autosave
+  const autosaveTimer = useRef(null);
+
+  useEffect(() => {
+    latestDomainRef.current = { requirements, dataset, visRef, lockedStep };
+    draftMetaRef.current = draftMeta;
   });
 
   useEffect(() => {
@@ -189,42 +251,81 @@ const IndicatorSpecificationCard = () => {
     });
   }, [requirements.data]);
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      let sessionISC = {
-        id,
-        requirements,
-        dataset,
-        visRef,
-        lockedStep,
-      };
-      // TODO: Add date to the session
-      sessionStorage.setItem(SESSION_ISC, JSON.stringify(sessionISC));
+  // Runs the actual backend autosave from refs (latest state, current draftId),
+  // guarding against overlapping saves. Backend-backed modes only; legacy
+  // sessions remain sessionStorage-only (see the recovery effect below).
+  const runAutosave = useCallback(async () => {
+    const meta = draftMetaRef.current;
+    const isBackendMode = meta.mode === "NEW_DRAFT" || meta.mode === "EDIT_DRAFT";
+    if (!isBackendMode) return;
+    if (savingRef.current) {
+      pendingRef.current = true; // coalesce: re-run once the in-flight save finishes
+      return;
+    }
+    const domain = latestDomainRef.current;
+    const serialized = JSON.stringify(domain);
+    if (serialized === lastSavedRef.current) return; // nothing changed
 
-      // Check if any of the dependencies have changed
-      if (
-        prevDependencies.current.requirements !== requirements ||
-        prevDependencies.current.dataset !== dataset ||
-        prevDependencies.current.visRef !== visRef ||
-        prevDependencies.current.lockedStep !== lockedStep
-      ) {
-        enqueueSnackbar("Draft saved", {
-          variant: "info",
-          autoHideDuration: 1000,
-        });
+    savingRef.current = true;
+    try {
+      if (!meta.draftId) {
+        const res = await createDraft(api, domain);
+        setDraftMeta((m) => ({
+          ...m,
+          draftId: res.id,
+          status: res.status || "DRAFT",
+          lastAutosavedAt: Date.now(),
+          autosaveError: null,
+        }));
+      } else {
+        await updateDraft(api, meta.draftId, domain);
+        setDraftMeta((m) => ({ ...m, lastAutosavedAt: Date.now(), autosaveError: null }));
       }
+      lastSavedRef.current = serialized;
+    } catch (error) {
+      setDraftMeta((m) => ({
+        ...m,
+        autosaveError: error?.message || "Autosave failed",
+      }));
+      enqueueSnackbar("Couldn't autosave to the server — your work is kept locally.", {
+        variant: "warning",
+        autoHideDuration: 3000,
+      });
+    } finally {
+      savingRef.current = false;
+      if (pendingRef.current) {
+        pendingRef.current = false;
+        runAutosave();
+      }
+    }
+  }, [api, enqueueSnackbar]);
 
-      // Update the previous dependencies to the current ones
-      prevDependencies.current = {
-        requirements,
-        dataset,
-        visRef,
-        lockedStep,
-      };
-    }, 5000);
+  // On any change: (1) write the local recovery copy immediately (incl. draft
+  // metadata), and (2) debounce a backend autosave. sessionStorage is a backup,
+  // not the source of truth.
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        SESSION_ISC,
+        JSON.stringify({ id, requirements, dataset, visRef, lockedStep, draftMeta })
+      );
+    } catch {
+      // Storage may be unavailable (private mode/quota) — backend remains authoritative.
+    }
 
-    return () => clearInterval(intervalId);
-  }, [requirements, dataset, visRef, lockedStep]);
+    clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(runAutosave, AUTOSAVE_DEBOUNCE_MS);
+    return () => clearTimeout(autosaveTimer.current);
+  }, [
+    id,
+    requirements,
+    dataset,
+    visRef,
+    lockedStep,
+    draftMeta,
+    SESSION_ISC,
+    runAutosave,
+  ]);
 
   // Derive the (informational) workflow-stepper view from the real runtime state
   // (lockedStep + completeness selectors). Pure read — does not affect gating.
@@ -253,6 +354,8 @@ const IndicatorSpecificationCard = () => {
           setVisRef,
           dataset,
           setDataset,
+          draftMeta,
+          setDraftMeta,
         }}
       >
         <ISCWorkspace

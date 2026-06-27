@@ -18,6 +18,7 @@ import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
 import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import MyIscTable from "./components/my-isc-table.jsx";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
+import { discardDraft } from "../creator/utils/isc-draft-api.js";
 
 const formatDate = (time) =>
   time
@@ -29,7 +30,7 @@ const formatDate = (time) =>
     : "";
 
 const IscDashboard = () => {
-  const { SESSION_ISC } = useContext(AuthContext);
+  const { SESSION_ISC, api } = useContext(AuthContext);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   // Best-effort, READ-ONLY description of the in-progress draft (for the banner).
@@ -45,16 +46,25 @@ const IscDashboard = () => {
     }
     try {
       const parsed = JSON.parse(saved);
+      const meta = parsed?.draftMeta;
       setDraft({
-        isEdit: Boolean(parsed?.id),
+        draftId: meta?.draftId || null,
+        isEdit: meta ? meta.mode === "EDIT_DRAFT" : Boolean(parsed?.id),
         name: parsed?.requirements?.indicatorName || "",
       });
     } catch {
-      setDraft({ isEdit: false, name: "" });
+      setDraft({ draftId: null, isEdit: false, name: "" });
     }
   }, [SESSION_ISC]);
 
   const handleDiscard = () => {
+    // Remove the backend draft too (best-effort); the saved source ISC, if this
+    // is an edit draft, is untouched by the draft delete.
+    if (draft?.draftId) {
+      discardDraft(api, draft.draftId).catch((error) =>
+        console.warn("Could not discard backend draft", error)
+      );
+    }
     sessionStorage.removeItem(SESSION_ISC);
     setDraft(null);
   };

@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { requestDeleteISC, requestISCDetails } from "../utils/dashboard-api.js";
+import { createOrGetEditDraft } from "../../creator/utils/isc-draft-api.js";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -19,7 +20,6 @@ import {
   Stack,
   Container,
   Box,
-  Switch,
   ToggleButtonGroup,
   ToggleButton,
 } from "@mui/material";
@@ -53,7 +53,6 @@ const IscPreview = () => {
     openDeleteDialog: false,
     dataRequiredByUser: [],
   });
-  const [showDataset, setShowDataset] = useState(false);
   const [showVisData, setShowVisData] = useState([VIS]);
 
   useEffect(() => {
@@ -76,7 +75,7 @@ const IscPreview = () => {
           JSON.parse(details.dataset)
         ),
       }));
-    } catch (error) {
+    } catch {
       console.log("Error requesting my indicators");
     } finally {
       setState((p) => ({ ...p, loading: false }));
@@ -86,17 +85,49 @@ const IscPreview = () => {
   const handleEditIndicator = async () => {
     setState((p) => ({ ...p, isLoading: { ...p.isLoading, status: true } }));
     try {
-      const responseData = await requestISCDetails(api, params.id);
+      // Create/find a backend edit draft (source untouched until publish); fall
+      // back to the legacy in-session edit if the endpoint is unavailable.
+      let draftId = null;
+      try {
+        const editDraft = await createOrGetEditDraft(api, params.id);
+        draftId = editDraft.id;
+      } catch (draftError) {
+        console.warn("Edit-draft endpoint unavailable; using legacy edit", draftError);
+      }
+
+      const responseData = await requestISCDetails(api, draftId || params.id);
       let parsedData = JSON.parse(JSON.stringify(responseData));
       parsedData.requirements = JSON.parse(parsedData.requirements);
       parsedData.dataset = JSON.parse(parsedData.dataset);
       parsedData.visRef = JSON.parse(parsedData.visRef);
       parsedData.lockedStep = JSON.parse(parsedData.lockedStep);
       parsedData.visRef.edit = true;
-      sessionStorage.setItem(SESSION_ISC, JSON.stringify(parsedData));
+
+      if (draftId) {
+        sessionStorage.setItem(
+          SESSION_ISC,
+          JSON.stringify({
+            id: null,
+            requirements: parsedData.requirements,
+            dataset: parsedData.dataset,
+            visRef: parsedData.visRef,
+            lockedStep: parsedData.lockedStep,
+            draftMeta: {
+              mode: "EDIT_DRAFT",
+              draftId,
+              sourceId: params.id,
+              status: "DRAFT",
+              lastAutosavedAt: null,
+              autosaveError: null,
+            },
+          })
+        );
+      } else {
+        sessionStorage.setItem(SESSION_ISC, JSON.stringify(parsedData));
+      }
       navigate(`/isc/creator/edit/${params.id}`);
     } catch (error) {
-      console.error("Error requesting my indicators");
+      console.error("Error requesting my indicators", error);
     } finally {
       setState((p) => ({ ...p, isLoading: { ...p.isLoading, status: false } }));
     }
@@ -118,10 +149,6 @@ const IscPreview = () => {
     } finally {
       setState((p) => ({ ...p, isLoading: { ...p.isLoading, status: false } }));
     }
-  };
-
-  const toggleShowDataset = () => {
-    setShowDataset((p) => !p);
   };
 
   const handleShowVisData = (events, options) => {
@@ -317,7 +344,6 @@ const IscPreview = () => {
                           />
                         )}
                       </Stack>
-                      {showDataset && <Divider />}
                       {showVisData.find((item) => item === VIS) && (
                         <PreviewChart dataset={dataset} visRef={visRef} />
                       )}
