@@ -19,6 +19,9 @@ import {
   InputAdornment,
   InputLabel,
   LinearProgress,
+  ListItemIcon,
+  ListItemText,
+  Menu,
   MenuItem,
   Paper,
   Select,
@@ -40,6 +43,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import ViewListRoundedIcon from "@mui/icons-material/ViewListRounded";
 import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
+import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
 import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
 import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
@@ -117,6 +121,7 @@ export default function MyIscTable({ onStats }) {
   const [view, setView] = useState("list");
   const [busyId, setBusyId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [menu, setMenu] = useState({ anchorEl: null, item: null });
 
   const loadMyISCList = async (query) => {
     setLoading(true);
@@ -333,9 +338,26 @@ export default function MyIscTable({ onStats }) {
     };
   })();
 
-  // Lifecycle-aware action buttons (always visible, keyboard-accessible).
-  const renderActions = (item) => {
+  // Consistent action area for every lifecycle: a primary icon-button + a
+  // three-dot overflow menu. Same size/spacing/alignment across saved/draft/edit.
+  const primaryActionOf = (item) => {
     const life = lifecycleOf(item);
+    if (life.key === "saved") {
+      return { label: "Preview", Icon: PreviewIcon, run: () => handlePreview(item.id) };
+    }
+    if (life.key === "editDraft") {
+      return {
+        label: "Continue editing",
+        Icon: PlayArrowRoundedIcon,
+        run: () => handleContinueDraft(item),
+      };
+    }
+    return { label: "Continue", Icon: PlayArrowRoundedIcon, run: () => handleContinueDraft(item) };
+  };
+
+  const renderActions = (item) => {
+    const primary = primaryActionOf(item);
+    const PrimaryIcon = primary.Icon;
     const stop = (fn) => (e) => {
       e.stopPropagation();
       fn();
@@ -343,99 +365,90 @@ export default function MyIscTable({ onStats }) {
     const disabled = Boolean(busyId);
     const name = item.indicatorName;
 
-    if (life.key === "saved") {
-      return (
-        <Stack direction="row" gap={0.5} alignItems="center">
-          <Tooltip arrow title="Preview">
-            <span>
-              <IconButton
-                size="small"
-                color="primary"
-                aria-label={`Preview ${name}`}
-                onClick={stop(() => handlePreview(item.id))}
-                disabled={disabled}
-              >
-                <PreviewIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip arrow title="Edit">
-            <span>
-              <IconButton
-                size="small"
-                color="primary"
-                aria-label={`Edit ${name}`}
-                onClick={stop(() => handleEditIndicator(item.id))}
-                disabled={disabled}
-              >
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip arrow title="Delete">
-            <span>
-              <IconButton
-                size="small"
-                color="error"
-                aria-label={`Delete ${name}`}
-                onClick={stop(() => setDeleteTarget(item))}
-                disabled={disabled}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Stack>
-      );
-    }
-
-    // draft or editDraft
-    const isEdit = life.key === "editDraft";
     return (
       <Stack direction="row" gap={0.5} alignItems="center">
-        <Tooltip arrow title={isEdit ? "Continue editing" : "Continue"}>
+        <Tooltip arrow title={primary.label}>
           <span>
             <IconButton
               size="small"
               color="primary"
-              aria-label={`${isEdit ? "Continue editing" : "Continue"} ${name}`}
-              onClick={stop(() => handleContinueDraft(item))}
+              aria-label={`${primary.label} ${name}`}
+              onClick={stop(primary.run)}
               disabled={disabled}
             >
-              <PlayArrowRoundedIcon fontSize="small" />
+              <PrimaryIcon fontSize="small" />
             </IconButton>
           </span>
         </Tooltip>
-        {isEdit && item.sourceId && (
-          <Tooltip arrow title="Preview saved version">
-            <span>
-              <IconButton
-                size="small"
-                color="primary"
-                aria-label={`Preview saved version of ${name}`}
-                onClick={stop(() => handlePreviewSource(item.sourceId))}
-                disabled={disabled}
-              >
-                <PreviewIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        )}
-        <Tooltip arrow title={isEdit ? "Discard changes" : "Discard draft"}>
+        <Tooltip arrow title="More actions">
           <span>
             <IconButton
               size="small"
-              color="error"
-              aria-label={`${isEdit ? "Discard changes for" : "Discard draft"} ${name}`}
-              onClick={stop(() => setDeleteTarget(item))}
+              aria-label={`More actions for ${name}`}
+              aria-haspopup="true"
+              onClick={stop((e) => setMenu({ anchorEl: e.currentTarget, item }))}
               disabled={disabled}
             >
-              <DeleteOutlineIcon fontSize="small" />
+              <MoreVertRoundedIcon fontSize="small" />
             </IconButton>
           </span>
         </Tooltip>
       </Stack>
     );
+  };
+
+  // Build overflow menu items for the currently-open menu's item.
+  const menuItemsFor = (item) => {
+    if (!item) return [];
+    const life = lifecycleOf(item);
+    const close = () => setMenu({ anchorEl: null, item: null });
+    const withClose = (fn) => () => {
+      close();
+      fn();
+    };
+    if (life.key === "saved") {
+      return [
+        {
+          key: "edit",
+          label: "Edit",
+          icon: <EditIcon fontSize="small" />,
+          onClick: withClose(() => handleEditIndicator(item.id)),
+        },
+        {
+          key: "delete",
+          label: "Delete",
+          icon: <DeleteIcon fontSize="small" color="error" />,
+          destructive: true,
+          onClick: withClose(() => setDeleteTarget(item)),
+        },
+      ];
+    }
+    if (life.key === "editDraft") {
+      return [
+        item.sourceId && {
+          key: "preview-source",
+          label: "Preview saved version",
+          icon: <PreviewIcon fontSize="small" />,
+          onClick: withClose(() => handlePreviewSource(item.sourceId)),
+        },
+        {
+          key: "discard",
+          label: "Discard changes",
+          icon: <DeleteOutlineIcon fontSize="small" color="error" />,
+          destructive: true,
+          onClick: withClose(() => setDeleteTarget(item)),
+        },
+      ].filter(Boolean);
+    }
+    return [
+      {
+        key: "discard",
+        label: "Discard draft",
+        icon: <DeleteOutlineIcon fontSize="small" color="error" />,
+        destructive: true,
+        onClick: withClose(() => setDeleteTarget(item)),
+      },
+    ];
   };
 
   // Primary click target (whole row/card): Preview for saved, Continue for drafts.
@@ -705,6 +718,23 @@ export default function MyIscTable({ onStats }) {
         onRowsPerPageChange={handleRowsPerPageChange}
         rowsPerPageOptions={[5, 10, 20, 50]}
       />
+
+      <Menu
+        anchorEl={menu.anchorEl}
+        open={Boolean(menu.anchorEl)}
+        onClose={() => setMenu({ anchorEl: null, item: null })}
+      >
+        {menuItemsFor(menu.item).map((mi) => (
+          <MenuItem
+            key={mi.key}
+            onClick={mi.onClick}
+            sx={mi.destructive ? { color: "error.main" } : undefined}
+          >
+            <ListItemIcon>{mi.icon}</ListItemIcon>
+            <ListItemText>{mi.label}</ListItemText>
+          </MenuItem>
+        ))}
+      </Menu>
 
       <Dialog
         open={Boolean(deleteTarget)}
