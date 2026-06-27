@@ -37,7 +37,25 @@ import {
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import AuthLayout from "../../common/components/auth-layout/auth-layout";
+import {
+  ALLOWED_SPECIAL_CHARACTERS,
+  getPasswordCriteria,
+} from "../../common/utils/password-policy";
 import OpenLAPIcon from "../../assets/brand/openlap-icon.svg";
+
+// Screen-reader-only style: exposes each criterion's met/unmet state to
+// assistive tech without changing the visual design.
+const srOnly = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0 0 0 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
 
 // Returns slotProps that add an accessible show/hide toggle to a password field.
 const visibilityAdornment = (visible, toggle) => ({
@@ -175,30 +193,9 @@ const Register = () => {
     }
   };
 
-  // Live password criteria — mirrors the backend policy (source of truth) for
-  // user guidance only; it does not gate submit.
-  const password = formFields.password;
-  const allowedSpecials = "!\"§$%&/()=?*+#-_.:,;@";
-  const hasAllowedSpecial = [...password].some((ch) =>
-    allowedSpecials.includes(ch)
-  );
-  const onlyAllowedChars =
-    password.length > 0 &&
-    [...password].every(
-      (ch) => /[A-Za-z0-9]/.test(ch) || allowedSpecials.includes(ch)
-    );
-  const passwordCriteria = [
-    { label: "At least 12 characters", met: password.length >= 12 },
-    {
-      label: "At most 64 characters",
-      met: password.length > 0 && password.length <= 64,
-    },
-    { label: "At least 1 uppercase letter", met: /[A-Z]/.test(password) },
-    { label: "At least 1 lowercase letter", met: /[a-z]/.test(password) },
-    { label: "At least 1 number", met: /[0-9]/.test(password) },
-    { label: "At least 1 allowed special character", met: hasAllowedSpecial },
-    { label: "Only allowed characters are used", met: onlyAllowedChars },
-  ];
+  // Live password criteria mirror the backend policy (source of truth) for user
+  // guidance only — see common/utils/password-policy.js. Does not gate submit.
+  const passwordCriteria = getPasswordCriteria(formFields.password);
 
   return (
     <AuthLayout
@@ -277,10 +274,15 @@ const Register = () => {
               >
                 Password requirements:
               </Typography>
-              <Stack spacing={0.75}>
+              <Stack
+                spacing={0.75}
+                role="list"
+                aria-label="Password requirements"
+              >
                 {passwordCriteria.map((c) => (
                   <Stack
-                    key={c.label}
+                    key={c.id}
+                    role="listitem"
                     direction="row"
                     spacing={1}
                     alignItems="center"
@@ -299,6 +301,9 @@ const Register = () => {
                       color={c.met ? "text.primary" : "text.secondary"}
                     >
                       {c.label}
+                      <Box component="span" sx={srOnly}>
+                        {c.met ? " — met" : " — not met"}
+                      </Box>
                     </Typography>
                   </Stack>
                 ))}
@@ -308,7 +313,7 @@ const Register = () => {
                 color="text.secondary"
                 sx={{ display: "block", mt: 1.5 }}
               >
-                {`Allowed special characters: ${allowedSpecials}`}
+                {`Allowed special characters: ${ALLOWED_SPECIAL_CHARACTERS}`}
               </Typography>
             </Box>
           </Stack>
