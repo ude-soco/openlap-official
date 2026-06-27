@@ -1,4 +1,5 @@
 import { useContext, useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import {
   Box,
   Button,
@@ -33,6 +34,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ViewListRoundedIcon from "@mui/icons-material/ViewListRounded";
 import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
 import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
+import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
+import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager";
@@ -60,7 +63,7 @@ const formatDate = (time) =>
     year: "numeric",
   });
 
-export default function MyIscTable() {
+export default function MyIscTable({ onStats }) {
   const { api, SESSION_ISC } = useContext(AuthContext);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -87,8 +90,16 @@ export default function MyIscTable() {
     setIndicatorList([]);
     try {
       const response = await requestMyISCs(api, query);
-      setIndicatorList(response.content ?? []);
+      const content = response.content ?? [];
+      setIndicatorList(content);
       setTotalElements(response.totalElements ?? 0);
+      // Report real stats up to the dashboard header (no invented numbers).
+      const latest = content.reduce(
+        (max, i) =>
+          !max || new Date(i.createdOn) > new Date(max) ? i.createdOn : max,
+        null
+      );
+      onStats?.({ total: response.totalElements ?? 0, latest });
     } catch {
       enqueueSnackbar("Error requesting my indicators", { variant: "error" });
     } finally {
@@ -133,19 +144,16 @@ export default function MyIscTable() {
     // name sorts are applied client-side without refetching.
   };
 
-  const handlePageChange = (event, newPage) => {
+  const handlePageChange = (event, newPage) =>
     setParams((p) => ({ ...p, page: newPage }));
-  };
 
-  const handleRowsPerPageChange = (event) => {
+  const handleRowsPerPageChange = (event) =>
     setParams((p) => ({ ...p, size: parseInt(event.target.value, 10), page: 0 }));
-  };
 
   const handlePreview = (id) => navigate(`/isc/${id}`);
 
   // Edit bootstrap preserved verbatim (parse slices, mark visRef.edit, write the
-  // draft, navigate to the edit route) — now keyed by the row's OWN id instead
-  // of a hover-tracked id.
+  // draft, navigate to the edit route) — keyed by the row's OWN id.
   const handleEditIndicator = async (id) => {
     setEditingId(id);
     try {
@@ -192,78 +200,89 @@ export default function MyIscTable() {
   };
 
   const isEmpty = !loading && visibleList.length === 0;
+  const searching = Boolean(searchTerm.trim());
 
-  const renderActions = (indicator) => (
-    <Stack direction="row" gap={0.5} alignItems="center">
-      <Tooltip arrow title="Preview">
-        <span>
-          <IconButton
-            size="small"
-            color="primary"
-            aria-label={`Preview ${indicator.indicatorName}`}
-            onClick={() => handlePreview(indicator.id)}
-            disabled={Boolean(editingId)}
-          >
-            <PreviewIcon fontSize="small" />
-          </IconButton>
-        </span>
-      </Tooltip>
-      <Tooltip arrow title="Edit">
-        <span>
-          <IconButton
-            size="small"
-            color="primary"
-            aria-label={`Edit ${indicator.indicatorName}`}
-            onClick={() => handleEditIndicator(indicator.id)}
-            disabled={Boolean(editingId)}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-        </span>
-      </Tooltip>
-      <Tooltip arrow title="Delete">
-        <span>
-          <IconButton
-            size="small"
-            color="error"
-            aria-label={`Delete ${indicator.indicatorName}`}
-            onClick={() => handleOpenDelete(indicator)}
-            disabled={Boolean(editingId)}
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </span>
-      </Tooltip>
-    </Stack>
-  );
+  // Actions block. `stop` prevents the wrapping clickable row/card from also
+  // triggering Preview when an action button is pressed.
+  const renderActions = (indicator) => {
+    const stop = (fn) => (e) => {
+      e.stopPropagation();
+      fn();
+    };
+    return (
+      <Stack direction="row" gap={0.5} alignItems="center">
+        <Tooltip arrow title="Preview">
+          <span>
+            <IconButton
+              size="small"
+              color="primary"
+              aria-label={`Preview ${indicator.indicatorName}`}
+              onClick={stop(() => handlePreview(indicator.id))}
+              disabled={Boolean(editingId)}
+            >
+              <PreviewIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip arrow title="Edit">
+          <span>
+            <IconButton
+              size="small"
+              color="primary"
+              aria-label={`Edit ${indicator.indicatorName}`}
+              onClick={stop(() => handleEditIndicator(indicator.id))}
+              disabled={Boolean(editingId)}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip arrow title="Delete">
+          <span>
+            <IconButton
+              size="small"
+              color="error"
+              aria-label={`Delete ${indicator.indicatorName}`}
+              onClick={stop(() => handleOpenDelete(indicator))}
+              disabled={Boolean(editingId)}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Stack>
+    );
+  };
 
   return (
     <Stack gap={2}>
-      {/* Control bar */}
+      {/* Control bar: Create (left) · search/sort/view (right) */}
       <Paper
         variant="outlined"
         sx={(t) => ({ p: 2, borderRadius: `${t.custom?.radii?.card ?? 8}px` })}
       >
-        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+        <Grid
+          container
+          spacing={2}
+          alignItems="center"
+          justifyContent="space-between"
+        >
           <Grid size={{ xs: 12, md: "auto" }}>
-            <Stack direction="row" gap={1.5} alignItems="center" flexWrap="wrap">
-              <Button
-                startIcon={<AddIcon />}
-                variant="contained"
-                color="primary"
-                onClick={handleCreateNew}
-              >
-                Create new ISC
-              </Button>
-              <Chip
-                size="small"
-                variant="outlined"
-                label={`${totalElements} ISC${totalElements === 1 ? "" : "s"}`}
-              />
-            </Stack>
+            <Button
+              startIcon={<AddIcon />}
+              variant="contained"
+              color="primary"
+              onClick={handleCreateNew}
+            >
+              Create new ISC
+            </Button>
           </Grid>
           <Grid size={{ xs: 12, md: "auto" }}>
-            <Stack direction={{ xs: "column", sm: "row" }} gap={1.5} alignItems="center">
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              gap={1.5}
+              alignItems={{ xs: "stretch", sm: "center" }}
+            >
               <TextField
                 size="small"
                 label="Search"
@@ -310,11 +329,20 @@ export default function MyIscTable() {
             </Stack>
           </Grid>
         </Grid>
+        {searching && (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mt: 1 }}
+          >
+            Search applies to the currently loaded page.
+          </Typography>
+        )}
       </Paper>
 
       {loading && <LinearProgress />}
 
-      {/* Empty state */}
+      {/* Empty / no-results states */}
       {isEmpty && (
         <Paper
           variant="outlined"
@@ -324,12 +352,16 @@ export default function MyIscTable() {
             borderRadius: `${t.custom?.radii?.card ?? 8}px`,
           })}
         >
-          {searchTerm.trim() ? (
-            <Typography color="text.secondary">
-              No ISCs match &quot;{searchTerm}&quot; on this page.
-            </Typography>
+          {searching ? (
+            <Stack gap={1} alignItems="center">
+              <SearchOffRoundedIcon color="disabled" fontSize="large" />
+              <Typography color="text.secondary">
+                No ISCs match this search on the current page.
+              </Typography>
+            </Stack>
           ) : (
             <Stack gap={1.5} alignItems="center">
+              <InsightsOutlinedIcon color="disabled" fontSize="large" />
               <Typography variant="h6">No ISCs yet.</Typography>
               <Typography color="text.secondary" sx={{ maxWidth: 460 }}>
                 Create your first Indicator Specification Card to prototype an
@@ -347,7 +379,7 @@ export default function MyIscTable() {
         </Paper>
       )}
 
-      {/* List view */}
+      {/* List view — whole row opens Preview; action buttons are separate */}
       {!isEmpty && view === "list" && (
         <Stack gap={1}>
           {visibleList.map((indicator) => (
@@ -355,31 +387,65 @@ export default function MyIscTable() {
               key={indicator.id}
               variant="outlined"
               sx={(t) => ({
-                p: 1.5,
                 borderRadius: `${t.custom?.radii?.card ?? 8}px`,
+                overflow: "hidden",
                 "&:hover": { borderColor: t.palette.primary.main },
               })}
             >
-              <Grid container alignItems="center" spacing={1}>
+              <Grid container alignItems="center">
                 <Grid size="grow">
-                  <Stack
-                    direction="row"
-                    gap={1}
-                    alignItems="center"
-                    flexWrap="wrap"
+                  <CardActionArea
+                    onClick={() => handlePreview(indicator.id)}
+                    aria-label={`Preview ${indicator.indicatorName}`}
+                    sx={{ p: 1.5 }}
                   >
-                    <Typography fontWeight={600}>
-                      {toSentenceCase(indicator.indicatorName)}
-                    </Typography>
-                    <Chip size="small" color="success" variant="outlined" label="Saved" />
-                  </Stack>
-                  <Typography variant="body2" color="text.secondary">
-                    Created {formatDate(indicator.createdOn)}
-                  </Typography>
+                    <Stack
+                      direction="row"
+                      gap={1}
+                      alignItems="center"
+                      flexWrap="wrap"
+                    >
+                      <Typography fontWeight={600}>
+                        {toSentenceCase(indicator.indicatorName)}
+                      </Typography>
+                      <Chip
+                        size="small"
+                        color="success"
+                        variant="outlined"
+                        label="Saved"
+                      />
+                    </Stack>
+                    <Stack
+                      direction="row"
+                      gap={1.5}
+                      alignItems="center"
+                      flexWrap="wrap"
+                      sx={{ mt: 0.5 }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        Created {formatDate(indicator.createdOn)}
+                      </Typography>
+                      {indicator.createdBy && (
+                        <Stack
+                          direction="row"
+                          gap={0.5}
+                          alignItems="center"
+                          sx={{ color: "text.secondary" }}
+                        >
+                          <PersonOutlineRoundedIcon fontSize="inherit" />
+                          <Typography variant="body2">
+                            {indicator.createdBy}
+                          </Typography>
+                        </Stack>
+                      )}
+                    </Stack>
+                  </CardActionArea>
                 </Grid>
-                <Grid size="auto">{renderActions(indicator)}</Grid>
+                <Grid size="auto" sx={{ pr: 1.5 }}>
+                  {renderActions(indicator)}
+                </Grid>
               </Grid>
-              {editingId === indicator.id && <LinearProgress sx={{ mt: 1 }} />}
+              {editingId === indicator.id && <LinearProgress />}
             </Paper>
           ))}
         </Stack>
@@ -389,7 +455,11 @@ export default function MyIscTable() {
       {!isEmpty && view === "cards" && (
         <Grid container spacing={2}>
           {visibleList.map((indicator) => (
-            <Grid key={indicator.id} size={{ xs: 12, sm: 6, lg: 4 }} sx={{ display: "flex" }}>
+            <Grid
+              key={indicator.id}
+              size={{ xs: 12, sm: 6, lg: 4 }}
+              sx={{ display: "flex" }}
+            >
               <Card
                 variant="outlined"
                 sx={(t) => ({
@@ -399,37 +469,53 @@ export default function MyIscTable() {
                   borderRadius: `${t.custom?.radii?.card ?? 8}px`,
                 })}
               >
-                <CardActionArea onClick={() => handlePreview(indicator.id)}>
+                <CardActionArea
+                  onClick={() => handlePreview(indicator.id)}
+                  aria-label={`Preview ${indicator.indicatorName}`}
+                >
                   <Box
                     sx={(t) => ({
-                      height: 96,
+                      height: 104,
+                      position: "relative",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       backgroundColor: alpha(t.palette.primary.main, 0.06),
                     })}
                   >
-                    <InsightsOutlinedIcon color="primary" />
+                    <InsightsOutlinedIcon color="primary" sx={{ fontSize: 40 }} />
+                    <Chip
+                      size="small"
+                      label="ISC prototype"
+                      sx={{ position: "absolute", top: 8, left: 8 }}
+                    />
                   </Box>
                   <CardContent>
-                    <Stack direction="row" gap={1} alignItems="center" sx={{ mb: 0.5 }}>
-                      <Typography fontWeight={600} noWrap>
-                        {toSentenceCase(indicator.indicatorName)}
+                    <Typography fontWeight={600} noWrap gutterBottom>
+                      {toSentenceCase(indicator.indicatorName)}
+                    </Typography>
+                    <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+                      <Chip
+                        size="small"
+                        color="success"
+                        variant="outlined"
+                        label="Saved"
+                      />
+                      <Typography variant="body2" color="text.secondary">
+                        {formatDate(indicator.createdOn)}
                       </Typography>
                     </Stack>
-                    <Chip size="small" color="success" variant="outlined" label="Saved" />
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 1 }}
-                    >
-                      Created {formatDate(indicator.createdOn)}
-                    </Typography>
                   </CardContent>
                 </CardActionArea>
                 <Box sx={{ mt: "auto" }}>
                   <Divider />
-                  <Box sx={{ p: 1, display: "flex", justifyContent: "flex-end" }}>
+                  <Box
+                    sx={{
+                      p: 1,
+                      display: "flex",
+                      justifyContent: "flex-end",
+                    }}
+                  >
                     {renderActions(indicator)}
                   </Box>
                 </Box>
@@ -459,3 +545,7 @@ export default function MyIscTable() {
     </Stack>
   );
 }
+
+MyIscTable.propTypes = {
+  onStats: PropTypes.func,
+};

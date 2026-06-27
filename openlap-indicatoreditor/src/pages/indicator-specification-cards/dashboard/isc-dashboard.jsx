@@ -1,28 +1,41 @@
 import { useContext, useEffect, useState } from "react";
 import {
-  Alert,
-  AlertTitle,
+  Box,
   Breadcrumbs,
   Button,
+  Chip,
   Divider,
   Link,
+  Paper,
   Stack,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
+import HistoryEduOutlinedIcon from "@mui/icons-material/HistoryEduOutlined";
+import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
+import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
 import MyIscTable from "./components/my-isc-table.jsx";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
+
+const formatDate = (time) =>
+  time
+    ? new Date(time).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "";
 
 const IscDashboard = () => {
   const { SESSION_ISC } = useContext(AuthContext);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  // `draft` is null when there is no in-progress ISC. When present it carries a
-  // best-effort, READ-ONLY description of the draft (name, and whether it is an
-  // edit of an existing ISC) — purely for the banner. The draft architecture
-  // itself is unchanged (Phase A).
+  // Best-effort, READ-ONLY description of the in-progress draft (for the banner).
   const [draft, setDraft] = useState(null);
+  // Real stats reported up from the list (no invented numbers).
+  const [stats, setStats] = useState({ total: 0, latest: null });
 
   useEffect(() => {
     const saved = sessionStorage.getItem(SESSION_ISC);
@@ -37,7 +50,6 @@ const IscDashboard = () => {
         name: parsed?.requirements?.indicatorName || "",
       });
     } catch {
-      // Unparseable draft — still show the generic banner.
       setDraft({ isEdit: false, name: "" });
     }
   }, [SESSION_ISC]);
@@ -55,13 +67,11 @@ const IscDashboard = () => {
     });
   };
 
-  const draftMessage = !draft
+  const draftTitle = !draft
     ? ""
     : draft.isEdit
-      ? `You have an unfinished ISC${
-          draft.name ? `: editing “${draft.name}”` : " (editing an existing ISC)"
-        }.`
-      : `You have an unfinished ISC${draft.name ? `: “${draft.name}”` : ""}.`;
+      ? `You have unfinished edits for “${draft.name || "an existing ISC"}”.`
+      : "You have an unfinished ISC draft.";
 
   return (
     <Stack gap={2}>
@@ -81,34 +91,71 @@ const IscDashboard = () => {
         </Typography>
       </Stack>
 
+      {/* Compact summary row — real data only */}
+      <Stack direction="row" gap={1} flexWrap="wrap" alignItems="center">
+        <Chip
+          icon={<InsightsOutlinedIcon />}
+          variant="outlined"
+          label={`${stats.total} ISC${stats.total === 1 ? "" : "s"}`}
+        />
+        {draft && (
+          <Chip
+            icon={<HistoryEduOutlinedIcon />}
+            color="info"
+            variant="outlined"
+            label="Draft in progress"
+          />
+        )}
+        {stats.latest && (
+          <Chip
+            icon={<ScheduleRoundedIcon />}
+            variant="outlined"
+            label={`Latest created ${formatDate(stats.latest)}`}
+          />
+        )}
+      </Stack>
+
       <Divider />
 
+      {/* Structured draft banner: icon + title | explanation | actions */}
       {draft && (
-        <Alert
-          severity="info"
+        <Paper
           variant="outlined"
-          action={
-            <Stack direction="row" gap={1}>
-              <Button size="small" variant="outlined" onClick={handleDiscard}>
+          sx={(t) => ({
+            p: 2,
+            borderRadius: `${t.custom?.radii?.card ?? 8}px`,
+            borderColor: alpha(t.palette.info.main, 0.4),
+            backgroundColor: alpha(t.palette.info.main, 0.06),
+          })}
+        >
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            gap={2}
+            alignItems={{ xs: "flex-start", sm: "center" }}
+            justifyContent="space-between"
+          >
+            <Stack direction="row" gap={1.5} alignItems="center">
+              <HistoryEduOutlinedIcon color="info" />
+              <Box>
+                <Typography fontWeight={600}>{draftTitle}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Continue where you left off, or discard it to start fresh.
+                </Typography>
+              </Box>
+            </Stack>
+            <Stack direction="row" gap={1} sx={{ flexShrink: 0 }}>
+              <Button variant="outlined" onClick={handleDiscard}>
                 Discard
               </Button>
-              <Button
-                size="small"
-                variant="contained"
-                color="primary"
-                onClick={handleContinue}
-              >
+              <Button variant="contained" color="primary" onClick={handleContinue}>
                 Continue
               </Button>
             </Stack>
-          }
-        >
-          <AlertTitle>{draftMessage}</AlertTitle>
-          Continue where you left off, or discard it to start fresh.
-        </Alert>
+          </Stack>
+        </Paper>
       )}
 
-      <MyIscTable />
+      <MyIscTable onStats={setStats} />
     </Stack>
   );
 };
