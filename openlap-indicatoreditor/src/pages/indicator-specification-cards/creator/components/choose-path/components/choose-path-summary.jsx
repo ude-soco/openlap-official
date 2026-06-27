@@ -3,6 +3,7 @@ import { Chip, Collapse, IconButton, Stack, Typography } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import { ISCContext } from "../../../isc-context.js";
 import { ISC_STEPS } from "../../../utils/isc-constants.js";
+import { PATH_META } from "../utils/utils.js";
 import {
   withOnlyStepExpanded,
   withStepCollapsed,
@@ -87,9 +88,16 @@ export default function ChoosePathSummary() {
         unmountOnExit
       >
         {requirements.selectedPath !== "" ? (
-          <Stack direction="row" alignItems="center" gap={1}>
-            <Typography>Selected path:</Typography>
-            <Chip label={requirements.selectedPath} />
+          <Stack gap={0.5}>
+            <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
+              <Typography>Selected path:</Typography>
+              <Chip label={requirements.selectedPath} />
+            </Stack>
+            {PATH_META[requirements.selectedPath]?.summary && (
+              <Typography variant="body2" color="text.secondary">
+                {PATH_META[requirements.selectedPath].summary}
+              </Typography>
+            )}
           </Stack>
         ) : (
           !lockedStep.path.locked && (
