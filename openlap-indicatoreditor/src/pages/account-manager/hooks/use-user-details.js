@@ -16,11 +16,12 @@ const EMPTY_USER = {
  * UserProfile. Behaviour is intentionally identical: fetch on mount, log on
  * failure, expose a `loading` flag. The API call itself is unchanged.
  *
- * @returns {{ loading: boolean, user: object }}
+ * @returns {{ loading: boolean, error: boolean, user: object }}
  */
 export const useUserDetails = () => {
   const { api } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [user, setUser] = useState(EMPTY_USER);
 
   useEffect(() => {
@@ -28,11 +29,13 @@ export const useUserDetails = () => {
 
     const load = async () => {
       setLoading(true);
+      setError(false);
       try {
         const data = await requestUserDetails(api);
         if (active) setUser((prev) => ({ ...prev, ...data }));
-      } catch (error) {
-        console.error("Failed to load user data", error);
+      } catch (err) {
+        console.error("Failed to load user data", err);
+        if (active) setError(true);
       } finally {
         if (active) setLoading(false);
       }
@@ -44,7 +47,7 @@ export const useUserDetails = () => {
     };
   }, [api]);
 
-  return { loading, user };
+  return { loading, error, user };
 };
 
 export default useUserDetails;
