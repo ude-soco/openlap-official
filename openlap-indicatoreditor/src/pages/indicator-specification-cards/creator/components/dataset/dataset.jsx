@@ -1,12 +1,12 @@
 import { useContext } from "react";
 import { ISCContext } from "../../isc-context.js";
-import { Button, Collapse, Divider, Grid, Paper, Stack } from "@mui/material";
+import { Button, Collapse, Divider, Grid, Stack } from "@mui/material";
 import DatasetSummary from "./components/dataset-summary.jsx";
 import DataTableManager from "./data-table-manager/data-table-manager";
-import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";
+import WorkflowSection from "../workflow-section/workflow-section.jsx";
+import { isDatasetComplete } from "../../utils/isc-selectors.js";
 
 const Dataset = () => {
-  const { darkMode } = useContext(CustomThemeContext);
   const { dataset, lockedStep, setLockedStep } = useContext(ISCContext);
 
   const handleTogglePanel = () => {
@@ -52,21 +52,20 @@ const Dataset = () => {
     }
   };
 
+  const status = lockedStep.dataset.locked
+    ? "locked"
+    : lockedStep.dataset.openPanel
+      ? "active"
+      : isDatasetComplete({ dataset })
+        ? "completed"
+        : "available";
+
   return (
     <>
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 2,
-          position: "relative",
-          opacity: lockedStep.dataset.locked ? "0.5" : "1",
-          pointerEvents: lockedStep.dataset.locked ? "none" : "auto",
-          backgroundColor: lockedStep.dataset.locked
-            ? darkMode
-              ? "grey.800"
-              : "grey.400"
-            : "background.paper",
-        }}
+      <WorkflowSection
+        status={status}
+        ariaLabel="Choose dataset"
+        lockedHint="Complete the previous step to build your dataset."
       >
         <DatasetSummary />
         <Collapse
@@ -91,7 +90,7 @@ const Dataset = () => {
             </Grid>
           </Stack>
         </Collapse>
-      </Paper>
+      </WorkflowSection>
     </>
   );
 };

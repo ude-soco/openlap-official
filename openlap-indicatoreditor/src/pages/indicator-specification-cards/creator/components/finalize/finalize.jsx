@@ -1,15 +1,14 @@
 import { useContext, useState } from "react";
 import { ISCContext } from "../../isc-context.js";
-import { Button, Divider, Paper, Grid, Collapse } from "@mui/material";
+import { Button, Divider, Grid, Collapse } from "@mui/material";
 import NameDialog from "./components/name-dialog.jsx";
 import VisSelection from "../visualization/components/visualization-filter/vis-selection";
 import FinalizeSummary from "./components/finalize-summary/finalize-summary";
-import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";
+import WorkflowSection from "../workflow-section/workflow-section.jsx";
 import { useParams } from "react-router-dom";
 
 const Finalize = () => {
   const params = useParams();
-  const { darkMode } = useContext(CustomThemeContext);
   const { dataset, lockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     openSaveDialog: false,
@@ -32,21 +31,18 @@ const Finalize = () => {
     return dataset.rows.length === 0 || dataset.columns.length === 0;
   };
 
+  const status = lockedStep.finalize.locked
+    ? "locked"
+    : lockedStep.finalize.openPanel
+      ? "active"
+      : "available";
+
   return (
     <>
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 2,
-          position: "relative",
-          opacity: lockedStep.finalize.locked ? "0.5" : "1",
-          pointerEvents: lockedStep.finalize.locked ? "none" : "auto",
-          backgroundColor: lockedStep.finalize.locked
-            ? darkMode
-              ? "grey.800"
-              : "grey.400"
-            : "background.paper",
-        }}
+      <WorkflowSection
+        status={status}
+        ariaLabel="Finalize indicator"
+        lockedHint="Complete the previous steps to finalize your indicator."
       >
         <Grid container spacing={2}>
           <Grid size={{ xs: 12 }}>
@@ -87,7 +83,7 @@ const Finalize = () => {
             </Collapse>
           </Grid>
         </Grid>
-      </Paper>
+      </WorkflowSection>
       <NameDialog
         open={state.openSaveDialog}
         toggleOpen={handleOpenSaveDialog}

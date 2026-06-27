@@ -1,15 +1,8 @@
 import { useContext } from "react";
-import {
-  Button,
-  Collapse,
-  Divider,
-  Paper,
-  Grid,
-  Stack,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
+import { Button, Collapse, Divider, Grid, Stack } from "@mui/material";
 import { ISCContext } from "../../isc-context.js";
+import WorkflowSection from "../workflow-section/workflow-section.jsx";
+import { isRequirementsComplete } from "../../utils/isc-selectors.js";
 import SpecifyGoal from "./components/specify-goal/specify-goal";
 import ConfirmGoal from "./components/specify-goal/confirm-goal";
 import FormulateQuestion from "./components/formulate-question/formulate-question";
@@ -19,8 +12,6 @@ import RequirementSummary from "./components/requirement-summary/requirement-sum
 
 const SpecifyRequirements = () => {
   const { requirements, lockedStep, setLockedStep } = useContext(ISCContext);
-  const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down("lg"));
   const handleTogglePanel = () => {
     setLockedStep((p) => ({
       ...p,
@@ -59,9 +50,15 @@ const SpecifyRequirements = () => {
     );
   };
 
+  const status = lockedStep.requirements.openPanel
+    ? "active"
+    : isRequirementsComplete({ requirements })
+      ? "completed"
+      : "available";
+
   return (
     <>
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <WorkflowSection status={status} ariaLabel="Step 1: Specify requirements">
         <Stack gap={1}>
           <RequirementSummary />
           <Collapse
@@ -113,7 +110,7 @@ const SpecifyRequirements = () => {
             )}
           </Collapse>
         </Stack>
-      </Paper>
+      </WorkflowSection>
     </>
   );
 };

@@ -1,14 +1,14 @@
 import { useContext } from "react";
-import { Button, Collapse, Divider, Paper, Grid, Stack } from "@mui/material";
+import { Button, Collapse, Divider, Grid, Stack } from "@mui/material";
 import { ISCContext } from "../../isc-context.js";
 import ChartTypeFilter from "./components/chart-type-filter.jsx";
 import VisualizationFilter from "./components/visualization-filter/visualization-filter";
 import VisualizationSummary from "./components/visualization-summary/visualization-summary.jsx";
-import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";
+import WorkflowSection from "../workflow-section/workflow-section.jsx";
+import { isVisualizationComplete } from "../../utils/isc-selectors.js";
 import pathChoices from "../choose-path/utils/utils.js";
 
 const Visualization = () => {
-  const { darkMode } = useContext(CustomThemeContext);
   const { lockedStep, setLockedStep, visRef, requirements } =
     useContext(ISCContext);
 
@@ -62,21 +62,20 @@ const Visualization = () => {
     }
   };
 
+  const status = lockedStep.visualization.locked
+    ? "locked"
+    : lockedStep.visualization.openPanel
+      ? "active"
+      : isVisualizationComplete({ visRef })
+        ? "completed"
+        : "available";
+
   return (
     <>
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 2,
-          position: "relative",
-          opacity: lockedStep.visualization.locked ? "0.5" : "1",
-          pointerEvents: lockedStep.visualization.locked ? "none" : "auto",
-          backgroundColor: lockedStep.visualization.locked
-            ? darkMode
-              ? "grey.800"
-              : "grey.400"
-            : "background.paper",
-        }}
+      <WorkflowSection
+        status={status}
+        ariaLabel="Choose visualization"
+        lockedHint="Complete the previous step to choose your visualization."
       >
         <Grid container spacing={2}>
           <Grid size={{ xs: 12 }}>
@@ -128,7 +127,7 @@ const Visualization = () => {
             </Collapse>
           </Grid>
         </Grid>
-      </Paper>
+      </WorkflowSection>
     </>
   );
 };
