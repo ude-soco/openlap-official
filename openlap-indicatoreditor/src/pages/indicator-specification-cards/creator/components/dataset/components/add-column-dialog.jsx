@@ -1,4 +1,5 @@
 import { useContext, useState } from "react";
+import PropTypes from "prop-types";
 import { ISCContext } from "../../../isc-context.js";
 import {
   Autocomplete,
@@ -86,8 +87,11 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
   return (
     <>
       <Dialog open={Boolean(open)} fullWidth maxWidth="xs">
-        <DialogTitle id="alert-dialog-title">Add a column</DialogTitle>
+        <DialogTitle id="alert-dialog-title">Add column</DialogTitle>
         <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Add another data requirement to your dataset.
+          </Typography>
           <Grid container spacing={2}>
             <TextField
               autoFocus
@@ -115,6 +119,7 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
               getOptionLabel={(option) => option.value}
               groupBy={() => "Column types"}
               renderOption={(props, option) => {
+                // eslint-disable-next-line react/prop-types
                 const { key, ...restProps } = props;
                 return (
                   <li {...restProps} key={key}>
@@ -137,7 +142,9 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
               renderInput={(params) => (
                 <TextField
                   {...params}
+                  label="Data type"
                   placeholder="Select a data column type"
+                  InputLabelProps={{ shrink: true }}
                 />
               )}
               onChange={(event, value) => {
@@ -187,6 +194,11 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
       </Dialog>
     </>
   );
+};
+
+AddColumnDialog.propTypes = {
+  open: PropTypes.bool,
+  toggleOpen: PropTypes.func,
 };
 
 export default AddColumnDialog;

@@ -11,9 +11,9 @@ const NoRowsOverlay = () => {
       >
         <Grid size="auto">
           <Typography align="center">
-            No data available.
+            No rows yet.
             <br />
-            <b>Create a new column</b> to add data to the table.
+            Use <b>Add row</b> above to start entering your data.
           </Typography>
         </Grid>
       </Grid>

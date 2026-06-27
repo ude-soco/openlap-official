@@ -1,10 +1,10 @@
 import { useContext } from "react";
+import PropTypes from "prop-types";
 import {
   Button,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   Typography,
 } from "@mui/material";
@@ -47,6 +47,7 @@ const ImportDialog = ({ open, toggleOpen }) => {
 
   const cleanRowData = (rowData) => {
     const hasEmptyValue = (row) =>
+      // eslint-disable-next-line no-extra-boolean-cast -- CSV behavior unchanged this phase
       Object.values(row).some((value) => !Boolean(value));
     const tempRow = rowData.filter((row) => !hasEmptyValue(row));
     return tempRow.map((row) => ({ id: uuidv4(), ...row }));
@@ -81,21 +82,24 @@ const ImportDialog = ({ open, toggleOpen }) => {
   return (
     <>
       <Dialog open={Boolean(open)}>
-        <DialogTitle>Import Data</DialogTitle>
+        <DialogTitle>Import existing dataset</DialogTitle>
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            <Typography gutterBottom>
-              You can upload a dataset in only <b>CSV</b> format.
-            </Typography>
-            <Typography variant="body2" sx={{ fontStyle: "italic" }}>
-              <b>Note:</b> You do not need to upload any data. Data you do
-              upload is not permanently stored. We recommend against uploading
-              sensitive data that is confidential or contains identifying
-              information about other people or parties.
-            </Typography>
-          </DialogContentText>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Upload a CSV file if you already have dataset values.
+          </Typography>
 
           <CsvImporter />
+
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mt: 2 }}
+          >
+            <b>Note:</b> You do not need to upload any data. Data you upload is
+            not permanently stored. We recommend against uploading sensitive data
+            that is confidential or contains identifying information about other
+            people or parties.
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button
@@ -115,12 +119,17 @@ const ImportDialog = ({ open, toggleOpen }) => {
             color="primary"
             startIcon={<GetAppIcon />}
           >
-            Import data
+            Import dataset
           </Button>
         </DialogActions>
       </Dialog>
     </>
   );
+};
+
+ImportDialog.propTypes = {
+  open: PropTypes.bool,
+  toggleOpen: PropTypes.func,
 };
 
 export default ImportDialog;

@@ -1,12 +1,20 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import { ISCContext } from "../../../isc-context.js";
 import { ClearAll as ClearAllIcon } from "@mui/icons-material";
-import { Grid } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import Footer from "./components/footer.jsx";
 import NoRowsOverlay from "./components/no-rows-overlay.jsx";
 import ColumnMenu from "./column-menu/column-menu.jsx";
-import TableSideBar from "./components/table-side-bar.jsx";
+import DatasetToolbar from "./components/dataset-toolbar.jsx";
+import { decorateColumns } from "./components/dataset-grid-columns.jsx";
 import ExampleDatasetOnboarding from "./components/example-dataset-onboarding.jsx";
 import { isExampleDatasetActive } from "../utils/example-dataset.js";
 import { createBlankRows, INITIAL_MANUAL_ROWS } from "../utils/dataset-rows.js";
@@ -55,15 +63,29 @@ const DataTableManager = () => {
 
   const style = {
     dataGrid: {
+      height: state.gridHeight,
       "& .MuiDataGrid-columnHeaders": {
         cursor: "pointer",
+      },
+      // Clearer row affordances: hover highlight + emphasized cell being edited.
+      "& .MuiDataGrid-row:hover": {
+        backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.04),
       },
       "& .MuiDataGrid-cell:hover": {
         color: "primary.main",
       },
-      height: state.gridHeight,
+      "& .MuiDataGrid-cell--editing": {
+        backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
+      },
     },
   };
+
+  // Display-only decoration: styled headers (name + subtle type) and an
+  // "Enter value…" placeholder for empty cells. Does not touch dataset.columns.
+  const displayColumns = useMemo(
+    () => decorateColumns(dataset.columns),
+    [dataset.columns]
+  );
 
   useEffect(() => {
     const calculateGridHeight = () => {
@@ -153,58 +175,55 @@ const DataTableManager = () => {
     state.page * state.pageSize
   );
 
+  if (exampleActive) {
+    return (
+      <ExampleDatasetOnboarding
+        columns={dataset.columns}
+        onGenerate={handleGenerate}
+        onStartEmpty={handleStartEmpty}
+      />
+    );
+  }
+
   return (
     <>
-      <Grid container spacing={2}>
-        <Grid size="auto">
-          <TableSideBar />
-        </Grid>
-        <Grid size="grow">
-          {exampleActive ? (
-            <ExampleDatasetOnboarding
-              columns={dataset.columns}
-              onGenerate={handleGenerate}
-              onStartEmpty={handleStartEmpty}
-            />
-          ) : (
-          <DataGrid
-            columns={dataset.columns}
-            rows={paginatedRows}
-            apiRef={apiRef}
-            columnMenuClearIcon={<ClearAllIcon />}
-            cellModesModel={state.cellModesModel}
-            checkboxSelection
-            disableRowSelectionOnClick={true}
-            disableColumnMenu={false}
-            onColumnHeaderClick={(params) => handleColumnHeaderClick(params)}
-            onCellModesModelChange={handleCellModesModelChange}
-            onCellClick={handleCellClick}
-            onRowSelectionModelChange={(newSelectionModel) =>
-              handleRowSelectionModelChange(newSelectionModel)
-            }
-            pageSizeOptions={[5, 10, 25]}
-            processRowUpdate={handleProcessRowUpdate}
-            rowHeight={40}
-            selectionModel={state.selectionModel}
-            showCellVerticalBorder
-            showFooterRowCount
-            showFooterSelectedRowCount
-            slots={{
-              noRowsOverlay: () => <NoRowsOverlay />,
-              columnMenu: (props) => <ColumnMenu props={props} />,
-              footer: () => <Footer state={state} setState={setState} />,
-            }}
-            sx={style.dataGrid}
-            componentsProps={{
-              row: {
-                onMouseEnter: handlePopperOpen,
-                onMouseLeave: handlePopperClose,
-              },
-            }}
-          />
-          )}
-        </Grid>
-      </Grid>
+      <DatasetToolbar />
+      <DataGrid
+        columns={displayColumns}
+        rows={paginatedRows}
+        apiRef={apiRef}
+        columnMenuClearIcon={<ClearAllIcon />}
+        cellModesModel={state.cellModesModel}
+        checkboxSelection
+        disableRowSelectionOnClick={true}
+        disableColumnMenu={false}
+        columnHeaderHeight={58}
+        onColumnHeaderClick={(params) => handleColumnHeaderClick(params)}
+        onCellModesModelChange={handleCellModesModelChange}
+        onCellClick={handleCellClick}
+        onRowSelectionModelChange={(newSelectionModel) =>
+          handleRowSelectionModelChange(newSelectionModel)
+        }
+        pageSizeOptions={[5, 10, 25]}
+        processRowUpdate={handleProcessRowUpdate}
+        rowHeight={44}
+        selectionModel={state.selectionModel}
+        showCellVerticalBorder
+        showFooterRowCount
+        showFooterSelectedRowCount
+        slots={{
+          noRowsOverlay: () => <NoRowsOverlay />,
+          columnMenu: (props) => <ColumnMenu props={props} />,
+          footer: () => <Footer state={state} setState={setState} />,
+        }}
+        sx={style.dataGrid}
+        componentsProps={{
+          row: {
+            onMouseEnter: handlePopperOpen,
+            onMouseLeave: handlePopperClose,
+          },
+        }}
+      />
     </>
   );
 };

@@ -7,9 +7,11 @@ import DatasetRequirementsRail from "./components/dataset-requirements-rail.jsx"
 import DataTableManager from "./data-table-manager/data-table-manager";
 import WorkflowSection from "../workflow-section/workflow-section.jsx";
 import { isDatasetComplete } from "../../utils/isc-selectors.js";
+import { isExampleDatasetActive } from "./utils/example-dataset.js";
+import { validateDataset } from "./utils/dataset-validation.js";
 
 const Dataset = () => {
-  const { dataset, lockedStep, setLockedStep } = useContext(ISCContext);
+  const { dataset, lockedStep, setLockedStep, id } = useContext(ISCContext);
 
   const handleTogglePanel = () => {
     setLockedStep((p) => ({
@@ -39,8 +41,15 @@ const Dataset = () => {
     }));
   };
 
+  // Next is allowed only once the dataset is actually usable (Phase 4F):
+  // columns exist, at least one meaningful row, and no invalid cells. The
+  // Example Mode draft (illustrative placeholders) never counts as real data.
   const handleCheckDisabled = () => {
-    return dataset.rows.length === 0 && dataset.columns.length === 0;
+    if (isExampleDatasetActive({ dataset, isExistingIsc: Boolean(id) })) {
+      return true;
+    }
+    const validation = validateDataset(dataset);
+    return !validation.ready;
   };
 
   const handleUnlockPath = () => {

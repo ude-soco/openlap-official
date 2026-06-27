@@ -10,6 +10,7 @@ import {
   DialogTitle,
   Grid,
   TextField,
+  Typography,
 } from "@mui/material";
 import { createBlankRows } from "../utils/dataset-rows.js";
 
@@ -41,9 +42,12 @@ const AddRowDialog = ({ open, toggleOpen }) => {
   return (
     <>
       <Dialog open={Boolean(open)} fullWidth maxWidth="xs">
-        <DialogTitle id="alert-dialog-title">Add Rows</DialogTitle>
+        <DialogTitle id="alert-dialog-title">Add rows</DialogTitle>
         <DialogContent>
-          <Grid container sx={{ mt: 2 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Add blank rows to continue entering dataset values.
+          </Typography>
+          <Grid container>
             <TextField
               fullWidth
               label="Number of rows"
@@ -72,7 +76,7 @@ const AddRowDialog = ({ open, toggleOpen }) => {
             variant="contained"
             color="primary"
           >
-            Add Rows
+            Add rows
           </Button>
         </DialogActions>
       </Dialog>

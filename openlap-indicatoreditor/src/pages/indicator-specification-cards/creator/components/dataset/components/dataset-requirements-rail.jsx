@@ -21,12 +21,11 @@ import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import ScienceOutlinedIcon from "@mui/icons-material/ScienceOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { ISCContext } from "../../../isc-context.js";
-import {
-  getChartCompatibility,
-  getMissingSummary,
-} from "../../visualization/utils/chart-compatibility.js";
+import { getChartCompatibility } from "../../visualization/utils/chart-compatibility.js";
 import { isExampleDatasetActive } from "../utils/example-dataset.js";
+import { validateDataset } from "../utils/dataset-validation.js";
 import { ISC_PATHS } from "../../../utils/isc-constants.js";
 
 // Step 4 dataset guidance rail (Phase 4B).
@@ -115,19 +114,37 @@ const DatasetRequirementsRail = () => {
 
   const hasChart = Boolean(chart?.type);
   const hasColumns = columns.length > 0;
-  const hasRows = realRowCount > 0;
 
   const compatibility = hasChart ? getChartCompatibility(chart, columns) : null;
   const requirements = compatibility?.requirements ?? [];
   const requiredTypes = new Set(requirements.map((r) => r.type));
   const satisfiedCount = requirements.filter((r) => r.satisfied).length;
 
-  // ---- Single status model (drives the chip, metrics, and next action) ----
+  // ---- Data quality (Phase 4F) ----
+  // The status chip + Next reflect actual cell quality, not just row/column
+  // counts. In Example Mode the rows are illustrative, so they count as no real
+  // data. Chart compatibility stays in the "Required data" checklist + the
+  // Compatibility metric — it is not folded into the data-quality chip (per the
+  // 4F spec, Ready depends on columns + a meaningful row + no invalid cells).
+  const validation = validateDataset(dataset);
+  const meaningfulRowCount = exampleActive ? 0 : validation.meaningfulRowCount;
+  const emptyCellCount = exampleActive ? 0 : validation.emptyCellCount;
+  const invalidCellCount = exampleActive ? 0 : validation.invalidCellCount;
+  const showQuality = hasColumns && !exampleActive;
+
   let statusKey;
-  if (!hasChart) statusKey = "no-chart";
-  else if (compatibility && !compatibility.compatible) statusKey = "missing";
-  else if (!hasRows) statusKey = "needs-rows";
+  if (!hasColumns) statusKey = "no-columns";
+  else if (meaningfulRowCount === 0) statusKey = "needs-rows";
+  else if (invalidCellCount > 0) statusKey = "invalid";
+  else if (emptyCellCount > 0) statusKey = "incomplete";
   else statusKey = "ready";
+
+  // Action for "needs-rows" depends on whether rows exist but are blank.
+  const needsRowsAction = exampleActive
+    ? "Generate an example dataset, start empty, or import existing data."
+    : realRowCount === 0
+      ? "Add at least one row."
+      : "Enter values to start your dataset.";
 
   const statusMeta = {
     ready: {
@@ -135,39 +152,44 @@ const DatasetRequirementsRail = () => {
       color: "success",
       Icon: CheckCircleRoundedIcon,
       tone: "success",
-      action: "You're ready — continue to the next step.",
+      action: datasetFirstNoChart
+        ? "Continue to the visualization step after preparing your dataset."
+        : "You're ready — continue to the next step.",
+    },
+    incomplete: {
+      label: "Needs values",
+      color: "default",
+      Icon: EditOutlinedIcon,
+      tone: "neutral",
+      action: "Enter values in empty cells.",
+    },
+    invalid: {
+      label: "Invalid data",
+      color: "warning",
+      Icon: ReportProblemOutlinedIcon,
+      tone: "warning",
+      action: "Fix invalid numbers.",
     },
     "needs-rows": {
       label: "Needs rows",
       color: "default",
       Icon: TableRowsRoundedIcon,
       tone: "neutral",
-      action: "Add rows manually or upload a CSV to preview real data.",
+      action: needsRowsAction,
     },
-    missing: {
-      label: "Missing required columns",
-      color: "warning",
-      Icon: ReportProblemOutlinedIcon,
-      tone: "warning",
-      action: hasChart
-        ? `Add ${getMissingSummary(chart, columns)} before continuing.`
-        : "Add or update the missing column before continuing.",
-    },
-    "no-chart": {
-      label: "No chart selected",
+    "no-columns": {
+      label: "No columns",
       color: "default",
       Icon: InsightsOutlinedIcon,
       tone: "neutral",
-      action: datasetFirstNoChart
-        ? "Continue to the visualization step after preparing your dataset."
-        : "Choose a visualization in Step 3 first.",
+      action: "Add columns to build your dataset.",
     },
   }[statusKey];
 
   const StatusIcon = statusMeta.Icon;
   const compatibilityValue = !hasChart
     ? "No chart selected"
-    : statusKey === "missing"
+    : compatibility && !compatibility.compatible
       ? `Missing data for ${chart.type}`
       : `Compatible with ${chart.type}`;
 
@@ -373,6 +395,58 @@ const DatasetRequirementsRail = () => {
             </Typography>
           )}
         </Box>
+
+        {/* 3b. Data quality — cell-level readiness (Phase 4F) */}
+        {showQuality && (
+          <Box>
+            <SectionHeading>Data quality</SectionHeading>
+            <Stack gap={0.5} sx={{ mt: 0.5 }}>
+              <Stack direction="row" gap={1} alignItems="center">
+                {meaningfulRowCount > 0 ? (
+                  <CheckCircleRoundedIcon fontSize="small" color="success" />
+                ) : (
+                  <RadioButtonUncheckedRoundedIcon
+                    fontSize="small"
+                    color="disabled"
+                  />
+                )}
+                <Typography variant="body2">
+                  {meaningfulRowCount} row{meaningfulRowCount === 1 ? "" : "s"}{" "}
+                  ready
+                </Typography>
+              </Stack>
+
+              {invalidCellCount > 0 && (
+                <Stack direction="row" gap={1} alignItems="center">
+                  <ReportProblemOutlinedIcon fontSize="small" color="warning" />
+                  <Typography variant="body2">
+                    {invalidCellCount} invalid number
+                    {invalidCellCount === 1 ? "" : "s"}
+                  </Typography>
+                </Stack>
+              )}
+
+              {emptyCellCount > 0 && (
+                <Stack direction="row" gap={1} alignItems="center">
+                  <EditOutlinedIcon fontSize="small" color="action" />
+                  <Typography variant="body2">
+                    {emptyCellCount} empty cell
+                    {emptyCellCount === 1 ? "" : "s"}
+                  </Typography>
+                </Stack>
+              )}
+
+              {meaningfulRowCount > 0 &&
+                invalidCellCount === 0 &&
+                emptyCellCount === 0 && (
+                  <Stack direction="row" gap={1} alignItems="center">
+                    <CheckCircleRoundedIcon fontSize="small" color="success" />
+                    <Typography variant="body2">All cells valid</Typography>
+                  </Stack>
+                )}
+            </Stack>
+          </Box>
+        )}
 
         {/* 4. Next best action — one clear recommendation */}
         <Box sx={tonedCardSx(statusMeta.tone)}>
