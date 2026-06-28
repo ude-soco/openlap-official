@@ -36,7 +36,7 @@ import {
 import { alpha } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
-import PreviewIcon from "@mui/icons-material/Preview";
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -46,7 +46,6 @@ import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
 import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
 import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
 import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
-import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
 import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
@@ -247,7 +246,7 @@ export default function MyIscTable({ onStats }) {
   const primaryActionOf = (item) => {
     const life = lifecycleOf(item);
     if (life.key === "saved") {
-      return { label: "Preview", Icon: PreviewIcon, run: () => handlePreview(item.id) };
+      return { label: "Preview", Icon: VisibilityIcon, run: () => handlePreview(item.id) };
     }
     if (life.key === "editDraft") {
       return {
@@ -270,18 +269,16 @@ export default function MyIscTable({ onStats }) {
 
     return (
       <Stack direction="row" gap={0.5} alignItems="center">
-        <Tooltip arrow title={primary.label}>
-          <span>
-            <IconButton
-              size="small"
-              color="primary"
-              aria-label={`${primary.label} ${name}`}
-              onClick={stop(primary.run)}
-            >
-              <PrimaryIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
+        <Button
+          variant="text"
+          size="small"
+          color="primary"
+          startIcon={<PrimaryIcon fontSize="small" />}
+          aria-label={`${primary.label} ${name}`}
+          onClick={stop(primary.run)}
+        >
+          {primary.label}
+        </Button>
         <Tooltip arrow title="More actions">
           <span>
             <IconButton
@@ -333,7 +330,7 @@ export default function MyIscTable({ onStats }) {
         item.sourceId && {
           key: "preview-source",
           label: "Preview saved version",
-          icon: <PreviewIcon fontSize="small" />,
+          icon: <VisibilityIcon fontSize="small" />,
           onClick: withClose(() => handlePreviewSource(item.sourceId)),
         },
         {
@@ -389,12 +386,6 @@ export default function MyIscTable({ onStats }) {
         <Typography variant="body2" color="text.secondary">
           {dateLabel} {formatDate(date)}
         </Typography>
-        {item.createdBy && (
-          <Stack direction="row" gap={0.5} alignItems="center" sx={{ color: "text.secondary" }}>
-            <PersonOutlineRoundedIcon fontSize="inherit" />
-            <Typography variant="body2">{item.createdBy}</Typography>
-          </Stack>
-        )}
       </Stack>
     );
   };
@@ -521,21 +512,16 @@ export default function MyIscTable({ onStats }) {
               sx={(t) => ({
                 borderRadius: `${t.custom?.radii?.card ?? 8}px`,
                 overflow: "hidden",
-                "&:hover": { borderColor: t.palette.primary.main },
               })}
             >
               <Grid container alignItems="center">
                 <Grid size="grow">
-                  <CardActionArea
-                    onClick={() => handlePrimary(item)}
-                    aria-label={`Open ${item.indicatorName}`}
-                    sx={{ p: 1.5 }}
-                  >
+                  <Box sx={{ p: 1.5 }}>
                     <Typography fontWeight={600}>
                       {toSentenceCase(item.indicatorName)}
                     </Typography>
                     <Box sx={{ mt: 0.5 }}>{metaChips(item)}</Box>
-                  </CardActionArea>
+                  </Box>
                 </Grid>
                 <Grid size="auto" sx={{ pr: 1.5 }}>
                   {renderActions(item)}
