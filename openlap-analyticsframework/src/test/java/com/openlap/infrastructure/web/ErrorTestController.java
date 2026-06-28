@@ -26,19 +26,23 @@ public class ErrorTestController {
     throw new NotFoundException("USER_NOT_FOUND", "User not found.");
   }
 
+  // These endpoints exist only to engage @Valid/@RequestBody/@RequestParam binding so the
+  // tests can drive the error paths. They return a constant rather than echoing the bound
+  // input back into the response (which CodeQL flags as reflected XSS); no test asserts the
+  // happy-path body, so binding/validation behaviour is unchanged.
   @PostMapping("/valid")
   public String valid(@Valid @RequestBody Dto dto) {
-    return dto.getName();
+    return "ok";
   }
 
   @PostMapping("/body")
   public String body(@RequestBody Dto dto) {
-    return dto.getName();
+    return "ok";
   }
 
   @GetMapping("/param")
   public String param(@RequestParam("q") String q) {
-    return q;
+    return "ok";
   }
 
   @GetMapping("/boom")
