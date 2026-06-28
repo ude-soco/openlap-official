@@ -1,37 +1,57 @@
 import PropTypes from "prop-types";
-import { Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
 import { getChartMetadata } from "../utils/visualization-data";
 
+const FieldLabel = ({ children }) => (
+  <Typography
+    variant="overline"
+    color="text.secondary"
+    component="h5"
+    sx={{ lineHeight: 1.6 }}
+  >
+    {children}
+  </Typography>
+);
+FieldLabel.propTypes = { children: PropTypes.node };
+
 /**
- * "About this visualization" — static, local guidance for the selected chart:
- * what it is good for and a simple readability caution. No backend calls.
+ * "About {chart}" — static, local documentation for the selected chart: what it
+ * is, what it is best for, and where to use it with care. No backend calls.
  */
 const ChartAbout = ({ chartType }) => {
   if (!chartType?.id) return null;
   const meta = getChartMetadata(chartType.imageCode);
 
   return (
-    <SectionCard title="About this visualization">
-      <Stack gap={1}>
+    <SectionCard title={`About ${chartType.name}`}>
+      <Stack gap={2}>
         <Typography variant="body2">{meta.summary}</Typography>
+
         {meta.bestFor && (
-          <Typography variant="body2" color="text.secondary">
-            <b>Best for:</b> {meta.bestFor}
-          </Typography>
-        )}
-        {meta.caution && (
-          <Stack direction="row" gap={1} alignItems="flex-start">
-            <InfoOutlinedIcon
-              fontSize="small"
-              color="action"
-              sx={{ mt: "1px" }}
-            />
+          <Box>
+            <FieldLabel>Best for</FieldLabel>
             <Typography variant="body2" color="text.secondary">
-              {meta.caution}
+              {meta.bestFor}
             </Typography>
-          </Stack>
+          </Box>
+        )}
+
+        {meta.caution && (
+          <Box>
+            <FieldLabel>Use with care</FieldLabel>
+            <Stack direction="row" gap={1} alignItems="flex-start">
+              <InfoOutlinedIcon
+                fontSize="small"
+                color="action"
+                sx={{ mt: "1px" }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                {meta.caution}
+              </Typography>
+            </Stack>
+          </Box>
         )}
       </Stack>
     </SectionCard>

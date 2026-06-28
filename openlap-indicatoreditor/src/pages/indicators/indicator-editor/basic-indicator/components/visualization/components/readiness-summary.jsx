@@ -9,8 +9,8 @@ import SectionCard from "../../../../../../../common/components/section-card/sec
  * the current wizard state (it does not gate or change save behavior).
  */
 const ReadinessSummary = ({ items }) => (
-  <SectionCard title="Ready to save?">
-    <Stack gap={0.75}>
+  <SectionCard title="Ready to save">
+    <Stack gap={1}>
       {items.map((item) => (
         <Stack key={item.label} direction="row" gap={1} alignItems="center">
           {item.done ? (

@@ -109,27 +109,44 @@ const TypeSelection = () => {
           <Stack
             gap={1}
             alignItems="center"
-            justifyContent="flex-start"
-            sx={{ height: "100%" }}
+            sx={{ height: "100%", width: "100%" }}
           >
             <Box
               aria-hidden
               sx={{ "& svg": { width: 56, height: 56 } }}
               dangerouslySetInnerHTML={{ __html: svg }}
             />
-            <Typography variant="body2" align="center" fontWeight={600}>
+            {/* Reserve ~2 lines so icons stay aligned regardless of name length. */}
+            <Typography
+              variant="body2"
+              align="center"
+              fontWeight={600}
+              sx={{
+                minHeight: 40,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               {type.name}
             </Typography>
-            <StatusChip status={compat.status} />
-            {incompatible && requirementText && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                align="center"
-              >
-                {requirementText}
-              </Typography>
-            )}
+            {/* mt:auto pins the badge to the same vertical position on every card. */}
+            <Stack
+              alignItems="center"
+              gap={0.5}
+              sx={{ mt: "auto", width: "100%" }}
+            >
+              <StatusChip status={compat.status} />
+              {incompatible && requirementText && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  align="center"
+                >
+                  {requirementText}
+                </Typography>
+              )}
+            </Stack>
           </Stack>
         </ButtonBase>
       </Grid>
@@ -142,7 +159,7 @@ const TypeSelection = () => {
         <Typography variant="subtitle2" component="h4">
           {title}
         </Typography>
-        <Grid container spacing={2}>
+        <Grid container spacing={2.5}>
           {entries.map(renderChartCard)}
         </Grid>
       </Stack>
@@ -166,8 +183,10 @@ const TypeSelection = () => {
                 alignSelf: "flex-start",
                 justifyContent: "flex-start",
                 gap: 0.5,
+                px: 1,
                 py: 0.5,
                 borderRadius: 1,
+                "&:hover": { bgcolor: "action.hover" },
               }}
             >
               {showNeedsData ? (
@@ -185,7 +204,7 @@ const TypeSelection = () => {
               {showNeedsData ? "" : " Expand to see what each one needs."}
             </Typography>
             <Collapse in={showNeedsData} unmountOnExit>
-              <Grid container spacing={2} sx={{ pt: 1 }}>
+              <Grid container spacing={2.5} sx={{ pt: 1 }}>
                 {groups.needsData.map(renderChartCard)}
               </Grid>
             </Collapse>

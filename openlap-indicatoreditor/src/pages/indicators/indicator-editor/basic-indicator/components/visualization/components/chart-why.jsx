@@ -31,7 +31,7 @@ ReasonRow.propTypes = { ok: PropTypes.bool, children: PropTypes.node };
 
 // Tinted "callout" card — same tones as the ISC Creator's Why/Compatibility blocks.
 const tintedCardSx = (tone) => (theme) => ({
-  p: 2,
+  p: 2.5,
   borderRadius: `${theme.custom.radii.card}px`,
   border: `1px solid ${
     tone === "success"

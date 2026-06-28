@@ -278,7 +278,7 @@ export default function Visualization() {
             {configReady ? (
               <>
                 <TypeInputSelection />
-                <Grid container spacing={2}>
+                <Grid container spacing={3} alignItems="flex-start">
                   <Grid size={{ xs: 12, lg: 8 }}>
                     <SectionCard
                       title="Live preview"
@@ -315,11 +315,18 @@ export default function Visualization() {
             ) : undefined}
 
             <ReadinessSummary items={readinessItems} />
-            <Divider />
-            <Grid container justifyContent="center" alignItems="center" spacing={1}>
+            <Divider sx={{ mt: 1 }} />
+            <Grid
+              container
+              justifyContent="center"
+              alignItems="center"
+              spacing={1}
+              sx={{ pt: 2 }}
+            >
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Button
                   fullWidth
+                  size="large"
                   variant="contained"
                   disabled={handleCheckDisabled()}
                   onClick={handleToggleNameIndicator}
