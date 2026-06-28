@@ -1,16 +1,14 @@
 package com.openlap.visualization_methods.exceptions.library;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.NotFoundException;
 
-@Slf4j
-public class VisualizationLibraryNotFoundException extends RuntimeException {
+/** Requested visualization library does not exist → HTTP 404. Rendered by the unified handler. */
+public class VisualizationLibraryNotFoundException extends NotFoundException {
   public VisualizationLibraryNotFoundException(String message) {
-    super(message);
-    log.error(message);
+    super("VISUALIZATION_LIBRARY_NOT_FOUND", message);
   }
 
   public VisualizationLibraryNotFoundException(String message, Throwable cause) {
-    super(message, cause);
-    log.error(message, cause);
+    super("VISUALIZATION_LIBRARY_NOT_FOUND", message, cause);
   }
 }
