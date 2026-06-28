@@ -24,8 +24,7 @@ import {
   buildVisRef,
 } from "../../utils/query-builder";
 import TypeInputSelection from "./components/type-input-selection";
-import ChartWhy from "./components/chart-why";
-import ChartAbout from "./components/chart-about";
+import ChartGuidance from "./components/chart-guidance";
 import ReadinessSummary from "./components/readiness-summary";
 import ChartPreview from "../../../components/chart-preview";
 import ChartCustomizationPanel from "./components/customization/chart-customization-panel";
@@ -269,7 +268,7 @@ export default function Visualization() {
             ) : undefined}
 
             {visualization.selectedType.id ? (
-              <ChartWhy
+              <ChartGuidance
                 chartType={visualization.selectedType}
                 analyzedData={analysis.analyzedData}
               />
@@ -333,7 +332,6 @@ export default function Visualization() {
                     </Grid>
                   )}
                 </Grid>
-                <ChartAbout chartType={visualization.selectedType} />
               </>
             ) : undefined}
 

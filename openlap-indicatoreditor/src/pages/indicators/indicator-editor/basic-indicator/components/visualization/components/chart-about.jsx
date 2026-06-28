@@ -1,7 +1,6 @@
 import PropTypes from "prop-types";
 import { Box, Stack, Typography } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import SectionCard from "../../../../../../../common/components/section-card/section-card";
 import { getChartMetadata } from "../utils/visualization-data";
 
 const FieldLabel = ({ children }) => (
@@ -18,14 +17,24 @@ FieldLabel.propTypes = { children: PropTypes.node };
 
 /**
  * "About {chart}" — static, local documentation for the selected chart: what it
- * is, what it is best for, and where to use it with care. No backend calls.
+ * is, what it is best for, and where to use it with care. Renders as a plain
+ * block (no card of its own) so it can sit inside the unified Chart guidance
+ * section. No backend calls.
  */
 const ChartAbout = ({ chartType }) => {
   if (!chartType?.id) return null;
   const meta = getChartMetadata(chartType.imageCode);
 
   return (
-    <SectionCard title={`About ${chartType.name}`}>
+    <Box>
+      <Typography
+        variant="subtitle2"
+        component="h4"
+        fontWeight={600}
+        gutterBottom
+      >
+        About {chartType.name}
+      </Typography>
       <Stack gap={2}>
         <Typography variant="body2">{meta.summary}</Typography>
 
@@ -63,7 +72,7 @@ const ChartAbout = ({ chartType }) => {
           </Box>
         )}
       </Stack>
-    </SectionCard>
+    </Box>
   );
 };
 

@@ -75,7 +75,7 @@ const ChartWhy = ({ chartType, analyzedData }) => {
     <Box component="section" aria-label="Why this chart" sx={tintedCardSx(callout.tone)}>
       <Stack direction="row" gap={1} alignItems="center" sx={{ mb: 1.5 }}>
         <Icon color={callout.iconColor} />
-        <Typography variant="subtitle1" component="h4" fontWeight={600}>
+        <Typography variant="subtitle2" component="h4" fontWeight={600}>
           Why this chart?
         </Typography>
       </Stack>
