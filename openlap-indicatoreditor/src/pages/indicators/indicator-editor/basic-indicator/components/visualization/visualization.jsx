@@ -38,6 +38,7 @@ import WorkflowSection from "../../../../../../common/components/workflow-sectio
 import SectionCard from "../../../../../../common/components/section-card/section-card.jsx";
 import { getStepStatus } from "../../utils/basic-workflow-ui.js";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
+import PaletteIcon from "@mui/icons-material/Palette";
 import {
   requestCreateBasicIndicator,
   requestUpdateBasicIndicator,
@@ -65,6 +66,9 @@ export default function Visualization() {
     previewLoading: false,
     previewError: false,
   });
+  // Customization panel is hidden by default so the live preview is the focus;
+  // toggled by the "Customize chart" button (preview stays mounted either way).
+  const [customize, setCustomize] = useState(false);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
@@ -279,10 +283,24 @@ export default function Visualization() {
               <>
                 <TypeInputSelection />
                 <Grid container spacing={3} alignItems="flex-start">
-                  <Grid size={{ xs: 12, lg: "grow" }} sx={{ minWidth: 0 }}>
+                  <Grid
+                    size={{ xs: 12, lg: customize ? "grow" : 12 }}
+                    sx={{ minWidth: 0 }}
+                  >
                     <SectionCard
                       title="Live preview"
-                      helper="Updates live as you adjust the chart inputs and options above."
+                      helper="Updates live as you adjust the chart inputs and options."
+                      action={
+                        !customize && (
+                          <Button
+                            startIcon={<PaletteIcon />}
+                            variant="contained"
+                            onClick={() => setCustomize(true)}
+                          >
+                            Customize chart
+                          </Button>
+                        )
+                      }
                     >
                       {state.previewError ? (
                         <Alert severity="error">
@@ -306,11 +324,15 @@ export default function Visualization() {
                       )}
                     </SectionCard>
                   </Grid>
-                  <Grid size={{ xs: 12, lg: "auto" }}>
-                    <Box sx={{ width: { xs: "100%", lg: 340 } }}>
-                      <ChartCustomizationPanel />
-                    </Box>
-                  </Grid>
+                  {customize && (
+                    <Grid size={{ xs: 12, lg: "auto" }}>
+                      <Box sx={{ width: { xs: "100%", lg: 340 } }}>
+                        <ChartCustomizationPanel
+                          onClose={() => setCustomize(false)}
+                        />
+                      </Box>
+                    </Grid>
+                  )}
                 </Grid>
                 <ChartAbout chartType={visualization.selectedType} />
               </>

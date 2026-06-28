@@ -1,5 +1,16 @@
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-import { Box, Paper, Grid, Tab, Typography } from "@mui/material";
+import PropTypes from "prop-types";
+import {
+  Box,
+  IconButton,
+  Paper,
+  Grid,
+  Stack,
+  Tab,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import { useContext, useEffect, useState } from "react";
 import { BasicContext } from "../../../../basic-indicator";
 import { ElementsBar } from "./components/elements-bar";
@@ -10,7 +21,7 @@ import { useParams } from "react-router-dom";
 
 const HEIGHT = "440px";
 
-const ChartCustomizationPanel = () => {
+const ChartCustomizationPanel = ({ onClose }) => {
   const params = useParams();
   const { analysis, visualization, setVisualization } =
     useContext(BasicContext);
@@ -43,13 +54,27 @@ const ChartCustomizationPanel = () => {
 
   return (
     <>
-      <Typography
-        variant="subtitle2"
-        color="text.secondary"
-        gutterBottom
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ mb: 1 }}
       >
-        Customization panel
-      </Typography>
+        <Typography variant="subtitle2" color="text.secondary">
+          Customization panel
+        </Typography>
+        {onClose && (
+          <Tooltip title="Close">
+            <IconButton
+              size="small"
+              aria-label="Close customization"
+              onClick={onClose}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Stack>
       <Grid container component={Paper} variant="outlined">
         <Grid size={{ xs: 12 }}>
           <TabContext value={value}>
@@ -111,6 +136,10 @@ const ChartCustomizationPanel = () => {
       </Grid>
     </>
   );
+};
+
+ChartCustomizationPanel.propTypes = {
+  onClose: PropTypes.func,
 };
 
 export default ChartCustomizationPanel;
