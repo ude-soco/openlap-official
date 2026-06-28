@@ -8,7 +8,7 @@ import com.openlap.analytics_statements.services.LrsService;
 import com.openlap.analytics_statements.services.StatementService;
 import com.openlap.dataset.OpenLAPColumnDataType;
 import com.openlap.dataset.OpenLAPDataSet;
-import com.openlap.exception.ServiceException;
+import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.exceptions.OpenLAPDataColumnException;
 import java.net.MalformedURLException;
 import java.net.URL;

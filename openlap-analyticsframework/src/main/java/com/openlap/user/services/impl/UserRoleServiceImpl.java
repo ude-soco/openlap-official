@@ -1,6 +1,6 @@
 package com.openlap.user.services.impl;
 
-import com.openlap.exception.ServiceException;
+import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.user.dto.request.RoleRequest;
 import com.openlap.user.entities.Role;
 import com.openlap.user.entities.RoleType;

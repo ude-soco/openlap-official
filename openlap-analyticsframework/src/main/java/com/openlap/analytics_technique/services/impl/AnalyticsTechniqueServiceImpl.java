@@ -17,8 +17,8 @@ import com.openlap.dataset.OpenLAPColumnDataType;
 import com.openlap.dataset.OpenLAPDataSetConfigValidationResult;
 import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.dynamicparam.OpenLAPDynamicParam;
-import com.openlap.exception.DatabaseOperationException;
-import com.openlap.exception.ServiceException;
+import com.openlap.infrastructure.exception.DatabaseOperationException;
+import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.template.AnalyticsMethod;
 
 import java.io.File;

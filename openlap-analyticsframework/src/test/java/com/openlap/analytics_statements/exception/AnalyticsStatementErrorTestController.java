@@ -1,6 +1,6 @@
 package com.openlap.analytics_statements.exception;
 
-import com.openlap.exception.DatabaseOperationException;
+import com.openlap.infrastructure.exception.DatabaseOperationException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

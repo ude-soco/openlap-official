@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.openlap.analytics_statements.services.LrsService;
 import com.openlap.analytics_statements.services.StatementService;
-import com.openlap.exception.ServiceException;
+import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.user.exception.user.UserNotFoundException;
 import com.openlap.user.repositories.UserRepository;
 import com.openlap.user.services.TokenService;

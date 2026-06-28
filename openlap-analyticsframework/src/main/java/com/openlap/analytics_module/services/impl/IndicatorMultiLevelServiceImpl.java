@@ -13,7 +13,7 @@ import com.openlap.analytics_statements.dtos.OpenLapDataConverter;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueResponse;
 import com.openlap.analytics_technique.services.AnalyticsTechniqueService;
 import com.openlap.dataset.*;
-import com.openlap.exception.ServiceException;
+import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.exceptions.OpenLAPDataColumnException;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;

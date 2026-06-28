@@ -5,7 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.openlap.analytics_module.exceptions.indicator.IndicatorManipulationNotAllowed;
 import com.openlap.analytics_module.exceptions.indicator.IndicatorNotFoundException;
-import com.openlap.exception.DatabaseOperationException;
+import com.openlap.infrastructure.exception.DatabaseOperationException;
 import com.openlap.isc_module.dto.request.IscDraftRequest;
 import com.openlap.isc_module.dto.request.IscRequest;
 import com.openlap.isc_module.dto.response.ISCResponse;

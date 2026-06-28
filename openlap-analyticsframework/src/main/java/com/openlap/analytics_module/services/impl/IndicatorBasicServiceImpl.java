@@ -25,7 +25,7 @@ import com.openlap.analytics_technique.services.AnalyticsTechniqueService;
 import com.openlap.dataset.OpenLAPDataSet;
 import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.dynamicparam.OpenLAPDynamicParam;
-import com.openlap.exception.ServiceException;
+import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.exceptions.AnalyticsMethodInitializationException;
 import com.openlap.template.AnalyticsMethod;
 import com.openlap.user.entities.User;

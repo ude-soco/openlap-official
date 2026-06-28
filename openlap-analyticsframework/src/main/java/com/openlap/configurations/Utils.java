@@ -1,6 +1,6 @@
 package com.openlap.configurations;
 
-import com.openlap.exception.ServiceException;
+import com.openlap.infrastructure.exception.ServiceException;
 import java.io.*;
 import java.net.URLDecoder;
 import java.net.URLEncoder;

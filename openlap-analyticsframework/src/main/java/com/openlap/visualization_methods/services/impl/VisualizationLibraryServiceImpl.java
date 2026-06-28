@@ -1,7 +1,7 @@
 package com.openlap.visualization_methods.services.impl;
 
 import com.openlap.configurations.Utils;
-import com.openlap.exception.DatabaseOperationException;
+import com.openlap.infrastructure.exception.DatabaseOperationException;
 import com.openlap.visualization_methods.dto.VisualizationLibraryResponse;
 import com.openlap.visualization_methods.entities.VisLibrary;
 import com.openlap.visualization_methods.entities.VisType;

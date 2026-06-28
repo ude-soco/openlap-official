@@ -100,12 +100,13 @@ public class AnalyticsStatementErrorMappingMockMvcTest {
   }
 
   @Test
-  public void databaseFailureRemainsLegacyAndUnchanged() throws Exception {
-    // Shared DatabaseOperationException (com.openlap.exception) is out of scope for this PR and is
-    // still handled by the legacy global handler: 500, legacy ApiError shape, no `code`.
+  public void databaseFailureNowUsesUnifiedEnvelope() throws Exception {
+    // DatabaseOperationException is now an InfrastructureException (legacy com.openlap.exception
+    // retired): 500 with a stable code via the unified handler, no cause.
     mockMvc
         .perform(get("/analytics-statement-error-test/database-failure"))
         .andExpect(status().is(500))
-        .andExpect(jsonPath("$.code").doesNotExist());
+        .andExpect(jsonPath("$.code").value("DATABASE_OPERATION_FAILED"))
+        .andExpect(jsonPath("$.cause").doesNotExist());
   }
 }
