@@ -265,7 +265,7 @@ const IndicatorPreview = () => {
 
                             <Tooltip
                               arrow
-                              title={<Typography>Edit indicator</Typography>}
+                              title={<Typography>Delete indicator</Typography>}
                             >
                               <span>
                                 <IconButton

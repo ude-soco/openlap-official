@@ -1,23 +1,45 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import {
   Box,
   Button,
+  Card,
+  CardActionArea,
+  CardContent,
+  Chip,
   Divider,
-  IconButton,
-  LinearProgress,
-  Paper,
   Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
+  IconButton,
+  InputAdornment,
+  LinearProgress,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Paper,
+  Stack,
   TablePagination,
-  TableRow,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import AddIcon from "@mui/icons-material/Add";
+import SearchIcon from "@mui/icons-material/Search";
+import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import CodeIcon from "@mui/icons-material/Code";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
+import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
+import ViewListRoundedIcon from "@mui/icons-material/ViewListRounded";
+import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
+import { useNavigate } from "react-router-dom";
+import { useSnackbar } from "notistack";
 import {
   requestIndicatorCode,
   requestIndicatorDeletion,
@@ -26,583 +48,521 @@ import {
   requestMyIndicators,
 } from "../utils/indicator-dashboard-api.js";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import SearchIcon from "@mui/icons-material/Search";
-import PreviewIcon from "@mui/icons-material/Preview";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import CodeIcon from "@mui/icons-material/Code";
-import CloseIcon from "@mui/icons-material/Close";
-import AddIcon from "@mui/icons-material/Add";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import { useNavigate } from "react-router-dom";
-import { useSnackbar } from "notistack";
 import { handleDisplayType } from "../utils/utils.js";
 import CustomDialog from "../../../../common/components/custom-dialog/custom-dialog.jsx";
+import EmptyState from "../../../../common/components/empty-state/empty-state.jsx";
 
-const MyIndicatorsTable = () => {
+const toSentenceCase = (str) =>
+  !str ? "" : str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
+const formatDate = (time) =>
+  time
+    ? new Date(time).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "";
+
+// Edit routing is keyed by indicator type (server contract preserved).
+const EDIT_ROUTES = {
+  BASIC: "/indicator/editor/basic/edit",
+  COMPOSITE: "/indicator/editor/composite/edit",
+  MULTI_LEVEL: "/indicator/editor/multi-level-analysis/edit",
+};
+
+const ICC_TOOLTIP = (
+  <>
+    <Typography gutterBottom>Copy embed code (ICC)</Typography>
+    <Typography variant="body2">
+      An Interactive Indicator Code (ICC) is an iframe snippet you can embed in
+      any web app that supports iframes, to show this indicator live.
+    </Typography>
+  </>
+);
+
+const MyIndicatorsTable = ({ onStats }) => {
   const { api, SESSION_INDICATOR } = useContext(AuthContext);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const [state, setState] = useState({
-    indicatorList: [],
-    pageable: {
-      pageSize: 10,
-      pageNumber: 0,
-    },
-    totalElements: 0,
-    params: {
-      page: 0,
-      size: 10,
-      sortDirection: "dsc",
-      sortBy: "createdOn",
-    },
-    openDeleteDialog: false,
-    isLoading: { status: false, indicator: undefined },
-    loadingMyIndicatorList: false,
-    onHoverIndicatorId: undefined,
-    toggleSearch: true,
-    searchTerm: "",
-    filteredIndicatorList: [],
+
+  const [indicatorList, setIndicatorList] = useState([]);
+  const [pageable, setPageable] = useState({ pageSize: 10, pageNumber: 0 });
+  const [totalElements, setTotalElements] = useState(0);
+  // Server contract preserved verbatim: sortDirection "dsc", sortBy "createdOn".
+  const [params, setParams] = useState({
+    page: 0,
+    size: 10,
+    sortDirection: "dsc",
+    sortBy: "createdOn",
   });
+  const [loading, setLoading] = useState(false);
+  const [busyId, setBusyId] = useState(undefined); // per-row action in progress
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filtered, setFiltered] = useState([]);
+  const [view, setView] = useState("list");
+  const [menu, setMenu] = useState({ anchorEl: null, item: null });
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const loadMyIndicatorList = async (api, params) => {
-    setState((p) => ({ ...p, loadingMyIndicatorList: true }));
+  const loadMyIndicatorList = async () => {
+    setLoading(true);
     try {
-      const indicatorList = await requestMyIndicators(api, params);
-      setState((p) => ({
-        ...p,
-        indicatorList: indicatorList.content,
-        pageable: indicatorList.pageable,
-        totalElements: indicatorList.totalElements,
-        loadingMyIndicatorList: false,
-      }));
-    } catch (error) {
-      console.log("Error requesting my indicators");
-    } finally {
-      setState((p) => ({ ...p, loadingMyIndicatorList: false }));
-    }
-  };
-
-  useEffect(() => {
-    loadMyIndicatorList(api, state.params);
-  }, [state.params]);
-
-  useEffect(() => {
-    const filtered = state.indicatorList.filter((indicator) =>
-      indicator.indicatorName
-        .toLowerCase()
-        .includes(state.searchTerm.toLowerCase())
-    );
-    setState((p) => ({ ...p, filteredIndicatorList: filtered }));
-  }, [state.searchTerm, state.indicatorList]);
-
-  const handleOnHoverIndicator = (id) => {
-    setState((p) => ({ ...p, onHoverIndicatorId: id }));
-  };
-
-  const handleCopyEmbedCode = async () => {
-    setState((p) => ({
-      ...p,
-      isLoading: {
-        ...p.isLoading,
-        status: true,
-        indicator: p.onHoverIndicatorId,
-      },
-    }));
-    try {
-      const indicatorCode = await requestIndicatorCode(
-        api,
-        state.onHoverIndicatorId
-      );
-      await navigator.clipboard.writeText(indicatorCode.data);
-      enqueueSnackbar(indicatorCode.message, { variant: "success" });
-      setState((p) => ({ ...p, isLoading: false }));
-    } catch (error) {
-      enqueueSnackbar(error.response.data.message, { variant: "error" });
-    } finally {
-      setState((p) => ({
-        ...p,
-        isLoading: {
-          ...p.isLoading,
-          status: false,
-          indicator: undefined,
-        },
-      }));
-    }
-  };
-
-  const handlePreview = (id) => {
-    navigate(`/indicator/${id}`);
-  };
-
-  const handleEditIndicator = async () => {
-    setState((p) => ({
-      ...p,
-      isLoading: {
-        ...p.isLoading,
-        status: true,
-        indicator: p.onHoverIndicatorId,
-      },
-    }));
-    try {
-      const indicator = await requestIndicatorFullDetail(
-        api,
-        state.onHoverIndicatorId
-      );
-      let configuration = JSON.parse(indicator.configuration);
-      let updatedConfiguration = {
-        ...configuration,
-        indicator: { ...configuration.indicator, id: state.onHoverIndicatorId },
-      };
-      sessionStorage.setItem(
-        SESSION_INDICATOR,
-        JSON.stringify(updatedConfiguration)
-      );
-      const baseRoutes = {
-        BASIC: "/indicator/editor/basic/edit",
-        COMPOSITE: "/indicator/editor/composite/edit",
-        MULTI_LEVEL: "/indicator/editor/multi-level-analysis/edit",
-      };
-
-      const baseRoute = baseRoutes[indicator.type];
-
-      navigate(`${baseRoute}/${state.onHoverIndicatorId}`);
+      const result = await requestMyIndicators(api, params);
+      setIndicatorList(result.content);
+      setPageable(result.pageable);
+      setTotalElements(result.totalElements);
+      if (onStats) onStats({ total: result.totalElements });
     } catch (error) {
       console.error("Error requesting my indicators", error);
+      enqueueSnackbar("Could not load your indicators. Please try again.", {
+        variant: "error",
+      });
     } finally {
-      setState((p) => ({
-        ...p,
-        isLoading: {
-          ...p.isLoading,
-          status: false,
-          indicator: undefined,
-        },
-      }));
+      setLoading(false);
     }
   };
 
-  const handleDuplicateMyIndicator = async () => {
-    setState((p) => ({
-      ...p,
-      isLoading: {
-        ...p.isLoading,
-        status: true,
-        indicator: p.onHoverIndicatorId,
-      },
-    }));
-    try {
-      const response = await requestMyIndicatorDuplication(
-        api,
-        state.onHoverIndicatorId
-      );
-      setState((p) => ({
-        ...p,
-        isLoading: {
-          ...p.isLoading,
-          status: false,
-          indicator: undefined,
-        },
-      }));
-      await loadMyIndicatorList(api, state.params);
-      enqueueSnackbar(response.message, { variant: "success" });
-    } catch (error) {
-      setState((p) => ({
-        ...p,
-        isLoading: {
-          ...p.isLoading,
-          status: false,
-          indicator: undefined,
-        },
-      }));
-      console.error("Error duplication my indicator", error);
-    }
-  };
+  useEffect(() => {
+    loadMyIndicatorList();
+    // Reload when paging/size changes; client-side name filter is applied below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
 
-  const handleToggleDelete = () => {
-    setState((p) => ({ ...p, openDeleteDialog: !p.openDeleteDialog }));
-  };
+  // Client-side name filter over the current page (behaviour preserved).
+  useEffect(() => {
+    const term = searchTerm.toLowerCase();
+    setFiltered(
+      indicatorList.filter((i) =>
+        (i.indicatorName || "").toLowerCase().includes(term)
+      )
+    );
+  }, [searchTerm, indicatorList]);
 
-  const handleDeleteIndicator = async () => {
-    setState((p) => ({
-      ...p,
-      isLoading: {
-        ...p.isLoading,
-        status: true,
-        indicator: p.onHoverIndicatorId,
-      },
-    }));
-    try {
-      const response = await requestIndicatorDeletion(
-        api,
-        state.onHoverIndicatorId
-      );
-      setState((p) => ({
-        ...p,
-        indicatorList: p.indicatorList.filter(
-          (item) => item.id !== state.onHoverIndicatorId
-        ),
-        isLoading: {
-          ...p.isLoading,
-          status: false,
-          indicator: undefined,
-        },
-      }));
-      enqueueSnackbar(response.message, { variant: "success" });
-    } catch (error) {
-      setState((p) => ({
-        ...p,
-        isLoading: {
-          ...p.isLoading,
-          status: false,
-          indicator: undefined,
-        },
-      }));
-      enqueueSnackbar(error.message, { variant: "error" });
-    }
-  };
-
-  const handlePageChange = (event, newPage) => {
-    setState((p) => ({ ...p, params: { ...p.params, page: newPage } }));
-  };
-
-  const handleRowsPerPageChange = (event) => {
-    setState((p) => ({
-      ...p,
-      params: { ...p.params, size: parseInt(event.target.value, 10), page: 0 },
-    }));
-  };
-
-  const handleToggleSearch = () => {
-    setState((p) => ({ ...p, searchTerm: "", toggleSearch: !p.toggleSearch }));
-  };
-
-  const handleSearchTerm = (event) => {
-    const { value } = event.target;
-    setState((p) => ({ ...p, searchTerm: value }));
-  };
-
-  const handleClearSession = () => {
-    setState((p) => ({ ...p, indicatorInProgress: !p.indicatorInProgress }));
-    sessionStorage.removeItem(SESSION_INDICATOR);
-  };
+  const closeMenu = () => setMenu({ anchorEl: null, item: null });
 
   const handleCreateNew = () => {
-    handleClearSession();
+    sessionStorage.removeItem(SESSION_INDICATOR);
     navigate("/indicator/editor");
   };
 
-  // * Helper functions
-  function toSentenceCase(str) {
-    if (!str) return "";
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  }
+  const handlePreview = (id) => navigate(`/indicator/${id}`);
 
-  function changeTimeFormat(time) {
-    return new Date(time).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  }
+  const handleEditIndicator = async (item) => {
+    setBusyId(item.id);
+    try {
+      const indicator = await requestIndicatorFullDetail(api, item.id);
+      const configuration = JSON.parse(indicator.configuration);
+      sessionStorage.setItem(
+        SESSION_INDICATOR,
+        JSON.stringify({
+          ...configuration,
+          indicator: { ...configuration.indicator, id: item.id },
+        })
+      );
+      const baseRoute = EDIT_ROUTES[indicator.type];
+      navigate(`${baseRoute}/${item.id}`);
+    } catch (error) {
+      console.error("Error opening indicator for editing", error);
+      enqueueSnackbar("Could not open this indicator for editing.", {
+        variant: "error",
+      });
+    } finally {
+      setBusyId(undefined);
+    }
+  };
+
+  const handleCopyEmbedCode = async (item) => {
+    setBusyId(item.id);
+    try {
+      const indicatorCode = await requestIndicatorCode(api, item.id);
+      await navigator.clipboard.writeText(indicatorCode.data);
+      enqueueSnackbar(indicatorCode.message, { variant: "success" });
+    } catch (error) {
+      enqueueSnackbar(
+        error?.response?.data?.message || "Could not copy the embed code.",
+        { variant: "error" }
+      );
+    } finally {
+      setBusyId(undefined);
+    }
+  };
+
+  const handleDuplicate = async (item) => {
+    setBusyId(item.id);
+    try {
+      const response = await requestMyIndicatorDuplication(api, item.id);
+      await loadMyIndicatorList();
+      enqueueSnackbar(response.message, { variant: "success" });
+    } catch (error) {
+      console.error("Error duplicating indicator", error);
+      enqueueSnackbar("Could not duplicate this indicator.", {
+        variant: "error",
+      });
+    } finally {
+      setBusyId(undefined);
+    }
+  };
+
+  const handleDeleteIndicator = async () => {
+    const item = deleteTarget;
+    if (!item) return;
+    setBusyId(item.id);
+    try {
+      const response = await requestIndicatorDeletion(api, item.id);
+      setIndicatorList((prev) => prev.filter((i) => i.id !== item.id));
+      enqueueSnackbar(response.message, { variant: "success" });
+    } catch (error) {
+      enqueueSnackbar(error?.message || "Could not delete this indicator.", {
+        variant: "error",
+      });
+    } finally {
+      setBusyId(undefined);
+      setDeleteTarget(null);
+    }
+  };
+
+  const handlePageChange = (event, newPage) =>
+    setParams((p) => ({ ...p, page: newPage }));
+
+  const handleRowsPerPageChange = (event) =>
+    setParams((p) => ({ ...p, size: parseInt(event.target.value, 10), page: 0 }));
+
+  const isSearching = searchTerm.trim().length > 0;
+  const isEmpty = !loading && filtered.length === 0;
+
+  // Consistent action area for every row/card: primary "Preview" + overflow menu.
+  const renderActions = (item) => {
+    const busy = busyId === item.id;
+    const name = item.indicatorName;
+    return (
+      <Stack direction="row" gap={0.5} alignItems="center">
+        <Button
+          variant="text"
+          size="small"
+          color="primary"
+          startIcon={<VisibilityIcon fontSize="small" />}
+          aria-label={`Preview ${name}`}
+          disabled={busy}
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePreview(item.id);
+          }}
+        >
+          Preview
+        </Button>
+        <Tooltip arrow title="More actions">
+          <span>
+            <IconButton
+              size="small"
+              aria-label={`More actions for ${name}`}
+              aria-haspopup="true"
+              disabled={busy}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setMenu({ anchorEl: e.currentTarget, item });
+              }}
+            >
+              <MoreVertRoundedIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Stack>
+    );
+  };
+
+  const menuItemsFor = (item) => {
+    if (!item) return [];
+    const withClose = (fn) => () => {
+      closeMenu();
+      fn();
+    };
+    return [
+      {
+        key: "edit",
+        label: "Edit",
+        icon: <EditIcon fontSize="small" />,
+        onClick: withClose(() => handleEditIndicator(item)),
+      },
+      {
+        key: "copy",
+        label: "Copy embed code",
+        icon: <CodeIcon fontSize="small" />,
+        tooltip: ICC_TOOLTIP,
+        onClick: withClose(() => handleCopyEmbedCode(item)),
+      },
+      {
+        key: "duplicate",
+        label: "Duplicate",
+        icon: <ContentCopyIcon fontSize="small" />,
+        onClick: withClose(() => handleDuplicate(item)),
+      },
+      {
+        key: "delete",
+        label: "Delete",
+        icon: <DeleteIcon fontSize="small" color="error" />,
+        destructive: true,
+        onClick: withClose(() => setDeleteTarget(item)),
+      },
+    ];
+  };
+
+  const metaChips = (item) => (
+    <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+      <Chip
+        size="small"
+        variant="outlined"
+        icon={<InsightsOutlinedIcon />}
+        label={handleDisplayType(item.type)}
+      />
+      <Typography variant="body2" color="text.secondary">
+        Created {formatDate(item.createdOn)}
+      </Typography>
+    </Stack>
+  );
 
   return (
-    <>
-      <Grid container spacing={2}>
-        <Grid size={12}>
-          <TableContainer component={Paper} elevation={0} variant="outlined">
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>
-                    <Grid container alignItems="center" spacing={1}>
-                      <Button
-                        startIcon={<AddIcon />}
-                        size="small"
-                        color="primary"
-                        variant="contained"
-                        onClick={handleCreateNew}
-                      >
-                        Create New
-                      </Button>
-                      <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
-                      {state.toggleSearch ? (
-                        <>
-                          <Typography>Search</Typography>
-                          <Tooltip
-                            title={
-                              <Typography>Search for indicators</Typography>
-                            }
-                          >
-                            <span>
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={handleToggleSearch}
-                              >
-                                <SearchIcon />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        </>
-                      ) : (
-                        <>
-                          <Grid>
-                            <TextField
-                              autoFocus
-                              size="small"
-                              placeholder="Search for indicator"
-                              value={state.searchTerm}
-                              onChange={handleSearchTerm}
-                            />
-                          </Grid>
-                          <Grid size="auto">
-                            <Tooltip
-                              title={<Typography>Close search</Typography>}
-                            >
-                              <span>
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  onClick={handleToggleSearch}
-                                >
-                                  <CloseIcon />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
-                          </Grid>
-                        </>
-                      )}
-                    </Grid>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {state.filteredIndicatorList.map((indicator) => (
-                  <React.Fragment key={indicator.id}>
-                    <TableRow
-                      onMouseEnter={() => handleOnHoverIndicator(indicator.id)}
-                      hover
-                      sx={{
-                        cursor: "pointer",
-                        position: "relative",
-                        "&:hover .hover-actions": { opacity: 1 },
-                        "&:hover .time-text": { opacity: 0 },
-                      }}
-                    >
-                      <TableCell>
-                        <Grid container justifyContent="space-between">
-                          <Grid
-                            size="grow"
-                            onClick={() => handlePreview(indicator.id)}
-                          >
-                            <Typography component="span">
-                              <b>{toSentenceCase(indicator.indicatorName)}</b>
-                              <br />
-                              <Typography component="span" variant="caption">
-                                {handleDisplayType(indicator.type)} ● Created
-                                on: {changeTimeFormat(indicator.createdOn)}
-                              </Typography>
-                            </Typography>
-                          </Grid>
-                          <Grid size="auto">
-                            <Box
-                              className="hover-actions"
-                              sx={{
-                                position: "absolute",
-                                right: 0,
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                display: "flex",
-                                gap: 1,
-                                opacity: 0,
-                                transition: "opacity 0.2s ease-in-out",
-                                zIndex: 2,
-                                mr: 2,
-                              }}
-                            >
-                              <Tooltip
-                                arrow
-                                title={
-                                  <Typography>Preview indicator</Typography>
-                                }
-                              >
-                                <span>
-                                  <IconButton
-                                    size="small"
-                                    color="primary"
-                                    onClick={() => handlePreview(indicator.id)}
-                                    disabled={state.isLoading.status}
-                                  >
-                                    <PreviewIcon />
-                                  </IconButton>
-                                </span>
-                              </Tooltip>
-
-                              <Tooltip
-                                arrow
-                                title={
-                                  <>
-                                    <Typography gutterBottom>
-                                      Copy ICC code
-                                    </Typography>
-                                    <Typography>
-                                      What's an ICC code?
-                                      <br />
-                                      An Interactive Indicator Code (ICC) is an
-                                      iFrame code snippet you can embed in any
-                                      web application that supports iFrames.
-                                      <br />
-                                      It lets you display real-time analytics
-                                      directly within your website.
-                                    </Typography>
-                                  </>
-                                }
-                              >
-                                <span>
-                                  <IconButton
-                                    size="small"
-                                    color="primary"
-                                    onClick={handleCopyEmbedCode}
-                                    disabled={state.isLoading.status}
-                                  >
-                                    <CodeIcon />
-                                  </IconButton>
-                                </span>
-                              </Tooltip>
-
-                              <Tooltip
-                                arrow
-                                title={<Typography>Edit indicator</Typography>}
-                              >
-                                <span>
-                                  <IconButton
-                                    size="small"
-                                    color="primary"
-                                    onClick={handleEditIndicator}
-                                    disabled={state.isLoading.status}
-                                  >
-                                    <EditIcon />
-                                  </IconButton>
-                                </span>
-                              </Tooltip>
-                              <Tooltip
-                                arrow
-                                title={
-                                  <Typography>Duplicate indicator</Typography>
-                                }
-                              >
-                                <span>
-                                  <IconButton
-                                    size="small"
-                                    color="primary"
-                                    onClick={handleDuplicateMyIndicator}
-                                    disabled={state.isLoading.status}
-                                  >
-                                    <ContentCopyIcon />
-                                  </IconButton>
-                                </span>
-                              </Tooltip>
-                              <Divider
-                                orientation="vertical"
-                                flexItem
-                                sx={{ mx: 1 }}
-                              />
-                              <Tooltip
-                                arrow
-                                title={
-                                  <Typography>Delete indicator</Typography>
-                                }
-                              >
-                                <span>
-                                  <IconButton
-                                    size="small"
-                                    color="error"
-                                    onClick={handleToggleDelete}
-                                    disabled={state.isLoading.status}
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>
-                                </span>
-                              </Tooltip>
-                            </Box>
-                          </Grid>
-                        </Grid>
-                      </TableCell>
-                    </TableRow>
-                    {state.isLoading.status &&
-                      indicator.id === state.isLoading.indicator && (
-                        <TableRow>
-                          <TableCell colSpan={3} sx={{ padding: 0 }}>
-                            <LinearProgress />
-                          </TableCell>
-                        </TableRow>
-                      )}
-                  </React.Fragment>
-                ))}
-                {state.loadingMyIndicatorList && (
-                  <TableRow>
-                    <TableCell colSpan={3} sx={{ padding: 0 }}>
-                      <LinearProgress />
-                    </TableCell>
-                  </TableRow>
-                )}
-                {state.filteredIndicatorList.length === 0 &&
-                  !state.loadingMyIndicatorList && (
-                    <TableRow>
-                      <TableCell colSpan={3}>
-                        <Box>
-                          {state.searchTerm.length > 0 ? (
-                            <Typography>
-                              <em>No indicators found with this name!</em>
-                            </Typography>
-                          ) : (
-                            <Box
-                              sx={{
-                                p: 8,
-                                textAlign: "center",
-                                color: "text.secondary",
-                              }}
-                            >
-                              <Typography variant="body1" gutterBottom>
-                                No indicators created yet. Click "Create new" to
-                                get started.
-                              </Typography>
-                              <Button
-                                variant="contained"
-                                onClick={handleCreateNew}
-                              >
-                                Create New
-                              </Button>
-                            </Box>
-                          )}
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  )}
-              </TableBody>
-            </Table>
-            <TablePagination
-              component="div"
-              count={state.totalElements}
-              page={state.pageable.pageNumber}
-              onPageChange={handlePageChange}
-              rowsPerPage={state.pageable.pageSize}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              rowsPerPageOptions={[5, 10, 20, 50]}
-            />
-          </TableContainer>
+    <Stack gap={2}>
+      {/* Control bar */}
+      <Paper
+        variant="outlined"
+        sx={(t) => ({ p: 2, borderRadius: `${t.custom?.radii?.card ?? 8}px` })}
+      >
+        <Grid
+          container
+          spacing={2}
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          <Grid size={{ xs: 12, md: "auto" }}>
+            <Button
+              startIcon={<AddIcon />}
+              variant="contained"
+              color="primary"
+              onClick={handleCreateNew}
+            >
+              Create new
+            </Button>
+          </Grid>
+          <Grid size={{ xs: 12, md: "auto" }}>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              gap={1.5}
+              alignItems={{ xs: "stretch", sm: "center" }}
+            >
+              <TextField
+                size="small"
+                label="Search"
+                placeholder="Search by name"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <ToggleButtonGroup
+                size="small"
+                exclusive
+                value={view}
+                onChange={(e, v) => v && setView(v)}
+                aria-label="View mode"
+              >
+                <ToggleButton value="list" aria-label="List view">
+                  <ViewListRoundedIcon fontSize="small" />
+                </ToggleButton>
+                <ToggleButton value="cards" aria-label="Card view">
+                  <GridViewRoundedIcon fontSize="small" />
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Stack>
+          </Grid>
         </Grid>
-      </Grid>
+      </Paper>
+
+      {loading && <LinearProgress />}
+
+      {isEmpty &&
+        (isSearching ? (
+          <EmptyState
+            icon={SearchOffRoundedIcon}
+            title="No indicators match your search"
+            description="Try a different name, or clear the search to see all your indicators."
+          />
+        ) : (
+          <EmptyState
+            icon={InsightsOutlinedIcon}
+            title="No indicators yet"
+            description="An indicator turns your learning data into a chart you can read and reuse. Create your first one to get started."
+            action={
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleCreateNew}
+              >
+                Create new
+              </Button>
+            }
+          />
+        ))}
+
+      {/* List view */}
+      {!isEmpty && view === "list" && (
+        <Stack gap={1}>
+          {filtered.map((item) => (
+            <Paper
+              key={item.id}
+              variant="outlined"
+              sx={(t) => ({
+                borderRadius: `${t.custom?.radii?.card ?? 8}px`,
+                overflow: "hidden",
+              })}
+            >
+              <Grid container alignItems="center">
+                <Grid size="grow">
+                  <Box sx={{ p: 1.5 }}>
+                    <Typography fontWeight={600}>
+                      {toSentenceCase(item.indicatorName)}
+                    </Typography>
+                    <Box sx={{ mt: 0.5 }}>{metaChips(item)}</Box>
+                  </Box>
+                </Grid>
+                <Grid size="auto" sx={{ pr: 1.5 }}>
+                  {renderActions(item)}
+                </Grid>
+              </Grid>
+              {busyId === item.id && <LinearProgress />}
+            </Paper>
+          ))}
+        </Stack>
+      )}
+
+      {/* Card view */}
+      {!isEmpty && view === "cards" && (
+        <Grid container spacing={2}>
+          {filtered.map((item) => (
+            <Grid
+              key={item.id}
+              size={{ xs: 12, sm: 6, lg: 4 }}
+              sx={{ display: "flex" }}
+            >
+              <Card
+                variant="outlined"
+                sx={(t) => ({
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  borderRadius: `${t.custom?.radii?.card ?? 8}px`,
+                })}
+              >
+                <CardActionArea
+                  onClick={() => handlePreview(item.id)}
+                  aria-label={`Preview ${item.indicatorName}`}
+                >
+                  <Box
+                    sx={(t) => ({
+                      height: 96,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: alpha(t.palette.primary.main, 0.06),
+                    })}
+                  >
+                    <InsightsOutlinedIcon
+                      color="primary"
+                      sx={{ fontSize: 36 }}
+                    />
+                  </Box>
+                  <CardContent>
+                    <Typography fontWeight={600} noWrap gutterBottom>
+                      {toSentenceCase(item.indicatorName)}
+                    </Typography>
+                    <Stack
+                      direction="row"
+                      gap={1}
+                      alignItems="center"
+                      flexWrap="wrap"
+                    >
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        icon={<InsightsOutlinedIcon />}
+                        label={handleDisplayType(item.type)}
+                      />
+                    </Stack>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 1 }}
+                    >
+                      Created {formatDate(item.createdOn)}
+                    </Typography>
+                  </CardContent>
+                </CardActionArea>
+                <Box sx={{ mt: "auto" }}>
+                  {busyId === item.id && <LinearProgress />}
+                  <Divider />
+                  <Box sx={{ p: 1, display: "flex", justifyContent: "flex-end" }}>
+                    {renderActions(item)}
+                  </Box>
+                </Box>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      <TablePagination
+        component="div"
+        count={totalElements}
+        page={pageable.pageNumber}
+        onPageChange={handlePageChange}
+        rowsPerPage={pageable.pageSize}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        rowsPerPageOptions={[5, 10, 20, 50]}
+      />
+
+      <Menu
+        anchorEl={menu.anchorEl}
+        open={Boolean(menu.anchorEl && menu.item)}
+        onClose={closeMenu}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        {menuItemsFor(menu.item).map((mi) => (
+          <MenuItem
+            key={mi.key}
+            onClick={mi.onClick}
+            sx={mi.destructive ? { color: "error.main" } : undefined}
+          >
+            <ListItemIcon>{mi.icon}</ListItemIcon>
+            {mi.tooltip ? (
+              <Tooltip arrow placement="right" title={mi.tooltip}>
+                <ListItemText>{mi.label}</ListItemText>
+              </Tooltip>
+            ) : (
+              <ListItemText>{mi.label}</ListItemText>
+            )}
+          </MenuItem>
+        ))}
+      </Menu>
 
       <CustomDialog
         type="delete"
-        content={`This will delete the indicator permanently from your dashboard.`}
-        open={state.openDeleteDialog}
-        toggleOpen={handleToggleDelete}
+        content="This will delete the indicator permanently from your dashboard."
+        open={Boolean(deleteTarget)}
+        toggleOpen={() => setDeleteTarget(null)}
         handler={handleDeleteIndicator}
       />
-    </>
+    </Stack>
   );
+};
+
+MyIndicatorsTable.propTypes = {
+  onStats: PropTypes.func,
 };
 
 export default MyIndicatorsTable;
