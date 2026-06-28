@@ -5,13 +5,8 @@ import {
   CircularProgress,
   Grid,
   Collapse,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
   LinearProgress,
-  TextField,
   Stack,
   Typography,
 } from "@mui/material";
@@ -34,6 +29,7 @@ import ChartAbout from "./components/chart-about";
 import ReadinessSummary from "./components/readiness-summary";
 import ChartPreview from "../../../components/chart-preview";
 import ChartCustomizationPanel from "./components/customization/chart-customization-panel";
+import SaveIndicatorDialog from "./components/save-indicator-dialog";
 import WorkflowSection from "../../../../../../common/components/workflow-section/workflow-section.jsx";
 import SectionCard from "../../../../../../common/components/section-card/section-card.jsx";
 import { getStepStatus } from "../../utils/basic-workflow-ui.js";
@@ -372,55 +368,15 @@ export default function Visualization() {
             </Grid>
           </Stack>
         </Collapse>
-        <Dialog
-          fullWidth
-          maxWidth="sm"
+        <SaveIndicatorDialog
           open={!!state.openDialog}
           onClose={handleToggleNameIndicator}
-        >
-          <DialogTitle>Provide a name to the indicator</DialogTitle>
-          <DialogContent>
-            <Box sx={{ py: 1 }}>
-              <TextField
-                fullWidth
-                label="Indicator name"
-                value={indicator.indicatorName}
-                placeholder="e.g., The most frequently access learning materials in my course"
-                onChange={handleOnChangeNameIndicator}
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={handleToggleNameIndicator}
-              disabled={state.nameIndicator.loading}
-            >
-              Continue editing
-            </Button>
-            <Button
-              loading={state.nameIndicator.loading}
-              disabled={indicator.indicatorName.length === 0}
-              loadingPosition="start"
-              loadingIndicator={params.id ? "Updating..." : "Saving..."}
-              fullWidth
-              variant="contained"
-              onClick={handleSaveIndicator}
-            >
-              {!state.nameIndicator.loading &&
-                (params.id
-                  ? "Update & Save to Dashboard"
-                  : "Save to dashboard")}
-            </Button>
-            {indicator.indicatorName.length === 0 && (
-              <CustomTooltip
-                type="help"
-                message={`The button is disabled because:<br/>● Indicator name is missing.`}
-              />
-            )}
-          </DialogActions>
-        </Dialog>
+          onSave={handleSaveIndicator}
+          saving={state.nameIndicator.loading}
+          isEdit={Boolean(params.id)}
+          indicatorName={indicator.indicatorName}
+          onChangeName={handleOnChangeNameIndicator}
+        />
       </WorkflowSection>
     </>
   );
