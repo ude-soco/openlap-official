@@ -308,7 +308,10 @@ export default function Visualization() {
                           Please choose another chart or adjust the inputs.
                         </Alert>
                       ) : visualization.previewData?.displayCode?.length ? (
-                        <ChartPreview previewData={visualization.previewData} />
+                        <ChartPreview
+                          previewData={visualization.previewData}
+                          responsive
+                        />
                       ) : (
                         <Stack
                           gap={1.5}
