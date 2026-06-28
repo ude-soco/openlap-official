@@ -3,18 +3,16 @@ import PropTypes from "prop-types";
 import {
   Box,
   ButtonBase,
-  Card,
-  CardActionArea,
   Chip,
   Collapse,
   Grid,
+  Paper,
   Stack,
   Typography,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import RecommendRoundedIcon from "@mui/icons-material/RecommendRounded";
-import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { BasicContext } from "../../../basic-indicator";
 import { visualizationImages, defaultParams } from "../utils/visualization-data";
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
@@ -24,9 +22,9 @@ import {
 } from "../utils/chart-compatibility";
 
 const STATUS_ARIA = {
-  recommended: "recommended",
-  compatible: "compatible",
-  "needs-data": "needs more data",
+  recommended: "recommended for your data",
+  compatible: "compatible with your data",
+  "needs-data": "requires additional data",
 };
 
 const StatusChip = ({ status }) => {
@@ -35,7 +33,6 @@ const StatusChip = ({ status }) => {
       <Chip
         size="small"
         color="success"
-        variant="outlined"
         icon={<RecommendRoundedIcon />}
         label="Recommended"
       />
@@ -44,14 +41,22 @@ const StatusChip = ({ status }) => {
   if (status === "compatible") {
     return <Chip size="small" variant="outlined" label="Compatible" />;
   }
-  return <Chip size="small" color="warning" variant="outlined" label="Needs data" />;
+  return (
+    <Chip
+      size="small"
+      variant="outlined"
+      color="warning"
+      label="Requires additional data"
+    />
+  );
 };
-
 StatusChip.propTypes = { status: PropTypes.string };
 
 const TypeSelection = () => {
   const { analysis, visualization, setVisualization } =
     useContext(BasicContext);
+  // "Requires additional data" is collapsed by default, but the header + a short
+  // explanation stay visible so it's discoverable.
   const [showNeedsData, setShowNeedsData] = useState(false);
 
   const handleSelectVisualizationType = async (typeSelected) => {
@@ -70,153 +75,122 @@ const TypeSelection = () => {
     analysis.analyzedData
   );
 
-  const renderCard = ({ type, compat }) => {
+  const renderChartCard = ({ type, compat }) => {
     const svg = visualizationImages[type.imageCode];
     if (!svg) return null;
     const selected = visualization.selectedType.id === type.id;
-    const requirementText =
-      compat.status === "needs-data"
-        ? buildRequirementText(compat.conditions)
-        : "";
+    const incompatible = compat.status === "needs-data";
+    const requirementText = incompatible
+      ? buildRequirementText(compat.conditions)
+      : "";
 
     return (
       <Grid
         key={type.id ?? type.imageCode}
-        size={{ xs: 6, sm: 4, md: 3, lg: 2 }}
-        sx={{ display: "flex" }}
+        component={Paper}
+        variant="outlined"
+        size={{ xs: 6, sm: 4, lg: 3 }}
+        sx={{
+          p: 0,
+          overflow: "hidden",
+          borderRadius: 1,
+          opacity: incompatible ? 0.75 : 1,
+          borderStyle: incompatible ? "dashed" : "solid",
+          "&:hover": { boxShadow: 5 },
+          border: selected ? "2px solid #F57C00" : undefined,
+        }}
       >
-        <Card
-          variant="outlined"
-          sx={(theme) => ({
-            width: "100%",
-            position: "relative",
-            borderRadius: `${theme.custom.radii.card}px`,
-            borderWidth: selected ? 2 : 1,
-            borderColor: selected ? "primary.main" : undefined,
-            backgroundColor: selected
-              ? alpha(theme.palette.primary.main, 0.06)
-              : undefined,
-            transition: `border-color ${theme.custom.motion.duration.normal}ms ${theme.custom.motion.easing.standard}`,
-          })}
+        <ButtonBase
+          onClick={() => handleSelectVisualizationType(type)}
+          aria-pressed={selected}
+          aria-label={`${type.name}. ${STATUS_ARIA[compat.status]}.`}
+          sx={{ width: "100%", height: "100%", p: 2 }}
         >
-          <CardActionArea
-            onClick={() => handleSelectVisualizationType(type)}
-            aria-label={`Select ${type.name} chart (${STATUS_ARIA[compat.status]})`}
-            aria-pressed={selected}
-            sx={{ p: 2, height: "100%" }}
+          <Stack
+            gap={1}
+            alignItems="center"
+            justifyContent="flex-start"
+            sx={{ height: "100%" }}
           >
-            {selected && (
-              <CheckCircleRoundedIcon
-                color="primary"
-                sx={{
-                  position: "absolute",
-                  top: 6,
-                  right: 6,
-                  fontSize: 20,
-                  bgcolor: "background.paper",
-                  borderRadius: "50%",
-                }}
-              />
-            )}
-            <Stack
-              gap={1}
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ height: "100%" }}
-            >
-              <StatusChip status={compat.status} />
-              <Box aria-hidden dangerouslySetInnerHTML={{ __html: svg }} />
-              <Typography variant="body2" align="center">
-                {type.name}
+            <Box
+              aria-hidden
+              sx={{ "& svg": { width: 56, height: 56 } }}
+              dangerouslySetInnerHTML={{ __html: svg }}
+            />
+            <Typography variant="body2" align="center" fontWeight={600}>
+              {type.name}
+            </Typography>
+            <StatusChip status={compat.status} />
+            {incompatible && requirementText && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                align="center"
+              >
+                {requirementText}
               </Typography>
-              {requirementText && (
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  align="center"
-                >
-                  {requirementText}
-                </Typography>
-              )}
-            </Stack>
-          </CardActionArea>
-        </Card>
+            )}
+          </Stack>
+        </ButtonBase>
       </Grid>
     );
   };
 
+  const renderGroup = (title, entries) =>
+    entries.length > 0 ? (
+      <Stack gap={1.5} key={title}>
+        <Typography variant="subtitle2" component="h4">
+          {title}
+        </Typography>
+        <Grid container spacing={2}>
+          {entries.map(renderChartCard)}
+        </Grid>
+      </Stack>
+    ) : null;
+
   return (
     <SectionCard
-      title="Chart"
+      title="Choose a visualization"
       helper="Charts are grouped by how well they fit your analysed data."
     >
-      {groups.recommended.length > 0 && (
-        <Box>
-          <Typography
-            variant="subtitle2"
-            sx={{ color: "success.main", fontWeight: 600, mb: 1 }}
-          >
-            Recommended
-          </Typography>
-          <Grid container spacing={2}>
-            {groups.recommended.map(renderCard)}
-          </Grid>
-        </Box>
-      )}
+      <Stack gap={4}>
+        {renderGroup("Recommended for your data", groups.recommended)}
+        {renderGroup("Alternative visualizations", groups.compatible)}
 
-      {groups.compatible.length > 0 && (
-        <Box>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-            Compatible
-          </Typography>
-          <Grid container spacing={2}>
-            {groups.compatible.map(renderCard)}
-          </Grid>
-        </Box>
-      )}
-
-      {groups.needsData.length > 0 && (
-        <Box>
-          <ButtonBase
-            onClick={() => setShowNeedsData((s) => !s)}
-            aria-expanded={showNeedsData}
-            sx={{
-              width: "100%",
-              justifyContent: "flex-start",
-              gap: 0.5,
-              mb: 1,
-              borderRadius: 1,
-            }}
-          >
-            <ExpandMoreRoundedIcon
-              fontSize="small"
+        {groups.needsData.length > 0 && (
+          <Stack gap={1}>
+            <ButtonBase
+              onClick={() => setShowNeedsData((s) => !s)}
+              aria-expanded={showNeedsData}
               sx={{
-                transform: showNeedsData ? "rotate(180deg)" : "none",
-                transition: "transform 0.2s ease",
+                alignSelf: "flex-start",
+                justifyContent: "flex-start",
+                gap: 0.5,
+                py: 0.5,
+                borderRadius: 1,
               }}
-            />
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-              Requires additional data ({groups.needsData.length})
+            >
+              {showNeedsData ? (
+                <ExpandLessIcon fontSize="small" />
+              ) : (
+                <ExpandMoreIcon fontSize="small" />
+              )}
+              <Typography variant="subtitle2" component="h4">
+                Requires additional data ({groups.needsData.length})
+              </Typography>
+            </ButtonBase>
+            <Typography variant="body2" color="text.secondary">
+              These charts need data types your current analysis doesn’t
+              produce.
+              {showNeedsData ? "" : " Expand to see what each one needs."}
             </Typography>
-          </ButtonBase>
-          <Collapse in={showNeedsData} unmountOnExit>
-            <Grid container spacing={2}>
-              {groups.needsData.map(renderCard)}
-            </Grid>
-          </Collapse>
-        </Box>
-      )}
-
-      <Stack
-        direction="row"
-        gap={1}
-        alignItems="center"
-        sx={{ color: "text.secondary" }}
-      >
-        <RecommendRoundedIcon color="success" fontSize="small" />
-        <Typography variant="body2">
-          Recommendations are based on your analysed data.
-        </Typography>
+            <Collapse in={showNeedsData} unmountOnExit>
+              <Grid container spacing={2} sx={{ pt: 1 }}>
+                {groups.needsData.map(renderChartCard)}
+              </Grid>
+            </Collapse>
+          </Stack>
+        )}
       </Stack>
     </SectionCard>
   );
