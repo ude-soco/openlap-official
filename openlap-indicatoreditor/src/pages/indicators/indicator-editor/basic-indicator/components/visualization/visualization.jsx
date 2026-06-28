@@ -1,20 +1,17 @@
 import {
+  Alert,
   Box,
   Button,
+  CircularProgress,
   Grid,
   Collapse,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
   LinearProgress,
-  Skeleton,
-  TextField,
   Stack,
-  Container,
+  Typography,
 } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
+import { useSnackbar } from "notistack";
 import { BasicContext } from "../../basic-indicator";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
 import VisualizationSummary from "./components/visualization-summary";
@@ -27,16 +24,21 @@ import {
   buildVisRef,
 } from "../../utils/query-builder";
 import TypeInputSelection from "./components/type-input-selection";
+import ChartGuidance from "./components/chart-guidance";
+import ReadinessSummary from "./components/readiness-summary";
 import ChartPreview from "../../../components/chart-preview";
 import ChartCustomizationPanel from "./components/customization/chart-customization-panel";
-import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper";
+import SaveIndicatorDialog from "./components/save-indicator-dialog";
+import WorkflowSection from "../../../../../../common/components/workflow-section/workflow-section.jsx";
+import SectionCard from "../../../../../../common/components/section-card/section-card.jsx";
+import { getStepStatus } from "../../utils/basic-workflow-ui.js";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
+import PaletteIcon from "@mui/icons-material/Palette";
 import {
   requestCreateBasicIndicator,
   requestUpdateBasicIndicator,
 } from "../../utils/basic-indicator-api";
 import { useNavigate, useParams } from "react-router-dom";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
 export default function Visualization() {
   const params = useParams();
@@ -56,16 +58,37 @@ export default function Visualization() {
       openDialog: false,
       loading: false,
     },
+    previewLoading: false,
+    previewError: false,
   });
+  // Customization panel is hidden by default so the live preview is the focus;
+  // toggled by the "Customize chart" button (preview stays mounted either way).
+  const [customize, setCustomize] = useState(false);
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     if (
-      visualization.inputs.length !== 0 &&
-      allInputsHaveSelected(visualization.inputs) &&
-      Object.keys(analysis.analyzedData).length > 0
-    )
-      handleLoadPreviewVisualization().then((previewData) => {
+      visualization.inputs.length === 0 ||
+      !allInputsHaveSelected(visualization.inputs) ||
+      Object.keys(analysis.analyzedData).length === 0
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    // Clear any stale preview and mark loading before the request starts, so a
+    // previously-rendered chart never lingers under a new (possibly failing)
+    // selection and the page stays in a known state.
+    setState((p) => ({ ...p, previewLoading: true, previewError: false }));
+    setVisualization((p) => ({
+      ...p,
+      previewData: { displayCode: [], scriptData: {} },
+    }));
+
+    handleLoadPreviewVisualization().then((previewData) => {
+      if (cancelled) return;
+      if (previewData && previewData.displayCode) {
         setVisualization((p) => ({
           ...p,
           previewData: {
@@ -74,7 +97,25 @@ export default function Visualization() {
             scriptData: previewData.scriptData,
           },
         }));
-      });
+        setState((p) => ({ ...p, previewLoading: false, previewError: false }));
+      } else {
+        // Preview failed (the rejection was already logged in
+        // handleLoadPreviewVisualization). Keep the step usable and surface a
+        // friendly message instead of crashing on `previewData.displayCode`.
+        setState((p) => ({ ...p, previewLoading: false, previewError: true }));
+        enqueueSnackbar(
+          "Preview could not be generated for the selected chart. Please choose another chart or adjust the inputs.",
+          { variant: "error" }
+        );
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+    // Re-run the preview only when the chart inputs/params change (not when the
+    // callbacks or analyzedData identity change). Deps are intentional.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visualization.inputs, visualization.params]);
 
   const handleLoadPreviewVisualization = async () => {
@@ -157,7 +198,9 @@ export default function Visualization() {
     return (
       visualization.inputs.length === 0 ||
       !allInputsHaveSelected(visualization.inputs) ||
-      Object.keys(analysis.analyzedData).length === 0
+      Object.keys(analysis.analyzedData).length === 0 ||
+      state.previewError ||
+      !visualization.previewData?.displayCode?.length
     );
   };
 
@@ -173,110 +216,166 @@ export default function Visualization() {
     });
   }
 
+  const configReady =
+    visualization.inputs.length > 0 &&
+    Object.keys(analysis.analyzedData).length > 0;
+
+  // Read-only confidence checklist shown above Save. Reflects state only — it
+  // does not gate saving (Save stays governed by handleCheckDisabled()).
+  const readinessItems = [
+    {
+      label: "Dataset selected",
+      done: dataset.selectedLRSList.length > 0,
+    },
+    {
+      label: "Filters configured",
+      done: filters.selectedActivities.length > 0,
+    },
+    {
+      label: "Analysis preview generated",
+      done: Object.keys(analysis.analyzedData).length > 0,
+    },
+    {
+      label: "Chart selected and configured",
+      done: !handleCheckDisabled(),
+    },
+  ];
+
   return (
     <>
-      <CustomPaper locked={lockedStep.visualization.locked}>
-        <Stack gap={2}>
-          <VisualizationSummary />
-          <Collapse
-            in={lockedStep.visualization.openPanel}
-            timeout={{ enter: 500, exit: 250 }}
-            unmountOnExit
-          >
-            <Stack gap={4}>
-              <Container maxWidth="lg">
-                <LibrarySelection />
-              </Container>
-              {visualization.selectedLibrary.id ? (
-                visualization.typeList.length > 0 ? (
-                  <TypeSelection />
-                ) : (
-                  <LinearProgress />
-                )
-              ) : undefined}
-              {visualization.inputs.length > 0 &&
-              Object.keys(analysis.analyzedData).length > 0 ? (
-                <>
-                  <TypeInputSelection />
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, lg: "grow", xl: 8 }}>
-                      {visualization.previewData.displayCode.length !== 0 ? (
-                        <ChartPreview previewData={visualization.previewData} />
-                      ) : (
-                        <Skeleton variant="rectangular" height={565} />
-                      )}
-                    </Grid>
-                    <Grid size={{ xs: 12, md: "grow" }}>
-                      <ChartCustomizationPanel />
-                    </Grid>
-                  </Grid>
-                </>
-              ) : undefined}
+      <WorkflowSection
+        status={getStepStatus(lockedStep, "visualization")}
+        lockedHint="Complete Analysis to unlock Visualization."
+        ariaLabel="Visualization step"
+      >
+        <VisualizationSummary />
+        <Collapse
+          in={lockedStep.visualization.openPanel}
+          timeout={{ enter: 500, exit: 250 }}
+          unmountOnExit
+        >
+          <Stack gap={2} sx={{ py: 2 }}>
+            <LibrarySelection />
 
-              <Divider />
-              <Container maxWidth="sm">
+            {visualization.selectedLibrary.id ? (
+              visualization.typeList.length > 0 ? (
+                <TypeSelection />
+              ) : (
+                <SectionCard title="Chart" helper="Loading available charts…">
+                  <LinearProgress aria-label="Loading available charts" />
+                </SectionCard>
+              )
+            ) : undefined}
+
+            {visualization.selectedType.id ? (
+              <ChartGuidance
+                chartType={visualization.selectedType}
+                analyzedData={analysis.analyzedData}
+              />
+            ) : undefined}
+
+            {configReady ? (
+              <>
+                <TypeInputSelection />
+                <Grid container spacing={3} alignItems="flex-start">
+                  <Grid
+                    size={{ xs: 12, lg: customize ? "grow" : 12 }}
+                    sx={{ minWidth: 0 }}
+                  >
+                    <SectionCard
+                      title="Live preview"
+                      helper="Updates live as you adjust the chart inputs and options."
+                      action={
+                        !customize && (
+                          <Button
+                            startIcon={<PaletteIcon />}
+                            variant="contained"
+                            onClick={() => setCustomize(true)}
+                          >
+                            Customize chart
+                          </Button>
+                        )
+                      }
+                    >
+                      {state.previewError ? (
+                        <Alert severity="error">
+                          Preview could not be generated for the selected chart.
+                          Please choose another chart or adjust the inputs.
+                        </Alert>
+                      ) : visualization.previewData?.displayCode?.length ? (
+                        <ChartPreview
+                          previewData={visualization.previewData}
+                          responsive
+                        />
+                      ) : (
+                        <Stack
+                          gap={1.5}
+                          alignItems="center"
+                          justifyContent="center"
+                          sx={{ minHeight: 360 }}
+                        >
+                          <CircularProgress />
+                          <Typography variant="body2" color="text.secondary">
+                            Generating preview…
+                          </Typography>
+                        </Stack>
+                      )}
+                    </SectionCard>
+                  </Grid>
+                  {customize && (
+                    <Grid size={{ xs: 12, lg: "auto" }}>
+                      <Box sx={{ width: { xs: "100%", lg: 340 } }}>
+                        <ChartCustomizationPanel
+                          onClose={() => setCustomize(false)}
+                        />
+                      </Box>
+                    </Grid>
+                  )}
+                </Grid>
+              </>
+            ) : undefined}
+
+            <ReadinessSummary items={readinessItems} />
+            <Divider sx={{ mt: 1 }} />
+            <Grid
+              container
+              justifyContent="center"
+              alignItems="center"
+              spacing={1}
+              sx={{ pt: 2 }}
+            >
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Button
                   fullWidth
+                  size="large"
                   variant="contained"
                   disabled={handleCheckDisabled()}
                   onClick={handleToggleNameIndicator}
                 >
                   Save Indicator
                 </Button>
-              </Container>
-            </Stack>
-          </Collapse>
-        </Stack>
-        <Dialog
-          fullWidth
-          maxWidth="sm"
+              </Grid>
+              {handleCheckDisabled() && (
+                <Grid size="auto">
+                  <CustomTooltip
+                    type="help"
+                    message={`The Save button is disabled until:<br/>● Every required chart input is mapped.<br/>● A preview has been generated successfully.`}
+                  />
+                </Grid>
+              )}
+            </Grid>
+          </Stack>
+        </Collapse>
+        <SaveIndicatorDialog
           open={!!state.openDialog}
           onClose={handleToggleNameIndicator}
-        >
-          <DialogTitle>Provide a name to the indicator</DialogTitle>
-          <DialogContent>
-            <Box sx={{ py: 1 }}>
-              <TextField
-                fullWidth
-                label="Indicator name"
-                value={indicator.indicatorName}
-                placeholder="e.g., The most frequently access learning materials in my course"
-                onChange={handleOnChangeNameIndicator}
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={handleToggleNameIndicator}
-              disabled={state.nameIndicator.loading}
-            >
-              Continue editing
-            </Button>
-            <Button
-              loading={state.nameIndicator.loading}
-              disabled={indicator.indicatorName.length === 0}
-              loadingPosition="start"
-              loadingIndicator={params.id ? "Updating..." : "Saving..."}
-              fullWidth
-              variant="contained"
-              onClick={handleSaveIndicator}
-            >
-              {!state.nameIndicator.loading &&
-                (params.id
-                  ? "Update & Save to Dashboard"
-                  : "Save to dashboard")}
-            </Button>
-            {indicator.indicatorName.length === 0 && (
-              <CustomTooltip
-                type="help"
-                message={`The button is disabled because:<br/>● Indicator name is missing.`}
-              />
-            )}
-          </DialogActions>
-        </Dialog>
-      </CustomPaper>
+          onSave={handleSaveIndicator}
+          saving={state.nameIndicator.loading}
+          isEdit={Boolean(params.id)}
+          indicatorName={indicator.indicatorName}
+          onChangeName={handleOnChangeNameIndicator}
+        />
+      </WorkflowSection>
     </>
   );
 }

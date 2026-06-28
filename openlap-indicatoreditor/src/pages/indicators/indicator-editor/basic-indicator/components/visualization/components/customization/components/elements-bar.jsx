@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import {
   FormControlLabel,
   Switch,
@@ -12,12 +13,24 @@ import {
   FormGroup,
 } from "@mui/material";
 
+// Debounce for free-text inputs (title/subtitle) before they reach the chart
+// preview. Short enough to feel live, long enough to avoid a request per keystroke.
+const TEXT_DEBOUNCE_MS = 350;
+
 export const ElementsBar = ({ state, setState, chartConfiguration }) => {
   const [typingTimeout, setTypingTimeout] = useState(null);
   const [inputTitleValue, setInputTitleValue] = useState(state.chartTitle);
   const [inputSubtitleValue, setInputSubtitleValue] = useState(
     state.chartSubtitle
   );
+
+  // Clear any pending debounce timer when this panel unmounts (e.g. switching
+  // chart type or collapsing the step) to avoid a setState-after-unmount.
+  useEffect(() => {
+    return () => {
+      if (typingTimeout) clearTimeout(typingTimeout);
+    };
+  }, [typingTimeout]);
 
   const handleLegendSwitch = (e) => {
     setState((prevState) => ({
@@ -67,7 +80,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
         chartTitle: e.target.value,
         edited: true,
       }));
-    }, 1000);
+    }, TEXT_DEBOUNCE_MS);
 
     setTypingTimeout(timeout);
   };
@@ -96,7 +109,7 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
         chartSubtitle: e.target.value,
         edited: true,
       }));
-    }, 1000);
+    }, TEXT_DEBOUNCE_MS);
 
     setTypingTimeout(timeout);
   };
@@ -342,4 +355,10 @@ export const ElementsBar = ({ state, setState, chartConfiguration }) => {
       </Grid>
     </>
   );
+};
+
+ElementsBar.propTypes = {
+  state: PropTypes.object,
+  setState: PropTypes.func,
+  chartConfiguration: PropTypes.object,
 };

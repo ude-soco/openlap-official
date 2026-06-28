@@ -1,20 +1,41 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import {
+  Box,
   Breadcrumbs,
+  Button,
   Chip,
+  Container,
   Divider,
+  Grid,
   IconButton,
   LinearProgress,
   Link,
-  Grid,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
   Paper,
   Skeleton,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
   Tooltip,
   Typography,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import CodeIcon from "@mui/icons-material/Code";
+import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
+import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
+import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
+import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
+import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded";
 import { useNavigate, useParams, Link as RouterLink } from "react-router-dom";
 import {
   requestIndicatorCode,
@@ -26,6 +47,91 @@ import { handleDisplayType } from "../utils/utils.js";
 import { useSnackbar } from "notistack";
 import ChartPreview from "../../indicator-editor/components/chart-preview.jsx";
 import CustomDialog from "../../../../common/components/custom-dialog/custom-dialog.jsx";
+import EmptyState from "../../../../common/components/empty-state/empty-state.jsx";
+
+const formatDate = (time) =>
+  time
+    ? new Date(time).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "";
+
+const toSentenceCase = (str) =>
+  !str ? "" : str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
+const formatTypeName = (type) => {
+  if (type === "Text") return "Categorical";
+  if (type === "Numeric") return "Numerical";
+  return type;
+};
+
+// ---- Local presentational helpers (visual language mirrored from the ISC
+// preview/detail page; kept local so this read-only page stays self-contained). ----
+
+const SectionPaper = ({ label, children, sx }) => (
+  <Paper
+    variant="outlined"
+    component="section"
+    aria-label={label}
+    sx={(t) => ({
+      p: { xs: 2, sm: 2.5 },
+      borderRadius: `${t.custom.radii.card}px`,
+      ...sx,
+    })}
+  >
+    {children}
+  </Paper>
+);
+SectionPaper.propTypes = {
+  label: PropTypes.string,
+  children: PropTypes.node,
+  sx: PropTypes.object,
+};
+
+const SectionHeading = ({ children }) => (
+  <Typography variant="subtitle1" component="h2" fontWeight={600}>
+    {children}
+  </Typography>
+);
+SectionHeading.propTypes = { children: PropTypes.node };
+
+const GroupHeading = ({ children }) => (
+  <Typography variant="overline" color="text.secondary" component="h3">
+    {children}
+  </Typography>
+);
+GroupHeading.propTypes = { children: PropTypes.node };
+
+const Field = ({ label, value, clamp }) => (
+  <Stack gap={0.25}>
+    <Typography variant="caption" color="text.secondary">
+      {label}
+    </Typography>
+    <Typography
+      variant="body2"
+      sx={
+        clamp
+          ? {
+              display: "-webkit-box",
+              WebkitLineClamp: 4,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              overflowWrap: "anywhere",
+            }
+          : { overflowWrap: "anywhere" }
+      }
+    >
+      {value || "—"}
+    </Typography>
+  </Stack>
+);
+Field.propTypes = {
+  label: PropTypes.node,
+  value: PropTypes.node,
+  clamp: PropTypes.bool,
+};
 
 const IndicatorPreview = () => {
   const { api, SESSION_INDICATOR } = useContext(AuthContext);
@@ -50,6 +156,9 @@ const IndicatorPreview = () => {
     },
     openDeleteDialog: false,
   });
+  const [menuAnchor, setMenuAnchor] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const { enqueueSnackbar } = useSnackbar();
 
   const loadIndicatorDetail = async () => {
@@ -58,13 +167,14 @@ const IndicatorPreview = () => {
       const indicatorData = await requestIndicatorFullDetail(api, params.id);
       setState((p) => ({ ...p, ...indicatorData, loading: false }));
     } catch (error) {
-      console.log("Error requesting my indicators");
+      console.error("Error requesting indicator detail", error);
       setState((p) => ({ ...p, loading: false }));
     }
   };
 
   useEffect(() => {
     loadIndicatorDetail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleEditIndicator = () => {
@@ -73,7 +183,6 @@ const IndicatorPreview = () => {
       isLoading: { ...p.isLoading, status: true },
     }));
     sessionStorage.setItem(SESSION_INDICATOR, state.configuration);
-    let route;
     if (state.type) {
       switch (state.type) {
         case "BASIC":
@@ -86,7 +195,7 @@ const IndicatorPreview = () => {
           navigate(`/indicator/editor/multi-level-analysis/edit/${params.id}`);
           break;
         default:
-          route = "Unknown";
+          break;
       }
     } else {
       setState((p) => ({
@@ -149,22 +258,56 @@ const IndicatorPreview = () => {
     }
   };
 
-  // * Helper functions
-  function toSentenceCase(str) {
-    if (!str) return "";
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  }
+  // Derived, presentation-only values from the EXISTING response (configuration
+  // is part of the indicator detail — parsed defensively, never a backend call).
+  const config = useMemo(() => {
+    try {
+      return state.configuration ? JSON.parse(state.configuration) : {};
+    } catch {
+      return {};
+    }
+  }, [state.configuration]);
 
-  function changeTimeFormat(time) {
-    return new Date(time).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  }
+  const dataSource =
+    config?.dataset?.selectedLRSList
+      ?.map((lrs) => lrs.lrsTitle)
+      .filter(Boolean)
+      .join(", ") || "";
+  const timeframe = config?.filters?.selectedTime
+    ? `${formatDate(config.filters.selectedTime.from)} – ${formatDate(
+        config.filters.selectedTime.until
+      )}`
+    : "";
+
+  const columns = useMemo(() => {
+    const analyzedData = config?.analysis?.analyzedData || {};
+    return Object.keys(analyzedData)
+      .map((key) => ({
+        title: analyzedData[key]?.configurationData?.title,
+        type: formatTypeName(analyzedData[key]?.configurationData?.type),
+        data: analyzedData[key]?.data || [],
+      }))
+      .filter((col) => col.title);
+  }, [config]);
+
+  const colCount = columns.length;
+  const rowCount = columns[0]?.data?.length ?? 0;
+  const hasDataset = colCount > 0 && rowCount > 0;
+  const resultSize = hasDataset
+    ? `${rowCount} row${rowCount === 1 ? "" : "s"} × ${colCount} column${
+        colCount === 1 ? "" : "s"
+      }`
+    : "";
+  const hasChart = (state.previewData?.displayCode?.length ?? 0) > 0;
+  const indicatorName = toSentenceCase(state.indicatorName);
+
+  const displayedRows = [...Array(rowCount).keys()].slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   return (
-    <Grid container spacing={2}>
+    <Stack gap={2}>
       <Breadcrumbs>
         <Link component={RouterLink} underline="hover" color="inherit" to="/">
           Home
@@ -178,161 +321,315 @@ const IndicatorPreview = () => {
           My Indicators
         </Link>
         <Typography sx={{ color: "text.primary" }}>
-          Preview Indicator
+          {indicatorName || "Preview Indicator"}
         </Typography>
       </Breadcrumbs>
-      <Grid size={{ xs: 12 }}>
-        <Divider />
-      </Grid>
+      <Divider />
 
-      <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-        <Grid container justifyContent="center">
-          <Grid size={{ xs: 12, lg: 10, xl: 7 }}>
-            {state.loading ? (
-              <Skeleton variant="rounded" height={500} />
-            ) : (
-              <>
-                {state.isLoading.status && <LinearProgress />}
-                <Paper variant="outlined" sx={{ p: 2 }}>
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12 }}>
-                      <Grid container spacing={1}>
-                        <Grid size="grow">
-                          <Typography variant="h5" gutterBottom>
-                            {toSentenceCase(state.indicatorName)}
-                          </Typography>
-                          <Typography gutterBottom variant="body2">
-                            {handleDisplayType(state.type)} ● Created on:{" "}
-                            {changeTimeFormat(state.createdOn)} ● Created by:{" "}
-                            {state.createdBy}
-                          </Typography>
-                        </Grid>
+      <Container maxWidth="lg" disableGutters>
+        {state.loading ? (
+          <Stack gap={2}>
+            <Skeleton variant="rounded" height={140} />
+            <Skeleton variant="rounded" height={220} />
+            <Skeleton variant="rounded" height={420} />
+          </Stack>
+        ) : (
+          <Stack gap={{ xs: 2, sm: 3 }}>
+            {state.isLoading.status && <LinearProgress />}
 
-                        <Grid size="auto">
-                          <Grid container>
-                            <Tooltip
-                              arrow
-                              title={
-                                <>
-                                  <Typography gutterBottom>
-                                    Copy ICC code
-                                  </Typography>
-                                  <Typography>
-                                    What's an ICC code?
-                                    <br />
-                                    An Interactive Indicator Code (ICC) is an
-                                    iFrame code snippet you can embed in any web
-                                    application that supports iFrames.
-                                    <br />
-                                    It lets you display real-time analytics
-                                    directly within your website.
-                                  </Typography>
-                                </>
-                              }
+            {/* 1. Header — identity, metadata, primary action + overflow */}
+            <SectionPaper label="Indicator overview">
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                gap={2}
+                alignItems="flex-start"
+                justifyContent="space-between"
+              >
+                <Stack gap={1.25} sx={{ minWidth: 0 }}>
+                  <Typography
+                    variant="h5"
+                    component="h1"
+                    fontWeight={700}
+                    sx={{ overflowWrap: "anywhere" }}
+                  >
+                    {indicatorName || "Untitled indicator"}
+                  </Typography>
+                  <Stack
+                    direction="row"
+                    gap={1}
+                    alignItems="center"
+                    flexWrap="wrap"
+                  >
+                    <Chip
+                      size="small"
+                      color="success"
+                      variant="outlined"
+                      label={handleDisplayType(state.type)}
+                    />
+                    {state.chart && (
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        icon={<InsightsOutlinedIcon />}
+                        label={state.chart}
+                      />
+                    )}
+                    {state.library && (
+                      <Chip size="small" variant="outlined" label={state.library} />
+                    )}
+                    {hasDataset && (
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        icon={<TableChartOutlinedIcon />}
+                        label={`${rowCount}×${colCount} Dataset`}
+                      />
+                    )}
+                    {state.createdOn && (
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        icon={<ScheduleRoundedIcon />}
+                        label={`Created ${formatDate(state.createdOn)}`}
+                      />
+                    )}
+                  </Stack>
+                </Stack>
+
+                <Stack
+                  direction="row"
+                  gap={1}
+                  alignItems="center"
+                  sx={{ flexShrink: 0 }}
+                >
+                  <Button
+                    variant="contained"
+                    startIcon={<EditIcon />}
+                    onClick={handleEditIndicator}
+                    disabled={state.isLoading.status}
+                  >
+                    Edit
+                  </Button>
+                  <Tooltip
+                    arrow
+                    title={
+                      <>
+                        <Typography gutterBottom>Copy embed code (ICC)</Typography>
+                        <Typography variant="body2">
+                          An Interactive Indicator Code (ICC) is an iframe
+                          snippet you can embed in any web app that supports
+                          iframes, to show this indicator live.
+                        </Typography>
+                      </>
+                    }
+                  >
+                    <span>
+                      <IconButton
+                        color="primary"
+                        aria-label="Copy embed code"
+                        onClick={handleCopyEmbedCode}
+                        disabled={state.isLoading.status}
+                      >
+                        <CodeIcon />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Tooltip arrow title="More actions">
+                    <span>
+                      <IconButton
+                        aria-label="More actions"
+                        aria-haspopup="true"
+                        aria-expanded={Boolean(menuAnchor)}
+                        onClick={(e) => setMenuAnchor(e.currentTarget)}
+                        disabled={state.isLoading.status}
+                      >
+                        <MoreVertRoundedIcon />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Menu
+                    anchorEl={menuAnchor}
+                    open={Boolean(menuAnchor)}
+                    onClose={() => setMenuAnchor(null)}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    transformOrigin={{ vertical: "top", horizontal: "right" }}
+                  >
+                    <MenuItem
+                      onClick={() => {
+                        setMenuAnchor(null);
+                        handleToggleDelete();
+                      }}
+                      sx={{ color: "error.main" }}
+                    >
+                      <ListItemIcon>
+                        <DeleteIcon fontSize="small" color="error" />
+                      </ListItemIcon>
+                      <ListItemText>Delete</ListItemText>
+                    </MenuItem>
+                  </Menu>
+                </Stack>
+              </Stack>
+            </SectionPaper>
+
+            {/* 2. Overview + Setup */}
+            <Grid container spacing={{ xs: 2, sm: 3 }}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <SectionPaper label="Indicator overview" sx={{ height: "100%" }}>
+                  <Stack gap={1.5}>
+                    <GroupHeading>Indicator overview</GroupHeading>
+                    <Field label="Indicator name" value={state.indicatorName} />
+                    <Field
+                      label="Type"
+                      value={handleDisplayType(state.type)}
+                    />
+                    <Field
+                      label="Analytics method"
+                      value={state.analyticsMethod}
+                    />
+                    <Field label="Data source" value={dataSource} />
+                  </Stack>
+                </SectionPaper>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <SectionPaper label="Indicator setup" sx={{ height: "100%" }}>
+                  <Stack gap={1.5}>
+                    <GroupHeading>Indicator setup</GroupHeading>
+                    <Field label="Visualization" value={state.chart} />
+                    <Field label="Visualization library" value={state.library} />
+                    <Field label="Result size" value={resultSize} />
+                    <Field label="Timeframe" value={timeframe} />
+                    <Field label="Created" value={formatDate(state.createdOn)} />
+                    <Field label="Created by" value={state.createdBy} />
+                  </Stack>
+                </SectionPaper>
+              </Grid>
+            </Grid>
+
+            {/* 3. Dataset preview */}
+            <SectionPaper label="Dataset">
+              <Stack gap={2}>
+                <Stack
+                  direction="row"
+                  gap={1.5}
+                  alignItems="center"
+                  flexWrap="wrap"
+                >
+                  <SectionHeading>Dataset</SectionHeading>
+                  {hasDataset && (
+                    <>
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        label={`${rowCount} row${rowCount === 1 ? "" : "s"}`}
+                      />
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        label={`${colCount} column${colCount === 1 ? "" : "s"}`}
+                      />
+                    </>
+                  )}
+                </Stack>
+                {hasDataset ? (
+                  <TableContainer
+                    component={Paper}
+                    variant="outlined"
+                    sx={(t) => ({ borderRadius: `${t.custom.radii.card}px` })}
+                  >
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          {columns.map((column, index) => (
+                            <TableCell
+                              key={index}
+                              component="th"
+                              scope="col"
+                              sx={{ fontWeight: 600, whiteSpace: "nowrap" }}
                             >
-                              <span>
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  onClick={handleCopyEmbedCode}
-                                  disabled={state.isLoading.status}
-                                >
-                                  <CodeIcon />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
+                              {column.title} ({column.type})
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {displayedRows.map((rowIndex) => (
+                          <TableRow key={rowIndex} hover>
+                            {columns.map((column, colIndex) => (
+                              <TableCell key={colIndex}>
+                                {column.data[rowIndex]}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    <TablePagination
+                      rowsPerPageOptions={[5, 10, 25]}
+                      component="div"
+                      count={rowCount}
+                      rowsPerPage={rowsPerPage}
+                      page={page}
+                      onPageChange={(e, newPage) => setPage(newPage)}
+                      onRowsPerPageChange={(e) => {
+                        setRowsPerPage(parseInt(e.target.value, 10));
+                        setPage(0);
+                      }}
+                    />
+                  </TableContainer>
+                ) : (
+                  <EmptyState
+                    icon={SearchOffRoundedIcon}
+                    title="No dataset preview available"
+                    description="This indicator doesn't have a saved analysed-data sample to display here."
+                  />
+                )}
+              </Stack>
+            </SectionPaper>
 
-                            <Tooltip
-                              arrow
-                              title={<Typography>Edit indicator</Typography>}
-                            >
-                              <span>
-                                <IconButton
-                                  color="primary"
-                                  onClick={handleEditIndicator}
-                                  disabled={state.isLoading.status}
-                                >
-                                  <EditIcon />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
+            {/* 4. Visualization preview */}
+            <SectionPaper label="Visualization">
+              <Stack gap={2}>
+                <Stack
+                  direction="row"
+                  gap={1.5}
+                  alignItems="center"
+                  flexWrap="wrap"
+                >
+                  <SectionHeading>Visualization</SectionHeading>
+                  {state.chart && (
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      icon={<InsightsOutlinedIcon />}
+                      label={state.chart}
+                    />
+                  )}
+                </Stack>
+                {hasChart ? (
+                  <Box sx={{ minHeight: { xs: 360, sm: 520 } }}>
+                    <ChartPreview previewData={state.previewData} responsive />
+                  </Box>
+                ) : (
+                  <EmptyState
+                    icon={InsightsOutlinedIcon}
+                    title="No chart to preview"
+                    description="A preview of this indicator's chart isn't available."
+                  />
+                )}
+              </Stack>
+            </SectionPaper>
 
-                            <Divider
-                              orientation="vertical"
-                              flexItem
-                              sx={{ mx: 1 }}
-                            />
-
-                            <Tooltip
-                              arrow
-                              title={<Typography>Edit indicator</Typography>}
-                            >
-                              <span>
-                                <IconButton
-                                  color="error"
-                                  disabled={state.isLoading.status}
-                                  onClick={handleToggleDelete}
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
-                            <CustomDialog
-                              type="delete"
-                              content={`This will delete the indicator permanently from your dashboard.`}
-                              open={state.openDeleteDialog}
-                              toggleOpen={handleToggleDelete}
-                              handler={handleDeleteIndicator}
-                            />
-                          </Grid>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Divider />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Grid container spacing={3}>
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Typography variant="overline">
-                            Analytics method used
-                          </Typography>
-                          <Grid size={{ xs: 12 }}>
-                            <Chip label={state.analyticsMethod} />
-                          </Grid>
-                        </Grid>
-                        <Grid size={{ xs: 6, md: 3 }}>
-                          <Typography variant="overline">
-                            Visualization Library
-                          </Typography>
-                          <Grid size={{ xs: 12 }}>
-                            <Chip label={state.library} />
-                          </Grid>
-                        </Grid>
-                        <Grid size={{ xs: 6, md: 3 }}>
-                          <Typography variant="overline">Chart</Typography>
-                          <Grid size={{ xs: 12 }}>
-                            <Chip label={state.chart} />
-                          </Grid>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Divider />
-                    </Grid>
-                    <Grid size={{ xs: 12 }}>
-                      <Grid container justifyContent="center">
-                        <ChartPreview previewData={state.previewData} />
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                </Paper>
-              </>
-            )}
-          </Grid>
-        </Grid>
-      </Grid>
-    </Grid>
+            <CustomDialog
+              type="delete"
+              content="This will delete the indicator permanently from your dashboard."
+              open={state.openDeleteDialog}
+              toggleOpen={handleToggleDelete}
+              handler={handleDeleteIndicator}
+            />
+          </Stack>
+        )}
+      </Container>
+    </Stack>
   );
 };
 

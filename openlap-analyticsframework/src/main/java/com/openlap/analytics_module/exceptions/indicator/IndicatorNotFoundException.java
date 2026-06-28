@@ -1,16 +1,14 @@
 package com.openlap.analytics_module.exceptions.indicator;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.NotFoundException;
 
-@Slf4j
-public class IndicatorNotFoundException extends RuntimeException {
+/** Requested indicator does not exist → HTTP 404. Rendered by the unified handler. */
+public class IndicatorNotFoundException extends NotFoundException {
   public IndicatorNotFoundException(String message) {
-    super(message);
-    log.error(message);
+    super("INDICATOR_NOT_FOUND", message);
   }
 
   public IndicatorNotFoundException(String message, Throwable cause) {
-    super(message, cause);
-    log.error(message, cause);
+    super("INDICATOR_NOT_FOUND", message, cause);
   }
 }

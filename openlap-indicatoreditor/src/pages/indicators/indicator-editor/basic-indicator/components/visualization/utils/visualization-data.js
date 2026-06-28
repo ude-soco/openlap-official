@@ -225,6 +225,88 @@ export const visualizationImages = {
     </svg>`,
 };
 
+// Static, local "About this visualization" metadata, keyed by chart imageCode.
+// Presentation copy only — no backend calls. `getChartMetadata` falls back to a
+// generic entry for any chart not listed here.
+export const chartMetadata = {
+  Area: {
+    summary: "Shows how a value changes across an ordered sequence, with the area below the line filled in.",
+    bestFor: "Emphasising the magnitude of change over an ordered axis.",
+    caution: "Overlapping areas get hard to read with many series.",
+    alternative: "Consider a line chart to compare series more precisely.",
+  },
+  Bar: {
+    summary: "Compares a numerical value across categories using bars.",
+    bestFor: "Comparing counts or amounts between categories.",
+    caution: "With many categories it gets crowded — labels may overlap.",
+    alternative: "Consider limiting to the Top N items if many categories exist.",
+  },
+  Donut: {
+    summary: "Shows parts of a whole as segments of a ring.",
+    bestFor: "A few categories that add up to a meaningful total.",
+    caution: "Similar-sized slices are hard to compare; avoid many categories.",
+    alternative: "Consider a bar chart if you have many categories.",
+  },
+  GroupedArea: {
+    summary: "Overlays several area series so their trends can be compared.",
+    bestFor: "Comparing a few series over an ordered axis.",
+    caution: "Overlapping areas reduce readability as series increase.",
+    alternative: "Consider a multi-line chart if the areas overlap too much.",
+  },
+  GroupBar: {
+    summary: "Places bars side by side to compare series within each category.",
+    bestFor: "Comparing sub-categories across groups.",
+    caution: "Too many groups or series quickly becomes cluttered.",
+    alternative: "Consider limiting the number of groups if it gets crowded.",
+  },
+  Line: {
+    summary: "Connects values to reveal a trend across an ordered sequence.",
+    bestFor: "Trends and changes over an ordered axis.",
+    caution: "Implies continuity — avoid for unordered categories.",
+    alternative: "Consider a bar chart when the x-axis is categorical, not ordered.",
+  },
+  MultiLine: {
+    summary: "Plots several line series together for comparison.",
+    bestFor: "Comparing the trends of multiple series.",
+    caution: "Many lines overlap; keep the number of series small.",
+    alternative: "Consider limiting the number of series if the lines overlap.",
+  },
+  Pie: {
+    summary: "Shows parts of a whole across a few categories.",
+    bestFor: "The share each category contributes to a total.",
+    caution: "With many categories a bar chart is easier to read.",
+    alternative: "Consider a bar chart if you have more than a handful of categories.",
+  },
+  ScatterPlot: {
+    summary: "Plots two numerical values to reveal a relationship.",
+    bestFor: "Correlation or distribution between two measures.",
+    caution: "Needs numerical axes; not for categorical comparisons.",
+    alternative: "Consider a line chart if one axis is an ordered sequence.",
+  },
+  StackedArea: {
+    summary: "Stacks area series to show how parts compose a total over a sequence.",
+    bestFor: "How parts contribute to a total over an ordered axis.",
+    caution: "Individual series near the top of the stack are hard to read.",
+    alternative: "Consider a line chart to compare individual series precisely.",
+  },
+  StackedBar: {
+    summary: "Stacks segments within each bar to show composition.",
+    bestFor: "Part-to-whole comparison across categories.",
+    caution: "Comparing inner segments across bars is difficult.",
+    alternative: "Consider a grouped bar chart to compare segments side by side.",
+  },
+};
+
+const DEFAULT_CHART_METADATA = {
+  summary: "A visualization of your analysed data.",
+  bestFor: "Exploring your indicator data.",
+  caution: "",
+  alternative: "",
+};
+
+export const getChartMetadata = (imageCode) =>
+  chartMetadata[imageCode] || DEFAULT_CHART_METADATA;
+
 export const defaultParams = {
   height: 500,
   width: 500,

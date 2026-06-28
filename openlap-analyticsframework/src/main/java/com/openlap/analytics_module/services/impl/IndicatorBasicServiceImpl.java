@@ -11,7 +11,6 @@ import com.openlap.analytics_module.entities.IndicatorCache;
 import com.openlap.analytics_module.entities.utility_entities.AnalyticsTechniqueReference;
 import com.openlap.analytics_module.entities.utility_entities.IndicatorAnalysisTechnique;
 import com.openlap.analytics_module.entities.utility_entities.IndicatorReference;
-import com.openlap.analytics_module.exceptions.indicator.PreviewNotPossibleException;
 import com.openlap.analytics_module.repositories.IndicatorAnalysisCacheRepository;
 import com.openlap.analytics_module.repositories.IndicatorCacheRepository;
 import com.openlap.analytics_module.services.IndicatorBasicService;
@@ -25,7 +24,8 @@ import com.openlap.analytics_technique.services.AnalyticsTechniqueService;
 import com.openlap.dataset.OpenLAPDataSet;
 import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.dynamicparam.OpenLAPDynamicParam;
-import com.openlap.exception.ServiceException;
+import com.openlap.infrastructure.exception.ServiceException;
+import com.openlap.infrastructure.exception.ValidationException;
 import com.openlap.exceptions.AnalyticsMethodInitializationException;
 import com.openlap.template.AnalyticsMethod;
 import com.openlap.user.entities.User;
@@ -187,7 +187,14 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
               indicatorRequest.getVisualizationParams(),
               true);
     } catch (Exception e) {
-      throw new PreviewNotPossibleException("Could not create indicator code", e);
+      // A failure here means the chosen chart cannot render the analyzed data
+      // (e.g. an incompatible visualization mapping) — a client-correctable
+      // input problem, surfaced as a controlled 400 rather than an opaque 500.
+      throw new ValidationException(
+          "INDICATOR_PREVIEW_INVALID",
+          "Preview could not be generated for the selected chart and data. "
+              + "Please choose another chart or adjust the inputs.",
+          e);
     }
     return indicatorCodeMethod;
   }

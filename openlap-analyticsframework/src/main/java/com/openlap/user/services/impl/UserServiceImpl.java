@@ -5,7 +5,7 @@ import com.openlap.analytics_statements.entities.LrsClient;
 import com.openlap.analytics_statements.entities.LrsStore;
 import com.openlap.analytics_statements.services.LrsService;
 import com.openlap.analytics_statements.services.StatementService;
-import com.openlap.exception.ServiceException;
+import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.infrastructure.exception.OpenLapException;
 import com.openlap.user.dto.request.ChangePasswordRequest;
 import com.openlap.user.dto.request.TokenRequest;

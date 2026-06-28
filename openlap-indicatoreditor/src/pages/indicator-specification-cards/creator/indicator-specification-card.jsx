@@ -9,7 +9,7 @@ import Visualization from "./components/visualization/visualization.jsx";
 import Dataset from "./components/dataset/dataset.jsx";
 import Finalize from "./components/finalize/finalize.jsx";
 import ISCWorkspace from "./components/isc-workspace/isc-workspace.jsx";
-import WorkflowStepper from "./components/workflow-stepper/workflow-stepper.jsx";
+import WorkflowStepper from "../../../common/components/workflow-stepper/workflow-stepper.jsx";
 import { DataTypes } from "./utils/data/config.js";
 import { LEGACY_STEP_CODE } from "./utils/isc-constants.js";
 import { getWorkflowSteps, getCurrentStep } from "./utils/isc-selectors.js";

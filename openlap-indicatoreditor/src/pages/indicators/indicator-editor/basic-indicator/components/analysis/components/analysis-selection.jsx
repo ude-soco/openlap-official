@@ -1,14 +1,12 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { BasicContext } from "../../../basic-indicator";
 import {
   fetchAnalyticsMethods,
-  fetchTechniqueInputs,
   fetchTechniqueInputsAndParams,
-  fetchTechniqueParams,
 } from "../utils/analysis-api";
 import { Autocomplete, Stack, TextField, Typography } from "@mui/material";
-import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
+import SectionCard from "../../../../../../../common/components/section-card/section-card";
 
 export default function AnalysisSelection() {
   const { api } = useContext(AuthContext);
@@ -65,17 +63,14 @@ export default function AnalysisSelection() {
   };
 
   return (
-    <>
-      <Stack>
-        <Stack direction="row" alignItems="center">
-          <Typography>
-            Select an <b>Analytics Method</b>
-          </Typography>
-          <CustomTooltip
-            type="description"
-            message={`Select the type of analysis to apply to your data.`}
-          />
-        </Stack>
+    <SectionCard
+      title="Analytics method"
+      helper="Choose the analysis to apply to your filtered data."
+    >
+      <Stack gap={0.75}>
+        <Typography variant="body2" fontWeight={500}>
+          Analytics method
+        </Typography>
         <Autocomplete
           disableClearable
           disablePortal
@@ -85,12 +80,19 @@ export default function AnalysisSelection() {
           value={analysis.selectedAnalyticsMethod.method || null}
           onChange={(event, value) => handleSelectAnalyticsMethod(value)}
           renderInput={(params) => (
-            <TextField {...params} placeholder="Search for Analytics Methods" />
+            <TextField
+              {...params}
+              placeholder="Search for an analytics method"
+              inputProps={{
+                ...params.inputProps,
+                "aria-label": "Analytics method",
+              }}
+            />
           )}
           renderOption={(props, option) => {
             const { key, ...restProps } = props;
             return (
-              <li {...restProps} key={option.id}>
+              <li key={key} {...restProps}>
                 <Stack sx={{ py: 0.5 }}>
                   <Typography>{option.name}</Typography>
                   <Typography
@@ -106,6 +108,6 @@ export default function AnalysisSelection() {
           }}
         />
       </Stack>
-    </>
+    </SectionCard>
   );
 }

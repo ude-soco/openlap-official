@@ -1,7 +1,7 @@
 package com.openlap.infrastructure.web;
 
 import com.openlap.analytics_module.exceptions.indicator.IndicatorNotFoundException;
-import com.openlap.exception.ServiceException;
+import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.infrastructure.exception.NotFoundException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -50,19 +50,19 @@ public class ErrorTestController {
     throw new IllegalStateException("kaboom");
   }
 
-  /** Routed by the legacy central GlobalExceptionHandler (ApiError), not the new handler. */
-  @GetMapping("/legacy-service")
-  public void legacyService() {
-    throw new ServiceException("legacy service failure");
+  /** ServiceException is now an InfrastructureException → rendered by the unified handler (500). */
+  @GetMapping("/service-error")
+  public void serviceError() {
+    throw new ServiceException("service failure");
   }
 
   /**
-   * Routed by a still-unmigrated module's legacy advice (IndicatorExceptionHandler →
-   * ExceptionResponse), not the new handler.
+   * analytics_module is now migrated: {@link IndicatorNotFoundException} extends the shared
+   * NotFoundException, so it is rendered by the unified handler (no legacy module advice anymore).
    */
-  @GetMapping("/legacy-indicator")
-  public void legacyIndicator() {
-    throw new IndicatorNotFoundException("legacy indicator not found");
+  @GetMapping("/migrated-indicator")
+  public void migratedIndicator() {
+    throw new IndicatorNotFoundException("indicator not found");
   }
 
   @Data

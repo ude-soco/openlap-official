@@ -1,27 +1,63 @@
 import { useContext, useState } from "react";
+import PropTypes from "prop-types";
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
+  ButtonBase,
   Chip,
+  Collapse,
   Grid,
   Paper,
   Stack,
-  Tooltip,
   Typography,
 } from "@mui/material";
+import RecommendRoundedIcon from "@mui/icons-material/RecommendRounded";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import RecommendIcon from "@mui/icons-material/Recommend";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { BasicContext } from "../../../basic-indicator";
-import { visualizationImages } from "../utils/visualization-data";
-import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
-import { defaultParams } from "../utils/visualization-data";
+import { visualizationImages, defaultParams } from "../utils/visualization-data";
+import SectionCard from "../../../../../../../common/components/section-card/section-card";
+import {
+  buildRequirementText,
+  categorizeCharts,
+} from "../utils/chart-compatibility";
+
+const STATUS_ARIA = {
+  recommended: "recommended for your data",
+  compatible: "compatible with your data",
+  "needs-data": "requires additional data",
+};
+
+const StatusChip = ({ status }) => {
+  if (status === "recommended") {
+    return (
+      <Chip
+        size="small"
+        color="success"
+        icon={<RecommendRoundedIcon />}
+        label="Recommended"
+      />
+    );
+  }
+  if (status === "compatible") {
+    return <Chip size="small" variant="outlined" label="Compatible" />;
+  }
+  return (
+    <Chip
+      size="small"
+      variant="outlined"
+      color="warning"
+      label="Requires additional data"
+    />
+  );
+};
+StatusChip.propTypes = { status: PropTypes.string };
 
 const TypeSelection = () => {
   const { analysis, visualization, setVisualization } =
     useContext(BasicContext);
-  const [state, setState] = useState({ showTypeSelection: false });
+  // "Requires additional data" is collapsed by default, but the header + a short
+  // explanation stay visible so it's discoverable.
+  const [showNeedsData, setShowNeedsData] = useState(false);
 
   const handleSelectVisualizationType = async (typeSelected) => {
     setVisualization((p) => ({
@@ -34,252 +70,149 @@ const TypeSelection = () => {
     }));
   };
 
-  const handleShowSelected = (expanded) => {
-    setState((p) => ({ ...p, showTypeSelection: !expanded }));
+  const groups = categorizeCharts(
+    visualization.typeList,
+    analysis.analyzedData
+  );
+
+  const renderChartCard = ({ type, compat }) => {
+    const svg = visualizationImages[type.imageCode];
+    if (!svg) return null;
+    const selected = visualization.selectedType.id === type.id;
+    const incompatible = compat.status === "needs-data";
+    const requirementText = incompatible
+      ? buildRequirementText(compat.conditions)
+      : "";
+
+    return (
+      <Grid
+        key={type.id ?? type.imageCode}
+        component={Paper}
+        variant="outlined"
+        size={{ xs: 6, sm: 4, lg: 3 }}
+        sx={{
+          p: 0,
+          overflow: "hidden",
+          borderRadius: 1,
+          opacity: incompatible ? 0.75 : 1,
+          borderStyle: incompatible ? "dashed" : "solid",
+          "&:hover": { boxShadow: 5 },
+          border: selected ? "2px solid #F57C00" : undefined,
+        }}
+      >
+        <ButtonBase
+          onClick={() => handleSelectVisualizationType(type)}
+          aria-pressed={selected}
+          aria-label={`${type.name}. ${STATUS_ARIA[compat.status]}.`}
+          sx={{ width: "100%", height: "100%", p: 2 }}
+        >
+          <Stack
+            gap={1}
+            alignItems="center"
+            sx={{ height: "100%", width: "100%" }}
+          >
+            <Box
+              aria-hidden
+              sx={{ "& svg": { width: 56, height: 56 } }}
+              dangerouslySetInnerHTML={{ __html: svg }}
+            />
+            {/* Reserve ~2 lines so icons stay aligned regardless of name length. */}
+            <Typography
+              variant="body2"
+              align="center"
+              fontWeight={600}
+              sx={{
+                minHeight: 40,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {type.name}
+            </Typography>
+            {/* mt:auto pins the badge to the same vertical position on every card. */}
+            <Stack
+              alignItems="center"
+              gap={0.5}
+              sx={{ mt: "auto", width: "100%" }}
+            >
+              <StatusChip status={compat.status} />
+              {incompatible && requirementText && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  align="center"
+                >
+                  {requirementText}
+                </Typography>
+              )}
+            </Stack>
+          </Stack>
+        </ButtonBase>
+      </Grid>
+    );
   };
 
-  // * Helper function
-  function isChartRecommended(chartInputs, analyzedData) {
-    const requiredTypeCount = {};
-    for (const input of chartInputs) {
-      if (!input.required) continue;
-      requiredTypeCount[input.type] = (requiredTypeCount[input.type] || 0) + 1;
-    }
-
-    if (Object.keys(requiredTypeCount).length === 0) return false;
-
-    const availableTypeCount = {};
-    for (const key in analyzedData) {
-      const type = analyzedData[key].configurationData.type;
-      availableTypeCount[type] = (availableTypeCount[type] || 0) + 1;
-    }
-
-    for (const type in requiredTypeCount) {
-      if (
-        !availableTypeCount[type] ||
-        availableTypeCount[type] < requiredTypeCount[type]
-      ) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  function determineType(type) {
-    if (type === "Text") return "Categorical";
-    if (type === "Numeric") return "Numerical";
-  }
+  const renderGroup = (title, entries) =>
+    entries.length > 0 ? (
+      <Stack gap={1.5} key={title}>
+        <Typography variant="subtitle2" component="h4">
+          {title}
+        </Typography>
+        <Grid container spacing={2.5}>
+          {entries.map(renderChartCard)}
+        </Grid>
+      </Stack>
+    ) : null;
 
   return (
-    <Stack gap={2}>
-      <Stack direction="row" alignItems="center">
-        <Typography>
-          Available <b>Charts</b>
-        </Typography>
-        <CustomTooltip type="description" message={`To be decided`} />
-      </Stack>
-      <Grid container spacing={2} justifyContent="center">
-        {visualization.typeList.flatMap((type, index) =>
-          Object.entries(visualizationImages)
-            .filter(([name]) => type.imageCode === name)
-            .map(([name, svg]) => {
-              const isRecommended = isChartRecommended(
-                type.chartInputs,
-                analysis.analyzedData
-              );
+    <SectionCard
+      title="Recommended visualizations"
+      helper="Charts are grouped by how well they fit your analysed data."
+    >
+      <Stack gap={4}>
+        {renderGroup("Recommended for your data", groups.recommended)}
+        {renderGroup("Alternative visualizations", groups.compatible)}
 
-              const cardContent = (
-                <Stack gap={2} alignItems="center" justifyContent="center">
-                  <Box sx={{ position: "relative" }}>
-                    <Box
-                      component="div"
-                      dangerouslySetInnerHTML={{ __html: svg }}
-                    />
-                    {isRecommended && (
-                      <RecommendIcon
-                        color="success"
-                        sx={{
-                          borderRadius: 50,
-                          bgcolor: "white",
-                          position: "absolute",
-                          top: -4,
-                          right: -8,
-                        }}
-                      />
-                    )}
-                  </Box>
-                  <Typography variant="body2" align="center">
-                    {type.name}
-                  </Typography>
-                </Stack>
-              );
-              return (
-                <Grid
-                  key={`${type.imageCode}-${name}-${index}`}
-                  container
-                  component={Paper}
-                  variant="outlined"
-                  justifyContent="center"
-                  size={{ xs: 6, sm: 3, lg: 2 }}
-                  sx={{
-                    p: 2,
-                    cursor: "pointer",
-                    "&:hover": { boxShadow: 2 },
-                    border:
-                      visualization.selectedType.id === type.id
-                        ? "2px solid #F57C00"
-                        : undefined,
-                  }}
-                  onClick={() => handleSelectVisualizationType(type)}
-                >
-                  <Grid size={{ xs: 12 }}>
-                    {isRecommended ? (
-                      <Tooltip
-                        arrow
-                        title={buildRecommendationExplanationTooltip(
-                          type,
-                          analysis.analyzedData
-                        )}
-                      >
-                        <span>{cardContent}</span>
-                      </Tooltip>
-                    ) : (
-                      <Tooltip
-                        arrow
-                        title={buildRequirementsTooltip(
-                          type,
-                          analysis.analyzedData
-                        )}
-                      >
-                        <span>{cardContent}</span>
-                      </Tooltip>
-                    )}
-                  </Grid>
-                </Grid>
-              );
-            })
+        {groups.needsData.length > 0 && (
+          <Stack gap={1}>
+            <ButtonBase
+              onClick={() => setShowNeedsData((s) => !s)}
+              aria-expanded={showNeedsData}
+              sx={{
+                alignSelf: "flex-start",
+                justifyContent: "flex-start",
+                gap: 0.5,
+                px: 1,
+                py: 0.5,
+                borderRadius: 1,
+                "&:hover": { bgcolor: "action.hover" },
+              }}
+            >
+              {showNeedsData ? (
+                <ExpandLessIcon fontSize="small" />
+              ) : (
+                <ExpandMoreIcon fontSize="small" />
+              )}
+              <Typography variant="subtitle2" component="h4">
+                Requires additional data ({groups.needsData.length})
+              </Typography>
+            </ButtonBase>
+            <Typography variant="body2" color="text.secondary">
+              These charts need data types your current analysis doesn’t
+              produce.
+              {showNeedsData ? "" : " Expand to see what each one needs."}
+            </Typography>
+            <Collapse in={showNeedsData} unmountOnExit>
+              <Grid container spacing={2.5} sx={{ pt: 1 }}>
+                {groups.needsData.map(renderChartCard)}
+              </Grid>
+            </Collapse>
+          </Stack>
         )}
-      </Grid>
-
-      <Grid container justifyContent="center" spacing={1} sx={{ pt: 2 }}>
-        <RecommendIcon color="success" />
-        <Typography>
-          Recommendation of charts is based on your analyzed data
-        </Typography>
-      </Grid>
-    </Stack>
+      </Stack>
+    </SectionCard>
   );
 };
 
 export default TypeSelection;
-
-function buildRecommendationExplanationTooltip(chartType, analyzedData) {
-  const requiredTypeCount = {};
-  chartType.chartInputs.forEach((input) => {
-    if (!input.required) return;
-    requiredTypeCount[input.type] = (requiredTypeCount[input.type] || 0) + 1;
-  });
-
-  const availableTypeCount = {};
-  Object.values(analyzedData).forEach((item) => {
-    const type = item.configurationData.type;
-    availableTypeCount[type] = (availableTypeCount[type] || 0) + 1;
-  });
-
-  const formatTypeName = (type) => {
-    if (type === "Text") return "Categorical";
-    if (type === "Numeric") return "Numerical";
-    return type;
-  };
-
-  return (
-    <>
-      <Typography gutterBottom>
-        <b>Why {chartType.name} is recommended?</b>
-      </Typography>
-
-      <Typography gutterBottom>
-        {chartType.name} requires the following number of data types as inputs:
-        <br />
-        {Object.entries(requiredTypeCount).map(([type, count]) => (
-          <div key={`req-${type}`}>
-            ⦁ {count} {formatTypeName(type)} {count > 1 ? "columns" : "column"}
-          </div>
-        ))}
-      </Typography>
-
-      <Typography gutterBottom>
-        Your analyzed data has the following number of data types:
-        <br />
-        {Object.entries(requiredTypeCount).map(([type]) => {
-          const count = availableTypeCount[type] || 0;
-          const matchingColumns = Object.values(analyzedData)
-            .filter((item) => item.configurationData.type === type)
-            .map((item) => item.configurationData.title);
-          return (
-            <div key={`avail-${type}`}>
-              ⦁ {count} {formatTypeName(type)}{" "}
-              {matchingColumns.length > 0 && (
-                <b>({matchingColumns.join(", ")})</b>
-              )}
-            </div>
-          );
-        })}
-      </Typography>
-      <Typography>
-        This fulfils the minimum requirement of the chart inputs.
-      </Typography>
-    </>
-  );
-}
-
-function buildRequirementsTooltip(chartType, analyzedData) {
-  const requiredTypeCount = {};
-  for (const input of chartType.chartInputs) {
-    if (!input.required) continue;
-    requiredTypeCount[input.type] = (requiredTypeCount[input.type] || 0) + 1;
-  }
-
-  const availableTypeCount = {};
-  for (const key in analyzedData) {
-    const type = analyzedData[key].configurationData.type;
-    availableTypeCount[type] = (availableTypeCount[type] || 0) + 1;
-  }
-
-  const formatTypeName = (type) => {
-    if (type === "Text") return "Categorical";
-    if (type === "Numeric") return "Numerical";
-    return type;
-  };
-
-  return (
-    <>
-      <Typography gutterBottom>
-        <b>Why {chartType.name} is not recommended?</b>
-      </Typography>
-      <Typography gutterBottom>
-        {chartType.name} requires the following number of data types as inputs:
-        <br />
-        {Object.entries(requiredTypeCount).map(([type, count]) => (
-          <Typography key={type}>
-            ⦁ {count} {formatTypeName(type)} {count > 1 ? "columns" : "column"}
-          </Typography>
-        ))}
-      </Typography>
-
-      <Typography gutterBottom sx={{ mt: 1 }}>
-        However, your analyzed data contains:
-        <br />
-        {Object.entries(requiredTypeCount).map(([type]) => (
-          <Typography key={type}>
-            ⦁ {availableTypeCount[type] || 0} {formatTypeName(type)} column(s)
-          </Typography>
-        ))}
-      </Typography>
-      <Typography>
-        This does <b>not</b> fulfil the minimum requirement of the chart inputs.
-      </Typography>
-    </>
-  );
-}

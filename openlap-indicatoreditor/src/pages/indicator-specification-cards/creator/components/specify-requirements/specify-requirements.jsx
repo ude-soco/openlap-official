@@ -9,7 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import { ISCContext } from "../../isc-context.js";
-import WorkflowSection from "../workflow-section/workflow-section.jsx";
+import WorkflowSection from "../../../../../common/components/workflow-section/workflow-section.jsx";
 import { isRequirementsComplete } from "../../utils/isc-selectors.js";
 import {
   isRequirementStepComplete,

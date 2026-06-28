@@ -10,8 +10,8 @@ import com.openlap.analytics_module.exceptions.analytics_goals.AnalyticsGoalAlre
 import com.openlap.analytics_module.exceptions.analytics_goals.AnalyticsQuestionNotFoundException;
 import com.openlap.analytics_module.repositories.AnalyticsGoalsRepository;
 import com.openlap.analytics_module.services.AnalyticsGoalsService;
-import com.openlap.exception.DatabaseOperationException;
-import com.openlap.exception.ServiceException;
+import com.openlap.infrastructure.exception.DatabaseOperationException;
+import com.openlap.infrastructure.exception.ServiceException;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.util.List;

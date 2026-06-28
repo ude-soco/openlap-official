@@ -6,7 +6,7 @@ import {
   fetchVisualizationTypeByLibraryId,
 } from "../utils/visualization-api";
 import { BasicContext } from "../../../basic-indicator";
-import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
+import SectionCard from "../../../../../../../common/components/section-card/section-card";
 
 export default function LibrarySelection() {
   const { api } = useContext(AuthContext);
@@ -17,7 +17,7 @@ export default function LibrarySelection() {
       try {
         return await fetchVisualizationLibrary(api);
       } catch (error) {
-        console.log("Failed to request visualization library list");
+        console.error("Failed to request visualization library list", error);
       }
     };
     if (visualization.libraryList.length === 0) {
@@ -60,14 +60,14 @@ export default function LibrarySelection() {
   };
 
   return (
-    <>
-      <Stack gap={1}>
-        <Stack direction="row" alignItems="center">
-          <Typography>
-            Select a <b>Visualization library</b>
-          </Typography>
-          <CustomTooltip type="description" message={`To be decided`} />
-        </Stack>
+    <SectionCard
+      title="Visualization library"
+      helper="The library that renders your chart. The default works for most indicators."
+    >
+      <Stack gap={0.75}>
+        <Typography variant="body2" fontWeight={500}>
+          Library
+        </Typography>
         <Autocomplete
           disableClearable
           disablePortal
@@ -79,13 +79,17 @@ export default function LibrarySelection() {
           renderInput={(params) => (
             <TextField
               {...params}
-              placeholder="Search for Visualization libraries"
+              placeholder="Search for a visualization library"
+              inputProps={{
+                ...params.inputProps,
+                "aria-label": "Visualization library",
+              }}
             />
           )}
           renderOption={(props, option) => {
             const { key, ...restProps } = props;
             return (
-              <li {...restProps} key={option.id}>
+              <li key={key} {...restProps}>
                 <Stack sx={{ py: 0.5 }}>
                   <Typography>{option.name}</Typography>
                   <Typography
@@ -101,6 +105,6 @@ export default function LibrarySelection() {
           }}
         />
       </Stack>
-    </>
+    </SectionCard>
   );
 }

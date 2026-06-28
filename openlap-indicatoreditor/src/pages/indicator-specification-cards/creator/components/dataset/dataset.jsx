@@ -5,7 +5,7 @@ import DatasetSummary from "./components/dataset-summary.jsx";
 import DatasetIntro from "./components/dataset-intro.jsx";
 import DatasetRequirementsRail from "./components/dataset-requirements-rail.jsx";
 import DataTableManager from "./data-table-manager/data-table-manager";
-import WorkflowSection from "../workflow-section/workflow-section.jsx";
+import WorkflowSection from "../../../../../common/components/workflow-section/workflow-section.jsx";
 import { isDatasetComplete } from "../../utils/isc-selectors.js";
 import { isExampleDatasetActive } from "./utils/example-dataset.js";
 import { validateDataset } from "./utils/dataset-validation.js";

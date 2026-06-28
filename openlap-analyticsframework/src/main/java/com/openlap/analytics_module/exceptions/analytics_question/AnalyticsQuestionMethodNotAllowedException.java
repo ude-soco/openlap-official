@@ -1,16 +1,17 @@
 package com.openlap.analytics_module.exceptions.analytics_question;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.ForbiddenException;
 
-@Slf4j
-public class AnalyticsQuestionMethodNotAllowedException extends RuntimeException {
+/**
+ * Caller is not permitted to perform the requested operation on the question (e.g. update/delete a
+ * question they do not own) → HTTP 403. Rendered by the unified error handler.
+ */
+public class AnalyticsQuestionMethodNotAllowedException extends ForbiddenException {
   public AnalyticsQuestionMethodNotAllowedException(String message) {
-    super(message);
-    log.error(message);
+    super("ANALYTICS_QUESTION_METHOD_NOT_ALLOWED", message);
   }
 
   public AnalyticsQuestionMethodNotAllowedException(String message, Throwable cause) {
-    super(message, cause);
-    log.error(message, cause);
+    super("ANALYTICS_QUESTION_METHOD_NOT_ALLOWED", message, cause);
   }
 }

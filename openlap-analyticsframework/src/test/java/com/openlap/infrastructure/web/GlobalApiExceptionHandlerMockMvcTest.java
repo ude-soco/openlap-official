@@ -127,27 +127,27 @@ public class GlobalApiExceptionHandlerMockMvcTest {
   }
 
   @Test
-  public void legacyCentralHandlerStillOwnsServiceException() throws Exception {
-    // legacy GlobalExceptionHandler -> ApiError {httpStatus, errors:{serverError}}; NOT the new envelope.
+  public void serviceExceptionNowUsesUnifiedEnvelope() throws Exception {
+    // ServiceException is now an InfrastructureException (legacy com.openlap.exception retired):
+    // 500 with a stable code via the unified handler (timestamp/error present), no cause.
     mockMvc
-        .perform(get("/test/legacy-service"))
+        .perform(get("/test/service-error"))
         .andExpect(status().isInternalServerError())
-        .andExpect(jsonPath("$.code").doesNotExist())
-        .andExpect(jsonPath("$.timestamp").doesNotExist())
-        .andExpect(jsonPath("$.errors.serverError").exists());
+        .andExpect(jsonPath("$.code").value("SERVICE_ERROR"))
+        .andExpect(jsonPath("$.timestamp").exists())
+        .andExpect(jsonPath("$.error").value("INTERNAL_SERVER_ERROR"))
+        .andExpect(jsonPath("$.cause").doesNotExist());
   }
 
   @Test
-  public void legacyModuleAdviceStillOwnsDomainException() throws Exception {
-    // An unmigrated module's legacy advice (IndicatorExceptionHandler) -> ExceptionResponse
-    // {message, httpStatus}; NOT the new envelope. (The user module is now migrated, so its
-    // exceptions use the unified envelope — see UserModuleErrorMappingMockMvcTest.)
+  public void migratedModuleExceptionUsesUnifiedEnvelope() throws Exception {
+    // analytics_module is now migrated (IndicatorExceptionHandler removed): IndicatorNotFoundException
+    // extends the shared NotFoundException, so it renders the unified envelope with a stable code.
     mockMvc
-        .perform(get("/test/legacy-indicator"))
+        .perform(get("/test/migrated-indicator"))
         .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.code").doesNotExist())
-        .andExpect(jsonPath("$.timestamp").doesNotExist())
-        .andExpect(jsonPath("$.message").value("legacy indicator not found"))
+        .andExpect(jsonPath("$.code").value("INDICATOR_NOT_FOUND"))
+        .andExpect(jsonPath("$.message").value("indicator not found"))
         .andExpect(jsonPath("$.cause").doesNotExist());
   }
 }

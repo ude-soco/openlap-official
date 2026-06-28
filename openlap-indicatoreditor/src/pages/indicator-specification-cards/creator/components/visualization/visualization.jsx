@@ -4,7 +4,7 @@ import { ISCContext } from "../../isc-context.js";
 import ChartTypeFilter from "./components/chart-type-filter.jsx";
 import VisualizationFilter from "./components/visualization-filter/visualization-filter";
 import VisualizationSummary from "./components/visualization-summary/visualization-summary.jsx";
-import WorkflowSection from "../workflow-section/workflow-section.jsx";
+import WorkflowSection from "../../../../../common/components/workflow-section/workflow-section.jsx";
 import { isVisualizationComplete } from "../../utils/isc-selectors.js";
 import pathChoices from "../choose-path/utils/utils.js";
 

@@ -1,16 +1,17 @@
 package com.openlap.analytics_module.exceptions.indicator;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.ForbiddenException;
 
-@Slf4j
-public class PreviewNotPossibleException extends RuntimeException {
+/**
+ * The indicator preview/duplication is not permitted for this caller (e.g. the user does not belong
+ * to the same LRS) → HTTP 403 (status preserved). Rendered by the unified error handler.
+ */
+public class PreviewNotPossibleException extends ForbiddenException {
   public PreviewNotPossibleException(String message) {
-    super(message);
-    log.error(message);
+    super("INDICATOR_PREVIEW_NOT_POSSIBLE", message);
   }
 
   public PreviewNotPossibleException(String message, Throwable cause) {
-    super(message, cause);
-    log.error(message, cause);
+    super("INDICATOR_PREVIEW_NOT_POSSIBLE", message, cause);
   }
 }

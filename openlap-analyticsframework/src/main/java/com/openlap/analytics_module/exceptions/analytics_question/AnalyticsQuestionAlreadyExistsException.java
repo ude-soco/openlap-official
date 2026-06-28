@@ -1,16 +1,14 @@
 package com.openlap.analytics_module.exceptions.analytics_question;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.ConflictException;
 
-@Slf4j
-public class AnalyticsQuestionAlreadyExistsException extends RuntimeException {
+/** An analytics question with the same identity already exists → HTTP 409. Rendered by the unified handler. */
+public class AnalyticsQuestionAlreadyExistsException extends ConflictException {
   public AnalyticsQuestionAlreadyExistsException(String message) {
-    super(message);
-    log.error(message);
+    super("ANALYTICS_QUESTION_ALREADY_EXISTS", message);
   }
 
   public AnalyticsQuestionAlreadyExistsException(String message, Throwable cause) {
-    super(message, cause);
-    log.error(message);
+    super("ANALYTICS_QUESTION_ALREADY_EXISTS", message, cause);
   }
 }

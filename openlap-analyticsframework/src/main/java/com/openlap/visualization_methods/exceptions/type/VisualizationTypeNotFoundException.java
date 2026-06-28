@@ -1,17 +1,14 @@
 package com.openlap.visualization_methods.exceptions.type;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.NotFoundException;
 
-@Slf4j
-public class VisualizationTypeNotFoundException extends RuntimeException {
-
+/** Requested visualization type does not exist → HTTP 404. Rendered by the unified handler. */
+public class VisualizationTypeNotFoundException extends NotFoundException {
   public VisualizationTypeNotFoundException(String message) {
-    super(message);
-    log.error(message);
+    super("VISUALIZATION_TYPE_NOT_FOUND", message);
   }
 
   public VisualizationTypeNotFoundException(String message, Throwable cause) {
-    super(message, cause);
-    log.error(message, cause);
+    super("VISUALIZATION_TYPE_NOT_FOUND", message, cause);
   }
 }

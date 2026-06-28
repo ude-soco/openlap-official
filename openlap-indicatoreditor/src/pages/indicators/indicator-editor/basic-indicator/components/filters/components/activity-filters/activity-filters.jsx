@@ -1,21 +1,24 @@
 import { useContext, useState } from "react";
 import {
-  Box,
   Button,
+  Grid,
   IconButton,
   Paper,
   Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import AddIcon from "@mui/icons-material/Add";
+import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import { BasicContext } from "../../../../basic-indicator";
 import { v4 as uuidv4 } from "uuid";
 import ActivityTypeSelection from "./activity-type-selection";
 import ActionSelection from "./action-selection";
 import ActivitySelection from "./activity-selection";
-import CustomTooltip from "../../../../../../../../common/components/custom-tooltip/custom-tooltip";
 import CustomDialog from "../../../../../../../../common/components/custom-dialog/custom-dialog";
+import EmptyState from "../../../../../../../../common/components/empty-state/empty-state";
+import FilterSection from "../filter-section";
 
 export default function ActivityFilters() {
   const { filters, setFilters, setAnalysis } = useContext(BasicContext);
@@ -84,105 +87,95 @@ export default function ActivityFilters() {
     handleRemoveFilter(null);
   };
 
-  return (
-    <>
-      <Stack gap={2} component={Paper} variant="outlined" sx={{ p: 2 }}>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Stack direction="row" alignItems="center">
-            <Typography>
-              Apply <b>Activity filters</b>
-            </Typography>
-            <CustomTooltip
-              type="description"
-              message={`Narrow down the data by selecting specific activity types, actions, or activities to include in the analysis.`}
-            />
-          </Stack>
-          {filters.selectedActivities.length > 0 ? (
-            <Button variant="contained" onClick={handleAddMoreFilter}>
-              Add Filter
-            </Button>
-          ) : undefined}
-        </Stack>
+  const hasFilters = filters.selectedActivities.length > 0;
 
-        {filters.selectedActivities.length === 0 ? (
-          <Box
-            sx={{
-              mt: 2,
-              pb: 1,
-              p: 8,
-              border: "1px dashed",
-              borderColor: "divider",
-              borderRadius: 2,
-              textAlign: "center",
-              color: "text.secondary",
-            }}
+  return (
+    <FilterSection
+      title="Activity filters"
+      helper="Narrow the data by activity type, action, and activity. Add at least one filter to continue."
+      action={
+        hasFilters ? (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleAddMoreFilter}
           >
-            <Typography variant="body1" gutterBottom>
-              No filters added. Click "Add Filter" to get started.
-            </Typography>
-            <Button variant="contained" onClick={handleAddMoreFilter}>
-              Add Filter
+            Add filter
+          </Button>
+        ) : undefined
+      }
+    >
+      {!hasFilters ? (
+        <EmptyState
+          icon={FilterAltOutlinedIcon}
+          title="No activity filters yet"
+          description="Add at least one activity filter to choose which activities to include in the analysis."
+          action={
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddMoreFilter}
+            >
+              Add filter
             </Button>
-          </Box>
-        ) : (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              gap: 2,
-              overflowX: "auto",
-              pb: 2,
-            }}
-          >
-            {filters.selectedActivities.map((activity, index) => (
-              <Stack
-                key={activity.id}
-                gap={2}
-                component={Paper}
-                sx={{
-                  width: 420,
-                  flexShrink: 0,
-                  p: 2,
-                }}
+          }
+        />
+      ) : (
+        <Grid container spacing={2}>
+          {filters.selectedActivities.map((activity, index) => (
+            <Grid
+              key={activity.id}
+              size={{ xs: 12, lg: 6 }}
+              sx={{ display: "flex" }}
+            >
+              <Paper
                 variant="outlined"
+                sx={(theme) => ({
+                  width: "100%",
+                  p: 2,
+                  borderRadius: `${theme.custom.radii.card}px`,
+                })}
               >
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <Typography>Activity filter {index + 1}</Typography>
-                  <Tooltip arrow title={<Typography>Delete filter</Typography>}>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleRemoveFilter(activity)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <CustomDialog
-                    type="delete"
-                    open={state.activityDialog.openActivityDialog}
-                    toggleOpen={handleToggleDialogOpen}
-                    content={state.activityDialog.content}
-                    handler={handleConfirmRemoveFilter}
-                  />
+                <Stack gap={2}>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    gap={1}
+                  >
+                    <Typography fontWeight={600}>
+                      Activity filter {index + 1}
+                    </Typography>
+                    <Tooltip arrow title="Remove this filter">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        aria-label={`Remove activity filter ${index + 1}`}
+                        onClick={() => handleRemoveFilter(activity)}
+                      >
+                        <DeleteOutlineIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
+                  <Stack gap={3}>
+                    <ActivityTypeSelection activity={activity} />
+                    <ActionSelection activity={activity} index={index} />
+                    <ActivitySelection activity={activity} />
+                  </Stack>
                 </Stack>
-                <Stack gap={3}>
-                  <ActivityTypeSelection activity={activity} />
-                  <ActionSelection activity={activity} index={index} />
-                  <ActivitySelection activity={activity} />
-                </Stack>
-              </Stack>
-            ))}
-          </Box>
-        )}
-      </Stack>
-    </>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      <CustomDialog
+        type="delete"
+        open={state.activityDialog.openActivityDialog}
+        toggleOpen={handleToggleDialogOpen}
+        content={state.activityDialog.content}
+        handler={handleConfirmRemoveFilter}
+      />
+    </FilterSection>
   );
 }
