@@ -263,9 +263,17 @@ public class IndicatorServiceImpl implements IndicatorService {
     Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
     String baseUrl = String.format("%s://%s", request.getScheme(), request.getServerName());
     String apiUrl = "/api/v1/code/indicators?indicatorId=";
-    String metaDataUrl = "' frameborder='0' height='500px' width='500px'";
+    // Same endpoint URL as before — only the surrounding markup is now responsive:
+    // the iframe fills the host container's width with a sensible height floor.
+    // Uses style border:0 (frameborder is deprecated), a meaningful title, and
+    // lazy loading. No sandbox — the embedded page runs the chart's own scripts.
+    String src = baseUrl + apiUrl + foundIndicator.getId();
 
-    return "<iframe src='" + baseUrl + apiUrl + foundIndicator.getId() + metaDataUrl + " />";
+    return "<iframe src=\""
+        + src
+        + "\" title=\"OpenLAP indicator\""
+        + " style=\"width: 100%; min-height: 500px; border: 0;\""
+        + " loading=\"lazy\"></iframe>";
   }
 
   @Override
