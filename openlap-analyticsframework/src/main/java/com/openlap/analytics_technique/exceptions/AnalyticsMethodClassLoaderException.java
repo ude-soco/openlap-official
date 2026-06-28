@@ -1,16 +1,18 @@
 package com.openlap.analytics_technique.exceptions;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.InfrastructureException;
 
-@Slf4j
-public class AnalyticsMethodClassLoaderException extends RuntimeException {
+/**
+ * Loading an analytics-method class/jar failed → HTTP 500 (status preserved). Rendered by the
+ * unified error handler. The underlying cause is logged centrally and never exposed to clients.
+ */
+public class AnalyticsMethodClassLoaderException extends InfrastructureException {
   public AnalyticsMethodClassLoaderException(String message) {
-    super(message);
-    log.error(message);
+    // Cast disambiguates the (code, message, Throwable) overload from (code, message, Map).
+    super("ANALYTICS_TECHNIQUE_CLASS_LOAD_FAILED", message, (Throwable) null);
   }
 
   public AnalyticsMethodClassLoaderException(String message, Throwable cause) {
-    super(message, cause);
-    log.error(message, cause);
+    super("ANALYTICS_TECHNIQUE_CLASS_LOAD_FAILED", message, cause);
   }
 }

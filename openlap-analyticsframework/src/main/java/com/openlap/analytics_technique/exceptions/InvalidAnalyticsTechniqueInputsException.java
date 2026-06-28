@@ -1,16 +1,17 @@
 package com.openlap.analytics_technique.exceptions;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.ValidationException;
 
-@Slf4j
-public class InvalidAnalyticsTechniqueInputsException extends RuntimeException {
+/**
+ * The analytics-technique input mapping is invalid → HTTP 400 (normalized from the previous 409,
+ * which mislabelled a bad-input case as a conflict). Rendered by the unified error handler.
+ */
+public class InvalidAnalyticsTechniqueInputsException extends ValidationException {
   public InvalidAnalyticsTechniqueInputsException(String message) {
-    super(message);
-    log.error(message);
+    super("ANALYTICS_TECHNIQUE_INVALID_INPUT", message);
   }
 
   public InvalidAnalyticsTechniqueInputsException(String message, Throwable cause) {
-    super(message, cause);
-    log.error(message, cause);
+    super("ANALYTICS_TECHNIQUE_INVALID_INPUT", message, cause);
   }
 }
