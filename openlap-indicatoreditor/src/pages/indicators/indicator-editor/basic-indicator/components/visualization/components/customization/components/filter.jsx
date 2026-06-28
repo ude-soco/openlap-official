@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import {
   Autocomplete,
   Checkbox,
@@ -12,6 +13,21 @@ import {
   TextField,
 } from "@mui/material";
 
+const STORAGE_KEY = "basic_indic_cats";
+
+// Guarded read: localStorage can throw (private mode / disabled storage) and
+// can hold malformed JSON. Return null on any failure so we fall back to the
+// categories derived from the analysed data.
+const readStoredCategories = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
 export const FiltersBar = ({
   categories,
   state,
@@ -19,17 +35,20 @@ export const FiltersBar = ({
   chartConfiguration,
 }) => {
   const [tempcategories, settempcategories] = useState(
-    JSON.parse(localStorage.getItem("basic_indic_cats"))?.length > 0
-      ? JSON.parse(localStorage.getItem("basic_indic_cats"))
-      : categories.map((category) => ({
-          name: category,
-          checked: true,
-        }))
+    readStoredCategories() ??
+      (categories || []).map((category) => ({
+        name: category,
+        checked: true,
+      }))
   );
   const [count, setcount] = useState(tempcategories.length);
 
   useEffect(() => {
-    localStorage.setItem("basic_indic_cats", JSON.stringify(tempcategories));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tempcategories));
+    } catch {
+      // localStorage unavailable (e.g. private mode) — non-critical.
+    }
   }, [tempcategories]);
 
   const pushtoHiddenCategoriesIndexes = (index) => {
@@ -155,4 +174,11 @@ export const FiltersBar = ({
       </Grid>
     </>
   );
+};
+
+FiltersBar.propTypes = {
+  categories: PropTypes.array,
+  state: PropTypes.object,
+  setState: PropTypes.func,
+  chartConfiguration: PropTypes.object,
 };

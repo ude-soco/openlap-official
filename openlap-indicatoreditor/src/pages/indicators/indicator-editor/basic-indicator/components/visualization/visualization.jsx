@@ -2,6 +2,7 @@ import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   Grid,
   Collapse,
   Dialog,
@@ -10,10 +11,9 @@ import {
   DialogTitle,
   Divider,
   LinearProgress,
-  Skeleton,
   TextField,
   Stack,
-  Container,
+  Typography,
 } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { useSnackbar } from "notistack";
@@ -32,6 +32,7 @@ import TypeInputSelection from "./components/type-input-selection";
 import ChartPreview from "../../../components/chart-preview";
 import ChartCustomizationPanel from "./components/customization/chart-customization-panel";
 import WorkflowSection from "../../../../../../common/components/workflow-section/workflow-section.jsx";
+import SectionCard from "../../../../../../common/components/section-card/section-card.jsx";
 import { getStepStatus } from "../../utils/basic-workflow-ui.js";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
 import {
@@ -213,6 +214,10 @@ export default function Visualization() {
     });
   }
 
+  const configReady =
+    visualization.inputs.length > 0 &&
+    Object.keys(analysis.analyzedData).length > 0;
+
   return (
     <>
       <WorkflowSection
@@ -221,28 +226,33 @@ export default function Visualization() {
         ariaLabel="Visualization step"
       >
         <VisualizationSummary />
-          <Collapse
-            in={lockedStep.visualization.openPanel}
-            timeout={{ enter: 500, exit: 250 }}
-            unmountOnExit
-          >
-            <Stack gap={4}>
-              <Container maxWidth="lg">
-                <LibrarySelection />
-              </Container>
-              {visualization.selectedLibrary.id ? (
-                visualization.typeList.length > 0 ? (
-                  <TypeSelection />
-                ) : (
-                  <LinearProgress />
-                )
-              ) : undefined}
-              {visualization.inputs.length > 0 &&
-              Object.keys(analysis.analyzedData).length > 0 ? (
-                <>
-                  <TypeInputSelection />
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, lg: "grow", xl: 8 }}>
+        <Collapse
+          in={lockedStep.visualization.openPanel}
+          timeout={{ enter: 500, exit: 250 }}
+          unmountOnExit
+        >
+          <Stack gap={2} sx={{ py: 2 }}>
+            <LibrarySelection />
+
+            {visualization.selectedLibrary.id ? (
+              visualization.typeList.length > 0 ? (
+                <TypeSelection />
+              ) : (
+                <SectionCard title="Chart" helper="Loading available charts…">
+                  <LinearProgress aria-label="Loading available charts" />
+                </SectionCard>
+              )
+            ) : undefined}
+
+            {configReady ? (
+              <>
+                <TypeInputSelection />
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, lg: 8 }}>
+                    <SectionCard
+                      title="Live preview"
+                      helper="A live preview of your indicator with the chosen chart and options."
+                    >
                       {state.previewError ? (
                         <Alert severity="error">
                           Preview could not be generated for the selected chart.
@@ -251,18 +261,30 @@ export default function Visualization() {
                       ) : visualization.previewData?.displayCode?.length ? (
                         <ChartPreview previewData={visualization.previewData} />
                       ) : (
-                        <Skeleton variant="rectangular" height={565} />
+                        <Stack
+                          gap={1.5}
+                          alignItems="center"
+                          justifyContent="center"
+                          sx={{ minHeight: 360 }}
+                        >
+                          <CircularProgress />
+                          <Typography variant="body2" color="text.secondary">
+                            Generating preview…
+                          </Typography>
+                        </Stack>
                       )}
-                    </Grid>
-                    <Grid size={{ xs: 12, md: "grow" }}>
-                      <ChartCustomizationPanel />
-                    </Grid>
+                    </SectionCard>
                   </Grid>
-                </>
-              ) : undefined}
+                  <Grid size={{ xs: 12, lg: 4 }}>
+                    <ChartCustomizationPanel />
+                  </Grid>
+                </Grid>
+              </>
+            ) : undefined}
 
-              <Divider />
-              <Container maxWidth="sm">
+            <Divider />
+            <Grid container justifyContent="center" alignItems="center" spacing={1}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Button
                   fullWidth
                   variant="contained"
@@ -271,9 +293,18 @@ export default function Visualization() {
                 >
                   Save Indicator
                 </Button>
-              </Container>
-            </Stack>
-          </Collapse>
+              </Grid>
+              {handleCheckDisabled() && (
+                <Grid size="auto">
+                  <CustomTooltip
+                    type="help"
+                    message={`The Save button is disabled until:<br/>● Every required chart input is mapped.<br/>● A preview has been generated successfully.`}
+                  />
+                </Grid>
+              )}
+            </Grid>
+          </Stack>
+        </Collapse>
         <Dialog
           fullWidth
           maxWidth="sm"

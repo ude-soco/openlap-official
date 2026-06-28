@@ -1,27 +1,30 @@
 import { useContext, useState } from "react";
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
+  Card,
+  CardActionArea,
   Chip,
   Grid,
-  Paper,
+  IconButton,
+  Popover,
   Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import RecommendIcon from "@mui/icons-material/Recommend";
+import { alpha } from "@mui/material/styles";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import RecommendRoundedIcon from "@mui/icons-material/RecommendRounded";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { BasicContext } from "../../../basic-indicator";
 import { visualizationImages } from "../utils/visualization-data";
-import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
+import SectionCard from "../../../../../../../common/components/section-card/section-card";
 import { defaultParams } from "../utils/visualization-data";
 
 const TypeSelection = () => {
   const { analysis, visualization, setVisualization } =
     useContext(BasicContext);
-  const [state, setState] = useState({ showTypeSelection: false });
+  // Single popover shared across cards: which chart's "why" explanation is open.
+  const [info, setInfo] = useState({ anchorEl: null, type: null });
 
   const handleSelectVisualizationType = async (typeSelected) => {
     setVisualization((p) => ({
@@ -34,9 +37,12 @@ const TypeSelection = () => {
     }));
   };
 
-  const handleShowSelected = (expanded) => {
-    setState((p) => ({ ...p, showTypeSelection: !expanded }));
+  const handleOpenInfo = (event, type) => {
+    event.stopPropagation();
+    setInfo({ anchorEl: event.currentTarget, type });
   };
+
+  const handleCloseInfo = () => setInfo({ anchorEl: null, type: null });
 
   // * Helper function
   function isChartRecommended(chartInputs, analyzedData) {
@@ -66,20 +72,12 @@ const TypeSelection = () => {
     return true;
   }
 
-  function determineType(type) {
-    if (type === "Text") return "Categorical";
-    if (type === "Numeric") return "Numerical";
-  }
-
   return (
-    <Stack gap={2}>
-      <Stack direction="row" alignItems="center">
-        <Typography>
-          Available <b>Charts</b>
-        </Typography>
-        <CustomTooltip type="description" message={`To be decided`} />
-      </Stack>
-      <Grid container spacing={2} justifyContent="center">
+    <SectionCard
+      title="Chart"
+      helper="Charts marked “Recommended” match the data types from your analysis."
+    >
+      <Grid container spacing={2}>
         {visualization.typeList.flatMap((type, index) =>
           Object.entries(visualizationImages)
             .filter(([name]) => type.imageCode === name)
@@ -88,87 +86,122 @@ const TypeSelection = () => {
                 type.chartInputs,
                 analysis.analyzedData
               );
+              const selected = visualization.selectedType.id === type.id;
 
-              const cardContent = (
-                <Stack gap={2} alignItems="center" justifyContent="center">
-                  <Box sx={{ position: "relative" }}>
-                    <Box
-                      component="div"
-                      dangerouslySetInnerHTML={{ __html: svg }}
-                    />
-                    {isRecommended && (
-                      <RecommendIcon
-                        color="success"
-                        sx={{
-                          borderRadius: 50,
-                          bgcolor: "white",
-                          position: "absolute",
-                          top: -4,
-                          right: -8,
-                        }}
-                      />
-                    )}
-                  </Box>
-                  <Typography variant="body2" align="center">
-                    {type.name}
-                  </Typography>
-                </Stack>
-              );
               return (
                 <Grid
                   key={`${type.imageCode}-${name}-${index}`}
-                  container
-                  component={Paper}
-                  variant="outlined"
-                  justifyContent="center"
-                  size={{ xs: 6, sm: 3, lg: 2 }}
-                  sx={{
-                    p: 2,
-                    cursor: "pointer",
-                    "&:hover": { boxShadow: 2 },
-                    border:
-                      visualization.selectedType.id === type.id
-                        ? "2px solid #F57C00"
-                        : undefined,
-                  }}
-                  onClick={() => handleSelectVisualizationType(type)}
+                  size={{ xs: 6, sm: 4, md: 3, lg: 2 }}
+                  sx={{ display: "flex" }}
                 >
-                  <Grid size={{ xs: 12 }}>
-                    {isRecommended ? (
-                      <Tooltip
-                        arrow
-                        title={buildRecommendationExplanationTooltip(
-                          type,
-                          analysis.analyzedData
-                        )}
+                  <Card
+                    variant="outlined"
+                    sx={(theme) => ({
+                      width: "100%",
+                      position: "relative",
+                      borderRadius: `${theme.custom.radii.card}px`,
+                      borderWidth: selected ? 2 : 1,
+                      borderColor: selected ? "primary.main" : undefined,
+                      backgroundColor: selected
+                        ? alpha(theme.palette.primary.main, 0.06)
+                        : undefined,
+                      transition: `border-color ${theme.custom.motion.duration.normal}ms ${theme.custom.motion.easing.standard}`,
+                    })}
+                  >
+                    <CardActionArea
+                      onClick={() => handleSelectVisualizationType(type)}
+                      aria-label={`Select ${type.name} chart${
+                        isRecommended ? " (recommended)" : ""
+                      }`}
+                      aria-pressed={selected}
+                      sx={{ p: 2, height: "100%" }}
+                    >
+                      {selected && (
+                        <CheckCircleRoundedIcon
+                          color="primary"
+                          sx={{
+                            position: "absolute",
+                            top: 6,
+                            right: 6,
+                            fontSize: 20,
+                            bgcolor: "background.paper",
+                            borderRadius: "50%",
+                          }}
+                        />
+                      )}
+                      <Stack
+                        gap={1}
+                        alignItems="center"
+                        justifyContent="center"
+                        sx={{ height: "100%" }}
                       >
-                        <span>{cardContent}</span>
-                      </Tooltip>
-                    ) : (
-                      <Tooltip
-                        arrow
-                        title={buildRequirementsTooltip(
-                          type,
-                          analysis.analyzedData
+                        {isRecommended && (
+                          <Chip
+                            size="small"
+                            color="success"
+                            variant="outlined"
+                            icon={<RecommendRoundedIcon />}
+                            label="Recommended"
+                          />
                         )}
+                        <Box
+                          aria-hidden
+                          dangerouslySetInnerHTML={{ __html: svg }}
+                        />
+                        <Typography variant="body2" align="center">
+                          {type.name}
+                        </Typography>
+                      </Stack>
+                    </CardActionArea>
+                    <Tooltip arrow title="Why this recommendation?">
+                      <IconButton
+                        size="small"
+                        onClick={(event) => handleOpenInfo(event, type)}
+                        aria-label={`Why ${type.name} is${
+                          isRecommended ? "" : " not"
+                        } recommended`}
+                        sx={{ position: "absolute", bottom: 4, right: 4 }}
                       >
-                        <span>{cardContent}</span>
-                      </Tooltip>
-                    )}
-                  </Grid>
+                        <InfoOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Card>
                 </Grid>
               );
             })
         )}
       </Grid>
 
-      <Grid container justifyContent="center" spacing={1} sx={{ pt: 2 }}>
-        <RecommendIcon color="success" />
-        <Typography>
-          Recommendation of charts is based on your analyzed data
+      <Stack
+        direction="row"
+        gap={1}
+        alignItems="center"
+        sx={{ pt: 1, color: "text.secondary" }}
+      >
+        <RecommendRoundedIcon color="success" fontSize="small" />
+        <Typography variant="body2">
+          Recommendations are based on your analysed data.
         </Typography>
-      </Grid>
-    </Stack>
+      </Stack>
+
+      <Popover
+        open={Boolean(info.anchorEl)}
+        anchorEl={info.anchorEl}
+        onClose={handleCloseInfo}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        transformOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Box sx={{ p: 2, maxWidth: 360 }}>
+          {info.type &&
+            (isChartRecommended(info.type.chartInputs, analysis.analyzedData)
+              ? buildRecommendationExplanationTooltip(
+                  info.type,
+                  analysis.analyzedData
+                )
+              : buildRequirementsTooltip(info.type, analysis.analyzedData))}
+        </Box>
+      </Popover>
+    </SectionCard>
   );
 };
 

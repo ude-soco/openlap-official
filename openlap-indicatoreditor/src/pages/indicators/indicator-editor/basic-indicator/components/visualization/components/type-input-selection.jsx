@@ -2,14 +2,13 @@ import { useContext, useEffect } from "react";
 import { BasicContext } from "../../../basic-indicator";
 import {
   FormControl,
+  FormHelperText,
   InputLabel,
   Grid,
   MenuItem,
   Select,
-  Typography,
-  Stack,
 } from "@mui/material";
-import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
+import SectionCard from "../../../../../../../common/components/section-card/section-card";
 
 const TypeInputSelection = () => {
   const { analysis, visualization, setVisualization } =
@@ -106,58 +105,55 @@ const TypeInputSelection = () => {
   };
 
   return (
-    <Stack gap={2}>
-      <Typography gutterBottom sx={{ pb: 0.5 }}>
-        Select <b>Inputs</b> of {visualization.selectedType.name}
-      </Typography>
-      <Grid container spacing={2} alignItems="center">
+    <SectionCard
+      title="Configure chart"
+      helper={`Map each input of ${visualization.selectedType.name} to a column from your analysed data.`}
+    >
+      <Grid container spacing={2}>
         {visualization.inputs.map((input) => {
           const filteredInputs = Object.values(analysis.analyzedData).filter(
             (value) => input.type === value.configurationData.type
           );
+          const labelId = `vis-input-label-${input.id}`;
+          const labelText = `${input.title} (${formatTypeName(input.type)})`;
 
           return (
             <Grid size={{ xs: 12, md: 6 }} key={input.id}>
-              <Grid container alignItems="center" spacing={1}>
-                <Grid size="grow">
-                  <FormControl fullWidth>
-                    <InputLabel required={Boolean(input.required)}>
-                      {input.title} ({formatTypeName(input.type)}) 
-                    </InputLabel>
-                    <Select
-                      label={`${input.title} (${formatTypeName(input.type)})`}
-                      value={input.selectedInput?.id || ""} // store the id
-                      onChange={(event) => {
-                        const selectedId = event.target.value;
-                        const selectedConfig = filteredInputs.find(
-                          (v) => v.configurationData.id === selectedId
-                        )?.configurationData;
-                        handleSelectInput(selectedConfig, input);
-                      }}
+              <FormControl fullWidth>
+                <InputLabel id={labelId} required={Boolean(input.required)}>
+                  {labelText}
+                </InputLabel>
+                <Select
+                  labelId={labelId}
+                  id={`vis-input-${input.id}`}
+                  label={labelText}
+                  value={input.selectedInput?.id || ""} // store the id
+                  onChange={(event) => {
+                    const selectedId = event.target.value;
+                    const selectedConfig = filteredInputs.find(
+                      (v) => v.configurationData.id === selectedId
+                    )?.configurationData;
+                    handleSelectInput(selectedConfig, input);
+                  }}
+                >
+                  {filteredInputs.map((value) => (
+                    <MenuItem
+                      key={value.configurationData.id}
+                      value={value.configurationData.id}
                     >
-                      {filteredInputs.map((value) => (
-                        <MenuItem
-                          key={value.configurationData.id}
-                          value={value.configurationData.id}
-                        >
-                          {value.configurationData.title}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size="auto">
-                  <CustomTooltip
-                    type="description"
-                    message={input.description}
-                  />
-                </Grid>
-              </Grid>
+                      {value.configurationData.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {input.description && (
+                  <FormHelperText>{input.description}</FormHelperText>
+                )}
+              </FormControl>
             </Grid>
           );
         })}
       </Grid>
-    </Stack>
+    </SectionCard>
   );
 };
 

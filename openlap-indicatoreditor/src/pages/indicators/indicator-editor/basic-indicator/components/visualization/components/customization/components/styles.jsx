@@ -1,5 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import { Box, FormControl, Grid, FormLabel, Typography } from "@mui/material";
+
+// Debounce for the native color inputs before the change reaches the preview.
+const COLOR_DEBOUNCE_MS = 350;
 
 export const StylesBar = ({
   categories,
@@ -7,14 +11,21 @@ export const StylesBar = ({
   setState,
   chartConfiguration,
 }) => {
-  const [inputColors, setInputColors] = useState(state.colorsArray);
+  const [inputColors, setInputColors] = useState(state.colorsArray || []);
   const [typingTimeout, setTypingTimeout] = useState(null);
   const [tempColLabels, settempColLabels] = useState(
-    categories.map((label, index) => ({
+    (categories || []).map((label, index) => ({
       label,
       color: inputColors[index] || "#008ffb", // Handle cases where colors array has fewer items
     }))
   );
+
+  // Clear any pending debounce timer on unmount to avoid setState-after-unmount.
+  useEffect(() => {
+    return () => {
+      if (typingTimeout) clearTimeout(typingTimeout);
+    };
+  }, [typingTimeout]);
 
   const handleSingleSeriesColorChange = (e) => {
     // const newValue = e.target.value;
@@ -35,7 +46,7 @@ export const StylesBar = ({
         colorsArray: [e.target.value],
         edited: true,
       }));
-    }, 2000); // Adjust delay as needed (e.g., 500ms)
+    }, COLOR_DEBOUNCE_MS);
 
     setTypingTimeout(timeout);
   };
@@ -62,7 +73,7 @@ export const StylesBar = ({
           edited: true,
         };
       });
-    }, 2000); // Adjust delay as needed (e.g., 500ms)
+    }, COLOR_DEBOUNCE_MS);
 
     setTypingTimeout(timeout);
   };
@@ -331,4 +342,11 @@ export const StylesBar = ({
       </Grid>
     </>
   );
+};
+
+StylesBar.propTypes = {
+  categories: PropTypes.array,
+  state: PropTypes.object,
+  setState: PropTypes.func,
+  chartConfiguration: PropTypes.object,
 };
