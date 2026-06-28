@@ -220,8 +220,7 @@ export default function Visualization() {
         lockedHint="Complete Analysis to unlock Visualization."
         ariaLabel="Visualization step"
       >
-        <Stack gap={2}>
-          <VisualizationSummary />
+        <VisualizationSummary />
           <Collapse
             in={lockedStep.visualization.openPanel}
             timeout={{ enter: 500, exit: 250 }}
@@ -275,7 +274,6 @@ export default function Visualization() {
               </Container>
             </Stack>
           </Collapse>
-        </Stack>
         <Dialog
           fullWidth
           maxWidth="sm"

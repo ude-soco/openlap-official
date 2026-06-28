@@ -3,9 +3,8 @@ import { Chip, Collapse, Grid, Stack, Typography } from "@mui/material";
 import { BasicContext } from "../../../basic-indicator";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button";
-import { ToggleEditIconButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button";
+import { ToggleEditButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button";
 import WorkflowStepHeader from "../../../../../../../common/components/workflow-step-header/workflow-step-header.jsx";
-import WorkflowSummaryPanel from "../../../../../../../common/components/workflow-summary-panel/workflow-summary-panel.jsx";
 import AnalyzedDataTable from "./analyzed-data-table";
 
 export default function AnalysisSummary() {
@@ -48,7 +47,7 @@ export default function AnalysisSummary() {
   const locked = lockedStep.analysis.locked;
 
   return (
-    <Stack gap={2}>
+    <>
       <WorkflowStepHeader
         stepNumber={lockedStep.analysis.step}
         title="Analysis"
@@ -72,7 +71,7 @@ export default function AnalysisSummary() {
           )
         }
         editToggle={
-          <ToggleEditIconButton
+          <ToggleEditButton
             openPanel={lockedStep.analysis.openPanel}
             togglePanel={handleTogglePanel}
           />
@@ -83,7 +82,10 @@ export default function AnalysisSummary() {
         timeout={{ enter: 500, exit: 250 }}
         unmountOnExit
       >
-        <WorkflowSummaryPanel>
+        <Stack gap={1}>
+          <Typography variant="body2" gutterBottom>
+            Selection summary
+          </Typography>
           {handleCheckAnalyticsMethodSelected("method") && (
             <Grid container spacing={1} alignItems="center">
               <Typography>Analytics Method:</Typography>
@@ -119,8 +121,8 @@ export default function AnalysisSummary() {
           {Object.keys(analysis.analyzedData).length ? (
             <AnalyzedDataTable />
           ) : undefined}
-        </WorkflowSummaryPanel>
+        </Stack>
       </Collapse>
-    </Stack>
+    </>
   );
 }

@@ -37,8 +37,7 @@ export default function Filters() {
         lockedHint="Select a dataset to unlock Filters."
         ariaLabel="Filters step"
       >
-        <Stack>
-          <FiltersSummary />
+        <FiltersSummary />
           <Collapse
             in={lockedStep.filters.openPanel}
             timeout={{ enter: 500, exit: 250 }}
@@ -71,7 +70,6 @@ export default function Filters() {
               </Container>
             </Stack>
           </Collapse>
-        </Stack>
       </WorkflowSection>
     </>
   );

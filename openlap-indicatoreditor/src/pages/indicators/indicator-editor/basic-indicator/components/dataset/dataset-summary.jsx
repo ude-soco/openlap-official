@@ -2,10 +2,9 @@ import { useContext, useState } from "react";
 import { Chip, Collapse, Grid, Stack, Typography } from "@mui/material";
 import { BasicContext } from "../../basic-indicator";
 import ToggleSummaryButton from "../../../../../../common/components/toggle-summary-button/toggle-summary-button";
-import { ToggleEditIconButton } from "../../../../../../common/components/toggle-edit-button/toggle-edit-button";
+import { ToggleEditButton } from "../../../../../../common/components/toggle-edit-button/toggle-edit-button";
 import TipPopover from "../../../../../../common/components/tip-popover/tip-popover";
 import WorkflowStepHeader from "../../../../../../common/components/workflow-step-header/workflow-step-header.jsx";
-import WorkflowSummaryPanel from "../../../../../../common/components/workflow-summary-panel/workflow-summary-panel.jsx";
 
 export default function DatasetSummary() {
   const { dataset, lockedStep, setLockedStep } = useContext(BasicContext);
@@ -38,7 +37,7 @@ export default function DatasetSummary() {
   };
 
   return (
-    <Stack gap={2}>
+    <>
       <WorkflowStepHeader
         stepNumber={lockedStep.dataset.step}
         title="Dataset"
@@ -58,7 +57,7 @@ export default function DatasetSummary() {
           )
         }
         editToggle={
-          <ToggleEditIconButton
+          <ToggleEditButton
             openPanel={lockedStep.dataset.openPanel}
             togglePanel={handleTogglePanel}
           />
@@ -69,7 +68,10 @@ export default function DatasetSummary() {
         timeout={{ enter: 500, exit: 250 }}
         unmountOnExit
       >
-        <WorkflowSummaryPanel>
+        <Stack gap={1}>
+          <Typography variant="body2" gutterBottom>
+            Selection summary
+          </Typography>
           <Grid container spacing={1} alignItems="center">
             {handleCheckDatasetSelected() ? (
               <>
@@ -86,8 +88,8 @@ export default function DatasetSummary() {
               </Typography>
             )}
           </Grid>
-        </WorkflowSummaryPanel>
+        </Stack>
       </Collapse>
-    </Stack>
+    </>
   );
 }

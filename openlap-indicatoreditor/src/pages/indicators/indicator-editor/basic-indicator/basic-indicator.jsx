@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useSnackbar } from "notistack";
-import { Paper, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import dayjs from "dayjs";
 import { Condition } from "../utils/indicator-data";
 import Dataset from "./components/dataset/dataset";
@@ -13,6 +13,7 @@ import WorkflowStepper from "../../../../common/components/workflow-stepper/work
 import {
   getCurrentStep,
   getWorkflowSteps,
+  isStepRevealed,
 } from "./utils/basic-workflow-ui.js";
 
 export const BasicContext = createContext(undefined);
@@ -208,7 +209,7 @@ export default function BasicIndicator() {
           handleResetIfDatasetEmpty,
         }}
       >
-        <Stack gap={2}>
+        <Stack gap={3}>
           <PageHeader
             title="Basic Indicator"
             breadcrumbs={[
@@ -216,21 +217,14 @@ export default function BasicIndicator() {
               { label: "My Indicators", to: "/indicator" },
               { label: "Create an indicator", to: "/indicator/editor" },
             ]}
-            subtitle="Build your indicator step by step — each step unlocks the next."
           />
-          <Paper
-            variant="outlined"
-            sx={(theme) => ({
-              p: { xs: 2, md: 3 },
-              borderRadius: `${theme.custom.radii.card}px`,
-            })}
-          >
-            <WorkflowStepper steps={workflowSteps} current={currentStep} />
-          </Paper>
-          <Dataset />
-          <Filters />
-          <Analysis />
-          <Visualization />
+          <WorkflowStepper steps={workflowSteps} current={currentStep} />
+          <Stack gap={2}>
+            {isStepRevealed(lockedStep, "dataset") && <Dataset />}
+            {isStepRevealed(lockedStep, "filters") && <Filters />}
+            {isStepRevealed(lockedStep, "analysis") && <Analysis />}
+            {isStepRevealed(lockedStep, "visualization") && <Visualization />}
+          </Stack>
         </Stack>
       </BasicContext.Provider>
     </>

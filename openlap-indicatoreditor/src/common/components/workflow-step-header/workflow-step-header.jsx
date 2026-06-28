@@ -1,18 +1,19 @@
 import PropTypes from "prop-types";
-import { Box, Stack, Typography } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import { Chip, IconButton, Stack, Typography } from "@mui/material";
+import LockIcon from "@mui/icons-material/Lock";
 
 /**
- * Standard header row for one wizard step, so every step in the Basic Indicator
- * wizard presents the same affordances in the same order:
+ * Standard header row for one wizard step. Mirrors the ISC Creator step header
+ * exactly (see indicator-specification-cards/.../dataset-summary.jsx) so the
+ * Basic Indicator wizard and the ISC Creator read as the same product:
  *
- *   [ step badge ]  Title   helper   summaryToggle   …   editToggle
+ *   [ step Chip | lock ]  Title   helper   summaryToggle      editToggle
  *
- * It only owns layout + the leading badge (a numbered circle, or a lock glyph
- * when the step is locked). The helper (tip), summary visibility toggle, and
- * expand/collapse toggle are passed in as slots so their existing behaviour is
- * preserved verbatim — this component adds no interactivity of its own.
+ * It owns layout + the leading badge only (a primary Chip with the step number,
+ * or a lock IconButton when the step is locked). The helper (tip), summary
+ * visibility toggle, and the Open/Close edit toggle are passed in as slots so
+ * their existing behaviour is preserved verbatim — this component adds no
+ * interactivity of its own.
  */
 const WorkflowStepHeader = ({
   stepNumber,
@@ -24,34 +25,19 @@ const WorkflowStepHeader = ({
 }) => (
   <Stack
     direction="row"
-    alignItems="center"
     justifyContent="space-between"
-    gap={1}
+    alignItems="center"
+    sx={{ pb: 2 }}
   >
-    <Stack direction="row" alignItems="center" gap={1} sx={{ minWidth: 0 }}>
-      <Box
-        aria-hidden
-        sx={(theme) => ({
-          width: 28,
-          height: 28,
-          flexShrink: 0,
-          borderRadius: "50%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 14,
-          fontWeight: 600,
-          color: locked ? "text.disabled" : theme.palette.primary.contrastText,
-          backgroundColor: locked
-            ? alpha(theme.palette.text.primary, 0.08)
-            : theme.palette.primary.main,
-        })}
-      >
-        {locked ? <LockOutlinedIcon sx={{ fontSize: 16 }} /> : stepNumber}
-      </Box>
-      <Typography variant="subtitle1" fontWeight={600} noWrap>
-        {title}
-      </Typography>
+    <Stack direction="row" alignItems="center" gap={1}>
+      {locked ? (
+        <IconButton size="small">
+          <LockIcon />
+        </IconButton>
+      ) : (
+        <Chip label={stepNumber} color="primary" />
+      )}
+      <Typography>{title}</Typography>
       {helper}
       {summaryToggle}
     </Stack>

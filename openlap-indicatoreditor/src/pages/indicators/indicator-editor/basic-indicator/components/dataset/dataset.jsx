@@ -120,8 +120,7 @@ export default function Dataset() {
         status={getStepStatus(lockedStep, "dataset")}
         ariaLabel="Dataset step"
       >
-        <Stack gap={2}>
-          <DatasetSummary />
+        <DatasetSummary />
           <Collapse
             in={lockedStep.dataset.openPanel}
             timeout={{ enter: 500, exit: 250 }}
@@ -187,7 +186,6 @@ export default function Dataset() {
               />
             </Stack>
           </Collapse>
-        </Stack>
       </WorkflowSection>
     </>
   );

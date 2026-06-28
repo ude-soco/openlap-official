@@ -78,8 +78,7 @@ export default function Analysis() {
         lockedHint="Complete Filters to unlock Analysis."
         ariaLabel="Analysis step"
       >
-        <Stack>
-          <AnalysisSummary />
+        <AnalysisSummary />
           <Collapse
             in={lockedStep.analysis.openPanel}
             timeout={{ enter: 500, exit: 250 }}
@@ -166,7 +165,6 @@ export default function Analysis() {
               </Container>
             </Stack>
           </Collapse>
-        </Stack>
       </WorkflowSection>
     </>
   );

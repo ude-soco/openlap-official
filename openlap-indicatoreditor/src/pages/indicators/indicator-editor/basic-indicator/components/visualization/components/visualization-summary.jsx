@@ -2,10 +2,9 @@ import { useContext, useState } from "react";
 import { Chip, Collapse, Grid, Stack, Typography } from "@mui/material";
 import { BasicContext } from "../../../basic-indicator";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button";
-import { ToggleEditIconButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button";
+import { ToggleEditButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 import WorkflowStepHeader from "../../../../../../../common/components/workflow-step-header/workflow-step-header.jsx";
-import WorkflowSummaryPanel from "../../../../../../../common/components/workflow-summary-panel/workflow-summary-panel.jsx";
 
 export default function VisualizationSummary() {
   const { visualization, lockedStep, setLockedStep } = useContext(BasicContext);
@@ -51,7 +50,7 @@ export default function VisualizationSummary() {
   const locked = lockedStep.visualization.locked;
 
   return (
-    <Stack gap={2}>
+    <>
       <WorkflowStepHeader
         stepNumber={lockedStep.visualization.step}
         title="Visualization"
@@ -75,7 +74,7 @@ export default function VisualizationSummary() {
           )
         }
         editToggle={
-          <ToggleEditIconButton
+          <ToggleEditButton
             openPanel={lockedStep.visualization.openPanel}
             togglePanel={handleTogglePanel}
           />
@@ -88,7 +87,10 @@ export default function VisualizationSummary() {
         timeout={{ enter: 500, exit: 250 }}
         unmountOnExit
       >
-        <WorkflowSummaryPanel>
+        <Stack gap={1}>
+          <Typography variant="body2" gutterBottom>
+            Selection summary
+          </Typography>
           {handleCheckVisualizationSelected("library") && (
             <Grid container spacing={1} alignItems="center">
               <Typography>Selected Visualization Library</Typography>
@@ -116,8 +118,8 @@ export default function VisualizationSummary() {
               })}
             </Grid>
           )}
-        </WorkflowSummaryPanel>
+        </Stack>
       </Collapse>
-    </Stack>
+    </>
   );
 }

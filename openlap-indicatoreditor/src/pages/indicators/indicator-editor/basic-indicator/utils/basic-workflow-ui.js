@@ -53,6 +53,19 @@ export const getCurrentStep = (lockedStep) =>
   BASIC_STEP_ORDER.find((key) => !isStepLocked(lockedStep, key)) ??
   "dataset";
 
+/** The first still-locked step (the one being unlocked next), or null. */
+export const getNextLockedStep = (lockedStep) =>
+  BASIC_STEP_ORDER.find((key) => isStepLocked(lockedStep, key)) ?? null;
+
+/**
+ * Whether a step's card should be rendered yet. Mirrors the ISC Creator, which
+ * reveals steps progressively: every unlocked step plus the single next locked
+ * step (so the user sees what's coming) — but nothing beyond that. Read-only:
+ * it never changes `lockedStep`, the unlock conditions, or step order.
+ */
+export const isStepRevealed = (lockedStep, key) =>
+  !isStepLocked(lockedStep, key) || key === getNextLockedStep(lockedStep);
+
 const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 // Short, guarded summary shown under each stepper node (real data only).

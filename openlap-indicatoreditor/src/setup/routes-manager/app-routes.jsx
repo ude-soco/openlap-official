@@ -106,9 +106,15 @@ const ManageAnalytics = lazy(() =>
 
 // Routes that opt out of the standard "content sheet" (Container + padded Paper
 // card) and render full-bleed instead — for editor/workspace pages where the
-// card-in-card framing is undesirable (e.g. the ISC Creator workspace, whose
-// own panels already provide framing). Other authenticated routes are unaffected.
-const FULL_BLEED_PATH_PREFIXES = ["/isc/creator", "/isc/new", "/isc/drafts"];
+// card-in-card framing is undesirable (e.g. the ISC Creator workspace and the
+// Basic Indicator wizard, whose own step panels already provide framing). Other
+// authenticated routes are unaffected.
+const FULL_BLEED_PATH_PREFIXES = [
+  "/isc/creator",
+  "/isc/new",
+  "/isc/drafts",
+  "/indicator/editor/basic",
+];
 // Full-bleed also for the edit bootstrap route /isc/:id/edit.
 const isFullBleedPath = (pathname) =>
   FULL_BLEED_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
