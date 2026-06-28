@@ -53,6 +53,15 @@ const ChartAbout = ({ chartType }) => {
             </Stack>
           </Box>
         )}
+
+        {meta.alternative && (
+          <Box>
+            <FieldLabel>Optional</FieldLabel>
+            <Typography variant="body2" color="text.secondary">
+              {meta.alternative}
+            </Typography>
+          </Box>
+        )}
       </Stack>
     </SectionCard>
   );

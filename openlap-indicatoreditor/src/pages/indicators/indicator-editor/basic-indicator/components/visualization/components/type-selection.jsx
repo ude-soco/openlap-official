@@ -167,7 +167,7 @@ const TypeSelection = () => {
 
   return (
     <SectionCard
-      title="Choose a visualization"
+      title="Recommended visualizations"
       helper="Charts are grouped by how well they fit your analysed data."
     >
       <Stack gap={4}>

@@ -279,10 +279,10 @@ export default function Visualization() {
               <>
                 <TypeInputSelection />
                 <Grid container spacing={3} alignItems="flex-start">
-                  <Grid size={{ xs: 12, lg: 8 }}>
+                  <Grid size={{ xs: 12, lg: "grow" }} sx={{ minWidth: 0 }}>
                     <SectionCard
                       title="Live preview"
-                      helper="A live preview of your indicator with the chosen chart and options."
+                      helper="Updates live as you adjust the chart inputs and options above."
                     >
                       {state.previewError ? (
                         <Alert severity="error">
@@ -306,8 +306,10 @@ export default function Visualization() {
                       )}
                     </SectionCard>
                   </Grid>
-                  <Grid size={{ xs: 12, lg: 4 }}>
-                    <ChartCustomizationPanel />
+                  <Grid size={{ xs: 12, lg: "auto" }}>
+                    <Box sx={{ width: { xs: "100%", lg: 340 } }}>
+                      <ChartCustomizationPanel />
+                    </Box>
                   </Grid>
                 </Grid>
                 <ChartAbout chartType={visualization.selectedType} />

@@ -43,7 +43,13 @@ const ChartCustomizationPanel = () => {
 
   return (
     <>
-      <Typography gutterBottom>Customization panel</Typography>
+      <Typography
+        variant="subtitle2"
+        color="text.secondary"
+        gutterBottom
+      >
+        Customization panel
+      </Typography>
       <Grid container component={Paper} variant="outlined">
         <Grid size={{ xs: 12 }}>
           <TabContext value={value}>

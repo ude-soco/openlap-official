@@ -8,8 +8,10 @@ import SectionCard from "../../../../../../../common/components/section-card/sec
  * Compact, read-only confidence checklist shown just above Save. It reflects
  * the current wizard state (it does not gate or change save behavior).
  */
-const ReadinessSummary = ({ items }) => (
-  <SectionCard title="Ready to save">
+const ReadinessSummary = ({ items }) => {
+  const allDone = items.every((item) => item.done);
+  return (
+    <SectionCard title={allDone ? "Everything looks good" : "Almost there"}>
     <Stack gap={1}>
       {items.map((item) => (
         <Stack key={item.label} direction="row" gap={1} alignItems="center">
@@ -29,9 +31,10 @@ const ReadinessSummary = ({ items }) => (
           </Typography>
         </Stack>
       ))}
-    </Stack>
-  </SectionCard>
-);
+      </Stack>
+    </SectionCard>
+  );
+};
 
 ReadinessSummary.propTypes = {
   items: PropTypes.arrayOf(
