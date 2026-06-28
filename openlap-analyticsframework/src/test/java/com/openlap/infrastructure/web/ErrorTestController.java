@@ -57,12 +57,12 @@ public class ErrorTestController {
   }
 
   /**
-   * Routed by a still-unmigrated module's legacy advice (IndicatorExceptionHandler →
-   * ExceptionResponse), not the new handler.
+   * analytics_module is now migrated: {@link IndicatorNotFoundException} extends the shared
+   * NotFoundException, so it is rendered by the unified handler (no legacy module advice anymore).
    */
-  @GetMapping("/legacy-indicator")
-  public void legacyIndicator() {
-    throw new IndicatorNotFoundException("legacy indicator not found");
+  @GetMapping("/migrated-indicator")
+  public void migratedIndicator() {
+    throw new IndicatorNotFoundException("indicator not found");
   }
 
   @Data

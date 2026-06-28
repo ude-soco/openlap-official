@@ -1,16 +1,14 @@
 package com.openlap.analytics_module.exceptions.analytics_question;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.NotFoundException;
 
-@Slf4j
-public class AnalyticsQuestionNotFoundException extends RuntimeException {
+/** Requested analytics question does not exist → HTTP 404. Rendered by the unified handler. */
+public class AnalyticsQuestionNotFoundException extends NotFoundException {
   public AnalyticsQuestionNotFoundException(String message) {
-    super(message);
-    log.error(message);
+    super("ANALYTICS_QUESTION_NOT_FOUND", message);
   }
 
   public AnalyticsQuestionNotFoundException(String message, Throwable cause) {
-    super(message, cause);
-    log.error(message, cause);
+    super("ANALYTICS_QUESTION_NOT_FOUND", message, cause);
   }
 }

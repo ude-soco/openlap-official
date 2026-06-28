@@ -1,16 +1,17 @@
 package com.openlap.analytics_module.exceptions.indicator;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.ForbiddenException;
 
-@Slf4j
-public class IndicatorManipulationNotAllowed extends RuntimeException {
+/**
+ * Caller is not permitted to manipulate the indicator (e.g. modify one they do not own) → HTTP 403.
+ * Rendered by the unified error handler.
+ */
+public class IndicatorManipulationNotAllowed extends ForbiddenException {
   public IndicatorManipulationNotAllowed(String message) {
-    super(message);
-    log.warn(message);
+    super("INDICATOR_MANIPULATION_NOT_ALLOWED", message);
   }
 
   public IndicatorManipulationNotAllowed(String message, Throwable cause) {
-    super(message, cause);
-    log.warn(message, cause);
+    super("INDICATOR_MANIPULATION_NOT_ALLOWED", message, cause);
   }
 }

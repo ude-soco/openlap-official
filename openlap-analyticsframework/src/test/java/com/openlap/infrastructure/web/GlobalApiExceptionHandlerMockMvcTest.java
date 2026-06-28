@@ -138,16 +138,15 @@ public class GlobalApiExceptionHandlerMockMvcTest {
   }
 
   @Test
-  public void legacyModuleAdviceStillOwnsDomainException() throws Exception {
-    // An unmigrated module's legacy advice (IndicatorExceptionHandler) -> ExceptionResponse
-    // {message, httpStatus}; NOT the new envelope. (The user module is now migrated, so its
-    // exceptions use the unified envelope — see UserModuleErrorMappingMockMvcTest.)
+  public void migratedModuleExceptionUsesUnifiedEnvelope() throws Exception {
+    // analytics_module is now migrated (IndicatorExceptionHandler removed): IndicatorNotFoundException
+    // extends the shared NotFoundException, so it renders the unified envelope with a stable code.
+    // (The legacy central handler still owns the shared ServiceException — see the test above.)
     mockMvc
-        .perform(get("/test/legacy-indicator"))
+        .perform(get("/test/migrated-indicator"))
         .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.code").doesNotExist())
-        .andExpect(jsonPath("$.timestamp").doesNotExist())
-        .andExpect(jsonPath("$.message").value("legacy indicator not found"))
+        .andExpect(jsonPath("$.code").value("INDICATOR_NOT_FOUND"))
+        .andExpect(jsonPath("$.message").value("indicator not found"))
         .andExpect(jsonPath("$.cause").doesNotExist());
   }
 }
