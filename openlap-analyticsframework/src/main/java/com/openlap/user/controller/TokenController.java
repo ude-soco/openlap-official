@@ -6,6 +6,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import com.auth0.jwt.JWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openlap.infrastructure.error.ErrorResponseWriter;
+import com.openlap.security.AuthTokenProperties;
 import com.openlap.user.dto.request.TokenRequest;
 import com.openlap.user.entities.User;
 import com.openlap.user.services.TokenService;
@@ -36,6 +37,7 @@ public class TokenController {
   private final UserService userService;
   private final TokenService tokenService;
   private final ErrorResponseWriter errorResponseWriter;
+  private final AuthTokenProperties authTokenProperties;
 
   /** This API is to refresh the access token if the access token gets expired. */
   @GetMapping("/refresh")
@@ -46,10 +48,13 @@ public class TokenController {
       try {
         TokenRequest tokenRequest = tokenService.verifyToken(request);
         User user = userService.getUserByEmail(tokenRequest.getUserEmail());
+        Date issuedAt = new Date();
         String access_token =
             JWT.create()
                 .withSubject(user.getEmail())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 10 * 60 * 1000))
+                .withIssuedAt(issuedAt)
+                .withExpiresAt(
+                    new Date(issuedAt.getTime() + authTokenProperties.getAccessTokenTtlMillis()))
                 .withIssuer(request.getRequestURL().toString())
                 .withClaim(
                     "roles",

@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openlap.infrastructure.error.ApiErrorResponseFactory;
 import com.openlap.infrastructure.error.ErrorResponseWriter;
+import com.openlap.security.AuthTokenProperties;
 import java.util.Map;
 import org.junit.Test;
 import org.springframework.mock.web.MockFilterChain;
@@ -31,6 +32,8 @@ import org.springframework.security.core.userdetails.User;
 public class CustomAuthenticationFilterTest {
 
   private static final String SECRET = "test-secret-key-that-is-long-enough-1234567890";
+  private static final long ACCESS_TTL_MINUTES = 15;
+  private static final long REFRESH_TTL_DAYS = 5;
 
   private final AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -38,7 +41,8 @@ public class CustomAuthenticationFilterTest {
       new CustomAuthenticationFilter(
           authenticationManager,
           SECRET,
-          new ErrorResponseWriter(new ApiErrorResponseFactory(true), objectMapper));
+          new ErrorResponseWriter(new ApiErrorResponseFactory(true), objectMapper),
+          new AuthTokenProperties(ACCESS_TTL_MINUTES, REFRESH_TTL_DAYS, 30));
 
   @Test
   @SuppressWarnings("unchecked")
@@ -62,6 +66,36 @@ public class CustomAuthenticationFilterTest {
     assertThat(accessToken.getSubject()).isEqualTo("admin@mail.com");
     assertThat(accessToken.getClaim("roles").asList(String.class))
         .containsExactly("ROLE_SUPER_ADMIN");
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void loginTokensUseTheConfiguredLifetimes() throws Exception {
+    User principal =
+        new User("u@mail.com", "ignored", singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+    Authentication authentication =
+        new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/login");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    filter.successfulAuthentication(request, response, new MockFilterChain(), authentication);
+
+    Map<String, String> body = objectMapper.readValue(response.getContentAsByteArray(), Map.class);
+    Algorithm algorithm = Algorithm.HMAC256(SECRET.getBytes());
+    DecodedJWT access = JWT.require(algorithm).build().verify(body.get("access_token"));
+    DecodedJWT refresh = JWT.require(algorithm).build().verify(body.get("refresh_token"));
+
+    // exp - iat (in seconds) equals the configured TTL exactly (JWT stores whole seconds).
+    long accessTtlSeconds = ttlSeconds(access);
+    long refreshTtlSeconds = ttlSeconds(refresh);
+    assertThat(accessTtlSeconds).isEqualTo(ACCESS_TTL_MINUTES * 60);
+    assertThat(refreshTtlSeconds).isEqualTo(REFRESH_TTL_DAYS * 24 * 60 * 60);
+    // Regression guard: the old 24h-access / 10min-access mismatch must be gone.
+    assertThat(accessTtlSeconds).isNotEqualTo(24 * 60 * 60).isNotEqualTo(10 * 60);
+  }
+
+  private static long ttlSeconds(DecodedJWT token) {
+    return (token.getExpiresAt().getTime() - token.getIssuedAt().getTime()) / 1000;
   }
 
   @Test

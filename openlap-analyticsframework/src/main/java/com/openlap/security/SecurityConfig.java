@@ -38,6 +38,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
   private final ErrorResponseWriter errorResponseWriter;
   private final RestAuthenticationEntryPoint authenticationEntryPoint;
   private final RestAccessDeniedHandler accessDeniedHandler;
+  private final AuthTokenProperties authTokenProperties;
 
   @Override
   protected void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -88,7 +89,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         .accessDeniedHandler(accessDeniedHandler);
 
     http.addFilter(
-        new CustomAuthenticationFilter(authenticationManagerBean(), jwtToken, errorResponseWriter));
+        new CustomAuthenticationFilter(
+            authenticationManagerBean(), jwtToken, errorResponseWriter, authTokenProperties));
     http.addFilterBefore(
         new CustomAuthorizationFilter(tokenService, errorResponseWriter),
         UsernamePasswordAuthenticationFilter.class);

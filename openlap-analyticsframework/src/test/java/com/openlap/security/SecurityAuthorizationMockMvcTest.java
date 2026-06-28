@@ -49,6 +49,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
     })
 @Import({
   SecurityConfig.class,
+  AuthTokenProperties.class,
   ApiErrorResponseFactory.class,
   ErrorResponseWriter.class,
   RestAuthenticationEntryPoint.class,

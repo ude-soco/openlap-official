@@ -6,6 +6,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openlap.infrastructure.error.ErrorResponseWriter;
+import com.openlap.security.AuthTokenProperties;
 import com.openlap.user.exception.user.UserNotFoundException;
 import java.io.IOException;
 import java.util.Date;
@@ -30,14 +31,17 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
   private final String jwtToken;
   private final AuthenticationManager authenticationManager;
   private final ErrorResponseWriter errorResponseWriter;
+  private final AuthTokenProperties tokenProperties;
 
   public CustomAuthenticationFilter(
       AuthenticationManager authenticationManager,
       String jwtToken,
-      ErrorResponseWriter errorResponseWriter) {
+      ErrorResponseWriter errorResponseWriter,
+      AuthTokenProperties tokenProperties) {
     this.authenticationManager = authenticationManager;
     this.jwtToken = jwtToken;
     this.errorResponseWriter = errorResponseWriter;
+    this.tokenProperties = tokenProperties;
   }
 
   @Override
@@ -66,10 +70,12 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
       throws IOException {
     User user = (User) authentication.getPrincipal();
     Algorithm algorithm = Algorithm.HMAC256(jwtToken.getBytes());
+    Date issuedAt = new Date();
     String access_token =
         JWT.create()
             .withSubject(user.getUsername())
-            .withExpiresAt(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))
+            .withIssuedAt(issuedAt)
+            .withExpiresAt(new Date(issuedAt.getTime() + tokenProperties.getAccessTokenTtlMillis()))
             .withIssuer(request.getRequestURL().toString())
             .withClaim(
                 "roles",
@@ -80,7 +86,8 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     String refresh_token =
         JWT.create()
             .withSubject(user.getUsername())
-            .withExpiresAt(new Date(System.currentTimeMillis() + 5 * 24 * 60 * 60 * 1000))
+            .withIssuedAt(issuedAt)
+            .withExpiresAt(new Date(issuedAt.getTime() + tokenProperties.getRefreshTokenTtlMillis()))
             .withIssuer(request.getRequestURL().toString())
             .sign(algorithm);
 
