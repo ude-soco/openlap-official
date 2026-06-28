@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   Button,
   Grid,
@@ -15,6 +16,7 @@ import {
   Container,
 } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
+import { useSnackbar } from "notistack";
 import { BasicContext } from "../../basic-indicator";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
 import VisualizationSummary from "./components/visualization-summary";
@@ -56,16 +58,34 @@ export default function Visualization() {
       openDialog: false,
       loading: false,
     },
+    previewLoading: false,
+    previewError: false,
   });
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     if (
-      visualization.inputs.length !== 0 &&
-      allInputsHaveSelected(visualization.inputs) &&
-      Object.keys(analysis.analyzedData).length > 0
-    )
-      handleLoadPreviewVisualization().then((previewData) => {
+      visualization.inputs.length === 0 ||
+      !allInputsHaveSelected(visualization.inputs) ||
+      Object.keys(analysis.analyzedData).length === 0
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    // Clear any stale preview and mark loading before the request starts, so a
+    // previously-rendered chart never lingers under a new (possibly failing)
+    // selection and the page stays in a known state.
+    setState((p) => ({ ...p, previewLoading: true, previewError: false }));
+    setVisualization((p) => ({
+      ...p,
+      previewData: { displayCode: [], scriptData: {} },
+    }));
+
+    handleLoadPreviewVisualization().then((previewData) => {
+      if (cancelled) return;
+      if (previewData && previewData.displayCode) {
         setVisualization((p) => ({
           ...p,
           previewData: {
@@ -74,7 +94,25 @@ export default function Visualization() {
             scriptData: previewData.scriptData,
           },
         }));
-      });
+        setState((p) => ({ ...p, previewLoading: false, previewError: false }));
+      } else {
+        // Preview failed (the rejection was already logged in
+        // handleLoadPreviewVisualization). Keep the step usable and surface a
+        // friendly message instead of crashing on `previewData.displayCode`.
+        setState((p) => ({ ...p, previewLoading: false, previewError: true }));
+        enqueueSnackbar(
+          "Preview could not be generated for the selected chart. Please choose another chart or adjust the inputs.",
+          { variant: "error" }
+        );
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+    // Re-run the preview only when the chart inputs/params change (not when the
+    // callbacks or analyzedData identity change). Deps are intentional.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visualization.inputs, visualization.params]);
 
   const handleLoadPreviewVisualization = async () => {
@@ -157,7 +195,9 @@ export default function Visualization() {
     return (
       visualization.inputs.length === 0 ||
       !allInputsHaveSelected(visualization.inputs) ||
-      Object.keys(analysis.analyzedData).length === 0
+      Object.keys(analysis.analyzedData).length === 0 ||
+      state.previewError ||
+      !visualization.previewData?.displayCode?.length
     );
   };
 
@@ -200,7 +240,12 @@ export default function Visualization() {
                   <TypeInputSelection />
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 12, lg: "grow", xl: 8 }}>
-                      {visualization.previewData.displayCode.length !== 0 ? (
+                      {state.previewError ? (
+                        <Alert severity="error">
+                          Preview could not be generated for the selected chart.
+                          Please choose another chart or adjust the inputs.
+                        </Alert>
+                      ) : visualization.previewData?.displayCode?.length ? (
                         <ChartPreview previewData={visualization.previewData} />
                       ) : (
                         <Skeleton variant="rectangular" height={565} />

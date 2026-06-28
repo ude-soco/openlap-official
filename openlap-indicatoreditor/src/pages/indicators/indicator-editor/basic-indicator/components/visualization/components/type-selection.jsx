@@ -199,7 +199,7 @@ function buildRecommendationExplanationTooltip(chartType, analyzedData) {
         <b>Why {chartType.name} is recommended?</b>
       </Typography>
 
-      <Typography gutterBottom>
+      <Typography gutterBottom component="div">
         {chartType.name} requires the following number of data types as inputs:
         <br />
         {Object.entries(requiredTypeCount).map(([type, count]) => (
@@ -209,7 +209,7 @@ function buildRecommendationExplanationTooltip(chartType, analyzedData) {
         ))}
       </Typography>
 
-      <Typography gutterBottom>
+      <Typography gutterBottom component="div">
         Your analyzed data has the following number of data types:
         <br />
         {Object.entries(requiredTypeCount).map(([type]) => {
@@ -258,7 +258,7 @@ function buildRequirementsTooltip(chartType, analyzedData) {
       <Typography gutterBottom>
         <b>Why {chartType.name} is not recommended?</b>
       </Typography>
-      <Typography gutterBottom>
+      <Typography gutterBottom component="div">
         {chartType.name} requires the following number of data types as inputs:
         <br />
         {Object.entries(requiredTypeCount).map(([type, count]) => (
@@ -268,7 +268,7 @@ function buildRequirementsTooltip(chartType, analyzedData) {
         ))}
       </Typography>
 
-      <Typography gutterBottom sx={{ mt: 1 }}>
+      <Typography gutterBottom component="div" sx={{ mt: 1 }}>
         However, your analyzed data contains:
         <br />
         {Object.entries(requiredTypeCount).map(([type]) => (
