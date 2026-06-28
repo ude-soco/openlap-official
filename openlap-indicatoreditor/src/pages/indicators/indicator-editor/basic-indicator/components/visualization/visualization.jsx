@@ -29,6 +29,9 @@ import {
   buildVisRef,
 } from "../../utils/query-builder";
 import TypeInputSelection from "./components/type-input-selection";
+import ChartWhy from "./components/chart-why";
+import ChartAbout from "./components/chart-about";
+import ReadinessSummary from "./components/readiness-summary";
 import ChartPreview from "../../../components/chart-preview";
 import ChartCustomizationPanel from "./components/customization/chart-customization-panel";
 import WorkflowSection from "../../../../../../common/components/workflow-section/workflow-section.jsx";
@@ -218,6 +221,27 @@ export default function Visualization() {
     visualization.inputs.length > 0 &&
     Object.keys(analysis.analyzedData).length > 0;
 
+  // Read-only confidence checklist shown above Save. Reflects state only — it
+  // does not gate saving (Save stays governed by handleCheckDisabled()).
+  const readinessItems = [
+    {
+      label: "Dataset selected",
+      done: dataset.selectedLRSList.length > 0,
+    },
+    {
+      label: "Filters configured",
+      done: filters.selectedActivities.length > 0,
+    },
+    {
+      label: "Analysis preview generated",
+      done: Object.keys(analysis.analyzedData).length > 0,
+    },
+    {
+      label: "Chart selected and configured",
+      done: !handleCheckDisabled(),
+    },
+  ];
+
   return (
     <>
       <WorkflowSection
@@ -242,6 +266,13 @@ export default function Visualization() {
                   <LinearProgress aria-label="Loading available charts" />
                 </SectionCard>
               )
+            ) : undefined}
+
+            {visualization.selectedType.id ? (
+              <ChartWhy
+                chartType={visualization.selectedType}
+                analyzedData={analysis.analyzedData}
+              />
             ) : undefined}
 
             {configReady ? (
@@ -279,9 +310,11 @@ export default function Visualization() {
                     <ChartCustomizationPanel />
                   </Grid>
                 </Grid>
+                <ChartAbout chartType={visualization.selectedType} />
               </>
             ) : undefined}
 
+            <ReadinessSummary items={readinessItems} />
             <Divider />
             <Grid container justifyContent="center" alignItems="center" spacing={1}>
               <Grid size={{ xs: 12, sm: 6 }}>
