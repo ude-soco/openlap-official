@@ -1,16 +1,17 @@
 package com.openlap.analytics_statements.exception;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.ForbiddenException;
 
-@Slf4j
-public class LrsManipulationException extends RuntimeException {
+/**
+ * Caller is not permitted to manipulate the LRS, or a confirmation is required before a destructive
+ * change → HTTP 403 (status preserved). Rendered by the unified error handler.
+ */
+public class LrsManipulationException extends ForbiddenException {
   public LrsManipulationException(String message) {
-    super(message);
-    log.error(message);
+    super("LRS_MANIPULATION_NOT_ALLOWED", message);
   }
 
   public LrsManipulationException(String message, Throwable cause) {
-    super(message, cause);
-    log.error(message, cause);
+    super("LRS_MANIPULATION_NOT_ALLOWED", message, cause);
   }
 }

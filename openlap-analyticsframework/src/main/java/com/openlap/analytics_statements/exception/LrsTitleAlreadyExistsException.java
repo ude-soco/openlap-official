@@ -1,16 +1,14 @@
 package com.openlap.analytics_statements.exception;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.ConflictException;
 
-@Slf4j
-public class LrsTitleAlreadyExistsException extends RuntimeException {
+/** An LRS with the requested title already exists → HTTP 409. Rendered by the unified handler. */
+public class LrsTitleAlreadyExistsException extends ConflictException {
   public LrsTitleAlreadyExistsException(String message) {
-    super(message);
-    log.error(message);
+    super("LRS_ALREADY_EXISTS", message);
   }
 
   public LrsTitleAlreadyExistsException(String message, Throwable cause) {
-    super(message, cause);
-    log.error(message, cause);
+    super("LRS_ALREADY_EXISTS", message, cause);
   }
 }

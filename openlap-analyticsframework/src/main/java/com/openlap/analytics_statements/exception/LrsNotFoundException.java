@@ -1,16 +1,14 @@
 package com.openlap.analytics_statements.exception;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.NotFoundException;
 
-@Slf4j
-public class LrsNotFoundException extends RuntimeException {
+/** Requested LRS store does not exist → HTTP 404. Rendered by the unified error handler. */
+public class LrsNotFoundException extends NotFoundException {
   public LrsNotFoundException(String message) {
-    super(message);
-    log.error(message);
+    super("LRS_NOT_FOUND", message);
   }
 
   public LrsNotFoundException(String message, Throwable cause) {
-    super(message, cause);
-    log.error(message, cause);
+    super("LRS_NOT_FOUND", message, cause);
   }
 }
