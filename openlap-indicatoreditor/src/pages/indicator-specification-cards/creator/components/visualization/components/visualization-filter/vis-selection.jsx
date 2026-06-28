@@ -10,7 +10,7 @@ import RadarChart from "../../../finalize/components/radar-chart.jsx";
 import TreeMap from "../../../finalize/components/treemap.jsx";
 import PolarAreaChart from "../../../finalize/components/polar-area-chart.jsx";
 import LineChart from "../../../finalize/components/line-chart.jsx";
-import { ISCContext } from "../../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../../isc-context.js";
 import { VisualizationTypes } from "../../../../utils/data/config.js";
 
 const VisSelection = ({ customize, handleToggleCustomizePanel }) => {

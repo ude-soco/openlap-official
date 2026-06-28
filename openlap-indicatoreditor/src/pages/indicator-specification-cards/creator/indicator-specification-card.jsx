@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { Breadcrumbs, Divider, Link, Stack, Typography } from "@mui/material";
-import { Link as RouterLink } from "react-router-dom";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { Stack, Typography } from "@mui/material";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { v4 as uuidv4 } from "uuid";
 import SpecifyRequirements from "./components/specify-requirements/specify-requirements.jsx";
@@ -8,21 +8,94 @@ import ChoosePath from "./components/choose-path/choose-path.jsx";
 import Visualization from "./components/visualization/visualization.jsx";
 import Dataset from "./components/dataset/dataset.jsx";
 import Finalize from "./components/finalize/finalize.jsx";
+import ISCWorkspace from "./components/isc-workspace/isc-workspace.jsx";
+import WorkflowStepper from "./components/workflow-stepper/workflow-stepper.jsx";
 import { DataTypes } from "./utils/data/config.js";
+import { LEGACY_STEP_CODE } from "./utils/isc-constants.js";
+import { getWorkflowSteps, getCurrentStep } from "./utils/isc-selectors.js";
+import { withOnlyStepExpanded } from "./utils/isc-workflow-ui.js";
+import { getDefaultVisRef } from "./utils/isc-workflow-reset.js";
+import {
+  createDraft,
+  discardDraft,
+  publishDraft,
+  updateDraft,
+} from "./utils/isc-draft-api.js";
+import LeaveEditDialog from "./components/leave-edit-dialog.jsx";
+import { getFinalizeReadiness } from "./components/finalize/utils/finalize-readiness.js";
+import { useNavigationGuard } from "../../../setup/routes-manager/navigation-guard-context.js";
+import { ISCContext } from "./isc-context.js";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 
-export const ISCContext = createContext(undefined);
+// How long after the last change to autosave the draft to the backend.
+const AUTOSAVE_DEBOUNCE_MS = 2000;
+
+// Derive the creator's draft metadata from a restored sessionStorage object.
+// Backend-backed drafts carry an explicit `draftMeta`; older sessions are kept
+// working via a LEGACY_SESSION fallback (publish falls back to create/update).
+const initDraftMeta = (saved) => {
+  if (saved && saved.draftMeta) {
+    return { lastAutosavedAt: null, autosaveError: null, ...saved.draftMeta };
+  }
+  if (saved && saved.id) {
+    // Legacy edit session (old behavior wrote the source id into the draft).
+    return {
+      mode: "LEGACY_SESSION",
+      draftId: null,
+      sourceId: saved.id,
+      status: "SAVED",
+      lastAutosavedAt: null,
+      autosaveError: null,
+    };
+  }
+  if (saved) {
+    // Legacy new session with no id.
+    return {
+      mode: "LEGACY_SESSION",
+      draftId: null,
+      sourceId: null,
+      status: null,
+      lastAutosavedAt: null,
+      autosaveError: null,
+    };
+  }
+  // Fresh new ISC → a backend draft will be created lazily on first autosave.
+  return {
+    mode: "NEW_DRAFT",
+    draftId: null,
+    sourceId: null,
+    status: "DRAFT",
+    lastAutosavedAt: null,
+    autosaveError: null,
+  };
+};
 
 const IndicatorSpecificationCard = () => {
-  const { SESSION_ISC } = useContext(AuthContext);
+  const { SESSION_ISC, api } = useContext(AuthContext);
   const { enqueueSnackbar } = useSnackbar();
-  const [id, setId] = useState(() => {
+  const { id: routeId } = useParams();
+  const navigate = useNavigate();
+  // `id` is only initialized from the restored draft; it is never set via state
+  // afterwards (the setter was unused), so no setter is destructured.
+  const [id] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION_ISC);
     return savedState
       ? JSON.parse(savedState).id
         ? JSON.parse(savedState).id
         : null
       : null;
+  });
+
+  // Frontend draft metadata — kept SEPARATE from the four domain slices and
+  // never sent inside the backend payload. The database is the source of truth;
+  // sessionStorage holds only a local recovery copy (incl. this metadata).
+  const [draftMeta, setDraftMeta] = useState(() => {
+    const savedState = sessionStorage.getItem(SESSION_ISC);
+    try {
+      return initDraftMeta(savedState ? JSON.parse(savedState) : null);
+    } catch {
+      return initDraftMeta(null);
+    }
   });
 
   const [requirements, setRequirements] = useState(() => {
@@ -82,37 +155,7 @@ const IndicatorSpecificationCard = () => {
 
   const [visRef, setVisRef] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION_ISC);
-    return savedState
-      ? JSON.parse(savedState).visRef
-      : {
-          filter: {
-            type: "",
-          },
-          chart: {
-            type: "",
-          },
-          data: {
-            series: [],
-            options: {},
-            axisOptions: {
-              selectedXAxis: "",
-              selectedYAxis: "",
-              selectedLabel: "", // * StackedBar/Line
-              selectedBarValue: "", // * StackedBar/Line
-              selectedCategory: "", // * TreeMap
-              selectedXValue: "", // * TreeMap
-              selectedValue: "", // * TreeMap
-              xAxisOptions: [],
-              yAxisOptions: [],
-              labelOptions: [], // * StackedBar/Line
-              barValueOptions: [], // * StackedBar/Line
-              categoryOptions: [], // * TreeMap
-              xValueOptions: [], // * TreeMap
-              valueOptions: [], // * TreeMap
-            },
-          },
-          edit: false,
-        };
+    return savedState ? JSON.parse(savedState).visRef : getDefaultVisRef();
   });
 
   const [lockedStep, setLockedStep] = useState(() => {
@@ -123,32 +166,38 @@ const IndicatorSpecificationCard = () => {
           requirements: {
             locked: false,
             openPanel: true,
-            step: "1",
+            step: LEGACY_STEP_CODE.REQUIREMENTS,
           },
-          path: { locked: true, openPanel: false, step: "2" },
+          path: { locked: true, openPanel: false, step: LEGACY_STEP_CODE.PATH },
           visualization: {
             locked: true,
             openPanel: false,
-            step: "0",
+            step: LEGACY_STEP_CODE.NONE,
           },
           dataset: {
             locked: true,
             openPanel: false,
-            step: "0",
+            step: LEGACY_STEP_CODE.NONE,
           },
           finalize: {
             locked: true,
             openPanel: false,
-            step: "5",
+            step: LEGACY_STEP_CODE.FINALIZE,
           },
         };
   });
 
-  const prevDependencies = useRef({
-    requirements,
-    dataset,
-    visRef,
-    lockedStep,
+  // ---- Autosave plumbing (refs avoid stale closures in the debounced saver) ----
+  const latestDomainRef = useRef({ requirements, dataset, visRef, lockedStep });
+  const draftMetaRef = useRef(draftMeta);
+  const savingRef = useRef(false);
+  const pendingRef = useRef(false);
+  const lastSavedRef = useRef(null); // serialized domain of the last successful autosave
+  const autosaveTimer = useRef(null);
+
+  useEffect(() => {
+    latestDomainRef.current = { requirements, dataset, visRef, lockedStep };
+    draftMetaRef.current = draftMeta;
   });
 
   useEffect(() => {
@@ -211,42 +260,205 @@ const IndicatorSpecificationCard = () => {
     });
   }, [requirements.data]);
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      let sessionISC = {
-        id,
-        requirements,
-        dataset,
-        visRef,
-        lockedStep,
-      };
-      // TODO: Add date to the session
-      sessionStorage.setItem(SESSION_ISC, JSON.stringify(sessionISC));
+  // Runs the actual backend autosave from refs (latest state, current draftId),
+  // guarding against overlapping saves. Backend-backed modes only; legacy
+  // sessions remain sessionStorage-only (see the recovery effect below).
+  const runAutosave = useCallback(async () => {
+    const meta = draftMetaRef.current;
+    const isBackendMode = meta.mode === "NEW_DRAFT" || meta.mode === "EDIT_DRAFT";
+    if (!isBackendMode) return;
+    if (savingRef.current) {
+      pendingRef.current = true; // coalesce: re-run once the in-flight save finishes
+      return;
+    }
+    const domain = latestDomainRef.current;
+    const serialized = JSON.stringify(domain);
+    if (serialized === lastSavedRef.current) return; // nothing changed
 
-      // Check if any of the dependencies have changed
-      if (
-        prevDependencies.current.requirements !== requirements ||
-        prevDependencies.current.dataset !== dataset ||
-        prevDependencies.current.visRef !== visRef ||
-        prevDependencies.current.lockedStep !== lockedStep
-      ) {
-        enqueueSnackbar("Draft saved", {
-          variant: "info",
-          autoHideDuration: 1000,
-        });
+    savingRef.current = true;
+    try {
+      if (!meta.draftId) {
+        const res = await createDraft(api, domain);
+        setDraftMeta((m) => ({
+          ...m,
+          draftId: res.id,
+          status: res.status || "DRAFT",
+          lastAutosavedAt: Date.now(),
+          autosaveError: null,
+        }));
+      } else {
+        await updateDraft(api, meta.draftId, domain);
+        setDraftMeta((m) => ({ ...m, lastAutosavedAt: Date.now(), autosaveError: null }));
       }
+      lastSavedRef.current = serialized;
+    } catch (error) {
+      setDraftMeta((m) => ({
+        ...m,
+        autosaveError: error?.message || "Autosave failed",
+      }));
+      enqueueSnackbar("Couldn't autosave to the server — your work is kept locally.", {
+        variant: "warning",
+        autoHideDuration: 3000,
+      });
+    } finally {
+      savingRef.current = false;
+      if (pendingRef.current) {
+        pendingRef.current = false;
+        runAutosave();
+      }
+    }
+  }, [api, enqueueSnackbar]);
 
-      // Update the previous dependencies to the current ones
-      prevDependencies.current = {
-        requirements,
-        dataset,
-        visRef,
-        lockedStep,
-      };
-    }, 5000);
+  // On any change: (1) write the local recovery copy immediately (incl. draft
+  // metadata), and (2) debounce a backend autosave. sessionStorage is a backup,
+  // not the source of truth.
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        SESSION_ISC,
+        JSON.stringify({ id, requirements, dataset, visRef, lockedStep, draftMeta })
+      );
+    } catch {
+      // Storage may be unavailable (private mode/quota) — backend remains authoritative.
+    }
 
-    return () => clearInterval(intervalId);
-  }, [requirements, dataset, visRef, lockedStep]);
+    clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(runAutosave, AUTOSAVE_DEBOUNCE_MS);
+    return () => clearTimeout(autosaveTimer.current);
+  }, [
+    id,
+    requirements,
+    dataset,
+    visRef,
+    lockedStep,
+    draftMeta,
+    SESSION_ISC,
+    runAutosave,
+  ]);
+
+  // Derive the (informational) workflow-stepper view from the real runtime state
+  // (lockedStep + completeness selectors). Pure read — does not affect gating.
+  const domainState = { requirements, dataset, visRef, lockedStep };
+  const workflowSteps = getWorkflowSteps(domainState);
+  const currentStep = getCurrentStep(domainState);
+
+  // Stepper navigation: expand the chosen (unlocked) section and collapse the
+  // others — the one-active-section model, on top of the existing lockedStep.
+  const handleSelectStep = (stepKey) => {
+    setLockedStep((p) =>
+      p[stepKey]?.locked ? p : withOnlyStepExpanded(p, stepKey)
+    );
+  };
+
+  // ---- Leave-page protection for EDIT drafts (Phase 3) ----
+  // Only edit drafts guard navigation (publishing merges into the saved source).
+  // New drafts already live in My ISCs once autosaved, so leaving is harmless.
+  const isEditDraft = draftMeta.mode === "EDIT_DRAFT";
+  const [leaveTo, setLeaveTo] = useState(null);
+  const [leaving, setLeaving] = useState(false);
+
+  // Browser-level guard (refresh / tab close / external URL). Generic prompt.
+  useEffect(() => {
+    if (!isEditDraft) return undefined;
+    const handler = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isEditDraft]);
+
+  // Internal-navigation guard: any guarded navigation (sidebar, top bar, etc.)
+  // while editing a draft is intercepted to show the Leave-editing dialog. The
+  // requested target is remembered (leaveTo) and executed after the user acts.
+  const navGuard = useNavigationGuard();
+  const registerGuard = navGuard?.registerGuard;
+  const unregisterGuard = navGuard?.unregisterGuard;
+  useEffect(() => {
+    if (!isEditDraft || !registerGuard) return undefined;
+    const guard = (to) => {
+      setLeaveTo(to);
+      return true; // intercept; navigation happens after the user chooses
+    };
+    registerGuard(guard);
+    return () => unregisterGuard(guard);
+  }, [isEditDraft, registerGuard, unregisterGuard]);
+
+  // Intercept the creator's own breadcrumb navigation while editing a draft.
+  const guardCrumb = (to) =>
+    isEditDraft
+      ? (e) => {
+          e.preventDefault();
+          setLeaveTo(to);
+        }
+      : undefined;
+
+  const proceedLeave = (to) => {
+    setLeaveTo(null);
+    navigate(to);
+  };
+
+  const handleSaveAndLeave = async () => {
+    const to = leaveTo;
+    if (!draftMeta.draftId) {
+      proceedLeave(to);
+      return;
+    }
+    // Guard against publishing an incomplete edit over a good saved ISC — the
+    // same readiness rule the Finalize Save dialog uses. If not ready, keep the
+    // dialog open so the user can Keep the draft or Discard instead.
+    const { ready } = getFinalizeReadiness({
+      requirements,
+      dataset,
+      visRef,
+    });
+    if (!ready) {
+      enqueueSnackbar(
+        "Finish the required steps before saving, or keep the draft to continue later.",
+        { variant: "warning" }
+      );
+      return;
+    }
+    setLeaving(true);
+    try {
+      const domain = { requirements, dataset, visRef, lockedStep };
+      await updateDraft(api, draftMeta.draftId, domain);
+      await publishDraft(api, draftMeta.draftId);
+      sessionStorage.removeItem(SESSION_ISC);
+      enqueueSnackbar("Indicator updated — it's now available in My ISCs.", {
+        variant: "success",
+      });
+      setLeaving(false);
+      proceedLeave(to);
+    } catch (error) {
+      enqueueSnackbar(error?.message || "Could not save changes", {
+        variant: "error",
+      });
+      setLeaving(false); // keep dialog open so the user can retry / keep / discard
+    }
+  };
+
+  const handleKeepAndLeave = () => {
+    const to = leaveTo;
+    sessionStorage.removeItem(SESSION_ISC); // backend draft remains; local copy cleared
+    proceedLeave(to);
+  };
+
+  const handleDiscardAndLeave = async () => {
+    const to = leaveTo;
+    setLeaving(true);
+    try {
+      if (draftMeta.draftId) await discardDraft(api, draftMeta.draftId);
+      sessionStorage.removeItem(SESSION_ISC);
+      setLeaving(false);
+      proceedLeave(to);
+    } catch (error) {
+      enqueueSnackbar(error?.message || "Could not discard draft", {
+        variant: "error",
+      });
+      setLeaving(false);
+    }
+  };
 
   return (
     <>
@@ -261,41 +473,52 @@ const IndicatorSpecificationCard = () => {
           setVisRef,
           dataset,
           setDataset,
+          draftMeta,
+          setDraftMeta,
         }}
       >
-        <Stack gap={2}>
-          <Breadcrumbs>
-            <Link
-              component={RouterLink}
-              underline="hover"
-              color="inherit"
-              to="/"
-            >
-              Home
-            </Link>
-            <Link
-              component={RouterLink}
-              underline="hover"
-              color="inherit"
-              to="/isc"
-            >
-              My ISCs
-            </Link>
-            <Typography sx={{ color: "text.primary" }}>
-              Create an ISC
-            </Typography>
-          </Breadcrumbs>
-          <Divider />
-          <SpecifyRequirements />
-          <ChoosePath />
-          {lockedStep.visualization.step === "3" && <Visualization />}
-          {lockedStep.dataset.step === "4" && <Dataset />}
-          {lockedStep.dataset.step === "3" && <Dataset />}
-          {lockedStep.visualization.step === "4" && <Visualization />}
-          {lockedStep.visualization.step !== "0" &&
-            lockedStep.dataset.step !== "0" && <Finalize />}
-        </Stack>
+        <ISCWorkspace
+          title={routeId || isEditDraft ? "Edit ISC" : "ISC Creator"}
+          breadcrumbs={[
+            { label: "Home", to: "/", onClick: guardCrumb("/") },
+            { label: "My ISCs", to: "/isc", onClick: guardCrumb("/isc") },
+          ]}
+          stepper={
+            <WorkflowStepper
+              steps={workflowSteps}
+              current={currentStep}
+              onStepSelect={handleSelectStep}
+            />
+          }
+        >
+          <Stack gap={2}>
+            <SpecifyRequirements />
+            <ChoosePath />
+            {lockedStep.visualization.step === LEGACY_STEP_CODE.FIRST_MIDDLE && (
+              <Visualization />
+            )}
+            {lockedStep.dataset.step === LEGACY_STEP_CODE.SECOND_MIDDLE && (
+              <Dataset />
+            )}
+            {lockedStep.dataset.step === LEGACY_STEP_CODE.FIRST_MIDDLE && (
+              <Dataset />
+            )}
+            {lockedStep.visualization.step === LEGACY_STEP_CODE.SECOND_MIDDLE && (
+              <Visualization />
+            )}
+            {lockedStep.visualization.step !== LEGACY_STEP_CODE.NONE &&
+              lockedStep.dataset.step !== LEGACY_STEP_CODE.NONE && <Finalize />}
+          </Stack>
+        </ISCWorkspace>
       </ISCContext.Provider>
+      <LeaveEditDialog
+        open={Boolean(leaveTo)}
+        saving={leaving}
+        onSave={handleSaveAndLeave}
+        onKeep={handleKeepAndLeave}
+        onDiscard={handleDiscardAndLeave}
+        onCancel={() => setLeaveTo(null)}
+      />
     </>
   );
 };

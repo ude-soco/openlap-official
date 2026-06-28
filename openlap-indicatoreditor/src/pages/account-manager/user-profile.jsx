@@ -1,158 +1,90 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
+import PropTypes from "prop-types";
+import { Box, Stack, Tab, Tabs, useMediaQuery, useTheme } from "@mui/material";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
-import {
-  Breadcrumbs,
-  Button,
-  Chip,
-  Divider,
-  Grid,
-  IconButton,
-  Link,
-  List,
-  ListItemButton,
-  ListItemText,
-  Paper,
-  Skeleton,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import { Link as RouterLink } from "react-router-dom";
-import { requestUserDetails } from "./utils/account-manager-api.js";
-import { Edit } from "@mui/icons-material";
+import { useUserDetails } from "./hooks/use-user-details";
+import PageHeader from "../../common/components/page-header/page-header";
+import AccountProfilePanel from "./components/account-profile-panel";
+import ChangePasswordPanel from "./components/change-password-panel";
+
+const TabPanel = ({ value, index, children }) => (
+  <Box
+    role="tabpanel"
+    hidden={value !== index}
+    id={`settings-panel-${index}`}
+    aria-labelledby={`settings-tab-${index}`}
+    sx={{ width: "100%" }}
+  >
+    {value === index && children}
+  </Box>
+);
+
+TabPanel.propTypes = {
+  value: PropTypes.number.isRequired,
+  index: PropTypes.number.isRequired,
+  children: PropTypes.node,
+};
 
 const UserProfile = () => {
-  const { api } = useContext(AuthContext);
-
-  const [state, setState] = useState({
-    loading: false,
-    page: 1,
-    user: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      lrsProviderList: [],
-      lrsConsumerList: [],
-    },
-  });
-
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
-    setState((p) => ({ ...p, loading: true }));
-    try {
-      const userData = await requestUserDetails(api);
-      setState((p) => ({ ...p, user: { ...p.user, ...userData } }));
-    } catch (error) {
-      console.error("Error loading user data", error);
-    } finally {
-      setState((p) => ({ ...p, loading: false }));
-    }
-  };
-
-  const togglePage = (pageNumber) => {
-    setState((p) => ({ ...p, page: pageNumber }));
-  };
-
-  const handleFormFields = (event) => {
-    const { name, value } = event.target;
-    setState((p) => ({ ...p, user: { ...p.user, [name]: value } }));
-  };
+  const {
+    user: { roles },
+  } = useContext(AuthContext);
+  const { loading, error, user, reload } = useUserDetails();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [tab, setTab] = useState(0);
 
   return (
     <>
-      <Grid container direction="column" spacing={2}>
-        <Breadcrumbs>
-          <Link component={RouterLink} underline="hover" color="inherit" to="/">
-            Home
-          </Link>
-          <Typography sx={{ color: "text.primary" }}>
-            Account Settings
-          </Typography>
-        </Breadcrumbs>
+      <PageHeader
+        title="Account Settings"
+        subtitle="Manage your profile and security settings."
+        breadcrumbs={[{ label: "Home", to: "/" }]}
+      />
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={3}
+        sx={{ mt: 1, alignItems: "flex-start" }}
+      >
+        <Tabs
+          orientation={isMobile ? "horizontal" : "vertical"}
+          variant={isMobile ? "fullWidth" : "standard"}
+          value={tab}
+          onChange={(_event, value) => setTab(value)}
+          aria-label="Account settings sections"
+          sx={{
+            flexShrink: 0,
+            minWidth: { sm: 220 },
+            width: { xs: "100%", sm: "auto" },
+            borderRight: { sm: 1 },
+            borderBottom: { xs: 1, sm: 0 },
+            borderColor: { xs: "divider", sm: "divider" },
+            "& .MuiTab-root": { alignItems: { sm: "flex-start" }, textTransform: "none" },
+          }}
+        >
+          <Tab label="Account" id="settings-tab-0" aria-controls="settings-panel-0" />
+          <Tab
+            label="Change Password"
+            id="settings-tab-1"
+            aria-controls="settings-panel-1"
+          />
+        </Tabs>
 
-        <Divider />
-        <Grid container justifyContent="center" sx={{ pt: 3 }}>
-          <Grid size={{ xs: 12, sm: 8 }}>
-            <Stack direction="row" spacing={2}>
-              <Grid container direction="column">
-                <Paper variant="outlined" component="form">
-                  <List component="div" disablePadding>
-                    <ListItemButton
-                      onClick={() => togglePage(1)}
-                      selected={state.page === 1}
-                    >
-                      <ListItemText primary="Account" />
-                    </ListItemButton>
-                  </List>
-                  <Divider />
-                  <List component="div" disablePadding>
-                    <ListItemButton
-                      onClick={() => togglePage(2)}
-                      selected={state.page === 2}
-                    >
-                      <ListItemText primary="Change Password" />
-                    </ListItemButton>
-                  </List>
-                </Paper>
-              </Grid>
-
-              {state.page === 1 && (
-                <Paper variant="outlined" sx={{ p: 3, width: "100%" }}>
-                  <Grid container direction="column" spacing={2}>
-                    <Typography variant="h5">
-                      {state.user.name ? (
-                        `Hello, ${state.user.name}`
-                      ) : (
-                        <Skeleton />
-                      )}
-                    </Typography>
-                    <Grid container spacing={1} alignItems="center">
-                      <Typography>Email:</Typography>
-                      <Chip label={state.user.email} />
-                      <IconButton size="small">
-                        <Edit />
-                      </IconButton>
-                    </Grid>
-                  </Grid>
-                </Paper>
-              )}
-              {state.page === 2 && (
-                <Paper variant="outlined" sx={{ p: 3, width: "100%" }}>
-                  <Stack spacing={2}>
-                    <Typography>Change password</Typography>
-                    <Stack direction="row" spacing={2}>
-                      <TextField
-                        fullWidth
-                        name="password"
-                        label="Password"
-                        placeholder="Password"
-                        type="password"
-                        onChange={handleFormFields}
-                      />
-                      <TextField
-                        fullWidth
-                        name="confirmPassword"
-                        label="Confirm Password"
-                        placeholder="Confirm password"
-                        type="password"
-                        onChange={handleFormFields}
-                      />
-                    </Stack>
-
-                    <Button variant="contained" fullWidth disabled>
-                      Update
-                    </Button>
-                  </Stack>
-                </Paper>
-              )}
-            </Stack>
-          </Grid>
-        </Grid>
-      </Grid>
+        <Box sx={{ flexGrow: 1, width: "100%" }}>
+          <TabPanel value={tab} index={0}>
+            <AccountProfilePanel
+              loading={loading}
+              error={error}
+              user={user}
+              roles={roles}
+              reload={reload}
+            />
+          </TabPanel>
+          <TabPanel value={tab} index={1}>
+            <ChangePasswordPanel />
+          </TabPanel>
+        </Box>
+      </Stack>
     </>
   );
 };

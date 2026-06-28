@@ -1,13 +1,11 @@
 import { useContext, useState } from "react";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../isc-context.js";
+import { ISC_STEPS } from "../../../utils/isc-constants.js";
 import {
-  Chip,
-  Collapse,
-  IconButton,
-  Grid,
-  Typography,
-  Stack,
-} from "@mui/material";
+  withOnlyStepExpanded,
+  withStepCollapsed,
+} from "../../../utils/isc-workflow-ui.js";
+import { Chip, Collapse, IconButton, Typography, Stack } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import ToggleSummaryButton from "../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
 import DataTable from "./data-table.jsx";
@@ -41,13 +39,12 @@ export default function DatasetSummary() {
   };
 
   const handleTogglePanel = () => {
-    setLockedStep((p) => ({
-      ...p,
-      dataset: {
-        ...p.dataset,
-        openPanel: !p.dataset.openPanel,
-      },
-    }));
+    // One-active-section: opening this step collapses the others.
+    setLockedStep((p) =>
+      p.dataset.openPanel
+        ? withStepCollapsed(p, ISC_STEPS.DATASET)
+        : withOnlyStepExpanded(p, ISC_STEPS.DATASET)
+    );
   };
 
   return (

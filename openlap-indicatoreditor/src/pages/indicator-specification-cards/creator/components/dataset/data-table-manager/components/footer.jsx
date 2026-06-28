@@ -11,7 +11,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { ISCContext } from "../../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../../isc-context.js";
 
 const Footer = ({ state, setState }) => {
   const { dataset, setDataset } = useContext(ISCContext);

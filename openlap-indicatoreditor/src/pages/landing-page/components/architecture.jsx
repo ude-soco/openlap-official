@@ -1,120 +1,119 @@
-import { useState } from "react";
-import {
-  Box,
-  Card,
-  CardActionArea,
-  CardMedia,
-  Container,
-  Dialog,
-  DialogContent,
-  IconButton,
-  Stack,
-  Typography,
-} from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
+import { alpha, Box, Stack, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import DesignServicesIcon from "@mui/icons-material/DesignServices";
+import InsightsIcon from "@mui/icons-material/Insights";
+import StorageIcon from "@mui/icons-material/Storage";
 import OpenLAPArchitecture from "../../../assets/home/abstract-architecture.png";
-import { navigationIds } from "../utils/navigation-data";
+import { navigationIds } from "../data/navigation-data";
+import Section from "./shared/section";
+import SectionHeading from "./shared/section-heading";
+import ZoomableImageCard from "./shared/zoomable-image-card";
+import Reveal from "./shared/reveal";
+
+// Existing architecture content, presented as icon feature points.
+const components = [
+  {
+    icon: DesignServicesIcon,
+    title: "Indicator Engine",
+    description:
+      "Responsible for providing an intuitive and interactive User Interface (UI) to help users develop their indicators.",
+  },
+  {
+    icon: InsightsIcon,
+    title: "Analytics Framework",
+    description:
+      "Contains various core modules that allow the generation, execution, and management of indicators.",
+  },
+  {
+    icon: StorageIcon,
+    title: "Data Collection and Management",
+    description:
+      "Responsible for xAPI-based data collection from various learning sources as well as maintaining data privacy policies.",
+  },
+];
 
 const Architecture = () => {
-  const [openDialog, setOpenDialog] = useState(false);
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+  const accent = theme.custom.colors.accent;
 
-  const toggleOpenDialog = () => setOpenDialog((p) => !p);
   return (
-    <Container
-      id={navigationIds.ARCHITECTURE}
-      maxWidth="lg"
-      sx={{ pt: { xs: 4, sm: 12 }, pb: { xs: 8 } }}
-    >
-      <Typography
-        variant="h4"
-        gutterBottom
-        sx={{ display: { xs: "flex", md: "none" } }}
-      >
-        OpenLAP Architecture
-      </Typography>
-      <Stack
-        direction={{ xs: "column-reverse", md: "row" }}
-        gap={4}
-        alignItems="center"
-      >
-        <Box sx={{ width: { xs: "100%", md: "40%" } }}>
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ display: { xs: "none", md: "flex" } }}
-          >
-            OpenLAP Architecture
-          </Typography>
-          <Typography>
-            The three main components of OpenLAP
-            <ul>
-              <li>
-                <b>Indicator Engine</b>: Responsible for providing an intuitive
-                and interactive User Interface (UI) to help users develop their
-                indicators.
-              </li>
-              <li>
-                <b>Analytics Framework</b>: Contains various core modules that
-                allow the generation, execution, and management of indicators.
-              </li>
-              <li>
-                <b>Data Collection and Management</b>: Responsible for
-                xAPI-based data collection from various learning sources as well
-                as maintaining data privacy policies.
-              </li>
-            </ul>
-          </Typography>
-        </Box>
-        <Box sx={{ width: { xs: "100%", md: "60%" } }}>
-          <Card elevation={0} sx={{ width: "100%", position: "relative" }}>
-            <CardActionArea
-              sx={{
-                "&:hover + .search-icon, .search-icon:hover": {
-                  opacity: 1,
-                },
-              }}
-              onClick={toggleOpenDialog}
-            >
-              <CardMedia
-                sx={{
-                  width: "100%",
-                  aspectRatio: "16/9",
-                  objectFit: "contain",
-                }}
-                image={OpenLAPArchitecture}
-              />
-            </CardActionArea>
+    <Section id={navigationIds.ARCHITECTURE}>
+      <Reveal>
+        <SectionHeading
+          title="OpenLAP Architecture"
+          subtitle="Three core components work together to turn raw learning activity data into meaningful, actionable indicators."
+          sx={{ width: { sm: "100%", md: "70%" }, mx: "auto" }}
+        />
+      </Reveal>
 
-            <IconButton
-              className="search-icon"
+      <Reveal delay={80} sx={{ mt: { xs: 5, md: 8 } }}>
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={{ xs: 4, md: 6 }}
+          useFlexGap
+          alignItems="center"
+        >
+          <Box sx={{ width: { xs: "100%", md: "56%" } }}>
+            <ZoomableImageCard
+              image={OpenLAPArchitecture}
+              alt="Diagram of the OpenLAP architecture showing the Indicator Engine, Analytics Framework, and Data Collection and Management components"
+              dialogLabel="OpenLAP Architecture diagram"
               sx={{
-                position: "absolute",
-                top: 8,
-                right: 8,
-                opacity: 0,
-                transition: "opacity 0.3s",
-                backgroundColor: "rgba(255, 255, 255, 0.8)",
-                "&:hover": {
-                  opacity: 1,
-                  backgroundColor: "rgba(255, 255, 255, 1)",
-                },
+                border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+                boxShadow: theme.custom.shadows.lg,
               }}
-            >
-              <SearchIcon />
-            </IconButton>
-          </Card>
-        </Box>
-      </Stack>
-      <Dialog aria-label="OpenLAP Architecture diagram" maxWidth="xl" open={openDialog} onClose={toggleOpenDialog}>
-        <DialogContent>
-          <Box
-            component="img"
-            src={OpenLAPArchitecture}
-            sx={{ width: "100%", objectFit: "contain" }}
-          />
-        </DialogContent>
-      </Dialog>
-    </Container>
+            />
+          </Box>
+
+          <Stack spacing={3} sx={{ width: { xs: "100%", md: "44%" } }}>
+            {components.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Stack
+                  key={item.title}
+                  direction="row"
+                  spacing={2}
+                  alignItems="flex-start"
+                >
+                  <Box
+                    aria-hidden
+                    sx={{
+                      flexShrink: 0,
+                      width: 44,
+                      height: 44,
+                      borderRadius: "12px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: accent,
+                      bgcolor: alpha(
+                        theme.palette.primary.main,
+                        isDark ? 0.18 : 0.1
+                      ),
+                    }}
+                  >
+                    <Icon fontSize="small" />
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ fontWeight: 600 }}
+                      gutterBottom
+                    >
+                      {item.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {item.description}
+                    </Typography>
+                  </Box>
+                </Stack>
+              );
+            })}
+          </Stack>
+        </Stack>
+      </Reveal>
+    </Section>
   );
 };
 

@@ -1,0 +1,9 @@
+{
+  // Java 11 is required and is enforced for builds by pom.xml
+  // (maven.compiler.source/target=11). The Java extension auto-detects an
+  // installed JDK 11 and uses it for compiling, running and debugging, so no
+  // machine-specific JDK path is stored here (keeps this file portable).
+  // Make sure a JDK 11 is installed — see README → Local Development.
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.import.maven.enabled": true
+}

@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
-import { ISCContext } from "../../../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../../../isc-context.js";
 import { useGridApiContext } from "@mui/x-data-grid";
 
 const RenameMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {

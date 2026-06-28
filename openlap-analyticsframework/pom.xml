@@ -121,11 +121,14 @@
             <version>1.1</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-            <version>4.1.8.RELEASE</version>
-        </dependency>
+        <!--
+          NOTE: spring-test is intentionally NOT declared here. It is supplied
+          test-scoped and version-managed (5.1.x) by spring-boot-starter-test.
+          A previous explicit org.springframework:spring-test:4.1.8.RELEASE pin
+          (compile scope) overrode that and broke MockMvc / SpringRunner; it was
+          removed as part of the P0 test-infrastructure setup.
+        -->
+
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>

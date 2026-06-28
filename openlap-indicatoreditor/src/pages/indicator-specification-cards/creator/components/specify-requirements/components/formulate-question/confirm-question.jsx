@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { IconButton, Grid, Typography, Avatar, Divider } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../../isc-context.js";
 
 export default function ConfirmQuestion() {
   const { requirements, setRequirements } = useContext(ISCContext);

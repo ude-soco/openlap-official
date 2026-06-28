@@ -1,7 +1,13 @@
 import { useContext, useState } from "react";
 import { Chip, Collapse, IconButton, Stack, Typography } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../isc-context.js";
+import { ISC_STEPS } from "../../../utils/isc-constants.js";
+import { PATH_META } from "../utils/utils.js";
+import {
+  withOnlyStepExpanded,
+  withStepCollapsed,
+} from "../../../utils/isc-workflow-ui.js";
 import ToggleSummaryButton from "../../../../../../common/components/toggle-summary-button/toggle-summary-button.jsx";
 import { ToggleEditButton } from "../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
 import TipPopover from "../../../../../../common/components/tip-popover/tip-popover.jsx";
@@ -32,10 +38,12 @@ export default function ChoosePathSummary() {
   };
 
   const handleTogglePanel = () => {
-    setLockedStep((p) => ({
-      ...p,
-      path: { ...p.path, openPanel: !p.path.openPanel },
-    }));
+    // One-active-section: opening this step collapses the others.
+    setLockedStep((p) =>
+      p.path.openPanel
+        ? withStepCollapsed(p, ISC_STEPS.PATH)
+        : withOnlyStepExpanded(p, ISC_STEPS.PATH)
+    );
   };
 
   return (
@@ -80,9 +88,16 @@ export default function ChoosePathSummary() {
         unmountOnExit
       >
         {requirements.selectedPath !== "" ? (
-          <Stack direction="row" alignItems="center" gap={1}>
-            <Typography>Selected path:</Typography>
-            <Chip label={requirements.selectedPath} />
+          <Stack gap={0.5}>
+            <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
+              <Typography>Selected path:</Typography>
+              <Chip label={requirements.selectedPath} />
+            </Stack>
+            {PATH_META[requirements.selectedPath]?.summary && (
+              <Typography variant="body2" color="text.secondary">
+                {PATH_META[requirements.selectedPath].summary}
+              </Typography>
+            )}
           </Stack>
         ) : (
           !lockedStep.path.locked && (

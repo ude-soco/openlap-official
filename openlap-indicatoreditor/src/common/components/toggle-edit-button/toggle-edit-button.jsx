@@ -1,13 +1,14 @@
+import PropTypes from "prop-types";
 import { Button, IconButton, Grid, Tooltip, Typography } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
-export function ToggleEditButton({ openPanel, togglePanel }) {
+export function ToggleEditButton({ openPanel, togglePanel, controls }) {
   return (
     <Grid size="auto">
       <Button
-        // variant="outlined"
-        // startIcon={openPanel ? <CloseIcon /> : <SettingsIcon />}
         onClick={togglePanel}
+        aria-expanded={Boolean(openPanel)}
+        aria-controls={controls}
       >
         {openPanel ? "Close" : "Open"}
       </Button>
@@ -42,3 +43,14 @@ export function ToggleEditIconButton({ openPanel, togglePanel }) {
     </Tooltip>
   );
 }
+
+ToggleEditButton.propTypes = {
+  openPanel: PropTypes.bool,
+  togglePanel: PropTypes.func,
+  controls: PropTypes.string,
+};
+
+ToggleEditIconButton.propTypes = {
+  openPanel: PropTypes.bool,
+  togglePanel: PropTypes.func,
+};

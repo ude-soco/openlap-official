@@ -2,6 +2,7 @@ import {
   Box,
   Container,
   Divider,
+  Grid,
   IconButton,
   Link,
   Stack,
@@ -12,21 +13,22 @@ import EmailIcon from "@mui/icons-material/Email";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import SocoLogo from "../../../assets/home/soco-logo.svg";
-import { navigationItems, socialItems } from "../utils/navigation-data";
+import { navigationItems, socialItems } from "../data/navigation-data";
+import { scrollToSection } from "../../../common/utils/scroll-to-section";
+import Reveal from "./shared/reveal";
 
-const logoStyle = {
-  width: "150px",
-  height: "auto",
-};
+const openLapLogoStyle = { width: "130px", height: "auto" };
+const socoLogoStyle = { width: "120px", height: "auto" };
 
 function Copyright() {
   return (
-    <Typography variant="body2" color="textSecondary" mt={1}>
+    <Typography variant="body2" color="textSecondary">
       {"Copyright © "}
       <Link
-        sx={{ cursor: "pointer" }}
+        href="https://www.uni-due.de/soco/"
+        target="_blank"
+        rel="noopener noreferrer"
         underline="hover"
-        onClick={() => window.open("https://www.uni-due.de/soco/", "_blank", "noopener,noreferrer")}
       >
         Social Computing Group
       </Link>
@@ -36,103 +38,118 @@ function Copyright() {
 }
 
 export default function Footer() {
-  const scrollToSection = (sectionId) => {
-    const sectionElement = document.getElementById(sectionId);
-    const offset = 128;
-    if (sectionElement) {
-      const targetScroll = sectionElement.offsetTop - offset;
-      sectionElement.scrollIntoView({ behavior: "smooth" });
-      window.scrollTo({
-        top: targetScroll,
-        behavior: "smooth",
-      });
-    }
-  };
-
   return (
-    <>
-      <Container maxWidth="lg" sx={{ py: 8, px: 4 }}>
-        <Stack gap={4}>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            justifyContent="space-between"
-            gap={10}
-            useFlexGap
-            sx={{ flexWrap: "wrap" }}
-          >
-            <Box>
-              <Box
-                component="img"
-                src={OpenLAPLogo}
-                style={logoStyle}
-                alt="logo of OpenLAP"
-                sx={{ pb: 2 }}
-              />
-              <Stack gap={2}>
-                <Stack direction="row" gap={1} alignItems="center">
-                  <CallIcon color="primary" />
-                  <Typography>+49 (0) 203 379-3707</Typography>
-                </Stack>
-                <Stack direction="row" gap={1} alignItems="center">
-                  <EmailIcon color="primary" />
-                  <Typography>socogroup.ude@gmail.com</Typography>
-                </Stack>
-                <Stack direction="row" gap={1}>
-                  <LocationOnIcon color="primary" />
-                  <Typography>Forsthausweg 2, 47057 Duisburg</Typography>
-                </Stack>
+    <Box component="footer" sx={{ borderTop: "1px solid", borderColor: "divider" }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 6, md: 8 } }}>
+        <Reveal>
+          <Grid container spacing={{ xs: 5, md: 4 }}>
+            {/* OpenLAP identity */}
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Stack spacing={2} sx={{ maxWidth: 360 }}>
+                <Box
+                  component="img"
+                  src={OpenLAPLogo}
+                  style={openLapLogoStyle}
+                  alt="logo of OpenLAP"
+                  loading="lazy"
+                />
+                <Typography variant="body2" color="text.secondary">
+                  Do-it-yourself learning analytics — design and implement your
+                  own indicators without writing code.
+                </Typography>
               </Stack>
-            </Box>
-            <Box>
-              <Stack gap={1}>
+            </Grid>
+
+            {/* Social Computing Group / university context */}
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Stack spacing={2}>
                 <Box
                   component="img"
                   src={SocoLogo}
-                  style={logoStyle}
+                  style={socoLogoStyle}
                   alt="Logo of Social Computing Group"
+                  loading="lazy"
                 />
-                <Typography>
-                  <b>Social Computing Group</b>
-                </Typography>
-                <Typography color="textSecondary">
-                  Faculty of Computer Science
-                  <br />
-                  University of Duisburg-Essen
-                </Typography>
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                    Social Computing Group
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Faculty of Computer Science
+                    <br />
+                    University of Duisburg-Essen
+                  </Typography>
+                </Box>
+                <Stack spacing={1}>
+                  <Stack direction="row" gap={1} alignItems="center">
+                    <CallIcon color="primary" fontSize="small" />
+                    <Typography variant="body2">+49 (0) 203 379-3707</Typography>
+                  </Stack>
+                  <Stack direction="row" gap={1} alignItems="center">
+                    <EmailIcon color="primary" fontSize="small" />
+                    <Typography variant="body2">socogroup.ude@gmail.com</Typography>
+                  </Stack>
+                  <Stack direction="row" gap={1} alignItems="flex-start">
+                    <LocationOnIcon color="primary" fontSize="small" />
+                    <Typography variant="body2">
+                      Forsthausweg 2, 47057 Duisburg
+                    </Typography>
+                  </Stack>
+                </Stack>
               </Stack>
-            </Box>
-            <Stack direction="column" gap={1}>
-              <Typography>
-                <b>OpenLAP</b>
-              </Typography>
-              {navigationItems.map((item) => (
-                <Typography
-                  key={item.id}
-                  color="text.secondary"
-                  onClick={() => scrollToSection(item.id)}
-                  sx={{
-                    "&:hover": {
-                      color: "primary.main",
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                    },
-                  }}
-                >
-                  {item.name}
+            </Grid>
+
+            {/* Navigation */}
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Stack spacing={1.5}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                  Explore
                 </Typography>
-              ))}
-            </Stack>
-          </Stack>
-        </Stack>
+                {navigationItems.map((item) => (
+                  <Typography
+                    key={item.id}
+                    variant="body2"
+                    role="button"
+                    tabIndex={0}
+                    color="text.secondary"
+                    onClick={() => scrollToSection(item.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        scrollToSection(item.id);
+                      }
+                    }}
+                    sx={{
+                      width: "fit-content",
+                      "&:hover, &:focus-visible": {
+                        color: "primary.main",
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                      },
+                    }}
+                  >
+                    {item.name}
+                  </Typography>
+                ))}
+              </Stack>
+            </Grid>
+          </Grid>
+        </Reveal>
       </Container>
+
       <Divider />
-      <Container maxWidth="lg" sx={{ p: 3 }}>
-        <Stack direction="row" justifyContent="space-between">
+
+      <Container maxWidth="lg" sx={{ py: 3 }}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          justifyContent="space-between"
+          alignItems="center"
+          gap={2}
+        >
           <Copyright />
           <Stack
             direction="row"
-            justifyContent="left"
-            spacing={1}
+            spacing={0.5}
             useFlexGap
             sx={{ color: "primary.main" }}
           >
@@ -140,9 +157,10 @@ export default function Footer() {
               <IconButton
                 key={item.id}
                 color="inherit"
+                aria-label={`OpenLAP on ${item.name}`}
                 href={item.link}
                 target="_blank"
-                sx={{ alignSelf: "center" }}
+                rel="noopener noreferrer"
               >
                 {<item.icon />}
               </IconButton>
@@ -150,6 +168,6 @@ export default function Footer() {
           </Stack>
         </Stack>
       </Container>
-    </>
+    </Box>
   );
 }

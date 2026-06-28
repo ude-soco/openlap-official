@@ -1,15 +1,7 @@
 import { useContext, useEffect, useState } from "react";
-import {
-  Breadcrumbs,
-  Button,
-  Divider,
-  Link,
-  Alert,
-  Skeleton,
-  Typography,
-  Container,
-  Stack,
-} from "@mui/material";
+import { Button, Skeleton, Container, Stack } from "@mui/material";
+import StorageIcon from "@mui/icons-material/Storage";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import AddLrsConsumer from "./components/add-lrs-consumer";
 import { useSnackbar } from "notistack";
@@ -18,7 +10,8 @@ import ManageLrsConsumerList from "./components/manage-lrs-consumer-list";
 import ManageLrsProviderList from "./components/manage-lrs-provider-list";
 import RoleTypes from "./utils/enums/role-types.js";
 import AddLrsProvider from "./components/add-lrs-provider";
-import { Link as RouterLink } from "react-router-dom";
+import PageHeader from "../../common/components/page-header/page-header";
+import EmptyState from "../../common/components/empty-state/empty-state";
 
 const ManageLrs = () => {
   const {
@@ -28,6 +21,7 @@ const ManageLrs = () => {
   } = useContext(AuthContext);
   const [state, setState] = useState({
     loading: false,
+    error: false,
     user: {
       name: "",
       email: "",
@@ -53,13 +47,14 @@ const ManageLrs = () => {
   ]);
 
   const loadLRSData = async () => {
-    setState((p) => ({ ...p, loading: true }));
+    setState((p) => ({ ...p, loading: true, error: false }));
     try {
       const userDetails = await requestUserDetails(api);
       setState((p) => ({
         ...p,
         user: { ...p.user, ...userDetails },
         loading: false,
+        error: false,
         addLRSConsumerDialog: {
           ...p.addLRSConsumerDialog,
           lrsConsumerUpdated: false,
@@ -77,6 +72,9 @@ const ManageLrs = () => {
       await refreshTokenIfUserRoleChange(userDetails.lrsConsumerList);
     } catch (error) {
       console.error("Error", error);
+      // Surface a graceful, non-blocking error state instead of leaving the
+      // page stuck on the loading skeleton.
+      setState((p) => ({ ...p, loading: false, error: true }));
     }
   };
 
@@ -118,67 +116,94 @@ const ManageLrs = () => {
     }
   };
 
+  const isProvider = roles.includes(RoleTypes["data provider"]);
+  const handleAddLrs = isProvider
+    ? handleToggleAddLrsProvider
+    : handleToggleAddLrsConsumer;
+
+  const hasConsumerLrs =
+    state.user.lrsConsumerList.length > 0 &&
+    (roles.includes(RoleTypes.user) ||
+      roles.includes(RoleTypes.userWithoutLRS));
+  const hasProviderLrs = state.user.lrsProviderList.length > 0 && isProvider;
+
+  const renderContent = () => {
+    if (state.error) {
+      return (
+        <EmptyState
+          icon={ErrorOutlineIcon}
+          tone="error"
+          title="Couldn't load your Learning Record Stores"
+          description="Something went wrong while loading your LRS list. Please try again."
+          action={
+            <Button variant="outlined" onClick={loadLRSData}>
+              Retry
+            </Button>
+          }
+        />
+      );
+    }
+    if (state.loading) {
+      return Array.from({ length: 3 }).map((_, index) => (
+        <Skeleton
+          key={index}
+          variant="rounded"
+          height={96}
+          sx={{ borderRadius: 2 }}
+        />
+      ));
+    }
+    if (hasConsumerLrs) {
+      return <ManageLrsConsumerList state={state} setState={setState} />;
+    }
+    if (hasProviderLrs) {
+      return <ManageLrsProviderList state={state} setState={setState} />;
+    }
+    return (
+      <EmptyState
+        icon={StorageIcon}
+        title="No Learning Record Store yet"
+        description="Connect a Learning Record Store to start working with your learning data."
+        action={
+          <Button variant="contained" disableElevation onClick={handleAddLrs}>
+            Add New LRS
+          </Button>
+        }
+      />
+    );
+  };
+
   return (
     <>
-      <Stack gap={2}>
-        <Breadcrumbs>
-          <Link component={RouterLink} underline="hover" color="inherit" to="/">
-            Home
-          </Link>
-          <Typography color="textPrimary">Manage LRS</Typography>
-        </Breadcrumbs>
-        <Divider />
-      </Stack>
-      <Container maxWidth="lg" sx={{ pt: 2 }}>
-        <Stack gap={2}>
-          <Stack direction="row" justifyContent="space-between">
-            <Typography>Your LRSs</Typography>
-            <Button
-              color="primary"
-              size="small"
-              variant="contained"
-              disableElevation
-              onClick={
-                roles.includes(RoleTypes["data provider"])
-                  ? handleToggleAddLrsProvider
-                  : handleToggleAddLrsConsumer
-              }
-            >
-              Add New LRS
-            </Button>
-            {state.addLRSConsumerDialog.open && (
-              <AddLrsConsumer
-                addLrsConsumer={state.addLRSConsumerDialog}
-                toggleOpen={handleToggleAddLrsConsumer}
-              />
-            )}
-            {state.addLRSProviderDialog.open && (
-              <AddLrsProvider
-                addLrsProvider={state.addLRSProviderDialog}
-                toggleOpen={handleToggleAddLrsProvider}
-              />
-            )}
-          </Stack>
-          {state.loading ? (
-            Array.from({ length: 1 }).map((_, index) => (
-              <Skeleton
-                key={index}
-                variant="rectangular"
-                height={60}
-                width="100%"
-              />
-            ))
-          ) : state.user.lrsConsumerList.length > 0 &&
-            (roles.includes(RoleTypes.user) ||
-              roles.includes(RoleTypes.userWithoutLRS)) ? (
-            <ManageLrsConsumerList state={state} setState={setState} />
-          ) : state.user.lrsProviderList.length > 0 &&
-            roles.includes(RoleTypes["data provider"]) ? (
-            <ManageLrsProviderList state={state} setState={setState} />
-          ) : (
-            <Alert severity="info">You do not belong to any LRS yet.</Alert>
-          )}
-        </Stack>
+      <PageHeader
+        title="Manage LRS"
+        subtitle="Manage the Learning Record Stores connected to your account."
+        breadcrumbs={[{ label: "Home", to: "/" }]}
+        actions={
+          <Button
+            color="primary"
+            variant="contained"
+            disableElevation
+            onClick={handleAddLrs}
+          >
+            Add New LRS
+          </Button>
+        }
+      />
+      {state.addLRSConsumerDialog.open && (
+        <AddLrsConsumer
+          addLrsConsumer={state.addLRSConsumerDialog}
+          toggleOpen={handleToggleAddLrsConsumer}
+        />
+      )}
+      {state.addLRSProviderDialog.open && (
+        <AddLrsProvider
+          addLrsProvider={state.addLRSProviderDialog}
+          toggleOpen={handleToggleAddLrsProvider}
+        />
+      )}
+      <Container maxWidth="lg" sx={{ pt: 2 }} disableGutters>
+        <Stack gap={2}>{renderContent()}</Stack>
       </Container>
     </>
   );

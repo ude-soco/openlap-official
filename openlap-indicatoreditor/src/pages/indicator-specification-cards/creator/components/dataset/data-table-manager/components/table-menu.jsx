@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import { Delete as DeleteIcon } from "@mui/icons-material";
 import DeleteDialog from "../../../../../../../common/components/delete-dialog/delete-dialog.jsx";
-import { ISCContext } from "../../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../../isc-context.js";
 
 const TableMenu = ({ state, setState }) => {
   const { setDataset } = useContext(ISCContext);

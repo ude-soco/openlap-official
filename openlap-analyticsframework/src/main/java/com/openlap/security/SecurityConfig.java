@@ -2,6 +2,9 @@ package com.openlap.security;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
+import com.openlap.infrastructure.error.ErrorResponseWriter;
+import com.openlap.infrastructure.security.RestAccessDeniedHandler;
+import com.openlap.infrastructure.security.RestAuthenticationEntryPoint;
 import com.openlap.security.filter.CustomAuthenticationFilter;
 import com.openlap.security.filter.CustomAuthorizationFilter;
 import com.openlap.user.entities.RoleType;
@@ -32,6 +35,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
   private final BCryptPasswordEncoder bCryptPasswordEncoder;
   private final TokenService tokenService;
   private final UrlBasedCorsConfigurationSource corsConfigurationSource;
+  private final ErrorResponseWriter errorResponseWriter;
+  private final RestAuthenticationEntryPoint authenticationEntryPoint;
+  private final RestAccessDeniedHandler accessDeniedHandler;
+  private final AuthTokenProperties authTokenProperties;
 
   @Override
   protected void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -74,9 +81,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         .antMatchers("/v1/roles/**", "/v1/engine/**", "/v1/analytics/**", "/v1/visualizations/**")
         .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString());
     http.authorizeRequests().anyRequest().authenticated();
-    http.addFilter(new CustomAuthenticationFilter(authenticationManagerBean(), jwtToken));
+
+    // Render authentication/authorization failures with the unified error envelope.
+    // (Rendering only — the authorization rules above are unchanged.)
+    http.exceptionHandling()
+        .authenticationEntryPoint(authenticationEntryPoint)
+        .accessDeniedHandler(accessDeniedHandler);
+
+    http.addFilter(
+        new CustomAuthenticationFilter(
+            authenticationManagerBean(), jwtToken, errorResponseWriter, authTokenProperties));
     http.addFilterBefore(
-        new CustomAuthorizationFilter(tokenService), UsernamePasswordAuthenticationFilter.class);
+        new CustomAuthorizationFilter(tokenService, errorResponseWriter),
+        UsernamePasswordAuthenticationFilter.class);
   }
 
   @Bean

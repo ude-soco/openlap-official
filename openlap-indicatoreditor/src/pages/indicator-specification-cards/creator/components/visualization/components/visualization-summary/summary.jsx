@@ -1,9 +1,14 @@
+import PropTypes from "prop-types";
 import { Chip, Stack, Typography } from "@mui/material";
 import { useContext } from "react";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../../isc-context.js";
+import { isChartCompatible } from "../../utils/chart-compatibility.js";
 
 export default function Summary({ filterType, chartType }) {
-  const { lockedStep } = useContext(ISCContext);
+  const { lockedStep, visRef, dataset } = useContext(ISCContext);
+  const chartCompatible =
+    Boolean(visRef.chart?.type) &&
+    isChartCompatible(visRef.chart, dataset.columns);
   const handleCheckFilterType = () => {
     return filterType !== "";
   };
@@ -20,9 +25,15 @@ export default function Summary({ filterType, chartType }) {
           </Stack>
         )}
         {handleCheckChartType() && (
-          <Stack direction="row" gap={1} alignItems="center">
+          <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
             <Typography>Chart selected</Typography>
             <Chip label={chartType} />
+            <Chip
+              size="small"
+              variant="outlined"
+              color={chartCompatible ? "success" : "warning"}
+              label={chartCompatible ? "Compatible" : "Needs data"}
+            />
           </Stack>
         )}
         {!handleCheckChartType() &&
@@ -38,3 +49,8 @@ export default function Summary({ filterType, chartType }) {
     </>
   );
 }
+
+Summary.propTypes = {
+  filterType: PropTypes.string,
+  chartType: PropTypes.string,
+};

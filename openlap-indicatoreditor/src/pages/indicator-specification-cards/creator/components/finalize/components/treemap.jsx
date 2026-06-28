@@ -1,8 +1,10 @@
 import { useContext, useEffect, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import {
   Button,
   FormControl,
+  FormHelperText,
   Grow,
   Grid,
   IconButton,
@@ -18,14 +20,17 @@ import Chart from "react-apexcharts";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../isc-context.js";
 import { DataTypes } from "../../../utils/data/config.js";
 import ChartAxisDropdownFeedback from "./chart-axis-dropdown-feedback.jsx";
+import { ensureApexOptions } from "../utils/ensure-apex-options.js";
+import { AXIS_INTRO, getAxisLabels } from "../utils/axis-labels.js";
 
 const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
   const { darkMode } = useContext(CustomThemeContext);
   const { visRef, setVisRef, dataset } = useContext(ISCContext);
   const chartRef = useRef(null);
+  const axisLabels = getAxisLabels("treemap");
 
   const [state, setState] = useState({
     series: [],
@@ -65,7 +70,7 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
       isCategoriesFilteringAvailable: false,
     },
     options: visRef.edit
-      ? visRef.data.options
+      ? ensureApexOptions(visRef.data.options)
       : {
           chart: {
             type: "treemap",
@@ -382,18 +387,25 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
   return (
     <>
       <Grid container spacing={2}>
+        <Grid size={{ xs: 12 }}>
+          <Typography variant="body2" color="text.secondary">
+            {AXIS_INTRO}
+          </Typography>
+        </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <FormControl
             fullWidth
             error={state.axisOptions.selectedCategory?.length === 0}
           >
-            <InputLabel id="category-select-label">Category</InputLabel>
+            <InputLabel id="category-select-label">
+              {axisLabels.category.label}
+            </InputLabel>
             <Select
               labelId="category-select-label"
               id="category-select"
               value={state.axisOptions.selectedCategory}
               onChange={handleCategoryChange}
-              label="Category"
+              label={axisLabels.category.label}
               variant="outlined"
             >
               <ListSubheader>
@@ -407,9 +419,10 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+            <FormHelperText>{axisLabels.category.help}</FormHelperText>
             {state.axisOptions.selectedCategory?.length === 0 && (
               <ChartAxisDropdownFeedback
-                axisName="Categories"
+                axisName={axisLabels.category.label}
                 columnTypeValue={state.axisOptions.categoryType.value}
               />
             )}
@@ -420,13 +433,15 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
             fullWidth
             error={state.axisOptions.selectedXValue?.length === 0}
           >
-            <InputLabel id="x-value-select-label">X-Value</InputLabel>
+            <InputLabel id="x-value-select-label">
+              {axisLabels.nested.label}
+            </InputLabel>
             <Select
               labelId="x-value-select-label"
               id="x-value-select"
               value={state.axisOptions.selectedXValue}
               onChange={handleXValueChange}
-              label="X-Value"
+              label={axisLabels.nested.label}
               variant="outlined"
             >
               <ListSubheader>
@@ -440,9 +455,10 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+            <FormHelperText>{axisLabels.nested.help}</FormHelperText>
             {state.axisOptions.selectedXValue.length === 0 && (
               <ChartAxisDropdownFeedback
-                axisName="Categories"
+                axisName={axisLabels.nested.label}
                 columnTypeValue={state.axisOptions.xValueType.value}
               />
             )}
@@ -453,13 +469,15 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
             fullWidth
             error={state.axisOptions.selectedValue.length === 0}
           >
-            <InputLabel id="value-select-label">Value</InputLabel>
+            <InputLabel id="value-select-label">
+              {axisLabels.size.label}
+            </InputLabel>
             <Select
               labelId="value-select-label"
               id="value-select"
               value={state.axisOptions.selectedValue}
               onChange={handleValueChange}
-              label="Value"
+              label={axisLabels.size.label}
               variant="outlined"
             >
               <ListSubheader>
@@ -474,9 +492,10 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
               ))}
             </Select>
 
+            <FormHelperText>{axisLabels.size.help}</FormHelperText>
             {state.axisOptions.selectedValue.length === 0 && (
               <ChartAxisDropdownFeedback
-                axisName="Categories"
+                axisName={axisLabels.size.label}
                 columnTypeValue={state.axisOptions.valueType.value}
               />
             )}
@@ -484,13 +503,21 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
         </Grid>
         {!customize && (
           <Grid size={{ xs: 12 }}>
-            <Grid container spacing={2} justifyContent="flex-end">
+            <Grid
+              container
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Typography variant="subtitle2" component="h4">
+                Chart preview
+              </Typography>
               <Button
+                aria-expanded={customize}
                 startIcon={<PaletteIcon />}
                 variant="contained"
                 onClick={handleToggleCustomizePanel}
               >
-                Customize
+                Customize chart
               </Button>
             </Grid>
           </Grid>
@@ -514,6 +541,9 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
 
         <Grow in={customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>
           <Grid size={{ xs: 12, md: 8 }} sx={{ minHeight: 600 }}>
+            <Typography variant="subtitle2" component="h4" gutterBottom>
+              Chart preview
+            </Typography>
             {state.series.length > 0 ? (
               <Chart
                 ref={chartRef}
@@ -533,11 +563,16 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
               container
               spacing={2}
               justifyContent="space-between"
-              alignItems="center"
+              alignItems="flex-start"
             >
-              <Typography>Customization panel</Typography>
+              <Grid>
+                <Typography component="h4">Chart appearance</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Optional settings for labels, colors, legend, and filters.
+                </Typography>
+              </Grid>
               <Tooltip title="Close">
-                <IconButton onClick={handleToggleCustomizePanel}>
+                <IconButton aria-label="Close customization" onClick={handleToggleCustomizePanel}>
                   <CloseIcon color="primary" />
                 </IconButton>
               </Tooltip>
@@ -548,6 +583,11 @@ const TreeMap = ({ customize = false, handleToggleCustomizePanel }) => {
       </Grid>
     </>
   );
+};
+
+TreeMap.propTypes = {
+  customize: PropTypes.bool,
+  handleToggleCustomizePanel: PropTypes.func,
 };
 
 export default TreeMap;

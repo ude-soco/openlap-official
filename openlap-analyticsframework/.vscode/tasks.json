@@ -1,0 +1,42 @@
+{
+  // Maven tasks via the project's Maven Wrapper (./mvnw) — no global Maven required.
+  // Requires a Java 11 JDK available via JAVA_HOME / PATH (see README → Troubleshooting).
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Maven: Clean",
+      "type": "shell",
+      "command": "./mvnw",
+      "args": ["clean"],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Maven: Package",
+      "type": "shell",
+      "command": "./mvnw",
+      "args": ["clean", "package"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Spring Boot: Run",
+      "type": "shell",
+      "command": "./mvnw",
+      "args": ["spring-boot:run"],
+      "isBackground": true,
+      // LOCAL DEV ONLY: waive the P0 fail-fast guard so the app boots with the
+      // default dev secrets. NEVER enable ALLOW_INSECURE_DEFAULTS in production.
+      "options": { "env": { "ALLOW_INSECURE_DEFAULTS": "true" } },
+      "problemMatcher": []
+    },
+    {
+      "label": "Spring Boot: Test",
+      "type": "shell",
+      "command": "./mvnw",
+      "args": ["test"],
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    }
+  ]
+}

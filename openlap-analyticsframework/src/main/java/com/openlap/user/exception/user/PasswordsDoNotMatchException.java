@@ -1,16 +1,18 @@
 package com.openlap.user.exception.user;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.ValidationException;
 
-@Slf4j
-public class PasswordsDoNotMatchException extends RuntimeException {
+/**
+ * Password and confirmation do not match → HTTP 400 (validation error).
+ *
+ * <p>Normalized from the legacy 409 mapping in PR4.1.
+ */
+public class PasswordsDoNotMatchException extends ValidationException {
   public PasswordsDoNotMatchException(String message) {
-    super(message);
-    log.error(message);
+    super("PASSWORDS_DO_NOT_MATCH", message);
   }
 
   public PasswordsDoNotMatchException(String message, Throwable cause) {
-    super(message, cause);
-    log.error(message, cause);
+    super("PASSWORDS_DO_NOT_MATCH", message, cause);
   }
 }

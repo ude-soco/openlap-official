@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { IconButton, Grid, Typography, Divider, Avatar } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import FlagIcon from "@mui/icons-material/Flag";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../../isc-context.js";
 
 export default function ConfirmGoal() {
   const { requirements, setRequirements } = useContext(ISCContext);

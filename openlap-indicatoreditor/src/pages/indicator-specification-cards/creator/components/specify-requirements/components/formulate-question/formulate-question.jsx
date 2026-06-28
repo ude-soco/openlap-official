@@ -9,11 +9,12 @@ import {
 } from "@mui/material";
 import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
 import { useContext, useState } from "react";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../../isc-context.js";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
 
 export default function FormulateQuestion() {
   const { requirements, setRequirements } = useContext(ISCContext);
+  const [questionTouched, setQuestionTouched] = useState(false);
   const [state, setState] = useState({
     questionPopoverAnchor: null,
     // TODO: Description needs to be updated
@@ -75,13 +76,19 @@ export default function FormulateQuestion() {
         <Grid size="grow" sx={{ pb: 2 }}>
           <Grid container spacing={2}>
             <Grid container spacing={1} alignItems="center">
-              <Typography>Formulate your question</Typography>
+              <Typography component="h3" variant="subtitle2">
+                Formulate your question
+              </Typography>
               <TipPopover
                 tipAnchor={state.questionPopoverAnchor}
                 toggleTipAnchor={handleQuestionPopoverAnchor}
                 description={state.questionDescription}
               />
             </Grid>
+            <Typography variant="body2" color="text.secondary">
+              Turn your goal into a concrete question you want the data to
+              answer.
+            </Typography>
             <TextField
               multiline
               fullWidth
@@ -91,7 +98,13 @@ export default function FormulateQuestion() {
               label="I am interested in knowing"
               placeholder="e.g., how often these learning materials are viewed by my students."
               onChange={handleFormData}
-              error={requirements.question === ""}
+              onBlur={() => setQuestionTouched(true)}
+              error={questionTouched && requirements.question === ""}
+              helperText={
+                questionTouched && requirements.question === ""
+                  ? "Required"
+                  : ""
+              }
             />
             <Box>
               <Button

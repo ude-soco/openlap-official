@@ -1,450 +1,663 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import {
   Box,
   Button,
+  Card,
+  CardActionArea,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
-  IconButton,
-  LinearProgress,
-  Paper,
-  Table,
+  FormControl,
   Grid,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
+  IconButton,
+  InputAdornment,
+  InputLabel,
+  LinearProgress,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Paper,
+  Select,
+  Stack,
   TablePagination,
-  TableRow,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import AddIcon from "@mui/icons-material/Add";
+import SearchIcon from "@mui/icons-material/Search";
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import PreviewIcon from "@mui/icons-material/Preview";
-import SearchIcon from "@mui/icons-material/Search";
-import CloseIcon from "@mui/icons-material/Close";
-import AddIcon from "@mui/icons-material/Add";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
+import ViewListRoundedIcon from "@mui/icons-material/ViewListRounded";
+import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
+import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
+import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
+import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
+import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager";
-import {
-  requestDeleteISC,
-  requestISCDetails,
-  requestMyISCs,
-} from "../utils/dashboard-api";
-import CustomDialog from "../../../../common/components/custom-dialog/custom-dialog";
+import { requestDeleteISC, requestMyISCs } from "../utils/dashboard-api";
+import { discardDraft } from "../../creator/utils/isc-draft-api.js";
 
-export default function MyIscTable() {
+const SORT_OPTIONS = [
+  { value: "newest", label: "Newest first", sortBy: "createdOn", dir: "desc" },
+  { value: "oldest", label: "Oldest first", sortBy: "createdOn", dir: "asc" },
+  { value: "nameAsc", label: "Name A–Z", sortBy: "indicatorName", dir: "asc" },
+  { value: "nameDesc", label: "Name Z–A", sortBy: "indicatorName", dir: "desc" },
+];
+
+const FILTER_OPTIONS = [
+  { value: "", label: "All" },
+  { value: "SAVED", label: "Saved" },
+  { value: "DRAFT", label: "Drafts" },
+];
+
+const toSentenceCase = (str) =>
+  !str ? "" : str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
+const formatDate = (time) =>
+  time
+    ? new Date(time).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "";
+
+// Lifecycle classification from backend fields.
+const lifecycleOf = (item) => {
+  const status = item.status || "SAVED";
+  if (status === "DRAFT" && (item.draftKind === "EDIT_DRAFT" || item.sourceId)) {
+    return { key: "editDraft", label: "Editing draft", color: "warning" };
+  }
+  if (status === "DRAFT") {
+    return { key: "draft", label: "Draft", color: "info" };
+  }
+  return { key: "saved", label: "Saved", color: "success" };
+};
+
+export default function MyIscTable({ onStats }) {
   const { api, SESSION_ISC } = useContext(AuthContext);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const [state, setState] = useState({
-    indicatorList: [],
-    pageable: {
-      pageSize: 10,
-      pageNumber: 0,
-    },
-    totalElements: 0,
-    params: {
-      page: 0,
-      size: 10,
-      sortDirection: "dsc",
-      sortBy: "createdOn",
-    },
-    openDeleteDialog: false,
-    isLoading: { status: false, indicator: undefined },
-    loadingMyIndicatorList: false,
-    onHoverIndicatorId: undefined,
-    toggleSearch: true,
-    searchTerm: "",
-    filteredIndicatorList: [],
+
+  const [indicatorList, setIndicatorList] = useState([]);
+  const [totalElements, setTotalElements] = useState(0);
+  const [loading, setLoading] = useState(false);
+  // All server-side now: page, size, createdOn/indicatorName sort, status filter,
+  // and search (indicatorName regex).
+  const [params, setParams] = useState({
+    page: 0,
+    size: 10,
+    sortBy: "createdOn",
+    sortDirection: "desc",
+    status: "",
+    search: "",
   });
+  const [sort, setSort] = useState("newest");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [view, setView] = useState("list");
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [menu, setMenu] = useState({ anchorEl: null, item: null });
 
-  const loadMyISCList = async (api, params) => {
-    setState((p) => ({
-      ...p,
-      indicatorList: [],
-      loadingMyIndicatorList: true,
-    }));
+  const loadMyISCList = async (query) => {
+    setLoading(true);
+    setIndicatorList([]);
     try {
-      const response = await requestMyISCs(api, params);
-      setState((p) => ({
-        ...p,
-        indicatorList: response.content,
-        pageable: response.pageable,
-        totalElements: response.totalElements,
-        loadingMyIndicatorList: false,
-      }));
-    } catch (error) {
-      setState((p) => ({ ...p, loadingMyIndicatorList: false }));
-      enqueueSnackbar("Error requesting my indicators", {
-        variant: "error",
-      });
+      const response = await requestMyISCs(api, query);
+      const content = response.content ?? [];
+      setIndicatorList(content);
+      setTotalElements(response.totalElements ?? 0);
+      const latest = content.reduce((max, i) => {
+        const t = i.updatedOn || i.createdOn;
+        return !max || new Date(t) > new Date(max) ? t : max;
+      }, null);
+      onStats?.({ total: response.totalElements ?? 0, latest });
+    } catch {
+      enqueueSnackbar("Error requesting my indicators", { variant: "error" });
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadMyISCList(api, state.params);
-  }, []);
+    loadMyISCList(params);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    params.page,
+    params.size,
+    params.sortBy,
+    params.sortDirection,
+    params.status,
+    params.search,
+  ]);
 
+  // Debounce the free-text search into the server query.
   useEffect(() => {
-    const filtered = state.indicatorList.filter((indicator) =>
-      indicator.indicatorName
-        .toLowerCase()
-        .includes(state.searchTerm.toLowerCase())
-    );
-    setState((p) => ({ ...p, filteredIndicatorList: filtered }));
-  }, [state.searchTerm, state.indicatorList]);
-
-  const handleOnHoverIndicator = (id) => {
-    setState((p) => ({ ...p, onHoverIndicatorId: id }));
-  };
-
-  const handlePreview = (id) => {
-    navigate(`/isc/${id}`);
-  };
-
-  const handleEditIndicator = async () => {
-    setState((p) => ({
-      ...p,
-      isLoading: {
-        ...p.isLoading,
-        status: true,
-        indicator: p.onHoverIndicatorId,
-      },
-    }));
-    try {
-      const responseData = await requestISCDetails(
-        api,
-        state.onHoverIndicatorId
+    const t = setTimeout(() => {
+      setParams((p) =>
+        p.search === searchTerm ? p : { ...p, search: searchTerm, page: 0 }
       );
-      let parsedData = JSON.parse(JSON.stringify(responseData));
-      parsedData.requirements = JSON.parse(parsedData.requirements);
-      parsedData.dataset = JSON.parse(parsedData.dataset);
-      parsedData.visRef = JSON.parse(parsedData.visRef);
-      parsedData.lockedStep = JSON.parse(parsedData.lockedStep);
-      parsedData.visRef.edit = true;
-      sessionStorage.setItem(SESSION_ISC, JSON.stringify(parsedData));
-      setState((p) => ({
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  const handleSortChange = (event) => {
+    const value = event.target.value;
+    setSort(value);
+    const opt = SORT_OPTIONS.find((o) => o.value === value);
+    if (opt) {
+      setParams((p) => ({
         ...p,
-        isLoading: {
-          ...p.isLoading,
-          status: false,
-          indicator: undefined,
-        },
+        sortBy: opt.sortBy,
+        sortDirection: opt.dir,
+        page: 0,
       }));
-      navigate(`/isc/creator/edit/${state.onHoverIndicatorId}`);
-    } catch (error) {
-      console.error("Error requesting my indicators", error);
     }
   };
 
-  const handleToggleDelete = () => {
-    setState((p) => ({ ...p, openDeleteDialog: !p.openDeleteDialog }));
-  };
+  const handleFilterChange = (event) =>
+    setParams((p) => ({ ...p, status: event.target.value, page: 0 }));
 
-  const handleDeleteIndicator = async () => {
-    await requestDeleteISC(api, state.onHoverIndicatorId)
-      .then(() => {
-        setState((p) => ({
-          ...p,
-          indicatorList: p.indicatorList.filter(
-            (item) => item.id !== state.onHoverIndicatorId
-          ),
-        }));
-        enqueueSnackbar("Indicator deleted successfully", {
-          variant: "success",
-        });
-      })
-      .catch((error) => console.error(error));
-  };
+  const handlePageChange = (event, newPage) =>
+    setParams((p) => ({ ...p, page: newPage }));
 
-  const handlePageChange = (event, newPage) => {
-    setState((p) => ({ ...p, params: { ...p.params, page: newPage } }));
-  };
+  const handleRowsPerPageChange = (event) =>
+    setParams((p) => ({ ...p, size: parseInt(event.target.value, 10), page: 0 }));
 
-  // * Handle rows per page change
-  const handleRowsPerPageChange = (event) => {
-    setState((p) => ({
-      ...p,
-      params: { ...p.params, size: parseInt(event.target.value, 10), page: 0 },
-    }));
-  };
+  const handlePreview = (id) => navigate(`/isc/${id}`);
+  const handlePreviewSource = (sourceId) => navigate(`/isc/${sourceId}`);
 
-  const handleToggleSearch = () => {
-    setState((p) => ({ ...p, searchTerm: "", toggleSearch: !p.toggleSearch }));
-  };
+  // Route-authoritative (Phase 3): the loader routes own the bootstrap. Continue
+  // a draft by its id; edit a saved ISC via the create-or-get-edit-draft route.
+  const handleContinueDraft = (item) => navigate(`/isc/drafts/${item.id}`);
+  const handleEditIndicator = (id) => navigate(`/isc/${id}/edit`);
 
-  const handleSearchTerm = (event) => {
-    const { value } = event.target;
-    setState((p) => ({ ...p, searchTerm: value }));
-  };
-
-  const handleClearSession = () => {
-    setState((p) => ({ ...p, indicatorInProgress: !p.indicatorInProgress }));
-    sessionStorage.removeItem(SESSION_ISC);
+  const handleConfirmRemove = async () => {
+    if (!deleteTarget) return;
+    const life = lifecycleOf(deleteTarget);
+    try {
+      if (life.key === "saved") {
+        await requestDeleteISC(api, deleteTarget.id);
+        enqueueSnackbar("Indicator deleted successfully", { variant: "success" });
+      } else {
+        await discardDraft(api, deleteTarget.id);
+        enqueueSnackbar("Draft discarded", { variant: "success" });
+      }
+      setDeleteTarget(null);
+      loadMyISCList(params);
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar("Could not complete that action", { variant: "error" });
+    }
   };
 
   const handleCreateNew = () => {
-    // TODO: Another check need if there is exist a draft
-    handleClearSession();
-    navigate("/isc/creator");
+    // Clear the local recovery copy so /isc/new starts a genuinely fresh draft.
+    // Any existing backend draft stays in the list (confirm-before-discard is
+    // a later phase).
+    sessionStorage.removeItem(SESSION_ISC);
+    navigate("/isc/new");
   };
 
-  // * Helper functions
-  function toSentenceCase(str) {
-    if (!str) return "";
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-  }
+  const isEmpty = !loading && indicatorList.length === 0;
+  const searching = Boolean(params.search.trim());
 
-  function changeTimeFormat(time) {
-    return new Date(time).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  }
+  const removeDialog = (() => {
+    if (!deleteTarget) return { title: "", content: "", confirmLabel: "" };
+    const life = lifecycleOf(deleteTarget);
+    if (life.key === "saved") {
+      return {
+        title: "Delete indicator?",
+        content: "This will delete the indicator permanently from your dashboard.",
+        confirmLabel: "Delete indicator",
+      };
+    }
+    if (life.key === "editDraft") {
+      return {
+        title: "Discard changes?",
+        content: "Discard these changes? The saved ISC will remain unchanged.",
+        confirmLabel: "Discard changes",
+      };
+    }
+    return {
+      title: "Discard draft?",
+      content: "Discard this draft? This will delete the unfinished ISC draft.",
+      confirmLabel: "Discard draft",
+    };
+  })();
+
+  // Consistent action area for every lifecycle: a primary icon-button + a
+  // three-dot overflow menu. Same size/spacing/alignment across saved/draft/edit.
+  const primaryActionOf = (item) => {
+    const life = lifecycleOf(item);
+    if (life.key === "saved") {
+      return { label: "Preview", Icon: VisibilityIcon, run: () => handlePreview(item.id) };
+    }
+    if (life.key === "editDraft") {
+      return {
+        label: "Continue editing",
+        Icon: PlayArrowRoundedIcon,
+        run: () => handleContinueDraft(item),
+      };
+    }
+    return { label: "Continue", Icon: PlayArrowRoundedIcon, run: () => handleContinueDraft(item) };
+  };
+
+  const renderActions = (item) => {
+    const primary = primaryActionOf(item);
+    const PrimaryIcon = primary.Icon;
+    const stop = (fn) => (e) => {
+      e.stopPropagation();
+      fn();
+    };
+    const name = item.indicatorName;
+
+    return (
+      <Stack direction="row" gap={0.5} alignItems="center">
+        <Button
+          variant="text"
+          size="small"
+          color="primary"
+          startIcon={<PrimaryIcon fontSize="small" />}
+          aria-label={`${primary.label} ${name}`}
+          onClick={stop(primary.run)}
+        >
+          {primary.label}
+        </Button>
+        <Tooltip arrow title="More actions">
+          <span>
+            <IconButton
+              size="small"
+              aria-label={`More actions for ${name}`}
+              aria-haspopup="true"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setMenu({ anchorEl: e.currentTarget, item });
+              }}
+            >
+              <MoreVertRoundedIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Stack>
+    );
+  };
+
+  // Build overflow menu items for the currently-open menu's item.
+  const menuItemsFor = (item) => {
+    if (!item) return [];
+    const life = lifecycleOf(item);
+    const close = () => setMenu({ anchorEl: null, item: null });
+    const withClose = (fn) => () => {
+      close();
+      fn();
+    };
+    if (life.key === "saved") {
+      return [
+        {
+          key: "edit",
+          label: "Edit",
+          icon: <EditIcon fontSize="small" />,
+          onClick: withClose(() => handleEditIndicator(item.id)),
+        },
+        {
+          key: "delete",
+          label: "Delete",
+          icon: <DeleteIcon fontSize="small" color="error" />,
+          destructive: true,
+          onClick: withClose(() => setDeleteTarget(item)),
+        },
+      ];
+    }
+    if (life.key === "editDraft") {
+      return [
+        item.sourceId && {
+          key: "preview-source",
+          label: "Preview saved version",
+          icon: <VisibilityIcon fontSize="small" />,
+          onClick: withClose(() => handlePreviewSource(item.sourceId)),
+        },
+        {
+          key: "discard",
+          label: "Discard changes",
+          icon: <DeleteOutlineIcon fontSize="small" color="error" />,
+          destructive: true,
+          onClick: withClose(() => setDeleteTarget(item)),
+        },
+      ].filter(Boolean);
+    }
+    return [
+      {
+        key: "discard",
+        label: "Discard draft",
+        icon: <DeleteOutlineIcon fontSize="small" color="error" />,
+        destructive: true,
+        onClick: withClose(() => setDeleteTarget(item)),
+      },
+    ];
+  };
+
+  // Primary click target (whole row/card): Preview for saved, Continue for drafts.
+  const handlePrimary = (item) => {
+    const life = lifecycleOf(item);
+    if (life.key === "saved") handlePreview(item.id);
+    else handleContinueDraft(item);
+  };
+
+  const metaChips = (item) => {
+    const life = lifecycleOf(item);
+    const date = item.updatedOn || item.createdOn;
+    const dateLabel = item.updatedOn ? "Updated" : "Created";
+    return (
+      <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+        <Chip size="small" color={life.color} variant="outlined" label={life.label} />
+        {item.visualizationType && (
+          <Chip
+            size="small"
+            variant="outlined"
+            icon={<InsightsOutlinedIcon />}
+            label={item.visualizationType}
+          />
+        )}
+        {item.datasetRows != null && item.datasetColumns != null && (
+          <Chip
+            size="small"
+            variant="outlined"
+            icon={<TableChartOutlinedIcon />}
+            label={`${item.datasetRows}×${item.datasetColumns}`}
+          />
+        )}
+        <Typography variant="body2" color="text.secondary">
+          {dateLabel} {formatDate(date)}
+        </Typography>
+      </Stack>
+    );
+  };
 
   return (
-    <>
-      <Grid container spacing={2}>
-        <Grid size={12}>
-          <TableContainer component={Paper} elevation={0} variant="outlined">
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>
-                    <Grid container alignItems="center" spacing={1}>
-                      <Button
-                        startIcon={<AddIcon />}
-                        size="small"
-                        color="primary"
-                        variant="contained"
-                        onClick={handleCreateNew}
-                      >
-                        Create New
-                      </Button>
-                      <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
-                      {state.toggleSearch ? (
-                        <>
-                          <Typography>Search</Typography>
-                          <Tooltip
-                            title={<Typography>Search for ISC</Typography>}
-                          >
-                            <span>
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={handleToggleSearch}
-                              >
-                                <SearchIcon />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        </>
-                      ) : (
-                        <>
-                          <Grid>
-                            <TextField
-                              autoFocus
-                              size="small"
-                              placeholder="Search for ISC"
-                              value={state.searchTerm}
-                              onChange={handleSearchTerm}
-                            />
-                          </Grid>
-                          <Grid size="auto">
-                            <Tooltip
-                              title={<Typography>Close search</Typography>}
-                            >
-                              <span>
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  onClick={handleToggleSearch}
-                                >
-                                  <CloseIcon />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
-                          </Grid>
-                        </>
-                      )}
-                    </Grid>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {state.filteredIndicatorList.map((indicator) => (
-                  <React.Fragment key={indicator.id}>
-                    <TableRow
-                      onMouseEnter={() => handleOnHoverIndicator(indicator.id)}
-                      hover
-                      sx={{
-                        cursor: "pointer",
-                        position: "relative",
-                        "&:hover .hover-actions": { opacity: 1 },
-                        "&:hover .time-text": { opacity: 0 },
-                      }}
-                    >
-                      <TableCell>
-                        <Grid container justifyContent="space-between">
-                          <Grid
-                            size="grow"
-                            onClick={() => handlePreview(indicator.id)}
-                          >
-                            <Typography component="span" fontWeight="bold">
-                              {toSentenceCase(indicator.indicatorName)}
-                            </Typography>
-                            <Typography variant="body2">
-                              Created on:{" "}
-                              {changeTimeFormat(indicator.createdOn)}
-                            </Typography>
-                          </Grid>
-                          <Grid size="auto">
-                            <Box
-                              className="hover-actions"
-                              sx={{
-                                position: "absolute",
-                                right: 0,
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                display: "flex",
-                                gap: 1,
-                                opacity: 0,
-                                transition: "opacity 0.2s ease-in-out",
-                                zIndex: 2,
-                                mr: 2,
-                              }}
-                            >
-                              <Tooltip
-                                arrow
-                                title={
-                                  <Typography>Preview indicator</Typography>
-                                }
-                              >
-                                <span>
-                                  <IconButton
-                                    size="small"
-                                    color="primary"
-                                    onClick={() => handlePreview(indicator.id)}
-                                    disabled={state.isLoading.status}
-                                  >
-                                    <PreviewIcon />
-                                  </IconButton>
-                                </span>
-                              </Tooltip>
-                              <Tooltip
-                                arrow
-                                title={<Typography>Edit indicator</Typography>}
-                              >
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  onClick={handleEditIndicator}
-                                  disabled={state.isLoading.status}
-                                >
-                                  <EditIcon />
-                                </IconButton>
-                              </Tooltip>
-                              <Divider
-                                orientation="vertical"
-                                flexItem
-                                sx={{ mx: 1 }}
-                              />
-                              <Tooltip
-                                arrow
-                                title={
-                                  <Typography>Delete indicator</Typography>
-                                }
-                              >
-                                <span>
-                                  <IconButton
-                                    size="small"
-                                    color="error"
-                                    onClick={handleToggleDelete}
-                                    disabled={state.isLoading.status}
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>
-                                </span>
-                              </Tooltip>
-                            </Box>
-                          </Grid>
-                        </Grid>
-                      </TableCell>
-                    </TableRow>
-                    {state.isLoading.status &&
-                      indicator.id === state.isLoading.indicator && (
-                        <TableRow>
-                          <TableCell colSpan={3} sx={{ padding: 0 }}>
-                            <LinearProgress />
-                          </TableCell>
-                        </TableRow>
-                      )}
-                  </React.Fragment>
-                ))}
-                {state.loadingMyIndicatorList && (
-                  <TableRow>
-                    <TableCell colSpan={3} sx={{ padding: 0 }}>
-                      <LinearProgress />
-                    </TableCell>
-                  </TableRow>
-                )}
-                {state.filteredIndicatorList.length === 0 &&
-                  !state.loadingMyIndicatorList && (
-                    <TableRow>
-                      <TableCell colSpan={3}>
-                        <Box>
-                          {state.searchTerm.length > 0 ? (
-                            <Typography>
-                              <em>No indicators found with this name!</em>
-                            </Typography>
-                          ) : (
-                            <Box
-                              sx={{
-                                p: 8,
-                                textAlign: "center",
-                                color: "text.secondary",
-                              }}
-                            >
-                              <Typography variant="body1" gutterBottom>
-                                No ISCs created yet. Click "Create new" to get
-                                started.
-                              </Typography>
-                              <Button
-                                variant="contained"
-                                onClick={handleCreateNew}
-                              >
-                                Create New
-                              </Button>
-                            </Box>
-                          )}
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  )}
-              </TableBody>
-            </Table>
-            <TablePagination
-              component="div"
-              count={state.totalElements}
-              page={state.pageable.pageNumber}
-              onPageChange={handlePageChange}
-              rowsPerPage={state.pageable.pageSize}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              rowsPerPageOptions={[5, 10, 20, 50]}
-            />
-          </TableContainer>
+    <Stack gap={2}>
+      {/* Control bar */}
+      <Paper variant="outlined" sx={(t) => ({ p: 2, borderRadius: `${t.custom?.radii?.card ?? 8}px` })}>
+        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+          <Grid size={{ xs: 12, md: "auto" }}>
+            <Button
+              startIcon={<AddIcon />}
+              variant="contained"
+              color="primary"
+              onClick={handleCreateNew}
+            >
+              Create new ISC
+            </Button>
+          </Grid>
+          <Grid size={{ xs: 12, md: "auto" }}>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              gap={1.5}
+              alignItems={{ xs: "stretch", sm: "center" }}
+            >
+              <TextField
+                size="small"
+                label="Search"
+                placeholder="Search by name"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel id="isc-filter-label">Show</InputLabel>
+                <Select
+                  labelId="isc-filter-label"
+                  label="Show"
+                  value={params.status}
+                  onChange={handleFilterChange}
+                >
+                  {FILTER_OPTIONS.map((o) => (
+                    <MenuItem key={o.value} value={o.value}>
+                      {o.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 150 }}>
+                <InputLabel id="isc-sort-label">Sort</InputLabel>
+                <Select
+                  labelId="isc-sort-label"
+                  label="Sort"
+                  value={sort}
+                  onChange={handleSortChange}
+                >
+                  {SORT_OPTIONS.map((o) => (
+                    <MenuItem key={o.value} value={o.value}>
+                      {o.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <ToggleButtonGroup
+                size="small"
+                exclusive
+                value={view}
+                onChange={(e, v) => v && setView(v)}
+                aria-label="View mode"
+              >
+                <ToggleButton value="list" aria-label="List view">
+                  <ViewListRoundedIcon fontSize="small" />
+                </ToggleButton>
+                <ToggleButton value="cards" aria-label="Card view">
+                  <GridViewRoundedIcon fontSize="small" />
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Stack>
+          </Grid>
         </Grid>
-      </Grid>
-      <CustomDialog
-        type="delete"
-        content={`This will delete the indicator permanently from your dashboard.`}
-        open={state.openDeleteDialog}
-        toggleOpen={handleToggleDelete}
-        handler={handleDeleteIndicator}
+      </Paper>
+
+      {loading && <LinearProgress />}
+
+      {isEmpty && (
+        <Paper
+          variant="outlined"
+          sx={(t) => ({ p: 6, textAlign: "center", borderRadius: `${t.custom?.radii?.card ?? 8}px` })}
+        >
+          {searching ? (
+            <Stack gap={1} alignItems="center">
+              <SearchOffRoundedIcon color="disabled" fontSize="large" />
+              <Typography color="text.secondary">No ISCs match this search.</Typography>
+            </Stack>
+          ) : (
+            <Stack gap={1.5} alignItems="center">
+              <InsightsOutlinedIcon color="disabled" fontSize="large" />
+              <Typography variant="h6">No ISCs yet.</Typography>
+              <Typography color="text.secondary" sx={{ maxWidth: 460 }}>
+                Create your first Indicator Specification Card to prototype an
+                indicator before implementing it.
+              </Typography>
+              <Button startIcon={<AddIcon />} variant="contained" onClick={handleCreateNew}>
+                Create new ISC
+              </Button>
+            </Stack>
+          )}
+        </Paper>
+      )}
+
+      {/* List view */}
+      {!isEmpty && view === "list" && (
+        <Stack gap={1}>
+          {indicatorList.map((item) => (
+            <Paper
+              key={item.id}
+              variant="outlined"
+              sx={(t) => ({
+                borderRadius: `${t.custom?.radii?.card ?? 8}px`,
+                overflow: "hidden",
+              })}
+            >
+              <Grid container alignItems="center">
+                <Grid size="grow">
+                  <Box sx={{ p: 1.5 }}>
+                    <Typography fontWeight={600}>
+                      {toSentenceCase(item.indicatorName)}
+                    </Typography>
+                    <Box sx={{ mt: 0.5 }}>{metaChips(item)}</Box>
+                  </Box>
+                </Grid>
+                <Grid size="auto" sx={{ pr: 1.5 }}>
+                  {renderActions(item)}
+                </Grid>
+              </Grid>
+            </Paper>
+          ))}
+        </Stack>
+      )}
+
+      {/* Card view */}
+      {!isEmpty && view === "cards" && (
+        <Grid container spacing={2}>
+          {indicatorList.map((item) => {
+            const life = lifecycleOf(item);
+            return (
+              <Grid key={item.id} size={{ xs: 12, sm: 6, lg: 4 }} sx={{ display: "flex" }}>
+                <Card
+                  variant="outlined"
+                  sx={(t) => ({
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    borderRadius: `${t.custom?.radii?.card ?? 8}px`,
+                  })}
+                >
+                  <CardActionArea
+                    onClick={() => handlePrimary(item)}
+                    aria-label={`Open ${item.indicatorName}`}
+                  >
+                    <Box
+                      sx={(t) => ({
+                        height: 96,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: alpha(t.palette.primary.main, 0.06),
+                      })}
+                    >
+                      <InsightsOutlinedIcon color="primary" sx={{ fontSize: 36 }} />
+                    </Box>
+                    <CardContent>
+                      <Typography fontWeight={600} noWrap gutterBottom>
+                        {toSentenceCase(item.indicatorName)}
+                      </Typography>
+                      <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+                        <Chip size="small" color={life.color} variant="outlined" label={life.label} />
+                        {item.visualizationType && (
+                          <Chip size="small" variant="outlined" label={item.visualizationType} />
+                        )}
+                        {item.datasetRows != null && item.datasetColumns != null && (
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={`${item.datasetRows}×${item.datasetColumns}`}
+                          />
+                        )}
+                      </Stack>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        {item.updatedOn ? "Updated" : "Created"}{" "}
+                        {formatDate(item.updatedOn || item.createdOn)}
+                      </Typography>
+                    </CardContent>
+                  </CardActionArea>
+                  <Box sx={{ mt: "auto" }}>
+                    <Divider />
+                    <Box sx={{ p: 1, display: "flex", justifyContent: "flex-end" }}>
+                      {renderActions(item)}
+                    </Box>
+                  </Box>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
+      )}
+
+      <TablePagination
+        component="div"
+        count={totalElements}
+        page={params.page}
+        onPageChange={handlePageChange}
+        rowsPerPage={params.size}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        rowsPerPageOptions={[5, 10, 20, 50]}
       />
-    </>
+
+      <Menu
+        anchorEl={menu.anchorEl}
+        open={Boolean(menu.anchorEl && menu.item)}
+        onClose={() => setMenu({ anchorEl: null, item: null })}
+      >
+        {menuItemsFor(menu.item).map((mi) => (
+          <MenuItem
+            key={mi.key}
+            onClick={mi.onClick}
+            sx={mi.destructive ? { color: "error.main" } : undefined}
+          >
+            <ListItemIcon>{mi.icon}</ListItemIcon>
+            <ListItemText>{mi.label}</ListItemText>
+          </MenuItem>
+        ))}
+      </Menu>
+
+      <Dialog
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        aria-labelledby="isc-remove-title"
+        aria-describedby="isc-remove-description"
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle id="isc-remove-title">{removeDialog.title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="isc-remove-description">
+            {removeDialog.content}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteTarget(null)} variant="outlined" fullWidth>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmRemove}
+            variant="contained"
+            color="error"
+            fullWidth
+          >
+            {removeDialog.confirmLabel}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Stack>
   );
 }
+
+MyIscTable.propTypes = {
+  onStats: PropTypes.func,
+};

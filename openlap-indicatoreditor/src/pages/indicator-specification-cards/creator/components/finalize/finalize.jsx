@@ -1,21 +1,23 @@
 import { useContext, useState } from "react";
-import { ISCContext } from "../../indicator-specification-card.jsx";
-import { Button, Divider, Paper, Grid, Collapse } from "@mui/material";
+import { ISCContext } from "../../isc-context.js";
+import { Button, Divider, Grid, Collapse, Stack, Typography } from "@mui/material";
 import NameDialog from "./components/name-dialog.jsx";
 import VisSelection from "../visualization/components/visualization-filter/vis-selection";
 import FinalizeSummary from "./components/finalize-summary/finalize-summary";
-import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";
+import FinalizeReview from "./components/finalize-review/finalize-review.jsx";
+import WorkflowSection from "../workflow-section/workflow-section.jsx";
 import { useParams } from "react-router-dom";
 
 const Finalize = () => {
   const params = useParams();
-  const { darkMode } = useContext(CustomThemeContext);
   const { dataset, lockedStep } = useContext(ISCContext);
   const [state, setState] = useState({
     openSaveDialog: false,
   });
 
-  const [showCustomize, setShowCustomize] = useState(true);
+  // Preview first, customize only if needed (Phase 5D): the customization panel
+  // starts collapsed so the chart preview uses the full available width.
+  const [showCustomize, setShowCustomize] = useState(false);
 
   const handleOpenSaveDialog = () => {
     setState((prevState) => ({
@@ -32,21 +34,18 @@ const Finalize = () => {
     return dataset.rows.length === 0 || dataset.columns.length === 0;
   };
 
+  const status = lockedStep.finalize.locked
+    ? "locked"
+    : lockedStep.finalize.openPanel
+      ? "active"
+      : "available";
+
   return (
     <>
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 2,
-          position: "relative",
-          opacity: lockedStep.finalize.locked ? "0.5" : "1",
-          pointerEvents: lockedStep.finalize.locked ? "none" : "auto",
-          backgroundColor: lockedStep.finalize.locked
-            ? darkMode
-              ? "grey.800"
-              : "grey.400"
-            : "background.paper",
-        }}
+      <WorkflowSection
+        status={status}
+        ariaLabel="Finalize indicator"
+        lockedHint="Complete the previous steps to finalize your indicator."
       >
         <Grid container spacing={2}>
           <Grid size={{ xs: 12 }}>
@@ -60,6 +59,32 @@ const Finalize = () => {
             >
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12 }}>
+                  <Stack gap={0.5} sx={{ mb: 1 }}>
+                    <Typography variant="h6" component="h3">
+                      Finalize your indicator
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Review the indicator, confirm the data and visualization,
+                      then save it.
+                    </Typography>
+                  </Stack>
+                </Grid>
+
+                {/* 1. Review + 2. Checks */}
+                <Grid size={{ xs: 12 }}>
+                  <FinalizeReview />
+                </Grid>
+
+                {/* 3. Preview and customize — the existing chart editor, unchanged */}
+                <Grid size={{ xs: 12 }}>
+                  <Typography
+                    variant="subtitle1"
+                    component="h3"
+                    fontWeight={600}
+                    gutterBottom
+                  >
+                    Preview and customize
+                  </Typography>
                   <VisSelection
                     customize={showCustomize}
                     handleToggleCustomizePanel={handleToggleCustomizePanel}
@@ -87,7 +112,7 @@ const Finalize = () => {
             </Collapse>
           </Grid>
         </Grid>
-      </Paper>
+      </WorkflowSection>
       <NameDialog
         open={state.openSaveDialog}
         toggleOpen={handleOpenSaveDialog}

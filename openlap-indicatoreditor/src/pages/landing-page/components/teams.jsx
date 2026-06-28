@@ -1,192 +1,148 @@
-import { navigationIds } from "../utils/navigation-data";
 import {
-  Avatar,
   Box,
-  Typography,
-  Container,
+  Card,
+  CardContent,
   Grid,
   IconButton,
+  Stack,
   Tooltip,
+  Typography,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import { memberItems, peopleItems } from "../utils/team-data";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import SchoolIcon from "@mui/icons-material/School";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import { navigationIds } from "../data/navigation-data";
+import { memberItems, peopleItems } from "../data/team-data";
+import Section from "./shared/section";
+import SectionHeading from "./shared/section-heading";
+import ProfileAvatar from "./shared/profile-avatar";
+import Reveal from "./shared/reveal";
+
+const SOCIAL_ICONS = {
+  linkedin: LinkedInIcon,
+  scholar: SchoolIcon,
+  github: GitHubIcon,
+};
 
 export default function Teams() {
+  const sortedPeople = [...peopleItems].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+
   return (
-    <Container
+    <Section
       id={navigationIds.TEAM}
       sx={{
-        pt: { xs: 4, sm: 12 },
-        pb: { xs: 8, sm: 16 },
-        position: "relative",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: { xs: 3, sm: 6 },
+        gap: { xs: 5, md: 7 },
       }}
     >
-      <Box
-        sx={{
-          width: { sm: "100%", md: "60%" },
-          textAlign: { sm: "left", md: "center" },
-        }}
-      >
-        <Typography component="h2" variant="h4" color="text.primary">
-          Team
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Meet the minds building OpenLAP and shaping the future of open and
-          personalized learning analytics
-        </Typography>
-      </Box>
-      <Grid
-        container
-        spacing={10}
-        justifyContent="center"
-        sx={{ width: "100%" }}
-      >
-        {memberItems.map((item) => (
-          <Grid size={{ xs: 12, sm: 4, md: 3 }} key={item.id}>
-            <Grid container direction="column" alignItems="center">
-              <Box
-                sx={{
-                  position: "relative",
-                  width: 148,
-                  height: 148,
-                  mb: 2,
-                  "&:hover .overlay-member": {
-                    opacity: 1,
-                  },
-                }}
-              >
-                <Avatar
-                  src={item.image}
-                  sx={{ width: "100%", height: "100%" }}
-                />
+      <Reveal>
+        <SectionHeading
+          title="Team"
+          subtitle="Meet the minds building OpenLAP and shaping the future of open and personalized learning analytics"
+          sx={{ width: { sm: "100%", md: "70%" }, mx: "auto" }}
+        />
+      </Reveal>
 
-                <Tooltip arrow title={`View ${item.name}'s profile`}>
-                  <Box
-                    className="overlay-member"
-                    sx={{
-                      position: "absolute",
-                      cursor: "pointer",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      bgcolor: "rgba(0,0,0,0.5)",
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      opacity: 0,
-                      transition: "opacity 0.3s ease",
-                    }}
-                    onClick={() => window.open(item.link, "_blank")}
-                  >
-                    <SearchIcon fontSize="large" sx={{ color: "white" }} />
-                  </Box>
-                </Tooltip>
-              </Box>
-              <Typography variant="body2" color="textSecondary" align="center">
-                {item.name}
-              </Typography>
-              <Typography variant="body2" color="textSecondary" align="center">
-                {item.title}
-              </Typography>
-              <Grid container spacing={1}>
-                {item.social?.map((social) => (
-                  <Tooltip
-                    key={social.id}
-                    arrow
-                    title={`View ${social.name} profile`}
-                  >
-                    <IconButton
-                      color="primary"
-                      onClick={() => window.open(social.link, "_blank", "noopener,noreferrer")}
-                    >
-                      <social.icon />
-                    </IconButton>
-                  </Tooltip>
-                ))}
-              </Grid>
-            </Grid>
-          </Grid>
-        ))}
-      </Grid>
-      <Grid
-        container
-        spacing={2}
-        justifyContent="center"
-        sx={{ width: "100%" }}
-      >
-        {peopleItems
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map((item) => (
-            <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={item.id}>
-              <Grid container direction="column" alignItems="center">
-                <Box
+      {/* Lead researchers — prominent profile cards */}
+      <Reveal sx={{ width: "100%" }}>
+        <Grid container spacing={3} justifyContent="center">
+          {memberItems.map((item) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
+              <Card sx={{ height: "100%" }}>
+                <CardContent
                   sx={{
-                    position: "relative",
-                    width: 96,
-                    height: 96,
-                    mb: 2,
-                    "&:hover .overlay-people": {
-                      opacity: 1,
-                    },
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                    p: { xs: 3, md: 4 },
+                    gap: 1.5,
                   }}
                 >
-                  <Avatar
-                    src={item.image}
-                    sx={{ width: "100%", height: "100%" }}
+                  <ProfileAvatar
+                    image={item.image}
+                    name={item.name}
+                    link={item.link}
+                    size={120}
+                    iconFontSize="large"
                   />
-
-                  <Tooltip arrow title={`View ${item.name}'s profile`}>
-                    <Box
-                      className="overlay-people"
-                      sx={{
-                        position: "absolute",
-                        cursor: "pointer",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        height: "100%",
-                        bgcolor: "rgba(0,0,0,0.5)",
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        opacity: 0,
-                        transition: "opacity 0.3s ease",
-                      }}
-                      onClick={() => window.open(item.link, "_blank")}
-                    >
-                      <SearchIcon sx={{ color: "white" }} />
-                    </Box>
-                  </Tooltip>
-                </Box>
-
-                <Typography
-                  variant="body2"
-                  color="textSecondary"
-                  align="center"
-                >
-                  {item.name}
-                </Typography>
-
-                {item.title && (
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    align="center"
-                  >
-                    {item.title}
-                  </Typography>
-                )}
-              </Grid>
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      {item.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {item.title}
+                    </Typography>
+                  </Box>
+                  <Stack direction="row" spacing={0.5}>
+                    {item.social?.map((social) => {
+                      const SocialIcon = SOCIAL_ICONS[social.type];
+                      return (
+                        <Tooltip
+                          key={social.id}
+                          arrow
+                          title={`View ${item.name}'s ${social.name} profile`}
+                        >
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            aria-label={`View ${item.name}'s ${social.name} profile`}
+                            onClick={() =>
+                              window.open(
+                                social.link,
+                                "_blank",
+                                "noopener,noreferrer"
+                              )
+                            }
+                          >
+                            {SocialIcon ? <SocialIcon fontSize="small" /> : null}
+                          </IconButton>
+                        </Tooltip>
+                      );
+                    })}
+                  </Stack>
+                </CardContent>
+              </Card>
             </Grid>
           ))}
-      </Grid>
-    </Container>
+        </Grid>
+      </Reveal>
+
+      {/* Wider team — refined avatar grid */}
+      <Reveal sx={{ width: "100%" }} delay={80}>
+        <Grid container spacing={{ xs: 3, md: 4 }} justifyContent="center">
+          {sortedPeople.map((item) => (
+            <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={item.id}>
+              <Stack alignItems="center" spacing={1} sx={{ textAlign: "center" }}>
+                <ProfileAvatar
+                  image={item.image}
+                  name={item.name}
+                  link={item.link}
+                  size={88}
+                />
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {item.name}
+                  </Typography>
+                  {item.title && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      component="div"
+                    >
+                      {item.title}
+                    </Typography>
+                  )}
+                </Box>
+              </Stack>
+            </Grid>
+          ))}
+        </Grid>
+      </Reveal>
+    </Section>
   );
 }

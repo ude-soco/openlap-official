@@ -1,13 +1,13 @@
 import { useContext, useState } from "react";
 import { Grid, TextField, Typography, Avatar, Stack } from "@mui/material";
 import BarChartIcon from "@mui/icons-material/BarChart";
-import { ISCContext } from "../../../../indicator-specification-card";
+import { ISCContext } from "../../../../isc-context.js";
 import DataList from "./data-list";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
-import { DataTypes } from "../../../../utils/data/config";
 
 export default function SpecifyIndicator() {
   const { requirements, setRequirements } = useContext(ISCContext);
+  const [indicatorTouched, setIndicatorTouched] = useState(false);
   const [state, setState] = useState({
     indicatorPopoverAnchor: null,
     indicatorDescription: `
@@ -46,13 +46,19 @@ export default function SpecifyIndicator() {
       <Grid size="grow" sx={{ pb: 2 }}>
         <Stack gap={2}>
           <Grid container spacing={1} alignItems="center">
-            <Typography>Define your indicator</Typography>
+            <Typography component="h3" variant="subtitle2">
+              Define your indicator
+            </Typography>
             <TipPopover
               tipAnchor={state.indicatorPopoverAnchor}
               toggleTipAnchor={handleIndicatorPopoverAnchor}
               description={state.indicatorDescription}
             />
           </Grid>
+          <Typography variant="body2" color="text.secondary">
+            Name the indicator you want to prototype, then list the data it needs
+            below.
+          </Typography>
           <TextField
             multiline
             fullWidth
@@ -62,7 +68,13 @@ export default function SpecifyIndicator() {
             label="I need an indicator that shows"
             placeholder="e.g., the number of views of learning materials and sort by the most viewed ones."
             onChange={handleFormData}
-            error={requirements.indicatorName === ""}
+            onBlur={() => setIndicatorTouched(true)}
+            error={indicatorTouched && requirements.indicatorName === ""}
+            helperText={
+              indicatorTouched && requirements.indicatorName === ""
+                ? "Required"
+                : ""
+            }
             sx={{ pb: 2 }}
           />
           <DataList />

@@ -17,6 +17,9 @@ const menus = [
   {
     key: "isc",
     title: "Indicator Specification Cards (ISC)",
+    // `defaultOpen` is the group's expanded state on first render, before the
+    // role-based effect adjusts it. Single source of truth for the sidebar.
+    defaultOpen: true,
     icon: <StyleIcon />,
     allowedRoles: [RoleTypes.user, RoleTypes.userWithoutLRS],
     disabledRoles: [],
@@ -44,6 +47,7 @@ const menus = [
   {
     key: "indicator",
     title: "Indicators",
+    defaultOpen: false,
     icon: <BarChartIcon />,
     allowedRoles: [RoleTypes.user, RoleTypes.userWithoutLRS],
     disabledRoles: [RoleTypes.userWithoutLRS],
@@ -99,6 +103,7 @@ const menus = [
   {
     key: "gqi",
     title: "Goal-Question-Indicator",
+    defaultOpen: false,
     icon: <QuizIcon />,
     allowedRoles: [RoleTypes.user, RoleTypes.userWithoutLRS],
     disabledRoles: [RoleTypes.userWithoutLRS],
@@ -126,6 +131,7 @@ const menus = [
   {
     key: "tools",
     title: "Tools",
+    defaultOpen: false,
     icon: <ArchitectureIcon />,
     allowedRoles: [RoleTypes.user, RoleTypes.userWithoutLRS],
     disabledRoles: [RoleTypes.userWithoutLRS],
@@ -141,6 +147,7 @@ const menus = [
   {
     key: "settings",
     title: "Settings",
+    defaultOpen: true,
     icon: <SettingsIcon />,
     allowedRoles: [
       RoleTypes.user,
@@ -166,6 +173,7 @@ const menus = [
   {
     key: "upload-admin",
     title: "Manage JARs",
+    defaultOpen: false,
     icon: <ArchitectureIcon />,
     allowedRoles: [RoleTypes.admin],
     disabledRoles: [
@@ -191,6 +199,7 @@ const menus = [
   {
     key: "settings-admin",
     title: "Settings",
+    defaultOpen: false,
     icon: <SettingsIcon />,
     allowedRoles: [RoleTypes.admin],
     disabledRoles: [

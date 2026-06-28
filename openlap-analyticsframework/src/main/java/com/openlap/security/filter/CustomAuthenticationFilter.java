@@ -5,6 +5,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openlap.infrastructure.error.ErrorResponseWriter;
+import com.openlap.security.AuthTokenProperties;
 import com.openlap.user.exception.user.UserNotFoundException;
 import java.io.IOException;
 import java.util.Date;
@@ -15,6 +17,7 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -27,10 +30,18 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
   private final String jwtToken;
   private final AuthenticationManager authenticationManager;
+  private final ErrorResponseWriter errorResponseWriter;
+  private final AuthTokenProperties tokenProperties;
 
-  public CustomAuthenticationFilter(AuthenticationManager authenticationManager, String jwtToken) {
+  public CustomAuthenticationFilter(
+      AuthenticationManager authenticationManager,
+      String jwtToken,
+      ErrorResponseWriter errorResponseWriter,
+      AuthTokenProperties tokenProperties) {
     this.authenticationManager = authenticationManager;
     this.jwtToken = jwtToken;
+    this.errorResponseWriter = errorResponseWriter;
+    this.tokenProperties = tokenProperties;
   }
 
   @Override
@@ -59,10 +70,12 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
       throws IOException {
     User user = (User) authentication.getPrincipal();
     Algorithm algorithm = Algorithm.HMAC256(jwtToken.getBytes());
+    Date issuedAt = new Date();
     String access_token =
         JWT.create()
             .withSubject(user.getUsername())
-            .withExpiresAt(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))
+            .withIssuedAt(issuedAt)
+            .withExpiresAt(new Date(issuedAt.getTime() + tokenProperties.getAccessTokenTtlMillis()))
             .withIssuer(request.getRequestURL().toString())
             .withClaim(
                 "roles",
@@ -73,7 +86,8 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     String refresh_token =
         JWT.create()
             .withSubject(user.getUsername())
-            .withExpiresAt(new Date(System.currentTimeMillis() + 5 * 24 * 60 * 60 * 1000))
+            .withIssuedAt(issuedAt)
+            .withExpiresAt(new Date(issuedAt.getTime() + tokenProperties.getRefreshTokenTtlMillis()))
             .withIssuer(request.getRequestURL().toString())
             .sign(algorithm);
 
@@ -90,21 +104,16 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
   protected void unsuccessfulAuthentication(
       HttpServletRequest request, HttpServletResponse response, AuthenticationException failed)
       throws IOException {
-    log.error("Authentication failed: {}", failed.getMessage());
+    log.warn("Authentication failed: {}", failed.getMessage());
 
-    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-    response.setContentType(APPLICATION_JSON_VALUE);
-
-    Map<String, String> errorResponse = new HashMap<>();
-    if (failed.getCause() instanceof UserNotFoundException) {
-      errorResponse.put("error", "Authentication failed");
-      errorResponse.put("message", "User not found.");
-      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-    } else {
-      errorResponse.put("error", "Authentication failed");
-      errorResponse.put("message", failed.getMessage() + ": Check your email and password.");
-    }
-
-    new ObjectMapper().writeValue(response.getOutputStream(), errorResponse);
+    // Status decision is preserved (401, or 404 when the cause is UserNotFoundException); only the
+    // response body is unified, and internal exception messages are no longer leaked.
+    boolean userNotFound = failed.getCause() instanceof UserNotFoundException;
+    HttpStatus status = userNotFound ? HttpStatus.NOT_FOUND : HttpStatus.UNAUTHORIZED;
+    String message =
+        userNotFound
+            ? "User not found."
+            : "Authentication failed: check your email and password.";
+    errorResponseWriter.write(request, response, status, "AUTHENTICATION_FAILED", message);
   }
 }

@@ -1,15 +1,56 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../isc-context.js";
 import { ClearAll as ClearAllIcon } from "@mui/icons-material";
-import { Grid } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import Footer from "./components/footer.jsx";
 import NoRowsOverlay from "./components/no-rows-overlay.jsx";
 import ColumnMenu from "./column-menu/column-menu.jsx";
-import TableSideBar from "./components/table-side-bar.jsx";
+import DatasetToolbar from "./components/dataset-toolbar.jsx";
+import { decorateColumns } from "./components/dataset-grid-columns.jsx";
+import ExampleDatasetOnboarding from "./components/example-dataset-onboarding.jsx";
+import { isExampleDatasetActive } from "../utils/example-dataset.js";
+import { createBlankRows, INITIAL_MANUAL_ROWS } from "../utils/dataset-rows.js";
+import { generatePrototypeRows } from "../utils/generated-dataset.js";
 
 const DataTableManager = () => {
-  const { dataset, setDataset } = useContext(ISCContext);
+  const { dataset, setDataset, id } = useContext(ISCContext);
+
+  // Example Mode replaces the editable grid with a read-only illustrative table
+  // while the dataset is still a pristine auto-seeded draft. Read-only decision:
+  // it never alters dataset/state.
+  const exampleActive = isExampleDatasetActive({
+    dataset,
+    isExistingIsc: Boolean(id),
+  });
+
+  // "Start with an empty table": replace the pristine auto-seeded placeholder
+  // rows with genuinely empty rows and drop straight into the editable grid
+  // (this exits Example Mode, since the rows are no longer all-default). Uses
+  // the existing setDataset rows path — no persistence/shape change.
+  const handleStartEmpty = () => {
+    setDataset((p) => ({
+      ...p,
+      rows: createBlankRows(p.columns, INITIAL_MANUAL_ROWS),
+    }));
+  };
+
+  // "Generate dataset": an explicit user action that turns the generated rows
+  // into REAL editable data (replacing the pristine auto-seeded placeholders).
+  // From this point they autosave/save/edit/delete exactly like typed data.
+  const handleGenerate = () => {
+    setDataset((p) => ({
+      ...p,
+      rows: generatePrototypeRows(p.columns),
+    }));
+  };
   const [state, setState] = useState({
     cellModesModel: {},
     selectionModel: [],
@@ -22,15 +63,29 @@ const DataTableManager = () => {
 
   const style = {
     dataGrid: {
+      height: state.gridHeight,
       "& .MuiDataGrid-columnHeaders": {
         cursor: "pointer",
+      },
+      // Clearer row affordances: hover highlight + emphasized cell being edited.
+      "& .MuiDataGrid-row:hover": {
+        backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.04),
       },
       "& .MuiDataGrid-cell:hover": {
         color: "primary.main",
       },
-      height: state.gridHeight,
+      "& .MuiDataGrid-cell--editing": {
+        backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
+      },
     },
   };
+
+  // Display-only decoration: styled headers (name + subtle type) and an
+  // "Enter value…" placeholder for empty cells. Does not touch dataset.columns.
+  const displayColumns = useMemo(
+    () => decorateColumns(dataset.columns),
+    [dataset.columns]
+  );
 
   useEffect(() => {
     const calculateGridHeight = () => {
@@ -120,50 +175,55 @@ const DataTableManager = () => {
     state.page * state.pageSize
   );
 
+  if (exampleActive) {
+    return (
+      <ExampleDatasetOnboarding
+        columns={dataset.columns}
+        onGenerate={handleGenerate}
+        onStartEmpty={handleStartEmpty}
+      />
+    );
+  }
+
   return (
     <>
-      <Grid container spacing={2}>
-        <Grid size="auto">
-          <TableSideBar />
-        </Grid>
-        <Grid size="grow">
-          <DataGrid
-            columns={dataset.columns}
-            rows={paginatedRows}
-            apiRef={apiRef}
-            columnMenuClearIcon={<ClearAllIcon />}
-            cellModesModel={state.cellModesModel}
-            checkboxSelection
-            disableRowSelectionOnClick={true}
-            disableColumnMenu={false}
-            onColumnHeaderClick={(params) => handleColumnHeaderClick(params)}
-            onCellModesModelChange={handleCellModesModelChange}
-            onCellClick={handleCellClick}
-            onRowSelectionModelChange={(newSelectionModel) =>
-              handleRowSelectionModelChange(newSelectionModel)
-            }
-            pageSizeOptions={[5, 10, 25]}
-            processRowUpdate={handleProcessRowUpdate}
-            rowHeight={40}
-            selectionModel={state.selectionModel}
-            showCellVerticalBorder
-            showFooterRowCount
-            showFooterSelectedRowCount
-            slots={{
-              noRowsOverlay: () => <NoRowsOverlay />,
-              columnMenu: (props) => <ColumnMenu props={props} />,
-              footer: () => <Footer state={state} setState={setState} />,
-            }}
-            sx={style.dataGrid}
-            componentsProps={{
-              row: {
-                onMouseEnter: handlePopperOpen,
-                onMouseLeave: handlePopperClose,
-              },
-            }}
-          />
-        </Grid>
-      </Grid>
+      <DatasetToolbar />
+      <DataGrid
+        columns={displayColumns}
+        rows={paginatedRows}
+        apiRef={apiRef}
+        columnMenuClearIcon={<ClearAllIcon />}
+        cellModesModel={state.cellModesModel}
+        checkboxSelection
+        disableRowSelectionOnClick={true}
+        disableColumnMenu={false}
+        columnHeaderHeight={58}
+        onColumnHeaderClick={(params) => handleColumnHeaderClick(params)}
+        onCellModesModelChange={handleCellModesModelChange}
+        onCellClick={handleCellClick}
+        onRowSelectionModelChange={(newSelectionModel) =>
+          handleRowSelectionModelChange(newSelectionModel)
+        }
+        pageSizeOptions={[5, 10, 25]}
+        processRowUpdate={handleProcessRowUpdate}
+        rowHeight={44}
+        selectionModel={state.selectionModel}
+        showCellVerticalBorder
+        showFooterRowCount
+        showFooterSelectedRowCount
+        slots={{
+          noRowsOverlay: () => <NoRowsOverlay />,
+          columnMenu: (props) => <ColumnMenu props={props} />,
+          footer: () => <Footer state={state} setState={setState} />,
+        }}
+        sx={style.dataGrid}
+        componentsProps={{
+          row: {
+            onMouseEnter: handlePopperOpen,
+            onMouseLeave: handlePopperClose,
+          },
+        }}
+      />
     </>
   );
 };

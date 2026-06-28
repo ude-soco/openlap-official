@@ -1,18 +1,11 @@
 import { useContext } from "react";
-import {
-  Accordion,
-  AccordionActions,
-  AccordionDetails,
-  AccordionSummary,
-  Box,
-  Button,
-  Chip,
-  Grid,
-  Stack,
-  Typography,
-} from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import PropTypes from "prop-types";
+import { IconButton, Stack, Tooltip } from "@mui/material";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import StorageIcon from "@mui/icons-material/Storage";
 import DeleteDialog from "../../../common/components/delete-dialog/delete-dialog.jsx";
+import ResourceCard from "../../../common/components/resource-card/resource-card.jsx";
+import MetadataChip from "../../../common/components/metadata-chip/metadata-chip.jsx";
 import { requestDeleteLrsConsumer } from "../utils/account-manager-api.js";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 
@@ -51,36 +44,28 @@ const ManageLrsConsumerList = ({ state, setState }) => {
     <>
       <Stack spacing={2}>
         {state.user.lrsConsumerList?.map((lrs, index) => (
-          <Stack direction="row" key={lrs.id} spacing={2}>
-            <Typography sx={{ pt: 1.5 }}>#{index + 1}</Typography>
-            <Box sx={{ width: "100%" }}>
-              <Accordion variant="outlined">
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography>{lrs.lrsTitle}</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Grid container direction="column" spacing={2}>
-                    <Grid container spacing={1} alignItems="center">
-                      <Typography>LRS name:</Typography>
-                      <Chip label={lrs.lrsTitle} />
-                    </Grid>
-                    <Grid container spacing={1} alignItems="center">
-                      <Typography>Unique Identifier:</Typography>
-                      <Chip label={lrs.uniqueIdentifier} />
-                    </Grid>
-                  </Grid>
-                </AccordionDetails>
-                <AccordionActions>
-                  <Button
-                    color="error"
-                    onClick={() => handleToggleDelete(lrs.id)}
-                  >
-                    Delete
-                  </Button>
-                </AccordionActions>
-              </Accordion>
-            </Box>
-          </Stack>
+          <ResourceCard
+            key={lrs.id}
+            index={index + 1}
+            title={lrs.lrsTitle}
+            icon={StorageIcon}
+            actions={
+              <Tooltip title="Delete LRS" arrow>
+                <IconButton
+                  color="error"
+                  aria-label={`Delete LRS ${lrs.lrsTitle}`}
+                  onClick={() => handleToggleDelete(lrs.id)}
+                >
+                  <DeleteOutlineIcon />
+                </IconButton>
+              </Tooltip>
+            }
+          >
+            <MetadataChip
+              label="Unique identifier"
+              value={lrs.uniqueIdentifier}
+            />
+          </ResourceCard>
         ))}
       </Stack>
       <DeleteDialog
@@ -91,6 +76,11 @@ const ManageLrsConsumerList = ({ state, setState }) => {
       />
     </>
   );
+};
+
+ManageLrsConsumerList.propTypes = {
+  state: PropTypes.object.isRequired,
+  setState: PropTypes.func.isRequired,
 };
 
 export default ManageLrsConsumerList;

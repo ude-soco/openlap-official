@@ -1,32 +1,39 @@
 import { useContext, useState } from "react";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager.jsx";
 import { useNavigate } from "react-router-dom";
-import OpenLAPLogo from "../../assets/brand/openlap-logo.svg";
-import OpenLAPIcon from "../../assets/brand/openlap-icon.svg";
 import {
   Box,
   Button,
+  IconButton,
+  InputAdornment,
   Link,
-  Grid,
   Stack,
   TextField,
-  Tooltip,
   Typography,
-  Container,
 } from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { useSnackbar } from "notistack";
-import ToggleColorMode from "../landing-page/components/toggle-color-mode.jsx";
+import AuthLayout from "../../common/components/auth-layout/auth-layout";
+import OpenLAPIcon from "../../assets/brand/openlap-icon.svg";
 
-const logoStyle = {
-  width: "120px",
-  height: "auto",
-  cursor: "pointer",
-};
-
-const iconStyle = {
-  width: "60px",
-  height: "auto",
-};
+// Returns slotProps that add an accessible show/hide toggle to a password field.
+const visibilityAdornment = (visible, toggle) => ({
+  input: {
+    endAdornment: (
+      <InputAdornment position="end">
+        <IconButton
+          aria-label={visible ? "Hide password" : "Show password"}
+          onClick={toggle}
+          onMouseDown={(e) => e.preventDefault()}
+          edge="end"
+        >
+          {visible ? <VisibilityOff /> : <Visibility />}
+        </IconButton>
+      </InputAdornment>
+    ),
+  },
+});
 
 const Login = () => {
   const { login } = useContext(AuthContext);
@@ -35,6 +42,7 @@ const Login = () => {
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
@@ -67,103 +75,83 @@ const Login = () => {
   };
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Grid container justifyContent="center">
-        <Grid size={{ xs: 12, md: 8, xl: 6 }}>
-          <Grid container justifyContent="space-between">
-            <Tooltip title="To homepage">
-              <Box
-                component="img"
-                style={logoStyle}
-                src={OpenLAPLogo}
-                alt="Soco logo"
-                onClick={() => navigate("/")}
-              />
-            </Tooltip>
-
-            <Grid container spacing={2}>
-              <ToggleColorMode />
-              <Button
-                disableElevation
-                variant="contained"
-                size="small"
-                onClick={() => navigate("/register")}
-              >
-                Sign up
-              </Button>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
-      <Grid
-        container
-        direction="column"
-        justifyContent="center"
-        alignItems="center"
-        spacing={2}
-        sx={{ height: "75vh" }}
-      >
+    <AuthLayout
+      animate
+      icon={
         <Box
           component="img"
-          style={iconStyle}
           src={OpenLAPIcon}
-          alt="Soco logo"
+          alt=""
+          sx={{ height: 48, width: "auto" }}
         />
-        <Typography variant="h5" align="center" color="textSecondary">
-          Sign in
-        </Typography>
-        <Container maxWidth="sm">
-          <Stack gap={2}>
-            <Stack gap={2} component="form" onSubmit={handleSubmit}>
-              <TextField
-                fullWidth
-                label="Email Address"
-                name="email"
-                autoComplete="email"
-                placeholder="example@mail.com"
-                autoFocus
-                onChange={handleFormFields}
-              />
-              <TextField
-                fullWidth
-                name="password"
-                label="Password"
-                placeholder="Password"
-                type="password"
-                autoComplete="current-password"
-                onChange={handleFormFields}
-              />
-              <Button
-                type="submit"
-                fullWidth
-                loading={loading}
-                variant="contained"
-                loadingPosition="start"
-                loadingIndicator="Logging in..."
-                disabled={formFields.email === "" || formFields.password === ""}
-              >
-                {!loading && "Login with email"}
-              </Button>
-            </Stack>
-            <Grid container justifyContent="flex-end">
-              {/* 
-              <Link href="#" variant="body2">
-                Forgot password?
-              </Link>
-             */}
-              <Link
-                component="button"
-                onClick={() => navigate("/register")}
-                variant="body2"
-                underline="hover"
-              >
-                <span>Don't have an account? Create an account</span>
-              </Link>
-            </Grid>
-          </Stack>
-        </Container>
-      </Grid>
-    </Box>
+      }
+      title="Welcome back"
+      subtitle="Sign in to your OpenLAP account"
+      crossLink={{ label: "Sign up", to: "/register" }}
+    >
+      <Stack gap={2.5} component="form" onSubmit={handleSubmit}>
+        <TextField
+          fullWidth
+          label="Email Address"
+          name="email"
+          autoComplete="email"
+          placeholder="example@mail.com"
+          autoFocus
+          onChange={handleFormFields}
+        />
+        <TextField
+          fullWidth
+          name="password"
+          label="Password"
+          placeholder="Password"
+          type={showPassword ? "text" : "password"}
+          autoComplete="current-password"
+          onChange={handleFormFields}
+          slotProps={visibilityAdornment(showPassword, () =>
+            setShowPassword((s) => !s)
+          )}
+        />
+        <Button
+          type="submit"
+          fullWidth
+          size="large"
+          loading={loading}
+          variant="contained"
+          loadingPosition="start"
+          loadingIndicator="Logging in..."
+          disabled={formFields.email === "" || formFields.password === ""}
+        >
+          {!loading && "Sign in"}
+        </Button>
+      </Stack>
+
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        align="center"
+        sx={{ mt: 3 }}
+      >
+        Don&apos;t have an account?{" "}
+        <Link
+          component="button"
+          type="button"
+          onClick={() => navigate("/register")}
+          underline="hover"
+          sx={{ fontWeight: 600 }}
+        >
+          Create an account
+        </Link>
+      </Typography>
+
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        align="center"
+        sx={{ display: "block", mt: 3 }}
+      >
+        Part of the OpenLAP learning analytics ecosystem
+      </Typography>
+    </AuthLayout>
   );
 };
 

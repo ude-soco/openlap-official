@@ -1,29 +1,28 @@
 import { useContext } from "react";
-import { Collapse, Grid, Paper } from "@mui/material";
-import { ISCContext } from "../../indicator-specification-card.jsx";
+import { Collapse, Grid } from "@mui/material";
+import { ISCContext } from "../../isc-context.js";
 import ChoosePathSummary from "./components/choose-path-summary.jsx";
 import PathSelectors from "./components/path-selectors.jsx";
-import { CustomThemeContext } from "../../../../../setup/theme-manager/theme-context-manager.jsx";
+import WorkflowSection from "../workflow-section/workflow-section.jsx";
+import { isPathComplete } from "../../utils/isc-selectors.js";
 
 const ChoosePath = () => {
-  const { darkMode } = useContext(CustomThemeContext);
-  const { lockedStep } = useContext(ISCContext);
+  const { lockedStep, requirements } = useContext(ISCContext);
+
+  const status = lockedStep.path.locked
+    ? "locked"
+    : lockedStep.path.openPanel
+      ? "active"
+      : isPathComplete({ requirements })
+        ? "completed"
+        : "available";
 
   return (
     <>
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 2,
-          position: "relative",
-          opacity: lockedStep.path.locked ? "0.5" : "1",
-          pointerEvents: lockedStep.path.locked ? "none" : "auto",
-          backgroundColor: lockedStep.path.locked
-            ? darkMode
-              ? "grey.800"
-              : "grey.400"
-            : "background.paper",
-        }}
+      <WorkflowSection
+        status={status}
+        ariaLabel="Step 2: Choose path"
+        lockedHint="Complete Specify Requirements to choose how you want to start."
       >
         <Grid container spacing={2}>
           <Grid size={{ xs: 12 }}>
@@ -39,7 +38,7 @@ const ChoosePath = () => {
             </Collapse>
           </Grid>
         </Grid>
-      </Paper>
+      </WorkflowSection>
     </>
   );
 };

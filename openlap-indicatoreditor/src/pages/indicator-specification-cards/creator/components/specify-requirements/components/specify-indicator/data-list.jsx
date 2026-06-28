@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   IconButton,
-  Popover,
   Grid,
   TextField,
   Tooltip,
@@ -13,9 +12,8 @@ import {
   Paper,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import WarningIcon from "@mui/icons-material/Warning";
 import AddIcon from "@mui/icons-material/Add";
-import { ISCContext } from "../../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../../isc-context.js";
 import { DataTypes } from "../../../../utils/data/config.js";
 import { v4 as uuidv4 } from "uuid";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip.jsx";
@@ -23,6 +21,10 @@ import TipPopover from "../../../../../../../common/components/tip-popover/tip-p
 
 const DataList = () => {
   const { lockedStep, requirements, setRequirements } = useContext(ISCContext);
+  // Per-field "touched" map (keyed by `${item.id}-value` / `${item.id}-type`)
+  // so empty required fields only show red after the user leaves them.
+  const [touched, setTouched] = useState({});
+  const markTouched = (key) => setTouched((p) => ({ ...p, [key]: true }));
   const [state, setState] = useState({
     indicatorPopoverAnchor: null,
     indicatorDescription: `
@@ -94,13 +96,19 @@ const DataList = () => {
     <>
       <Stack gap={2} sx={{ width: "100%" }}>
         <Grid container spacing={1} alignItems="center">
-          <Typography>I need the following data</Typography>
+          <Typography component="h4" variant="subtitle2">
+            I need the following data
+          </Typography>
           <TipPopover
             tipAnchor={state.indicatorPopoverAnchor}
             toggleTipAnchor={handleIndicatorPopoverAnchor}
             description={state.indicatorDescription}
           />
         </Grid>
+        <Typography variant="body2" color="text.secondary">
+          List each piece of data your indicator needs. Give it a clear name and
+          pick the type of data it represents.
+        </Typography>
         {requirements.data.map((requirement, index) => {
           const isDuplicate = duplicateValues.has(requirement.value);
           return (
@@ -108,7 +116,7 @@ const DataList = () => {
               component={Paper}
               variant="outlined"
               gap={3}
-              key={index}
+              key={requirement.id ?? index}
               sx={{ p: 2 }}
             >
               <Grid
@@ -145,12 +153,13 @@ const DataList = () => {
                   arrow
                   title={
                     <Typography>
-                      Remove <b>{requirement.value}</b>
+                      Remove <b>{requirement.value || `data ${index + 1}`}</b>
                     </Typography>
                   }
                 >
                   <IconButton
                     color="error"
+                    aria-label={`Remove ${requirement.value || `data ${index + 1}`}`}
                     onClick={() => handleDeleteDataRow(index)}
                   >
                     <DeleteIcon />
@@ -167,13 +176,19 @@ const DataList = () => {
                   required
                   name="value"
                   label={`Name of data`}
-                  error={requirement.value === "" || isDuplicate}
+                  error={
+                    (touched[`${requirement.id}-value`] &&
+                      requirement.value === "") ||
+                    isDuplicate
+                  }
                   value={requirement.value}
                   onChange={(event) => handleChangeValue(index, event)}
+                  onBlur={() => markTouched(`${requirement.id}-value`)}
                   placeholder={requirement.placeholder || ""}
                   helperText={
+                    touched[`${requirement.id}-value`] &&
                     requirement.value === ""
-                      ? ""
+                      ? "Required"
                       : isDuplicate
                       ? "Duplicate name detected"
                       : ""
@@ -192,6 +207,7 @@ const DataList = () => {
                     return option?.value || "Unknown";
                   }}
                   renderOption={(props, option) => {
+                    // eslint-disable-next-line react/prop-types
                     const { key, ...restProps } = props;
                     return (
                       <li key={key} {...restProps}>
@@ -207,6 +223,17 @@ const DataList = () => {
                       {...params}
                       placeholder="Select a data column type"
                       label="Type of data *"
+                      onBlur={() => markTouched(`${requirement.id}-type`)}
+                      error={
+                        touched[`${requirement.id}-type`] &&
+                        !requirement.type?.type
+                      }
+                      helperText={
+                        touched[`${requirement.id}-type`] &&
+                        !requirement.type?.type
+                          ? "Required"
+                          : ""
+                      }
                     />
                   )}
                   onChange={(event, value) => {

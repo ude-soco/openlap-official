@@ -1,8 +1,10 @@
 import { useContext, useEffect, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import {
   Button,
   FormControl,
+  FormHelperText,
   Grow,
   Grid,
   IconButton,
@@ -17,14 +19,17 @@ import Chart from "react-apexcharts";
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../isc-context.js";
 import { DataTypes } from "../../../utils/data/config.js";
 import ChartAxisDropdownFeedback from "./chart-axis-dropdown-feedback.jsx";
+import { ensureApexOptions } from "../utils/ensure-apex-options.js";
+import { AXIS_INTRO, getAxisLabels } from "../utils/axis-labels.js";
 
 const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
   const { darkMode } = useContext(CustomThemeContext);
   const { visRef, setVisRef, dataset } = useContext(ISCContext);
   const chartRef = useRef(null);
+  const axisLabels = getAxisLabels("stackedBar");
 
   const [state, setState] = useState({
     series: [],
@@ -64,7 +69,7 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
       isCategoriesFilteringAvailable: true,
     },
     options: visRef.edit
-      ? visRef.data.options
+      ? ensureApexOptions(visRef.data.options)
       : {
           chart: {
             type: visRef.chart.code,
@@ -433,18 +438,25 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
   return (
     <>
       <Grid container spacing={2}>
+        <Grid size={{ xs: 12 }}>
+          <Typography variant="body2" color="text.secondary">
+            {AXIS_INTRO}
+          </Typography>
+        </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <FormControl
             fullWidth
             error={state.axisOptions.selectedXAxis.length === 0}
           >
-            <InputLabel id="x-axis-select-label">X-Axis: Group By</InputLabel>
+            <InputLabel id="x-axis-select-label">
+              {axisLabels.group.label}
+            </InputLabel>
             <Select
               labelId="x-axis-select-label"
               id="x-axis-select"
               value={state.axisOptions.selectedXAxis}
               onChange={handleXAxisChange}
-              label="X-Axis: Group By"
+              label={axisLabels.group.label}
               variant="outlined"
             >
               <ListSubheader>
@@ -458,9 +470,10 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+            <FormHelperText>{axisLabels.group.help}</FormHelperText>
             {state.axisOptions.selectedXAxis.length === 0 && (
               <ChartAxisDropdownFeedback
-                axisName="X-Axis: Group By"
+                axisName={axisLabels.group.label}
                 columnTypeValue={state.axisOptions.xAxisType.value}
               />
             )}
@@ -471,13 +484,15 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
             fullWidth
             error={state.axisOptions.selectedBarValue.length === 0}
           >
-            <InputLabel id="bar-value-select-label">Stack Label</InputLabel>
+            <InputLabel id="bar-value-select-label">
+              {axisLabels.stack.label}
+            </InputLabel>
             <Select
               labelId="bar-value-select-label"
               id="bar-value-select"
               value={state.axisOptions.selectedBarValue}
               onChange={handleBarValueChange}
-              label="Stack Label"
+              label={axisLabels.stack.label}
               variant="outlined"
             >
               <ListSubheader>
@@ -491,9 +506,10 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+            <FormHelperText>{axisLabels.stack.help}</FormHelperText>
             {state.axisOptions.selectedBarValue.length === 0 && (
               <ChartAxisDropdownFeedback
-                axisName="Stack Label"
+                axisName={axisLabels.stack.label}
                 columnTypeValue={state.axisOptions.barValueType.value}
               />
             )}
@@ -504,13 +520,15 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
             fullWidth
             error={state.axisOptions.selectedYAxis.length === 0}
           >
-            <InputLabel id="y-axis-select-label">Y-Axis</InputLabel>
+            <InputLabel id="y-axis-select-label">
+              {axisLabels.measure.label}
+            </InputLabel>
             <Select
               labelId="y-axis-select-label"
               id="y-axis-select"
               value={state.axisOptions.selectedYAxis}
               onChange={handleYAxisChange}
-              label="Y-Axis"
+              label={axisLabels.measure.label}
               variant="outlined"
             >
               <ListSubheader>
@@ -524,9 +542,10 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
                 </MenuItem>
               ))}
             </Select>
+            <FormHelperText>{axisLabels.measure.help}</FormHelperText>
             {state.axisOptions.selectedYAxis.length === 0 && (
               <ChartAxisDropdownFeedback
-                axisName="Y-Axis"
+                axisName={axisLabels.measure.label}
                 columnTypeValue={state.axisOptions.yAxisType.value}
               />
             )}
@@ -534,13 +553,21 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
         </Grid>
         {!customize && (
           <Grid size={{ xs: 12 }}>
-            <Grid container spacing={2} justifyContent="flex-end">
+            <Grid
+              container
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Typography variant="subtitle2" component="h4">
+                Chart preview
+              </Typography>
               <Button
+                aria-expanded={customize}
                 startIcon={<PaletteIcon />}
                 variant="contained"
                 onClick={handleToggleCustomizePanel}
               >
-                Customize
+                Customize chart
               </Button>
             </Grid>
           </Grid>
@@ -560,6 +587,9 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
 
         <Grow in={customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>
           <Grid size={{ xs: 12, md: 8 }} sx={{ minHeight: 600 }}>
+            <Typography variant="subtitle2" component="h4" gutterBottom>
+              Chart preview
+            </Typography>
             <Chart
               ref={chartRef}
               options={state.options}
@@ -575,11 +605,16 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
               container
               spacing={2}
               justifyContent="space-between"
-              alignItems="center"
+              alignItems="flex-start"
             >
-              <Typography>Customization panel</Typography>
+              <Grid>
+                <Typography component="h4">Chart appearance</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Optional settings for labels, colors, legend, and filters.
+                </Typography>
+              </Grid>
               <Tooltip title="Close">
-                <IconButton onClick={handleToggleCustomizePanel}>
+                <IconButton aria-label="Close customization" onClick={handleToggleCustomizePanel}>
                   <CloseIcon color="primary" />
                 </IconButton>
               </Tooltip>
@@ -590,6 +625,11 @@ const StackedBarChart = ({ customize = false, handleToggleCustomizePanel }) => {
       </Grid>
     </>
   );
+};
+
+StackedBarChart.propTypes = {
+  customize: PropTypes.bool,
+  handleToggleCustomizePanel: PropTypes.func,
 };
 
 export default StackedBarChart;

@@ -1,6 +1,11 @@
 import { useContext, useState } from "react";
-import { ISCContext } from "../../../../indicator-specification-card";
-import { Chip, IconButton, Grid, Typography, Stack } from "@mui/material";
+import { ISCContext } from "../../../../isc-context.js";
+import { ISC_STEPS } from "../../../../utils/isc-constants.js";
+import {
+  withOnlyStepExpanded,
+  withStepCollapsed,
+} from "../../../../utils/isc-workflow-ui.js";
+import { Chip, IconButton, Typography, Stack } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import { ToggleEditButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button.jsx";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover.jsx";
@@ -22,13 +27,12 @@ export default function FinalizeSummary() {
   };
 
   const handleTogglePanel = () => {
-    setLockedStep((p) => ({
-      ...p,
-      finalize: {
-        ...p.finalize,
-        openPanel: !p.finalize.openPanel,
-      },
-    }));
+    // One-active-section: opening this step collapses the others.
+    setLockedStep((p) =>
+      p.finalize.openPanel
+        ? withStepCollapsed(p, ISC_STEPS.FINALIZE)
+        : withOnlyStepExpanded(p, ISC_STEPS.FINALIZE)
+    );
   };
 
   return (

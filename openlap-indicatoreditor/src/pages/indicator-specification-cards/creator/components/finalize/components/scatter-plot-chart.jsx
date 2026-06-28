@@ -1,9 +1,11 @@
 import { useContext, useEffect, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { CustomThemeContext } from "../../../../../../setup/theme-manager/theme-context-manager.jsx";
 import Chart from "react-apexcharts";
 import {
   Button,
   FormControl,
+  FormHelperText,
   Grow,
   Grid,
   IconButton,
@@ -17,9 +19,11 @@ import {
 import PaletteIcon from "@mui/icons-material/Palette";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomizationPanel from "./customization-panel/customization-panel.jsx";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import { ISCContext } from "../../../isc-context.js";
 import { DataTypes } from "../../../utils/data/config.js";
 import ChartAxisDropdownFeedback from "./chart-axis-dropdown-feedback.jsx";
+import { ensureApexOptions } from "../utils/ensure-apex-options.js";
+import { AXIS_INTRO, getAxisLabels } from "../utils/axis-labels.js";
 
 const ScatterPlotChart = ({
   customize = false,
@@ -28,6 +32,7 @@ const ScatterPlotChart = ({
   const { darkMode } = useContext(CustomThemeContext);
   const { visRef, setVisRef, dataset } = useContext(ISCContext);
   const chartRef = useRef(null);
+  const axisLabels = getAxisLabels("scatter");
 
   const [state, setState] = useState({
     series: [],
@@ -67,7 +72,7 @@ const ScatterPlotChart = ({
       isCategoriesFilteringAvailable: false,
     },
     options: visRef.edit
-      ? visRef.data.options
+      ? ensureApexOptions(visRef.data.options)
       : {
           chart: {
             type: visRef.chart.code,
@@ -427,18 +432,25 @@ const ScatterPlotChart = ({
   return (
     <>
       <Grid container spacing={2}>
+        <Grid size={{ xs: 12 }}>
+          <Typography variant="body2" color="text.secondary">
+            {AXIS_INTRO}
+          </Typography>
+        </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
           <FormControl
             fullWidth
             error={state.axisOptions.selectedXAxis.length === 0}
           >
-            <InputLabel id="x-axis-select-label">X Axis</InputLabel>
+            <InputLabel id="x-axis-select-label">
+              {axisLabels.horizontal.label}
+            </InputLabel>
             <Select
               labelId="x-axis-select-label"
               id="x-axis-select"
               value={state.axisOptions.selectedXAxis}
               onChange={handleXAxisChange}
-              label="X Axis"
+              label={axisLabels.horizontal.label}
               variant="outlined"
             >
               <ListSubheader>
@@ -453,9 +465,10 @@ const ScatterPlotChart = ({
               ))}
             </Select>
 
+            <FormHelperText>{axisLabels.horizontal.help}</FormHelperText>
             {state.axisOptions.selectedXAxis.length === 0 && (
               <ChartAxisDropdownFeedback
-                axisName="X-Axis"
+                axisName={axisLabels.horizontal.label}
                 columnTypeValue={state.axisOptions.xAxisType.value}
               />
             )}
@@ -466,13 +479,15 @@ const ScatterPlotChart = ({
             fullWidth
             error={state.axisOptions.selectedYAxis.length === 0}
           >
-            <InputLabel id="y-axis-select-label">Y Axis</InputLabel>
+            <InputLabel id="y-axis-select-label">
+              {axisLabels.vertical.label}
+            </InputLabel>
             <Select
               labelId="y-axis-select-label"
               id="y-axis-select"
               value={state.axisOptions.selectedYAxis}
               onChange={handleYAxisChange}
-              label="Y Axis"
+              label={axisLabels.vertical.label}
               variant="outlined"
             >
               <ListSubheader>
@@ -486,9 +501,10 @@ const ScatterPlotChart = ({
                 </MenuItem>
               ))}
             </Select>
+            <FormHelperText>{axisLabels.vertical.help}</FormHelperText>
             {state.axisOptions.selectedYAxis.length === 0 && (
               <ChartAxisDropdownFeedback
-                axisName="Y-Axis"
+                axisName={axisLabels.vertical.label}
                 columnTypeValue={state.axisOptions.yAxisType.value}
               />
             )}
@@ -499,13 +515,15 @@ const ScatterPlotChart = ({
             fullWidth
             error={state.axisOptions.selectedLabel.length === 0}
           >
-            <InputLabel id="label-select-label">Label</InputLabel>
+            <InputLabel id="label-select-label">
+              {axisLabels.label.label}
+            </InputLabel>
             <Select
               labelId="label-select-label"
               id="label-select"
               value={state.axisOptions.selectedLabel}
               onChange={handleLabelChange}
-              label="Label"
+              label={axisLabels.label.label}
               variant="outlined"
             >
               <ListSubheader>
@@ -519,9 +537,10 @@ const ScatterPlotChart = ({
                 </MenuItem>
               ))}
             </Select>
+            <FormHelperText>{axisLabels.label.help}</FormHelperText>
             {state.axisOptions.selectedLabel.length === 0 && (
               <ChartAxisDropdownFeedback
-                axisName="Label"
+                axisName={axisLabels.label.label}
                 columnTypeValue={state.axisOptions.labelType.value}
               />
             )}
@@ -529,13 +548,21 @@ const ScatterPlotChart = ({
         </Grid>
         {!customize && (
           <Grid size={{ xs: 12 }}>
-            <Grid container spacing={2} justifyContent="flex-end">
+            <Grid
+              container
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Typography variant="subtitle2" component="h4">
+                Chart preview
+              </Typography>
               <Button
+                aria-expanded={customize}
                 startIcon={<PaletteIcon />}
                 variant="contained"
                 onClick={handleToggleCustomizePanel}
               >
-                Customize
+                Customize chart
               </Button>
             </Grid>
           </Grid>
@@ -554,6 +581,9 @@ const ScatterPlotChart = ({
 
         <Grow in={customize} timeout={{ enter: 500, exit: 0 }} unmountOnExit>
           <Grid size={{ xs: 12, md: 8 }} sx={{ minHeight: 600 }}>
+            <Typography variant="subtitle2" component="h4" gutterBottom>
+              Chart preview
+            </Typography>
             <Chart
               ref={chartRef}
               options={state.options}
@@ -569,11 +599,16 @@ const ScatterPlotChart = ({
               container
               spacing={2}
               justifyContent="space-between"
-              alignItems="center"
+              alignItems="flex-start"
             >
-              <Typography>Customization panel</Typography>
+              <Grid>
+                <Typography component="h4">Chart appearance</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Optional settings for labels, colors, legend, and filters.
+                </Typography>
+              </Grid>
               <Tooltip title="Close">
-                <IconButton onClick={handleToggleCustomizePanel}>
+                <IconButton aria-label="Close customization" onClick={handleToggleCustomizePanel}>
                   <CloseIcon color="primary" />
                 </IconButton>
               </Tooltip>
@@ -584,6 +619,11 @@ const ScatterPlotChart = ({
       </Grid>
     </>
   );
+};
+
+ScatterPlotChart.propTypes = {
+  customize: PropTypes.bool,
+  handleToggleCustomizePanel: PropTypes.func,
 };
 
 export default ScatterPlotChart;

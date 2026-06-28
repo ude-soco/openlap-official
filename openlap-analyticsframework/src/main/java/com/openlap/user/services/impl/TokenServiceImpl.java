@@ -6,6 +6,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.openlap.security.AuthTokenProperties;
 import com.openlap.user.dto.request.TokenRequest;
 import com.openlap.user.entities.User;
 import com.openlap.user.repositories.UserRepository;
@@ -22,13 +23,17 @@ public class TokenServiceImpl implements TokenService {
   private String jwtToken;
 
   private final UserRepository userRepository;
+  private final AuthTokenProperties authTokenProperties;
 
   @Override
   public TokenRequest verifyToken(HttpServletRequest request) {
     String authorizationHeader = request.getHeader(AUTHORIZATION);
     String token = authorizationHeader.substring("Bearer ".length());
     Algorithm algorithm = Algorithm.HMAC256(jwtToken.getBytes());
-    JWTVerifier verifier = JWT.require(algorithm).build();
+    // A small leeway absorbs minor client/server clock differences so a token is
+    // not rejected a second or two before/after its nominal expiry.
+    JWTVerifier verifier =
+        JWT.require(algorithm).acceptLeeway(authTokenProperties.getJwtLeewaySeconds()).build();
     DecodedJWT decodedJWT = verifier.verify(token);
     String userEmail = decodedJWT.getSubject();
     String[] roles = decodedJWT.getClaim("roles").asArray(String.class);

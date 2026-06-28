@@ -1,5 +1,6 @@
 import { useContext, useState } from "react";
-import { ISCContext } from "../../../indicator-specification-card.jsx";
+import PropTypes from "prop-types";
+import { ISCContext } from "../../../isc-context.js";
 import { useSnackbar } from "notistack";
 import {
   Button,
@@ -9,8 +10,9 @@ import {
   DialogTitle,
   Grid,
   TextField,
+  Typography,
 } from "@mui/material";
-import { v4 as uuidv4 } from "uuid";
+import { createBlankRows } from "../utils/dataset-rows.js";
 
 const AddRowDialog = ({ open, toggleOpen }) => {
   const { dataset, setDataset } = useContext(ISCContext);
@@ -29,17 +31,9 @@ const AddRowDialog = ({ open, toggleOpen }) => {
   };
 
   const handleAddNewRows = () => {
-    const tempColumnData = dataset.columns;
-    const existingRowCount = dataset.rows.length;
-    const newRows = Array.from({ length: state.numberOfRows }, (_, i) => {
-      const newRow = { id: uuidv4() };
-      tempColumnData.forEach((column) => {
-        const rowNumber = existingRowCount + i + 1;
-        newRow[column.field] =
-          column.type === "string" ? `${column.headerName} ${rowNumber}` : 0;
-      });
-      return newRow;
-    });
+    // New rows are created visually empty (see createBlankRows) so the user
+    // fills in their own values rather than starting from placeholders.
+    const newRows = createBlankRows(dataset.columns, state.numberOfRows);
     setDataset((p) => ({ ...p, rows: [...p.rows, ...newRows] }));
     enqueueSnackbar("New row(s) added successfully", { variant: "success" });
     toggleOpen();
@@ -48,9 +42,12 @@ const AddRowDialog = ({ open, toggleOpen }) => {
   return (
     <>
       <Dialog open={Boolean(open)} fullWidth maxWidth="xs">
-        <DialogTitle id="alert-dialog-title">Add Rows</DialogTitle>
+        <DialogTitle id="alert-dialog-title">Add rows</DialogTitle>
         <DialogContent>
-          <Grid container sx={{ mt: 2 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Add blank rows to continue entering dataset values.
+          </Typography>
+          <Grid container>
             <TextField
               fullWidth
               label="Number of rows"
@@ -79,12 +76,17 @@ const AddRowDialog = ({ open, toggleOpen }) => {
             variant="contained"
             color="primary"
           >
-            Add Rows
+            Add rows
           </Button>
         </DialogActions>
       </Dialog>
     </>
   );
+};
+
+AddRowDialog.propTypes = {
+  open: PropTypes.bool,
+  toggleOpen: PropTypes.func,
 };
 
 export default AddRowDialog;

@@ -1,7 +1,11 @@
-import { Divider } from "@mui/material";
+import { useContext, useMemo } from "react";
+import { Box } from "@mui/material";
+import { ThemeProvider } from "@mui/material/styles";
+import { CustomThemeContext } from "../../setup/theme-manager/theme-context-manager";
+import { createScopedTheme } from "../../common/theme/scoped-theme";
 import AppAppBar from "./components/app-appbar";
 import Hero from "./components/hero";
-import Features from "./components/features";
+import Features from "./components/features/features";
 import Footer from "./components/footer";
 import Publications from "./components/publications";
 import News from "./components/news";
@@ -9,31 +13,28 @@ import Teams from "./components/teams";
 import ContactUs from "./components/contact-us";
 import LogoCollection from "./components/logo-collection";
 import Architecture from "./components/architecture";
-import ISCCreatorFeature from "./components/isc-creator-feature";
-import IndicatorEditorFeature from "./components/indicator-editor-feature";
 
 const LandingPage = () => {
+  // Layer the landing design system on top of the app's base (light/dark)
+  // theme, scoped to this subtree only via the nested ThemeProvider.
+  const { theme } = useContext(CustomThemeContext);
+  const landingTheme = useMemo(() => createScopedTheme(theme), [theme]);
+
   return (
-    <>
-      <AppAppBar />
-      <Hero />
-      <Architecture />
-      <LogoCollection />
-      <Divider />
-      <Features />
-      <ISCCreatorFeature />
-      <IndicatorEditorFeature />
-      <Divider />
-      <Teams />
-      <Divider />
-      <News />
-      <Divider />
-      <Publications />
-      <Divider />
-      <ContactUs />
-      <Divider />
-      <Footer />
-    </>
+    <ThemeProvider theme={landingTheme}>
+      <Box sx={{ fontFamily: landingTheme.typography.fontFamily }}>
+        <AppAppBar />
+        <Hero />
+        <Architecture />
+        <LogoCollection />
+        <Features />
+        <Teams />
+        <News />
+        <Publications />
+        <ContactUs />
+        <Footer />
+      </Box>
+    </ThemeProvider>
   );
 };
 

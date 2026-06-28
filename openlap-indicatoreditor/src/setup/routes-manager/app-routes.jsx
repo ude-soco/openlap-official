@@ -1,38 +1,162 @@
-import { useContext } from "react";
-import { CssBaseline, Paper, Stack, Divider, Container } from "@mui/material";
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { lazy, Suspense, useContext } from "react";
+import {
+  Box,
+  CircularProgress,
+  CssBaseline,
+  Paper,
+  Stack,
+  Divider,
+  Container,
+} from "@mui/material";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import PrivateRoute from "./private-routes";
-import UserProfile from "../../pages/account-manager/user-profile";
-import Login from "../../pages/login/login";
-import Register from "../../pages/register/register";
 import RoleTypes from "../../pages/account-manager/utils/enums/role-types.js";
 import { CustomThemeContext } from "../theme-manager/theme-context-manager";
 import { AuthContext } from "../auth-context-manager/auth-context-manager";
-import IndicatorEditorDashboard from "../../pages/indicators/dashboard/indicator-editor-dashboard";
-import IndicatorPool from "../../pages/indicators/indicator-pool/indicator-pool";
-import ISCPool from "../../pages/indicator-specification-cards/isc-pool/isc-pool";
-import GQIDashboard from "../../pages/gqi-editor/dashboard/gqi-dashboard";
-import GQIEditor from "../../pages/gqi-editor/gqi-editor/gqi-editor";
-import GQIPool from "../../pages/gqi-editor/gqi-pool/gqi-pool";
 import Footer from "../../common/components/footer/footer";
 import { SnackbarProvider } from "notistack";
-import IndicatorPreview from "../../pages/indicators/dashboard/components/indicator-preview";
-import CompositeIndicator from "../../pages/indicators/indicator-editor/composite-indicator/composite-indicator";
-import CsvXapiDashboard from "../../pages/csv-xapi-converter/csv-xapi-dashboard";
-import ManageLrs from "../../pages/account-manager/manage-lrs";
-import Home from "../../pages/home/home";
-import IndicatorSpecificationCard from "../../pages/indicator-specification-cards/creator/indicator-specification-card";
-import IscDashboard from "../../pages/indicator-specification-cards/dashboard/isc-dashboard";
-import IscPreview from "../../pages/indicator-specification-cards/dashboard/components/isc-preview";
-
-import IndicatorEditor from "../../pages/indicators/indicator-editor/indicator-editor";
-import BasicIndicator from "../../pages/indicators/indicator-editor/basic-indicator/basic-indicator";
-import NavigationBar from "../../common/components/navigation-bar/navigation-bar";
+import AppShell from "../../common/components/app-shell/app-shell";
+import { NavigationGuardProvider } from "./navigation-guard.jsx";
 import LandingPage from "../../pages/landing-page/landing-page.jsx";
-import PrivacyPolicy from "../../pages/privacy-policy/privacy-policy.jsx";
-import ManageVisualization from "../../pages/admin/manage-visualization.jsx";
-import ManageAnalytics from "../../pages/admin/manage-analytics.jsx";
+
+// Route components are code-split so anonymous landing-page visitors don't
+// download the authenticated app (charts, data grid, CSV parsing, etc.).
+// Only the public LandingPage entry is eager.
+const Login = lazy(() => import("../../pages/login/login"));
+const Register = lazy(() => import("../../pages/register/register"));
+const PrivacyPolicy = lazy(() =>
+  import("../../pages/privacy-policy/privacy-policy.jsx")
+);
+const UserProfile = lazy(() =>
+  import("../../pages/account-manager/user-profile")
+);
+const IndicatorEditorDashboard = lazy(() =>
+  import("../../pages/indicators/dashboard/indicator-editor-dashboard")
+);
+const IndicatorPool = lazy(() =>
+  import("../../pages/indicators/indicator-pool/indicator-pool")
+);
+const ISCPool = lazy(() =>
+  import("../../pages/indicator-specification-cards/isc-pool/isc-pool")
+);
+const GQIDashboard = lazy(() =>
+  import("../../pages/gqi-editor/dashboard/gqi-dashboard")
+);
+const GQIEditor = lazy(() =>
+  import("../../pages/gqi-editor/gqi-editor/gqi-editor")
+);
+const GQIPool = lazy(() => import("../../pages/gqi-editor/gqi-pool/gqi-pool"));
+const IndicatorPreview = lazy(() =>
+  import("../../pages/indicators/dashboard/components/indicator-preview")
+);
+const CompositeIndicator = lazy(() =>
+  import(
+    "../../pages/indicators/indicator-editor/composite-indicator/composite-indicator"
+  )
+);
+const CsvXapiDashboard = lazy(() =>
+  import("../../pages/csv-xapi-converter/csv-xapi-dashboard")
+);
+const ManageLrs = lazy(() => import("../../pages/account-manager/manage-lrs"));
+const Home = lazy(() => import("../../pages/home/home"));
+const IndicatorSpecificationCard = lazy(() =>
+  import(
+    "../../pages/indicator-specification-cards/creator/indicator-specification-card"
+  )
+);
+const IscDashboard = lazy(() =>
+  import("../../pages/indicator-specification-cards/dashboard/isc-dashboard")
+);
+const IscPreview = lazy(() =>
+  import(
+    "../../pages/indicator-specification-cards/dashboard/components/isc-preview"
+  )
+);
+// Route-authoritative lifecycle entry points (Phase 3).
+const IscNewRoute = lazy(() =>
+  import("../../pages/indicator-specification-cards/creator/isc-route-loaders").then(
+    (m) => ({ default: m.IscNewRoute })
+  )
+);
+const IscDraftLoader = lazy(() =>
+  import("../../pages/indicator-specification-cards/creator/isc-route-loaders").then(
+    (m) => ({ default: m.IscDraftLoader })
+  )
+);
+const IscEditBootstrap = lazy(() =>
+  import("../../pages/indicator-specification-cards/creator/isc-route-loaders").then(
+    (m) => ({ default: m.IscEditBootstrap })
+  )
+);
+const IndicatorEditor = lazy(() =>
+  import("../../pages/indicators/indicator-editor/indicator-editor")
+);
+const BasicIndicator = lazy(() =>
+  import(
+    "../../pages/indicators/indicator-editor/basic-indicator/basic-indicator"
+  )
+);
+const ManageVisualization = lazy(() =>
+  import("../../pages/admin/manage-visualization.jsx")
+);
+const ManageAnalytics = lazy(() =>
+  import("../../pages/admin/manage-analytics.jsx")
+);
+
+// Routes that opt out of the standard "content sheet" (Container + padded Paper
+// card) and render full-bleed instead — for editor/workspace pages where the
+// card-in-card framing is undesirable (e.g. the ISC Creator workspace, whose
+// own panels already provide framing). Other authenticated routes are unaffected.
+const FULL_BLEED_PATH_PREFIXES = ["/isc/creator", "/isc/new", "/isc/drafts"];
+// Full-bleed also for the edit bootstrap route /isc/:id/edit.
+const isFullBleedPath = (pathname) =>
+  FULL_BLEED_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
+  /^\/isc\/[^/]+\/edit\/?$/.test(pathname);
+
+// The authenticated content region. Renders the matched route via <Outlet/>,
+// wrapped in the content sheet by default, or full-bleed for editor routes.
+// Lives inside AppShell so switching between sheet and full-bleed routes never
+// remounts the shell (top bar / sidebar / drawer state are preserved).
+const AuthenticatedContent = () => {
+  const { pathname } = useLocation();
+  const fullBleed = isFullBleedPath(pathname);
+
+  return (
+    <Container maxWidth="xl" sx={{ minHeight: "89vh" }}>
+      {fullBleed ? (
+        <Outlet />
+      ) : (
+        <Stack
+          component={Paper}
+          elevation={0}
+          gap={1}
+          sx={{
+            p: { xs: 2, md: 3 },
+            borderRadius: (t) => `${t.custom.radii.card}px`,
+            border: (t) => `1px solid ${t.palette.divider}`,
+            bgcolor: "background.paper",
+          }}
+        >
+          <Outlet />
+        </Stack>
+      )}
+    </Container>
+  );
+};
+
+const RouteFallback = () => (
+  <Box
+    sx={{
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      minHeight: "60vh",
+    }}
+  >
+    <CircularProgress />
+  </Box>
+);
 
 const AppRoutes = () => {
   const { theme } = useContext(CustomThemeContext);
@@ -43,7 +167,8 @@ const AppRoutes = () => {
       <ThemeProvider theme={theme}>
         <SnackbarProvider maxSnack={3}>
           <CssBaseline />
-          <Routes>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
             {/* Public routes */}
             {!user && (
               <>
@@ -58,17 +183,15 @@ const AppRoutes = () => {
             {user && (
               <Route
                 element={
-                  <NavigationBar>
-                    <Container maxWidth="xl" sx={{ minHeight: "89vh" }}>
-                      <Stack component={Paper} elevation={0} gap={1}>
-                        <Outlet />
+                  <NavigationGuardProvider>
+                    <AppShell>
+                      <AuthenticatedContent />
+                      <Stack gap={2} sx={{ pt: 4 }}>
+                        <Divider />
+                        <Footer />
                       </Stack>
-                    </Container>
-                    <Stack gap={2} sx={{ pt: 4 }}>
-                      <Divider />
-                      <Footer />
-                    </Stack>
-                  </NavigationBar>
+                    </AppShell>
+                  </NavigationGuardProvider>
                 }
               >
                 <Route
@@ -219,11 +342,48 @@ const AppRoutes = () => {
                       />
                     }
                   />
+                  {/* Lifecycle entry points (static segments rank above :id) */}
+                  <Route
+                    path="new"
+                    element={
+                      <PrivateRoute
+                        component={<IscNewRoute />}
+                        allowedRoles={[
+                          RoleTypes.user,
+                          RoleTypes.userWithoutLRS,
+                        ]}
+                      />
+                    }
+                  />
+                  <Route
+                    path="drafts/:draftId"
+                    element={
+                      <PrivateRoute
+                        component={<IscDraftLoader />}
+                        allowedRoles={[
+                          RoleTypes.user,
+                          RoleTypes.userWithoutLRS,
+                        ]}
+                      />
+                    }
+                  />
                   <Route
                     path=":id"
                     element={
                       <PrivateRoute
                         component={<IscPreview />}
+                        allowedRoles={[
+                          RoleTypes.user,
+                          RoleTypes.userWithoutLRS,
+                        ]}
+                      />
+                    }
+                  />
+                  <Route
+                    path=":id/edit"
+                    element={
+                      <PrivateRoute
+                        component={<IscEditBootstrap />}
                         allowedRoles={[
                           RoleTypes.user,
                           RoleTypes.userWithoutLRS,
@@ -329,7 +489,8 @@ const AppRoutes = () => {
                 />
               </Route>
             )}
-          </Routes>
+            </Routes>
+          </Suspense>
         </SnackbarProvider>
       </ThemeProvider>
     </>

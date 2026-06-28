@@ -1,161 +1,210 @@
-import { alpha, Box, Button, Container, Grid, Link, Stack, Typography } from "@mui/material";
-import { navigationIds } from "../utils/navigation-data";
+import {
+  alpha,
+  Box,
+  Button,
+  Container,
+  Link,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
+import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+import { navigationIds } from "../data/navigation-data";
+import { scrollToSection } from "../../../common/utils/scroll-to-section";
+import { entrance, fadeUp } from "./shared/motion";
 import HeroLight from "../../../assets/home/hero-light.png";
 import HeroDark from "../../../assets/home/hero-dark.png";
 import OpenLAPFull from "../../../assets/home/soco-openlap-full.svg";
 import LAY from "../../../assets/home/soco-lay.png";
-import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
-import { useNavigate } from "react-router-dom";
 
 export default function Hero() {
   const navigate = useNavigate();
-  const scrollToSection = (sectionId) => {
-    const sectionElement = document.getElementById(sectionId);
-    const offset = 128;
-    if (sectionElement) {
-      const targetScroll = sectionElement.offsetTop - offset;
-      sectionElement.scrollIntoView({ behavior: "smooth" });
-      window.scrollTo({
-        top: targetScroll,
-        behavior: "smooth",
-      });
-    }
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+  const accent = theme.custom.colors.accent;
+
+  // Smoothly scroll to an in-page section; `highlight` briefly flags arrival.
+  const handleScroll = (id, highlight) => (e) => {
+    if (e) e.preventDefault();
+    scrollToSection(id, { highlight });
   };
+
+  // Layered, soft elevation so the product preview reads as the centerpiece.
+  const visualShadow = isDark
+    ? `0 24px 70px -24px rgba(0, 0, 0, 0.8), 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 90px ${alpha(
+        theme.palette.primary.main,
+        0.18
+      )}`
+    : `0 30px 70px -28px rgba(16, 24, 40, 0.30), 0 12px 28px rgba(16, 24, 40, 0.08), 0 0 90px ${alpha(
+        theme.palette.primary.main,
+        0.1
+      )}`;
 
   return (
     <Box
       id={navigationIds.HERO}
-      sx={(theme) => ({
+      sx={{
         width: "100%",
-        backgroundImage:
-          theme.palette.mode === "light"
-            ? "linear-gradient(180deg, #CEE5FD, #FFF)"
-            : `linear-gradient(#02294F, ${alpha("#090E10", 0.0)})`,
-        backgroundSize: "100% 20%",
+        backgroundImage: isDark
+          ? `linear-gradient(180deg, ${alpha(theme.palette.primary.dark, 0.25)}, ${alpha(theme.palette.background.default, 0)})`
+          : `linear-gradient(180deg, ${alpha(theme.palette.primary.light, 0.18)}, ${alpha(theme.palette.background.default, 0)})`,
+        backgroundSize: "100% 60%",
         backgroundRepeat: "no-repeat",
-      })}
+      }}
     >
       <Container
         sx={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          pt: { xs: 14, sm: 20 },
-          pb: { xs: 8, sm: 12 },
+          pt: { xs: 14, md: 22 },
+          pb: { xs: 10, md: 16 },
         }}
       >
-        <Stack spacing={2} useFlexGap sx={{ width: { xs: "100%", sm: "70%" } }}>
-          <Typography
-            variant="h4"
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", md: "row" },
-              alignSelf: "center",
-              textAlign: "center",
-              fontSize: "clamp(1rem, 10vw, 1.5rem)",
-            }}
-          >
-            Do-it-yourself Learning Analytics with
-          </Typography>
-          <Typography
-            variant="h1"
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", md: "row" },
-              alignSelf: "center",
-              textAlign: "center",
-              fontSize: "clamp(3.5rem, 10vw, 4rem)",
-            }}
-          >
+        {/* Headline / content */}
+        <Stack
+          spacing={{ xs: 3.5, md: 4.5 }}
+          alignItems="center"
+          sx={{
+            width: "100%",
+            maxWidth: 840,
+            textAlign: "center",
+            ...entrance(fadeUp),
+          }}
+        >
+          {/* eyebrow + headline kept tight together */}
+          <Stack spacing={2} alignItems="center">
             <Typography
-              component="span"
-              variant="h1"
-              sx={{
-                fontSize: "clamp(3rem, 10vw, 4rem)",
-                color: (theme) =>
-                  theme.palette.mode === "light"
-                    ? "primary.main"
-                    : "primary.light",
-              }}
+              variant="overline"
+              sx={{ color: accent, fontWeight: 600, letterSpacing: "0.1em" }}
             >
               Open Learning Analytics Platform
             </Typography>
-          </Typography>
 
-          <Typography textAlign="center" color="textSecondary">
-            A scalable, transparent, and interactive platform for self-service
-            learning analytics. <br />
-            Follows a human-centered learning analytics approach by empowering
-            stakeholders (e.g., teachers, students, researchers, institutions)
-            to take control of the learning analytics indicator design and
-            implementation process, using no-code-environments, namely the{" "}
+            <Typography variant="h1">
+              Build Learning Analytics Indicators{" "}
+              <Box component="span" sx={{ color: accent }}>
+                without writing code
+              </Box>
+            </Typography>
+          </Stack>
+
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{ maxWidth: 680, fontSize: { md: "1.125rem" } }}
+          >
+            A self-service learning analytics platform that lets teachers,
+            students, and researchers design and implement their own indicators
+            — no code required — through the{" "}
             <Link
-              underline="hover"
+              href="#isc-creator"
+              onClick={handleScroll("isc-creator", true)}
               sx={{ cursor: "pointer" }}
-              onClick={() => scrollToSection(navigationIds.FEATURE)}
             >
-              Indicator Specification Card (ISC) Creator
+              ISC Creator
             </Link>{" "}
             and the{" "}
             <Link
-              underline="hover"
+              href="#indicator-editor"
+              onClick={handleScroll("indicator-editor", true)}
               sx={{ cursor: "pointer" }}
-              onClick={() => scrollToSection(navigationIds.FEATURE)}
             >
               Indicator Editor
             </Link>
             .
           </Typography>
+
+          {/* CTAs */}
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
+          >
+            <Button
+              variant="contained"
+              size="large"
+              endIcon={<RocketLaunchIcon />}
+              onClick={() => navigate("/register")}
+            >
+              Try it now
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              href={`#${navigationIds.FEATURE}`}
+              onClick={handleScroll(navigationIds.FEATURE, false)}
+            >
+              Explore features
+            </Button>
+          </Stack>
+
+          {/* Trust strip */}
+          <Stack alignItems="center" spacing={2.5} sx={{ pt: { xs: 1, md: 2 } }}>
+            <Typography
+              variant="body2"
+              sx={{ color: "text.secondary", letterSpacing: "0.01em" }}
+            >
+              Developed by the Social Computing Group · University of
+              Duisburg-Essen
+            </Typography>
+            <Stack
+              direction="row"
+              spacing={4}
+              alignItems="center"
+              sx={{ opacity: 0.65, display: { xs: "none", sm: "flex" } }}
+            >
+              <Box
+                component="img"
+                src={OpenLAPFull}
+                alt="OpenLAP"
+                loading="lazy"
+                sx={{ height: 48 }}
+              />
+              <Box
+                component="img"
+                src={LAY}
+                alt="LAY project"
+                loading="lazy"
+                sx={{ height: 48 }}
+              />
+            </Stack>
+          </Stack>
         </Stack>
-        <Grid
-          container
-          sx={{ pt: 3, pb: 5, width: { xs: "100%", sm: "70%" } }}
-          justifyContent="space-around"
+
+        {/* Product visual */}
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: 1080,
+            mt: { xs: 8, md: 13 },
+            ...entrance(fadeUp, { delay: 160 }),
+          }}
         >
           <Box
-            component="img"
-            sx={{ height: 48, display: { xs: "none", md: "flex" } }}
-            src={OpenLAPFull}
-            alt="Soco logo"
-          />
-          <Button
-            variant="contained"
-            size="large"
-            endIcon={<RocketLaunchIcon />}
-            onClick={() => navigate("/register")}
+            sx={{
+              borderRadius: `${theme.custom.radii.image}px`,
+              border: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+              overflow: "hidden",
+              bgcolor: "background.paper",
+              boxShadow: visualShadow,
+            }}
           >
-            Try it now
-          </Button>
-          <Box
-            component="img"
-            sx={{ height: 48, display: { xs: "none", md: "flex" } }}
-            src={LAY}
-            alt="LAY logo"
-          />
-        </Grid>
-        <Box
-          id="image"
-          sx={(theme) => ({
-            alignSelf: "center",
-            height: { xs: 200, sm: 700 },
-            width: "100%",
-            backgroundImage:
-              theme.palette.mode === "light"
-                ? `url(${HeroLight})`
-                : `url(${HeroDark})`,
-            backgroundSize: "cover",
-            borderRadius: "10px",
-            outline: "1px solid",
-            outlineColor:
-              theme.palette.mode === "light"
-                ? alpha("#BFCCD9", 0.5)
-                : alpha("#9CCCFC", 0.1),
-            boxShadow:
-              theme.palette.mode === "light"
-                ? `0 0 12px 8px ${alpha("#9CCCFC", 0.2)}`
-                : `0 0 24px 12px ${alpha("#033363", 0.2)}`,
-          })}
-        />
+            <Box
+              component="img"
+              src={isDark ? HeroDark : HeroLight}
+              alt="The OpenLAP platform interface for designing and visualizing learning analytics indicators"
+              fetchPriority="high"
+              sx={{
+                display: "block",
+                width: "100%",
+                height: "auto",
+                aspectRatio: "2304 / 1400",
+              }}
+            />
+          </Box>
+        </Box>
       </Container>
     </Box>
   );

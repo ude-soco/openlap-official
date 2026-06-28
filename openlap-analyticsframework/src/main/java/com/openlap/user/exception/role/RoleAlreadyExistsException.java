@@ -1,16 +1,14 @@
 package com.openlap.user.exception.role;
 
-import lombok.extern.slf4j.Slf4j;
+import com.openlap.infrastructure.exception.ConflictException;
 
-@Slf4j
-public class RoleAlreadyExistsException extends RuntimeException {
+/** Role already exists → HTTP 409 (status preserved). */
+public class RoleAlreadyExistsException extends ConflictException {
   public RoleAlreadyExistsException(String message) {
-    super(message);
-    log.error(message);
+    super("ROLE_ALREADY_EXISTS", message);
   }
 
   public RoleAlreadyExistsException(String message, Throwable cause) {
-    super(message, cause);
-    log.error(message, cause);
+    super("ROLE_ALREADY_EXISTS", message, cause);
   }
 }
