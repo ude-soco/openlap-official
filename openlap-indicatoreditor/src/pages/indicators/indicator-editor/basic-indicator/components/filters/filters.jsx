@@ -1,11 +1,4 @@
-import {
-  Button,
-  Collapse,
-  Grid,
-  Divider,
-  Stack,
-  Container,
-} from "@mui/material";
+import { Button, Collapse, Divider, Grid, Stack } from "@mui/material";
 import { useContext } from "react";
 import { BasicContext } from "../../basic-indicator";
 import FiltersSummary from "./components/filters-summary";
@@ -43,31 +36,29 @@ export default function Filters() {
             timeout={{ enter: 500, exit: 250 }}
             unmountOnExit
           >
-            <Stack gap={2}>
-              <Container maxWidth="lg">
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, lg: 6 }}>
-                    <DateFilter />
-                  </Grid>
-                  <Grid size={{ xs: 12, lg: 6 }}>
-                    <UserFilter />
-                  </Grid>
-                  <Grid size={{ xs: 12 }}>
-                    <ActivityFilters />
-                  </Grid>
+            <Stack gap={2} sx={{ py: 2 }}>
+              <Grid container spacing={2} alignItems="stretch">
+                <Grid size={{ xs: 12, lg: 6 }} sx={{ display: "flex" }}>
+                  <DateFilter />
                 </Grid>
-              </Container>
+                <Grid size={{ xs: 12, lg: 6 }} sx={{ display: "flex" }}>
+                  <UserFilter />
+                </Grid>
+              </Grid>
+              <ActivityFilters />
               <Divider />
-              <Container maxWidth="sm">
-                <Button
-                  fullWidth
-                  variant="contained"
-                  disabled={handleCheckDisabled()}
-                  onClick={handleUnlockPath}
-                >
-                  Next
-                </Button>
-              </Container>
+              <Grid container justifyContent="center">
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    disabled={handleCheckDisabled()}
+                    onClick={handleUnlockPath}
+                  >
+                    Next
+                  </Button>
+                </Grid>
+              </Grid>
             </Stack>
           </Collapse>
       </WorkflowSection>

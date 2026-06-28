@@ -1,24 +1,17 @@
 import { useContext } from "react";
-import {
-  Accordion,
-  AccordionDetails,
-  Grid,
-  Paper,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Stack } from "@mui/material";
 import { BasicContext } from "../../../basic-indicator";
-import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
-import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
+import FilterSection from "./filter-section";
 
 export default function DateFilter() {
   const { filters, setFilters, setAnalysis } = useContext(BasicContext);
 
   const handleUpdateDate = (value, name) => {
+    if (!value) return;
     setFilters((p) => ({
       ...p,
       selectedTime: { ...p.selectedTime, [name]: value.toISOString() },
@@ -27,44 +20,30 @@ export default function DateFilter() {
   };
 
   return (
-    <>
-      <Stack gap={1} component={Paper} variant="outlined" sx={{ p: 2 }}>
-        <Stack direction="row" alignItems="center">
-          <Typography>
-            Select <b>Timeframe</b>
-          </Typography>
-          <CustomTooltip
-            type="description"
-            message={`Choose the start and end dates to define the period of data you want to include in your analysis.`}
+    <FilterSection
+      title="Timeframe"
+      helper="Choose the start and end dates that define the period of data to analyse."
+    >
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <Stack gap={2} direction={{ xs: "column", sm: "row" }}>
+          <DatePicker
+            format="DD MMM YYYY"
+            label="Start date"
+            maxDate={dayjs(filters.selectedTime.until)}
+            onChange={(value) => handleUpdateDate(value, "from")}
+            value={dayjs(filters.selectedTime.from)}
+            slotProps={{ textField: { fullWidth: true } }}
+          />
+          <DatePicker
+            format="DD MMM YYYY"
+            label="End date"
+            minDate={dayjs(filters.selectedTime.from)}
+            onChange={(value) => handleUpdateDate(value, "until")}
+            value={dayjs(filters.selectedTime.until)}
+            slotProps={{ textField: { fullWidth: true } }}
           />
         </Stack>
-        <Stack gap={2} justifyContent="center" direction={{ xs: "column", lg: "row" }}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DemoContainer components={["DatePicker"]}>
-              <DatePicker
-                format="DD MMM YYYY"
-                fullWidth
-                label="Start date"
-                maxDate={dayjs(filters.selectedTime.until)}
-                onChange={(value) => handleUpdateDate(value, "from")}
-                value={dayjs(filters.selectedTime.from)}
-              />
-            </DemoContainer>
-          </LocalizationProvider>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DemoContainer components={["DatePicker"]}>
-              <DatePicker
-                format="DD MMM YYYY"
-                fullWidth
-                label="End date"
-                minDate={dayjs(filters.selectedTime.from)}
-                onChange={(value) => handleUpdateDate(value, "until")}
-                value={dayjs(filters.selectedTime.until)}
-              />
-            </DemoContainer>
-          </LocalizationProvider>
-        </Stack>
-      </Stack>
-    </>
+      </LocalizationProvider>
+    </FilterSection>
   );
 }

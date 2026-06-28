@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 import PropTypes from "prop-types";
-import { Chip, Collapse, Grid, Stack, Tooltip, Typography } from "@mui/material";
+import { Chip, Collapse, Grid, Stack, Typography } from "@mui/material";
 import { BasicContext } from "../../../basic-indicator";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button";
 import { ToggleEditButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button";
@@ -9,41 +9,22 @@ import WorkflowStepHeader from "../../../../../../../common/components/workflow-
 import { Condition } from "../../../../utils/indicator-data";
 import dayjs from "dayjs";
 
-const MAX_DISPLAY_ITEMS = 3;
-const MAX_LABEL_LENGTH = 21;
+// How many activity/action chips to show before collapsing the rest into a
+// single "+N more" count. The shown chips carry full labels (they wrap), so the
+// summary stays readable WITHOUT hover; the full list is one click away via Edit.
+const MAX_DISPLAY_ITEMS = 6;
 
 function ChipsWithMore({ items }) {
   const displayed = items.slice(0, MAX_DISPLAY_ITEMS);
-  const hidden = items.slice(MAX_DISPLAY_ITEMS);
-  const moreCount = hidden.length;
-
-  const truncate = (text, length) =>
-    text.length > length ? `${text.slice(0, length)}…` : text;
+  const moreCount = items.length - displayed.length;
 
   return (
     <>
       {displayed.map((item) => (
-        <Tooltip key={item.id} arrow title={item.name}>
-          <Chip
-            label={truncate(item.name, MAX_LABEL_LENGTH)}
-            sx={{ cursor: "help" }}
-          />
-        </Tooltip>
+        <Chip key={item.id} size="small" label={item.name} />
       ))}
-
       {moreCount > 0 && (
-        <Tooltip
-          arrow
-          title={hidden.map((item, index) => (
-            <Typography variant="body2" key={index}>
-              {item.name}
-            </Typography>
-          ))}
-        >
-          <Typography sx={{ fontStyle: "italic", cursor: "help" }}>
-            {`${moreCount} more...`}
-          </Typography>
-        </Tooltip>
+        <Chip size="small" variant="outlined" label={`+${moreCount} more`} />
       )}
     </>
   );
@@ -140,11 +121,13 @@ export default function FilterSummary() {
           <Grid container spacing={1} alignItems="center">
             <Typography>Timeframe:</Typography>
             <Chip
+              size="small"
               label={`From (${dayjs(filters.selectedTime.from).format(
                 "DD MMM YYYY"
               )})`}
             />
             <Chip
+              size="small"
               label={`Until (${dayjs(filters.selectedTime.until).format(
                 "DD MMM YYYY"
               )})`}
@@ -152,7 +135,7 @@ export default function FilterSummary() {
           </Grid>
           <Grid container spacing={1} alignItems="center">
             <Typography>User(s):</Typography>
-            <Chip label={getUserFilterLabel()} />
+            <Chip size="small" label={getUserFilterLabel()} />
           </Grid>
           {handleCheckFiltersSelected() && (
             <>
@@ -161,6 +144,7 @@ export default function FilterSummary() {
                 {filters.selectedActivities.map((activity) => (
                   <Chip
                     key={activity.id}
+                    size="small"
                     label={activity.selectedActivityType.name}
                   />
                 ))}
