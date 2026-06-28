@@ -31,14 +31,14 @@ import {
 import TypeInputSelection from "./components/type-input-selection";
 import ChartPreview from "../../../components/chart-preview";
 import ChartCustomizationPanel from "./components/customization/chart-customization-panel";
-import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper";
+import WorkflowSection from "../../../../../../common/components/workflow-section/workflow-section.jsx";
+import { getStepStatus } from "../../utils/basic-workflow-ui.js";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
 import {
   requestCreateBasicIndicator,
   requestUpdateBasicIndicator,
 } from "../../utils/basic-indicator-api";
 import { useNavigate, useParams } from "react-router-dom";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
 export default function Visualization() {
   const params = useParams();
@@ -215,7 +215,11 @@ export default function Visualization() {
 
   return (
     <>
-      <CustomPaper locked={lockedStep.visualization.locked}>
+      <WorkflowSection
+        status={getStepStatus(lockedStep, "visualization")}
+        lockedHint="Complete Analysis to unlock Visualization."
+        ariaLabel="Visualization step"
+      >
         <Stack gap={2}>
           <VisualizationSummary />
           <Collapse
@@ -321,7 +325,7 @@ export default function Visualization() {
             )}
           </DialogActions>
         </Dialog>
-      </CustomPaper>
+      </WorkflowSection>
     </>
   );
 }

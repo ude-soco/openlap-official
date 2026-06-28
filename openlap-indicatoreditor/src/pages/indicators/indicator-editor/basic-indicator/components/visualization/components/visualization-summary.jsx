@@ -1,10 +1,11 @@
 import { useContext, useState } from "react";
-import { Chip, Collapse, Grid, IconButton, Typography } from "@mui/material";
-import LockIcon from "@mui/icons-material/Lock";
+import { Chip, Collapse, Grid, Stack, Typography } from "@mui/material";
 import { BasicContext } from "../../../basic-indicator";
 import ToggleSummaryButton from "../../../../../../../common/components/toggle-summary-button/toggle-summary-button";
 import { ToggleEditIconButton } from "../../../../../../../common/components/toggle-edit-button/toggle-edit-button";
 import TipPopover from "../../../../../../../common/components/tip-popover/tip-popover";
+import WorkflowStepHeader from "../../../../../../../common/components/workflow-step-header/workflow-step-header.jsx";
+import WorkflowSummaryPanel from "../../../../../../../common/components/workflow-summary-panel/workflow-summary-panel.jsx";
 
 export default function VisualizationSummary() {
   const { visualization, lockedStep, setLockedStep } = useContext(BasicContext);
@@ -47,85 +48,76 @@ export default function VisualizationSummary() {
     }
   };
 
+  const locked = lockedStep.visualization.locked;
+
   return (
-    <>
-      <Grid container>
-        <Grid size={{ xs: 12 }}>
-          <Grid container justifyContent="space-between" spacing={1}>
-            <Grid size="grow">
-              <Grid container alignItems="center" spacing={1}>
-                {!lockedStep.visualization.locked ? (
-                  <Chip label={lockedStep.visualization.step} color="primary" />
-                ) : (
-                  <IconButton size="small">
-                    <LockIcon />
-                  </IconButton>
-                )}
-                <Typography>Visualization</Typography>
-                {!lockedStep.visualization.locked && (
-                  <TipPopover
-                    tipAnchor={state.tipAnchor}
-                    toggleTipAnchor={handleTipAnchor}
-                    description={state.tipDescription}
-                  />
-                )}
-                {!lockedStep.visualization.locked &&
-                  !lockedStep.visualization.openPanel && (
-                    <ToggleSummaryButton
-                      showSelections={state.showSelections}
-                      toggleShowSelection={handleToggleShowSelection}
-                    />
-                  )}
-              </Grid>
-            </Grid>
-            <ToggleEditIconButton
-              openPanel={lockedStep.visualization.openPanel}
-              togglePanel={handleTogglePanel}
+    <Stack gap={2}>
+      <WorkflowStepHeader
+        stepNumber={lockedStep.visualization.step}
+        title="Visualization"
+        locked={locked}
+        helper={
+          !locked && (
+            <TipPopover
+              tipAnchor={state.tipAnchor}
+              toggleTipAnchor={handleTipAnchor}
+              description={state.tipDescription}
             />
-          </Grid>
-        </Grid>
-        <Collapse
-          in={!lockedStep.visualization.openPanel && state.showSelections}
-          timeout={{ enter: 500, exit: 250 }}
-          unmountOnExit
-        >
-          <Grid container spacing={1}>
-            {handleCheckVisualizationSelected("library") && (
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Typography>Selected Visualization Library</Typography>
-                  <Chip label={visualization.selectedLibrary.name} />
-                </Grid>
-              </Grid>
-            )}
-            {handleCheckVisualizationSelected("chart") && (
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Typography>Selected Chart</Typography>
-                  <Chip label={visualization.selectedType.name} />
-                </Grid>
-              </Grid>
-            )}
-            {handleCheckVisualizationSelected("inputs") && (
-              <Grid size={{ xs: 12 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Typography>Selected Inputs</Typography>
-                  {visualization.inputs.map((input) => {
-                    if (input.selectedInput) {
-                      return (
-                        <Chip
-                          key={input.id}
-                          label={`${input.title} (${input.selectedInput.title})`}
-                        />
-                      );
-                    }
-                  })}
-                </Grid>
-              </Grid>
-            )}
-          </Grid>
-        </Collapse>
-      </Grid>
-    </>
+          )
+        }
+        summaryToggle={
+          !locked &&
+          !lockedStep.visualization.openPanel && (
+            <ToggleSummaryButton
+              showSelections={state.showSelections}
+              toggleShowSelection={handleToggleShowSelection}
+            />
+          )
+        }
+        editToggle={
+          <ToggleEditIconButton
+            openPanel={lockedStep.visualization.openPanel}
+            togglePanel={handleTogglePanel}
+          />
+        }
+      />
+      <Collapse
+        in={
+          !locked && !lockedStep.visualization.openPanel && state.showSelections
+        }
+        timeout={{ enter: 500, exit: 250 }}
+        unmountOnExit
+      >
+        <WorkflowSummaryPanel>
+          {handleCheckVisualizationSelected("library") && (
+            <Grid container spacing={1} alignItems="center">
+              <Typography>Selected Visualization Library</Typography>
+              <Chip label={visualization.selectedLibrary.name} />
+            </Grid>
+          )}
+          {handleCheckVisualizationSelected("chart") && (
+            <Grid container spacing={1} alignItems="center">
+              <Typography>Selected Chart</Typography>
+              <Chip label={visualization.selectedType.name} />
+            </Grid>
+          )}
+          {handleCheckVisualizationSelected("inputs") && (
+            <Grid container spacing={1} alignItems="center">
+              <Typography>Selected Inputs</Typography>
+              {visualization.inputs.map((input) => {
+                if (input.selectedInput) {
+                  return (
+                    <Chip
+                      key={input.id}
+                      label={`${input.title} (${input.selectedInput.title})`}
+                    />
+                  );
+                }
+              })}
+            </Grid>
+          )}
+        </WorkflowSummaryPanel>
+      </Collapse>
+    </Stack>
   );
 }

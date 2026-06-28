@@ -12,7 +12,8 @@ import FiltersSummary from "./components/filters-summary";
 import UserFilter from "./components/user-filter";
 import DateFilter from "./components/date-filter";
 import ActivityFilters from "./components/activity-filters/activity-filters.jsx";
-import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper.jsx";
+import WorkflowSection from "../../../../../../common/components/workflow-section/workflow-section.jsx";
+import { getStepStatus } from "../../utils/basic-workflow-ui.js";
 
 export default function Filters() {
   const { lockedStep, setLockedStep, filters } = useContext(BasicContext);
@@ -31,7 +32,11 @@ export default function Filters() {
 
   return (
     <>
-      <CustomPaper locked={lockedStep.filters.locked}>
+      <WorkflowSection
+        status={getStepStatus(lockedStep, "filters")}
+        lockedHint="Select a dataset to unlock Filters."
+        ariaLabel="Filters step"
+      >
         <Stack>
           <FiltersSummary />
           <Collapse
@@ -67,7 +72,7 @@ export default function Filters() {
             </Stack>
           </Collapse>
         </Stack>
-      </CustomPaper>
+      </WorkflowSection>
     </>
   );
 }

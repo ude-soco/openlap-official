@@ -5,7 +5,7 @@ import NameDialog from "./components/name-dialog.jsx";
 import VisSelection from "../visualization/components/visualization-filter/vis-selection";
 import FinalizeSummary from "./components/finalize-summary/finalize-summary";
 import FinalizeReview from "./components/finalize-review/finalize-review.jsx";
-import WorkflowSection from "../workflow-section/workflow-section.jsx";
+import WorkflowSection from "../../../../../common/components/workflow-section/workflow-section.jsx";
 import { useParams } from "react-router-dom";
 
 const Finalize = () => {

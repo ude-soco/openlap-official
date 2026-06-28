@@ -23,7 +23,8 @@ import {
 } from "../../utils/query-builder.js";
 import AnalyzedDataTable from "./components/analyzed-data-table";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip.jsx";
-import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper.jsx";
+import WorkflowSection from "../../../../../../common/components/workflow-section/workflow-section.jsx";
+import { getStepStatus } from "../../utils/basic-workflow-ui.js";
 
 export default function Analysis() {
   const { api } = useContext(AuthContext);
@@ -72,7 +73,11 @@ export default function Analysis() {
 
   return (
     <>
-      <CustomPaper locked={lockedStep.analysis.locked}>
+      <WorkflowSection
+        status={getStepStatus(lockedStep, "analysis")}
+        lockedHint="Complete Filters to unlock Analysis."
+        ariaLabel="Analysis step"
+      >
         <Stack>
           <AnalysisSummary />
           <Collapse
@@ -162,7 +167,7 @@ export default function Analysis() {
             </Stack>
           </Collapse>
         </Stack>
-      </CustomPaper>
+      </WorkflowSection>
     </>
   );
 }

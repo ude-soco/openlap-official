@@ -3,7 +3,7 @@ import { Collapse, Grid } from "@mui/material";
 import { ISCContext } from "../../isc-context.js";
 import ChoosePathSummary from "./components/choose-path-summary.jsx";
 import PathSelectors from "./components/path-selectors.jsx";
-import WorkflowSection from "../workflow-section/workflow-section.jsx";
+import WorkflowSection from "../../../../../common/components/workflow-section/workflow-section.jsx";
 import { isPathComplete } from "../../utils/isc-selectors.js";
 
 const ChoosePath = () => {

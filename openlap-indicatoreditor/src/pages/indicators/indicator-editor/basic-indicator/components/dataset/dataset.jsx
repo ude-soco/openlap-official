@@ -15,7 +15,8 @@ import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-c
 import { fetchActivityTypesList, fetchUserLRSList } from "./utils/dataset-api";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
 import CustomDialog from "../../../../../../common/components/custom-dialog/custom-dialog";
-import CustomPaper from "../../../../../../common/components/custom-paper/custom-paper";
+import WorkflowSection from "../../../../../../common/components/workflow-section/workflow-section.jsx";
+import { getStepStatus } from "../../utils/basic-workflow-ui.js";
 
 export default function Dataset() {
   const { api } = useContext(AuthContext);
@@ -115,7 +116,10 @@ export default function Dataset() {
 
   return (
     <>
-      <CustomPaper sx={{ p: 2 }}>
+      <WorkflowSection
+        status={getStepStatus(lockedStep, "dataset")}
+        ariaLabel="Dataset step"
+      >
         <Stack gap={2}>
           <DatasetSummary />
           <Collapse
@@ -184,7 +188,7 @@ export default function Dataset() {
             </Stack>
           </Collapse>
         </Stack>
-      </CustomPaper>
+      </WorkflowSection>
     </>
   );
 }

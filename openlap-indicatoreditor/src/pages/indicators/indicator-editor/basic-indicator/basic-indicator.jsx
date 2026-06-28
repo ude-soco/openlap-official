@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useSnackbar } from "notistack";
-import { Link as RouterLink } from "react-router-dom";
-import { Breadcrumbs, Link, Grid, Stack, Typography } from "@mui/material";
+import { Paper, Stack } from "@mui/material";
 import dayjs from "dayjs";
 import { Condition } from "../utils/indicator-data";
 import Dataset from "./components/dataset/dataset";
@@ -9,6 +8,12 @@ import Filters from "./components/filters/filters";
 import Analysis from "./components/analysis/analysis";
 import Visualization from "./components/visualization/visualization";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager";
+import PageHeader from "../../../../common/components/page-header/page-header";
+import WorkflowStepper from "../../../../common/components/workflow-stepper/workflow-stepper.jsx";
+import {
+  getCurrentStep,
+  getWorkflowSteps,
+} from "./utils/basic-workflow-ui.js";
 
 export const BasicContext = createContext(undefined);
 
@@ -173,6 +178,17 @@ export default function BasicIndicator() {
     return () => clearInterval(intervalId);
   }, [lockedStep, dataset, filters, analysis, visualization, indicator]);
 
+  // Informational workflow view, derived purely from the live state (no gating
+  // change). The stepper reflects progress; panel open/close stays owned by
+  // each step's existing toggles and "Next" buttons.
+  const workflowSteps = getWorkflowSteps(lockedStep, {
+    dataset,
+    filters,
+    analysis,
+    visualization,
+  });
+  const currentStep = getCurrentStep(lockedStep);
+
   return (
     <>
       <BasicContext.Provider
@@ -193,36 +209,24 @@ export default function BasicIndicator() {
         }}
       >
         <Stack gap={2}>
-          <Breadcrumbs>
-            <Link
-              component={RouterLink}
-              underline="hover"
-              color="inherit"
-              to="/"
-            >
-              Home
-            </Link>
-            <Link
-              component={RouterLink}
-              underline="hover"
-              color="inherit"
-              to="/indicator"
-            >
-              My Indicators
-            </Link>
-
-            <Link
-              component={RouterLink}
-              underline="hover"
-              color="inherit"
-              to="/indicator/editor"
-            >
-              Create an Indicator
-            </Link>
-            <Typography sx={{ color: "text.primary" }}>
-              Basic Indicator
-            </Typography>
-          </Breadcrumbs>
+          <PageHeader
+            title="Basic Indicator"
+            breadcrumbs={[
+              { label: "Home", to: "/" },
+              { label: "My Indicators", to: "/indicator" },
+              { label: "Create an indicator", to: "/indicator/editor" },
+            ]}
+            subtitle="Build your indicator step by step — each step unlocks the next."
+          />
+          <Paper
+            variant="outlined"
+            sx={(theme) => ({
+              p: { xs: 2, md: 3 },
+              borderRadius: `${theme.custom.radii.card}px`,
+            })}
+          >
+            <WorkflowStepper steps={workflowSteps} current={currentStep} />
+          </Paper>
           <Dataset />
           <Filters />
           <Analysis />
