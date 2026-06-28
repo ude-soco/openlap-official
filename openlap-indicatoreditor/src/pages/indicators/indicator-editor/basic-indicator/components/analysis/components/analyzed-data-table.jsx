@@ -1,8 +1,7 @@
 import { useContext, useState } from "react";
 import {
-  Alert,
+  Box,
   Paper,
-  Grid,
   Table,
   TableBody,
   TableCell,
@@ -10,10 +9,11 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  Typography,
 } from "@mui/material";
+import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded";
 import { BasicContext } from "../../../basic-indicator";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
+import EmptyState from "../../../../../../../common/components/empty-state/empty-state";
 import { DataTypes } from "../../../../../../indicator-specification-cards/creator/utils/data/config";
 
 const AnalyzedDataTable = () => {
@@ -42,7 +42,18 @@ const AnalyzedDataTable = () => {
     ${DataTypes[type.toLowerCase()].description}`;
   };
 
-  const numRows = columns[0].data.length;
+  const numRows = columns[0]?.data.length ?? 0;
+
+  // Friendly empty result: the method ran but produced no rows.
+  if (numRows === 0) {
+    return (
+      <EmptyState
+        icon={SearchOffRoundedIcon}
+        title="No data for this combination"
+        description="No records matched the selected method, inputs, and filters. Try adjusting your filters or inputs, then preview again."
+      />
+    );
+  }
 
   // Calculate the rows to display based on the current page and rows per page
   const displayedRows = [...Array(numRows).keys()].slice(
@@ -60,71 +71,52 @@ const AnalyzedDataTable = () => {
   };
 
   return (
-    <Grid container>
-      <Grid size={{ xs: 12 }}>
-        <Grid container alignItems="center">
-          <Typography>Preview data</Typography>
-          <Grid size="auto">
-            <CustomTooltip
-              type="description"
-              message={`View a sample of the data based on the selected method, inputs and parameters.<br/>
-                Each column can either be of type Categorical or Numerical
-                `}
-            />
-          </Grid>
-        </Grid>
-      </Grid>
-      <Grid size={{ xs: 12 }}>
-        <TableContainer component={Paper} variant="outlined">
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                {columns.map((column, index) => (
-                  <TableCell key={index}>
-                    <Grid container alignItems="center">
-                      <b>{column.title}</b>
-                      <CustomTooltip
-                        type="description"
-                        message={handleTooltipDescription(column.type)}
-                      />
-                    </Grid>
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {displayedRows.map((rowIndex) => (
-                <TableRow key={rowIndex}>
-                  {columns.map((column, colIndex) => (
-                    <TableCell key={colIndex}>
-                      {column.data[rowIndex]}
-                    </TableCell>
-                  ))}
-                </TableRow>
+    <TableContainer
+      component={Paper}
+      variant="outlined"
+      sx={(theme) => ({ borderRadius: `${theme.custom.radii.card}px` })}
+    >
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            {columns.map((column, index) => (
+              <TableCell
+                key={index}
+                component="th"
+                scope="col"
+                sx={{ fontWeight: 600, whiteSpace: "nowrap" }}
+              >
+                <Box sx={{ display: "inline-flex", alignItems: "center" }}>
+                  {column.title}
+                  <CustomTooltip
+                    type="description"
+                    message={handleTooltipDescription(column.type)}
+                  />
+                </Box>
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {displayedRows.map((rowIndex) => (
+            <TableRow key={rowIndex} hover>
+              {columns.map((column, colIndex) => (
+                <TableCell key={colIndex}>{column.data[rowIndex]}</TableCell>
               ))}
-            </TableBody>
-          </Table>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={numRows}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </TableContainer>
-      </Grid>
-      {/* // ! TODO: This error is generic and has issues! */}
-      {numRows === 0 && (
-        <Grid size={{ xs: 12 }}>
-          <Alert severity="warning">
-            There are not enough data to perform the analysis. Please change the
-            filters.
-          </Alert>
-        </Grid>
-      )}
-    </Grid>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={numRows}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
+    </TableContainer>
   );
 };
 

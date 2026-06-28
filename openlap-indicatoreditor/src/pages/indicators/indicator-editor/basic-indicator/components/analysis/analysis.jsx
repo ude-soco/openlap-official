@@ -2,10 +2,10 @@ import { useContext, useState } from "react";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
 import { BasicContext } from "../../basic-indicator";
 import {
-  Box,
+  Alert,
   Button,
+  CircularProgress,
   Collapse,
-  Container,
   Divider,
   Grid,
   LinearProgress,
@@ -24,18 +24,22 @@ import {
 import AnalyzedDataTable from "./components/analyzed-data-table";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip.jsx";
 import WorkflowSection from "../../../../../../common/components/workflow-section/workflow-section.jsx";
+import SectionCard from "../../../../../../common/components/section-card/section-card.jsx";
 import { getStepStatus } from "../../utils/basic-workflow-ui.js";
 
 export default function Analysis() {
   const { api } = useContext(AuthContext);
   const { dataset, filters, lockedStep, setLockedStep, analysis, setAnalysis } =
     useContext(BasicContext);
-  const [state, setState] = useState({ loadingPreview: false });
+  const [state, setState] = useState({
+    loadingPreview: false,
+    previewError: false,
+  });
 
   const handlePreviewAnalyzedData = async () => {
     let indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
     let analysisRef = buildAnalysisRef(analysis);
-    setState((p) => ({ ...p, loadingPreview: true }));
+    setState((p) => ({ ...p, loadingPreview: true, previewError: false }));
     try {
       const analyzedData = await fetchAnalyzedData(
         api,
@@ -45,7 +49,7 @@ export default function Analysis() {
       setAnalysis((p) => ({ ...p, analyzedData: analyzedData.data }));
       setState((p) => ({ ...p, loadingPreview: false }));
     } catch (error) {
-      setState((p) => ({ ...p, loadingPreview: false }));
+      setState((p) => ({ ...p, loadingPreview: false, previewError: true }));
       console.error("Error analyzing data:", error);
     }
   };
@@ -71,6 +75,11 @@ export default function Analysis() {
     }));
   };
 
+  const methodSelected =
+    analysis.selectedAnalyticsMethod.method.id.length > 0;
+  const hasAnalyzedData = Object.keys(analysis.analyzedData).length > 0;
+  const previewDisabled = handleCheckPreviewDisabled();
+
   return (
     <>
       <WorkflowSection
@@ -79,81 +88,103 @@ export default function Analysis() {
         ariaLabel="Analysis step"
       >
         <AnalysisSummary />
-          <Collapse
-            in={lockedStep.analysis.openPanel}
-            timeout={{ enter: 500, exit: 250 }}
-            unmountOnExit
-          >
-            <Stack gap={2}>
-              <Container maxWidth="lg">
-                <Stack gap={3}>
-                  <AnalysisSelection />
-                  {analysis.inputs.length !== 0 ? (
-                    <>
-                      <Grid container spacing={2}>
-                        <Grid
-                          size={{
-                            xs: 12,
-                            lg: analysis.params.length !== 0 ? 6 : 12,
-                          }}
-                        >
-                          <InputsSelection />
-                        </Grid>
-                        {analysis.params.length !== 0 ? (
-                          <Grid size={{ xs: 12, lg: 6 }}>
-                            <ParamsSelection />
-                          </Grid>
-                        ) : undefined}
-                      </Grid>
-                      {Object.keys(analysis.analyzedData).length ? (
-                        <AnalyzedDataTable />
-                      ) : (
-                        <Box
-                          sx={{
-                            mt: 2,
-                            pb: 1,
-                            p: 8,
-                            border: "1px dashed",
-                            borderColor: "divider",
-                            borderRadius: 2,
-                            textAlign: "center",
-                            color: "text.secondary",
-                          }}
-                        >
-                          <Typography variant="body1" gutterBottom>
-                            Click "Preview" to run the analysis and view of the
-                            analyzed data.
-                          </Typography>
-                          <Button
-                            loading={state.loadingPreview}
-                            loadingPosition="start"
-                            loadingIndicator="Please wait..."
-                            autoFocus
-                            variant="contained"
-                            disabled={handleCheckPreviewDisabled()}
-                            onClick={handlePreviewAnalyzedData}
-                          >
-                            {!state.loadingPreview && "Preview"}
-                          </Button>
-                          {handleCheckPreviewDisabled() && (
-                            <CustomTooltip
-                              type="help"
-                              message={`The button is disabled because:<br/>
-                              ● The required <b>Input(s)</b> of the analytics method is/are not selected.<br/>
-                              ● In <b>Filters</b>, under all <b>Activity filters</b>, none of the <b>Activities</b> are possibly not selected.
-                              `}
-                            />
-                          )}
-                        </Box>
+        <Collapse
+          in={lockedStep.analysis.openPanel}
+          timeout={{ enter: 500, exit: 250 }}
+          unmountOnExit
+        >
+          <Stack gap={2} sx={{ py: 2 }}>
+            <AnalysisSelection />
+
+            {methodSelected && analysis.inputs.length === 0 && (
+              <SectionCard
+                title="Method inputs"
+                helper="Loading the inputs for this method…"
+              >
+                <LinearProgress aria-label="Loading method inputs" />
+              </SectionCard>
+            )}
+
+            {analysis.inputs.length !== 0 && (
+              <>
+                <Grid container spacing={2} alignItems="stretch">
+                  <Grid
+                    size={{
+                      xs: 12,
+                      lg: analysis.params.length !== 0 ? 6 : 12,
+                    }}
+                    sx={{ display: "flex" }}
+                  >
+                    <InputsSelection />
+                  </Grid>
+                  {analysis.params.length !== 0 && (
+                    <Grid size={{ xs: 12, lg: 6 }} sx={{ display: "flex" }}>
+                      <ParamsSelection />
+                    </Grid>
+                  )}
+                </Grid>
+
+                <SectionCard
+                  title="Preview results"
+                  helper="Run the analysis to preview the data that will feed your visualization."
+                >
+                  {hasAnalyzedData ? (
+                    <AnalyzedDataTable />
+                  ) : state.loadingPreview ? (
+                    <Stack gap={1.5} alignItems="center" sx={{ py: 3 }}>
+                      <CircularProgress />
+                      <Typography variant="body2" color="text.secondary">
+                        Running analysis…
+                      </Typography>
+                    </Stack>
+                  ) : (
+                    <Stack
+                      gap={2}
+                      alignItems="center"
+                      sx={{ py: 3, textAlign: "center" }}
+                    >
+                      {state.previewError && (
+                        <Alert severity="error" sx={{ width: "100%" }}>
+                          The analysis could not be run. Please check your inputs
+                          and filters, then try again.
+                        </Alert>
                       )}
-                    </>
-                  ) : analysis.selectedAnalyticsMethod.method.id.length > 0 ? (
-                    <LinearProgress />
-                  ) : undefined}
-                </Stack>
-              </Container>
-              <Divider />
-              <Container maxWidth="sm">
+                      <Typography variant="body2" color="text.secondary">
+                        {state.previewError
+                          ? "Adjust your selections and run the preview again."
+                          : "Choose your inputs and parameters, then run a preview of the analysed data."}
+                      </Typography>
+                      <Stack direction="row" gap={1} alignItems="center">
+                        <Button
+                          variant="contained"
+                          disabled={previewDisabled}
+                          onClick={handlePreviewAnalyzedData}
+                        >
+                          {state.previewError ? "Try again" : "Preview"}
+                        </Button>
+                        {previewDisabled && (
+                          <CustomTooltip
+                            type="help"
+                            message={`The Preview button is disabled until:<br/>● A required <b>Input</b> of the analytics method is selected.<br/>● At least one <b>Activity</b> is selected in <b>Filters</b>.`}
+                          />
+                        )}
+                      </Stack>
+                    </Stack>
+                  )}
+                </SectionCard>
+              </>
+            )}
+
+            {!methodSelected && (
+              <Typography variant="body2" color="text.secondary">
+                Select an analytics method above to configure its inputs and
+                parameters.
+              </Typography>
+            )}
+
+            <Divider />
+            <Grid container justifyContent="center">
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Button
                   fullWidth
                   variant="contained"
@@ -162,9 +193,10 @@ export default function Analysis() {
                 >
                   Next
                 </Button>
-              </Container>
-            </Stack>
-          </Collapse>
+              </Grid>
+            </Grid>
+          </Stack>
+        </Collapse>
       </WorkflowSection>
     </>
   );
