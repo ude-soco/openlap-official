@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openlap.analytics_statements.entities.LrsStore;
 import com.openlap.analytics_statements.entities.utility_entities.UniqueIdentifierType;
 import com.openlap.analytics_statements.services.LrsService;
@@ -72,6 +73,7 @@ public class AdminUserDetailMappingTest {
     assertThat(detail.getId()).isEqualTo("u1");
     assertThat(detail.getEmail()).isEqualTo("alice@mail.com");
     assertThat(detail.getRoles()).containsExactly("ROLE_USER");
+    assertThat(detail.isEnabled()).isTrue();
 
     assertThat(detail.getLrsConsumerConnections()).hasSize(1);
     assertThat(detail.getLrsConsumerConnections().get(0).getLrsTitle()).isEqualTo("Course LRS");
@@ -86,6 +88,27 @@ public class AdminUserDetailMappingTest {
 
     // The LRS client (which holds the basic-auth secret) must never be resolved.
     verify(lrsService, never()).getLrsClient(anyString());
+  }
+
+  @Test
+  public void adminUserDetailJsonIncludesEnabledAndNoSecrets() throws Exception {
+    User user = new User();
+    user.setId("u1");
+    user.setName("Alice");
+    user.setEmail("alice@mail.com");
+    user.setPassword("secret-hash");
+    user.setEnabled(false);
+    user.setRoles(Collections.singletonList(new Role("r1", RoleType.ROLE_USER)));
+    when(userRepository.findById("u1")).thenReturn(Optional.of(user));
+
+    AdminUserDetailResponse detail = service.getUserDetailById("u1");
+    String json = new ObjectMapper().writeValueAsString(detail);
+
+    assertThat(json).contains("\"enabled\":false");
+    assertThat(json).doesNotContain("password");
+    assertThat(json).doesNotContain("basicAuth");
+    assertThat(json).doesNotContain("basicSecret");
+    assertThat(json).doesNotContain("basicKey");
   }
 
   @Test

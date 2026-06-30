@@ -4,6 +4,7 @@ import { useSnackbar } from "notistack";
 import {
   Box,
   Button,
+  Chip,
   Checkbox,
   CircularProgress,
   Drawer,
@@ -30,6 +31,7 @@ import { AuthContext } from "../../../setup/auth-context-manager/auth-context-ma
 import {
   requestUpdateUser,
   requestUpdateUserRoles,
+  requestUpdateUserStatus,
   requestUserDetail,
 } from "../utils/manage-apis";
 import { roleLabel } from "../utils/role-labels";
@@ -64,6 +66,23 @@ const sameRoleSet = (a, b) => {
 
 const errorMessage = (error, fallback) =>
   error?.response?.data?.message || error?.response?.data?.error || fallback;
+
+const escapeHtml = (value) =>
+  String(value || "this user")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+const statusChip = (enabled) => (
+  <Chip
+    size="small"
+    color={enabled ? "success" : "default"}
+    variant={enabled ? "filled" : "outlined"}
+    label={enabled ? "Enabled" : "Disabled"}
+  />
+);
 
 // LRS connection tables. Plain render helpers (not components) — all fields are
 // secret-free (the backend never returns LRS credentials).
@@ -128,7 +147,8 @@ const renderProviderConnections = (connections) => {
 /**
  * User detail drawer. Reads GET /v1/admin/users/{id} and supports admin edits:
  * update name/email and replace roles (with confirmation and a clear extra
- * warning when Super admin is removed). No password/delete/deactivate/LRS edits.
+ * warning when Super admin is removed), plus soft deactivation/reactivation.
+ * No password/delete/LRS edits.
  * After a successful save it refreshes its data and notifies the parent via
  * onUpdated so the list row can update.
  */
@@ -145,6 +165,7 @@ const UserDetailDrawer = ({ open, userId, onClose, onUpdated }) => {
 
   const [roleDraft, setRoleDraft] = useState([]);
   const [rolesConfirmOpen, setRolesConfirmOpen] = useState(false);
+  const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
 
   const applyDetail = useCallback((data) => {
     setDetail(data);
@@ -218,14 +239,45 @@ const UserDetailDrawer = ({ open, userId, onClose, onUpdated }) => {
     }
   };
 
+  const handleConfirmStatus = async () => {
+    const nextEnabled = detail?.enabled === false;
+    try {
+      const { data } = await requestUpdateUserStatus(api, userId, nextEnabled);
+      applyDetail(data);
+      onUpdated?.(data);
+      enqueueSnackbar(`User ${nextEnabled ? "reactivated" : "deactivated"}.`, {
+        variant: "success",
+      });
+    } catch (error) {
+      enqueueSnackbar(errorMessage(error, "Could not update user status."), {
+        variant: "error",
+      });
+    }
+  };
+
   const currentRoles = detail?.roles || [];
+  const isEnabled = detail?.enabled !== false;
+  const isSuperAdmin = currentRoles.includes(SUPER_ADMIN);
   const rolesChanged = detail ? !sameRoleSet(roleDraft, currentRoles) : false;
   const rolesValid = roleDraft.length > 0;
   const superAdminRemoved =
-    currentRoles.includes(SUPER_ADMIN) && !roleDraft.includes(SUPER_ADMIN);
+    isSuperAdmin && !roleDraft.includes(SUPER_ADMIN);
   const rolesConfirmContent = superAdminRemoved
     ? "<b>This will remove Super admin access from this user.</b><br/>They will lose all administrative privileges. Are you sure you want to continue?"
     : "Update this user&rsquo;s roles to the selected set?";
+  const statusConfirmContent = isEnabled
+    ? `Deactivate <b>${escapeHtml(
+        detail?.name || detail?.email
+      )}</b>?<br/>They will no longer be able to sign in or refresh their session. Existing saved indicators and LRS connections will remain unchanged.${
+        isSuperAdmin
+          ? "<br/><br/><b>This user is a Super admin.</b> OpenLAP must keep at least one active Super admin."
+          : ""
+      }`
+    : `Reactivate <b>${escapeHtml(
+        detail?.name || detail?.email
+      )}</b>?<br/>They will be able to sign in again.${
+        isSuperAdmin ? "<br/><br/><b>This user is a Super admin.</b>" : ""
+      }`;
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
@@ -318,8 +370,50 @@ const UserDetailDrawer = ({ open, userId, onClose, onUpdated }) => {
                   <Typography variant="h6">{detail.name || "—"}</Typography>
                   <MetadataChip label="Email" value={detail.email || "—"} />
                   {detail.id && <MetadataChip label="User ID" value={detail.id} />}
+                  <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ minWidth: { xs: "auto", sm: 150 } }}
+                    >
+                      Status
+                    </Typography>
+                    {statusChip(isEnabled)}
+                  </Stack>
                 </Stack>
               )}
+            </SectionCard>
+
+            <SectionCard
+              title="Account status"
+              helper={
+                isEnabled
+                  ? "Deactivate to preserve this account while blocking future sign-in and token refresh."
+                  : "Reactivate to allow this account to sign in again."
+              }
+            >
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                justifyContent="space-between"
+                alignItems={{ xs: "flex-start", sm: "center" }}
+                gap={1.5}
+              >
+                <Stack gap={0.5}>
+                  <Typography variant="body2" fontWeight={600}>
+                    {isEnabled ? "This user is enabled." : "This user is disabled."}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Saved indicators, ISCs, LRS connections, and history are preserved.
+                  </Typography>
+                </Stack>
+                <Button
+                  variant="outlined"
+                  color={isEnabled ? "warning" : "primary"}
+                  onClick={() => setStatusConfirmOpen(true)}
+                >
+                  {isEnabled ? "Deactivate user" : "Reactivate user"}
+                </Button>
+              </Stack>
             </SectionCard>
 
             <SectionCard
@@ -383,6 +477,13 @@ const UserDetailDrawer = ({ open, userId, onClose, onUpdated }) => {
         open={rolesConfirmOpen}
         toggleOpen={() => setRolesConfirmOpen((prev) => !prev)}
         handler={handleConfirmRoles}
+      />
+      <CustomDialog
+        type="confirm"
+        content={statusConfirmContent}
+        open={statusConfirmOpen}
+        toggleOpen={() => setStatusConfirmOpen((prev) => !prev)}
+        handler={handleConfirmStatus}
       />
     </Drawer>
   );

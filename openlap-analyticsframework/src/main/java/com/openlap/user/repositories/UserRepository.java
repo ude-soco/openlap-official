@@ -17,4 +17,14 @@ public interface UserRepository extends MongoRepository<User, String> {
    */
   @Query(value = "{ 'roles.$id' : ?0 }", count = true)
   long countByRoleId(ObjectId roleId);
+
+  /**
+   * Counts enabled users that hold the role with the given id. Legacy users with a missing/null
+   * {@code enabled} flag are treated as enabled, matching {@link User#isEnabled()}.
+   */
+  @Query(
+      value =
+          "{ 'roles.$id' : ?0, '$or' : [ { 'enabled' : true }, { 'enabled' : null }, { 'enabled' : { '$exists' : false } } ] }",
+      count = true)
+  long countActiveByRoleId(ObjectId roleId);
 }

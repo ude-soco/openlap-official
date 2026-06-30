@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import {
   Button,
   Chip,
@@ -27,11 +28,23 @@ import UserDetailDrawer from "./components/user-detail-drawer";
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
 const SKELETON_ROWS = 5;
 
+const UserStatusChip = ({ enabled }) => (
+  <Chip
+    size="small"
+    color={enabled ? "success" : "default"}
+    variant={enabled ? "filled" : "outlined"}
+    label={enabled ? "Enabled" : "Disabled"}
+  />
+);
+
+UserStatusChip.propTypes = {
+  enabled: PropTypes.bool.isRequired,
+};
+
 /**
- * Admin Users (read-only). Lists OpenLAP users and their roles from the
+ * Admin Users. Lists OpenLAP users and their roles/status from the
  * admin-only GET /v1/users endpoint, with server-side pagination. Displays only
- * safe fields (name, email, roles) — no password, LRS secrets, or status/created
- * date (the backend does not expose those). No write actions.
+ * safe fields (name, email, roles, enabled) — no password or LRS secrets.
  */
 const AdminUsers = () => {
   const { api } = useContext(AuthContext);
@@ -76,6 +89,7 @@ const AdminUsers = () => {
               name: updated.name,
               email: updated.email,
               roles: updated.roles,
+              enabled: updated.enabled,
             }
           : user
       )
@@ -133,6 +147,7 @@ const AdminUsers = () => {
                     <TableCell>Name</TableCell>
                     <TableCell>Email</TableCell>
                     <TableCell>Roles</TableCell>
+                    <TableCell>Status</TableCell>
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -148,6 +163,9 @@ const AdminUsers = () => {
                           </TableCell>
                           <TableCell>
                             <Skeleton width={120} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton width={90} />
                           </TableCell>
                           <TableCell align="right">
                             <Skeleton width={80} />
@@ -180,6 +198,9 @@ const AdminUsers = () => {
                                 ))}
                               </Stack>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            <UserStatusChip enabled={user.enabled !== false} />
                           </TableCell>
                           <TableCell align="right">
                             <Button

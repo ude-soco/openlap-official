@@ -70,8 +70,9 @@ public class UserRoleServiceImpl implements UserRoleService {
     // account — if they are the only super admin the removal is blocked.
     boolean userIsSuperAdmin = userHasRole(user, RoleType.ROLE_SUPER_ADMIN);
     if (userIsSuperAdmin
+        && user.isEnabled()
         && !roles.contains(RoleType.ROLE_SUPER_ADMIN)
-        && countSuperAdmins() <= 1) {
+        && countActiveSuperAdmins() <= 1) {
       throw new LastSuperAdminException("Cannot remove the last super admin.");
     }
 
@@ -95,12 +96,12 @@ public class UserRoleServiceImpl implements UserRoleService {
             .anyMatch(role -> role != null && role.getName() == roleType);
   }
 
-  private long countSuperAdmins() {
+  private long countActiveSuperAdmins() {
     Role superAdmin = roleRepository.findByName(RoleType.ROLE_SUPER_ADMIN);
     if (superAdmin == null || superAdmin.getId() == null) {
       return 0;
     }
-    return userRepository.countByRoleId(new ObjectId(superAdmin.getId()));
+    return userRepository.countActiveByRoleId(new ObjectId(superAdmin.getId()));
   }
 
   private void modifyUserRole(User user, RoleType roleName, boolean addRole) {

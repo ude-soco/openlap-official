@@ -82,7 +82,7 @@ public class UserRoleServiceImplTest {
     User user = userWithRoles(RoleType.ROLE_SUPER_ADMIN);
     when(roleRepository.findByName(RoleType.ROLE_SUPER_ADMIN))
         .thenReturn(new Role(SUPER_ADMIN_ROLE_ID, RoleType.ROLE_SUPER_ADMIN));
-    when(userRepository.countByRoleId(new ObjectId(SUPER_ADMIN_ROLE_ID))).thenReturn(1L);
+    when(userRepository.countActiveByRoleId(new ObjectId(SUPER_ADMIN_ROLE_ID))).thenReturn(1L);
 
     assertThatThrownBy(
             () -> service.replaceUserRoles(user, new HashSet<>(Arrays.asList(RoleType.ROLE_USER))))
@@ -95,7 +95,7 @@ public class UserRoleServiceImplTest {
     User user = userWithRoles(RoleType.ROLE_SUPER_ADMIN);
     when(roleRepository.findByName(RoleType.ROLE_SUPER_ADMIN))
         .thenReturn(new Role(SUPER_ADMIN_ROLE_ID, RoleType.ROLE_SUPER_ADMIN));
-    when(userRepository.countByRoleId(new ObjectId(SUPER_ADMIN_ROLE_ID))).thenReturn(2L);
+    when(userRepository.countActiveByRoleId(new ObjectId(SUPER_ADMIN_ROLE_ID))).thenReturn(2L);
     when(roleRepository.findByName(RoleType.ROLE_USER))
         .thenReturn(new Role("user-id", RoleType.ROLE_USER));
 

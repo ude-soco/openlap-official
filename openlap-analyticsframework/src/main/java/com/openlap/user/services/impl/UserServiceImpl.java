@@ -22,6 +22,7 @@ import com.openlap.user.entities.RoleType;
 import com.openlap.user.entities.User;
 import com.openlap.user.entities.utility_entities.LrsConsumer;
 import com.openlap.user.entities.utility_entities.LrsProvider;
+import com.openlap.user.exception.role.LastSuperAdminException;
 import com.openlap.user.exception.user.*;
 import com.openlap.user.repositories.UserRepository;
 import com.openlap.user.services.TokenService;
@@ -30,6 +31,7 @@ import com.openlap.user.services.UserService;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
@@ -76,7 +78,13 @@ public class UserServiceImpl implements UserService, UserDetailsService {
               authorities.add(new SimpleGrantedAuthority(role.getName().toString()));
             });
     return new org.springframework.security.core.userdetails.User(
-        user.getEmail(), user.getPassword(), authorities);
+        user.getEmail(),
+        user.getPassword(),
+        user.isEnabled(),
+        true,
+        true,
+        true,
+        authorities);
   }
 
   @Override
@@ -137,7 +145,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
    */
   private AdminUserResponse toAdminUserResponse(User user) {
     return new AdminUserResponse(
-        user.getId(), user.getName(), user.getEmail(), roleNames(user));
+        user.getId(), user.getName(), user.getEmail(), roleNames(user), user.isEnabled());
   }
 
   /** Maps a user's roles to their string names (e.g. "ROLE_SUPER_ADMIN"); null-safe. */
@@ -183,10 +191,51 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     return buildAdminUserDetail(user);
   }
 
+  @Override
+  public AdminUserDetailResponse setUserEnabled(String id, boolean enabled) {
+    User user = loadUserById(id);
+    if (!enabled && user.isEnabled() && userHasRole(user, RoleType.ROLE_SUPER_ADMIN)) {
+      String superAdminRoleId = findRoleId(user, RoleType.ROLE_SUPER_ADMIN).orElse(null);
+      if (superAdminRoleId == null || countActiveUsersWithRole(superAdminRoleId) <= 1) {
+        throw new LastSuperAdminException("Cannot deactivate the last active super admin.");
+      }
+    }
+    user.setEnabled(enabled);
+    User savedUser = userRepository.save(user);
+    log.info("Admin set user '{}' enabled={}", savedUser.getId(), enabled);
+    return buildAdminUserDetail(savedUser);
+  }
+
   private User loadUserById(String id) {
     return userRepository
         .findById(id)
         .orElseThrow(() -> new UserNotFoundException("User not found."));
+  }
+
+  private long countActiveUsersWithRole(String roleId) {
+    try {
+      return userRepository.countActiveByRoleId(new ObjectId(roleId));
+    } catch (IllegalArgumentException e) {
+      // A malformed/missing role id should fail closed rather than allowing the last active admin to
+      // be disabled because the count could not be computed.
+      log.warn("Could not count active users for role id '{}': {}", roleId, e.getMessage());
+      return 0;
+    }
+  }
+
+  private static boolean userHasRole(User user, RoleType roleType) {
+    return findRoleId(user, roleType).isPresent();
+  }
+
+  private static Optional<String> findRoleId(User user, RoleType roleType) {
+    if (user.getRoles() == null) {
+      return Optional.empty();
+    }
+    return user.getRoles().stream()
+        .filter(role -> role != null && role.getName() == roleType)
+        .map(role -> role.getId())
+        .filter(roleId -> roleId != null && !roleId.isBlank())
+        .findFirst();
   }
 
   private AdminUserDetailResponse buildAdminUserDetail(User user) {
@@ -195,6 +244,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     response.setName(user.getName());
     response.setEmail(user.getEmail());
     response.setRoles(roleNames(user));
+    response.setEnabled(user.isEnabled());
     response.setLrsConsumerConnections(mapAdminConsumerConnections(user));
     response.setLrsProviderConnections(mapAdminProviderConnections(user));
     return response;

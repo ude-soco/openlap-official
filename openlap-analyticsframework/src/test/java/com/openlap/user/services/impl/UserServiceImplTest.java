@@ -25,6 +25,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 /** Regression tests for the getUserByEmail 404->500 wrapping bug and login-behaviour preservation. */
@@ -94,6 +95,57 @@ public class UserServiceImplTest {
     assertThat(dto.getName()).isEqualTo("Alice");
     assertThat(dto.getEmail()).isEqualTo("alice@mail.com");
     assertThat(dto.getRoles()).containsExactly("ROLE_SUPER_ADMIN");
+    assertThat(dto.isEnabled()).isTrue();
     // AdminUserResponse exposes no password field — safe by construction.
+  }
+
+  @Test
+  public void legacyNullEnabledUserIsTreatedAsEnabledForLoginAndAdminList() {
+    User user = new User();
+    user.setId("u2");
+    user.setName("Legacy");
+    user.setEmail("legacy@mail.com");
+    user.setPassword("hash");
+    user.setEnabled(null);
+    user.setRoles(Collections.singletonList(new Role("r1", RoleType.ROLE_USER)));
+
+    when(userRepository.findByEmail("legacy@mail.com")).thenReturn(user);
+    when(userRepository.findAll(any(Pageable.class)))
+        .thenReturn(new PageImpl<>(Collections.singletonList(user)));
+
+    UserDetails details = service.loadUserByUsername("legacy@mail.com");
+    Page<AdminUserResponse> result = service.listUsers(PageRequest.of(0, 10));
+
+    assertThat(user.isEnabled()).isTrue();
+    assertThat(details.isEnabled()).isTrue();
+    assertThat(result.getContent().get(0).isEnabled()).isTrue();
+  }
+
+  @Test
+  public void disabledUserDetailsAreReturnedAsDisabledForLogin() {
+    User user = new User();
+    user.setEmail("disabled@mail.com");
+    user.setPassword("hash");
+    user.setEnabled(false);
+    user.setRoles(Collections.singletonList(new Role("r1", RoleType.ROLE_USER)));
+    when(userRepository.findByEmail("disabled@mail.com")).thenReturn(user);
+
+    UserDetails details = service.loadUserByUsername("disabled@mail.com");
+
+    assertThat(details.isEnabled()).isFalse();
+  }
+
+  @Test
+  public void enabledUserDetailsAreReturnedAsEnabledForLogin() {
+    User user = new User();
+    user.setEmail("enabled@mail.com");
+    user.setPassword("hash");
+    user.setEnabled(true);
+    user.setRoles(Collections.singletonList(new Role("r1", RoleType.ROLE_USER)));
+    when(userRepository.findByEmail("enabled@mail.com")).thenReturn(user);
+
+    UserDetails details = service.loadUserByUsername("enabled@mail.com");
+
+    assertThat(details.isEnabled()).isTrue();
   }
 }

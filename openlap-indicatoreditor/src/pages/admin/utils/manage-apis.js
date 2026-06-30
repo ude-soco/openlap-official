@@ -99,6 +99,24 @@ export const requestUpdateUserRoles = async (api, id, roles) => {
   }
 };
 
+// Admin soft-deactivation/reactivation (PATCH /v1/admin/users/{id}/status).
+// `enabled=false` blocks future login/token refresh, while preserving the user
+// record and related indicators/LRS connections. Returns the updated detail.
+export const requestUpdateUserStatus = async (api, id, enabled) => {
+  try {
+    const response = await api.patch(`v1/admin/users/${id}/status`, {
+      enabled,
+    });
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to update user status");
+    throw error;
+  }
+};
+
 // Admin-only usage analytics (GET /v1/admin/usage). Read-only: how many saved
 // indicators (and distinct users) reference each visualization library, type, and
 // analytics method. Returns `data` =

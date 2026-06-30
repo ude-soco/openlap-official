@@ -167,6 +167,7 @@ public class SecurityAuthorizationMockMvcTest {
         .perform(get("/v1/users?page=0&size=10").header(AUTHORIZATION, "Bearer valid-token"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].email").value("alice@mail.com"))
+        .andExpect(jsonPath("$.data.content[0].enabled").value(true))
         .andExpect(jsonPath("$.data.content[0].password").doesNotExist());
   }
 
@@ -226,9 +227,12 @@ public class SecurityAuthorizationMockMvcTest {
     mockMvc
         .perform(get("/v1/admin/users/u1").header(AUTHORIZATION, "Bearer valid-token"))
         .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.enabled").value(true))
         .andExpect(jsonPath("$.data.roles[0]").value("ROLE_USER"))
         .andExpect(jsonPath("$.data.lrsProviderConnections[0].lrsTitle").value("Provider LRS"))
         .andExpect(jsonPath("$.data.lrsProviderConnections[0].basicAuth").doesNotExist())
+        .andExpect(jsonPath("$.data.lrsProviderConnections[0].basicSecret").doesNotExist())
+        .andExpect(jsonPath("$.data.lrsProviderConnections[0].basicKey").doesNotExist())
         .andExpect(jsonPath("$.data.password").doesNotExist());
   }
 
@@ -295,6 +299,33 @@ public class SecurityAuthorizationMockMvcTest {
   }
 
   @Test
+  public void adminCanUpdateUserStatus() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(
+            new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    given(userService.setUserEnabled(any(), anyBoolean()))
+        .willReturn(
+            new AdminUserDetailResponse(
+                "u1",
+                "Alice",
+                "alice@mail.com",
+                Collections.singletonList("ROLE_USER"),
+                false,
+                Collections.emptyList(),
+                Collections.emptyList()));
+
+    mockMvc
+        .perform(
+            patch("/v1/admin/users/u1/status")
+                .header(AUTHORIZATION, "Bearer valid-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"enabled\":false}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.enabled").value(false))
+        .andExpect(jsonPath("$.data.password").doesNotExist());
+  }
+
+  @Test
   public void normalUserCannotUpdateUser() throws Exception {
     given(tokenService.verifyToken(any()))
         .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
@@ -320,6 +351,21 @@ public class SecurityAuthorizationMockMvcTest {
                 .header(AUTHORIZATION, "Bearer valid-token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"roles\":[\"ROLE_USER\"]}"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @Test
+  public void normalUserCannotUpdateUserStatus() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+
+    mockMvc
+        .perform(
+            patch("/v1/admin/users/u1/status")
+                .header(AUTHORIZATION, "Bearer valid-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"enabled\":false}"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
   }

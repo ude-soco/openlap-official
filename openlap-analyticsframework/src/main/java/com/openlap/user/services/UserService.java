@@ -33,6 +33,9 @@ public interface UserService {
   /** Admin replacement of a user's role set (with guardrails). Returns the updated admin detail. */
   AdminUserDetailResponse replaceUserRoles(String id, Set<RoleType> roles);
 
+  /** Admin soft-deactivation/reactivation of a user. Returns the updated admin detail. */
+  AdminUserDetailResponse setUserEnabled(String id, boolean enabled);
+
   UserResponse getUserDetails(HttpServletRequest request);
 
   List<LrsConsumerResponse> getLrsConsumerList(HttpServletRequest request);
