@@ -17,8 +17,10 @@ import com.openlap.infrastructure.error.ErrorResponseWriter;
 import com.openlap.infrastructure.security.RestAccessDeniedHandler;
 import com.openlap.infrastructure.security.RestAuthenticationEntryPoint;
 import com.openlap.user.dto.request.TokenRequest;
+import com.openlap.user.dto.response.AdminUserDetailResponse;
 import com.openlap.user.dto.response.AdminUserResponse;
 import com.openlap.user.dto.response.UserResponse;
+import com.openlap.user.dto.response.utils.AdminLrsProviderConnection;
 import com.openlap.user.services.TokenService;
 import com.openlap.user.services.UserRegisterService;
 import com.openlap.user.services.UserRoleService;
@@ -51,7 +53,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
       com.openlap.user.controller.UserController.class,
       com.openlap.user.controller.UserRegisterController.class,
       com.openlap.user.controller.AdminUserController.class,
-      com.openlap.admin.controller.AdminUsageController.class
+      com.openlap.admin.controller.AdminUsageController.class,
+      com.openlap.admin.controller.AdminUserDetailController.class
     })
 @Import({
   SecurityConfig.class,
@@ -183,6 +186,42 @@ public class SecurityAuthorizationMockMvcTest {
 
     mockMvc
         .perform(get("/v1/admin/usage").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @Test
+  public void adminUserDetailIsAllowedForSuperAdminAndOmitsSecrets() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(
+            new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    given(userService.getUserDetailById(any()))
+        .willReturn(
+            new AdminUserDetailResponse(
+                "u1",
+                "Alice",
+                "alice@mail.com",
+                Collections.singletonList("ROLE_USER"),
+                Collections.emptyList(),
+                Collections.singletonList(
+                    new AdminLrsProviderConnection("lrsP", "Provider LRS", "MBOX", 42, null, null))));
+
+    mockMvc
+        .perform(get("/v1/admin/users/u1").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.roles[0]").value("ROLE_USER"))
+        .andExpect(jsonPath("$.data.lrsProviderConnections[0].lrsTitle").value("Provider LRS"))
+        .andExpect(jsonPath("$.data.lrsProviderConnections[0].basicAuth").doesNotExist())
+        .andExpect(jsonPath("$.data.password").doesNotExist());
+  }
+
+  @Test
+  public void adminUserDetailIsForbiddenForNormalUser() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+
+    mockMvc
+        .perform(get("/v1/admin/users/u1").header(AUTHORIZATION, "Bearer valid-token"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
   }

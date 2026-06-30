@@ -11,8 +11,10 @@ import com.openlap.user.dto.request.ChangePasswordRequest;
 import com.openlap.user.dto.request.TokenRequest;
 import com.openlap.user.dto.request.UpdateEmailRequest;
 import com.openlap.user.dto.request.UpdateProfileRequest;
+import com.openlap.user.dto.response.AdminUserDetailResponse;
 import com.openlap.user.dto.response.AdminUserResponse;
 import com.openlap.user.dto.response.UserResponse;
+import com.openlap.user.dto.response.utils.AdminLrsProviderConnection;
 import com.openlap.user.dto.response.utils.LrsConsumerResponse;
 import com.openlap.user.dto.response.utils.LrsProviderResponse;
 import com.openlap.user.entities.RoleType;
@@ -132,6 +134,12 @@ public class UserServiceImpl implements UserService, UserDetailsService {
    * never the password hash or LRS credentials.
    */
   private AdminUserResponse toAdminUserResponse(User user) {
+    return new AdminUserResponse(
+        user.getId(), user.getName(), user.getEmail(), roleNames(user));
+  }
+
+  /** Maps a user's roles to their string names (e.g. "ROLE_SUPER_ADMIN"); null-safe. */
+  private static List<String> roleNames(User user) {
     List<String> roles = new ArrayList<>();
     if (user.getRoles() != null) {
       user.getRoles()
@@ -142,7 +150,89 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 }
               });
     }
-    return new AdminUserResponse(user.getId(), user.getName(), user.getEmail(), roles);
+    return roles;
+  }
+
+  @Override
+  public AdminUserDetailResponse getUserDetailById(String id) {
+    User user =
+        userRepository
+            .findById(id)
+            .orElseThrow(() -> new UserNotFoundException("User not found."));
+    AdminUserDetailResponse response = new AdminUserDetailResponse();
+    response.setId(user.getId());
+    response.setName(user.getName());
+    response.setEmail(user.getEmail());
+    response.setRoles(roleNames(user));
+    response.setLrsConsumerConnections(mapAdminConsumerConnections(user));
+    response.setLrsProviderConnections(mapAdminProviderConnections(user));
+    return response;
+  }
+
+  /**
+   * Maps the user's LRS consumer connections for an admin view, reusing the secret-free {@link
+   * LrsConsumerResponse} (id, lrsId, title, uniqueIdentifier). A missing/deleted LRS store falls
+   * back to an "Unknown LRS" title rather than failing the whole request.
+   */
+  private List<LrsConsumerResponse> mapAdminConsumerConnections(User user) {
+    List<LrsConsumerResponse> connections = new ArrayList<>();
+    if (user.getLrsConsumerList() == null) {
+      return connections;
+    }
+    for (LrsConsumer consumer : user.getLrsConsumerList()) {
+      LrsConsumerResponse connection = new LrsConsumerResponse();
+      connection.setId(consumer.getId() == null ? null : consumer.getId().toString());
+      connection.setLrsId(consumer.getLrsId());
+      connection.setUniqueIdentifier(consumer.getUniqueIdentifier());
+      connection.setLrsTitle(resolveLrsTitle(consumer.getLrsId()));
+      connections.add(connection);
+    }
+    return connections;
+  }
+
+  /**
+   * Maps the user's LRS provider connections for an admin view using the LRS store ONLY. It never
+   * resolves the LRS client, so the basic-auth credential (ClientApi.basic_auth/basic_secret/
+   * basic_key) is never read or exposed. A missing store falls back to an "Unknown LRS" title.
+   */
+  private List<AdminLrsProviderConnection> mapAdminProviderConnections(User user) {
+    List<AdminLrsProviderConnection> connections = new ArrayList<>();
+    if (user.getLrsProviderList() == null) {
+      return connections;
+    }
+    for (LrsProvider provider : user.getLrsProviderList()) {
+      AdminLrsProviderConnection connection = new AdminLrsProviderConnection();
+      connection.setLrsId(provider.getLrsId());
+      connection.setUniqueIdentifierType(
+          provider.getUniqueIdentifierType() == null
+              ? null
+              : provider.getUniqueIdentifierType().toString());
+      try {
+        LrsStore store = lrsService.getLrsStore(provider.getLrsId());
+        connection.setLrsTitle(store.getTitle());
+        connection.setStatementCount(store.getStatementCount());
+        connection.setCreatedAt(store.getCreatedAt());
+        connection.setUpdatedAt(store.getUpdatedAt());
+      } catch (Exception e) {
+        log.warn(
+            "Could not resolve LRS store '{}' for admin user detail: {}",
+            provider.getLrsId(),
+            e.getMessage());
+        connection.setLrsTitle("Unknown LRS");
+      }
+      connections.add(connection);
+    }
+    return connections;
+  }
+
+  /** Resolves an LRS store title, or "Unknown LRS" if the store is missing/unavailable. */
+  private String resolveLrsTitle(String lrsId) {
+    try {
+      return lrsService.getLrsStore(lrsId).getTitle();
+    } catch (Exception e) {
+      log.warn("Could not resolve LRS store '{}' for admin user detail: {}", lrsId, e.getMessage());
+      return "Unknown LRS";
+    }
   }
 
   /** Resolves the authenticated user from the request's bearer token (existing pattern). */

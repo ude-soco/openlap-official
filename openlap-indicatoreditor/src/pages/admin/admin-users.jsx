@@ -21,16 +21,8 @@ import SectionCard from "../../common/components/section-card/section-card";
 import EmptyState from "../../common/components/empty-state/empty-state";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import { requestUsers } from "./utils/manage-apis";
-
-// Friendly labels for the backend RoleType values (read-only display only).
-const ROLE_LABELS = {
-  ROLE_SUPER_ADMIN: "Super admin",
-  ROLE_USER: "User",
-  ROLE_USER_WITHOUT_LRS: "User (no LRS)",
-  ROLE_DATA_PROVIDER: "Data provider",
-};
-
-const roleLabel = (role) => ROLE_LABELS[role] || role;
+import { roleLabel } from "./utils/role-labels";
+import UserDetailDrawer from "./components/user-detail-drawer";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
 const SKELETON_ROWS = 5;
@@ -48,6 +40,7 @@ const AdminUsers = () => {
   const [status, setStatus] = useState("loading");
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
+  const [detailUserId, setDetailUserId] = useState(null);
 
   const loadUsers = useCallback(async () => {
     setStatus("loading");
@@ -124,6 +117,7 @@ const AdminUsers = () => {
                     <TableCell>Name</TableCell>
                     <TableCell>Email</TableCell>
                     <TableCell>Roles</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -138,6 +132,9 @@ const AdminUsers = () => {
                           </TableCell>
                           <TableCell>
                             <Skeleton width={120} />
+                          </TableCell>
+                          <TableCell align="right">
+                            <Skeleton width={80} />
                           </TableCell>
                         </TableRow>
                       ))
@@ -168,6 +165,14 @@ const AdminUsers = () => {
                               </Stack>
                             )}
                           </TableCell>
+                          <TableCell align="right">
+                            <Button
+                              size="small"
+                              onClick={() => setDetailUserId(user.id)}
+                            >
+                              View details
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))}
                 </TableBody>
@@ -185,6 +190,12 @@ const AdminUsers = () => {
           </>
         )}
       </SectionCard>
+
+      <UserDetailDrawer
+        open={Boolean(detailUserId)}
+        userId={detailUserId}
+        onClose={() => setDetailUserId(null)}
+      />
     </Stack>
   );
 };

@@ -4,6 +4,7 @@ import com.openlap.analytics_statements.dtos.request.LrsConsumerRequest;
 import com.openlap.user.dto.request.ChangePasswordRequest;
 import com.openlap.user.dto.request.UpdateEmailRequest;
 import com.openlap.user.dto.request.UpdateProfileRequest;
+import com.openlap.user.dto.response.AdminUserDetailResponse;
 import com.openlap.user.dto.response.AdminUserResponse;
 import com.openlap.user.dto.response.UserResponse;
 import com.openlap.user.dto.response.utils.LrsConsumerResponse;
@@ -19,6 +20,9 @@ public interface UserService {
 
   /** Lists all users (admin), paginated, exposing safe fields only (id, name, email, roles). */
   Page<AdminUserResponse> listUsers(Pageable pageable);
+
+  /** Loads one user's admin detail by id (safe fields + roles + secret-free LRS connections). */
+  AdminUserDetailResponse getUserDetailById(String id);
 
   UserResponse getUserDetails(HttpServletRequest request);
 

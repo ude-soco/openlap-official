@@ -21,6 +21,22 @@ export const requestAnalyticsMethods = async (api) => {
   }
 };
 
+// Admin-only user detail (GET /v1/admin/users/{id}). Read-only: safe fields only
+// (id, name, email, roles) plus the user's LRS connections via secret-free DTOs —
+// never password or LRS credentials. Returns `data` = the AdminUserDetailResponse.
+export const requestUserDetail = async (api, id) => {
+  try {
+    const response = await api.get(`v1/admin/users/${id}`);
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to fetch user detail");
+    throw error;
+  }
+};
+
 // Admin-only usage analytics (GET /v1/admin/usage). Read-only: how many saved
 // indicators (and distinct users) reference each visualization library, type, and
 // analytics method. Returns `data` =
