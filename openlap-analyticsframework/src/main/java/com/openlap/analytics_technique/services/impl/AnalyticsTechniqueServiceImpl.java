@@ -298,7 +298,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     if (file.isEmpty()) {
       throw new ServiceException("File is empty");
     }
-    String fileName = file.getOriginalFilename();
+    String fileName = Utils.requireSafeJarFileName(file.getOriginalFilename());
     Utils.saveFile(file, analyticsMethodsJarsFolder, fileName);
     List<AnalyticsTechnique> existingAnalyticsMethods = fetchAllAnalyticsTechniquesMethod();
     findJarAndAddMethod(fileName, existingAnalyticsMethods);
@@ -317,8 +317,9 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Override
   public void deleteAnalyticsTechniqueFile(String fileName) {
-    Utils.deleteFile(analyticsMethodsJarsFolder, fileName);
-    String frameworkLocation = analyticsMethodsJarsFolder + fileName;
+    String safeFileName = Utils.requireSafeJarFileName(fileName);
+    Utils.deleteFile(analyticsMethodsJarsFolder, safeFileName);
+    String frameworkLocation = analyticsMethodsJarsFolder + safeFileName;
     List<AnalyticsTechnique> allByFileName =
         analyticsTechniqueRepository.findAllByFileName(frameworkLocation);
     if (!allByFileName.isEmpty()) {
@@ -331,10 +332,11 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Override
   public void reloadAnalyticsTechniqueFile(String fileName) {
-    String frameworkLocation = analyticsMethodsJarsFolder + fileName;
+    String safeFileName = Utils.requireSafeJarFileName(fileName);
+    String frameworkLocation = analyticsMethodsJarsFolder + safeFileName;
     List<AnalyticsTechnique> existingAnalyticsMethods =
         analyticsTechniqueRepository.findAllByFileName(frameworkLocation);
-    findJarAndAddMethod(fileName, existingAnalyticsMethods);
+    findJarAndAddMethod(safeFileName, existingAnalyticsMethods);
   }
 
   @Override

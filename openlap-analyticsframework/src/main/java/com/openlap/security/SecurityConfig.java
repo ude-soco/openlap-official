@@ -85,6 +85,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     http.authorizeRequests()
         .antMatchers("/v1/indicators/**", "/v1/questions/**", "/v1/statements/**")
         .hasAnyAuthority(RoleType.ROLE_USER.toString());
+    // Harden the state-changing plugin endpoints that are exposed via GET (reload/populate): lock
+    // them to SUPER_ADMIN. This MUST precede the broad GET rule below (antMatchers are
+    // first-match-wins) which would otherwise grant ROLE_USER. The "/**" suffix also covers the
+    // trailing-slash form. Read-only catalog GETs (method/library/type lists, input-params) are
+    // NOT matched here and remain available to ROLE_USER via the broad GET rule.
+    http.authorizeRequests()
+        .antMatchers(
+            "/v1/analytics/methods/reload/**",
+            "/v1/analytics/methods/populate/**",
+            "/v1/visualizations/reload/**")
+        .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString());
     http.authorizeRequests()
         .antMatchers(
             HttpMethod.GET, "/v1/analytics/**", "/v1/visualizations/**", "/v1/analytics/goals/**")

@@ -13,6 +13,7 @@ import com.openlap.admin.services.AdminUsageService;
 import com.openlap.analytics_engine.services.EngineService;
 import com.openlap.analytics_statements.services.LrsService;
 import com.openlap.analytics_statements.services.StatementService;
+import com.openlap.analytics_technique.services.AnalyticsTechniqueService;
 import com.openlap.infrastructure.error.ApiErrorResponseFactory;
 import com.openlap.infrastructure.error.ErrorResponseWriter;
 import com.openlap.infrastructure.security.RestAccessDeniedHandler;
@@ -26,6 +27,9 @@ import com.openlap.user.services.TokenService;
 import com.openlap.user.services.UserRegisterService;
 import com.openlap.user.services.UserRoleService;
 import com.openlap.user.services.UserService;
+import com.openlap.visualization_methods.services.VisualizationLibraryService;
+import com.openlap.visualization_methods.services.VisualizationMethodUtilityService;
+import com.openlap.visualization_methods.services.VisualizationTypeService;
 import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,7 +60,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
       com.openlap.user.controller.UserRegisterController.class,
       com.openlap.user.controller.AdminUserController.class,
       com.openlap.admin.controller.AdminUsageController.class,
-      com.openlap.admin.controller.AdminUserDetailController.class
+      com.openlap.admin.controller.AdminUserDetailController.class,
+      com.openlap.analytics_technique.controller.AnalyticsTechniqueController.class,
+      com.openlap.visualization_methods.controllers.VisualizationMethodController.class
     })
 @Import({
   SecurityConfig.class,
@@ -84,6 +90,10 @@ public class SecurityAuthorizationMockMvcTest {
   // Controller collaborators
   @MockBean private UserService userService;
   @MockBean private AdminUsageService adminUsageService;
+  @MockBean private AnalyticsTechniqueService analyticsTechniqueService;
+  @MockBean private VisualizationLibraryService visualizationLibraryService;
+  @MockBean private VisualizationTypeService visualizationTypeService;
+  @MockBean private VisualizationMethodUtilityService visualizationMethodUtilityService;
   @MockBean private UserRegisterService userRegisterService;
   @MockBean private StatementService statementService;
   @MockBean private LrsService lrsService;
@@ -307,5 +317,95 @@ public class SecurityAuthorizationMockMvcTest {
                 .content("{\"roles\":[\"ROLE_USER\"]}"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  // --- Plugin-management hardening: reload/populate are SUPER_ADMIN-only; reads stay open ---
+
+  @Test
+  public void normalUserForbiddenOnAnalyticsReload() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+
+    mockMvc
+        .perform(
+            get("/v1/analytics/methods/reload?fileName=x.jar")
+                .header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @Test
+  public void normalUserForbiddenOnAnalyticsPopulate() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+
+    mockMvc
+        .perform(get("/v1/analytics/methods/populate").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @Test
+  public void normalUserForbiddenOnVisualizationReload() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+
+    mockMvc
+        .perform(
+            get("/v1/visualizations/reload?fileName=x.jar")
+                .header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @Test
+  public void superAdminAllowedOnAnalyticsReloadAndPopulate() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(
+            new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+
+    mockMvc
+        .perform(
+            get("/v1/analytics/methods/reload?fileName=x.jar")
+                .header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk());
+    mockMvc
+        .perform(get("/v1/analytics/methods/populate").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  public void superAdminAllowedOnVisualizationReload() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(
+            new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+
+    mockMvc
+        .perform(
+            get("/v1/visualizations/reload?fileName=x.jar")
+                .header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  public void normalUserCanStillReadAnalyticsMethods() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+
+    mockMvc
+        .perform(get("/v1/analytics/methods").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  public void normalUserCanStillReadVisualizationLibraries() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+    given(visualizationLibraryService.getAllVisualizationLibraries())
+        .willReturn(Collections.emptyList());
+
+    mockMvc
+        .perform(get("/v1/visualizations/libraries").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk());
   }
 }
