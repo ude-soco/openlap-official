@@ -30,6 +30,8 @@ import {
   requestAnalyticsMethodInputParams,
   requestAnalyticsMethods,
 } from "./utils/manage-apis";
+import { useAdminUsage } from "./utils/use-admin-usage";
+import UsageChips from "./components/usage-chips";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
 const SKELETON_ROWS = 5;
@@ -50,6 +52,7 @@ const AdminAnalyticsMethods = () => {
   const [expandedIds, setExpandedIds] = useState(() => new Set());
   // Per-method inputs/params cache: { [id]: { status, inputs, params } }.
   const [detailsById, setDetailsById] = useState({});
+  const usage = useAdminUsage("analyticsMethods");
 
   const loadMethods = useCallback(async () => {
     setStatus("loading");
@@ -234,6 +237,7 @@ const AdminAnalyticsMethods = () => {
                     <TableCell padding="checkbox" />
                     <TableCell>Method</TableCell>
                     <TableCell>Description</TableCell>
+                    <TableCell>Usage</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -248,6 +252,9 @@ const AdminAnalyticsMethods = () => {
                           </TableCell>
                           <TableCell>
                             <Skeleton />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton width={140} />
                           </TableCell>
                         </TableRow>
                       ))
@@ -290,10 +297,16 @@ const AdminAnalyticsMethods = () => {
                                   {method.description || "—"}
                                 </Typography>
                               </TableCell>
+                              <TableCell>
+                                <UsageChips
+                                  status={usage.status}
+                                  usage={usage.byId[id]}
+                                />
+                              </TableCell>
                             </TableRow>
                             <TableRow>
                               <TableCell
-                                colSpan={3}
+                                colSpan={4}
                                 sx={{
                                   py: 0,
                                   borderBottom: expanded ? undefined : "none",

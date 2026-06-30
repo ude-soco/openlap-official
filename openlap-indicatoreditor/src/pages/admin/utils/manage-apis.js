@@ -21,6 +21,24 @@ export const requestAnalyticsMethods = async (api) => {
   }
 };
 
+// Admin-only usage analytics (GET /v1/admin/usage). Read-only: how many saved
+// indicators (and distinct users) reference each visualization library, type, and
+// analytics method. Returns `data` =
+// { visualizationLibraries, visualizationTypes, analyticsMethods },
+// each [{ id, indicatorCount, uniqueUserCount }].
+export const requestAdminUsage = async (api) => {
+  try {
+    const response = await api.get("v1/admin/usage");
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to fetch admin usage");
+    throw error;
+  }
+};
+
 // Per-method inputs and parameters (GET /v1/analytics/methods/input-params/{id}).
 // Loaded on demand (it resolves the method's class from its JAR server-side), so
 // the admin page fetches it lazily per row rather than for the whole list.

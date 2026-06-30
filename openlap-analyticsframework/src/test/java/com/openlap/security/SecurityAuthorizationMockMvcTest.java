@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.openlap.admin.dto.AdminUsageResponse;
+import com.openlap.admin.services.AdminUsageService;
 import com.openlap.analytics_engine.services.EngineService;
 import com.openlap.analytics_statements.services.LrsService;
 import com.openlap.analytics_statements.services.StatementService;
@@ -48,7 +50,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
     controllers = {
       com.openlap.user.controller.UserController.class,
       com.openlap.user.controller.UserRegisterController.class,
-      com.openlap.user.controller.AdminUserController.class
+      com.openlap.user.controller.AdminUserController.class,
+      com.openlap.admin.controller.AdminUsageController.class
     })
 @Import({
   SecurityConfig.class,
@@ -75,6 +78,7 @@ public class SecurityAuthorizationMockMvcTest {
 
   // Controller collaborators
   @MockBean private UserService userService;
+  @MockBean private AdminUsageService adminUsageService;
   @MockBean private UserRegisterService userRegisterService;
   @MockBean private StatementService statementService;
   @MockBean private LrsService lrsService;
@@ -153,6 +157,32 @@ public class SecurityAuthorizationMockMvcTest {
 
     mockMvc
         .perform(get("/v1/users").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @Test
+  public void adminUsageIsAllowedForSuperAdmin() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(
+            new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    given(adminUsageService.getUsage())
+        .willReturn(
+            new AdminUsageResponse(
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
+
+    mockMvc
+        .perform(get("/v1/admin/usage").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  public void adminUsageIsForbiddenForNormalUser() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+
+    mockMvc
+        .perform(get("/v1/admin/usage").header(AUTHORIZATION, "Bearer valid-token"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
   }

@@ -23,6 +23,8 @@ import {
   requestVisualizationLibraries,
   requestVisualizationTypes,
 } from "./utils/manage-apis";
+import { useAdminUsage } from "./utils/use-admin-usage";
+import UsageChips from "./components/usage-chips";
 
 const SKELETON_ROWS = 4;
 
@@ -38,6 +40,7 @@ const AdminVisualizationLibraries = () => {
   const [status, setStatus] = useState("loading");
   const [libraries, setLibraries] = useState([]);
   const [typeCountByLibrary, setTypeCountByLibrary] = useState({});
+  const usage = useAdminUsage("visualizationLibraries");
 
   const load = useCallback(async () => {
     setStatus("loading");
@@ -136,6 +139,7 @@ const AdminVisualizationLibraries = () => {
                   <TableCell>Name</TableCell>
                   <TableCell>Creator</TableCell>
                   <TableCell align="right">Chart types</TableCell>
+                  <TableCell>Usage</TableCell>
                   <TableCell>Description</TableCell>
                 </TableRow>
               </TableHead>
@@ -151,6 +155,9 @@ const AdminVisualizationLibraries = () => {
                         </TableCell>
                         <TableCell align="right">
                           <Skeleton width={24} />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton width={140} />
                         </TableCell>
                         <TableCell>
                           <Skeleton />
@@ -174,6 +181,12 @@ const AdminVisualizationLibraries = () => {
                           {library.name
                             ? typeCountByLibrary[library.name] ?? "—"
                             : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <UsageChips
+                            status={usage.status}
+                            usage={usage.byId[library.id]}
+                          />
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" color="text.secondary">

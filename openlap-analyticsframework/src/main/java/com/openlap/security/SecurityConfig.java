@@ -57,6 +57,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     http.authorizeRequests()
         .antMatchers("/login/**", "/v1/register/**", "/v1/token/refresh/**", "/v1/code/**")
         .permitAll();
+    // All admin-management endpoints live under /v1/admin/** and are SUPER_ADMIN-only.
+    // Declared early (antMatchers are first-match-wins) so no broader rule can shadow it.
+    http.authorizeRequests()
+        .antMatchers("/v1/admin/**")
+        .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString());
     http.authorizeRequests()
         .antMatchers("/v1/lrs/**")
         .hasAnyAuthority(RoleType.ROLE_DATA_PROVIDER.toString());

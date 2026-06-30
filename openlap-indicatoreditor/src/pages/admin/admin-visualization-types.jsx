@@ -21,6 +21,8 @@ import SectionCard from "../../common/components/section-card/section-card";
 import EmptyState from "../../common/components/empty-state/empty-state";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import { requestVisualizationTypes } from "./utils/manage-apis";
+import { useAdminUsage } from "./utils/use-admin-usage";
+import UsageChips from "./components/usage-chips";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
 const SKELETON_ROWS = 5;
@@ -37,6 +39,7 @@ const AdminVisualizationTypes = () => {
   const [types, setTypes] = useState([]);
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
+  const usage = useAdminUsage("visualizationTypes");
 
   const load = useCallback(async () => {
     setStatus("loading");
@@ -141,6 +144,7 @@ const AdminVisualizationTypes = () => {
                     <TableCell>Chart type</TableCell>
                     <TableCell>Library</TableCell>
                     <TableCell>Inputs</TableCell>
+                    <TableCell>Usage</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -152,6 +156,9 @@ const AdminVisualizationTypes = () => {
                           </TableCell>
                           <TableCell>
                             <Skeleton />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton width={140} />
                           </TableCell>
                           <TableCell>
                             <Skeleton width={140} />
@@ -172,6 +179,12 @@ const AdminVisualizationTypes = () => {
                           </TableCell>
                           <TableCell>{type.library || "—"}</TableCell>
                           <TableCell>{renderInputs(type.chartInputs)}</TableCell>
+                          <TableCell>
+                            <UsageChips
+                              status={usage.status}
+                              usage={usage.byId[type.id]}
+                            />
+                          </TableCell>
                         </TableRow>
                       ))}
                 </TableBody>
