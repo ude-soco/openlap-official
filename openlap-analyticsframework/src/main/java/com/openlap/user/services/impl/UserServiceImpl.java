@@ -7,6 +7,7 @@ import com.openlap.analytics_statements.services.LrsService;
 import com.openlap.analytics_statements.services.StatementService;
 import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.infrastructure.exception.OpenLapException;
+import com.openlap.user.dto.request.AdminUpdateUserRequest;
 import com.openlap.user.dto.request.ChangePasswordRequest;
 import com.openlap.user.dto.request.TokenRequest;
 import com.openlap.user.dto.request.UpdateEmailRequest;
@@ -29,6 +30,7 @@ import com.openlap.user.services.UserService;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -155,10 +157,39 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
   @Override
   public AdminUserDetailResponse getUserDetailById(String id) {
-    User user =
-        userRepository
-            .findById(id)
-            .orElseThrow(() -> new UserNotFoundException("User not found."));
+    return buildAdminUserDetail(loadUserById(id));
+  }
+
+  @Override
+  public AdminUserDetailResponse updateUserByAdmin(String id, AdminUpdateUserRequest request) {
+    User user = loadUserById(id);
+    user.setName(request.getName());
+    String newEmail = request.getEmail();
+    if (!newEmail.equals(user.getEmail())) {
+      if (userRepository.existsByEmail(newEmail)) {
+        throw new EmailAlreadyTakenException("Email already taken.");
+      }
+      user.setEmail(newEmail);
+    }
+    User savedUser = userRepository.save(user);
+    log.info("Admin updated user '{}'.", savedUser.getId());
+    return buildAdminUserDetail(savedUser);
+  }
+
+  @Override
+  public AdminUserDetailResponse replaceUserRoles(String id, Set<RoleType> roles) {
+    User user = loadUserById(id);
+    userRoleService.replaceUserRoles(user, roles);
+    return buildAdminUserDetail(user);
+  }
+
+  private User loadUserById(String id) {
+    return userRepository
+        .findById(id)
+        .orElseThrow(() -> new UserNotFoundException("User not found."));
+  }
+
+  private AdminUserDetailResponse buildAdminUserDetail(User user) {
     AdminUserDetailResponse response = new AdminUserDetailResponse();
     response.setId(user.getId());
     response.setName(user.getName());

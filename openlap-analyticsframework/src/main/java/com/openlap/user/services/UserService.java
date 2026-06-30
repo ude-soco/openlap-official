@@ -1,6 +1,7 @@
 package com.openlap.user.services;
 
 import com.openlap.analytics_statements.dtos.request.LrsConsumerRequest;
+import com.openlap.user.dto.request.AdminUpdateUserRequest;
 import com.openlap.user.dto.request.ChangePasswordRequest;
 import com.openlap.user.dto.request.UpdateEmailRequest;
 import com.openlap.user.dto.request.UpdateProfileRequest;
@@ -8,8 +9,10 @@ import com.openlap.user.dto.response.AdminUserDetailResponse;
 import com.openlap.user.dto.response.AdminUserResponse;
 import com.openlap.user.dto.response.UserResponse;
 import com.openlap.user.dto.response.utils.LrsConsumerResponse;
+import com.openlap.user.entities.RoleType;
 import com.openlap.user.entities.User;
 import java.util.List;
+import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +26,12 @@ public interface UserService {
 
   /** Loads one user's admin detail by id (safe fields + roles + secret-free LRS connections). */
   AdminUserDetailResponse getUserDetailById(String id);
+
+  /** Admin update of a user's name/email (no password). Returns the updated admin detail. */
+  AdminUserDetailResponse updateUserByAdmin(String id, AdminUpdateUserRequest request);
+
+  /** Admin replacement of a user's role set (with guardrails). Returns the updated admin detail. */
+  AdminUserDetailResponse replaceUserRoles(String id, Set<RoleType> roles);
 
   UserResponse getUserDetails(HttpServletRequest request);
 

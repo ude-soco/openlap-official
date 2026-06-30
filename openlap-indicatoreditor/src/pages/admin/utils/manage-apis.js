@@ -37,6 +37,36 @@ export const requestUserDetail = async (api, id) => {
   }
 };
 
+// Admin update of a user's basic info (PATCH /v1/admin/users/{id}). Name + email
+// only; no password. `payload` = { name, email }. Returns the updated detail.
+export const requestUpdateUser = async (api, id, payload) => {
+  try {
+    const response = await api.patch(`v1/admin/users/${id}`, payload);
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to update user");
+    throw error;
+  }
+};
+
+// Admin replacement of a user's roles (PATCH /v1/admin/users/{id}/roles).
+// `roles` = array of RoleType strings. Returns the updated detail.
+export const requestUpdateUserRoles = async (api, id, roles) => {
+  try {
+    const response = await api.patch(`v1/admin/users/${id}/roles`, { roles });
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to update user roles");
+    throw error;
+  }
+};
+
 // Admin-only usage analytics (GET /v1/admin/usage). Read-only: how many saved
 // indicators (and distinct users) reference each visualization library, type, and
 // analytics method. Returns `data` =

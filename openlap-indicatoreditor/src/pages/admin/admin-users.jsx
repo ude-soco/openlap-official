@@ -66,6 +66,22 @@ const AdminUsers = () => {
     setPage(0);
   };
 
+  // After an in-drawer save, patch the matching row in place (keeps pagination).
+  const handleUserUpdated = (updated) => {
+    setRows((prev) =>
+      prev.map((user) =>
+        user.id === updated.id
+          ? {
+              ...user,
+              name: updated.name,
+              email: updated.email,
+              roles: updated.roles,
+            }
+          : user
+      )
+    );
+  };
+
   const loading = status === "loading";
   // Keep previously-loaded rows visible during a page change; only show the
   // skeleton on the very first load.
@@ -195,6 +211,7 @@ const AdminUsers = () => {
         open={Boolean(detailUserId)}
         userId={detailUserId}
         onClose={() => setDetailUserId(null)}
+        onUpdated={handleUserUpdated}
       />
     </Stack>
   );

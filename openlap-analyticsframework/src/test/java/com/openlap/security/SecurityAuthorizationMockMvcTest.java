@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -33,6 +34,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.TestPropertySource;
@@ -222,6 +224,87 @@ public class SecurityAuthorizationMockMvcTest {
 
     mockMvc
         .perform(get("/v1/admin/users/u1").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @Test
+  public void adminCanUpdateUserNameAndEmail() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(
+            new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    given(userService.updateUserByAdmin(any(), any()))
+        .willReturn(
+            new AdminUserDetailResponse(
+                "u1",
+                "New Name",
+                "new@mail.com",
+                Collections.singletonList("ROLE_USER"),
+                Collections.emptyList(),
+                Collections.emptyList()));
+
+    mockMvc
+        .perform(
+            patch("/v1/admin/users/u1")
+                .header(AUTHORIZATION, "Bearer valid-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"New Name\",\"email\":\"new@mail.com\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.email").value("new@mail.com"))
+        .andExpect(jsonPath("$.data.password").doesNotExist());
+  }
+
+  @Test
+  public void adminCanReplaceUserRoles() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(
+            new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    given(userService.replaceUserRoles(any(), any()))
+        .willReturn(
+            new AdminUserDetailResponse(
+                "u1",
+                "Alice",
+                "alice@mail.com",
+                Collections.singletonList("ROLE_DATA_PROVIDER"),
+                Collections.emptyList(),
+                Collections.emptyList()));
+
+    mockMvc
+        .perform(
+            patch("/v1/admin/users/u1/roles")
+                .header(AUTHORIZATION, "Bearer valid-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roles\":[\"ROLE_DATA_PROVIDER\"]}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.roles[0]").value("ROLE_DATA_PROVIDER"));
+  }
+
+  @Test
+  public void normalUserCannotUpdateUser() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+
+    mockMvc
+        .perform(
+            patch("/v1/admin/users/u1")
+                .header(AUTHORIZATION, "Bearer valid-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"x\",\"email\":\"x@mail.com\"}"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @Test
+  public void normalUserCannotReplaceRoles() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+
+    mockMvc
+        .perform(
+            patch("/v1/admin/users/u1/roles")
+                .header(AUTHORIZATION, "Bearer valid-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"roles\":[\"ROLE_USER\"]}"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
   }
