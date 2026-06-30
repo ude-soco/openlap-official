@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.openlap.admin.audit.AdminAuditService;
 import com.openlap.admin.dto.AdminUsageResponse;
 import com.openlap.admin.dto.AdminVisLibraryResponse;
 import com.openlap.admin.services.AdminCatalogService;
@@ -66,7 +67,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
       com.openlap.admin.controller.AdminUserDetailController.class,
       com.openlap.analytics_technique.controller.AnalyticsTechniqueController.class,
       com.openlap.visualization_methods.controllers.VisualizationMethodController.class,
-      com.openlap.admin.controller.AdminCatalogController.class
+      com.openlap.admin.controller.AdminCatalogController.class,
+      com.openlap.admin.controller.AdminAuditController.class
     })
 @Import({
   SecurityConfig.class,
@@ -95,6 +97,7 @@ public class SecurityAuthorizationMockMvcTest {
   @MockBean private UserService userService;
   @MockBean private AdminUsageService adminUsageService;
   @MockBean private AdminCatalogService adminCatalogService;
+  @MockBean private AdminAuditService adminAuditService;
   @MockBean private AnalyticsTechniqueService analyticsTechniqueService;
   @MockBean private VisualizationLibraryService visualizationLibraryService;
   @MockBean private VisualizationTypeService visualizationTypeService;
@@ -252,6 +255,15 @@ public class SecurityAuthorizationMockMvcTest {
     given(tokenService.verifyToken(any()))
         .willReturn(
             new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    given(userService.getUserDetailById(any()))
+        .willReturn(
+            new AdminUserDetailResponse(
+                "u1",
+                "Old Name",
+                "old@mail.com",
+                Collections.singletonList("ROLE_USER"),
+                Collections.emptyList(),
+                Collections.emptyList()));
     given(userService.updateUserByAdmin(any(), any()))
         .willReturn(
             new AdminUserDetailResponse(
@@ -278,6 +290,15 @@ public class SecurityAuthorizationMockMvcTest {
     given(tokenService.verifyToken(any()))
         .willReturn(
             new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    given(userService.getUserDetailById(any()))
+        .willReturn(
+            new AdminUserDetailResponse(
+                "u1",
+                "Alice",
+                "alice@mail.com",
+                Collections.singletonList("ROLE_USER"),
+                Collections.emptyList(),
+                Collections.emptyList()));
     given(userService.replaceUserRoles(any(), any()))
         .willReturn(
             new AdminUserDetailResponse(
@@ -303,6 +324,16 @@ public class SecurityAuthorizationMockMvcTest {
     given(tokenService.verifyToken(any()))
         .willReturn(
             new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    given(userService.getUserDetailById(any()))
+        .willReturn(
+            new AdminUserDetailResponse(
+                "u1",
+                "Alice",
+                "alice@mail.com",
+                Collections.singletonList("ROLE_USER"),
+                true,
+                Collections.emptyList(),
+                Collections.emptyList()));
     given(userService.setUserEnabled(any(), anyBoolean()))
         .willReturn(
             new AdminUserDetailResponse(
@@ -468,6 +499,8 @@ public class SecurityAuthorizationMockMvcTest {
         .willReturn(
             new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
     given(adminCatalogService.getVisualizationLibraries()).willReturn(Collections.emptyList());
+    given(adminCatalogService.getVisualizationLibraryById(any()))
+        .willReturn(new AdminVisLibraryResponse("L1", "creator", "name", "desc", true));
     given(adminCatalogService.setVisualizationLibraryEnabled(any(), anyBoolean()))
         .willReturn(new AdminVisLibraryResponse("L1", "creator", "name", "desc", false));
 
@@ -483,6 +516,29 @@ public class SecurityAuthorizationMockMvcTest {
                 .content("{\"enabled\":false}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.enabled").value(false));
+  }
+
+  @Test
+  public void adminCanReadAuditLogs() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(
+            new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    given(adminAuditService.listAuditLogs(any())).willReturn(new PageImpl<>(Collections.emptyList()));
+
+    mockMvc
+        .perform(get("/v1/admin/audit-logs").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  public void normalUserCannotReadAuditLogs() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+
+    mockMvc
+        .perform(get("/v1/admin/audit-logs").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
   }
 
   @Test

@@ -17,6 +17,12 @@ public interface AdminCatalogService {
 
   List<AdminAnalyticsMethodResponse> getAnalyticsMethods();
 
+  AdminVisLibraryResponse getVisualizationLibraryById(String id);
+
+  AdminVisTypeResponse getVisualizationTypeById(String id);
+
+  AdminAnalyticsMethodResponse getAnalyticsMethodById(String id);
+
   AdminVisLibraryResponse setVisualizationLibraryEnabled(String id, boolean enabled);
 
   AdminVisTypeResponse setVisualizationTypeEnabled(String id, boolean enabled);

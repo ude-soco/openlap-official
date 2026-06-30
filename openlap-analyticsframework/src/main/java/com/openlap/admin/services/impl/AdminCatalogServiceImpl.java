@@ -62,6 +62,21 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
   }
 
   @Override
+  public AdminVisLibraryResponse getVisualizationLibraryById(String id) {
+    return toLibraryResponse(visualizationMethodUtilityService.fetchVisualizationLibraryMethod(id));
+  }
+
+  @Override
+  public AdminVisTypeResponse getVisualizationTypeById(String id) {
+    return toTypeResponse(visualizationMethodUtilityService.fetchVisualizationTypeMethod(id));
+  }
+
+  @Override
+  public AdminAnalyticsMethodResponse getAnalyticsMethodById(String id) {
+    return toMethodResponse(analyticsTechniqueService.fetchAnalyticsTechniqueMethod(id));
+  }
+
+  @Override
   public AdminVisLibraryResponse setVisualizationLibraryEnabled(String id, boolean enabled) {
     VisLibrary library = visualizationMethodUtilityService.fetchVisualizationLibraryMethod(id);
     library.setEnabled(enabled);
