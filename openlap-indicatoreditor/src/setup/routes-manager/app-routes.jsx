@@ -110,6 +110,9 @@ const AdminVisualizationTypes = lazy(() =>
 const AdminAnalyticsMethods = lazy(() =>
   import("../../pages/admin/admin-analytics-methods.jsx")
 );
+const AdminAuditLogs = lazy(() =>
+  import("../../pages/admin/admin-audit-logs.jsx")
+);
 
 // Routes that opt out of the standard "content sheet" (Container + padded Paper
 // card) and render full-bleed instead — for editor/workspace pages where the
@@ -518,6 +521,15 @@ const AppRoutes = () => {
                   element={
                     <PrivateRoute
                       component={<AdminAnalyticsMethods />}
+                      allowedRoles={[RoleTypes.admin]}
+                    />
+                  }
+                />
+                <Route
+                  path="/admin/audit-logs"
+                  element={
+                    <PrivateRoute
+                      component={<AdminAuditLogs />}
                       allowedRoles={[RoleTypes.admin]}
                     />
                   }

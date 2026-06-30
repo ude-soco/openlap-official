@@ -135,6 +135,23 @@ export const requestAdminUsage = async (api) => {
   }
 };
 
+// Admin-only audit log list (GET /v1/admin/audit-logs). Read-only, paginated
+// Spring Page response. Audit metadata is non-secret backend metadata.
+export const requestAdminAuditLogs = async (api, page = 0, size = 25) => {
+  try {
+    const response = await api.get("v1/admin/audit-logs", {
+      params: { page, size },
+    });
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to fetch admin audit logs");
+    throw error;
+  }
+};
+
 // Per-method inputs and parameters (GET /v1/analytics/methods/input-params/{id}).
 // Loaded on demand (it resolves the method's class from its JAR server-side), so
 // the admin page fetches it lazily per row rather than for the whole list.

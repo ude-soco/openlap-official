@@ -7,6 +7,7 @@ import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
 import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
 import AnalyticsOutlinedIcon from "@mui/icons-material/AnalyticsOutlined";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
@@ -15,6 +16,7 @@ import SectionCard from "../../common/components/section-card/section-card";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import {
   requestAdminAnalyticsMethods,
+  requestAdminAuditLogs,
   requestAdminVisualizationLibraries,
   requestAdminVisualizationTypes,
   requestUsers,
@@ -69,6 +71,16 @@ const SECTIONS = [
     loader: requestAdminAnalyticsMethods,
     to: "/admin/analytics-methods",
     actionLabel: "View details",
+  },
+  {
+    key: "auditLogs",
+    title: "Audit Logs",
+    helper: "Recorded security-sensitive admin actions.",
+    icon: HistoryOutlinedIcon,
+    unit: "entries",
+    loader: (api) => requestAdminAuditLogs(api, 0, 1),
+    to: "/admin/audit-logs",
+    actionLabel: "View logs",
   },
 ];
 

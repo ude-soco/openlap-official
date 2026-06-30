@@ -10,6 +10,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import SchoolIcon from "@mui/icons-material/School";
 import PersonIcon from "@mui/icons-material/Person";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import HistoryIcon from "@mui/icons-material/History";
 import RoleTypes from "../../pages/account-manager/utils/enums/role-types.js";
 
 const menus = [
@@ -186,6 +187,12 @@ const menus = [
         secondary: "Manage users, visualizations, and analytics",
         navigate: "/admin",
         icon: <DashboardIcon />,
+      },
+      {
+        primary: "Audit Logs",
+        secondary: "Review admin actions",
+        navigate: "/admin/audit-logs",
+        icon: <HistoryIcon />,
       },
     ],
   },
