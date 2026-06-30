@@ -9,8 +9,7 @@ import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SchoolIcon from "@mui/icons-material/School";
 import PersonIcon from "@mui/icons-material/Person";
-import AnalyticsIcon from '@mui/icons-material/Analytics';
-import PieChartIcon from '@mui/icons-material/PieChart';
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import RoleTypes from "../../pages/account-manager/utils/enums/role-types.js";
 
 const menus = [
@@ -171,10 +170,10 @@ const menus = [
     ],
   },
   {
-    key: "upload-admin",
-    title: "Manage JARs",
+    key: "admin",
+    title: "Administration",
     defaultOpen: false,
-    icon: <ArchitectureIcon />,
+    icon: <AdminPanelSettingsIcon />,
     allowedRoles: [RoleTypes.admin],
     disabledRoles: [
       RoleTypes.user,
@@ -183,16 +182,10 @@ const menus = [
     ],
     items: [
       {
-        primary: "Analytics Methods",
-        secondary: "Manage analytics methods",
-        navigate: "/manage-analytics",
-        icon: <AnalyticsIcon />,
-      },
-      {
-        primary: "Visualization Methods",
-        secondary: "Manage visualization methods",
-        navigate: "/manage-visualization",
-        icon: <PieChartIcon />,
+        primary: "Admin Dashboard",
+        secondary: "Manage users, visualizations, and analytics",
+        navigate: "/admin",
+        icon: <DashboardIcon />,
       },
     ],
   },
