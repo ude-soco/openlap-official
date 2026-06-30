@@ -63,6 +63,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     http.authorizeRequests()
         .antMatchers("/v1/users/my/lrs/**", "/v1/isc/**", "/v1/analytics/goals/**")
         .hasAnyAuthority(RoleType.ROLE_USER.toString(), RoleType.ROLE_USER_WITHOUT_LRS.toString());
+    // Admin-only user administration (list users). Must precede the broader
+    // "/v1/users/my/**" self-service rule below (antMatchers are first-match-wins).
+    // Matches only the exact list path and its trailing-slash form, so
+    // "/v1/users/my/**" continues to work for normal users.
+    http.authorizeRequests()
+        .antMatchers("/v1/users", "/v1/users/")
+        .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString());
     http.authorizeRequests()
         .antMatchers("/v1/users/my/**")
         .hasAnyAuthority(

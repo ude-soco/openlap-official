@@ -11,6 +11,7 @@ import com.openlap.user.dto.request.ChangePasswordRequest;
 import com.openlap.user.dto.request.TokenRequest;
 import com.openlap.user.dto.request.UpdateEmailRequest;
 import com.openlap.user.dto.request.UpdateProfileRequest;
+import com.openlap.user.dto.response.AdminUserResponse;
 import com.openlap.user.dto.response.UserResponse;
 import com.openlap.user.dto.response.utils.LrsConsumerResponse;
 import com.openlap.user.dto.response.utils.LrsProviderResponse;
@@ -31,6 +32,8 @@ import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -110,6 +113,36 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     userResponse.setLrsProviderList(generateLrsProviderResponseMethod(foundUser));
     userResponse.setLrsConsumerList(generateLrsConsumerResponseMethod(foundUser));
     return userResponse;
+  }
+
+  @Override
+  public Page<AdminUserResponse> listUsers(Pageable pageable) {
+    try {
+      return userRepository.findAll(pageable).map(this::toAdminUserResponse);
+    } catch (OpenLapException e) {
+      // Domain exceptions propagate unchanged (consistent error envelope), as elsewhere.
+      throw e;
+    } catch (Exception e) {
+      throw new ServiceException("Error listing users.", e);
+    }
+  }
+
+  /**
+   * Builds the admin-facing user response. Exposes safe fields only (id, name, email, role names);
+   * never the password hash or LRS credentials.
+   */
+  private AdminUserResponse toAdminUserResponse(User user) {
+    List<String> roles = new ArrayList<>();
+    if (user.getRoles() != null) {
+      user.getRoles()
+          .forEach(
+              role -> {
+                if (role != null && role.getName() != null) {
+                  roles.add(role.getName().toString());
+                }
+              });
+    }
+    return new AdminUserResponse(user.getId(), user.getName(), user.getEmail(), roles);
   }
 
   /** Resolves the authenticated user from the request's bearer token (existing pattern). */

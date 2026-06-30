@@ -15,6 +15,7 @@ import com.openlap.infrastructure.error.ErrorResponseWriter;
 import com.openlap.infrastructure.security.RestAccessDeniedHandler;
 import com.openlap.infrastructure.security.RestAuthenticationEntryPoint;
 import com.openlap.user.dto.request.TokenRequest;
+import com.openlap.user.dto.response.AdminUserResponse;
 import com.openlap.user.dto.response.UserResponse;
 import com.openlap.user.services.TokenService;
 import com.openlap.user.services.UserRegisterService;
@@ -27,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.TestPropertySource;
@@ -45,7 +47,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @WebMvcTest(
     controllers = {
       com.openlap.user.controller.UserController.class,
-      com.openlap.user.controller.UserRegisterController.class
+      com.openlap.user.controller.UserRegisterController.class,
+      com.openlap.user.controller.AdminUserController.class
     })
 @Import({
   SecurityConfig.class,
@@ -119,5 +122,38 @@ public class SecurityAuthorizationMockMvcTest {
     given(lrsService.getAvailableLrs()).willReturn(Collections.emptyList());
 
     mockMvc.perform(get("/v1/register/lrs")).andExpect(status().isOk());
+  }
+
+  @Test
+  public void listUsersIsAllowedForSuperAdminAndOmitsPassword() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(
+            new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    given(userService.listUsers(any()))
+        .willReturn(
+            new PageImpl<>(
+                Collections.singletonList(
+                    new AdminUserResponse(
+                        "u1",
+                        "Alice",
+                        "alice@mail.com",
+                        Collections.singletonList("ROLE_SUPER_ADMIN")))));
+
+    mockMvc
+        .perform(get("/v1/users?page=0&size=10").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content[0].email").value("alice@mail.com"))
+        .andExpect(jsonPath("$.data.content[0].password").doesNotExist());
+  }
+
+  @Test
+  public void listUsersIsForbiddenForNormalUser() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+
+    mockMvc
+        .perform(get("/v1/users").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
   }
 }
