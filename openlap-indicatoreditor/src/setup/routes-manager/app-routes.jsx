@@ -101,6 +101,12 @@ const AdminOverview = lazy(() =>
   import("../../pages/admin/admin-overview.jsx")
 );
 const AdminUsers = lazy(() => import("../../pages/admin/admin-users.jsx"));
+const AdminVisualizationLibraries = lazy(() =>
+  import("../../pages/admin/admin-visualization-libraries.jsx")
+);
+const AdminVisualizationTypes = lazy(() =>
+  import("../../pages/admin/admin-visualization-types.jsx")
+);
 
 // Routes that opt out of the standard "content sheet" (Container + padded Paper
 // card) and render full-bleed instead — for editor/workspace pages where the
@@ -482,6 +488,24 @@ const AppRoutes = () => {
                   element={
                     <PrivateRoute
                       component={<AdminUsers />}
+                      allowedRoles={[RoleTypes.admin]}
+                    />
+                  }
+                />
+                <Route
+                  path="/admin/visualizations/libraries"
+                  element={
+                    <PrivateRoute
+                      component={<AdminVisualizationLibraries />}
+                      allowedRoles={[RoleTypes.admin]}
+                    />
+                  }
+                />
+                <Route
+                  path="/admin/visualizations/types"
+                  element={
+                    <PrivateRoute
+                      component={<AdminVisualizationTypes />}
                       allowedRoles={[RoleTypes.admin]}
                     />
                   }

@@ -47,6 +47,8 @@ const SECTIONS = [
     icon: CategoryOutlinedIcon,
     unit: "libraries",
     loader: requestVisualizationLibraries,
+    to: "/admin/visualizations/libraries",
+    actionLabel: "View details",
   },
   {
     key: "types",
@@ -55,6 +57,8 @@ const SECTIONS = [
     icon: BarChartOutlinedIcon,
     unit: "chart types",
     loader: requestVisualizationTypes,
+    to: "/admin/visualizations/types",
+    actionLabel: "View details",
   },
   {
     key: "methods",
