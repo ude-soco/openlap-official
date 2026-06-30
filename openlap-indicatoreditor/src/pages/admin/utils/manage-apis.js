@@ -56,6 +56,19 @@ export const requestVisualizationLibraries = async (api) => {
   }
 };
 
+export const requestVisualizationTypes = async (api) => {
+  try {
+    const response = await api.get("v1/visualizations/types");
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to fetch visualization types");
+    throw error;
+  }
+};
+
 export const requestVisualizationTypesByLibraryId = async (api, libraryId) => {
   try {
     const response = await api.get(
