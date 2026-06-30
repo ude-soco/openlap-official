@@ -67,6 +67,8 @@ const SECTIONS = [
     icon: AnalyticsOutlinedIcon,
     unit: "methods",
     loader: requestAnalyticsMethods,
+    to: "/admin/analytics-methods",
+    actionLabel: "View details",
   },
 ];
 

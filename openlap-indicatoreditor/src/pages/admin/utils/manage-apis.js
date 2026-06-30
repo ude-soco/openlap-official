@@ -21,6 +21,25 @@ export const requestAnalyticsMethods = async (api) => {
   }
 };
 
+// Per-method inputs and parameters (GET /v1/analytics/methods/input-params/{id}).
+// Loaded on demand (it resolves the method's class from its JAR server-side), so
+// the admin page fetches it lazily per row rather than for the whole list.
+// Returns `data` = { inputs: [...], params: [...] }.
+export const requestAnalyticsMethodInputParams = async (api, methodId) => {
+  try {
+    const response = await api.get(
+      `v1/analytics/methods/input-params/${methodId}`
+    );
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to fetch analytics method inputs/params");
+    throw error;
+  }
+};
+
 export const requestDeleteAnalyticsMethodById = async (api, analyticsId) => {
   try {
     const response = await api.delete(`v1/analytics/methods/${analyticsId}`);
