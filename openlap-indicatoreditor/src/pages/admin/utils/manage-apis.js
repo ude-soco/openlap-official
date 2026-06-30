@@ -21,6 +21,38 @@ export const requestAnalyticsMethods = async (api) => {
   }
 };
 
+// Admin catalog lists (GET /v1/admin/...). These return all items, including
+// disabled ones, and include the `enabled` flag. Keep them separate from the
+// editor list helpers above, which intentionally return enabled items only.
+export const requestAdminAnalyticsMethods = async (api) => {
+  try {
+    const response = await api.get("v1/admin/analytics-methods");
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to fetch admin analytics methods");
+    throw error;
+  }
+};
+
+export const requestSetAnalyticsMethodStatus = async (api, methodId, enabled) => {
+  try {
+    const response = await api.patch(
+      `v1/admin/analytics-methods/${methodId}/status`,
+      { enabled }
+    );
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to update analytics method status");
+    throw error;
+  }
+};
+
 // Admin-only user detail (GET /v1/admin/users/{id}). Read-only: safe fields only
 // (id, name, email, roles) plus the user's LRS connections via secret-free DTOs —
 // never password or LRS credentials. Returns `data` = the AdminUserDetailResponse.
@@ -139,6 +171,39 @@ export const requestVisualizationLibraries = async (api) => {
   }
 };
 
+export const requestAdminVisualizationLibraries = async (api) => {
+  try {
+    const response = await api.get("v1/admin/visualizations/libraries");
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to fetch admin visualization libraries");
+    throw error;
+  }
+};
+
+export const requestSetVisualizationLibraryStatus = async (
+  api,
+  libraryId,
+  enabled
+) => {
+  try {
+    const response = await api.patch(
+      `v1/admin/visualizations/libraries/${libraryId}/status`,
+      { enabled }
+    );
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to update visualization library status");
+    throw error;
+  }
+};
+
 export const requestVisualizationTypes = async (api) => {
   try {
     const response = await api.get("v1/visualizations/types");
@@ -148,6 +213,35 @@ export const requestVisualizationTypes = async (api) => {
     };
   } catch (error) {
     console.error("Failed to fetch visualization types");
+    throw error;
+  }
+};
+
+export const requestAdminVisualizationTypes = async (api) => {
+  try {
+    const response = await api.get("v1/admin/visualizations/types");
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to fetch admin visualization types");
+    throw error;
+  }
+};
+
+export const requestSetVisualizationTypeStatus = async (api, typeId, enabled) => {
+  try {
+    const response = await api.patch(
+      `v1/admin/visualizations/types/${typeId}/status`,
+      { enabled }
+    );
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to update visualization type status");
     throw error;
   }
 };

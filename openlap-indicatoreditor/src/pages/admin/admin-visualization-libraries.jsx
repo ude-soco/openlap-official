@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useState } from "react";
+import { useSnackbar } from "notistack";
 import {
   Button,
   Chip,
@@ -20,33 +21,40 @@ import SectionCard from "../../common/components/section-card/section-card";
 import EmptyState from "../../common/components/empty-state/empty-state";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import {
-  requestVisualizationLibraries,
-  requestVisualizationTypes,
+  requestAdminVisualizationLibraries,
+  requestAdminVisualizationTypes,
+  requestSetVisualizationLibraryStatus,
 } from "./utils/manage-apis";
 import { useAdminUsage } from "./utils/use-admin-usage";
 import UsageChips from "./components/usage-chips";
+import CatalogStatusControl from "./components/catalog-status-control";
 
 const SKELETON_ROWS = 4;
 
+const errorMessage = (error, fallback) =>
+  error?.response?.data?.message || error?.response?.data?.error || fallback;
+
 /**
- * Admin Visualization Libraries (read-only). Lists installed visualization
- * libraries from GET /v1/visualizations/libraries. The "Chart types" count is a
- * best-effort enhancement derived from GET /v1/visualizations/types (grouped by
- * library name); if that call fails the page still renders with "—" counts. No
- * upload/delete/enable/disable actions.
+ * Admin Visualization Libraries. Lists all visualization libraries from
+ * GET /v1/admin/visualizations/libraries, including disabled items. The "Chart
+ * types" count is a best-effort enhancement derived from the admin types list
+ * (grouped by library name); if that call fails the page still renders with "—"
+ * counts. No upload/delete actions.
  */
 const AdminVisualizationLibraries = () => {
   const { api } = useContext(AuthContext);
+  const { enqueueSnackbar } = useSnackbar();
   const [status, setStatus] = useState("loading");
   const [libraries, setLibraries] = useState([]);
   const [typeCountByLibrary, setTypeCountByLibrary] = useState({});
+  const [updatingId, setUpdatingId] = useState(null);
   const usage = useAdminUsage("visualizationLibraries");
 
   const load = useCallback(async () => {
     setStatus("loading");
     const [librariesResult, typesResult] = await Promise.allSettled([
-      requestVisualizationLibraries(api),
-      requestVisualizationTypes(api),
+      requestAdminVisualizationLibraries(api),
+      requestAdminVisualizationTypes(api),
     ]);
 
     if (librariesResult.status === "rejected") {
@@ -86,6 +94,29 @@ const AdminVisualizationLibraries = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  const handleStatusChange = async (library, enabled) => {
+    setUpdatingId(library.id);
+    try {
+      const { data } = await requestSetVisualizationLibraryStatus(
+        api,
+        library.id,
+        enabled
+      );
+      setLibraries((prev) =>
+        prev.map((item) => (item.id === data.id ? { ...item, ...data } : item))
+      );
+      enqueueSnackbar(`Visualization library ${enabled ? "enabled" : "disabled"}.`, {
+        variant: "success",
+      });
+    } catch (error) {
+      enqueueSnackbar(errorMessage(error, "Could not update visualization library."), {
+        variant: "error",
+      });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   const loading = status === "loading";
   const showSkeleton = loading && libraries.length === 0;
@@ -140,6 +171,7 @@ const AdminVisualizationLibraries = () => {
                   <TableCell>Creator</TableCell>
                   <TableCell align="right">Chart types</TableCell>
                   <TableCell>Usage</TableCell>
+                  <TableCell>Status</TableCell>
                   <TableCell>Description</TableCell>
                 </TableRow>
               </TableHead>
@@ -158,6 +190,9 @@ const AdminVisualizationLibraries = () => {
                         </TableCell>
                         <TableCell>
                           <Skeleton width={140} />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton width={160} />
                         </TableCell>
                         <TableCell>
                           <Skeleton />
@@ -186,6 +221,17 @@ const AdminVisualizationLibraries = () => {
                           <UsageChips
                             status={usage.status}
                             usage={usage.byId[library.id]}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <CatalogStatusControl
+                            enabled={library.enabled !== false}
+                            name={library.name}
+                            usage={usage.byId[library.id]}
+                            disabled={updatingId === library.id || !library.id}
+                            onChange={(enabled) =>
+                              handleStatusChange(library, enabled)
+                            }
                           />
                         </TableCell>
                         <TableCell>

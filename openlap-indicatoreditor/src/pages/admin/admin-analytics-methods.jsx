@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useSnackbar } from "notistack";
 import {
   Box,
   Button,
@@ -27,28 +28,35 @@ import SectionCard from "../../common/components/section-card/section-card";
 import EmptyState from "../../common/components/empty-state/empty-state";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import {
+  requestAdminAnalyticsMethods,
   requestAnalyticsMethodInputParams,
-  requestAnalyticsMethods,
+  requestSetAnalyticsMethodStatus,
 } from "./utils/manage-apis";
 import { useAdminUsage } from "./utils/use-admin-usage";
 import UsageChips from "./components/usage-chips";
+import CatalogStatusControl from "./components/catalog-status-control";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
 const SKELETON_ROWS = 5;
 
+const errorMessage = (error, fallback) =>
+  error?.response?.data?.message || error?.response?.data?.error || fallback;
+
 /**
- * Admin Analytics Methods (read-only). Lists available analytics methods from
- * GET /v1/analytics/methods (id, name, description). A method's inputs and
+ * Admin Analytics Methods. Lists all analytics methods from GET /v1/admin/analytics-methods
+ * (id, name, description, enabled), including disabled items. A method's inputs and
  * parameters come from GET /v1/analytics/methods/input-params/{id}, which
  * resolves the method's class from its JAR server-side — so they are loaded
- * lazily, only when a row is expanded. No upload/delete/enable/reload actions.
+ * lazily, only when a row is expanded. No upload/delete/reload actions.
  */
 const AdminAnalyticsMethods = () => {
   const { api } = useContext(AuthContext);
+  const { enqueueSnackbar } = useSnackbar();
   const [status, setStatus] = useState("loading");
   const [methods, setMethods] = useState([]);
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
+  const [updatingId, setUpdatingId] = useState(null);
   const [expandedIds, setExpandedIds] = useState(() => new Set());
   // Per-method inputs/params cache: { [id]: { status, inputs, params } }.
   const [detailsById, setDetailsById] = useState({});
@@ -57,7 +65,7 @@ const AdminAnalyticsMethods = () => {
   const loadMethods = useCallback(async () => {
     setStatus("loading");
     try {
-      const { data } = await requestAnalyticsMethods(api);
+      const { data } = await requestAdminAnalyticsMethods(api);
       setMethods(Array.isArray(data) ? data : []);
       setStatus("ready");
     } catch (error) {
@@ -117,6 +125,25 @@ const AdminAnalyticsMethods = () => {
   const handleChangeRowsPerPage = (event) => {
     setSize(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const handleStatusChange = async (method, enabled) => {
+    setUpdatingId(method.id);
+    try {
+      const { data } = await requestSetAnalyticsMethodStatus(api, method.id, enabled);
+      setMethods((prev) =>
+        prev.map((item) => (item.id === data.id ? { ...item, ...data } : item))
+      );
+      enqueueSnackbar(`Analytics method ${enabled ? "enabled" : "disabled"}.`, {
+        variant: "success",
+      });
+    } catch (error) {
+      enqueueSnackbar(errorMessage(error, "Could not update analytics method."), {
+        variant: "error",
+      });
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   const loading = status === "loading";
@@ -238,6 +265,7 @@ const AdminAnalyticsMethods = () => {
                     <TableCell>Method</TableCell>
                     <TableCell>Description</TableCell>
                     <TableCell>Usage</TableCell>
+                    <TableCell>Status</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -255,6 +283,9 @@ const AdminAnalyticsMethods = () => {
                           </TableCell>
                           <TableCell>
                             <Skeleton width={140} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton width={160} />
                           </TableCell>
                         </TableRow>
                       ))
@@ -303,10 +334,21 @@ const AdminAnalyticsMethods = () => {
                                   usage={usage.byId[id]}
                                 />
                               </TableCell>
+                              <TableCell>
+                                <CatalogStatusControl
+                                  enabled={method.enabled !== false}
+                                  name={method.name}
+                                  usage={usage.byId[id]}
+                                  disabled={updatingId === id || !id}
+                                  onChange={(enabled) =>
+                                    handleStatusChange(method, enabled)
+                                  }
+                                />
+                              </TableCell>
                             </TableRow>
                             <TableRow>
                               <TableCell
-                                colSpan={4}
+                                colSpan={5}
                                 sx={{
                                   py: 0,
                                   borderBottom: expanded ? undefined : "none",

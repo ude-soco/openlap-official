@@ -14,10 +14,10 @@ import PageHeader from "../../common/components/page-header/page-header";
 import SectionCard from "../../common/components/section-card/section-card";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import {
-  requestAnalyticsMethods,
+  requestAdminAnalyticsMethods,
+  requestAdminVisualizationLibraries,
+  requestAdminVisualizationTypes,
   requestUsers,
-  requestVisualizationLibraries,
-  requestVisualizationTypes,
 } from "./utils/manage-apis";
 
 // Admin overview (read-only). Each card shows a live count from an existing list
@@ -46,7 +46,7 @@ const SECTIONS = [
     helper: "Installed chart libraries and their source plugins.",
     icon: CategoryOutlinedIcon,
     unit: "libraries",
-    loader: requestVisualizationLibraries,
+    loader: requestAdminVisualizationLibraries,
     to: "/admin/visualizations/libraries",
     actionLabel: "View details",
   },
@@ -56,7 +56,7 @@ const SECTIONS = [
     helper: "Available chart types and their input requirements.",
     icon: BarChartOutlinedIcon,
     unit: "chart types",
-    loader: requestVisualizationTypes,
+    loader: requestAdminVisualizationTypes,
     to: "/admin/visualizations/types",
     actionLabel: "View details",
   },
@@ -66,7 +66,7 @@ const SECTIONS = [
     helper: "Available analytics methods, their inputs, and parameters.",
     icon: AnalyticsOutlinedIcon,
     unit: "methods",
-    loader: requestAnalyticsMethods,
+    loader: requestAdminAnalyticsMethods,
     to: "/admin/analytics-methods",
     actionLabel: "View details",
   },
