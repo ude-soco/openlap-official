@@ -30,6 +30,10 @@ public class VisualizationLibraryServiceImpl implements VisualizationLibraryServ
       }
       List<VisualizationLibraryResponse> visualizationLibraryResponses = new ArrayList<>();
       for (VisLibrary visLibrary : foundAllVisualizationLibraries) {
+        // Editor list: hide soft-disabled libraries from new indicator selection.
+        if (!visLibrary.isEnabled()) {
+          continue;
+        }
         visualizationLibraryResponses.add(
             new VisualizationLibraryResponse(
                 visLibrary.getId(),

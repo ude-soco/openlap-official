@@ -212,7 +212,8 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
                 libraryInfo.getName(),
                 libraryInfo.getDescription(),
                 jarFile,
-                null));
+                null,
+                true));
   }
 
   private boolean isTypeAlreadyAdded(List<VisType> existingVisualizationTypes, String className) {

@@ -3,12 +3,15 @@ package com.openlap.security;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.openlap.admin.dto.AdminUsageResponse;
+import com.openlap.admin.dto.AdminVisLibraryResponse;
+import com.openlap.admin.services.AdminCatalogService;
 import com.openlap.admin.services.AdminUsageService;
 import com.openlap.analytics_engine.services.EngineService;
 import com.openlap.analytics_statements.services.LrsService;
@@ -62,7 +65,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
       com.openlap.admin.controller.AdminUsageController.class,
       com.openlap.admin.controller.AdminUserDetailController.class,
       com.openlap.analytics_technique.controller.AnalyticsTechniqueController.class,
-      com.openlap.visualization_methods.controllers.VisualizationMethodController.class
+      com.openlap.visualization_methods.controllers.VisualizationMethodController.class,
+      com.openlap.admin.controller.AdminCatalogController.class
     })
 @Import({
   SecurityConfig.class,
@@ -90,6 +94,7 @@ public class SecurityAuthorizationMockMvcTest {
   // Controller collaborators
   @MockBean private UserService userService;
   @MockBean private AdminUsageService adminUsageService;
+  @MockBean private AdminCatalogService adminCatalogService;
   @MockBean private AnalyticsTechniqueService analyticsTechniqueService;
   @MockBean private VisualizationLibraryService visualizationLibraryService;
   @MockBean private VisualizationTypeService visualizationTypeService;
@@ -407,5 +412,57 @@ public class SecurityAuthorizationMockMvcTest {
     mockMvc
         .perform(get("/v1/visualizations/libraries").header(AUTHORIZATION, "Bearer valid-token"))
         .andExpect(status().isOk());
+  }
+
+  // --- Catalog soft-disable admin endpoints (/v1/admin/...) ---
+
+  @Test
+  public void adminCanListAndToggleCatalog() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(
+            new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    given(adminCatalogService.getVisualizationLibraries()).willReturn(Collections.emptyList());
+    given(adminCatalogService.setVisualizationLibraryEnabled(any(), anyBoolean()))
+        .willReturn(new AdminVisLibraryResponse("L1", "creator", "name", "desc", false));
+
+    mockMvc
+        .perform(
+            get("/v1/admin/visualizations/libraries").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk());
+    mockMvc
+        .perform(
+            patch("/v1/admin/visualizations/libraries/L1/status")
+                .header(AUTHORIZATION, "Bearer valid-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"enabled\":false}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.enabled").value(false));
+  }
+
+  @Test
+  public void normalUserCannotListCatalogAdmin() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+
+    mockMvc
+        .perform(
+            get("/v1/admin/analytics-methods").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @Test
+  public void normalUserCannotToggleCatalogStatus() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+
+    mockMvc
+        .perform(
+            patch("/v1/admin/analytics-methods/M1/status")
+                .header(AUTHORIZATION, "Bearer valid-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"enabled\":false}"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
   }
 }

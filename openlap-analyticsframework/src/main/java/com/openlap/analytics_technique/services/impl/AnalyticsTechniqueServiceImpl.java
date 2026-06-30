@@ -115,7 +115,8 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
               analyticsTechnique.getCreator(),
               analyticsTechnique.getFileName(),
               analyticsTechnique.getImplementingClass(),
-              analyticsTechnique.getOutputs()));
+              analyticsTechnique.getOutputs(),
+              true));
       log.info("Successfully created analytics technique {}", analyticsTechnique);
     } catch (Exception e) {
       log.error("Could not create analytics technique {}", analyticsTechnique, e);
@@ -152,6 +153,10 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
   public List<AnalyticsTechniqueResponse> getAllAnalyticsTechniques() {
     List<AnalyticsTechniqueResponse> analyticsTechniqueResponses = new ArrayList<>();
     for (AnalyticsTechnique analyticsTechnique : fetchAllAnalyticsTechniquesMethod()) {
+      // Editor list: hide soft-disabled methods from new indicator selection.
+      if (!analyticsTechnique.isEnabled()) {
+        continue;
+      }
       analyticsTechniqueResponses.add(
           new AnalyticsTechniqueResponse(
               analyticsTechnique.getId(),
@@ -234,7 +239,8 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
             method.getAnalyticsMethodCreator(),
             jarFile,
             className,
-            null);
+            null,
+            true);
 
     String outputs =
         method.getOutputPorts().stream()
