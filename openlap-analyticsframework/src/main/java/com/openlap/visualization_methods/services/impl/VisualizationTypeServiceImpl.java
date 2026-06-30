@@ -16,6 +16,7 @@ import com.openlap.visualization_methods.services.VisualizationMethodUtilityServ
 import com.openlap.visualization_methods.services.VisualizationTypeService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,11 +35,27 @@ public class VisualizationTypeServiceImpl implements VisualizationTypeService {
   public List<VisualizationTypeResponse> getAllVisualizationTypes() {
     try {
       List<VisType> foundAllVisualizationTypes = visualizationTypeRepository.findAll();
-      return generateVisTypeResponseList(foundAllVisualizationTypes);
+      return generateVisTypeResponseList(filterSelectableTypes(foundAllVisualizationTypes));
     } catch (Exception e) {
       throw new DatabaseOperationException(
           "Could not access database to get visualization libraries", e);
     }
+  }
+
+  /**
+   * Editor list: a type is selectable only if it AND its parent library are enabled. Filtering
+   * before {@code generateVisTypeResponseList} also avoids loading the JAR class of a disabled type.
+   */
+  static boolean isTypeSelectable(VisType visType) {
+    return visType.isEnabled()
+        && visType.getVisualizationLib() != null
+        && visType.getVisualizationLib().isEnabled();
+  }
+
+  private static List<VisType> filterSelectableTypes(List<VisType> types) {
+    return types.stream()
+        .filter(VisualizationTypeServiceImpl::isTypeSelectable)
+        .collect(Collectors.toList());
   }
 
   @Override
@@ -98,7 +115,7 @@ public class VisualizationTypeServiceImpl implements VisualizationTypeService {
     try {
       List<VisType> foundAllVisualizationTypes =
           visualizationTypeRepository.findByVisualizationLib_id(libraryId);
-      return generateVisTypeResponseList(foundAllVisualizationTypes);
+      return generateVisTypeResponseList(filterSelectableTypes(foundAllVisualizationTypes));
     } catch (Exception e) {
       throw new DatabaseOperationException(
           "Could not access database to get visualization libraries", e);

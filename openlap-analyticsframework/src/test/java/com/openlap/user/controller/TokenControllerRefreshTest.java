@@ -113,4 +113,21 @@ public class TokenControllerRefreshTest {
     // The refresh token is returned unchanged (no rotation in this phase).
     assertThat(data.get("refresh_token").asText()).isEqualTo("refresh-token");
   }
+
+  @Test
+  public void disabledUserCannotRefreshToken() throws Exception {
+    Algorithm algorithm = Algorithm.HMAC256(SECRET.getBytes());
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("disabled@mail.com", new String[0], "refresh-token", algorithm));
+    User user = new User();
+    user.setEmail("disabled@mail.com");
+    user.setEnabled(false);
+    user.setRoles(Collections.singletonList(new Role("role-id", RoleType.ROLE_USER)));
+    given(userService.getUserByEmail("disabled@mail.com")).willReturn(user);
+
+    mockMvc
+        .perform(get("/v1/token/refresh").header(AUTHORIZATION, "Bearer refresh-token"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("REFRESH_FAILED"));
+  }
 }

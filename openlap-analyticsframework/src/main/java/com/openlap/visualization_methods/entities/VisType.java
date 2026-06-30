@@ -26,4 +26,12 @@ public class VisType {
   @NotNull(message = "'implementingClass' attribute is required")
   private String implementingClass;
   // ? Description could be added in the future
+
+  /** Soft-disable flag. Boxed + default true so legacy documents (missing the field) read enabled. */
+  private Boolean enabled = true;
+
+  /** Treats a missing/null flag (legacy documents) as enabled. */
+  public boolean isEnabled() {
+    return enabled == null || enabled;
+  }
 }

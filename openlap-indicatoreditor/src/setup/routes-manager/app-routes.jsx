@@ -97,11 +97,21 @@ const BasicIndicator = lazy(() =>
     "../../pages/indicators/indicator-editor/basic-indicator/basic-indicator"
   )
 );
-const ManageVisualization = lazy(() =>
-  import("../../pages/admin/manage-visualization.jsx")
+const AdminOverview = lazy(() =>
+  import("../../pages/admin/admin-overview.jsx")
 );
-const ManageAnalytics = lazy(() =>
-  import("../../pages/admin/manage-analytics.jsx")
+const AdminUsers = lazy(() => import("../../pages/admin/admin-users.jsx"));
+const AdminVisualizationLibraries = lazy(() =>
+  import("../../pages/admin/admin-visualization-libraries.jsx")
+);
+const AdminVisualizationTypes = lazy(() =>
+  import("../../pages/admin/admin-visualization-types.jsx")
+);
+const AdminAnalyticsMethods = lazy(() =>
+  import("../../pages/admin/admin-analytics-methods.jsx")
+);
+const AdminAuditLogs = lazy(() =>
+  import("../../pages/admin/admin-audit-logs.jsx")
 );
 
 // Routes that opt out of the standard "content sheet" (Container + padded Paper
@@ -471,22 +481,71 @@ const AppRoutes = () => {
                   }
                 />
                 <Route
-                  path="/manage-analytics"
+                  path="/admin"
                   element={
                     <PrivateRoute
-                      component={<ManageAnalytics />}
+                      component={<AdminOverview />}
                       allowedRoles={[RoleTypes.admin]}
                     />
                   }
                 />
                 <Route
-                  path="/manage-visualization"
+                  path="/admin/users"
                   element={
                     <PrivateRoute
-                      component={<ManageVisualization />}
+                      component={<AdminUsers />}
                       allowedRoles={[RoleTypes.admin]}
                     />
                   }
+                />
+                <Route
+                  path="/admin/visualizations/libraries"
+                  element={
+                    <PrivateRoute
+                      component={<AdminVisualizationLibraries />}
+                      allowedRoles={[RoleTypes.admin]}
+                    />
+                  }
+                />
+                <Route
+                  path="/admin/visualizations/types"
+                  element={
+                    <PrivateRoute
+                      component={<AdminVisualizationTypes />}
+                      allowedRoles={[RoleTypes.admin]}
+                    />
+                  }
+                />
+                <Route
+                  path="/admin/analytics-methods"
+                  element={
+                    <PrivateRoute
+                      component={<AdminAnalyticsMethods />}
+                      allowedRoles={[RoleTypes.admin]}
+                    />
+                  }
+                />
+                <Route
+                  path="/admin/audit-logs"
+                  element={
+                    <PrivateRoute
+                      component={<AdminAuditLogs />}
+                      allowedRoles={[RoleTypes.admin]}
+                    />
+                  }
+                />
+                {/* Legacy admin paths are consolidated under /admin. These
+                    redirects keep old links/bookmarks working; the JAR-
+                    management pages return, restyled, under /admin/* in later
+                    PRs. /admin enforces the admin role via PrivateRoute, so a
+                    non-admin following these is bounced on to /login. */}
+                <Route
+                  path="/manage-analytics"
+                  element={<Navigate to="/admin" replace />}
+                />
+                <Route
+                  path="/manage-visualization"
+                  element={<Navigate to="/admin" replace />}
                 />
 
                 <Route

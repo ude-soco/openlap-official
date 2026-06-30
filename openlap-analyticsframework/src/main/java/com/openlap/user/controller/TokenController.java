@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -48,6 +49,11 @@ public class TokenController {
       try {
         TokenRequest tokenRequest = tokenService.verifyToken(request);
         User user = userService.getUserByEmail(tokenRequest.getUserEmail());
+        if (!user.isEnabled()) {
+          // Deactivation blocks future refreshes. Already-issued access tokens are intentionally
+          // left valid until expiry; this phase does not implement immediate token revocation.
+          throw new DisabledException("User account is disabled.");
+        }
         Date issuedAt = new Date();
         String access_token =
             JWT.create()

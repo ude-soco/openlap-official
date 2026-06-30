@@ -57,12 +57,24 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     http.authorizeRequests()
         .antMatchers("/login/**", "/v1/register/**", "/v1/token/refresh/**", "/v1/code/**")
         .permitAll();
+    // All admin-management endpoints live under /v1/admin/** and are SUPER_ADMIN-only.
+    // Declared early (antMatchers are first-match-wins) so no broader rule can shadow it.
+    http.authorizeRequests()
+        .antMatchers("/v1/admin/**")
+        .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString());
     http.authorizeRequests()
         .antMatchers("/v1/lrs/**")
         .hasAnyAuthority(RoleType.ROLE_DATA_PROVIDER.toString());
     http.authorizeRequests()
         .antMatchers("/v1/users/my/lrs/**", "/v1/isc/**", "/v1/analytics/goals/**")
         .hasAnyAuthority(RoleType.ROLE_USER.toString(), RoleType.ROLE_USER_WITHOUT_LRS.toString());
+    // Admin-only user administration (list users). Must precede the broader
+    // "/v1/users/my/**" self-service rule below (antMatchers are first-match-wins).
+    // Matches only the exact list path and its trailing-slash form, so
+    // "/v1/users/my/**" continues to work for normal users.
+    http.authorizeRequests()
+        .antMatchers("/v1/users", "/v1/users/")
+        .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString());
     http.authorizeRequests()
         .antMatchers("/v1/users/my/**")
         .hasAnyAuthority(
@@ -73,6 +85,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     http.authorizeRequests()
         .antMatchers("/v1/indicators/**", "/v1/questions/**", "/v1/statements/**")
         .hasAnyAuthority(RoleType.ROLE_USER.toString());
+    // Harden the state-changing plugin endpoints that are exposed via GET (reload/populate): lock
+    // them to SUPER_ADMIN. This MUST precede the broad GET rule below (antMatchers are
+    // first-match-wins) which would otherwise grant ROLE_USER. The "/**" suffix also covers the
+    // trailing-slash form. Read-only catalog GETs (method/library/type lists, input-params) are
+    // NOT matched here and remain available to ROLE_USER via the broad GET rule.
+    http.authorizeRequests()
+        .antMatchers(
+            "/v1/analytics/methods/reload/**",
+            "/v1/analytics/methods/populate/**",
+            "/v1/visualizations/reload/**")
+        .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString());
     http.authorizeRequests()
         .antMatchers(
             HttpMethod.GET, "/v1/analytics/**", "/v1/visualizations/**", "/v1/analytics/goals/**")

@@ -212,7 +212,8 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
                 libraryInfo.getName(),
                 libraryInfo.getDescription(),
                 jarFile,
-                null));
+                null,
+                true));
   }
 
   private boolean isTypeAlreadyAdded(List<VisType> existingVisualizationTypes, String className) {
@@ -281,7 +282,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
     if (file.isEmpty()) {
       throw new ServiceException("File is empty");
     }
-    String fileName = file.getOriginalFilename();
+    String fileName = Utils.requireSafeJarFileName(file.getOriginalFilename());
     Utils.saveFile(file, visualizerJarsFolder, fileName);
 
     findJarAndAddVisualizerMethod(fileName);
@@ -303,8 +304,9 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
 
   @Override
   public void deleteVisualizationMethodFile(String fileName) {
-    Utils.deleteFile(visualizerJarsFolder, fileName);
-    String frameworkLocation = visualizerJarsFolder + fileName;
+    String safeFileName = Utils.requireSafeJarFileName(fileName);
+    Utils.deleteFile(visualizerJarsFolder, safeFileName);
+    String frameworkLocation = visualizerJarsFolder + safeFileName;
     VisLibrary foundVisLibrary =
         visualizationLibraryRepository.findByFrameworkLocation(frameworkLocation);
     if (foundVisLibrary != null) {
@@ -324,7 +326,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
 
   @Override
   public void reloadVisualizationMethodFile(String fileName) {
-    findJarAndAddVisualizerMethod(fileName);
+    findJarAndAddVisualizerMethod(Utils.requireSafeJarFileName(fileName));
   }
 
   @Override

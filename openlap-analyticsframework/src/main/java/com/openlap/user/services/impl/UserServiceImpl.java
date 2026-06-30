@@ -7,17 +7,22 @@ import com.openlap.analytics_statements.services.LrsService;
 import com.openlap.analytics_statements.services.StatementService;
 import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.infrastructure.exception.OpenLapException;
+import com.openlap.user.dto.request.AdminUpdateUserRequest;
 import com.openlap.user.dto.request.ChangePasswordRequest;
 import com.openlap.user.dto.request.TokenRequest;
 import com.openlap.user.dto.request.UpdateEmailRequest;
 import com.openlap.user.dto.request.UpdateProfileRequest;
+import com.openlap.user.dto.response.AdminUserDetailResponse;
+import com.openlap.user.dto.response.AdminUserResponse;
 import com.openlap.user.dto.response.UserResponse;
+import com.openlap.user.dto.response.utils.AdminLrsProviderConnection;
 import com.openlap.user.dto.response.utils.LrsConsumerResponse;
 import com.openlap.user.dto.response.utils.LrsProviderResponse;
 import com.openlap.user.entities.RoleType;
 import com.openlap.user.entities.User;
 import com.openlap.user.entities.utility_entities.LrsConsumer;
 import com.openlap.user.entities.utility_entities.LrsProvider;
+import com.openlap.user.exception.role.LastSuperAdminException;
 import com.openlap.user.exception.user.*;
 import com.openlap.user.repositories.UserRepository;
 import com.openlap.user.services.TokenService;
@@ -26,11 +31,15 @@ import com.openlap.user.services.UserService;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -69,7 +78,13 @@ public class UserServiceImpl implements UserService, UserDetailsService {
               authorities.add(new SimpleGrantedAuthority(role.getName().toString()));
             });
     return new org.springframework.security.core.userdetails.User(
-        user.getEmail(), user.getPassword(), authorities);
+        user.getEmail(),
+        user.getPassword(),
+        user.isEnabled(),
+        true,
+        true,
+        true,
+        authorities);
   }
 
   @Override
@@ -110,6 +125,195 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     userResponse.setLrsProviderList(generateLrsProviderResponseMethod(foundUser));
     userResponse.setLrsConsumerList(generateLrsConsumerResponseMethod(foundUser));
     return userResponse;
+  }
+
+  @Override
+  public Page<AdminUserResponse> listUsers(Pageable pageable) {
+    try {
+      return userRepository.findAll(pageable).map(this::toAdminUserResponse);
+    } catch (OpenLapException e) {
+      // Domain exceptions propagate unchanged (consistent error envelope), as elsewhere.
+      throw e;
+    } catch (Exception e) {
+      throw new ServiceException("Error listing users.", e);
+    }
+  }
+
+  /**
+   * Builds the admin-facing user response. Exposes safe fields only (id, name, email, role names);
+   * never the password hash or LRS credentials.
+   */
+  private AdminUserResponse toAdminUserResponse(User user) {
+    return new AdminUserResponse(
+        user.getId(), user.getName(), user.getEmail(), roleNames(user), user.isEnabled());
+  }
+
+  /** Maps a user's roles to their string names (e.g. "ROLE_SUPER_ADMIN"); null-safe. */
+  private static List<String> roleNames(User user) {
+    List<String> roles = new ArrayList<>();
+    if (user.getRoles() != null) {
+      user.getRoles()
+          .forEach(
+              role -> {
+                if (role != null && role.getName() != null) {
+                  roles.add(role.getName().toString());
+                }
+              });
+    }
+    return roles;
+  }
+
+  @Override
+  public AdminUserDetailResponse getUserDetailById(String id) {
+    return buildAdminUserDetail(loadUserById(id));
+  }
+
+  @Override
+  public AdminUserDetailResponse updateUserByAdmin(String id, AdminUpdateUserRequest request) {
+    User user = loadUserById(id);
+    user.setName(request.getName());
+    String newEmail = request.getEmail();
+    if (!newEmail.equals(user.getEmail())) {
+      if (userRepository.existsByEmail(newEmail)) {
+        throw new EmailAlreadyTakenException("Email already taken.");
+      }
+      user.setEmail(newEmail);
+    }
+    User savedUser = userRepository.save(user);
+    log.info("Admin updated user '{}'.", savedUser.getId());
+    return buildAdminUserDetail(savedUser);
+  }
+
+  @Override
+  public AdminUserDetailResponse replaceUserRoles(String id, Set<RoleType> roles) {
+    User user = loadUserById(id);
+    userRoleService.replaceUserRoles(user, roles);
+    return buildAdminUserDetail(user);
+  }
+
+  @Override
+  public AdminUserDetailResponse setUserEnabled(String id, boolean enabled) {
+    User user = loadUserById(id);
+    if (!enabled && user.isEnabled() && userHasRole(user, RoleType.ROLE_SUPER_ADMIN)) {
+      String superAdminRoleId = findRoleId(user, RoleType.ROLE_SUPER_ADMIN).orElse(null);
+      if (superAdminRoleId == null || countActiveUsersWithRole(superAdminRoleId) <= 1) {
+        throw new LastSuperAdminException("Cannot deactivate the last active super admin.");
+      }
+    }
+    user.setEnabled(enabled);
+    User savedUser = userRepository.save(user);
+    log.info("Admin set user '{}' enabled={}", savedUser.getId(), enabled);
+    return buildAdminUserDetail(savedUser);
+  }
+
+  private User loadUserById(String id) {
+    return userRepository
+        .findById(id)
+        .orElseThrow(() -> new UserNotFoundException("User not found."));
+  }
+
+  private long countActiveUsersWithRole(String roleId) {
+    try {
+      return userRepository.countActiveByRoleId(new ObjectId(roleId));
+    } catch (IllegalArgumentException e) {
+      // A malformed/missing role id should fail closed rather than allowing the last active admin to
+      // be disabled because the count could not be computed.
+      log.warn("Could not count active users for role id '{}': {}", roleId, e.getMessage());
+      return 0;
+    }
+  }
+
+  private static boolean userHasRole(User user, RoleType roleType) {
+    return findRoleId(user, roleType).isPresent();
+  }
+
+  private static Optional<String> findRoleId(User user, RoleType roleType) {
+    if (user.getRoles() == null) {
+      return Optional.empty();
+    }
+    return user.getRoles().stream()
+        .filter(role -> role != null && role.getName() == roleType)
+        .map(role -> role.getId())
+        .filter(roleId -> roleId != null && !roleId.isBlank())
+        .findFirst();
+  }
+
+  private AdminUserDetailResponse buildAdminUserDetail(User user) {
+    AdminUserDetailResponse response = new AdminUserDetailResponse();
+    response.setId(user.getId());
+    response.setName(user.getName());
+    response.setEmail(user.getEmail());
+    response.setRoles(roleNames(user));
+    response.setEnabled(user.isEnabled());
+    response.setLrsConsumerConnections(mapAdminConsumerConnections(user));
+    response.setLrsProviderConnections(mapAdminProviderConnections(user));
+    return response;
+  }
+
+  /**
+   * Maps the user's LRS consumer connections for an admin view, reusing the secret-free {@link
+   * LrsConsumerResponse} (id, lrsId, title, uniqueIdentifier). A missing/deleted LRS store falls
+   * back to an "Unknown LRS" title rather than failing the whole request.
+   */
+  private List<LrsConsumerResponse> mapAdminConsumerConnections(User user) {
+    List<LrsConsumerResponse> connections = new ArrayList<>();
+    if (user.getLrsConsumerList() == null) {
+      return connections;
+    }
+    for (LrsConsumer consumer : user.getLrsConsumerList()) {
+      LrsConsumerResponse connection = new LrsConsumerResponse();
+      connection.setId(consumer.getId() == null ? null : consumer.getId().toString());
+      connection.setLrsId(consumer.getLrsId());
+      connection.setUniqueIdentifier(consumer.getUniqueIdentifier());
+      connection.setLrsTitle(resolveLrsTitle(consumer.getLrsId()));
+      connections.add(connection);
+    }
+    return connections;
+  }
+
+  /**
+   * Maps the user's LRS provider connections for an admin view using the LRS store ONLY. It never
+   * resolves the LRS client, so the basic-auth credential (ClientApi.basic_auth/basic_secret/
+   * basic_key) is never read or exposed. A missing store falls back to an "Unknown LRS" title.
+   */
+  private List<AdminLrsProviderConnection> mapAdminProviderConnections(User user) {
+    List<AdminLrsProviderConnection> connections = new ArrayList<>();
+    if (user.getLrsProviderList() == null) {
+      return connections;
+    }
+    for (LrsProvider provider : user.getLrsProviderList()) {
+      AdminLrsProviderConnection connection = new AdminLrsProviderConnection();
+      connection.setLrsId(provider.getLrsId());
+      connection.setUniqueIdentifierType(
+          provider.getUniqueIdentifierType() == null
+              ? null
+              : provider.getUniqueIdentifierType().toString());
+      try {
+        LrsStore store = lrsService.getLrsStore(provider.getLrsId());
+        connection.setLrsTitle(store.getTitle());
+        connection.setStatementCount(store.getStatementCount());
+        connection.setCreatedAt(store.getCreatedAt());
+        connection.setUpdatedAt(store.getUpdatedAt());
+      } catch (Exception e) {
+        log.warn(
+            "Could not resolve LRS store '{}' for admin user detail: {}",
+            provider.getLrsId(),
+            e.getMessage());
+        connection.setLrsTitle("Unknown LRS");
+      }
+      connections.add(connection);
+    }
+    return connections;
+  }
+
+  /** Resolves an LRS store title, or "Unknown LRS" if the store is missing/unavailable. */
+  private String resolveLrsTitle(String lrsId) {
+    try {
+      return lrsService.getLrsStore(lrsId).getTitle();
+    } catch (Exception e) {
+      log.warn("Could not resolve LRS store '{}' for admin user detail: {}", lrsId, e.getMessage());
+      return "Unknown LRS";
+    }
   }
 
   /** Resolves the authenticated user from the request's bearer token (existing pattern). */

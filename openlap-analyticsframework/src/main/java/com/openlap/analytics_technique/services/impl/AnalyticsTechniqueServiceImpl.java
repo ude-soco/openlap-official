@@ -115,7 +115,8 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
               analyticsTechnique.getCreator(),
               analyticsTechnique.getFileName(),
               analyticsTechnique.getImplementingClass(),
-              analyticsTechnique.getOutputs()));
+              analyticsTechnique.getOutputs(),
+              true));
       log.info("Successfully created analytics technique {}", analyticsTechnique);
     } catch (Exception e) {
       log.error("Could not create analytics technique {}", analyticsTechnique, e);
@@ -152,6 +153,10 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
   public List<AnalyticsTechniqueResponse> getAllAnalyticsTechniques() {
     List<AnalyticsTechniqueResponse> analyticsTechniqueResponses = new ArrayList<>();
     for (AnalyticsTechnique analyticsTechnique : fetchAllAnalyticsTechniquesMethod()) {
+      // Editor list: hide soft-disabled methods from new indicator selection.
+      if (!analyticsTechnique.isEnabled()) {
+        continue;
+      }
       analyticsTechniqueResponses.add(
           new AnalyticsTechniqueResponse(
               analyticsTechnique.getId(),
@@ -234,7 +239,8 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
             method.getAnalyticsMethodCreator(),
             jarFile,
             className,
-            null);
+            null,
+            true);
 
     String outputs =
         method.getOutputPorts().stream()
@@ -298,7 +304,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     if (file.isEmpty()) {
       throw new ServiceException("File is empty");
     }
-    String fileName = file.getOriginalFilename();
+    String fileName = Utils.requireSafeJarFileName(file.getOriginalFilename());
     Utils.saveFile(file, analyticsMethodsJarsFolder, fileName);
     List<AnalyticsTechnique> existingAnalyticsMethods = fetchAllAnalyticsTechniquesMethod();
     findJarAndAddMethod(fileName, existingAnalyticsMethods);
@@ -317,8 +323,9 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Override
   public void deleteAnalyticsTechniqueFile(String fileName) {
-    Utils.deleteFile(analyticsMethodsJarsFolder, fileName);
-    String frameworkLocation = analyticsMethodsJarsFolder + fileName;
+    String safeFileName = Utils.requireSafeJarFileName(fileName);
+    Utils.deleteFile(analyticsMethodsJarsFolder, safeFileName);
+    String frameworkLocation = analyticsMethodsJarsFolder + safeFileName;
     List<AnalyticsTechnique> allByFileName =
         analyticsTechniqueRepository.findAllByFileName(frameworkLocation);
     if (!allByFileName.isEmpty()) {
@@ -331,10 +338,11 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Override
   public void reloadAnalyticsTechniqueFile(String fileName) {
-    String frameworkLocation = analyticsMethodsJarsFolder + fileName;
+    String safeFileName = Utils.requireSafeJarFileName(fileName);
+    String frameworkLocation = analyticsMethodsJarsFolder + safeFileName;
     List<AnalyticsTechnique> existingAnalyticsMethods =
         analyticsTechniqueRepository.findAllByFileName(frameworkLocation);
-    findJarAndAddMethod(fileName, existingAnalyticsMethods);
+    findJarAndAddMethod(safeFileName, existingAnalyticsMethods);
   }
 
   @Override
