@@ -109,3 +109,19 @@ export const requestDeleteVisualizationTypeById = async (api, typeId) => {
     throw error;
   }
 };
+
+// Admin-only, read-only user listing (GET /v1/users). Returns the Spring Page
+// envelope in `data` (content[], totalElements, totalPages, number, size, ...).
+// The endpoint exposes safe fields only (id, name, email, roles).
+export const requestUsers = async (api, page = 0, size = 10) => {
+  try {
+    const response = await api.get("v1/users", { params: { page, size } });
+    return {
+      message: response.data.message,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error("Failed to fetch users");
+    throw error;
+  }
+};

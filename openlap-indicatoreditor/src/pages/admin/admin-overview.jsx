@@ -1,36 +1,44 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Box, Button, Chip, Grid, Skeleton, Stack, Typography } from "@mui/material";
+import { Box, Button, Grid, Skeleton, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { Link as RouterLink } from "react-router-dom";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
 import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
 import AnalyticsOutlinedIcon from "@mui/icons-material/AnalyticsOutlined";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import PageHeader from "../../common/components/page-header/page-header";
 import SectionCard from "../../common/components/section-card/section-card";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import {
   requestAnalyticsMethods,
+  requestUsers,
   requestVisualizationLibraries,
   requestVisualizationTypes,
 } from "./utils/manage-apis";
 
-// Admin overview (PR2). Read-only: shows live counts for the catalog surfaces
-// that already have list APIs (visualization libraries, visualization types,
-// analytics methods) and keeps Users as a "Coming next" card until a list-users
-// endpoint exists. No upload/delete/management actions are exposed here, and no
-// new backend APIs are introduced — counts are just the length of existing list
-// responses. Detail routes don't exist yet, so cards carry no "View details"
-// action (added in later PRs alongside their pages).
+// Admin overview (read-only). Each card shows a live count from an existing list
+// API and, where a detail page exists, a "View" link to it. No
+// upload/delete/management actions are exposed here, and no new backend APIs are
+// introduced — counts come from existing list responses (array length, or the
+// Spring Page `totalElements` for the paginated users endpoint).
+//
+// Cards without a `to` (visualization libraries/types, analytics methods) get
+// their detail pages — and links — in later PRs.
 const SECTIONS = [
   {
     key: "users",
     title: "Users",
-    helper: "Browse OpenLAP user accounts and the roles assigned to them.",
+    helper: "OpenLAP user accounts and the roles assigned to them.",
     icon: PeopleAltOutlinedIcon,
-    comingSoon: true,
+    unit: "users",
+    // size=1 keeps the payload tiny; we only need totalElements for the count.
+    loader: (api) => requestUsers(api, 0, 1),
+    to: "/admin/users",
+    actionLabel: "View users",
   },
   {
     key: "libraries",
@@ -58,7 +66,12 @@ const SECTIONS = [
   },
 ];
 
-const LIVE_SECTIONS = SECTIONS.filter((section) => !section.comingSoon);
+// List endpoints return an array; the users endpoint returns a Spring Page.
+const extractCount = (data) => {
+  if (Array.isArray(data)) return data.length;
+  if (data && typeof data.totalElements === "number") return data.totalElements;
+  return 0;
+};
 
 // Tinted icon badge matching the dashboard card aesthetic (theme tokens only).
 const IconBadge = ({ icon: Icon }) => (
@@ -86,8 +99,8 @@ IconBadge.propTypes = {
   icon: PropTypes.elementType.isRequired,
 };
 
-// The value area of a live card: loading → skeleton, error → message + retry,
-// ready → prominent count + unit (count of 0 is shown as-is, an explicit empty).
+// The value area of a card: loading → skeleton, error → message + retry, ready →
+// prominent count + unit (a count of 0 is shown as-is, an explicit empty).
 const StatValue = ({ state, unit, onRetry }) => {
   if (state.status === "loading") {
     return <Skeleton variant="rounded" width={72} height={44} />;
@@ -126,17 +139,8 @@ StatValue.propTypes = {
   onRetry: PropTypes.func.isRequired,
 };
 
-const ComingSoonValue = () => (
-  <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
-    <Chip label="Coming next" size="small" />
-    <Typography variant="body2" color="text.secondary">
-      Needs a list-users API (planned).
-    </Typography>
-  </Stack>
-);
-
 const initialStats = () =>
-  LIVE_SECTIONS.reduce(
+  SECTIONS.reduce(
     (acc, section) => ({
       ...acc,
       [section.key]: { status: "loading", count: null },
@@ -156,10 +160,9 @@ const AdminOverview = () => {
       }));
       try {
         const result = await section.loader(api);
-        const count = Array.isArray(result?.data) ? result.data.length : 0;
         setStats((prev) => ({
           ...prev,
-          [section.key]: { status: "ready", count },
+          [section.key]: { status: "ready", count: extractCount(result?.data) },
         }));
       } catch (error) {
         console.error(`Failed to load ${section.key} count`, error);
@@ -173,14 +176,14 @@ const AdminOverview = () => {
   );
 
   const loadAll = useCallback(() => {
-    LIVE_SECTIONS.forEach((section) => loadOne(section));
+    SECTIONS.forEach((section) => loadOne(section));
   }, [loadOne]);
 
   useEffect(() => {
     loadAll();
   }, [loadAll]);
 
-  const anyLoading = LIVE_SECTIONS.some(
+  const anyLoading = SECTIONS.some(
     (section) => stats[section.key]?.status === "loading"
   );
 
@@ -213,15 +216,23 @@ const AdminOverview = () => {
               helper={section.helper}
               action={<IconBadge icon={section.icon} />}
             >
-              {section.comingSoon ? (
-                <ComingSoonValue />
-              ) : (
+              <Stack gap={1.5} alignItems="flex-start">
                 <StatValue
                   state={stats[section.key]}
                   unit={section.unit}
                   onRetry={() => loadOne(section)}
                 />
-              )}
+                {section.to && (
+                  <Button
+                    component={RouterLink}
+                    to={section.to}
+                    size="small"
+                    endIcon={<ArrowForwardRoundedIcon />}
+                  >
+                    {section.actionLabel}
+                  </Button>
+                )}
+              </Stack>
             </SectionCard>
           </Grid>
         ))}

@@ -100,6 +100,7 @@ const BasicIndicator = lazy(() =>
 const AdminOverview = lazy(() =>
   import("../../pages/admin/admin-overview.jsx")
 );
+const AdminUsers = lazy(() => import("../../pages/admin/admin-users.jsx"));
 
 // Routes that opt out of the standard "content sheet" (Container + padded Paper
 // card) and render full-bleed instead — for editor/workspace pages where the
@@ -472,6 +473,15 @@ const AppRoutes = () => {
                   element={
                     <PrivateRoute
                       component={<AdminOverview />}
+                      allowedRoles={[RoleTypes.admin]}
+                    />
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={
+                    <PrivateRoute
+                      component={<AdminUsers />}
                       allowedRoles={[RoleTypes.admin]}
                     />
                   }
