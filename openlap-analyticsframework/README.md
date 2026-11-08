@@ -110,6 +110,81 @@ The startup error names exactly which secrets are insecure and how to fix them
 (set strong `JWT_SECRET_KEY` / `ADMIN_PASSWORD`, or — for local dev only —
 `ALLOW_INSECURE_DEFAULTS=true`).
 
+## MongoDB database routing
+
+OpenLAP and Learning Locker use separate, explicitly named Mongo clients and templates.
+Application repositories use `primaryMongoTemplate`; Learning Locker repositories in
+`com.openlap.analytics_statements.repositories` use `secondaryMongoTemplate`. Unqualified
+`MongoClient` and `MongoTemplate` injection selects the primary beans through `@Primary`.
+Both configurations are self-contained: inheriting the same infrastructure bean names from
+`AbstractMongoClientConfiguration` caused the database-routing bug in issue #650, fixed in #736.
+
+Connection URIs and target database names are configured separately:
+
+| Environment setting | Default | Purpose |
+|---|---|---|
+| `MONGODB_PRIMARY_URI` | `mongodb://127.0.0.1:27017` | OpenLAP Mongo server connection |
+| `OPENLAP_MONGODB_DB` | `openlap_v2` | OpenLAP application database |
+| `MONGODB_SECONDARY_URI` | `mongodb://127.0.0.1:27018` | Learning Locker Mongo server connection |
+| `LRS_MONGODB_DB` | `learninglocker_v2` | Learning Locker database |
+
+The explicit database setting determines the target even when the URI contains a different
+database path. A URI without a database path is supported. For example, changing only
+`MONGODB_PRIMARY_URI` to end in `/another_db` does not change the OpenLAP target; set
+`OPENLAP_MONGODB_DB=another_db` to select it. Existing deployments using
+`OPENLAP_MONGODB_DB=openlap` continue to target `openlap`. These settings select databases;
+they do not move previously stored data between them.
+
+### Mongo wiring regression checks
+
+Run the focused Spring-context tests without a MongoDB server:
+
+```bash
+./mvnw -Dtest=MongoWiringTest test
+```
+
+The tests load the actual application properties and both Mongo configurations with bean
+overriding disabled. They verify both registration orders, primary/default injection,
+separate clients and templates, repository bindings, shared-server connections, custom
+database names, URI-path precedence, and startup failure for blank database names. The
+clients use closed loopback ports and perform no database operations.
+
+For a startup smoke test, use two disposable MongoDB containers with no persistent volumes:
+
+```bash
+docker run --rm -d --name openlap-wiring-primary \
+  -p 127.0.0.1:37017:27017 mongo:4.4
+docker run --rm -d --name openlap-wiring-secondary \
+  -p 127.0.0.1:37018:27017 mongo:4.4
+
+./mvnw package
+ALLOW_INSECURE_DEFAULTS=true \
+MONGODB_PRIMARY_URI=mongodb://127.0.0.1:37017 \
+MONGODB_SECONDARY_URI=mongodb://127.0.0.1:37018 \
+OPENLAP_MONGODB_DB=wiring_openlap_test \
+LRS_MONGODB_DB=wiring_lrs_test \
+java -jar target/AnalyticsFramework-2.0-SNAPSHOT.jar \
+  --server.address=127.0.0.1 --server.port=0
+```
+
+After the application finishes initialization, inspect the containers from another terminal:
+
+```bash
+docker exec openlap-wiring-primary mongo --quiet wiring_openlap_test \
+  --eval 'printjson(db.getCollectionNames())'
+docker exec openlap-wiring-secondary mongo --quiet wiring_lrs_test \
+  --eval 'printjson(db.getCollectionNames())'
+```
+
+The primary database should contain seeded collections such as `openlap-roles`,
+`openlap-users` and `analytics-goal`. The secondary database should contain none of those
+application collections. Restart the application with the same settings and check that
+this separation remains intact. Stop the application, then remove the disposable servers:
+
+```bash
+docker stop openlap-wiring-primary openlap-wiring-secondary
+```
+
 ## Default administrator
 
 A super-admin user is seeded automatically on first startup:
