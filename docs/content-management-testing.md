@@ -40,8 +40,10 @@ npm ci
 VITE_BACKEND_URL=http://localhost:8091/api/ npm run dev
 ```
 
-Open the displayed frontend URL, sign in as an administrator, and choose
-**Administration → Content Management**. For a fresh local database, the seed
+Open the displayed frontend URL, sign in as an administrator, and choose the
+**Content Management** card on Home, or **Administration → Content Management**
+in the sidebar. After switching feature branches, hard-refresh the browser if
+it still displays the previous navigation. For a fresh local database, the seed
 administrator is `admin@mail.com` / `1234qweR` when local defaults are enabled.
 
 ## Manual review

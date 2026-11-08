@@ -177,11 +177,7 @@ const menus = [
     defaultOpen: false,
     icon: <AdminPanelSettingsIcon />,
     allowedRoles: [RoleTypes.admin],
-    disabledRoles: [
-      RoleTypes.user,
-      RoleTypes.userWithoutLRS,
-      RoleTypes["data provider"],
-    ],
+    disabledRoles: [],
     items: [
       {
         primary: "Admin Dashboard",
@@ -209,11 +205,7 @@ const menus = [
     defaultOpen: false,
     icon: <SettingsIcon />,
     allowedRoles: [RoleTypes.admin],
-    disabledRoles: [
-      RoleTypes.user,
-      RoleTypes.userWithoutLRS,
-      RoleTypes["data provider"],
-    ],
+    disabledRoles: [],
     items: [
       {
         primary: "Account Settings",
