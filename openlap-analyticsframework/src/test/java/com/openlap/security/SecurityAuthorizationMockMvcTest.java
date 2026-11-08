@@ -6,6 +6,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -68,7 +69,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
       com.openlap.analytics_technique.controller.AnalyticsTechniqueController.class,
       com.openlap.visualization_methods.controllers.VisualizationMethodController.class,
       com.openlap.admin.controller.AdminCatalogController.class,
-      com.openlap.admin.controller.AdminAuditController.class
+      com.openlap.admin.controller.AdminAuditController.class,
+      com.openlap.admin.controller.AdminContentController.class,
+      com.openlap.content.PublicContentController.class
     })
 @Import({
   SecurityConfig.class,
@@ -98,6 +101,7 @@ public class SecurityAuthorizationMockMvcTest {
   @MockBean private AdminUsageService adminUsageService;
   @MockBean private AdminCatalogService adminCatalogService;
   @MockBean private AdminAuditService adminAuditService;
+  @MockBean private com.openlap.content.ContentService contentService;
   @MockBean private AnalyticsTechniqueService analyticsTechniqueService;
   @MockBean private VisualizationLibraryService visualizationLibraryService;
   @MockBean private VisualizationTypeService visualizationTypeService;
@@ -109,6 +113,42 @@ public class SecurityAuthorizationMockMvcTest {
   // Bootstrap CommandLineRunner safety net (prevents any MongoDB access if it is invoked)
   @MockBean private UserRoleService userRoleService;
   @MockBean private EngineService engineService;
+
+  @Test
+  public void homepageContentReadsArePublicAndDoNotExposeDrafts() throws Exception {
+    given(contentService.published(any(), org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt()))
+        .willReturn(new PageImpl<>(Collections.singletonList(Collections.singletonMap("title", "Published content"))));
+    for (String kind : new String[] {"news", "publications"}) {
+      mockMvc.perform(get("/v1/content/" + kind))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.data.content[0].title").value("Published content"))
+          .andExpect(jsonPath("$.data.content[0].draft").doesNotExist());
+    }
+  }
+
+  @Test
+  public void homepageContentAdminWritesAreForbiddenToNonAdmin() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+    mockMvc.perform(post("/v1/admin/content/news").header(AUTHORIZATION, "Bearer valid-token")
+        .contentType(MediaType.APPLICATION_JSON).content("{\"draft\":{\"title\":\"News\"}}"))
+        .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+    mockMvc.perform(get("/v1/admin/content/news")).andExpect(status().isForbidden());
+  }
+
+  @Test
+  public void homepageContentAdminCanCreateDrafts() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    com.openlap.content.ContentEntry entry = new com.openlap.content.ContentEntry();
+    entry.setId("news-1"); entry.setStatus("DRAFT"); entry.setVersion(1);
+    entry.setDraft(Collections.singletonMap("title", "News"));
+    given(contentService.create(any(), any())).willReturn(entry);
+    mockMvc.perform(post("/v1/admin/content/news").header(AUTHORIZATION, "Bearer valid-token")
+        .contentType(MediaType.APPLICATION_JSON).content("{\"draft\":{\"title\":\"News\"}}"))
+        .andExpect(status().isCreated()).andExpect(jsonPath("$.data.status").value("DRAFT"))
+        .andExpect(jsonPath("$.data.version").value(1));
+  }
 
   @Test
   public void protectedEndpointWithoutTokenUsesUnifiedEntryPoint() throws Exception {

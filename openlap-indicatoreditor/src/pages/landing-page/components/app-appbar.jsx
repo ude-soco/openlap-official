@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import {
   alpha,
   AppBar,
@@ -20,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { navigationIds, navigationItems } from "../data/navigation-data";
 import { scrollToSection } from "../../../common/utils/scroll-to-section";
 import { entrance, fadeDown } from "./shared/motion";
+import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
 
 const logoStyle = {
   width: "120px",
@@ -28,6 +29,7 @@ const logoStyle = {
 };
 
 const AppAppBar = () => {
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const theme = useTheme();
   const [open, setOpen] = useState(false);
@@ -66,7 +68,7 @@ const AppAppBar = () => {
             borderRadius: `${theme.custom.radii.pill}px`,
             bgcolor: alpha(
               theme.palette.background.paper,
-              scrolled ? 0.9 : theme.custom.appBar.bgOpacity
+              scrolled ? 0.9 : theme.custom.appBar.bgOpacity,
             ),
             backdropFilter: `blur(${theme.custom.appBar.blur}px)`,
             border: "1px solid",
@@ -124,22 +126,34 @@ const AppAppBar = () => {
             }}
           >
             <ToggleColorMode />
-            <Button
-              color="primary"
-              variant="text"
-              size="small"
-              onClick={() => navigate("/login")}
-            >
-              Sign in
-            </Button>
-            <Button
-              color="primary"
-              variant="contained"
-              size="small"
-              onClick={() => navigate("/register")}
-            >
-              Sign up
-            </Button>
+            {user ? (
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => navigate("/dashboard")}
+              >
+                Open workspace
+              </Button>
+            ) : (
+              <>
+                <Button
+                  color="primary"
+                  variant="text"
+                  size="small"
+                  onClick={() => navigate("/login")}
+                >
+                  Sign in
+                </Button>
+                <Button
+                  color="primary"
+                  variant="contained"
+                  size="small"
+                  onClick={() => navigate("/register")}
+                >
+                  Sign up
+                </Button>
+              </>
+            )}
           </Box>
           <Box sx={{ display: { sm: "", md: "none" } }}>
             <Button
@@ -176,26 +190,40 @@ const AppAppBar = () => {
                   </MenuItem>
                 ))}
                 <Divider />
-                <MenuItem>
-                  <Button
-                    color="primary"
-                    variant="contained"
-                    onClick={() => navigate("/register")}
-                    sx={{ width: "100%" }}
-                  >
-                    Sign up
-                  </Button>
-                </MenuItem>
-                <MenuItem>
-                  <Button
-                    color="primary"
-                    variant="outlined"
-                    onClick={() => navigate("/login")}
-                    sx={{ width: "100%" }}
-                  >
-                    Sign in
-                  </Button>
-                </MenuItem>
+                {user ? (
+                  <MenuItem>
+                    <Button
+                      variant="contained"
+                      onClick={() => navigate("/dashboard")}
+                      fullWidth
+                    >
+                      Open workspace
+                    </Button>
+                  </MenuItem>
+                ) : (
+                  <>
+                    <MenuItem>
+                      <Button
+                        color="primary"
+                        variant="contained"
+                        onClick={() => navigate("/register")}
+                        sx={{ width: "100%" }}
+                      >
+                        Sign up
+                      </Button>
+                    </MenuItem>
+                    <MenuItem>
+                      <Button
+                        color="primary"
+                        variant="outlined"
+                        onClick={() => navigate("/login")}
+                        sx={{ width: "100%" }}
+                      >
+                        Sign in
+                      </Button>
+                    </MenuItem>
+                  </>
+                )}
               </Box>
             </Drawer>
           </Box>

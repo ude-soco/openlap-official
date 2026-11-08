@@ -2,12 +2,33 @@ import StyleIcon from "@mui/icons-material/Style";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import StorageIcon from "@mui/icons-material/Storage";
 import AddIcon from "@mui/icons-material/Add";
+import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
 import RoleTypes from "../../account-manager/utils/enums/role-types";
+import { ADMIN_HOME_CARD_ACCESS } from "./home-access.js";
 
 // Dashboard "start here" cards. Each entry is self-describing data consumed by
 // <DashboardCard>; the page renders this list, so adding/editing a card means
 // editing one object here (no JSX changes). Stable string ids are used as keys.
 const homeData = [
+  {
+    id: "content-management",
+    title: "Content Management",
+    description:
+      "Create, preview, and publish news and publications on the OpenLAP homepage.",
+    icon: ArticleOutlinedIcon,
+    ...ADMIN_HOME_CARD_ACCESS,
+    primaryAction: { label: "Manage content", to: "/admin/content" },
+  },
+  {
+    id: "admin-dashboard",
+    title: "Admin Dashboard",
+    description:
+      "Manage users, homepage content, visualizations, analytics methods, and audit logs.",
+    icon: AdminPanelSettingsOutlinedIcon,
+    ...ADMIN_HOME_CARD_ACCESS,
+    primaryAction: { label: "Open administration", to: "/admin" },
+  },
   {
     id: "isc",
     title: "Indicator Specification Cards",

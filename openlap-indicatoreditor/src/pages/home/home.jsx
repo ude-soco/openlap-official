@@ -5,6 +5,7 @@ import { useUserDetails } from "../account-manager/hooks/use-user-details";
 import PageHeader from "../../common/components/page-header/page-header";
 import DashboardCard from "../../common/components/dashboard-card/dashboard-card";
 import homeData from "./utils/home-data";
+import { canViewHomeCard } from "./utils/home-access.js";
 
 const GRID_SIZE = { xs: 12, sm: 6, lg: 4 };
 
@@ -16,9 +17,7 @@ export default function Home() {
 
   const greeting = user.name ? `Hello, ${user.name}` : "Welcome back";
 
-  const cards = homeData.filter(
-    (card) => !roles.some((role) => card.disabledRoles.includes(role))
-  );
+  const cards = homeData.filter((card) => canViewHomeCard(card, roles));
 
   return (
     <Stack gap={3}>
