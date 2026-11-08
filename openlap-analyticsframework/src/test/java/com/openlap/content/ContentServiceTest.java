@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.openlap.infrastructure.exception.ConflictException;
+import com.openlap.infrastructure.exception.ValidationException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -15,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
@@ -91,5 +93,62 @@ public class ContentServiceTest {
     service.transition(ContentKind.NEWS, "entry", 2L, "unpublish");
     assertThat(entry.getStatus()).isEqualTo("DRAFT"); assertThat(entry.getPublished()).isNull();
     assertThat(entry.getDraft()).containsEntry("title", "News");
+  }
+
+  @Test public void adminSortingAppliesBeforePaginationAndKeepsFiltersAndStableTies() {
+    when(mongo.count(any(Query.class), eq("homepage_news"))).thenReturn(25L);
+    when(mongo.find(any(Query.class), eq(ContentEntry.class), eq("homepage_news")))
+        .thenReturn(java.util.Collections.emptyList());
+    Page<ContentEntry> result = service.list(ContentKind.NEWS, 1, 10, "paper", "PUBLISHED", "title", "asc");
+    ArgumentCaptor<Query> query = ArgumentCaptor.forClass(Query.class);
+    verify(mongo).find(query.capture(), eq(ContentEntry.class), eq("homepage_news"));
+    Query actual = query.getValue();
+    assertThat(actual.getSortObject()).containsEntry("draft.title", 1).containsEntry("_id", 1);
+    assertThat(actual.getSkip()).isEqualTo(10L);
+    assertThat(actual.getLimit()).isEqualTo(10);
+    assertThat(actual.getQueryObject()).containsEntry("status", "PUBLISHED").containsKey("$and");
+    assertThat(actual.getCollation().isPresent()).isTrue();
+    assertThat(actual.getCollation().get().toDocument()).containsEntry("locale", "en").containsEntry("strength", 2);
+    assertThat(result.getTotalElements()).isEqualTo(25L);
+    assertThat(result.getSort().getOrderFor("draft.title").getDirection()).isEqualTo(Sort.Direction.ASC);
+  }
+
+  @Test public void adminDateSortingUsesNewsDateOrPublicationYearInBothDirections() {
+    for (ContentKind kind : ContentKind.values()) {
+      String collection = kind.getCollection();
+      String field = kind == ContentKind.NEWS ? "draft.date" : "draft.year";
+      when(mongo.find(any(Query.class), eq(ContentEntry.class), eq(collection)))
+          .thenReturn(java.util.Collections.emptyList());
+      for (String direction : Arrays.asList("asc", "desc")) {
+        service.list(kind, 0, 10, "", "ALL", "date", direction);
+        ArgumentCaptor<Query> query = ArgumentCaptor.forClass(Query.class);
+        verify(mongo, atLeastOnce()).find(query.capture(), eq(ContentEntry.class), eq(collection));
+        assertThat(query.getValue().getSortObject()).containsEntry(field, "asc".equals(direction) ? 1 : -1);
+      }
+    }
+  }
+
+  @Test public void adminStatusAndUpdatedSortingSupportBothDirections() {
+    when(mongo.find(any(Query.class), eq(ContentEntry.class), eq("homepage_news")))
+        .thenReturn(java.util.Collections.emptyList());
+    for (String field : Arrays.asList("status", "updatedAt")) {
+      for (String direction : Arrays.asList("asc", "desc")) {
+        service.list(ContentKind.NEWS, 0, 10, "", "ALL", field, direction);
+        ArgumentCaptor<Query> query = ArgumentCaptor.forClass(Query.class);
+        verify(mongo, atLeastOnce()).find(query.capture(), eq(ContentEntry.class), eq("homepage_news"));
+        assertThat(query.getValue().getSortObject()).containsEntry(field, "asc".equals(direction) ? 1 : -1);
+      }
+    }
+  }
+
+  @Test public void unsupportedSortFieldsAndDirectionsCannotReachMongo() {
+    for (String field : Arrays.asList("draft.title", "published.title", "$where", "_id")) {
+      assertThatThrownBy(() -> service.list(ContentKind.NEWS, 0, 10, "", "ALL", field, "asc"))
+          .isInstanceOf(ValidationException.class);
+    }
+    assertThatThrownBy(() -> service.list(ContentKind.NEWS, 0, 10, "", "ALL", "title", "sideways"))
+        .isInstanceOf(ValidationException.class);
+    verify(mongo, never()).find(any(Query.class), eq(ContentEntry.class), anyString());
+    verify(mongo, never()).count(any(Query.class), anyString());
   }
 }

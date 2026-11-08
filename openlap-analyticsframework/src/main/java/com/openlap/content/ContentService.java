@@ -19,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Collation;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
@@ -52,8 +53,11 @@ public class ContentService {
     return new PageImpl<>(result, pageable, total);
   }
 
-  public Page<ContentEntry> list(ContentKind kind, int page, int size, String search, String status) {
-    Pageable pageable = page(page, size);
+  public Page<ContentEntry> list(ContentKind kind, int page, int size, String search, String status,
+      String sortBy, String direction) {
+    Pageable requested = page(page, size);
+    Pageable pageable = PageRequest.of(requested.getPageNumber(), requested.getPageSize(),
+        contentSort(kind, sortBy, direction));
     if (!java.util.Arrays.asList("ALL", "DRAFT", "PUBLISHED", "TRASH").contains(status)) {
       throw new ValidationException("Choose a valid content status.");
     }
@@ -66,8 +70,26 @@ public class ContentService {
     }
     Query query = Query.query(criteria);
     long count = mongo.count(query, kind.getCollection());
-    query.with(pageable).with(Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.asc("_id")));
+    query.with(pageable);
+    if ("title".equals(sortBy)) {
+      query.collation(Collation.of("en").strength(Collation.ComparisonLevel.secondary()));
+    }
     return new PageImpl<>(mongo.find(query, ContentEntry.class, kind.getCollection()), pageable, count);
+  }
+
+  private Sort contentSort(ContentKind kind, String sortBy, String direction) {
+    String property;
+    if ("title".equals(sortBy)) property = "draft.title";
+    else if ("date".equals(sortBy)) property = kind == ContentKind.NEWS ? "draft.date" : "draft.year";
+    else if ("status".equals(sortBy)) property = "status";
+    else if ("updatedAt".equals(sortBy)) property = "updatedAt";
+    else throw new ValidationException("Choose Title, Date/Year, Status, or Updated to sort content.");
+    Sort.Direction order;
+    if ("asc".equalsIgnoreCase(direction)) order = Sort.Direction.ASC;
+    else if ("desc".equalsIgnoreCase(direction)) order = Sort.Direction.DESC;
+    else throw new ValidationException("Choose ascending (asc) or descending (desc) sorting.");
+    // A unique tie breaker keeps pagination stable when dates or statuses match.
+    return Sort.by(new Sort.Order(order, property), Sort.Order.asc("_id"));
   }
 
   public ContentEntry get(ContentKind kind, String id) {

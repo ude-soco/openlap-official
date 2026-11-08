@@ -24,6 +24,7 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  TableSortLabel,
   Tabs,
   TextField,
   Tooltip,
@@ -36,6 +37,9 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
+import ArrowDownwardRoundedIcon from "@mui/icons-material/ArrowDownwardRounded";
+import ArrowUpwardRoundedIcon from "@mui/icons-material/ArrowUpwardRounded";
+import UnfoldMoreRoundedIcon from "@mui/icons-material/UnfoldMoreRounded";
 import { useSnackbar } from "notistack";
 import PageHeader from "../../common/components/page-header/page-header";
 import SectionCard from "../../common/components/section-card/section-card";
@@ -54,6 +58,7 @@ const FILTERS = [
   ["PUBLISHED", "Published"],
   ["TRASH", "Trash"],
 ];
+const SORT_FIELDS = ["title", "date", "status", "updatedAt"];
 const displayUpdated = (value) =>
   value
     ? new Date(value).toLocaleDateString(undefined, {
@@ -73,6 +78,16 @@ export default function AdminContent() {
     : "ALL";
   const page = Math.max(0, parseInt(params.get("page"), 10) || 0);
   const search = params.get("search") || "";
+  const sortBy = SORT_FIELDS.includes(params.get("sortBy"))
+    ? params.get("sortBy")
+    : "updatedAt";
+  const direction = params.get("direction") === "asc" ? "asc" : "desc";
+  const columns = [
+    { field: "title", label: "Title" },
+    { field: "date", label: kind === "news" ? "News date" : "Year" },
+    { field: "status", label: "Status" },
+    { field: "updatedAt", label: "Updated" },
+  ];
   const [searchInput, setSearchInput] = useState(search);
   const [size, setSize] = useState(10);
   const [rows, setRows] = useState([]);
@@ -90,7 +105,7 @@ export default function AdminContent() {
     listContent(
       api,
       kind,
-      { page, size, search, status: statusFilter },
+      { page, size, search, status: statusFilter, sortBy, direction },
       controller.signal,
     )
       .then((data) => {
@@ -103,7 +118,7 @@ export default function AdminContent() {
         if (!controller.signal.aborted) setStatus("error");
       });
     return () => controller.abort();
-  }, [api, kind, page, size, search, statusFilter, refresh]);
+  }, [api, kind, page, size, search, statusFilter, sortBy, direction, refresh]);
 
   const changeFilters = (changes) => {
     setRows([]);
@@ -112,9 +127,17 @@ export default function AdminContent() {
       status: statusFilter,
       search,
       page: String(page),
+      sortBy,
+      direction,
       ...changes,
     });
   };
+  const changeSort = (field) =>
+    changeFilters({
+      sortBy: field,
+      direction: sortBy === field && direction === "asc" ? "desc" : "asc",
+      page: "0",
+    });
   const askAction = useCallback((entry, action) => {
     setActionError("");
     setPending({ entry, action });
@@ -302,6 +325,41 @@ export default function AdminContent() {
             </Button>
           )}
         </Stack>
+        <Stack
+          direction="row"
+          alignItems="center"
+          gap={1}
+          sx={{ display: { xs: "flex", sm: "none" } }}
+        >
+          <TextField
+            select
+            label="Sort by"
+            size="small"
+            value={sortBy}
+            onChange={(event) => changeSort(event.target.value)}
+            fullWidth
+          >
+            {columns.map(({ field, label }) => (
+              <MenuItem key={field} value={field}>
+                {label}
+              </MenuItem>
+            ))}
+          </TextField>
+          <Tooltip
+            title={`Sort ${direction === "asc" ? "descending" : "ascending"}`}
+          >
+            <IconButton
+              aria-label={`Currently ${direction === "asc" ? "ascending" : "descending"}; sort ${direction === "asc" ? "descending" : "ascending"}`}
+              onClick={() => changeSort(sortBy)}
+            >
+              {direction === "asc" ? (
+                <ArrowUpwardRoundedIcon />
+              ) : (
+                <ArrowDownwardRoundedIcon />
+              )}
+            </IconButton>
+          </Tooltip>
+        </Stack>
         {statusFilter === "TRASH" && (
           <Alert severity="info">
             Trashed entries are hidden from the homepage. Restoring an entry
@@ -361,18 +419,57 @@ export default function AdminContent() {
           <>
             <TableContainer sx={{ display: { xs: "none", sm: "block" } }}>
               <Table
+                aria-busy={loading}
                 aria-label={
                   kind === "news" ? "News entries" : "Publication entries"
                 }
               >
                 <TableHead>
                   <TableRow>
-                    <TableCell>Title</TableCell>
-                    <TableCell>
-                      {kind === "news" ? "News date" : "Year"}
-                    </TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Updated</TableCell>
+                    {columns.map(({ field, label }) => {
+                      const active = sortBy === field;
+                      const next =
+                        active && direction === "asc"
+                          ? "descending"
+                          : "ascending";
+                      return (
+                        <TableCell
+                          key={field}
+                          sortDirection={active ? direction : false}
+                        >
+                          <Tooltip
+                            title={`Sort ${label.toLowerCase()} ${next}`}
+                          >
+                            <TableSortLabel
+                              component="button"
+                              type="button"
+                              active={active}
+                              direction={active ? direction : "asc"}
+                              hideSortIcon={false}
+                              IconComponent={
+                                active
+                                  ? ArrowDownwardRoundedIcon
+                                  : UnfoldMoreRoundedIcon
+                              }
+                              onClick={() => changeSort(field)}
+                              aria-label={`${label}: sort ${next}`}
+                              sx={{
+                                whiteSpace: "nowrap",
+                                color: active ? "primary.main" : "inherit",
+                                "& .MuiTableSortLabel-icon": {
+                                  opacity: 1,
+                                  color: active
+                                    ? "primary.main"
+                                    : "text.secondary",
+                                },
+                              }}
+                            >
+                              {label}
+                            </TableSortLabel>
+                          </Tooltip>
+                        </TableCell>
+                      );
+                    })}
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>

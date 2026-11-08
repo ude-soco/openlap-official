@@ -28,8 +28,11 @@ public class AdminContentController {
   @GetMapping
   public ApiSuccess list(@PathVariable String kind, @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "") String search,
-      @RequestParam(defaultValue = "ALL") String status) {
-    return new ApiSuccess(HttpStatus.OK, "Content found.", contentService.list(ContentKind.from(kind), page, size, search, status));
+      @RequestParam(defaultValue = "ALL") String status,
+      @RequestParam(defaultValue = "updatedAt") String sortBy,
+      @RequestParam(defaultValue = "desc") String direction) {
+    return new ApiSuccess(HttpStatus.OK, "Content found.",
+        contentService.list(ContentKind.from(kind), page, size, search, status, sortBy, direction));
   }
 
   @GetMapping("/{id}")

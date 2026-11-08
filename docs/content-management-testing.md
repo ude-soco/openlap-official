@@ -52,6 +52,9 @@ administrator is `admin@mail.com` / `1234qweR` when local defaults are enabled.
    The homepage shows five news entries and six publications. Follow **View all**
    to find all 7 original news entries and 9 publications, including their links.
    News archives display the full text.
+   Use the icons beside **Title**, **News date/Year**, **Status**, and **Updated**
+   to toggle ascending/descending sorting. Verify sorting is retained while
+   searching, filtering, or changing pages; changing the sort returns to page one.
 2. **Drafts:** add a news item with only a title and save it. It must remain absent
    from the homepage and public archive. Reopen it to verify persistence.
 3. **Rich text and publishing:** type directly in the news editor. Use its toolbar

@@ -239,7 +239,7 @@ All paths below are relative to `/api`. `{kind}` is `news` or `publications`.
 | Method and path | Access and behavior |
 | --- | --- |
 | `GET /v1/content/{kind}?page=0&size=6` | Public; paginated, published snapshots only, latest first |
-| `GET /v1/admin/content/{kind}?page=0&size=10&search=&status=ALL` | Super admin; statuses `ALL`, `DRAFT`, `PUBLISHED`, `TRASH`; `ALL` excludes Trash |
+| `GET /v1/admin/content/{kind}?page=0&size=10&search=&status=ALL&sortBy=updatedAt&direction=desc` | Super admin; filtered and sorted pagination; `ALL` excludes Trash |
 | `GET /v1/admin/content/{kind}/{id}` | Super admin; current entry and both snapshots |
 | `POST /v1/admin/content/{kind}` | Super admin; body `{ "draft": { ... } }`; creates Draft |
 | `PUT /v1/admin/content/{kind}/{id}` | Super admin; body `{ "draft": { ... }, "version": 1 }` |
@@ -254,6 +254,12 @@ Admin entries include `status`, `draft`, `published`, `hasUnpublishedChanges`, `
 timestamps, editor identifiers, and `deletedAt`. Version-qualified atomic updates reject stale
 requests with HTTP **409**, code `CONTENT_VERSION_CONFLICT`; clients should preserve unsaved
 input and offer to reload the latest version.
+
+Admin lists accept `sortBy=title|date|status|updatedAt` and `direction=asc|desc`, defaulting
+to Updated descending. The `date` sort uses the news date or publication year according to
+the content kind. Title sorting is case-insensitive. Sorting applies before pagination and
+uses the entry ID as a stable tie breaker. Invalid sort fields or directions return HTTP 400.
+The `status` filter accepts `ALL`, `DRAFT`, `PUBLISHED`, or `TRASH`.
 
 News fields are `title`, ISO `date`, `body`, and optional `venue`. The rich-text editor saves
 `body` as a standard Tiptap/ProseMirror JSON document: `doc`, `paragraph`, `text`, `hardBreak`,
