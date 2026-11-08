@@ -12,6 +12,12 @@ public final class AdminAuditActions {
       "VISUALIZATION_TYPE_STATUS_UPDATE";
   public static final String ANALYTICS_METHOD_STATUS_UPDATE =
       "ANALYTICS_METHOD_STATUS_UPDATE";
+  public static final String CONTENT_CREATE = "CONTENT_CREATE";
+  public static final String CONTENT_UPDATE = "CONTENT_UPDATE";
+  public static final String CONTENT_PUBLISH = "CONTENT_PUBLISH";
+  public static final String CONTENT_UNPUBLISH = "CONTENT_UNPUBLISH";
+  public static final String CONTENT_TRASH = "CONTENT_TRASH";
+  public static final String CONTENT_RESTORE = "CONTENT_RESTORE";
 
   private AdminAuditActions() {}
 }

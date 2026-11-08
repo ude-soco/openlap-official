@@ -176,6 +176,98 @@ See [`.env.example`](.env.example) for the full list of supported variables and 
 
 ---
 
+## Homepage content management
+
+The administration area manages homepage news and publications through the primary MongoDB
+database (`OPENLAP_MONGODB_DB`, default `openlap_v2`). The two collections are
+`homepage_news` and `homepage_publications`; `content_migrations` records one-time migration
+completion. Homepage content is never loaded from a frontend JSON fallback.
+
+Each entry contains a working `draft`, a separate `published` snapshot, a version number,
+created/updated timestamps, and authenticated editor identifiers (`createdBy` / `updatedBy`,
+the editor's login email). Saving a draft of a published entry leaves the public snapshot
+unchanged. Publishing atomically replaces that snapshot. Unpublishing removes it. Delete moves
+the entry to recoverable Trash; restoring returns it to Draft and requires an explicit publish
+to make it public again. These actions also appear in the existing admin audit log, whose actor
+records include the editor's user ID and email.
+
+### Migrate the existing homepage entries once
+
+**Run this before enabling content editing or switching the homepage to API reads.** Back up
+the target database first when applying this to an existing deployment. Start the local MongoDB
+service if needed, then run the explicit migration from this backend directory:
+
+```bash
+docker compose -f compose.yaml -f compose.dev.yaml up -d mongo
+
+./mvnw -q -DskipTests compile \
+  org.codehaus.mojo:exec-maven-plugin:3.5.0:java \
+  -Dexec.mainClass=com.openlap.content.migration.ContentMigrationApplication
+```
+
+The migration starts no HTTP server and does not seed users or start the analytics engine.
+It reads `MONGODB_PRIMARY_URI` (default `mongodb://127.0.0.1:27017`) and
+`OPENLAP_MONGODB_DB` (default `openlap_v2`) from the environment. Set these explicitly when
+targeting another database. It uses immutable backend migration fixtures to insert the original
+**7 news entries and 9 publications**, including all dates, authors, text, links, and the original
+order among items with equal dates/years. These fixtures exist only for the migration command.
+
+Stable IDs and insert-only updates prevent retries from overwriting content. The command checks
+every imported draft and public snapshot against its source before recording completion. Any
+pre-existing entry with the same ID but different content causes a clear collision error; resolve
+it deliberately before retrying. An interrupted command that reports a failure releases its lock
+and can be rerun. A completed migration returns without touching content, even if entries were
+subsequently edited, unpublished, or deleted; restarting the application never reruns this import.
+
+If a migration process was forcibly killed, first confirm that it is no longer running and keep
+content editing disabled. Then recover its abandoned lock explicitly:
+
+```bash
+./mvnw -q -DskipTests compile \
+  org.codehaus.mojo:exec-maven-plugin:3.5.0:java \
+  -Dexec.mainClass=com.openlap.content.migration.ContentMigrationApplication \
+  -Dexec.args=--resume-abandoned
+```
+
+MongoDB transactions are not required; each entry update and the migration lock claim is atomic
+on a standalone MongoDB server. Keep editing disabled until the completion message is printed.
+
+### Content API
+
+All paths below are relative to `/api`. `{kind}` is `news` or `publications`.
+
+| Method and path | Access and behavior |
+| --- | --- |
+| `GET /v1/content/{kind}?page=0&size=6` | Public; paginated, published snapshots only, latest first |
+| `GET /v1/admin/content/{kind}?page=0&size=10&search=&status=ALL` | Super admin; statuses `ALL`, `DRAFT`, `PUBLISHED`, `TRASH`; `ALL` excludes Trash |
+| `GET /v1/admin/content/{kind}/{id}` | Super admin; current entry and both snapshots |
+| `POST /v1/admin/content/{kind}` | Super admin; body `{ "draft": { ... } }`; creates Draft |
+| `PUT /v1/admin/content/{kind}/{id}` | Super admin; body `{ "draft": { ... }, "version": 1 }` |
+| `POST /v1/admin/content/{kind}/{id}/publish` | Super admin; body `{ "version": 1 }`; validates and publishes saved draft |
+| `POST /v1/admin/content/{kind}/{id}/unpublish` | Super admin; body `{ "version": 1 }` |
+| `DELETE /v1/admin/content/{kind}/{id}?version=1` | Super admin; moves entry to Trash |
+| `POST /v1/admin/content/{kind}/{id}/restore` | Super admin; body `{ "version": 1 }`; restores as Draft |
+
+Successes use the existing `ApiSuccess.data` envelope; lists contain a Spring Page (`content`,
+`totalElements`, `totalPages`, etc.). Public payloads contain only the content fields plus `id`.
+Admin entries include `status`, `draft`, `published`, `hasUnpublishedChanges`, `version`,
+timestamps, editor identifiers, and `deletedAt`. Version-qualified atomic updates reject stale
+requests with HTTP **409**, code `CONTENT_VERSION_CONFLICT`; clients should preserve unsaved
+input and offer to reload the latest version.
+
+News fields are `title`, ISO `date`, `body` (an ordered array of strings or `{ "text", "href" }`
+link parts), and optional `venue`. Publication fields are `title`, `authors`, four-digit `year`,
+`type` (`Journal`, `Conference`, `Workshop`, `Book chapter`), `venue`, optional `pdfLink`, and
+optional `details`. URL fields accept complete HTTP(S) URLs without embedded credentials.
+Drafts require a title and validate all supplied fields. Publishing also requires a news date
+and nonempty body, or publication authors/year/type/venue. URLs remain optional, and the UI
+should hide absent actions.
+
+Field errors use `details.fieldErrors` as a map from field name to an actionable message. Limits:
+title 300 characters; news body 30000 text characters and 500 parts; news venue 1000;
+publication authors/venue 2000 each; URLs 2048; publication year 1000–2999. All validation is
+enforced on the backend as well as in the editor.
+
 # Troubleshooting
 
 - **MongoDB not running / connection refused** — ensure `docker compose up -d mongo` is running and

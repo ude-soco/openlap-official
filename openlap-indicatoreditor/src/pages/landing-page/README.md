@@ -1,11 +1,11 @@
 # OpenLAP Landing Page
 
 The public marketing/landing page served at `/` for anonymous visitors. It is
-self-contained and **does not affect the authenticated app** — it applies its
-own scoped MUI theme and only reads from its own `data/` folder.
+scoped with its own MUI theme. News and publications load from the backend;
+other sections use bundled data modules.
 
-> Maintainers' rule of thumb: **content lives in `data/`, presentation lives in
-> `components/`.** Researchers should only ever need to touch `data/`.
+> Manage news and publications through **Administration → Content Management**.
+> Database content changes appear without rebuilding the frontend.
 
 ---
 
@@ -14,7 +14,9 @@ own scoped MUI theme and only reads from its own `data/` folder.
 ```
 src/pages/landing-page/
 ├─ landing-page.jsx          # Composition: wraps sections in the scoped ThemeProvider
-├─ components/               # Presentation only (no content literals beyond labels)
+├─ content-archive.jsx       # Public paginated /news and /publications pages
+├─ utils/                    # Anonymous API client, loading hook, link/date helpers
+├─ components/               # Presentation and section data loading
 │  ├─ app-appbar.jsx         # Frosted floating nav bar (scroll-aware)
 │  ├─ hero.jsx               # Headline, CTAs, trust strip, product screenshot
 │  ├─ architecture.jsx       # Diagram + 3 icon feature points
@@ -28,6 +30,8 @@ src/pages/landing-page/
 │  ├─ contact-us.jsx         # Two-column: invitation + EmailJS form card
 │  ├─ footer.jsx             # Multi-column footer
 │  └─ shared/                # Reusable, landing-only building blocks
+│     ├─ content-cards.jsx   # Shared homepage cards and admin previews
+│     ├─ content-state.jsx   # Loading, empty, and retry states
 │     ├─ section.jsx         # Standard section container + vertical rhythm
 │     ├─ section-heading.jsx # h2 title + optional subtitle
 │     ├─ zoomable-image-card.jsx # Framed image that opens a full-size dialog
@@ -35,9 +39,7 @@ src/pages/landing-page/
 │     ├─ profile-avatar.jsx  # Avatar with keyboard-accessible "view profile" overlay
 │     ├─ motion.js           # fadeUp/fadeDown keyframes + entrance() sx helper
 │     └─ reveal.jsx          # <Reveal>: scroll-into-view fade-up wrapper
-└─ data/                     # ← EDIT CONTENT HERE
-   ├─ news-data.json
-   ├─ publication-data.json
+└─ data/                     # Bundled non-CMS sections
    ├─ team-data.js
    ├─ features-data.js
    ├─ logo-data.js
@@ -54,52 +56,40 @@ src/pages/landing-page/
 
 - **`landing-page.jsx`** composes the sections top-to-bottom and wraps them in a
   nested `ThemeProvider` using `createScopedTheme(baseTheme)` (shared design system in `src/common/theme/scoped-theme.js`).
-- **Sections** (`components/*.jsx`) are presentation only. They import their
-  content from `data/` and render it with shared building blocks.
+- **Sections** (`components/*.jsx`) render shared building blocks. News and
+  publications load independent public API requests so one failed section does
+  not hide the other or trigger authentication redirects.
 - **Shared building blocks** (`components/shared/`) keep the sections consistent
   (`Section`, `SectionHeading`, `ZoomableImageCard`, `MoreLink`, `ProfileAvatar`).
-- **Content** (`data/`) is plain structured data. Pure-data content is JSON
-  (`news`, `publications`); content that must reference bundled images or icons
-  is a small `.js` module (`team`, `features`, `logos`, `navigation`).
+- **Content** comes from MongoDB for news/publications. The remaining bundled
+  `.js` modules reference assets or navigation for team, features, and logos.
 
 ---
 
 ## Where content lives & how to edit it
 
-### Add a News item — `data/news-data.json`
-Append an object (newest items sort to the top automatically by `date`):
-```json
-{
-  "slug": "2026-09-some-event",
-  "date": "2026-09-01",
-  "title": "OpenLAP @ Some Event",
-  "body": [
-    "Plain sentence, then a link to ",
-    { "text": "the paper", "href": "https://example.org/paper" },
-    " and more text."
-  ]
-}
-```
-- `slug` — unique, human-readable id (also the React key).
-- `date` — ISO `YYYY-MM-DD` (controls ordering; shown as e.g. "September 2026").
-- `body` — an array of parts: a **string**, or a **link** `{ "text", "href" }`.
-  Links open in a new tab. No React/JSX needed. In the cards the body is clamped
-  to a few lines; full text lives on the linked "More News" page.
+### Manage news and publications
 
-### Add a Publication — `data/publication-data.json`
-```json
-{
-  "id": "author-2026-venue-topic",
-  "year": "2026",
-  "type": "Conference",
-  "authors": "First Author and Second Author",
-  "title": "Paper Title",
-  "venue": "In Proceedings of …",
-  "pdfLink": "https://…/paper.pdf",
-  "details": "https://…/venue"
-}
-```
-`type` is shown as a small chip (e.g. `Journal`, `Conference`, `Workshop`, `Book chapter`).
+Sign in as an administrator and open **Administration → Content Management**.
+Choose **News** or **Publications**, then add or edit an entry. The editor uses
+persistent labels, field validation, a homepage card preview, and separate
+**Save draft** / **Publish** actions. News supports inline links through the
+text editor; publications have standard fields and optional web links.
+
+Saving draft changes to a published entry leaves the public version intact.
+Choose **Publish changes** when ready. Unpublish hides the entry; trash is
+recoverable, and restoring returns an entry to Draft for explicit republishing.
+
+The homepage shows the latest five news entries and six publications. The public
+`/news` and `/publications` archives provide paginated access to older entries;
+news text is displayed in full there. Both collections are read through
+`GET /api/v1/content/{news|publications}` and contain only published snapshots.
+The anonymous client never attaches access tokens or triggers login refresh.
+
+Existing entries are imported by an explicit one-time backend migration before
+switching to this frontend. See the [backend content migration instructions](../../../../openlap-analyticsframework/README.md#homepage-content-management).
+The immutable migration fixtures are historical input, not runtime fallback
+content. The frontend JSON content files and imports have been removed.
 
 ### Add a Team member — `data/team-data.js`
 1. Drop the photo in `src/assets/team/` (square, ~256px is plenty — see "Images").

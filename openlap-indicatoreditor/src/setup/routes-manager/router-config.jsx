@@ -11,6 +11,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import PersonIcon from "@mui/icons-material/Person";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import HistoryIcon from "@mui/icons-material/History";
+import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import RoleTypes from "../../pages/account-manager/utils/enums/role-types.js";
 
 const menus = [
@@ -187,6 +188,12 @@ const menus = [
         secondary: "Manage users, visualizations, and analytics",
         navigate: "/admin",
         icon: <DashboardIcon />,
+      },
+      {
+        primary: "Content Management",
+        secondary: "Manage homepage news and publications",
+        navigate: "/admin/content",
+        icon: <ArticleOutlinedIcon />,
       },
       {
         primary: "Audit Logs",

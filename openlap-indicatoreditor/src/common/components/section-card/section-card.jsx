@@ -7,7 +7,13 @@ import { Box, Paper, Stack, Typography } from "@mui/material";
  * section cards and the Filters step's grouping, so every step in the Basic
  * Indicator wizard reads as the same product. Presentational only.
  */
-const SectionCard = ({ title, helper = null, action = null, children }) => (
+const SectionCard = ({
+  title,
+  helper = null,
+  action = null,
+  headingComponent,
+  children,
+}) => (
   <Paper
     component="section"
     variant="outlined"
@@ -27,7 +33,11 @@ const SectionCard = ({ title, helper = null, action = null, children }) => (
         gap={1}
       >
         <Box>
-          <Typography variant="subtitle1" fontWeight={600}>
+          <Typography
+            variant="subtitle1"
+            component={headingComponent}
+            fontWeight={600}
+          >
             {title}
           </Typography>
           {helper && (
@@ -47,6 +57,7 @@ SectionCard.propTypes = {
   title: PropTypes.string.isRequired,
   helper: PropTypes.node,
   action: PropTypes.node,
+  headingComponent: PropTypes.string,
   children: PropTypes.node,
 };
 
