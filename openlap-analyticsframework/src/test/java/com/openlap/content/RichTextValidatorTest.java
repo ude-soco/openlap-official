@@ -77,13 +77,15 @@ public class RichTextValidatorTest {
   }
 
   @Test public void validatesOrderedListStartAsBoundedInteger() {
-    for (Object start : Arrays.asList(0, 100001, 1.5, "1")) {
+    for (Object start : Arrays.asList(0, 100001, 1.5, "1", Long.MIN_VALUE, Long.MAX_VALUE, 4294967297L)) {
       Map<String, Object> list = node("orderedList", node("listItem", paragraph(text("Item"))));
       list.put("attrs", Map.of("start", start)); rejected(doc(list));
     }
     Map<String, Object> list = node("orderedList", node("listItem", paragraph(text("Item"))));
-    list.put("attrs", Map.of("start", 100000));
-    assertThat(validator.validate(doc(list), true).toString()).contains("start=100000");
+    for (Object start : Arrays.asList(1, 100000, 1L, 100000L)) {
+      list.put("attrs", Map.of("start", start));
+      assertThat(validator.validate(doc(list), true).toString()).contains("start=" + start);
+    }
     list.put("attrs", Map.of("start", 1, "type", "A")); rejected(doc(list));
   }
 

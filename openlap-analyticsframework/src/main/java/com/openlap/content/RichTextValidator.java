@@ -71,7 +71,7 @@ public final class RichTextValidator {
         number = ((Number) start).longValue();
         if (number < 1 || number > 100000) throw invalid("List numbering must start at a whole number from 1 to 100000.");
       }
-      output.put("attrs", Collections.singletonMap("start", (int) number));
+      output.put("attrs", Collections.singletonMap("start", Math.toIntExact(number)));
     } else if (!attrs.isEmpty()) throw invalid("Content attributes are not supported for this node.");
 
     Object rawContent = input.get("content");
