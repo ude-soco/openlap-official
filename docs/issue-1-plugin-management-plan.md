@@ -1,6 +1,7 @@
 # Issue #1: plugin management with S3-compatible storage
 
-Status: implementation in progress on `feat/shoeb-plugin-management-s3`.
+Status: lifecycle protections implemented on `feat/shoeb-plugin-management-s3`;
+edge storage pilot deployed and verified; backend artifact integration next.
 Updated: 2026-11-08.
 Issue: [Create an admin panel #1](https://github.com/ude-soco/openlap-official/issues/1).
 
@@ -49,8 +50,32 @@ The first increment establishes local lifecycle protections:
 These changes are not yet deployed. Before deploying strict JAR-path resolution,
 inventory existing database paths and artifacts as described under Migration and
 rollback; inconsistent historical paths now fail explicitly instead of silently
-loading a different binary. S3 provisioning, artifact migration, modern management
-workflows and the usage overview remain pending.
+loading a different binary. Artifact migration, backend S3 integration, modern
+management workflows and the usage overview remain pending.
+
+The edge storage pilot was deployed and verified on 2026-11-08 through the private
+continuous-delivery repository:
+
+- The new persistent volume is Bound with 5 GiB requested capacity and
+  ReadWriteOnce access using the existing local-path provisioner. The storage
+  workload schedules and runs within the namespace's current permissions.
+- The private bucket grants its application key read/write access, with bucket
+  creation and ownership denied. Administration and application credentials are
+  separate, and namespace NetworkPolicy isolation is exercised by the live tests.
+- Both independent cluster test clients completed checksum-verified JAR round
+  trips, anonymous-access rejection and administration-port isolation checks.
+- A second rollout replaced the healthy storage pod. Both clients had to read
+  the original JAR before any upload, and the rollout completed Healthy/Synced.
+  The existing-object check remains enabled for later rollouts.
+- All 15 pilot resources passed isolated schema validation with synthetic
+  credentials. The exact container images also passed a local cold-backup and
+  restoration exercise. A real off-node cluster backup destination and production
+  availability design remain outstanding release requirements.
+
+The application has not yet been connected to the bucket, and existing plugin
+JARs have not been migrated. Production resources and application image pins
+were not changed by the pilot. The next implementation unit is the artifact
+registry, verified local cache and explicit migration path in phase 3.
 
 ## Storage and execution design
 
@@ -106,16 +131,17 @@ The read-only Argo CD inspection on 2026-11-08 established:
 - An existing edge Mongo PVC is Bound with `local-path`, provisioned by
   `rancher.io/local-path`, using ReadWriteOnce access.
 
-These findings support an edge pilot inside the existing application. They do
-not prove free node disk, namespace quota, CPU/RAM, admission-policy acceptance,
-or the ability to provision a new PVC. A requested PVC size is not evidence of
-available physical capacity.
+The subsequent pilot proved that its PVC, workload and two test clients can be
+provisioned under the current namespace permissions and scheduling constraints.
+It does not establish capacity for unrestricted future growth or a node-failure
+availability guarantee. A requested PVC size is not evidence of free physical
+disk or an enforced filesystem limit.
 
-Evaluate Garage as a candidate using a plain StatefulSet and configuration that
-does not require Kubernetes discovery CRDs. Its standard chart must be inspected
-and adapted to the project's constraints before deployment. Provider selection
-is finalized by the pilot, including S3 client compatibility and maintenance
-requirements.
+The pilot selected Garage v2.5.0 using a plain StatefulSet without Kubernetes
+discovery CRDs. Its official release and job images are digest-pinned. The service
+uses a non-root init step to prepare private service-owned credential files and
+requires no new Kubernetes API permissions. Backend SDK compatibility will be
+tested during the application integration unit.
 
 A single storage instance using local-path is suitable for proving integration.
 Production needs an explicit availability decision, an off-node backup location,

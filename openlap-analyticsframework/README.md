@@ -393,6 +393,12 @@ saved indicators functional. Dependency-safe removal, immutable S3 artifacts and
 the new upload/update workflows are subsequent increments. See the
 [issue #1 plan](../docs/issue-1-plugin-management-plan.md) for migration and rollout.
 
+An edge-only S3-compatible storage pilot has now passed live two-client access,
+network isolation and persistence checks after storage pod replacement. The
+backend still uses its existing local plugin files; connecting the artifact
+registry/cache and migrating installed JARs are the next implementation unit.
+Production storage and application deployments have not been changed by the pilot.
+
 Run the file, real-JAR version isolation, deletion and authorization regressions:
 
 ```bash
