@@ -1,6 +1,6 @@
 # Issue #1: plugin management with S3-compatible storage
 
-Status: proposed plan; implementation has not started.
+Status: implementation in progress on `feat/shoeb-plugin-management-s3`.
 Updated: 2026-11-08.
 Issue: [Create an admin panel #1](https://github.com/ude-soco/openlap-official/issues/1).
 
@@ -15,7 +15,7 @@ historical and includes gaps that have since been fixed.
 | Manage analytics methods | Admin catalog, input/parameter inspection, usage counts, enable/disable | Add, edit metadata, upload replacement versions, safe deletion |
 | Manage visualization methods | Admin library/type catalogs, inspection, usage counts, enable/disable | Add libraries/types from JARs, edit metadata, upload replacement versions, safe deletion |
 | Upload and add methods | Legacy backend upload routes and unrouted legacy UI exist | Validated upload/review/activation workflow backed by durable object storage |
-| Delete and update methods | Legacy destructive routes exist; the current admin UI does not expose them | Reference checks, shared-artifact protection, version handling, confirmations and recovery |
+| Delete and update methods | Legacy delete routes now reject removal; enable/disable remains available | Reference checks, shared-artifact protection, version handling, confirmations and recovery |
 | Dashboard showing methods in use | Counts per item from saved indicators and distinct creators | Overview with totals, most-used methods and unused items, with clear metric labels |
 
 Admin routing, role guards, audit logging and soft-disable are already available.
@@ -23,8 +23,34 @@ The current code also validates plugin filenames and restricts legacy reload and
 populate routes to SUPER_ADMIN. Those fixes are prerequisites to preserve, not
 features to rebuild.
 
-Uploads still write local files and can overwrite an existing filename. Both Java
-loaders need a local JAR. Backend replicas do not currently mount plugin storage.
+Uploads still write local files, but now validate a staged archive and reject an
+existing filename without overwriting it. Both Java loaders need a local JAR and
+now resolve the recorded file instead of scanning unrelated JARs for the same
+class. Backend replicas do not currently mount plugin storage.
+
+## Implementation progress
+
+The first increment establishes local lifecycle protections:
+
+- Static archive inspection bounds uploaded and expanded size, rejects unsafe
+  archive paths, checks entry integrity and requires class entries. It does not
+  execute or certify plugin code; contract inspection and activation follow later.
+- Publication uses atomic create-if-absent semantics, including concurrent uploads
+  and symlink targets. Existing files remain unchanged and staging files are
+  cleaned up after failure.
+- Runtime loading uses each catalog entry's recorded JAR, with independent
+  classloaders for different artifact paths. Retired versions still execute, and
+  loaders remain available for lazy dependency loading until application shutdown.
+- The five legacy delete operations return HTTP 409 / `PLUGIN_DELETE_UNAVAILABLE`
+  before accessing catalog records or files. This temporary restriction prevents
+  dangling references and shared-JAR deletion until the guarded removal workflow
+  in phase 6 is implemented. Enable/disable controls are unchanged.
+
+These changes are not yet deployed. Before deploying strict JAR-path resolution,
+inventory existing database paths and artifacts as described under Migration and
+rollback; inconsistent historical paths now fail explicitly instead of silently
+loading a different binary. S3 provisioning, artifact migration, modern management
+workflows and the usage overview remain pending.
 
 ## Storage and execution design
 
