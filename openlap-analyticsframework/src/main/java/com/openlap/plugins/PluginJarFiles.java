@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.Locale;
 import java.util.zip.CRC32;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +24,30 @@ public final class PluginJarFiles {
   static final int MAX_ENTRIES = 10000;
 
   private PluginJarFiles() {}
+
+  /** Resolves the recorded JAR only; never substitute another JAR containing the same class. */
+  public static Path installedPath(String folder, String recordedPath) {
+    if (recordedPath == null || recordedPath.trim().isEmpty()) {
+      throw new ServiceException("The installed plugin has no recorded JAR file.");
+    }
+    try {
+      Path base = java.nio.file.Paths.get(folder).toAbsolutePath().normalize();
+      Path recorded = java.nio.file.Paths.get(recordedPath);
+      Path candidate = recorded.getNameCount() == 1 ? base.resolve(recorded) : recorded;
+      candidate = candidate.toAbsolutePath().normalize();
+      if (!candidate.startsWith(base)
+          || !candidate.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".jar")) {
+        throw new ServiceException("The recorded plugin JAR is outside its configured directory.");
+      }
+      Path real = candidate.toRealPath();
+      if (!real.startsWith(base.toRealPath()) || !Files.isRegularFile(real)) {
+        throw new ServiceException("The recorded plugin JAR is outside its configured directory.");
+      }
+      return real;
+    } catch (IOException | java.nio.file.InvalidPathException e) {
+      throw new ServiceException("The recorded plugin JAR is unavailable. Restore this plugin version.", e);
+    }
+  }
 
   /**
    * Publishes a complete, validated JAR without replacing any existing file, including symlinks.

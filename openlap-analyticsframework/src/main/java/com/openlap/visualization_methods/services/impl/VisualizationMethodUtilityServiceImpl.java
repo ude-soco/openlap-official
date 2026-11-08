@@ -6,6 +6,8 @@ import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.infrastructure.exception.DatabaseOperationException;
 import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.template.VisualizationCodeGenerator;
+import com.openlap.plugins.PluginJarFiles;
+import javax.annotation.PreDestroy;
 import com.openlap.template.VisualizationLibraryInfo;
 import com.openlap.visualization_methods.dto.VisualizationLibraryResponse;
 import com.openlap.visualization_methods.dto.VisualizationMethodFileNameResponse;
@@ -86,53 +88,23 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
 
   @Override
   public VisualizationCodeGenerator loadVisTypeInstance(String visTypeId) {
-    VisType visType = fetchVisualizationTypeMethod(visTypeId);
-    String className = visType.getImplementingClass();
-
-    File folder = new File(visualizerJarsFolder);
-    File[] jars = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
-    if (jars == null || jars.length == 0) {
-      throw new ServiceException("No visualizer JARs found in " + visualizerJarsFolder);
+    VisType type = fetchVisualizationTypeMethod(visTypeId);
+    VisLibrary library = type.getVisualizationLib();
+    if (library == null) {
+      throw new VisualizationClassLoaderException("The visualization type has no installed library.");
     }
-
-    for (File jar : jars) {
-      try {
-        VisualizerClassPathLoader loader =
-            loaderCache.computeIfAbsent(
-                jar.getAbsolutePath(), path -> new VisualizerClassPathLoader(path));
-        return loader.loadTypeClass(className);
-      } catch (VisualizationClassLoaderException e) {
-        if (!e.getMessage().contains("not found")) throw e;
-      } catch (Exception e) {
-        // ignore and try next
-      }
-    }
-
-    throw new ServiceException("Could not find class " + className + " in any visualizer JAR");
+    String jarPath = PluginJarFiles.installedPath(visualizerJarsFolder, library.getFrameworkLocation())
+        .toString();
+    VisualizerClassPathLoader loader = loaderCache.computeIfAbsent(
+        jarPath, VisualizerClassPathLoader::new);
+    return loader.loadTypeClass(type.getImplementingClass());
   }
 
-//    @Override
-//    public VisualizationCodeGenerator loadVisTypeInstance(String visTypeId) {
-//      VisType visType = fetchVisualizationTypeMethod(visTypeId);
-//      String className = visType.getImplementingClass();
-//      // Try each JAR in the visualizer folder
-//      File folder = new File(visualizerJarsFolder);
-//      File[] jars = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
-//      if (jars == null || jars.length == 0) {
-//        throw new ServiceException("No visualizer JARs found in " + visualizerJarsFolder);
-//      }
-//      for (File jar : jars) {
-//        try (VisualizerClassPathLoader loader =
-//            new VisualizerClassPathLoader(jar.getAbsolutePath())) {
-//          return loader.loadTypeClass(className);
-//        } catch (VisualizationClassLoaderException e) {
-//          if (!e.getMessage().contains("not found")) throw e;
-//        } catch (Exception e) {
-//          // ignore and try next
-//        }
-//      }
-//      throw new ServiceException("Could not find class " + className + " in any visualizer JAR");
-//    }
+  @PreDestroy
+  public void closePluginLoaders() {
+    loaderCache.values().forEach(VisualizerClassPathLoader::close);
+    loaderCache.clear();
+  }
 
   @Override
   public void populateVisualizationMethods() {
