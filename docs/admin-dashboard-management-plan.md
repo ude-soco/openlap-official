@@ -1,6 +1,9 @@
 # OpenLAP Admin Dashboard — Management Phase: Audit & Plan
 
-**Status:** Active · **PR A (usage counts) in progress**
+**Status:** Historical audit (2026-06-30). For the current issue #1 plugin-management
+and S3 storage plan, see [`issue-1-plugin-management-plan.md`](./issue-1-plugin-management-plan.md).
+Several findings below have since been fixed; do not treat this historical audit
+as the current implementation status.
 **Prereq reading:** [`admin-dashboard-plan.md`](./admin-dashboard-plan.md) (read-only phase, PR1–PR5, shipped)
 **Last updated:** 2026-06-30
 
