@@ -4,6 +4,7 @@ import com.openlap.configurations.Utils;
 import com.openlap.dataset.OpenLAPDataSetConfigValidationResult;
 import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.infrastructure.exception.DatabaseOperationException;
+import com.openlap.plugins.LegacyPluginDeletionException;
 import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.template.VisualizationCodeGenerator;
 import com.openlap.plugins.PluginJarFiles;
@@ -251,9 +252,6 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
 
   @Override
   public void uploadVisualizationMethodFile(MultipartFile file) {
-    if (file.isEmpty()) {
-      throw new ServiceException("File is empty");
-    }
     String fileName = Utils.requireSafeJarFileName(file.getOriginalFilename());
     Utils.saveFile(file, visualizerJarsFolder, fileName);
 
@@ -276,24 +274,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
 
   @Override
   public void deleteVisualizationMethodFile(String fileName) {
-    String safeFileName = Utils.requireSafeJarFileName(fileName);
-    Utils.deleteFile(visualizerJarsFolder, safeFileName);
-    String frameworkLocation = visualizerJarsFolder + safeFileName;
-    VisLibrary foundVisLibrary =
-        visualizationLibraryRepository.findByFrameworkLocation(frameworkLocation);
-    if (foundVisLibrary != null) {
-      List<String> visTypeIds =
-          foundVisLibrary.getVisualizationTypes().stream()
-              .map(VisType::getId)
-              .collect(Collectors.toList());
-
-      visTypeIds.forEach(visualizationTypeRepository::deleteById);
-
-      visualizationLibraryRepository.delete(foundVisLibrary);
-      log.info("Deleted VisLibrary and associated VisTypes");
-    } else {
-      log.warn("VisLibrary not found");
-    }
+    throw new LegacyPluginDeletionException();
   }
 
   @Override

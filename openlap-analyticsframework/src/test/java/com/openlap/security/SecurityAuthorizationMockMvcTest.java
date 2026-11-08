@@ -5,6 +5,7 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -442,6 +443,28 @@ public class SecurityAuthorizationMockMvcTest {
   }
 
   // --- Plugin-management hardening: reload/populate are SUPER_ADMIN-only; reads stay open ---
+
+  @Test
+  public void legacyPluginDeletesStillRequireAnAdminToken() throws Exception {
+    for (String path : new String[] {
+        "/v1/analytics/methods/delete?fileName=x.jar", "/v1/analytics/methods/method-id",
+        "/v1/visualizations/delete?fileName=x.jar", "/v1/visualizations/libraries/library-id",
+        "/v1/visualizations/types/type-id"}) {
+      // Preserve the existing unauthenticated contract (403 / AUTH_REQUIRED).
+      mockMvc.perform(delete(path)).andExpect(status().isForbidden())
+          .andExpect(jsonPath("$.code").value("AUTH_REQUIRED"));
+    }
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+    for (String path : new String[] {
+        "/v1/analytics/methods/delete?fileName=x.jar", "/v1/analytics/methods/method-id",
+        "/v1/visualizations/delete?fileName=x.jar", "/v1/visualizations/libraries/library-id",
+        "/v1/visualizations/types/type-id"}) {
+      mockMvc.perform(delete(path).header(AUTHORIZATION, "Bearer valid-token"))
+          .andExpect(status().isForbidden())
+          .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+    }
+  }
 
   @Test
   public void normalUserForbiddenOnAnalyticsReload() throws Exception {

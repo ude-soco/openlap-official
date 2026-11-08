@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.openlap.dataset.OpenLAPColumnConfigData;
 import com.openlap.dataset.OpenLAPDataSet;
 import com.openlap.infrastructure.exception.DatabaseOperationException;
+import com.openlap.plugins.LegacyPluginDeletionException;
 import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.template.VisualizationCodeGenerator;
 import com.openlap.visualization_methods.dto.VisualizationTypeResponse;
@@ -124,13 +125,7 @@ public class VisualizationTypeServiceImpl implements VisualizationTypeService {
 
   @Override
   public void deleteVisualizationType(String typeId) {
-    VisType visType = visualizationMethodUtilityService.fetchVisualizationTypeMethod(typeId);
-    VisLibrary visLibrary = visType.getVisualizationLib();
-    if (visLibrary != null) {
-      visLibrary.getVisualizationTypes().removeIf(vt -> vt.getId().equals(typeId));
-      visualizationLibraryRepository.save(visLibrary);
-    }
-    visualizationTypeRepository.delete(visType);
+    throw new LegacyPluginDeletionException();
   }
 
   private List<VisualizationTypeResponse> generateVisTypeResponseList(

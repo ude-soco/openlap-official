@@ -18,6 +18,7 @@ import com.openlap.dataset.OpenLAPDataSetConfigValidationResult;
 import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.dynamicparam.OpenLAPDynamicParam;
 import com.openlap.infrastructure.exception.DatabaseOperationException;
+import com.openlap.plugins.LegacyPluginDeletionException;
 import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.template.AnalyticsMethod;
 import com.openlap.plugins.PluginJarFiles;
@@ -292,9 +293,6 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Override
   public void uploadAnalyticsTechniqueFile(MultipartFile file) {
-    if (file.isEmpty()) {
-      throw new ServiceException("File is empty");
-    }
     String fileName = Utils.requireSafeJarFileName(file.getOriginalFilename());
     Utils.saveFile(file, analyticsMethodsJarsFolder, fileName);
     List<AnalyticsTechnique> existingAnalyticsMethods = fetchAllAnalyticsTechniquesMethod();
@@ -314,17 +312,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Override
   public void deleteAnalyticsTechniqueFile(String fileName) {
-    String safeFileName = Utils.requireSafeJarFileName(fileName);
-    Utils.deleteFile(analyticsMethodsJarsFolder, safeFileName);
-    String frameworkLocation = analyticsMethodsJarsFolder + safeFileName;
-    List<AnalyticsTechnique> allByFileName =
-        analyticsTechniqueRepository.findAllByFileName(frameworkLocation);
-    if (!allByFileName.isEmpty()) {
-      analyticsTechniqueRepository.deleteAll(allByFileName);
-      log.info("Deleted all analytics technique from database");
-    } else {
-      log.warn("No analytics techniques found");
-    }
+    throw new LegacyPluginDeletionException();
   }
 
   @Override
@@ -369,8 +357,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Override
   public void deleteAnalyticsMethod(String analyticsId) {
-    AnalyticsTechnique analyticsTechnique = fetchAnalyticsTechniqueMethod(analyticsId);
-    analyticsTechniqueRepository.delete(analyticsTechnique);
+    throw new LegacyPluginDeletionException();
   }
 
   @Override
