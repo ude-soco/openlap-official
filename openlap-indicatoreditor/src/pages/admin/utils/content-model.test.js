@@ -1,95 +1,72 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  bodyLinks,
-  bodyToText,
   contentFieldErrors,
   contentPayload,
-  editBodyText,
   emptyContent,
-  setBodyLink,
   validHttpUrl,
   validateContent,
 } from "./content-model.js";
 import { transitionContent, updateContent } from "./content-api.js";
 
-const linkedBody = () => [
-  "Read ",
-  { text: "the paper", href: "https://example.org/paper" },
-  " today.",
-];
-
-test("existing linked news survives a round trip through the text editor", () => {
-  const body = linkedBody();
-  assert.deepEqual(editBodyText(body, bodyToText(body)), body);
-  assert.deepEqual(bodyLinks(body), [
-    { start: 5, end: 14, text: "the paper", href: "https://example.org/paper" },
-  ]);
-});
-
-test("typing before, inside and after linked text preserves its correct range", () => {
-  const body = linkedBody();
-  assert.deepEqual(editBodyText(body, "Please read the paper today."), [
-    "Please read ",
-    { text: "the paper", href: "https://example.org/paper" },
-    " today.",
-  ]);
-  assert.deepEqual(editBodyText(body, "Read the new paper today."), [
-    "Read ",
-    { text: "the new paper", href: "https://example.org/paper" },
-    " today.",
-  ]);
-  assert.deepEqual(editBodyText(body, "Read the paper today!"), [
-    "Read ",
-    { text: "the paper", href: "https://example.org/paper" },
-    " today!",
-  ]);
-});
-
-test("inserting at a link boundary does not accidentally link new text", () => {
-  assert.deepEqual(editBodyText(linkedBody(), "Read only the paper today."), [
-    "Read only ",
-    { text: "the paper", href: "https://example.org/paper" },
-    " today.",
-  ]);
-  assert.deepEqual(
-    editBodyText(linkedBody(), "Read the paper carefully today."),
-    [
-      "Read ",
-      { text: "the paper", href: "https://example.org/paper" },
-      " carefully today.",
+test("rich news supports formatting and links while requiring visible content", () => {
+  const body = {
+    type: "doc",
+    content: [
+      {
+        type: "paragraph",
+        content: [
+          {
+            type: "text",
+            text: "A linked update",
+            marks: [
+              { type: "bold" },
+              { type: "link", attrs: { href: "https://example.org" } },
+            ],
+          },
+        ],
+      },
     ],
+  };
+  const news = { ...emptyContent("news"), title: "News", body };
+  assert.deepEqual(validateContent("news", news, true), {});
+  assert.deepEqual(contentPayload("news", news).body, body);
+  assert.ok(
+    validateContent(
+      "news",
+      { ...news, body: { type: "doc", content: [{ type: "paragraph" }] } },
+      true,
+    ).body,
   );
+  const badLink = JSON.parse(JSON.stringify(body));
+  badLink.content[0].content[0].marks[1].attrs.href = "javascript:alert(1)";
+  assert.ok(validateContent("news", { ...news, body: badLink }).body);
 });
 
-test("deleting a link or a selection spanning link boundaries preserves remaining text", () => {
-  assert.equal(
-    bodyToText(editBodyText(linkedBody(), "Read  today.")),
-    "Read  today.",
-  );
-  assert.deepEqual(bodyLinks(editBodyText(linkedBody(), "Read  today.")), []);
-  const result = editBodyText(linkedBody(), "Read paper today.");
-  assert.equal(bodyToText(result), "Read paper today.");
-  assert.equal(bodyLinks(result)[0].text, "paper");
-});
-
-test("a link can be added, retargeted and removed without changing the words", () => {
-  const original = ["A paper and a demo."];
-  const added = setBodyLink(original, 2, 7, "https://example.org/paper");
-  const changed = setBodyLink(added, 2, 7, " https://example.org/new ");
-  assert.equal(bodyLinks(changed)[0].href, "https://example.org/new");
-  assert.equal(bodyToText(changed), bodyToText(original));
-  assert.deepEqual(setBodyLink(changed, 2, 7, ""), original);
-});
-
-test("linking part of an existing link keeps both surviving fragments", () => {
-  const body = [{ text: "one two three", href: "https://example.org/old" }];
-  const next = setBodyLink(body, 4, 7, "https://example.org/new");
-  assert.deepEqual(next, [
-    { text: "one ", href: "https://example.org/old" },
-    { text: "two", href: "https://example.org/new" },
-    { text: " three", href: "https://example.org/old" },
-  ]);
+test("oversized or deeply nested rich text is rejected without dropping the form content", () => {
+  const news = { ...emptyContent("news"), title: "News" };
+  const body = {
+    type: "doc",
+    content: [
+      {
+        type: "paragraph",
+        content: [{ type: "text", text: "x".repeat(30001) }],
+      },
+    ],
+  };
+  assert.ok(validateContent("news", { ...news, body }).body);
+  let block = {
+    type: "paragraph",
+    content: [{ type: "text", text: "Keep this" }],
+  };
+  for (let i = 0; i < 6; i++)
+    block = {
+      type: "bulletList",
+      content: [{ type: "listItem", content: [{ type: "paragraph" }, block] }],
+    };
+  const nested = { type: "doc", content: [block] };
+  assert.ok(validateContent("news", { ...news, body: nested }).body);
+  assert.equal(nested.content[0].type, "bulletList");
 });
 
 test("unsafe, malformed, overlong and credential-bearing URLs are rejected", () => {

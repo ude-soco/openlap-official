@@ -73,8 +73,14 @@ src/pages/landing-page/
 Sign in as an administrator and open **Administration → Content Management**.
 Choose **News** or **Publications**, then add or edit an entry. The editor uses
 persistent labels, field validation, a homepage card preview, and separate
-**Save draft** / **Publish** actions. News supports inline links through the
-text editor; publications have standard fields and optional web links.
+**Save draft** / **Publish** actions. News uses a rich text editor with bold,
+italic, underline, lists, inline links, and undo/redo. The homepage renders the
+same formatting. Publications have standard fields and optional web links.
+
+News bodies accept a small structured document schema; arbitrary HTML is never
+stored or injected. Existing text/link arrays remain readable and editable,
+and opening them does not change the draft. Rich text editor code is loaded
+only in administration, not by public homepage visitors.
 
 Saving draft changes to a published entry leaves the public version intact.
 Choose **Publish changes** when ready. Unpublish hides the entry; trash is

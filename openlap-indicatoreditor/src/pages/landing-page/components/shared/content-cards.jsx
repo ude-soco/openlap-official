@@ -6,7 +6,6 @@ import {
   CardActions,
   CardContent,
   Chip,
-  Link,
   Stack,
   Typography,
 } from "@mui/material";
@@ -14,6 +13,7 @@ import { useTheme } from "@mui/material/styles";
 import DownloadIcon from "@mui/icons-material/Download";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { contentHref, formatNewsDate } from "../../utils/content-links.js";
+import RichTextContent from "../../../../common/components/rich-text/rich-text-content.js";
 
 const clamp = (lines) => ({
   display: "-webkit-box",
@@ -58,26 +58,15 @@ export function NewsCard({ item, featured = false, expanded = false }) {
             sx={{
               whiteSpace: "pre-wrap",
               overflowWrap: "anywhere",
+              "& p": { m: 0, minHeight: "1em" },
+              "& p + p, & ul, & ol": { mt: 1 },
+              "& ul, & ol": { mb: 0, pl: 3 },
+              "& li p": { m: 0 },
+              "& a": { color: "primary.main", textDecoration: "underline" },
               ...(!expanded && clamp(featured ? 4 : 3)),
             }}
           >
-            {(Array.isArray(item.body) ? item.body : []).map((part, index) => {
-              if (typeof part === "string") return part;
-              if (!part || typeof part.text !== "string") return null;
-              const href = contentHref(part.href);
-              return href ? (
-                <Link
-                  key={index}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {part.text}
-                </Link>
-              ) : (
-                part.text
-              );
-            })}
+            <RichTextContent body={item.body} />
           </Typography>
           {item.venue && (
             <Typography variant="caption" color="text.secondary">

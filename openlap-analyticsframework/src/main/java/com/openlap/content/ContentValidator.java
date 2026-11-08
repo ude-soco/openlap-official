@@ -103,8 +103,16 @@ public class ContentValidator {
       if (required) errors.put("body", "Enter news content.");
       return;
     }
+    if (value instanceof Map) {
+      try {
+        result.put("body", new RichTextValidator().validate((Map<?, ?>) value, required));
+      } catch (IllegalArgumentException e) {
+        errors.put("body", e.getMessage());
+      }
+      return;
+    }
     if (!(value instanceof List) || ((List<?>) value).size() > 500) {
-      errors.put("body", "Enter content with up to 500 text and link parts.");
+      errors.put("body", "Enter rich-text content or up to 500 text and link parts.");
       return;
     }
     List<Object> body = new ArrayList<>();

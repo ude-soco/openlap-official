@@ -54,10 +54,13 @@ administrator is `admin@mail.com` / `1234qweR` when local defaults are enabled.
    News archives display the full text.
 2. **Drafts:** add a news item with only a title and save it. It must remain absent
    from the homepage and public archive. Reopen it to verify persistence.
-3. **Links and publishing:** add news text, select words, and choose **Add link**
-   (or Ctrl/Command + K). Applying a link must only edit the text; it must not
-   save or publish the entry. Check the preview, save, and explicitly publish.
-   Verify the resulting homepage card and its inline link.
+3. **Rich text and publishing:** type directly in the news editor. Use its toolbar
+   for bold, italic, underline, bulleted/numbered lists, links, and undo/redo.
+   Select words and choose **Insert or edit link** (or Ctrl/Command + K), or paste
+   a web URL over selected text. The link must be visible inside the editable
+   text. Click it to edit or remove the link. Applying formatting or a link must
+   not save or publish the entry. Save and reopen the draft to verify formatting
+   persists, then publish and verify the homepage card and full-text archive.
 4. **Publications:** add authors, year, type, venue, and optional PDF/details URLs.
    Check that the preview and public card match. Empty optional URLs must not
    produce broken buttons. A reference URL need not end in `.pdf`.

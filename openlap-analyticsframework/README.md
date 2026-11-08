@@ -255,8 +255,22 @@ timestamps, editor identifiers, and `deletedAt`. Version-qualified atomic update
 requests with HTTP **409**, code `CONTENT_VERSION_CONFLICT`; clients should preserve unsaved
 input and offer to reload the latest version.
 
-News fields are `title`, ISO `date`, `body` (an ordered array of strings or `{ "text", "href" }`
-link parts), and optional `venue`. Publication fields are `title`, `authors`, four-digit `year`,
+News fields are `title`, ISO `date`, `body`, and optional `venue`. The rich-text editor saves
+`body` as a standard Tiptap/ProseMirror JSON document: `doc`, `paragraph`, `text`, `hardBreak`,
+`bulletList`, `orderedList`, and `listItem` nodes, with `bold`, `italic`, `underline`, or `link`
+marks on text. The backend validates the parent/child structure and stores a canonical document;
+link attributes contain only a safe `href`, and ordered lists contain only an integer `start`
+from 1 to 100000. Known Tiptap link metadata (`target`, `rel`, `class`) and null ordered-list
+`type` metadata are discarded. Unsupported attributes, nodes, marks, and raw HTML are rejected.
+For example:
+
+```json
+{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Read our news","marks":[{"type":"bold"}]}]}]}
+```
+
+The original ordered array of strings or `{ "text", "href" }` link parts remains supported
+without conversion, so existing entries and the one-time migration retain exact content parity.
+Publication fields are `title`, `authors`, four-digit `year`,
 `type` (`Journal`, `Conference`, `Workshop`, `Book chapter`), `venue`, optional `pdfLink`, and
 optional `details`. URL fields accept complete HTTP(S) URLs without embedded credentials.
 Drafts require a title and validate all supplied fields. Publishing also requires a news date
@@ -264,7 +278,8 @@ and nonempty body, or publication authors/year/type/venue. URLs remain optional,
 should hide absent actions.
 
 Field errors use `details.fieldErrors` as a map from field name to an actionable message. Limits:
-title 300 characters; news body 30000 text characters and 500 parts; news venue 1000;
+title 300 characters; news body 30000 text characters (a hard break counts as one character),
+2000 rich-text nodes, and depth 12 (legacy arrays allow 500 parts); news venue 1000;
 publication authors/venue 2000 each; URLs 2048; publication year 1000–2999. All validation is
 enforced on the backend as well as in the editor.
 
