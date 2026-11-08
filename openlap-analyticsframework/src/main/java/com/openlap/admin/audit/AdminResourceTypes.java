@@ -7,6 +7,8 @@ public final class AdminResourceTypes {
   public static final String VISUALIZATION_LIBRARY = "VISUALIZATION_LIBRARY";
   public static final String VISUALIZATION_TYPE = "VISUALIZATION_TYPE";
   public static final String ANALYTICS_METHOD = "ANALYTICS_METHOD";
+  public static final String HOMEPAGE_NEWS = "HOMEPAGE_NEWS";
+  public static final String HOMEPAGE_PUBLICATION = "HOMEPAGE_PUBLICATION";
 
   private AdminResourceTypes() {}
 }

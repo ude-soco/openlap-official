@@ -8,7 +8,7 @@ import {
   Divider,
   Container,
 } from "@mui/material";
-import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import PrivateRoute from "./private-routes";
 import RoleTypes from "../../pages/account-manager/utils/enums/role-types.js";
@@ -113,6 +113,13 @@ const AdminAnalyticsMethods = lazy(() =>
 const AdminAuditLogs = lazy(() =>
   import("../../pages/admin/admin-audit-logs.jsx")
 );
+const AdminContent = lazy(() => import("../../pages/admin/admin-content.jsx"));
+const AdminContentEditor = lazy(() =>
+  import("../../pages/admin/admin-content-editor.jsx")
+);
+const ContentArchive = lazy(() =>
+  import("../../pages/landing-page/content-archive.jsx")
+);
 
 // Routes that opt out of the standard "content sheet" (Container + padded Paper
 // card) and render full-bleed instead — for editor/workspace pages where the
@@ -174,6 +181,12 @@ const RouteFallback = () => (
   </Box>
 );
 
+// Isolate working copies when browser history changes the entry being edited.
+const ContentEditorRoute = () => {
+  const { kind, id } = useParams();
+  return <AdminContentEditor key={`${kind}:${id || "new"}`} />;
+};
+
 const AppRoutes = () => {
   const { theme } = useContext(CustomThemeContext);
   const { user } = useContext(AuthContext);
@@ -185,10 +198,13 @@ const AppRoutes = () => {
           <CssBaseline />
           <Suspense fallback={<RouteFallback />}>
             <Routes>
+            {/* Public content remains accessible while signed in for admin review. */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/news" element={<ContentArchive key="news" kind="news" />} />
+            <Route path="/publications" element={<ContentArchive key="publications" kind="publications" />} />
             {/* Public routes */}
             {!user && (
               <>
-                <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -530,6 +546,33 @@ const AppRoutes = () => {
                   element={
                     <PrivateRoute
                       component={<AdminAuditLogs />}
+                      allowedRoles={[RoleTypes.admin]}
+                    />
+                  }
+                />
+                <Route
+                  path="/admin/content"
+                  element={
+                    <PrivateRoute
+                      component={<AdminContent />}
+                      allowedRoles={[RoleTypes.admin]}
+                    />
+                  }
+                />
+                <Route
+                  path="/admin/content/:kind/new"
+                  element={
+                    <PrivateRoute
+                      component={<ContentEditorRoute />}
+                      allowedRoles={[RoleTypes.admin]}
+                    />
+                  }
+                />
+                <Route
+                  path="/admin/content/:kind/:id"
+                  element={
+                    <PrivateRoute
+                      component={<ContentEditorRoute />}
                       allowedRoles={[RoleTypes.admin]}
                     />
                   }
