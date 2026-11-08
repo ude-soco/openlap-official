@@ -8,12 +8,14 @@ import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
 import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
 import AnalyticsOutlinedIcon from "@mui/icons-material/AnalyticsOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
+import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import PageHeader from "../../common/components/page-header/page-header";
 import SectionCard from "../../common/components/section-card/section-card";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
+import { listContent } from "./utils/content-api.js";
 import {
   requestAdminAnalyticsMethods,
   requestAdminAuditLogs,
@@ -71,6 +73,22 @@ const SECTIONS = [
     loader: requestAdminAnalyticsMethods,
     to: "/admin/analytics-methods",
     actionLabel: "View details",
+  },
+  {
+    key: "content",
+    title: "Homepage Content",
+    helper: "News and publications, including private drafts.",
+    icon: ArticleOutlinedIcon,
+    unit: "entries",
+    loader: async (api) => {
+      const [news, publications] = await Promise.all([
+        listContent(api, "news", { page: 0, size: 1, status: "ALL" }),
+        listContent(api, "publications", { page: 0, size: 1, status: "ALL" }),
+      ]);
+      return { data: { totalElements: (news?.totalElements || 0) + (publications?.totalElements || 0) } };
+    },
+    to: "/admin/content",
+    actionLabel: "Manage content",
   },
   {
     key: "auditLogs",
@@ -210,7 +228,7 @@ const AdminOverview = () => {
       <PageHeader
         title="Admin Dashboard"
         breadcrumbs={[{ label: "Home", to: "/" }]}
-        subtitle="Manage OpenLAP users, visualization libraries and types, and analytics methods."
+        subtitle="Manage OpenLAP users, homepage content, visualization libraries and types, and analytics methods."
         actions={
           <Button
             startIcon={<RefreshRoundedIcon />}
