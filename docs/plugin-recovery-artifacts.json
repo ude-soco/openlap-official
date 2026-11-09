@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "repository": "https://github.com/ude-soco/openlap-official",
+  "commit": "4768ec732c667940e00dfc5a87e0300ed0a7ef75",
+  "artifacts": [
+    {
+      "kind": "analytics",
+      "git_path": "openlap-analyticsframework/jars/analytics_techniques/AnalyticsMethods-Prototypes-1.0-SNAPSHOT.jar",
+      "git_blob": "086084d815143e880aea942bc843e6d72c3652f0",
+      "sha256": "5ed1a34bee570f1a8fc209a55f2ff69ff90c5c686c4a7b7fa35a6c010fff68c7",
+      "size_bytes": 87176,
+      "output_path": "jars/analytics/AnalyticsMethods-Prototypes-1.0-SNAPSHOT.jar"
+    },
+    {
+      "kind": "visualizations",
+      "git_path": "openlap-analyticsframework/jars/visualization_methods/Visualizer-C3-1.0-SNAPSHOT.jar",
+      "git_blob": "0c5774f0ea0df6aba2346dfa6e920f994a6b16bd",
+      "sha256": "ba08d00b3a26d7d5e6b127a55b1a965c08dd3e1bfd5da6ef865134f78d380033",
+      "size_bytes": 60130,
+      "output_path": "jars/visualizations/Visualizer-C3-1.0-SNAPSHOT.jar"
+    }
+  ]
+}
