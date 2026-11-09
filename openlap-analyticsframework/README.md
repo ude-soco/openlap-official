@@ -408,6 +408,16 @@ the backend changes have not been deployed. Preserve files from every live repli
 before any rollout. See the [artifact migration guide](../docs/plugin-artifact-migration.md)
 for environment settings, commands, recovery and the remaining release gates.
 
+SUPER_ADMIN users can now use **Add methods** or **Add library** in the admin
+catalogs for the shared upload, inspection, review and activation workflow.
+Inspection requires explicit trust confirmation before running constructors.
+Incomplete installations stay hidden from catalog selection and runtime fetches;
+saved reviews and interrupted activations can be resumed. Identical uploads are
+idempotent; replacement of an existing entry class is reserved for version management.
+The new workflow requires S3 mode after the existing-artifact migration. It has
+not been deployed. See the [upload workflow guide](../docs/plugin-upload-workflow.md)
+for supported JAR contracts, APIs and recovery.
+
 Run the full backend suite and opt-in disposable MongoDB/Garage integration tests:
 
 ```bash

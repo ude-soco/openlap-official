@@ -1,8 +1,10 @@
 # Plugin artifacts: migration and operation
 
 This is the phase 3 backend implementation for [issue #1](https://github.com/ude-soco/openlap-official/issues/1).
-It adds explicit artifact migration and S3 execution. Upload/review/activation,
-metadata/version management, safe deletion and the usage overview are later phases.
+It adds explicit artifact migration and S3 execution. The subsequent
+[upload/review/activation workflow](./plugin-upload-workflow.md) is also implemented
+on this branch. Metadata/version management, safe deletion and the usage overview
+remain later phases.
 The application defaults to **local** mode; deployment never imports JARs automatically.
 
 ## Storage model
@@ -68,8 +70,8 @@ In S3 mode, database initialization skips local plugin discovery, and legacy
 create/upload/reload/populate operations return HTTP 409
 `PLUGIN_MANAGEMENT_MIGRATION`. Enable/disable and existing indicator execution
 remain available. The five legacy delete operations continue returning
-`PLUGIN_DELETE_UNAVAILABLE`. The new management workflow will replace these
-temporary restrictions in later phases.
+`PLUGIN_DELETE_UNAVAILABLE`. Use **Add methods** or **Add library** in the admin
+catalogs for the new staged workflow; legacy local mutations stay blocked in S3 mode.
 
 ## Preserve and review before rollout
 

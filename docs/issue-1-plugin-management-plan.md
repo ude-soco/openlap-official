@@ -1,6 +1,6 @@
 # Issue #1: plugin management with S3-compatible storage
 
-Status: lifecycle protections and backend artifact integration implemented on
+Status: lifecycle protections, backend artifact integration and the staged Add workflow implemented on
 `feat/shoeb-plugin-management-s3`; edge storage pilot deployed and verified;
 live JAR preservation and application migration remain pending.
 Updated: 2026-11-09.
@@ -14,9 +14,9 @@ historical and includes gaps that have since been fixed.
 
 | Issue requirement | Current implementation | Remaining work |
 | --- | --- | --- |
-| Manage analytics methods | Admin catalog, input/parameter inspection, usage counts, enable/disable | Add, edit metadata, upload replacement versions, safe deletion |
-| Manage visualization methods | Admin library/type catalogs, inspection, usage counts, enable/disable | Add libraries/types from JARs, edit metadata, upload replacement versions, safe deletion |
-| Upload and add methods | Legacy backend upload routes and unrouted legacy UI exist | Validated upload/review/activation workflow backed by durable object storage |
+| Manage analytics methods | Admin catalog, input/parameter inspection, usage counts, enable/disable; staged Add workflow on feature branch | Edit metadata, upload replacement versions, safe deletion; live acceptance |
+| Manage visualization methods | Admin library/type catalogs, inspection, usage counts, enable/disable; staged library/type installation on feature branch | Edit metadata, upload replacement versions, safe deletion; live acceptance |
+| Upload and add methods | Validated S3 upload, explicit inspection, review and atomic installation on feature branch | Preserved-JAR migration, rollout and edge acceptance |
 | Delete and update methods | Legacy delete routes now reject removal; enable/disable remains available | Reference checks, shared-artifact protection, version handling, confirmations and recovery |
 | Dashboard showing methods in use | Counts per item from saved indicators and distinct creators | Overview with totals, most-used methods and unused items, with clear metric labels |
 
@@ -25,7 +25,7 @@ The current code also validates plugin filenames and restricts legacy reload and
 populate routes to SUPER_ADMIN. Those fixes are prerequisites to preserve, not
 features to rebuild.
 
-Uploads still write local files, but now validate a staged archive and reject an
+Legacy uploads in local mode validate a staged archive and reject an
 existing filename without overwriting it. Both Java loaders need a local JAR and
 now resolve the recorded file instead of scanning unrelated JARs for the same
 class. Backend replicas do not currently mount plugin storage.
@@ -102,7 +102,29 @@ Phase 3 is implemented on the feature branch and verified locally:
 No live application migration or backend rollout has occurred. Preserve binaries
 from every running replica before replacing pods, then verify actual edge replica
 execution and restart recovery. The [artifact migration guide](./plugin-artifact-migration.md)
-records the commands, configuration and recovery procedure. Phases 4–8 remain open.
+records the commands, configuration and recovery procedure.
+
+Phase 4 is also implemented and tested on the feature branch:
+
+- Both admin catalogs now offer the same guided Add dialog: upload and static
+  validation, explicit trust confirmation and contract inspection, a complete
+  entry review, and activation. Saved reviews can be resumed across sessions.
+- Persisted installation states and versioned claims make failures and retries
+  visible. All new catalog rows remain hidden from selection and execution until
+  their parent installation commits ACTIVE. A cross-replica activation lock and
+  deterministic insert-only catalog IDs prevent partial publication or duplicate
+  entries, with explicit recovery after crashed attempts.
+- Uploading identical bytes reopens the existing installation. Existing classes
+  and library names produce conflicts; the Add workflow cannot overwrite an
+  installed version. Constructors run only after explicit inspection consent.
+- SUPER_ADMIN authorization and admin audit logging cover the new operations.
+  Backend and real MongoDB/Garage tests verify both-kind installation and loading,
+  partial-failure visibility, simultaneous activation and expired-claim recovery.
+  Desktop/mobile browser smoke tests cover both dialogs and failed-request recovery.
+
+See the [upload workflow guide](./plugin-upload-workflow.md) for supported contracts,
+API details and recovery. Live migration and replica/restart acceptance remain
+pending; implementation phases 5–8 remain open.
 
 ## Storage and execution design
 
@@ -129,9 +151,9 @@ flowchart LR
   artifact identity and checksum. Original filenames are display metadata, not
   storage paths or overwrite targets. Application-managed versions must work
   without depending on native S3 bucket versioning.
-- Add a proposed `plugin-artifact` collection for artifact/version identity,
-  object key, SHA-256 checksum, size, discovered entry classes, lifecycle state,
-  uploader and timestamps. Existing catalog records reference an artifact ID.
+- Use `plugin-artifact` for artifact identity, object key, checksum, size and
+  storage verification state; `plugin-installation` holds discovered contracts,
+  review/activation state, uploader and timestamps. Existing catalog records reference an artifact ID.
   One JAR may supply several methods or visualization types.
 - Each replica downloads missing artifacts into a temporary cache file, checks
   size/checksum, and atomically exposes the completed file to the loader.
