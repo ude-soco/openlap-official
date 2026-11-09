@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- volume.yaml
+- access.yaml
+- job.yaml
+- network.yaml
+labels:
+- pairs:
+    app.kubernetes.io/component: plugin-preservation
+configMapGenerator:
+- name: openlap-plugin-preservation-code
+  files:
+  - capture.py
+  - client.py

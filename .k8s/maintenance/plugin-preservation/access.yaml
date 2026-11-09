@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openlap-plugin-preservation
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: openlap-plugin-preservation
+rules:
+- apiGroups: [""]
+  resources: [pods]
+  verbs: [get]
+  # Replace these exact names in an operator overlay. An empty list grants all names.
+  resourceNames: [configure-backend-a, configure-backend-b, configure-database]
+- apiGroups: [""]
+  resources: [pods/exec]
+  verbs: [get, create]
+  resourceNames: [configure-backend-a, configure-backend-b, configure-database]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: openlap-plugin-preservation
+subjects:
+- kind: ServiceAccount
+  name: openlap-plugin-preservation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: openlap-plugin-preservation

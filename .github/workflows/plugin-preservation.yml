@@ -1,0 +1,28 @@
+name: Plugin preservation regressions
+
+on:
+  pull_request:
+    paths:
+    - '.k8s/maintenance/plugin-preservation/**'
+    - 'tests/*plugin_preservation*.py'
+    - '.github/workflows/plugin-preservation.yml'
+  push:
+    branches: [main]
+    paths:
+    - '.k8s/maintenance/plugin-preservation/**'
+    - 'tests/*plugin_preservation*.py'
+    - '.github/workflows/plugin-preservation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  preservation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        persist-credentials: false
+    - name: Verify legacy-container compatibility and pinned-client protocol
+      run: python3 -B tests/verify_plugin_preservation_containers.py
