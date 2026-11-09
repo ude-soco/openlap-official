@@ -1,6 +1,6 @@
 # Issue #1: plugin management with S3-compatible storage
 
-Status: lifecycle protections, backend artifact integration and the staged Add workflow implemented on
+Status: lifecycle protections, artifact integration, Add, metadata editing and replacement versions implemented on
 `feat/shoeb-plugin-management-s3`; edge storage pilot deployed and verified;
 live JAR preservation and application migration remain pending.
 Updated: 2026-11-09.
@@ -14,8 +14,8 @@ historical and includes gaps that have since been fixed.
 
 | Issue requirement | Current implementation | Remaining work |
 | --- | --- | --- |
-| Manage analytics methods | Admin catalog, input/parameter inspection, usage counts, enable/disable; staged Add workflow on feature branch | Edit metadata, upload replacement versions, safe deletion; live acceptance |
-| Manage visualization methods | Admin library/type catalogs, inspection, usage counts, enable/disable; staged library/type installation on feature branch | Edit metadata, upload replacement versions, safe deletion; live acceptance |
+| Manage analytics methods | Catalog, usage counts, enable/disable, staged Add, edit details, replacement versions and history on feature branch | Safe deletion; live acceptance |
+| Manage visualization methods | Library/type catalogs, usage counts, enable/disable, staged Add, edit details, replacement versions and history on feature branch | Safe deletion; live acceptance |
 | Upload and add methods | Validated S3 upload, explicit inspection, review and atomic installation on feature branch | Preserved-JAR migration, rollout and edge acceptance |
 | Delete and update methods | Legacy delete routes now reject removal; enable/disable remains available | Reference checks, shared-artifact protection, version handling, confirmations and recovery |
 | Dashboard showing methods in use | Counts per item from saved indicators and distinct creators | Overview with totals, most-used methods and unused items, with clear metric labels |
@@ -124,7 +124,28 @@ Phase 4 is also implemented and tested on the feature branch:
 
 See the [upload workflow guide](./plugin-upload-workflow.md) for supported contracts,
 API details and recovery. Live migration and replica/restart acceptance remain
-pending; implementation phases 5–8 remain open.
+pending.
+
+Phase 5 is implemented and tested on the feature branch:
+
+- **Details & versions** provides safe metadata editing with a shared revision
+  for details and status updates, preserved unsaved input and explicit reload
+  confirmation. Atomic field updates preserve legacy IDs and unknown fields.
+- Replacement uploads use immutable artifact bytes and a source-specific review.
+  Admins explicitly map old entries to new classes or choose no replacement.
+  Mapped entries inherit edited metadata and disabled states; new entries start
+  enabled. Existing catalog IDs and indicator references remain unchanged.
+- Version history groups the family's generations and links their details.
+  Activation permits existing classes only within the chosen family and checks
+  for concurrent successors. Disabling previous entries is a separate, confirmed
+  action after activation, guarded by the current predecessor revisions.
+- Real MongoDB/Garage tests cover three generations of both plugin kinds,
+  preserved original execution after disabling, concurrent edits/retirement,
+  and removed/reintroduced entries. Desktop/mobile browser tests cover edit
+  conflict recovery, mapping, interrupted activation and history navigation.
+
+See the [version management guide](./plugin-version-management.md). Live migration
+and acceptance remain pending; implementation phases 6–8 remain open.
 
 ## Storage and execution design
 

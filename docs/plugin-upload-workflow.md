@@ -58,7 +58,8 @@ prerequisite. Storage credentials never reach the browser.
   cannot duplicate its entries. Different bytes with an already installed entry
   class, or an existing visualization library name, cannot replace that plugin
   through Add. Disabled entries still count as installed. Replacement/version
-  management is phase 5 and preserves original indicator references.
+  management is implemented through [Upload new version](./plugin-version-management.md)
+  and preserves original indicator references.
 
 ## Publication and recovery
 
@@ -143,4 +144,5 @@ rollout, preserve JARs from every running backend, migrate and verify their exac
 bytes, inject the S3 configuration, then test old indicators and these new flows
 on every replica and after restart. Production still requires the agreed backup,
 restore and availability gates. Metadata/version editing, guarded deletion and
-the usage overview remain phases 5–7.
+the usage overview remain phases 6–7. Metadata and replacement/version management
+are implemented in the [version management guide](./plugin-version-management.md).

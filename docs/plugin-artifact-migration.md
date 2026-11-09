@@ -3,8 +3,8 @@
 This is the phase 3 backend implementation for [issue #1](https://github.com/ude-soco/openlap-official/issues/1).
 It adds explicit artifact migration and S3 execution. The subsequent
 [upload/review/activation workflow](./plugin-upload-workflow.md) is also implemented
-on this branch. Metadata/version management, safe deletion and the usage overview
-remain later phases.
+on this branch, together with [metadata/version management](./plugin-version-management.md).
+Safe deletion and the usage overview remain later phases.
 The application defaults to **local** mode; deployment never imports JARs automatically.
 
 ## Storage model

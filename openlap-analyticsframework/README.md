@@ -413,10 +413,19 @@ catalogs for the shared upload, inspection, review and activation workflow.
 Inspection requires explicit trust confirmation before running constructors.
 Incomplete installations stay hidden from catalog selection and runtime fetches;
 saved reviews and interrupted activations can be resumed. Identical uploads are
-idempotent; replacement of an existing entry class is reserved for version management.
+idempotent; replacing an existing entry class uses the explicit version workflow.
 The new workflow requires S3 mode after the existing-artifact migration. It has
 not been deployed. See the [upload workflow guide](../docs/plugin-upload-workflow.md)
 for supported JAR contracts, APIs and recovery.
+
+**Details & versions** now supports metadata editing with revision checks and
+grouped history. **Upload new version** adds an explicit old-to-new mapping review,
+inherits edited details and disabled states, and installs separate immutable
+catalog IDs. Previous versions remain executable for existing indicators.
+After activation, admins can separately confirm disabling the previous entries
+for new selections. See the [version management guide](../docs/plugin-version-management.md)
+for API contracts and concurrency/recovery behavior. These changes remain on the
+feature branch and have not been deployed.
 
 Run the full backend suite and opt-in disposable MongoDB/Garage integration tests:
 
