@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.repository.support.MongoRepositoryFactory;
 
@@ -35,6 +36,10 @@ public final class PluginArtifactMigrationApplication {
   }
 
   static void execute(String[] args) throws Exception {
+    execute(args, System.getenv());
+  }
+
+  static void execute(String[] args, Map<String, String> environment) throws Exception {
     String action = null;
     Path manifestPath = null;
     List<Path> roots = new ArrayList<>();
@@ -49,9 +54,8 @@ public final class PluginArtifactMigrationApplication {
     }
     if (action == null || roots.isEmpty()) throw usage();
     if (!manifestPath.getFileName().toString().endsWith(".json")) throw usage();
-    String uri = System.getenv().getOrDefault("MONGODB_PRIMARY_URI", "mongodb://127.0.0.1:27017");
-    String database = System.getenv().getOrDefault("OPENLAP_MONGODB_DB", "openlap_v2");
-    if (database.trim().isEmpty()) throw new IllegalArgumentException("OPENLAP_MONGODB_DB must not be blank.");
+    String uri = requireEnvironment(environment, "MONGODB_PRIMARY_URI");
+    String database = requireEnvironment(environment, "OPENLAP_MONGODB_DB");
     ObjectMapper mapper = new ObjectMapper();
     MongoClient client = MongoClients.create(uri);
     try {
@@ -73,13 +77,21 @@ public final class PluginArtifactMigrationApplication {
         System.out.println("Preflight passed for " + manifest.entries.size() + " catalog entries. No data changed.");
         return;
       }
-      PluginStorageProperties properties = PluginStorageProperties.forMigration(System.getenv());
+      PluginStorageProperties properties = PluginStorageProperties.forMigration(environment);
       try (S3ArtifactObjectStore store = S3ArtifactObjectStore.connect(properties)) {
         PluginArtifactRepository repository = new MongoRepositoryFactory(mongo).getRepository(PluginArtifactRepository.class);
         int count = migration.apply(manifest, new PluginArtifactRegistry(repository, mongo, store));
         System.out.println("Artifact references verified for " + count + " catalog entries. IDs, metadata and enabled states were preserved.");
       }
     } finally { client.close(); }
+  }
+
+  private static String requireEnvironment(Map<String, String> environment, String name) {
+    String value = environment.get(name);
+    if (value == null || value.trim().isEmpty()) {
+      throw new IllegalArgumentException("Explicit " + name + " is required for artifact migration.");
+    }
+    return value;
   }
 
   private static IllegalArgumentException usage() {
