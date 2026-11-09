@@ -36,6 +36,7 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
   private final VisualizationMethodUtilityService visualizationMethodUtilityService;
   private final AnalyticsTechniqueService analyticsTechniqueService;
   private final PluginCatalogVisibility pluginVisibility;
+  private final com.openlap.plugins.management.PluginCatalogEditor pluginEditor;
 
   @Override
   public List<AdminVisLibraryResponse> getVisualizationLibraries() {
@@ -86,24 +87,27 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
   public AdminVisLibraryResponse setVisualizationLibraryEnabled(String id, boolean enabled) {
     VisLibrary library = visualizationMethodUtilityService.fetchVisualizationLibraryMethod(id);
     library.setEnabled(enabled);
+    pluginEditor.setEnabled(com.openlap.plugins.management.PluginCatalogKind.VISUALIZATION_LIBRARY, id, enabled);
     log.info("Admin set visualization library '{}' enabled={}", id, enabled);
-    return toLibraryResponse(visualizationLibraryRepository.save(library));
+    return toLibraryResponse(library);
   }
 
   @Override
   public AdminVisTypeResponse setVisualizationTypeEnabled(String id, boolean enabled) {
     VisType type = visualizationMethodUtilityService.fetchVisualizationTypeMethod(id);
     type.setEnabled(enabled);
+    pluginEditor.setEnabled(com.openlap.plugins.management.PluginCatalogKind.VISUALIZATION_TYPE, id, enabled);
     log.info("Admin set visualization type '{}' enabled={}", id, enabled);
-    return toTypeResponse(visualizationTypeRepository.save(type));
+    return toTypeResponse(type);
   }
 
   @Override
   public AdminAnalyticsMethodResponse setAnalyticsMethodEnabled(String id, boolean enabled) {
     AnalyticsTechnique technique = analyticsTechniqueService.fetchAnalyticsTechniqueMethod(id);
     technique.setEnabled(enabled);
+    pluginEditor.setEnabled(com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD, id, enabled);
     log.info("Admin set analytics method '{}' enabled={}", id, enabled);
-    return toMethodResponse(analyticsTechniqueRepository.save(technique));
+    return toMethodResponse(technique);
   }
 
   private AdminVisLibraryResponse toLibraryResponse(VisLibrary library) {

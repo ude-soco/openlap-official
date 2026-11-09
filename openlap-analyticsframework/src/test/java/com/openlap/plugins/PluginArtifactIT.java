@@ -451,6 +451,41 @@ public class PluginArtifactIT {
 
   private static long version(Map<String, Object> review) { return ((Number) review.get("version")).longValue(); }
 
+  @Test
+  public void metadataEditsPreserveBinaryIdentityLegacyIdsAndUnknownFields() {
+    com.openlap.plugins.management.PluginCatalogEditor editor = new com.openlap.plugins.management.PluginCatalogEditor(mongo);
+    Document before = row("analytics-technique", methodId);
+    Map<String, Object> update = new java.util.LinkedHashMap<>();
+    update.put("version", 0L); update.put("name", "Edited name"); update.put("description", "Updated description"); update.put("creator", "Admin attribution");
+    Map<String, Object> result = editor.edit(com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD, methodId.toHexString(), update);
+    assertThat(result.get("version")).isEqualTo(1L);
+    Document after = row("analytics-technique", methodId);
+    assertThat(after.get("_id")).isEqualTo(methodId);
+    for (String field : Arrays.asList("fileName", "implementingClass", "enabled", "customLegacyField")) assertThat(after.get(field)).isEqualTo(before.get(field));
+    assertThat(row("indicator", indicatorId).get("analytics")).isEqualTo(new DBRef("analytics-technique", methodId));
+    assertThatThrownBy(() -> editor.edit(com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD, methodId.toHexString(), update))
+        .isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class);
+    update.put("version", 1L); update.put("artifactId", "cannot-change-binary");
+    assertThatThrownBy(() -> editor.edit(com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD, methodId.toHexString(), update))
+        .isInstanceOf(com.openlap.infrastructure.exception.ValidationException.class);
+  }
+
+  @Test
+  public void statusUpdatesInvalidateStaleMetadataEditsWithoutOverwritingFields() {
+    com.openlap.plugins.management.PluginCatalogEditor editor = new com.openlap.plugins.management.PluginCatalogEditor(mongo);
+    editor.setEnabled(com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD, methodId.toHexString(), true);
+    Map<String, Object> stale = new java.util.LinkedHashMap<>(); stale.put("version", 0L); stale.put("name", "Stale edit");
+    assertThatThrownBy(() -> editor.edit(com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD, methodId.toHexString(), stale))
+        .isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class);
+    assertThat(row("analytics-technique", methodId).getBoolean("enabled")).isTrue();
+    assertThat(row("analytics-technique", methodId).get("customLegacyField")).isEqualTo(Arrays.asList("retain", "me"));
+    // Explicit null revisions in historical documents use the same initial revision as missing fields.
+    mongo.getCollection("visualization-type").updateOne(new Document("_id", typeId), new Document("$set", new Document("managementVersion", null)));
+    Map<String, Object> typeEdit = new java.util.LinkedHashMap<>(); typeEdit.put("version", 0L); typeEdit.put("description", "Accessible chart description");
+    editor.edit(com.openlap.plugins.management.PluginCatalogKind.VISUALIZATION_TYPE, typeId.toHexString(), typeEdit);
+    assertThat(row("visualization-type", typeId).getString("description")).isEqualTo("Accessible chart description");
+  }
+
   private void assertOnlyArtifactChanged(String collection, ObjectId id, Document before) {
     Document after = row(collection, id);
     assertThat(after.remove("artifactId")).isInstanceOf(String.class);
