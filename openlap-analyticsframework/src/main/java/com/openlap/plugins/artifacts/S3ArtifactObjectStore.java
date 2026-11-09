@@ -91,5 +91,17 @@ public final class S3ArtifactObjectStore implements ArtifactObjectStore, AutoClo
     return new PluginStorageException("PLUGIN_STORAGE_UNAVAILABLE", "Plugin storage is unavailable. Retry the operation or contact an administrator.");
   }
 
+  @Override public void deleteVerified(PluginArtifact artifact) {
+    artifact.validate();
+    try (InputStream existing = open(artifact)) {
+      ArtifactIntegrity.copyVerified(existing, java.io.OutputStream.nullOutputStream(), artifact);
+    } catch (PluginStorageException error) {
+      if ("PLUGIN_OBJECT_MISSING".equals(error.getCode())) return; // Idempotent recovery after a lost delete acknowledgement.
+      throw error;
+    } catch (IOException error) { throw unavailable(); }
+    try { client.deleteObject(request -> request.bucket(bucket).key(artifact.getObjectKey())); }
+    catch (SdkException error) { throw unavailable(); }
+  }
+
   @Override public void close() { client.close(); }
 }

@@ -44,6 +44,7 @@ public class PluginRemovalService {
     result.put("available", available()); result.put("kind", kind.name()); result.put("id", id);
     result.put("name", selected.get("name")); result.put("removed", "REMOVED".equals(selected.getString("removalState")));
     result.put("removalOperation", selected.get("removalOperation"));
+    if (selected.get("removalOperation") != null) result.put("operation", operation(selected.getString("removalOperation")));
     result.put("affected", summaries(scope)); result.put("dependencies", dependencies(scope));
     long pins = scope.stream().mapToLong(row -> pins(row).size()).sum();
     result.put("inFlightWrites", pins); result.put("retentionDays", retentionDays());
@@ -92,21 +93,25 @@ public class PluginRemovalService {
         Map<String, Long> dependencies = dependencies(rows);
         if (dependencies.values().stream().anyMatch(count -> count != 0)) throw conflict("This plugin is still referenced by saved work, drafts or a pending installation. Use Disable to retire it safely.");
         if (mongo.getCollection("plugin-removal").updateOne(new Document("_id", token).append("state", "PREPARING"),
-            new Document("$set", new Document("state", "COMMITTING"))).getMatchedCount() != 1) {
+            new Document("$set", new Document("state", "COMMITTING").append("removedAt", new Date()))).getMatchedCount() != 1) {
           Document latest = rawOperation(token);
           if ("REMOVED".equals(latest.getString("state"))) return operation(token);
           if (!"COMMITTING".equals(latest.getString("state"))) throw conflict("Removal was cancelled. Refresh before another attempt.");
         }
         committing = true;
       }
-      Date removed = operation.getDate("createdAt");
+      Date removed = recoveryStart(rawOperation(token));
       for (Document row : rows) {
-        if (mongo.getCollection(row.getString("_collection")).updateOne(new Document("_id", row.get("_id")).append("removalOperation", token),
+        if (mongo.getCollection(row.getString("_collection")).updateOne(new Document("_id", row.get("_id")).append("removalOperation", token).append("removalState", "REMOVING"),
             new Document("$set", new Document("removalState", "REMOVED").append("removedAt", removed).append("enabled", false))).getMatchedCount() != 1) {
-          throw conflict("A removal entry changed unexpectedly. Keep it reserved and resume after repairing its catalog record.");
+          String state = rawOperation(token).getString("state");
+          if (Arrays.asList("REMOVED", "RESTORING", "RESTORED").contains(state)) return operation(token);
+          Document current = mongo.getCollection(row.getString("_collection")).find(new Document("_id", row.get("_id"))).first();
+          if (current == null || !token.equals(current.getString("removalOperation")) || !"REMOVED".equals(current.getString("removalState")))
+            throw conflict("A removal entry changed unexpectedly. Keep it reserved and resume after repairing its catalog record.");
         }
       }
-      mongo.getCollection("plugin-removal").updateOne(new Document("_id", token), new Document("$set", new Document("state", "REMOVED")));
+      mongo.getCollection("plugin-removal").updateOne(new Document("_id", token).append("state", "COMMITTING"), new Document("$set", new Document("state", "REMOVED")));
       return operation(token);
     } catch (RuntimeException error) {
       if (!committing) {
@@ -131,9 +136,27 @@ public class PluginRemovalService {
 
   public List<Map<String, Object>> removed(PluginCatalogKind kind) {
     List<Map<String, Object>> result = new ArrayList<>();
-    for (Document row : mongo.getCollection("plugin-removal").find(new Document("kind", kind.name())
-        .append("state", new Document("$in", Arrays.asList("REMOVED", "COMMITTING", "RESTORING")))).sort(new Document("createdAt", -1)).limit(100)) result.add(operation(row.getString("_id")));
+    for (Document row : mongo.getCollection("plugin-removal").find(new Document("kind", kind == PluginCatalogKind.VISUALIZATION_TYPE
+        ? new Document("$in", Arrays.asList(kind.name(), PluginCatalogKind.VISUALIZATION_LIBRARY.name())) : kind.name())
+        .append("state", new Document("$in", Arrays.asList("PREPARING", "REMOVED", "COMMITTING", "RESTORING")))).sort(new Document("createdAt", -1)).limit(100)) {
+      if ("PREPARING".equals(row.getString("state"))) {
+        Document root = rows(row).get(0);
+        if (mongo.getCollection(root.getString("_collection")).countDocuments(new Document("_id", root.get("_id")).append("removalOperation", row.get("_id"))) == 0) continue;
+      }
+      result.add(operation(row.getString("_id")));
+    }
     return result;
+  }
+
+  public Map<String, Object> resume(String token) {
+    requireAvailable();
+    Document operation = rawOperation(token);
+    if (Arrays.asList("REMOVED", "RESTORING", "RESTORED").contains(operation.getString("state"))) return operation(token);
+    if (!Arrays.asList("PREPARING", "COMMITTING").contains(operation.getString("state"))) throw conflict("This removal was cancelled. Start with a fresh catalog review.");
+    PluginCatalogKind kind = PluginCatalogKind.valueOf(operation.getString("kind"));
+    Document current = editor.readIncludingRemoved(kind, operation.getString("catalogId"));
+    if (!token.equals(current.getString("removalOperation"))) throw conflict("This removal no longer owns the catalog entry. Refresh its current state.");
+    return remove(kind, operation.getString("catalogId"), Collections.emptyMap());
   }
 
   public Map<String, Object> restore(String token) {
@@ -141,7 +164,12 @@ public class PluginRemovalService {
     Document operation = rawOperation(token);
     if ("RESTORED".equals(operation.getString("state"))) { finishRestore(operation); return operation(token); }
     if (!("REMOVED".equals(operation.getString("state")) || "RESTORING".equals(operation.getString("state")))) throw conflict("Finish removal before restoring its entries.");
-    if (!"RESTORING".equals(operation.getString("state")) && operation.getDate("createdAt").toInstant().plusSeconds(retentionDays() * 86400L).isBefore(Instant.now())) throw conflict("The recovery period has ended. Restore from the preserved release backup if needed.");
+    if (!"RESTORING".equals(operation.getString("state")) && recoveryStart(operation).toInstant().plusSeconds(retentionDays() * 86400L).isBefore(Instant.now())) throw conflict("The recovery period has ended. Restore from the preserved release backup if needed.");
+    if (mongo.getCollection("plugin-removal").updateOne(new Document("_id", token).append("state", new Document("$in", Arrays.asList("REMOVED", "RESTORING"))),
+        new Document("$set", new Document("state", "RESTORING"))).getMatchedCount() != 1) {
+      if ("RESTORED".equals(rawOperation(token).getString("state"))) { finishRestore(operation); return operation(token); }
+      throw conflict("Recovery changed. Refresh before continuing.");
+    }
     List<Document> rows = rows(operation);
     // Restoring a chart on its own requires an available parent library.
     if (PluginCatalogKind.VISUALIZATION_TYPE.name().equals(operation.getString("kind"))) {
@@ -149,7 +177,7 @@ public class PluginRemovalService {
       if (parent instanceof DBRef) {
         Document library = editor.read(PluginCatalogKind.VISUALIZATION_LIBRARY, ((DBRef) parent).getId().toString());
         if (mongo.getCollection("visualization-library").updateOne(new Document("_id", library.get("_id"))
-            .append("removalState", new Document("$in", Arrays.asList(null, "RESTORED"))), new Document("$set", new Document("referencePins." + token, new Document("sourceCollection", "plugin-removal").append("createdAt", new Date())))).getMatchedCount() != 1) throw conflict("The parent library changed. Refresh before restoring.");
+            .append("removalState", library.get("removalState")).append("removalOperation", library.get("removalOperation")), new Document("$set", new Document("referencePins." + token, new Document("sourceCollection", "plugin-removal").append("createdAt", new Date())))).getMatchedCount() != 1) throw conflict("The parent library changed. Refresh before restoring.");
       }
     }
     for (Document row : rows) {
@@ -162,15 +190,17 @@ public class PluginRemovalService {
         cache.resolve(registry.ready(artifact, kind));
       }
     }
-    if (mongo.getCollection("plugin-removal").updateOne(new Document("_id", token).append("state", new Document("$in", Arrays.asList("REMOVED", "RESTORING"))),
-        new Document("$set", new Document("state", "RESTORING"))).getMatchedCount() != 1) {
-      if ("RESTORED".equals(rawOperation(token).getString("state"))) { finishRestore(operation); return operation(token); }
-      throw conflict("Recovery changed. Refresh before continuing.");
-    }
     // The retained parent documents keep DBRefs intact. Restore all entries disabled; enabling is explicit.
-    for (Document row : rows) mongo.getCollection(row.getString("_collection")).updateOne(new Document("_id", row.get("_id")).append("removalOperation", token),
+    for (Document row : rows) {
+      long matched = mongo.getCollection(row.getString("_collection")).updateOne(new Document("_id", row.get("_id")).append("removalOperation", token).append("removalState", "REMOVED"),
         new Document("$set", new Document("removalState", "RESTORED").append("enabled", false))
-            .append("$unset", new Document("removedAt", 1)).append("$inc", new Document("managementVersion", 1L)));
+            .append("$unset", new Document("removedAt", 1)).append("$inc", new Document("managementVersion", 1L))).getMatchedCount();
+      if (matched == 0) {
+        if ("RESTORED".equals(rawOperation(token).getString("state"))) { finishRestore(operation); return operation(token); }
+        Document current = mongo.getCollection(row.getString("_collection")).find(new Document("_id", row.get("_id"))).first();
+        if (current == null || !token.equals(current.getString("removalOperation")) || !"RESTORED".equals(current.getString("removalState"))) throw conflict("A recovery entry changed. Keep it reserved and resume after repairing its catalog record.");
+      }
+    }
     mongo.getCollection("plugin-removal").updateOne(new Document("_id", token).append("state", "RESTORING"), new Document("$set", new Document("state", "RESTORED")));
     finishRestore(operation);
     return operation(token);
@@ -188,6 +218,10 @@ public class PluginRemovalService {
     if (parent instanceof DBRef) mongo.getCollection("visualization-library").updateOne(new Document("_id", ((DBRef) parent).getId()), new Document("$unset", new Document("referencePins." + token, 1)));
   }
 
+  public void finishCompletedRecoveries() {
+    for (Document operation : mongo.getCollection("plugin-removal").find(new Document("state", "RESTORED")).limit(100)) finishRestore(operation);
+  }
+
   private List<Document> scope(PluginCatalogKind kind, Document selected) {
     List<Document> result = new ArrayList<>(); result.add(tag(selected, kind.collection));
     if (kind == PluginCatalogKind.VISUALIZATION_LIBRARY) for (Document row : mongo.getCollection("visualization-type").find(
@@ -198,15 +232,15 @@ public class PluginRemovalService {
     return result;
   }
 
-  private Map<String, Long> dependencies(List<Document> rows) {
+  Map<String, Long> dependencies(List<Document> rows) {
     Set<String> ids = new LinkedHashSet<>(); for (Document row : rows) ids.add(row.get("_id").toString());
     Map<String, Long> result = new LinkedHashMap<>();
     for (String key : Arrays.asList("savedIndicators", "indicatorDrafts", "savedCards", "cardDrafts", "pendingInstallations", "unreadableConfigurations")) result.put(key, 0L);
     for (String collection : PluginReferences.COLLECTIONS) {
       for (Document document : mongo.getCollection(collection).find()) {
-        if ("plugin-installation".equals(collection) && "ACTIVE".equals(document.getString("state"))) continue;
+        if ("plugin-installation".equals(collection) && Arrays.asList("ACTIVE", "DISCARDED").contains(document.getString("state"))) continue;
         try {
-          Set<String> referenced = references.collect(document);
+          Set<String> referenced = references.collect(document, ids);
           if (Collections.disjoint(ids, referenced)) continue;
           String key = "analytics-indicator".equals(collection) ? "savedIndicators" : "analytics-indicator-drafts".equals(collection) ? "indicatorDrafts"
               : "plugin-installation".equals(collection) ? "pendingInstallations" : "DRAFT".equals(document.getString("status")) ? "cardDrafts" : "savedCards";
@@ -237,7 +271,7 @@ public class PluginRemovalService {
     Document row = rawOperation(token); Map<String, Object> result = new LinkedHashMap<>();
     for (String field : Arrays.asList("kind", "catalogId", "name", "state", "createdAt")) result.put(field, row.get(field));
     result.put("id", token); result.put("affected", summaries(rows(row)));
-    result.put("recoverableUntil", Date.from(row.getDate("createdAt").toInstant().plusSeconds(retentionDays() * 86400L)));
+    result.put("recoverableUntil", Date.from(recoveryStart(row).toInstant().plusSeconds(retentionDays() * 86400L)));
     return result;
   }
 
@@ -259,6 +293,7 @@ public class PluginRemovalService {
   @SuppressWarnings("unchecked") private static Map<String, Object> pins(Document row) { return row.get("referencePins") instanceof Map<?, ?> ? (Map<String, Object>) row.get("referencePins") : Collections.emptyMap(); }
   @SuppressWarnings("unchecked") private static List<Document> rows(Document row) { return (List<Document>) row.get("rows"); }
   private int retentionDays() { if (properties.getRetentionDays() < 1) throw conflict("Configure a positive artifact retention period."); return properties.getRetentionDays(); }
+  private static Date recoveryStart(Document operation) { return operation.getDate("removedAt") == null ? operation.getDate("createdAt") : operation.getDate("removedAt"); }
   private void requireAvailable() { if (!available()) throw conflict("Removal is available after all backend replicas use reference guards and PLUGIN_DELETION_ENABLED is enabled."); }
   private static ConflictException conflict(String message) { return new ConflictException("PLUGIN_REMOVAL_BLOCKED", message); }
 }

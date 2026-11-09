@@ -13,6 +13,11 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 @EnableConfigurationProperties(PluginStorageProperties.class)
 public class PluginStorageConfiguration {
   @Bean
+  public com.openlap.plugins.management.PluginArtifactCleanup pluginArtifactCleanup(MongoTemplate mongo,
+      PluginStorageProperties properties, ObjectProvider<ArtifactObjectStore> store, com.openlap.plugins.management.PluginRemovalService removal) {
+    return new com.openlap.plugins.management.PluginArtifactCleanup(mongo, properties, store.getIfAvailable(), removal);
+  }
+  @Bean
   public com.openlap.plugins.management.PluginRemovalService pluginRemovalService(MongoTemplate mongo,
       PluginStorageProperties properties, ObjectProvider<PluginArtifactRegistry> registry, ObjectProvider<PluginArtifactCache> cache) {
     return new com.openlap.plugins.management.PluginRemovalService(mongo, properties, registry.getIfAvailable(), cache.getIfAvailable());
@@ -23,9 +28,9 @@ public class PluginStorageConfiguration {
     return new PluginManagementService(mongo, properties, registry.getIfAvailable(), cache.getIfAvailable());
   }
   @Bean
-  public PluginArtifactResolver pluginArtifactResolver(PluginStorageProperties properties,
+  public PluginArtifactResolver pluginArtifactResolver(PluginStorageProperties properties, MongoTemplate mongo,
       ObjectProvider<PluginArtifactRegistry> registry, ObjectProvider<PluginArtifactCache> cache) {
-    return properties.getMode() == PluginStorageProperties.Mode.LOCAL ? PluginArtifactResolver.local()
+    return properties.getMode() == PluginStorageProperties.Mode.LOCAL ? PluginArtifactResolver.local(mongo)
         : new PluginArtifactResolver(properties.getMode(), registry.getObject(), cache.getObject());
   }
 

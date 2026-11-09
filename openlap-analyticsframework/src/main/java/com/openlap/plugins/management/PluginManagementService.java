@@ -232,6 +232,39 @@ public class PluginManagementService {
     return get(id);
   }
 
+  public Map<String, Object> discard(String id, Long version) {
+    requireAvailable(); Document operation = operation(id);
+    if ("DISCARDED".equals(operation.getString("state"))) return response(operation);
+    if (mongo.updateFirst(versionQuery(id, version).addCriteria(Criteria.where("state").in("UPLOADED", "INSPECTION_FAILED", "INSPECTED")),
+        new Update().set("state", "DISCARDED").set("discardedAt", new Date()).inc("version", 1), OPERATIONS).getMatchedCount() != 1) {
+      throw conflict("Only an idle upload review can be discarded. Refresh or complete its running operation first.");
+    }
+    return get(id);
+  }
+
+  public Map<String, Object> reopen(String id, Long version) {
+    requireAvailable(); Document previous = operation(id);
+    if (!"DISCARDED".equals(previous.getString("state"))) throw conflict("This review is not discarded. Refresh its current state.");
+    if (previous.getDate("discardedAt").toInstant().plusSeconds(properties.getRetentionDays() * 86400L).isBefore(Instant.now())) throw conflict("This review's recovery period ended. Upload a new build with a different checksum.");
+    PluginKind kind = PluginKind.valueOf(previous.getString("kind"));
+    cache.resolve(registry.ready(previous.getString("artifactId"), kind));
+    Document next = new Document(previous);
+    if (next.get("replacementTarget") != null) {
+      Document source = next.get("replacementTarget", Document.class);
+      Document current = versions.target(PluginCatalogKind.valueOf(source.getString("kind")), source.getString("targetId"));
+      versions.requireNewBinary(current, previous.getString("artifactId")); next.put("replacementTarget", current);
+    }
+    for (String field : Arrays.asList("inspection", "replacement", "lastError", "discardedAt", "inspectionClaim", "_pluginReferenceWrite")) next.remove(field);
+    next.put("state", "UPLOADED"); next.put("version", PluginCatalogEditor.requireVersion(version) + 1);
+    PluginReferenceFence fence = new PluginReferenceFence(mongo); fence.beforeSave(next, OPERATIONS);
+    Update update = new Update(); next.forEach((field, value) -> { if (!"_id".equals(field)) update.set(field, value); });
+    for (String field : Arrays.asList("inspection", "replacement", "lastError", "discardedAt", "inspectionClaim")) update.unset(field);
+    if (mongo.updateFirst(versionQuery(id, version).addCriteria(Criteria.where("state").is("DISCARDED")), update, OPERATIONS).getMatchedCount() != 1) {
+      fence.afterSave(next); throw conflict("The review changed. Refresh before restoring it.");
+    }
+    fence.afterSave(next); return get(id);
+  }
+
   private void acquireLock(String id, String claim) {
     for (int attempt = 0; attempt < 3; attempt++) {
       try {
@@ -303,6 +336,14 @@ public class PluginManagementService {
   private Map<String, Object> response(Document operation) {
     Map<String, Object> result = summary(operation);
     result.put("conflicts", "ACTIVE".equals(operation.getString("state")) ? Collections.emptyList() : conflicts(operation));
+    if ("ACTIVE".equals(operation.getString("state"))) {
+      long available = 0; long removed = 0;
+      for (String collection : Arrays.asList("analytics-technique", "visualization-library")) for (Document row : mongo.getCollection(collection).find(new Document("installationId", operation.getString("_id")))) {
+        if (new PluginCatalogVisibility(mongo).isRecordAvailable(row)) available++; else removed++;
+      }
+      result.put("removedEntries", removed);
+      if (available == 0 && removed > 0) result.put("state", "REMOVED");
+    }
     if (operation.get("replacementTarget") != null) {
       Document target = operation.get("replacementTarget", Document.class);
       try { result.put("replacementSource", versions.target(PluginCatalogKind.valueOf(target.getString("kind")), target.getString("targetId"))); }

@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -39,6 +40,42 @@ public class AdminPluginController {
   private final PluginManagementService plugins;
   private final AdminAuditService audit;
   private final PluginCatalogEditor catalog;
+  private final com.openlap.plugins.management.PluginRemovalService removal;
+  private final com.openlap.plugins.management.PluginArtifactCleanup cleanup;
+
+  @GetMapping("/catalog/{kind}/{id}/removal")
+  public ApiSuccess removal(@PathVariable PluginCatalogKind kind, @PathVariable String id) {
+    return new ApiSuccess(HttpStatus.OK, "Removal review found.", removal.preview(kind, id));
+  }
+
+  @DeleteMapping("/catalog/{kind}/{id}")
+  public ApiSuccess remove(@PathVariable PluginCatalogKind kind, @PathVariable String id, @RequestBody ReviewRequest body, HttpServletRequest request) throws IOException {
+    return mutate(request, PLUGIN_REMOVE, id, kind.name(), () -> removal.remove(kind, id, body.getExpectedVersions()));
+  }
+
+  @GetMapping("/removed")
+  public ApiSuccess removed(@RequestParam PluginCatalogKind kind) {
+    Map<String, Object> data = new LinkedHashMap<>(); data.put("available", removal.available()); data.put("entries", removal.removed(kind));
+    return new ApiSuccess(HttpStatus.OK, "Removed entries found.", data);
+  }
+
+  @PostMapping("/removals/{id}/restore")
+  public ApiSuccess restore(@PathVariable String id, HttpServletRequest request) throws IOException {
+    return mutate(request, PLUGIN_RESTORE, id, "PLUGIN_REMOVAL", () -> removal.restore(id));
+  }
+
+  @PostMapping("/removals/{id}/resume")
+  public ApiSuccess resume(@PathVariable String id, HttpServletRequest request) throws IOException {
+    return mutate(request, PLUGIN_REMOVE, id, "PLUGIN_REMOVAL", () -> removal.resume(id));
+  }
+
+  @GetMapping("/cleanup")
+  public ApiSuccess cleanup() { return new ApiSuccess(HttpStatus.OK, "Retention cleanup reviewed.", cleanup.preview()); }
+
+  @PostMapping("/cleanup")
+  public ApiSuccess cleanup(@RequestBody ReviewRequest body, HttpServletRequest request) throws IOException {
+    return mutate(request, PLUGIN_ARTIFACT_CLEANUP, "retention-cleanup", () -> cleanup.run(Boolean.TRUE.equals(body.getConfirmed())));
+  }
 
   @GetMapping("/catalog/{kind}/{id}")
   public ApiSuccess details(@PathVariable PluginCatalogKind kind, @PathVariable String id) {
@@ -100,6 +137,12 @@ public class AdminPluginController {
     return mutate(request, PLUGIN_ACTIVATE, id, () -> plugins.activate(id, body.getVersion()));
   }
 
+  @PostMapping("/{id}/{action:discard|reopen}")
+  public ApiSuccess reviewState(@PathVariable String id, @PathVariable String action, @RequestBody ReviewRequest body, HttpServletRequest request) throws IOException {
+    return mutate(request, "discard".equals(action) ? PLUGIN_UPLOAD_DISCARD : PLUGIN_UPLOAD_REOPEN, id,
+        () -> "discard".equals(action) ? plugins.discard(id, body.getVersion()) : plugins.reopen(id, body.getVersion()));
+  }
+
   private ApiSuccess mutate(HttpServletRequest request, String action, String id, Mutation mutation) throws IOException {
     return mutate(request, action, id, PLUGIN_INSTALLATION, mutation);
   }
@@ -108,13 +151,14 @@ public class AdminPluginController {
     try {
       Map<String, Object> result = mutation.run();
       Map<String, Object> metadata = new LinkedHashMap<>();
-      for (String field : new String[] {"kind", "sha256", "state", "version"}) metadata.put(field, result.get(field));
+      for (String field : new String[] {"kind", "sha256", "state", "version", "purged", "failedArtifactIds"}) if (result.containsKey(field)) metadata.put(field, result.get(field));
       if (result.get("replacement") instanceof Map<?, ?>) {
         Map<?, ?> plan = (Map<?, ?>) result.get("replacement");
         metadata.put("previousArtifactId", plan.get("previousArtifactId")); metadata.put("familyId", plan.get("familyId"));
       }
-      try { audit.logSuccess(request, action, resource, String.valueOf(result.get("id")),
-          String.valueOf(result.getOrDefault("filename", result.get("name"))), metadata); }
+      String resourceId = result.get("catalogId") != null && !"PLUGIN_REMOVAL".equals(resource) ? String.valueOf(result.get("catalogId")) : String.valueOf(result.getOrDefault("id", id));
+      try { audit.logSuccess(request, action, resource, resourceId,
+          String.valueOf(result.getOrDefault("filename", result.getOrDefault("name", action))), metadata); }
       catch (RuntimeException e) { log.warn("Plugin audit logging failed."); }
       return new ApiSuccess(HttpStatus.OK, "Plugin review updated.", result);
     } catch (RuntimeException | IOException e) {
@@ -133,5 +177,6 @@ public class AdminPluginController {
     private Long version;
     private Boolean trusted;
     private Map<String, Object> expectedVersions;
+    private Boolean confirmed;
   }
 }

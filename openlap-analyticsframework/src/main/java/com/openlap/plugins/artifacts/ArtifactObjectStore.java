@@ -12,4 +12,8 @@ public interface ArtifactObjectStore {
    */
   void putIfAbsent(PluginArtifact artifact, Path source);
   InputStream open(PluginArtifact artifact);
+
+  default void deleteVerified(PluginArtifact artifact) {
+    throw new PluginStorageException("PLUGIN_PURGE_UNAVAILABLE", "This object store does not support verified retention cleanup.");
+  }
 }

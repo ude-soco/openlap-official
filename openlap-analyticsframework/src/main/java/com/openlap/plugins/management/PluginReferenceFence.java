@@ -30,7 +30,6 @@ public class PluginReferenceFence {
       // A new binary may use an archived predecessor's metadata without resurrecting its runtime IDs.
       checked = new Document(document); checked.remove("replacementTarget"); checked.remove("replacement");
     }
-    Set<String> ids = references.collect(checked);
     Map<String, List<Document>> catalog = new HashMap<>();
     for (PluginCatalogKind kind : PluginCatalogKind.values()) {
       for (Document row : mongo.getCollection(kind.collection).find().projection(new Document("_id", 1)
@@ -41,6 +40,7 @@ public class PluginReferenceFence {
         catalog.computeIfAbsent(row.get("_id").toString(), ignored -> new ArrayList<>()).add(ref);
       }
     }
+    Set<String> ids = references.collect(checked, catalog.keySet());
     Map<String, Document> selected = new LinkedHashMap<>();
     for (String id : ids) for (Document ref : catalog.getOrDefault(id, Collections.emptyList())) {
       selected.put(ref.getString("kind") + ":" + id, ref);

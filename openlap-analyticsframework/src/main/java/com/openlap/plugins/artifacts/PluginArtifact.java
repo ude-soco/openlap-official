@@ -11,7 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Getter
 @Document("plugin-artifact")
 public class PluginArtifact {
-  public enum State { STAGED, READY }
+  public enum State { STAGED, READY, PURGING, PURGED }
 
   @Id private final String id;
   private final PluginKind kind;

@@ -706,6 +706,106 @@ public class PluginArtifactIT {
     assertThat(row("visualization-type", typeId).get("visualizationLib")).isEqualTo(new DBRef("visualization-library", libraryId));
   }
 
+  @Test
+  public void interruptedRemovalAndRecoveryResumeWithoutRepublishingPartialCatalogs() throws Exception {
+    migration.apply(migration.inventory(), registry);
+    com.openlap.plugins.management.PluginRemovalService removal = removalService();
+    com.openlap.plugins.management.PluginCatalogKind kind = com.openlap.plugins.management.PluginCatalogKind.VISUALIZATION_LIBRARY;
+    Map<String, Object> removed = removal.remove(kind, libraryId.toHexString(), removalVersions(removal.preview(kind, libraryId.toHexString())));
+    String token = (String) removed.get("id");
+    // Simulate a process stopping after the first row was removed.
+    mongo.getCollection("plugin-removal").updateOne(new Document("_id", token), new Document("$set", new Document("state", "COMMITTING")));
+    mongo.getCollection("visualization-type").updateOne(new Document("_id", typeId), new Document("$set", new Document("removalState", "REMOVING")));
+    assertThat(removal.resume(token).get("state")).isEqualTo("REMOVED");
+    // A partially restored library remains invisible until the whole journal is published.
+    mongo.getCollection("plugin-removal").updateOne(new Document("_id", token), new Document("$set", new Document("state", "RESTORING")));
+    mongo.getCollection("visualization-library").updateOne(new Document("_id", libraryId), new Document("$set", new Document("removalState", "RESTORED")));
+    assertThat(new PluginCatalogVisibility(mongo).isVisible(null, "visualization-library", libraryId.toHexString())).isFalse();
+    assertThat(removal.restore(token).get("state")).isEqualTo("RESTORED");
+    assertThat(row("visualization-type", typeId).getBoolean("enabled")).isFalse();
+    mongo.getCollection("visualization-library").updateOne(new Document("_id", libraryId), new Document("$set", new Document("enabled", true)));
+    // Retrying recovery must preserve a later administrator's enabled state.
+    removal.restore(token);
+    assertThat(removal.resume(token).get("state")).isEqualTo("RESTORED");
+    assertThat(row("visualization-library", libraryId).getBoolean("enabled")).isTrue();
+  }
+
+  @Test
+  public void retentionCleanupPreservesLiveAndRecentSharedArtifactsThenRetiresTheKey() throws Exception {
+    migration.apply(migration.inventory(), registry);
+    com.openlap.plugins.management.PluginRemovalService removal = removalService();
+    com.openlap.plugins.management.PluginArtifactCleanup cleanup = new com.openlap.plugins.management.PluginArtifactCleanup(mongo, properties, store, removal);
+    java.util.Date expired = java.util.Date.from(java.time.Instant.now().minusSeconds(40L * 86400));
+    mongo.getCollection("plugin-artifact").updateMany(new Document(), new Document("$set", new Document("createdAt", expired).append("removedAt", expired)));
+    assertThat(cleanup.run(true).get("purged")).isEqualTo(0);
+    com.openlap.plugins.management.PluginCatalogKind kind = com.openlap.plugins.management.PluginCatalogKind.VISUALIZATION_LIBRARY;
+    Map<String, Object> removed = removal.remove(kind, libraryId.toHexString(), removalVersions(removal.preview(kind, libraryId.toHexString())));
+    assertThat(cleanup.run(true).get("purged")).isEqualTo(0);
+    String artifactId = row("visualization-library", libraryId).getString("artifactId");
+    mongo.getCollection("plugin-removal").updateOne(new Document("_id", removed.get("id")), new Document("$set", new Document("createdAt", expired).append("removedAt", expired)));
+    for (String collection : Arrays.asList("visualization-library", "visualization-type")) mongo.getCollection(collection).updateMany(new Document("removalOperation", removed.get("id")), new Document("$set", new Document("removedAt", expired)));
+    assertThat(cleanup.run(true).get("purged")).isEqualTo(1);
+    assertThat(artifacts.findById(artifactId).get().getState()).isEqualTo(PluginArtifact.State.PURGED);
+    assertThatThrownBy(() -> registry.ensureStored(PluginKind.VISUALIZATION, jar, ArtifactIntegrity.sha256(jar), Files.size(jar), "test"))
+        .isInstanceOf(PluginStorageException.class).hasFieldOrPropertyWithValue("code", "PLUGIN_ARTIFACT_PURGED");
+    assertThatThrownBy(() -> removal.restore((String) removed.get("id"))).isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class);
+    assertThat(registry.ready(row("analytics-technique", methodId).getString("artifactId"), PluginKind.ANALYTICS).getState()).isEqualTo(PluginArtifact.State.READY);
+  }
+
+  @Test
+  public void cleanupFailuresRemainRetryableAndUnknownWritesBlockPurging() throws Exception {
+    Path managed = ManagedPluginFixture.create(source, "Cleanup" + UUID.randomUUID().toString().replace("-", ""), false);
+    PluginArtifact artifact = registry.ensureStored(PluginKind.ANALYTICS, managed, ArtifactIntegrity.sha256(managed), Files.size(managed), "test");
+    java.util.Date expired = java.util.Date.from(java.time.Instant.now().minusSeconds(40L * 86400));
+    mongo.getCollection("plugin-artifact").updateOne(new Document("_id", artifact.getId()), new Document("$set", new Document("createdAt", expired).append("referencePins", new Document("uncertain-write", new Document("createdAt", expired)))));
+    com.openlap.plugins.management.PluginRemovalService removal = removalService();
+    com.openlap.plugins.management.PluginArtifactCleanup cleanup = new com.openlap.plugins.management.PluginArtifactCleanup(mongo, properties, store, removal);
+    assertThat(cleanup.run(true).get("purged")).isEqualTo(0);
+    mongo.getCollection("plugin-artifact").updateOne(new Document("_id", artifact.getId()), new Document("$unset", new Document("referencePins", 1)));
+    ArtifactObjectStore unavailable = new ArtifactObjectStore() {
+      public void putIfAbsent(PluginArtifact a, Path path) { throw new AssertionError(); }
+      public InputStream open(PluginArtifact a) { return store.open(a); }
+      public void deleteVerified(PluginArtifact a) { throw new PluginStorageException("TEST_OUTAGE", "offline"); }
+    };
+    Map<String, Object> failed = new com.openlap.plugins.management.PluginArtifactCleanup(mongo, properties, unavailable, removal).run(true);
+    assertThat(failed.get("failedArtifactIds")).isEqualTo(Collections.singletonList(artifact.getId()));
+    assertThat(artifacts.findById(artifact.getId()).get().getState()).isEqualTo(PluginArtifact.State.PURGING);
+    assertThat(cleanup.run(true).get("purged")).isEqualTo(1);
+    assertThat(artifacts.findById(artifact.getId()).get().getState()).isEqualTo(PluginArtifact.State.PURGED);
+  }
+
+  @Test
+  public void discardedReviewsCanBeRestoredAndPurgedAncestorsRemainUsableAsMetadata() throws Exception {
+    org.springframework.context.support.GenericApplicationContext context = new org.springframework.context.support.GenericApplicationContext();
+    context.addApplicationListener(new com.openlap.plugins.management.PluginReferenceWriteListener(mongo)); context.refresh();
+    mongo.setApplicationContext(context); closeables.add(context);
+    String suffix = "Archived" + UUID.randomUUID().toString().replace("-", "");
+    Path firstJar = ManagedPluginFixture.create(source, suffix, false, "v1");
+    PluginManagementService management = management(mongo);
+    Map<String, Object> uploaded = upload(management, firstJar, PluginKind.ANALYTICS); String op = (String) uploaded.get("id");
+    Map<String, Object> discarded = management.discard(op, version(uploaded));
+    assertThat(discarded.get("state")).isEqualTo("DISCARDED");
+    uploaded = management.reopen(op, version(discarded)); uploaded = management.inspect(op, version(uploaded), true);
+    management.activate(op, version(uploaded));
+    Document original = mongo.getCollection("analytics-technique").find(new Document("installationId", op)).first();
+    String originalId = original.getString("_id");
+    com.openlap.plugins.management.PluginRemovalService removal = removalService();
+    com.openlap.plugins.management.PluginCatalogKind kind = com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD;
+    Map<String, Object> removed = removal.remove(kind, originalId, removalVersions(removal.preview(kind, originalId)));
+    java.util.Date expired = java.util.Date.from(java.time.Instant.now().minusSeconds(40L * 86400));
+    mongo.getCollection("plugin-artifact").updateOne(new Document("_id", uploaded.get("artifactId")), new Document("$set", new Document("createdAt", expired).append("removedAt", expired)));
+    mongo.getCollection("analytics-technique").updateOne(new Document("_id", originalId), new Document("$set", new Document("removedAt", expired)));
+    mongo.getCollection("plugin-removal").updateOne(new Document("_id", removed.get("id")), new Document("$set", new Document("createdAt", expired).append("removedAt", expired)));
+    assertThat(new com.openlap.plugins.management.PluginArtifactCleanup(mongo, properties, store, removal).run(true).get("purged")).isEqualTo(1);
+    Path nextJar = ManagedPluginFixture.create(source, suffix, false, "v2");
+    Map<String, Object> next = management.upload(PluginKind.ANALYTICS, new MockMultipartFile("file", "new.jar", "application/java-archive", Files.readAllBytes(nextJar)), "admin", kind, originalId);
+    String nextOp = (String) next.get("id"); next = management.inspect(nextOp, version(next), true);
+    next = management.configureReplacement(nextOp, version(next), mapping(next));
+    assertThat(management.activate(nextOp, version(next)).get("state")).isEqualTo("ACTIVE");
+    assertThat((List<?>) management.history(kind, originalId).get("versions")).hasSize(2);
+    assertThat(new PluginCatalogVisibility(mongo).isVisible(op, "analytics-technique", originalId)).isFalse();
+  }
+
   private com.openlap.plugins.management.PluginRemovalService removalService() throws Exception {
     properties.setDeletionEnabled(true);
     PluginArtifactCache cache = new PluginArtifactCache(temporary.newFolder().toPath(), 1000000, 20, store); closeables.add(cache);

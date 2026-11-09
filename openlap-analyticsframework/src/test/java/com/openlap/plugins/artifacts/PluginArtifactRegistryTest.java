@@ -24,6 +24,12 @@ public class PluginArtifactRegistryTest {
   private final ArtifactObjectStore store = mock(ArtifactObjectStore.class);
   private final PluginArtifactRegistry registry = new PluginArtifactRegistry(repository, mongo, store);
 
+  @org.junit.Before
+  public void acknowledgeArtifactReservations() {
+    when(mongo.updateFirst(any(org.springframework.data.mongodb.core.query.Query.class), any(org.springframework.data.mongodb.core.query.Update.class), org.mockito.ArgumentMatchers.eq(PluginArtifact.class)))
+        .thenReturn(com.mongodb.client.result.UpdateResult.acknowledged(1L, 1L, null));
+  }
+
   private Path jar() throws Exception {
     Path source = temporary.newFile("source.jar").toPath();
     try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(source))) {
@@ -53,7 +59,7 @@ public class PluginArtifactRegistryTest {
     assertThatThrownBy(() -> registry.ensureStored(PluginKind.ANALYTICS, source,
         ArtifactIntegrity.sha256(source), Files.size(source), "migration"))
         .isInstanceOf(PluginStorageException.class).hasFieldOrPropertyWithValue("code", "PLUGIN_ARTIFACT_CORRUPT");
-    verifyZeroInteractions(mongo);
+    org.mockito.Mockito.verify(mongo).updateFirst(any(org.springframework.data.mongodb.core.query.Query.class), any(org.springframework.data.mongodb.core.query.Update.class), org.mockito.ArgumentMatchers.eq(PluginArtifact.class));
   }
 
   @Test
@@ -64,6 +70,17 @@ public class PluginArtifactRegistryTest {
     assertThatThrownBy(() -> registry.ensureStored(PluginKind.ANALYTICS, source,
         ArtifactIntegrity.sha256(source), Files.size(source), "migration"))
         .isInstanceOf(PluginStorageException.class).hasFieldOrPropertyWithValue("code", "PLUGIN_STORAGE_UNAVAILABLE");
-    verifyZeroInteractions(mongo);
+    org.mockito.Mockito.verify(mongo).updateFirst(any(org.springframework.data.mongodb.core.query.Query.class), any(org.springframework.data.mongodb.core.query.Update.class), org.mockito.ArgumentMatchers.eq(PluginArtifact.class));
+  }
+
+  @Test
+  public void cleanupWinningTheReservationRacePreventsAllObjectWrites() throws Exception {
+    Path source = jar();
+    when(repository.insert(any(PluginArtifact.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(mongo.updateFirst(any(org.springframework.data.mongodb.core.query.Query.class), any(org.springframework.data.mongodb.core.query.Update.class), org.mockito.ArgumentMatchers.eq(PluginArtifact.class)))
+        .thenReturn(com.mongodb.client.result.UpdateResult.acknowledged(0L, 0L, null));
+    assertThatThrownBy(() -> registry.ensureStored(PluginKind.ANALYTICS, source, ArtifactIntegrity.sha256(source), Files.size(source), "test"))
+        .isInstanceOf(PluginStorageException.class).hasFieldOrPropertyWithValue("code", "PLUGIN_ARTIFACT_PURGED");
+    verifyZeroInteractions(store);
   }
 }

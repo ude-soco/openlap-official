@@ -20,35 +20,50 @@ public final class PluginReferences {
   private final ObjectMapper mapper = new ObjectMapper();
 
   public Set<String> collect(Document document) {
+    return collect(document, null);
+  }
+
+  public Set<String> collect(Document document, Set<String> wanted) {
     Set<String> values = new LinkedHashSet<>();
-    walk(document, null, 0, new int[] {0}, values);
+    walk(document, null, 0, new int[] {0}, values, wanted);
     return values;
   }
 
-  private void walk(Object value, String field, int depth, int[] nodes, Set<String> values) {
-    if (depth > 48 || ++nodes[0] > 150000) throw invalid();
+  private void walk(Object value, String field, int depth, int[] nodes, Set<String> values, Set<String> wanted) {
+    if (depth > 48 || ++nodes[0] > 10000000) throw invalid();
     if (value == null) return;
-    if (value instanceof DBRef) { Object id = ((DBRef) value).getId(); if (id != null) values.add(id.toString()); return; }
+    if (value instanceof DBRef) { Object id = ((DBRef) value).getId(); if (id != null) add(id.toString(), values, wanted); return; }
     if (value instanceof Map<?, ?>) {
       ((Map<?, ?>) value).forEach((key, child) -> {
         String name = String.valueOf(key);
-        if (!"_pluginReferenceWrite".equals(name) && !"createdBy".equals(name) && !"_id".equals(name)) walk(child, name, depth + 1, nodes, values);
+        if (!"_pluginReferenceWrite".equals(name) && !"createdBy".equals(name) && !"_id".equals(name)) walk(child, name, depth + 1, nodes, values, wanted);
       });
     } else if (value instanceof Iterable<?>) {
-      for (Object child : (Iterable<?>) value) walk(child, field, depth + 1, nodes, values);
+      for (Object child : (Iterable<?>) value) walk(child, field, depth + 1, nodes, values, wanted);
     } else if (value instanceof String) {
       String text = (String) value;
       String trimmed = text.trim();
       if ("null".equals(trimmed) && JSON_FIELDS.contains(field)) return;
-      values.add(text);
+      add(text, values, wanted);
       if (!trimmed.isEmpty() && (JSON_FIELDS.contains(field) || trimmed.startsWith("{") || trimmed.startsWith("["))) {
-        if (text.length() > 8 * 1024 * 1024) throw invalid();
-        try { walk(mapper.readValue(text, Object.class), null, depth + 1, nodes, values); }
+        if (text.length() > 16 * 1024 * 1024) throw invalid();
+        try (com.fasterxml.jackson.core.JsonParser parser = mapper.getFactory().createParser(text)) {
+          int nesting = depth;
+          com.fasterxml.jackson.core.JsonToken token;
+          while ((token = parser.nextToken()) != null) {
+            if (++nodes[0] > 10000000) throw invalid();
+            if (token.isStructStart() && ++nesting > 48) throw invalid();
+            if (token.isStructEnd()) nesting--;
+            if (token == com.fasterxml.jackson.core.JsonToken.VALUE_STRING) walk(parser.getText(), parser.getCurrentName(), nesting + 1, nodes, values, wanted);
+          }
+        }
         catch (IOException e) { if (JSON_FIELDS.contains(field)) throw invalid(); }
         catch (StackOverflowError e) { throw invalid(); }
       }
-    } else if (value instanceof org.bson.types.ObjectId) values.add(value.toString());
+    } else if (value instanceof org.bson.types.ObjectId) add(value.toString(), values, wanted);
   }
+
+  private static void add(String value, Set<String> values, Set<String> wanted) { if (wanted == null || wanted.contains(value)) values.add(value); }
 
   private static ValidationException invalid() {
     return new ValidationException("PLUGIN_REFERENCE_DATA_INVALID", "A stored configuration contains unreadable or oversized JSON. Repair or discard that configuration before removing plugins.");

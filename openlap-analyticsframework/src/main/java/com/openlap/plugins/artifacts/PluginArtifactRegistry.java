@@ -38,8 +38,17 @@ public final class PluginArtifactRegistry {
       try { registered = repository.insert(expected); }
       catch (DuplicateKeyException e) { registered = repository.findById(expected.getId()).orElseThrow(PluginArtifactRegistry::unavailable); }
       registered.validate();
+      if (registered.getState() == PluginArtifact.State.PURGING || registered.getState() == PluginArtifact.State.PURGED) {
+        throw new PluginStorageException("PLUGIN_ARTIFACT_PURGED", "This artifact key was retired by retention cleanup. Upload a new build with a different checksum; purged keys are never reused.");
+      }
       if (registered.getSizeBytes() != size || registered.getKind() != kind) {
         throw new PluginStorageException("PLUGIN_ARTIFACT_INVALID", "The registered artifact identity conflicts with this JAR.");
+      }
+      String pin = "referencePins.registry-" + java.util.UUID.randomUUID();
+      if (mongo.updateFirst(Query.query(Criteria.where("_id").is(registered.getId()).and("state")
+              .in(PluginArtifact.State.STAGED, PluginArtifact.State.READY)),
+          Update.update(pin, new org.bson.Document("sourceCollection", "artifact-upload").append("createdAt", new java.util.Date())), PluginArtifact.class).getMatchedCount() != 1) {
+        throw new PluginStorageException("PLUGIN_ARTIFACT_PURGED", "Artifact retention cleanup has retired this key. Upload a new build with a different checksum.");
       }
       store.putIfAbsent(registered, snapshot);
       try (InputStream input = store.open(registered)) {
@@ -48,7 +57,10 @@ public final class PluginArtifactRegistry {
       mongo.updateFirst(Query.query(Criteria.where("_id").is(registered.getId())
               .and("state").is(PluginArtifact.State.STAGED).and("sha256").is(sha256).and("sizeBytes").is(size)),
           Update.update("state", PluginArtifact.State.READY), PluginArtifact.class);
-      return ready(registered.getId(), kind);
+      PluginArtifact result = ready(registered.getId(), kind);
+      // Release only after acknowledged verification. Indeterminate writes keep a durable reservation.
+      mongo.updateFirst(Query.query(Criteria.where("_id").is(registered.getId())), new Update().unset(pin), PluginArtifact.class);
+      return result;
     } catch (IOException e) {
       throw new PluginStorageException("PLUGIN_ARTIFACT_SOURCE_UNAVAILABLE", "The source JAR could not be snapshotted and verified.");
     } catch (DataAccessException e) { throw unavailable(); }

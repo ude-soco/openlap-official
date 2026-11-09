@@ -10,6 +10,7 @@ public final class PluginArtifactResolver {
   private final PluginStorageProperties.Mode mode;
   private final PluginArtifactRegistry registry;
   private final PluginArtifactCache cache;
+  private org.springframework.data.mongodb.core.MongoTemplate mutationCatalog;
 
   public PluginArtifactResolver(PluginStorageProperties.Mode mode, PluginArtifactRegistry registry, PluginArtifactCache cache) {
     this.mode = mode;
@@ -21,11 +22,18 @@ public final class PluginArtifactResolver {
     return new PluginArtifactResolver(PluginStorageProperties.Mode.LOCAL, null, null);
   }
 
+  public static PluginArtifactResolver local(org.springframework.data.mongodb.core.MongoTemplate mongo) {
+    PluginArtifactResolver resolver = local(); resolver.mutationCatalog = mongo; return resolver;
+  }
+
   public boolean usesObjectStorage() { return mode == PluginStorageProperties.Mode.S3; }
 
   public void requireLocalMutation() {
     if (usesObjectStorage()) throw new ConflictException("PLUGIN_MANAGEMENT_MIGRATION",
         "Local plugin changes are unavailable in S3 mode. Use Add methods or Add library in Administration.");
+    if (mutationCatalog != null && mutationCatalog.exists(org.springframework.data.mongodb.core.query.Query.query(
+        org.springframework.data.mongodb.core.query.Criteria.where("state").in("PREPARING", "COMMITTING", "REMOVED", "RESTORING", "RESTORED")), "plugin-removal"))
+      throw new ConflictException("PLUGIN_MANAGEMENT_REMOVAL_HISTORY", "This catalog has plugin removal history. Keep local population disabled and use the guarded S3 management workflow.");
   }
 
   public Path resolve(PluginKind kind, String artifactId, String folder, String recordedPath) {

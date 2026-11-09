@@ -115,6 +115,14 @@ public class PluginArtifactRuntimeTest {
   }
 
   @Test
+  public void localPopulationCannotResurrectRemovedCatalogEntries() {
+    MongoTemplate mongo = mock(MongoTemplate.class);
+    when(mongo.exists(any(org.springframework.data.mongodb.core.query.Query.class), eq("plugin-removal"))).thenReturn(true);
+    assertThatThrownBy(() -> PluginArtifactResolver.local(mongo).requireLocalMutation())
+        .isInstanceOf(ConflictException.class).hasFieldOrPropertyWithValue("code", "PLUGIN_MANAGEMENT_REMOVAL_HISTORY");
+  }
+
+  @Test
   public void databaseInitializationDoesNotRescanOrRecreateArtifactBackedPlugins() {
     AnalyticsGoalsService goals = mock(AnalyticsGoalsService.class);
     AnalyticsTechniqueService analytics = mock(AnalyticsTechniqueService.class);
