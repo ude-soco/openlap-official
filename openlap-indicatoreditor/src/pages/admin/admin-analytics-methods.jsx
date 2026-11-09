@@ -35,6 +35,7 @@ import {
 import { useAdminUsage } from "./utils/use-admin-usage";
 import UsageChips from "./components/usage-chips";
 import CatalogStatusControl from "./components/catalog-status-control";
+import PluginCatalogActions from "./components/plugin-catalog-actions";
 import PluginUploadControl from "./components/plugin-upload-control";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
@@ -270,6 +271,7 @@ const AdminAnalyticsMethods = () => {
                     <TableCell>Description</TableCell>
                     <TableCell>Usage</TableCell>
                     <TableCell>Status</TableCell>
+                  <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -291,6 +293,7 @@ const AdminAnalyticsMethods = () => {
                           <TableCell>
                             <Skeleton width={160} />
                           </TableCell>
+                        <TableCell><Skeleton width={120} /></TableCell>
                         </TableRow>
                       ))
                     : pagedMethods.map((method) => {
@@ -318,6 +321,7 @@ const AdminAnalyticsMethods = () => {
                                 <Typography variant="body2" fontWeight={600}>
                                   {method.name || "—"}
                                 </Typography>
+                            {method.artifactId && <Chip size="small" variant="outlined" label={`Version ${method.artifactId.slice(-64, -56)}`} title={method.artifactId} sx={{ mt: 0.5 }} />}
                                 {id && (
                                   <Typography
                                     variant="caption"
@@ -349,10 +353,11 @@ const AdminAnalyticsMethods = () => {
                                   }
                                 />
                               </TableCell>
+                              <TableCell><PluginCatalogActions kind="ANALYTICS_METHOD" entry={method} onSaved={loadMethods} /></TableCell>
                             </TableRow>
                             <TableRow>
                               <TableCell
-                                colSpan={5}
+                                colSpan={6}
                                 sx={{
                                   py: 0,
                                   borderBottom: expanded ? undefined : "none",
