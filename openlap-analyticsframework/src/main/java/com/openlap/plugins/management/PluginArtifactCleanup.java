@@ -43,13 +43,21 @@ public class PluginArtifactCleanup {
   }
 
   public Map<String, Object> run(boolean confirmed) {
+    @SuppressWarnings("unchecked") List<Map<String, Object>> candidates = (List<Map<String, Object>>) preview().get("artifacts");
+    return run(confirmed, candidates.stream().filter(row -> Boolean.TRUE.equals(row.get("eligible"))).map(row -> (String) row.get("id")).collect(java.util.stream.Collectors.toList()));
+  }
+
+  public Map<String, Object> run(boolean confirmed, List<String> reviewedIds) {
     if (!confirmed || !removal.available() || store == null) throw new ConflictException("PLUGIN_CLEANUP_UNAVAILABLE", "Confirm cleanup after the reference guards and retention settings are enabled.");
+    if (reviewedIds == null || reviewedIds.size() > 100 || reviewedIds.stream().anyMatch(id -> id == null || !id.matches("(analytics|visualizations)-[a-f0-9]{64}")))
+      throw new com.openlap.infrastructure.exception.ValidationException("Supply the reviewed artifact IDs for cleanup.");
     removal.finishCompletedRecoveries();
     int purged = 0; List<String> failed = new ArrayList<>();
     @SuppressWarnings("unchecked") List<Map<String, Object>> candidates = (List<Map<String, Object>>) preview().get("artifacts");
     for (Map<String, Object> candidate : candidates) {
       if (!Boolean.TRUE.equals(candidate.get("eligible"))) continue;
       String id = (String) candidate.get("id");
+      if (!reviewedIds.contains(id)) continue;
       try {
         Document row = mongo.getCollection("plugin-artifact").find(new Document("_id", id)).first();
         if (blocked(row, cutoff()) != null) continue;

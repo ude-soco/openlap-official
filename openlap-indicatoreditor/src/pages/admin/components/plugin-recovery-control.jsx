@@ -32,10 +32,10 @@ const PluginRecoveryControl = ({ kind, onChanged }) => {
   const purge = async () => {
     setBusy(true); setError("");
     try {
-      const result = await cleanupPluginArtifacts(api);
+      const result = await cleanupPluginArtifacts(api, cleanup.artifacts.filter((item) => item.eligible).map((item) => item.id));
       enqueueSnackbar(`${result.purged} artifacts cleaned; ${result.failedArtifactIds.length} need a retry.`, { variant: result.failedArtifactIds.length ? "warning" : "success" });
       setConfirmed(false); setCleanup(await reviewArtifactCleanup(api));
-    } catch (failure) { setError(message(failure)); } finally { setBusy(false); }
+    } catch (failure) { setError(message(failure)); } finally { setConfirmed(false); setBusy(false); }
   };
   const eligible = cleanup?.artifacts?.filter((item) => item.eligible) || [];
   return <>

@@ -74,7 +74,7 @@ public class AdminPluginController {
 
   @PostMapping("/cleanup")
   public ApiSuccess cleanup(@RequestBody ReviewRequest body, HttpServletRequest request) throws IOException {
-    return mutate(request, PLUGIN_ARTIFACT_CLEANUP, "retention-cleanup", () -> cleanup.run(Boolean.TRUE.equals(body.getConfirmed())));
+    return mutate(request, PLUGIN_ARTIFACT_CLEANUP, "retention-cleanup", () -> cleanup.run(Boolean.TRUE.equals(body.getConfirmed()), body.getArtifactIds()));
   }
 
   @GetMapping("/catalog/{kind}/{id}")
@@ -178,5 +178,6 @@ public class AdminPluginController {
     private Boolean trusted;
     private Map<String, Object> expectedVersions;
     private Boolean confirmed;
+    private java.util.List<String> artifactIds;
   }
 }

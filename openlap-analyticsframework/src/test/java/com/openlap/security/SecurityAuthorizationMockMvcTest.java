@@ -163,13 +163,13 @@ public class SecurityAuthorizationMockMvcTest {
     result.put("id", token); result.put("catalogId", "method-1"); result.put("kind", "ANALYTICS_METHOD"); result.put("name", "Method"); result.put("state", "REMOVED");
     given(pluginRemovalService.remove(org.mockito.ArgumentMatchers.eq(com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD), org.mockito.ArgumentMatchers.eq("method-1"), any())).willReturn(result);
     given(pluginRemovalService.restore(token)).willReturn(result);
-    given(pluginArtifactCleanup.run(true)).willReturn(Collections.singletonMap("purged", 1));
+    given(pluginArtifactCleanup.run(true, Collections.singletonList("analytics-" + String.join("", Collections.nCopies(64, "a"))))).willReturn(Collections.singletonMap("purged", 1));
     mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/v1/admin/plugins/catalog/ANALYTICS_METHOD/method-1")
         .header(AUTHORIZATION, "Bearer valid-token").contentType(MediaType.APPLICATION_JSON).content("{\"expectedVersions\":{\"analytics-technique:method-1\":0}}"))
         .andExpect(status().isOk()).andExpect(jsonPath("$.data.state").value("REMOVED"));
     mockMvc.perform(post("/v1/admin/plugins/removals/" + token + "/restore").header(AUTHORIZATION, "Bearer valid-token")).andExpect(status().isOk());
     mockMvc.perform(post("/v1/admin/plugins/cleanup").header(AUTHORIZATION, "Bearer valid-token")
-        .contentType(MediaType.APPLICATION_JSON).content("{\"confirmed\":true}")).andExpect(status().isOk());
+        .contentType(MediaType.APPLICATION_JSON).content("{\"confirmed\":true,\"artifactIds\":[\"analytics-" + String.join("", Collections.nCopies(64, "a")) + "\"]}")).andExpect(status().isOk());
     org.mockito.Mockito.verify(adminAuditService).logSuccess(any(), org.mockito.ArgumentMatchers.eq("PLUGIN_REMOVE"), org.mockito.ArgumentMatchers.eq("ANALYTICS_METHOD"), org.mockito.ArgumentMatchers.eq("method-1"), org.mockito.ArgumentMatchers.eq("Method"), any());
     org.mockito.Mockito.verify(adminAuditService).logSuccess(any(), org.mockito.ArgumentMatchers.eq("PLUGIN_RESTORE"), org.mockito.ArgumentMatchers.eq("PLUGIN_REMOVAL"), org.mockito.ArgumentMatchers.eq(token), org.mockito.ArgumentMatchers.eq("Method"), any());
     org.mockito.Mockito.verify(adminAuditService).logSuccess(any(), org.mockito.ArgumentMatchers.eq("PLUGIN_ARTIFACT_CLEANUP"), org.mockito.ArgumentMatchers.eq("PLUGIN_INSTALLATION"), org.mockito.ArgumentMatchers.eq("retention-cleanup"), any(), any());

@@ -753,6 +753,20 @@ public class PluginArtifactIT {
   }
 
   @Test
+  public void cleanupOnlyDeletesTheArtifactsIncludedInTheConfirmedReview() throws Exception {
+    Path first = ManagedPluginFixture.create(source, "Reviewed" + UUID.randomUUID().toString().replace("-", ""), false);
+    Path second = ManagedPluginFixture.create(source, "Unreviewed" + UUID.randomUUID().toString().replace("-", ""), false);
+    PluginArtifact reviewed = registry.ensureStored(PluginKind.ANALYTICS, first, ArtifactIntegrity.sha256(first), Files.size(first), "test");
+    PluginArtifact unreviewed = registry.ensureStored(PluginKind.ANALYTICS, second, ArtifactIntegrity.sha256(second), Files.size(second), "test");
+    mongo.getCollection("plugin-artifact").updateMany(new Document(), new Document("$set", new Document("createdAt", java.util.Date.from(java.time.Instant.now().minusSeconds(40L * 86400)))));
+    com.openlap.plugins.management.PluginArtifactCleanup cleanup = new com.openlap.plugins.management.PluginArtifactCleanup(mongo, properties, store, removalService());
+    assertThatThrownBy(() -> cleanup.run(true, null)).isInstanceOf(com.openlap.infrastructure.exception.ValidationException.class);
+    assertThat(cleanup.run(true, Collections.singletonList(reviewed.getId())).get("purged")).isEqualTo(1);
+    assertThat(artifacts.findById(unreviewed.getId()).get().getState()).isEqualTo(PluginArtifact.State.READY);
+    try (InputStream input = store.open(unreviewed)) { ArtifactIntegrity.copyVerified(input, java.io.OutputStream.nullOutputStream(), unreviewed); }
+  }
+
+  @Test
   public void cleanupFailuresRemainRetryableAndUnknownWritesBlockPurging() throws Exception {
     Path managed = ManagedPluginFixture.create(source, "Cleanup" + UUID.randomUUID().toString().replace("-", ""), false);
     PluginArtifact artifact = registry.ensureStored(PluginKind.ANALYTICS, managed, ArtifactIntegrity.sha256(managed), Files.size(managed), "test");

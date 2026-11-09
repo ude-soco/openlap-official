@@ -42,7 +42,7 @@ export const listRemovedPlugins = async (api, kind) => (await api.get("v1/admin/
 export const restoreRemovedPlugin = async (api, id) => (await api.post(`v1/admin/plugins/removals/${encodeURIComponent(id)}/restore`)).data.data;
 export const resumePluginRemoval = async (api, id) => (await api.post(`v1/admin/plugins/removals/${encodeURIComponent(id)}/resume`)).data.data;
 export const reviewArtifactCleanup = async (api) => (await api.get("v1/admin/plugins/cleanup")).data.data;
-export const cleanupPluginArtifacts = async (api) => (await api.post("v1/admin/plugins/cleanup", { confirmed: true })).data.data;
+export const cleanupPluginArtifacts = async (api, artifactIds) => (await api.post("v1/admin/plugins/cleanup", { confirmed: true, artifactIds })).data.data;
 export const transitionPluginReview = async (api, review, action) => (await api.post(`v1/admin/plugins/${encodeURIComponent(review.id)}/${action}`, { version: review.version })).data.data;
 export const disablePlugin = async (api, kind, id) => {
   const path = kind === "ANALYTICS_METHOD" ? "analytics-methods" : kind === "VISUALIZATION_LIBRARY" ? "visualizations/libraries" : "visualizations/types";
