@@ -172,7 +172,11 @@ This is source provenance, not automatic catalog mapping or runtime acceptance.
 The historical binaries passed local constructor/metadata checks for 13 analytics
 classes and nine chart classes against the backend's pinned API dependencies;
 that does not establish algorithm execution, rendering, compatibility with a
-particular deployed image, or coverage of an installation's database. Inventory
+particular deployed image, or coverage of an installation's database. In particular,
+the historical C3 renderers require `com.openlap.template.model.Customization`,
+which the pinned visualization template 1.1.0 no longer provides. Do not activate
+that C3 artifact against this runtime until a reviewed compatibility fix passes
+actual chart-generation checks; metadata inspection alone cannot clear this gate. Inventory
 the actual catalog, retain its IDs/paths/associations and explicitly map each
 entry to the intended verified source. Do not clear registrations or use Add/
 replacement uploads to repair missing legacy binaries.
