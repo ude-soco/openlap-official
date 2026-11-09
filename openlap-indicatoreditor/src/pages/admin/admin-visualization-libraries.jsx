@@ -30,6 +30,7 @@ import UsageChips from "./components/usage-chips";
 import CatalogStatusControl from "./components/catalog-status-control";
 import PluginCatalogActions from "./components/plugin-catalog-actions";
 import PluginUploadControl from "./components/plugin-upload-control";
+import PluginRecoveryControl from "./components/plugin-recovery-control";
 
 const SKELETON_ROWS = 4;
 
@@ -142,6 +143,7 @@ const AdminVisualizationLibraries = () => {
               }`}
             />
           ) : null}
+          <PluginRecoveryControl kind="VISUALIZATION_LIBRARY" onChanged={load} />
           <PluginUploadControl kind="VISUALIZATION" onActivated={load} />
           </Stack>
         }

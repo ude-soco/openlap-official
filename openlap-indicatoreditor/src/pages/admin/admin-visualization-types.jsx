@@ -29,6 +29,7 @@ import { useAdminUsage } from "./utils/use-admin-usage";
 import UsageChips from "./components/usage-chips";
 import CatalogStatusControl from "./components/catalog-status-control";
 import PluginCatalogActions from "./components/plugin-catalog-actions";
+import PluginRecoveryControl from "./components/plugin-recovery-control";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
 const SKELETON_ROWS = 5;
@@ -94,9 +95,10 @@ const AdminVisualizationTypes = () => {
 
   const loading = status === "loading";
   const showSkeleton = loading && types.length === 0;
+  const currentPage = Math.min(page, Math.max(0, Math.ceil(types.length / size) - 1));
   const pagedTypes = useMemo(
-    () => types.slice(page * size, page * size + size),
-    [types, page, size]
+    () => types.slice(currentPage * size, (currentPage + 1) * size),
+    [types, currentPage, size]
   );
 
   return (
@@ -109,13 +111,16 @@ const AdminVisualizationTypes = () => {
         ]}
         subtitle="Available chart types, their parent libraries, and selection status."
         actions={
-          status === "ready" ? (
+          <Stack direction="row" gap={1} alignItems="center">
+          {status === "ready" ? (
             <Chip
               label={`${types.length} ${
                 types.length === 1 ? "type" : "types"
               }`}
             />
-          ) : null
+          ) : null}
+          <PluginRecoveryControl kind="VISUALIZATION_TYPE" onChanged={load} />
+          </Stack>
         }
       />
 
@@ -212,7 +217,7 @@ const AdminVisualizationTypes = () => {
             <TablePagination
               component="div"
               count={types.length}
-              page={page}
+              page={currentPage}
               onPageChange={handleChangePage}
               rowsPerPage={size}
               onRowsPerPageChange={handleChangeRowsPerPage}

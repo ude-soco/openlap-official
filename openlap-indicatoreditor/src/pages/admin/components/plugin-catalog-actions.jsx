@@ -8,6 +8,7 @@ import { AuthContext } from "../../../setup/auth-context-manager/auth-context-ma
 import { useNavigationGuard } from "../../../setup/routes-manager/navigation-guard-context.js";
 import { getPluginDetails, getPluginHistory, savePluginDetails } from "../utils/plugin-apis.js";
 import PluginUploadControl from "./plugin-upload-control";
+import PluginRemovalControl from "./plugin-removal-control";
 
 const fields = (details) => Object.fromEntries((details?.editableFields || []).map((field) => [field, details[field] || ""]));
 const message = (error) => error?.response?.data?.message || "Could not load plugin details. Retry when the service is available.";
@@ -76,6 +77,7 @@ const PluginCatalogActions = ({ kind, entry, onSaved }) => {
           {busy && <LinearProgress aria-label="Loading or saving plugin details" />}
           {error && <Alert severity="error" role="alert" action={<Button color="inherit" disabled={busy} onClick={reload}>Reload latest</Button>}>{error}{dirty ? " Your unsaved edits are preserved." : ""}</Alert>}
           {details && <>
+            {details.removed && <Alert severity="info">This entry is removed. Restore it to edit or enable it, or create a new version with new catalog IDs.</Alert>}
             <Typography variant="body2" color="text.secondary">Edit display details. Saved indicators keep the same plugin ID, binary and input/output contracts.</Typography>
             {details.editableFields.map((field) => <TextField key={field} label={field === "creator" ? "Creator / attribution" : field === "name" ? "Name" : "Description"}
               value={form[field] || ""} required={field === "name"} multiline={field === "description"} minRows={field === "description" ? 3 : undefined}
@@ -96,13 +98,13 @@ const PluginCatalogActions = ({ kind, entry, onSaved }) => {
             <List disablePadding aria-label="Plugin version history">
               {(history?.versions || []).map((version, index) => <ListItem key={version.artifactId || version.entries[0]?.id} divider disableGutters sx={{ display: "block" }}>
                 <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
-                  <Chip size="small" label={`Version ${index + 1}`} title={version.artifactId || "Local version"} />
+                  <Chip size="small" label={`Version ${version.ordinal || index + 1}`} title={version.artifactId || "Local version"} />
                   {version.artifactId && <Typography variant="caption" color="text.secondary">{version.artifactId.slice(-64, -52)}</Typography>}
                   {version.selected && <Chip size="small" variant="outlined" label="Viewing this version" />}
                   <Typography variant="caption" color="text.secondary">{version.activatedAt ? new Date(version.activatedAt).toLocaleString() : "Existing installation"}</Typography>
                 </Stack>
                 {version.entries.map((item) => <Stack key={item.id} direction="row" gap={1} justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
-                  <Typography variant="body2">{item.name} · {item.enabled ? "Enabled" : "Disabled"}</Typography>
+                  <Typography variant="body2">{item.name} · {item.removed ? "Removed" : item.enabled ? "Enabled" : "Disabled"}</Typography>
                   {(kind !== "VISUALIZATION_TYPE") && item.id !== selectedId && <Button size="small" disabled={busy} onClick={() => view(item.id)}>View details</Button>}
                 </Stack>)}
               </ListItem>)}
@@ -111,6 +113,8 @@ const PluginCatalogActions = ({ kind, entry, onSaved }) => {
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
+        <PluginRemovalControl kind={kind} id={selectedId} removed={Boolean(details?.removed)} disabled={busy || dirty || !details}
+          onChanged={async () => { setOpen(false); await onSaved(); }} />
         <Button disabled={busy} onClick={reload}>Reload latest</Button><Box sx={{ flexGrow: 1 }} />
         <Button disabled={busy} onClick={close}>Close</Button>
         <Button variant="contained" disabled={busy || !details || !dirty || !form.name?.trim()} onClick={save}>Save details</Button>

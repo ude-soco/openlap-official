@@ -37,6 +37,7 @@ import UsageChips from "./components/usage-chips";
 import CatalogStatusControl from "./components/catalog-status-control";
 import PluginCatalogActions from "./components/plugin-catalog-actions";
 import PluginUploadControl from "./components/plugin-upload-control";
+import PluginRecoveryControl from "./components/plugin-recovery-control";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
 const SKELETON_ROWS = 5;
@@ -150,9 +151,10 @@ const AdminAnalyticsMethods = () => {
 
   const loading = status === "loading";
   const showSkeleton = loading && methods.length === 0;
+  const currentPage = Math.min(page, Math.max(0, Math.ceil(methods.length / size) - 1));
   const pagedMethods = useMemo(
-    () => methods.slice(page * size, page * size + size),
-    [methods, page, size]
+    () => methods.slice(currentPage * size, (currentPage + 1) * size),
+    [methods, currentPage, size]
   );
 
   const renderChips = (items) =>
@@ -234,6 +236,7 @@ const AdminAnalyticsMethods = () => {
               }`}
             />
           ) : null}
+          <PluginRecoveryControl kind="ANALYTICS_METHOD" onChanged={loadMethods} />
           <PluginUploadControl kind="ANALYTICS" onActivated={loadMethods} />
           </Stack>
         }
@@ -377,7 +380,7 @@ const AdminAnalyticsMethods = () => {
             <TablePagination
               component="div"
               count={methods.length}
-              page={page}
+              page={currentPage}
               onPageChange={handleChangePage}
               rowsPerPage={size}
               onRowsPerPageChange={handleChangeRowsPerPage}

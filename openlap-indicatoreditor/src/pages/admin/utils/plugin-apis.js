@@ -33,3 +33,18 @@ export const retirePreviousPlugin = async (api, review) =>
     version: review.version,
     expectedVersions: Object.fromEntries((review.retirementTargets || []).filter((row) => row.enabled).map((row) => [row.id, row.version])),
   })).data.data;
+
+export const reviewPluginRemoval = async (api, kind, id) => (await api.get(`${catalogPath(kind, id)}/removal`)).data.data;
+export const removePlugin = async (api, preview) => (await api.delete(catalogPath(preview.kind, preview.id), { data: {
+  expectedVersions: Object.fromEntries(preview.affected.map((entry) => [entry.key, entry.version])),
+} })).data.data;
+export const listRemovedPlugins = async (api, kind) => (await api.get("v1/admin/plugins/removed", { params: { kind } })).data.data;
+export const restoreRemovedPlugin = async (api, id) => (await api.post(`v1/admin/plugins/removals/${encodeURIComponent(id)}/restore`)).data.data;
+export const resumePluginRemoval = async (api, id) => (await api.post(`v1/admin/plugins/removals/${encodeURIComponent(id)}/resume`)).data.data;
+export const reviewArtifactCleanup = async (api) => (await api.get("v1/admin/plugins/cleanup")).data.data;
+export const cleanupPluginArtifacts = async (api) => (await api.post("v1/admin/plugins/cleanup", { confirmed: true })).data.data;
+export const transitionPluginReview = async (api, review, action) => (await api.post(`v1/admin/plugins/${encodeURIComponent(review.id)}/${action}`, { version: review.version })).data.data;
+export const disablePlugin = async (api, kind, id) => {
+  const path = kind === "ANALYTICS_METHOD" ? "analytics-methods" : kind === "VISUALIZATION_LIBRARY" ? "visualizations/libraries" : "visualizations/types";
+  return (await api.patch(`v1/admin/${path}/${encodeURIComponent(id)}/status`, { enabled: false })).data.data;
+};

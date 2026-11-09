@@ -12,12 +12,13 @@ import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import { useSnackbar } from "notistack";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
 import { useNavigationGuard } from "../../../setup/routes-manager/navigation-guard-context.js";
-import { activatePlugin, configurePluginReplacement, getPluginUpload, inspectPlugin, listPluginUploads, retirePreviousPlugin, uploadPlugin } from "../utils/plugin-apis.js";
+import { activatePlugin, configurePluginReplacement, getPluginUpload, inspectPlugin, listPluginUploads, retirePreviousPlugin, transitionPluginReview, uploadPlugin } from "../utils/plugin-apis.js";
 
 const labels = {
   UPLOADED: "Ready for inspection", INSPECTING: "Inspection in progress",
   INSPECTION_FAILED: "Inspection failed", INSPECTED: "Ready for review",
   ACTIVATING: "Activation needs completion", ACTIVE: "Installed",
+  DISCARDED: "Discarded review", REMOVED: "Removed from catalog",
 };
 const step = (review) => !review ? 0 : ["UPLOADED", "INSPECTING", "INSPECTION_FAILED"].includes(review.state) ? 1 : review.state === "ACTIVE" ? 3 : 2;
 const errorMessage = (error) => error?.response?.data?.message || "The request could not finish. Refresh the review before retrying.";
@@ -88,7 +89,8 @@ const PluginUploadControl = ({ kind, onActivated, replacementTarget, disabled = 
   const run = async (action) => {
     setError("");
     setBusy(action === "upload" ? "Uploading and validating JAR…" : action === "inspect" ? "Inspecting plugin contracts…"
-      : action === "mapping" ? "Saving replacement mapping…" : action === "retire" ? "Disabling the previous version…" : "Activating all entries…");
+      : action === "mapping" ? "Saving replacement mapping…" : action === "retire" ? "Disabling the previous version…"
+        : action === "discard" ? "Discarding upload review…" : action === "reopen" ? "Restoring upload review…" : "Activating all entries…");
     try {
       let next;
       if (action === "upload") {
@@ -100,6 +102,7 @@ const PluginUploadControl = ({ kind, onActivated, replacementTarget, disabled = 
         const rows = [...source.entries, ...(source.library ? [source.library] : [])];
         next = await configurePluginReplacement(api, review, { mappings, expectedVersions: Object.fromEntries(rows.map((row) => [row.id, row.version])) });
       } else if (action === "retire") next = await retirePreviousPlugin(api, review);
+      else if (["discard", "reopen"].includes(action)) next = await transitionPluginReview(api, review, action);
       else next = await activatePlugin(api, review);
       applyReview(next);
       setTrusted(false);
@@ -193,6 +196,8 @@ const PluginUploadControl = ({ kind, onActivated, replacementTarget, disabled = 
             <Typography variant="caption" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>SHA-256: {review.sha256}</Typography>
             {review.lastError && <Alert severity="error">{review.lastError}</Alert>}
             {review.state === "ACTIVE" && <Alert severity="success">Installation complete. All entries are available in the catalog. Re-uploading these bytes reopens this installation.</Alert>}
+            {review.state === "DISCARDED" && <Alert severity="info">This upload review is discarded and no longer blocks removal of its previous version. Restore the review within its recovery period to inspect and configure it again.</Alert>}
+            {review.state === "REMOVED" && <Alert severity="info">This installation was removed from the catalog. Use Removed entries to recover it within its retention period. Re-uploading the same JAR does not restore removed entries.</Alert>}
             {review.state === "ACTIVE" && previousEnabled.length > 0 && <Stack gap={1}>
               <Alert severity="info">The new version is installed. You can now disable the previous version for new selections. Saved indicators keep their original versions.</Alert>
               <Typography variant="body2">Previous entries: {previousEnabled.map((row) => row.name).join(", ")}</Typography>
@@ -251,6 +256,8 @@ const PluginUploadControl = ({ kind, onActivated, replacementTarget, disabled = 
         <Box sx={{ flexGrow: 1 }} />
         <Button onClick={() => setOpen(false)} disabled={Boolean(busy)}>{review?.state === "ACTIVE" ? "Done" : "Close"}</Button>
         {review && review.state !== "ACTIVE" && <Button onClick={refresh} disabled={Boolean(busy)}>Refresh review</Button>}
+        {["UPLOADED", "INSPECTED", "INSPECTION_FAILED"].includes(review?.state) && <Button onClick={() => run("discard")} disabled={!available || Boolean(busy)}>Discard review</Button>}
+        {review?.state === "DISCARDED" && <Button variant="contained" onClick={() => run("reopen")} disabled={!available || Boolean(busy)}>Restore review</Button>}
         {!review && <Button variant="contained" onClick={() => run("upload")} disabled={!available || !file || Boolean(busy)}>Upload & validate</Button>}
         {inspecting && <Button variant="contained" onClick={() => run("inspect")} disabled={!available || !trusted || inspectionRunning || Boolean(busy)}>{review.state === "UPLOADED" ? "Inspect contracts" : "Retry inspection"}</Button>}
         {["INSPECTED", "ACTIVATING"].includes(review?.state) && <Button variant="contained" onClick={() => run("activate")} disabled={!available || conflicts.length > 0 || !mappingSaved || Boolean(busy)}>{review.state === "ACTIVATING" ? "Complete activation" : "Activate plugin"}</Button>}
