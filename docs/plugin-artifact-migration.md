@@ -107,6 +107,16 @@ Create a new inventory file (existing files are never overwritten):
   '-Dexec.args=--inventory /preserved/plugins.json --source-root /preserved/replica-a --source-root /preserved/replica-b --source-root /preserved/image'
 ```
 
+For an operational console without file access, explicitly use `--inventory-report`
+instead of `--inventory` to also print the same manifest between
+`PLUGIN_INVENTORY_BEGIN` / `PLUGIN_INVENTORY_END` markers. This includes plugin
+catalog IDs and recorded paths, never environment settings or database contents
+from other collections. Authorize the log audience/retention for that metadata.
+The report is capped at 64 KiB. An oversized report action fails before creating
+a file; rerun with `--inventory` to write the full inventory privately. There is
+no automatic fallback. A successful report still creates a new protected output
+file and performs no MongoDB/S3 writes.
+
 The JSON contains `files` with discovered JAR identities and `entries` mapping
 the complete analytics/library catalog. Preserve each entry's `kind`, `catalogId`
 and `recordedPath`. For copied files whose original location is unavailable,

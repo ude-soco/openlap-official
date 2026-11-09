@@ -172,3 +172,31 @@ jobs:
           done <<EOF
           $TESTED_IMAGE_TAGS
           EOF
+
+      - name: Record immutable published identity
+        env:
+          TESTED_IMAGE_ID: ${{ needs.image.outputs.image-id }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os, re, subprocess
+          from pathlib import Path
+          image = os.environ['TESTED_IMAGE_ID']
+          refs = json.loads(subprocess.check_output(
+              ['docker', 'image', 'inspect', image, '--format', '{{json .RepoDigests}}'], text=True))
+          prefix = os.environ['IMAGE_NAME'] + '@'
+          refs = sorted(ref for ref in refs if ref.startswith(prefix)
+                        and re.fullmatch(r'sha256:[a-f0-9]{64}', ref[len(prefix):]))
+          if not refs:
+              raise SystemExit('The registry did not provide a verified immutable image reference.')
+          record = {'sourceRevision': os.environ['GITHUB_SHA'], 'testedImageId': image, 'references': refs}
+          Path('publication.json').write_text(json.dumps(record, indent=2) + '\n')
+          print(json.dumps(record))
+          PYTHON
+
+      - name: Retain publication record
+        uses: actions/upload-artifact@v7
+        with:
+          name: plugin-migration-publication
+          path: publication.json
+          if-no-files-found: error
+          retention-days: 7

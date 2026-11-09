@@ -47,7 +47,8 @@ public final class PluginArtifactMigrationApplication {
       String option = args[i];
       if (i + 1 >= args.length) throw usage();
       if ("--source-root".equals(option)) roots.add(Paths.get(args[++i]));
-      else if (("--inventory".equals(option) || "--check".equals(option) || "--apply".equals(option)) && action == null) {
+      else if (("--inventory".equals(option) || "--inventory-report".equals(option)
+          || "--check".equals(option) || "--apply".equals(option)) && action == null) {
         action = option;
         manifestPath = Paths.get(args[++i]);
       } else throw usage();
@@ -61,12 +62,18 @@ public final class PluginArtifactMigrationApplication {
     try {
       MongoTemplate mongo = new MongoTemplate(client, database);
       PluginArtifactMigration migration = new PluginArtifactMigration(mongo, roots);
-      if ("--inventory".equals(action)) {
+      if ("--inventory".equals(action) || "--inventory-report".equals(action)) {
         PluginArtifactManifest manifest = migration.inventory();
+        String report = "--inventory-report".equals(action) ? inventoryReport(manifest) : null;
         try (Writer output = Files.newBufferedWriter(manifestPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
           mapper.writerWithDefaultPrettyPrinter().writeValue(output, manifest);
         }
         System.out.println("Inventory written: " + manifest.entries.size() + " catalog entries. Review every missing or conflicting source before applying.");
+        if (report != null) {
+          System.out.println("PLUGIN_INVENTORY_BEGIN");
+          System.out.println(report);
+          System.out.println("PLUGIN_INVENTORY_END");
+        }
         return;
       }
       Path realManifest = manifestPath.toRealPath();
@@ -86,6 +93,15 @@ public final class PluginArtifactMigrationApplication {
     } finally { client.close(); }
   }
 
+  static String inventoryReport(PluginArtifactManifest manifest) throws Exception {
+    String report = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(manifest);
+    if (report.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 64 * 1024) {
+      throw new PluginStorageException("PLUGIN_INVENTORY_REPORT_LIMIT",
+          "Catalog review report exceeds 64 KiB; rerun with --inventory to create only a private inventory file.");
+    }
+    return report;
+  }
+
   private static String requireEnvironment(Map<String, String> environment, String name) {
     String value = environment.get(name);
     if (value == null || value.trim().isEmpty()) {
@@ -95,6 +111,6 @@ public final class PluginArtifactMigrationApplication {
   }
 
   private static IllegalArgumentException usage() {
-    return new IllegalArgumentException("Use --inventory FILE, --check FILE or --apply FILE, with one or more --source-root DIRECTORY arguments.");
+    return new IllegalArgumentException("Use --inventory FILE, --check FILE or --apply FILE, with one or more --source-root DIRECTORY arguments. --inventory-report FILE additionally prints the bounded catalog manifest for authorized operational review.");
   }
 }
