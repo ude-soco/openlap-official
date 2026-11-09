@@ -34,7 +34,7 @@
     "papaparse": "^5.5.4",
     "prop-types": "^15.8.1",
     "react": "^19.3.1",
-    "react-apexcharts": "^1.9.0",
+    "react-apexcharts": "^2.2.0",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.2",
     "styled-components": "^6.4.3",
