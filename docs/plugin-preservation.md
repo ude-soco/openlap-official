@@ -39,7 +39,13 @@ Explicit flags support other supported installations.
 For each named pod, the client retrieves only its UID, node, container image,
 readiness and restart count. There is no namespace-wide Pod list. A shell-builtin
 inventory includes nested and hidden directories, rejects symlinks, limits depth,
-and sends NUL-delimited filenames without evaluating them as commands.
+and requires read and search permission on every traversed directory. It sends
+NUL-delimited filenames without evaluating them as commands. Every inventory
+starts with `OPENLAP-JAR-INVENTORY-V1` and ends with
+`OPENLAP-JAR-INVENTORY-END-V1`, each followed by NUL. Filename records between
+these markers start with `./`, so they cannot be mistaken for framing. Missing or
+truncated framing is rejected, and every shell output write and recursive walk
+must succeed before the completion marker is sent.
 
 Each JAR is copied and hashed locally. A second complete read verifies that the
 source still has the same bytes and size. Directory inventories are compared
@@ -49,6 +55,8 @@ match the initial snapshot before a report is atomically published.
 
 An inspected directory may legitimately be empty, for example when a CI image
 contains only tracked placeholder directories and JAR binaries are ignored by Git.
+An empty inventory requires both framing records; no output is a failure.
+Unreadable or unsearchable directories fail instead of appearing empty.
 Empty roots do not prevent the database or another replica's files from being
 backed up. Each source inventory and its JAR count is recorded. If any root is
 empty, the tool publishes `capture-review.json` with `SOURCE_REVIEW_REQUIRED`,
@@ -57,6 +65,15 @@ therefore reports failure even though the database archive may be verified; read
 the bounded log and retained report. This is a source/catalog review gate, not a
 transport failure. Do not migrate until every catalog reference has a verified
 source. The tool never assesses catalog coverage, even for non-empty roots.
+
+Admin catalog counts describe MongoDB registrations, not filesystem availability
+or successful class loading. Registered methods and libraries can remain visible
+after their binaries become unavailable. An empty source report must therefore
+be reconciled with the actual catalog, effective plugin directories, access
+permissions and trusted binary sources. A dashboard count alone does not establish
+source coverage. Docker builds deliberately exclude workstation JARs; the application
+does not generate replacement binaries. Do not restore arbitrary local JARs or
+rewrite registrations to make a migration check pass.
 
 Directories are private (0700), files are private (0600), and existing destinations
 or partial files are never overwritten. Failure retains partial data but publishes
@@ -137,8 +154,11 @@ The second command requires Docker and uses pinned official container images.
 Only allowlisted code and synthetic files are mounted. The tests use synthetic
 data and a loopback-only API fixture, never a live
 configuration. They exercise shell-only inventories, symlink/path rejection,
-source changes, restart detection, archive truncation, size limits, exclusive
-publication, binary streaming, redacted errors and actual named-Pod client reads.
+non-root directory access failures, failed inventory writes, missing/truncated
+framing, source changes, restart detection, archive truncation, size limits,
+exclusive publication, binary streaming, redacted errors and actual named-Pod
+client reads. Directory permission fixtures require an unprivileged user and
+are skipped when the local suite runs as root; the container checks use UID 1000.
 Container-level verification should also use the intended legacy base image and
 the maintenance image's pinned client. An exact released image may require the
 operator's registry access; a base-image reproduction does not prove the underlying

@@ -21,22 +21,30 @@ import threading
 
 
 # Each recursive call has its own shell scope. Globs also include hidden directories;
-# NUL separation preserves spaces without evaluating filenames as shell code.
+# checked writes and framing distinguish a complete empty inventory from lost output.
+INVENTORY_HEADER = b"OPENLAP-JAR-INVENTORY-V1"
+INVENTORY_FOOTER = b"OPENLAP-JAR-INVENTORY-END-V1"
 LIST_JARS = r'''
 cd -P "$1" || exit 40
-[ "$(pwd -P)" = "$1" ] || exit 41
+physical_root=$(pwd -P) || exit 41
+[ "$physical_root" = "$1" ] || exit 41
 walk() (
     [ "$2" -le 32 ] || exit 42
+    [ -r "$1" ] && [ -x "$1" ] || exit 44
     for item in "$1"/* "$1"/.[!.]* "$1"/..?*; do
         [ ! -L "$item" ] || exit 43
         if [ -d "$item" ]; then
             walk "$item" "$(( $2 + 1 ))" || exit $?
         elif [ -f "$item" ]; then
-            case "$item" in *.[jJ][aA][rR]) printf '%s\000' "$item" ;; esac
+            case "$item" in
+                *.[jJ][aA][rR]) printf '%s\000' "$item" || exit 45 ;;
+            esac
         fi
     done
 )
-walk . 0
+printf '%s\000' 'OPENLAP-JAR-INVENTORY-V1' || exit 45
+walk . 0 || exit $?
+printf '%s\000' 'OPENLAP-JAR-INVENTORY-END-V1' || exit 45
 '''
 READ_JAR = r'''[ ! -L "$1" ] && [ -f "$1" ] || exit 43; exec cat -- "$1"'''
 POD_FIELDS = ('{.metadata.uid}{"\t"}{.spec.nodeName}{"\t"}'
@@ -67,12 +75,13 @@ def source_root(value):
 
 
 def paths_from_listing(data):
-    if not data:
-        return []  # A successfully inspected directory can legitimately be empty.
     require(len(data) <= 4 * 1024 * 1024 and data.endswith(b"\0"),
             "JAR inventory is incomplete or too large.")
+    records = data[:-1].split(b"\0")
+    require(len(records) >= 2 and records[0] == INVENTORY_HEADER
+            and records[-1] == INVENTORY_FOOTER, "JAR inventory completion framing is missing or invalid.")
     try:
-        paths = [p.decode("utf-8") for p in data[:-1].split(b"\0")]
+        paths = [p.decode("utf-8") for p in records[1:-1]]
     except UnicodeError:
         raise CaptureError("A source filename needs manual review.") from None
     for name in paths:
@@ -102,6 +111,10 @@ def failure(stage, stderr=b"", timed_out=False):
         category = "source root unavailable or indirect"
     elif b"exit code 42" in stderr:
         category = "source directory depth exceeds limit"
+    elif b"exit code 44" in stderr:
+        category = "source directory lacks read or search permission"
+    elif b"exit code 45" in stderr:
+        category = "JAR inventory output failed"
     else:
         category = "request failed"
     return CaptureError(f"Preservation stopped during {stage}: {category}. Raw client output was withheld.")

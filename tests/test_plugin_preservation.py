@@ -26,6 +26,10 @@ client_spec.loader.exec_module(client)
 DIGEST = "sha256:" + "a" * 64
 
 
+def inventory_frame(*paths):
+    return b"\0".join([capture.INVENTORY_HEADER, *paths, capture.INVENTORY_FOOTER]) + b"\0"
+
+
 class SourceFixture:
     jar_args = staticmethod(capture.Kubernetes.jar_args)
 
@@ -64,6 +68,10 @@ class CaptureTests(unittest.TestCase):
     def run_capture(self, source, output, **options):
         return capture.capture(source, "fixture", [("replica-a", "web"), ("replica-b", "web")],
                                ("database", "mongo"), "/plugins", "openlap", DIGEST, output, **options)
+
+    def run_inventory(self, root, prefix=""):
+        return subprocess.run(["/bin/sh", "-ceu", prefix + capture.LIST_JARS, "preserve", str(root)],
+                              env={"PATH": "/no-external-programs"}, capture_output=True, timeout=10)
 
     def test_complete_checkpoint_verifies_both_replicas_and_archive(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -126,28 +134,88 @@ class CaptureTests(unittest.TestCase):
     def test_shell_inventory_needs_no_external_commands(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp).resolve()
-            for name in ["a.jar", "UPPER.JAR", "space dir/b '$()`.jar", ".hidden/c.jar", "empty/not-a-jar"]:
+            names = ["a.jar", "UPPER.JAR", "MiXeD.JaR", "space dir/b '$()`.jar", ".hidden/c.jar",
+                     ".single.jar", "..double.jar", "...triple.jar", "..hidden/d.jar", "...hidden/e.jar"]
+            for name in names + ["empty/not-a-jar"]:
                 path = root / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(b"x")
-            result = subprocess.run(["/bin/sh", "-ceu", capture.LIST_JARS, "preserve", str(root)],
-                                    env={"PATH": "/no-external-programs"}, capture_output=True, check=True)
-            self.assertEqual(capture.paths_from_listing(result.stdout),
-                             [".hidden/c.jar", "UPPER.JAR", "a.jar", "space dir/b '$()`.jar"])
+            result = self.run_inventory(root)
+            self.assertEqual(result.returncode, 0)
+            self.assertEqual(capture.paths_from_listing(result.stdout), sorted(names))
             self.assertEqual(sorted(p for p in root.rglob("*") if p.name.lower().endswith(".jar")),
                              sorted(root / p for p in capture.paths_from_listing(result.stdout)))
 
+    def test_shell_empty_inventory_requires_completion_framing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            result = self.run_inventory(Path(tmp).resolve())
+            self.assertEqual(result.returncode, 0)
+            self.assertEqual(result.stdout, inventory_frame())
+            self.assertEqual(capture.paths_from_listing(result.stdout), [])
+
+    @unittest.skipIf(os.geteuid() == 0, "Directory access checks require an unprivileged fixture user")
+    def test_inaccessible_root_and_nested_directories_fail_inventory(self):
+        for nested in [False, True]:
+            for mode in [0o111, 0o444, 0o000]:
+                with self.subTest(nested=nested, mode=oct(mode)), tempfile.TemporaryDirectory() as tmp:
+                    root = Path(tmp).resolve(); directory = root / "nested" if nested else root
+                    directory.mkdir(exist_ok=True)
+                    jar = directory / "present.jar"; jar.write_bytes(b"synthetic JAR")
+                    directory.chmod(mode)
+                    try:
+                        result = self.run_inventory(root)
+                    finally:
+                        directory.chmod(0o700)
+                    self.assertTrue(jar.is_file())
+                    self.assertEqual(result.returncode, 40 if not nested and mode != 0o111 else 44)
+                    with self.assertRaises(capture.CaptureError):
+                        capture.paths_from_listing(result.stdout)
+
+    def test_inventory_printf_failures_propagate_without_completion(self):
+        cases = [("present.jar", "./*"), ("nested/present.jar", "./*"),
+                 ("present.jar", capture.INVENTORY_HEADER.decode()),
+                 ("present.jar", capture.INVENTORY_FOOTER.decode())]
+        for name, failed_record in cases:
+            with self.subTest(name=name, failed_record=failed_record), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp).resolve(); jar = root / name
+                jar.parent.mkdir(exist_ok=True); jar.write_bytes(b"synthetic JAR")
+                prefix = ('printf() { case "$2" in ' + failed_record
+                          + ') return 1 ;; esac; command printf "$@"; }\n')
+                result = self.run_inventory(root, prefix)
+                self.assertEqual(result.returncode, 45)
+                with self.assertRaises(capture.CaptureError):
+                    capture.paths_from_listing(result.stdout)
+
     def test_symlink_jar_and_directory_are_rejected(self):
-        for directory in [False, True]:
-            with self.subTest(directory=directory), tempfile.TemporaryDirectory() as tmp:
-                root = Path(tmp).resolve(); (root / "a.jar").write_bytes(b"x")
-                (root / ("indirect" if directory else "link.jar")).symlink_to(root if directory else root / "a.jar")
-                result = subprocess.run(["/bin/sh", "-ceu", capture.LIST_JARS, "preserve", str(root)],
-                                        env={"PATH": "/no-external-programs"}, capture_output=True)
-                self.assertEqual(result.returncode, 43)
+        for kind in ["jar", "directory", "dangling", "nested", "root"]:
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as tmp:
+                base = Path(tmp).resolve(); root = base / "source"; root.mkdir()
+                (root / "a.jar").write_bytes(b"x")
+                inventory_root = root
+                if kind == "root":
+                    inventory_root = base / "indirect"; inventory_root.symlink_to(root)
+                elif kind == "nested":
+                    (root / "nested").mkdir(); (root / "nested/link.jar").symlink_to(root / "a.jar")
+                else:
+                    (root / "indirect").symlink_to(root if kind == "directory" else root / ("missing" if kind == "dangling" else "a.jar"))
+                result = self.run_inventory(inventory_root)
+                self.assertEqual(result.returncode, 41 if kind == "root" else 43)
+                with self.assertRaises(capture.CaptureError):
+                    capture.paths_from_listing(result.stdout)
 
     def test_unsafe_and_ambiguous_listing_is_rejected(self):
-        self.assertEqual(capture.paths_from_listing(b""), [])
-        self.assertEqual(capture.paths_from_listing(b"./UPPER.JAR\0"), ["UPPER.JAR"])
-        for data in [b"./../a.jar\0", b"/a.jar\0", b"./a.jar\0./a.jar\0", b"./a\nb.jar\0", b"./a.jar"]:
+        self.assertEqual(capture.paths_from_listing(inventory_frame(b"./UPPER.JAR")), ["UPPER.JAR"])
+        for paths in [(b"./../a.jar",), (b"/a.jar",), (b"./a.jar", b"./a.jar"), (b"./a\nb.jar",),
+                      (capture.INVENTORY_HEADER,), (capture.INVENTORY_FOOTER,)]:
+            with self.subTest(paths=paths), self.assertRaises(capture.CaptureError):
+                capture.paths_from_listing(inventory_frame(*paths))
+
+    def test_missing_truncated_or_ambiguous_inventory_frames_are_rejected(self):
+        header = capture.INVENTORY_HEADER + b"\0"; footer = capture.INVENTORY_FOOTER + b"\0"
+        complete = inventory_frame(b"./a.jar", b"./b.jar")
+        malformed = [b"", header, footer, b"./a.jar\0", header + b"./a.jar\0",
+                     b"./a.jar\0" + footer, complete[:-1], complete[:-8],
+                     inventory_frame() + b"./a.jar\0", inventory_frame() * 2,
+                     b"unexpected\0" + inventory_frame()]
+        for data in malformed:
             with self.subTest(data=data), self.assertRaises(capture.CaptureError):
                 capture.paths_from_listing(data)
 
@@ -197,6 +265,8 @@ class CaptureTests(unittest.TestCase):
         for text, category in [(b"Error from server (Forbidden): ", "permission denied"),
                                (b"i/o timeout ", "connection timeout"),
                                (b"command terminated with exit code 127 ", "command unavailable"),
+                               (b"command terminated with exit code 44 ", "read or search permission"),
+                               (b"command terminated with exit code 45 ", "inventory output failed"),
                                (b"x509: ", "certificate verification failed")]:
             error = str(capture.failure("JAR inventory", text + private))
             self.assertIn("JAR inventory", error); self.assertIn(category, error)

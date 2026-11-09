@@ -27,8 +27,14 @@ def main():
         fixture = root / "synthetic"; fixture.mkdir()
         binaries = {"first.jar": bytes(range(256)) * 512,
                     "UPPER.JAR": b"case-insensitive extension matches application upload rules",
+                    "MiXeD.JaR": b"mixed-case extension",
                     "space dir/quoted '$()`.jar": b"second synthetic JAR",
-                    ".hidden/third.jar": b"hidden synthetic JAR"}
+                    ".hidden/third.jar": b"hidden synthetic JAR",
+                    ".single.jar": b"hidden JAR",
+                    "..double.jar": b"double-dot JAR",
+                    "...triple.jar": b"triple-dot JAR",
+                    "..hidden/fourth.jar": b"double-dot directory",
+                    "...hidden/fifth.jar": b"triple-dot directory"}
         for name, content in binaries.items():
             path = fixture / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(content)
         readable_tree(root)
@@ -47,7 +53,46 @@ def main():
                                     capture_output=True, check=True, timeout=120)
             assert result.stdout == content
             assert hashlib.sha256(result.stdout).digest() == hashlib.sha256(content).digest()
-        print("PASS: real minimal Corretto image lacks find; builtin inventory and binary reads succeed.", flush=True)
+        empty = fixture / "empty"; empty.mkdir(); empty.chmod(0o755)
+        result = subprocess.run(common + ["-ceu", capture.LIST_JARS, "preserve", "/fixtures/empty"],
+                                capture_output=True, check=True, timeout=120)
+        assert capture.paths_from_listing(result.stdout) == []
+        restricted = fixture / "restricted"; restricted.mkdir()
+        (restricted / "present.jar").write_bytes(b"inaccessible synthetic JAR")
+        # Linux tmpfs permissions avoid Docker Desktop host-share access emulation.
+        permission_common = common[:-1] + ["--tmpfs=/permission-fixtures:rw,noexec,nosuid,size=1m,mode=0777", BASE_IMAGE]
+        permission_fixture = r'''
+root=/permission-fixtures/source
+directory="$root"
+[ "$2" != nested ] || directory="$root/nested"
+mkdir -p "$directory"
+printf '%s' 'inaccessible synthetic JAR' > "$directory/present.jar"
+chmod "$1" "$directory"
+exec /bin/sh -ceu "$3" preserve "$root"
+'''
+        for nested in [False, True]:
+            for mode in [0o111, 0o444, 0o000]:
+                result = subprocess.run(permission_common + ["-ceu", permission_fixture, "fixture", format(mode, "o"),
+                                                             "nested" if nested else "root", capture.LIST_JARS],
+                                        capture_output=True, timeout=120)
+                assert result.returncode == (40 if not nested and mode != 0o111 else 44), (nested, mode, result.returncode)
+                try:
+                    capture.paths_from_listing(result.stdout)
+                except capture.CaptureError:
+                    pass
+                else:
+                    raise AssertionError("An inaccessible directory produced a completed inventory")
+        prefix = 'printf() { case "$2" in ./restricted/*) return 1 ;; esac; command printf "$@"; }\n'
+        result = subprocess.run(common + ["-ceu", prefix + capture.LIST_JARS, "preserve", "/fixtures"],
+                                capture_output=True, timeout=120)
+        assert result.returncode == 45
+        try:
+            capture.paths_from_listing(result.stdout)
+        except capture.CaptureError:
+            pass
+        else:
+            raise AssertionError("A failed nested inventory write produced completion framing")
+        print("PASS: pinned minimal Corretto lacks find; framed inventory, binary reads, permissions and write failures verified as UID 1000.", flush=True)
 
         staged = root / "source"
         (staged / "tests").mkdir(parents=True)
