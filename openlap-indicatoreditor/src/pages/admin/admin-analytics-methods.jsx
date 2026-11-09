@@ -35,6 +35,7 @@ import {
 import { useAdminUsage } from "./utils/use-admin-usage";
 import UsageChips from "./components/usage-chips";
 import CatalogStatusControl from "./components/catalog-status-control";
+import PluginUploadControl from "./components/plugin-upload-control";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
 const SKELETON_ROWS = 5;
@@ -47,7 +48,7 @@ const errorMessage = (error, fallback) =>
  * (id, name, description, enabled), including disabled items. A method's inputs and
  * parameters come from GET /v1/analytics/methods/input-params/{id}, which
  * resolves the method's class from its JAR server-side — so they are loaded
- * lazily, only when a row is expanded. No upload/delete/reload actions.
+ * lazily, only when a row is expanded. New entries use the shared staged upload workflow.
  */
 const AdminAnalyticsMethods = () => {
   const { api } = useContext(AuthContext);
@@ -224,13 +225,16 @@ const AdminAnalyticsMethods = () => {
         ]}
         subtitle="Available analytics methods and, on expand, their inputs and parameters."
         actions={
-          status === "ready" ? (
+          <Stack direction="row" gap={1} alignItems="center">
+          {status === "ready" ? (
             <Chip
               label={`${methods.length} ${
                 methods.length === 1 ? "method" : "methods"
               }`}
             />
-          ) : null
+          ) : null}
+          <PluginUploadControl kind="ANALYTICS" onActivated={loadMethods} />
+          </Stack>
         }
       />
 

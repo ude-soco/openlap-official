@@ -28,6 +28,7 @@ import {
 import { useAdminUsage } from "./utils/use-admin-usage";
 import UsageChips from "./components/usage-chips";
 import CatalogStatusControl from "./components/catalog-status-control";
+import PluginUploadControl from "./components/plugin-upload-control";
 
 const SKELETON_ROWS = 4;
 
@@ -39,7 +40,7 @@ const errorMessage = (error, fallback) =>
  * GET /v1/admin/visualizations/libraries, including disabled items. The "Chart
  * types" count is a best-effort enhancement derived from the admin types list
  * (grouped by library name); if that call fails the page still renders with "—"
- * counts. No upload/delete actions.
+ * counts. Adding a library uses the shared staged upload workflow.
  */
 const AdminVisualizationLibraries = () => {
   const { api } = useContext(AuthContext);
@@ -131,13 +132,16 @@ const AdminVisualizationLibraries = () => {
         ]}
         subtitle="Installed visualization libraries and their source plugins."
         actions={
-          status === "ready" ? (
+          <Stack direction="row" gap={1} alignItems="center">
+          {status === "ready" ? (
             <Chip
               label={`${libraries.length} ${
                 libraries.length === 1 ? "library" : "libraries"
               }`}
             />
-          ) : null
+          ) : null}
+          <PluginUploadControl kind="VISUALIZATION" onActivated={load} />
+          </Stack>
         }
       />
 
