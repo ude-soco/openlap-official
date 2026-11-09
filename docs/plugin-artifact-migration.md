@@ -174,9 +174,30 @@ classes and nine chart classes against the backend's pinned API dependencies;
 that does not establish algorithm execution, rendering, compatibility with a
 particular deployed image, or coverage of an installation's database. In particular,
 the historical C3 renderers require `com.openlap.template.model.Customization`,
-which the pinned visualization template 1.1.0 no longer provides. Do not activate
-that C3 artifact against this runtime until a reviewed compatibility fix passes
-actual chart-generation checks; metadata inspection alone cannot clear this gate. Inventory
+which the pinned visualization template 1.1.0 no longer provides. This backend
+includes an original, narrowly scoped String-value compatibility bridge at that
+binary name. It preserves the constructor/accessors called by the pinned charts;
+chart code still supplies defaults, color formatting and title placement. The
+unrecovered original model's other behavior is not claimed. Template dependency
+upgrades must check for a competing class with that binary name.
+
+The unchanged historical C3 archive and this bridge pass 19 real generator cases
+with 306 output assertions across all nine charts, defaults/customization,
+grouped/scatter data and Bar sorting/filtering. The baseline without the bridge
+fails all 19 with the missing-class error. Repeat the isolated check against a
+locally built migration image (which packages the same backend classes/APIs):
+
+```sh
+python3 -B openlap-analyticsframework/scripts/verify-legacy-c3.py \
+  --image REVIEWED_LOCAL_IMAGE_ID
+```
+
+The verifier reads only reviewed local public Git objects, validates the historical
+JAR hash, and runs synthetic data in a read-only, nonroot container without
+networking, services or credentials. It tests generated JavaScript/HTML strings;
+it does not open a browser or download chart libraries. Keep per-replica browser,
+cold-cache and restart acceptance as rollout gates. An old image without the
+bridge remains incompatible even if those same JAR bytes are copied into it. Inventory
 the actual catalog, retain its IDs/paths/associations and explicitly map each
 entry to the intended verified source. Do not clear registrations or use Add/
 replacement uploads to repair missing legacy binaries.
@@ -193,8 +214,11 @@ docker build -f openlap-analyticsframework/Dockerfile.plugin-migration \
 Its entrypoint runs only `PluginArtifactMigrationApplication`, with no web server,
 account initialization or Learning Locker connection. Arguments are passed as an
 array; no shell evaluates source paths. The runner uses umask `077` and suppresses
-dependency logging, retaining the CLI's bounded summaries. Publish a reviewed image
-through the dedicated workflow, retain its source revision/build record, then pin
+dependency logging, retaining the CLI's bounded summaries. The dedicated workflow
+runs entrypoint and historical-chart checks with read-only permissions. Its
+push-only publisher verifies an immutable archive's checksum, source revision and
+image configuration identity, then pushes that exact tested image without a
+second build. Retain the source revision/build record, then pin
 its `@sha256:` identity for an operation. A `plugin-migration-*` maintenance tag
 publishes only this runner, without merging the feature or publishing application
 images; it does not update the runner's main/edge tag. Creating that tag is an
@@ -269,7 +293,7 @@ not overwrite a corrupt existing object automatically. Never remove active cache
 files to repair a running backend.
 
 Rollback to an older image requires restoring its exact local binaries at the
-recorded paths as well as compatible metadata. After later phases introduce new
+recorded paths, compatible template/bridge classes and compatible metadata. After later phases introduce new
 S3-only versions, an old image cannot execute those versions using local paths
 alone; rehearse a rollback with both old and new artifacts before production.
 
