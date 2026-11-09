@@ -126,13 +126,14 @@ class CaptureTests(unittest.TestCase):
     def test_shell_inventory_needs_no_external_commands(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp).resolve()
-            for name in ["a.jar", "space dir/b '$()`.jar", ".hidden/c.jar", "empty/not-a-jar"]:
+            for name in ["a.jar", "UPPER.JAR", "space dir/b '$()`.jar", ".hidden/c.jar", "empty/not-a-jar"]:
                 path = root / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(b"x")
             result = subprocess.run(["/bin/sh", "-ceu", capture.LIST_JARS, "preserve", str(root)],
                                     env={"PATH": "/no-external-programs"}, capture_output=True, check=True)
             self.assertEqual(capture.paths_from_listing(result.stdout),
-                             [".hidden/c.jar", "a.jar", "space dir/b '$()`.jar"])
-            self.assertEqual(sorted(root.rglob("*.jar")), sorted(root / p for p in capture.paths_from_listing(result.stdout)))
+                             [".hidden/c.jar", "UPPER.JAR", "a.jar", "space dir/b '$()`.jar"])
+            self.assertEqual(sorted(p for p in root.rglob("*") if p.name.lower().endswith(".jar")),
+                             sorted(root / p for p in capture.paths_from_listing(result.stdout)))
 
     def test_symlink_jar_and_directory_are_rejected(self):
         for directory in [False, True]:
@@ -144,9 +145,52 @@ class CaptureTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 43)
 
     def test_unsafe_and_ambiguous_listing_is_rejected(self):
-        for data in [b"", b"./../a.jar\0", b"/a.jar\0", b"./a.jar\0./a.jar\0", b"./a\nb.jar\0", b"./a.jar"]:
+        self.assertEqual(capture.paths_from_listing(b""), [])
+        self.assertEqual(capture.paths_from_listing(b"./UPPER.JAR\0"), ["UPPER.JAR"])
+        for data in [b"./../a.jar\0", b"/a.jar\0", b"./a.jar\0./a.jar\0", b"./a\nb.jar\0", b"./a.jar"]:
             with self.subTest(data=data), self.assertRaises(capture.CaptureError):
                 capture.paths_from_listing(data)
+
+    def test_empty_sources_still_preserve_database_and_require_review(self):
+        source = SourceFixture(); source.data = {}
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "new"
+            report = self.run_capture(source, output)
+            self.assertEqual(report["status"], "SOURCE_REVIEW_REQUIRED")
+            self.assertEqual([row["jarCount"] for row in report["sourceInventories"]], [0, 0])
+            self.assertEqual(gzip.decompress((output / "database.archive.gz").read_bytes()), b"synthetic Mongo archive")
+            self.assertEqual(json.loads((output / "capture-review.json").read_text()), report)
+            self.assertFalse((output / "preservation.json").exists())
+
+    def test_one_empty_replica_does_not_lose_other_replica_copies(self):
+        class UnevenSources(SourceFixture):
+            def inventory(self, pod, root):
+                return [] if pod.name == "replica-a" else super().inventory(pod, root)
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "new"
+            report = self.run_capture(UnevenSources(), output)
+            self.assertEqual(report["status"], "SOURCE_REVIEW_REQUIRED")
+            self.assertEqual([row["jarCount"] for row in report["sourceInventories"]], [0, 2])
+            self.assertEqual({row["pod"] for row in report["files"]}, {"replica-b"})
+            self.assertFalse((output / "preservation.json").exists())
+
+    def test_interrupted_report_publication_is_never_a_success(self):
+        def interrupted(_data, stream, **_options):
+            stream.write('{"incomplete":'); raise OSError("synthetic interruption")
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "new"
+            with mock.patch.object(capture.json, "dump", side_effect=interrupted), self.assertRaises(OSError):
+                self.run_capture(SourceFixture(), output)
+            self.assertFalse((output / "preservation.json").exists())
+            self.assertTrue((output / "preservation.json.partial").exists())
+
+    def test_review_report_returns_a_distinct_non_success_exit_code(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            arguments = ["capture.py", "--context", "fixture", "--namespace", "fixture",
+                         "--backend-pod", "backend", "--database-pod", "database", "--database", "openlap",
+                         "--expected-backend-digest", DIGEST, "--output", str(Path(tmp) / "new")]
+            with mock.patch.object(sys, "argv", arguments), mock.patch.object(capture, "capture", return_value={"status": "SOURCE_REVIEW_REQUIRED"}):
+                self.assertEqual(capture.main(), 2)
 
     def test_diagnostics_identify_stage_and_hide_raw_values(self):
         private = b"never-echo-this-value"

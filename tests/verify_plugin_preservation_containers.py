@@ -26,6 +26,7 @@ def main():
         root = Path(temporary)
         fixture = root / "synthetic"; fixture.mkdir()
         binaries = {"first.jar": bytes(range(256)) * 512,
+                    "UPPER.JAR": b"case-insensitive extension matches application upload rules",
                     "space dir/quoted '$()`.jar": b"second synthetic JAR",
                     ".hidden/third.jar": b"hidden synthetic JAR"}
         for name, content in binaries.items():

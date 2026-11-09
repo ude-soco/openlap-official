@@ -45,7 +45,18 @@ Each JAR is copied and hashed locally. A second complete read verifies that the
 source still has the same bytes and size. Directory inventories are compared
 again. The database is streamed into a gzip archive and its complete compressed
 stream is checked. Finally, source pod identities, images and restart counts must
-match the initial snapshot before `preservation.json` is atomically published.
+match the initial snapshot before a report is atomically published.
+
+An inspected directory may legitimately be empty, for example when a CI image
+contains only tracked placeholder directories and JAR binaries are ignored by Git.
+Empty roots do not prevent the database or another replica's files from being
+backed up. Each source inventory and its JAR count is recorded. If any root is
+empty, the tool publishes `capture-review.json` with `SOURCE_REVIEW_REQUIRED`,
+returns exit code 2, and does **not** publish `preservation.json`. A Kubernetes Job
+therefore reports failure even though the database archive may be verified; read
+the bounded log and retained report. This is a source/catalog review gate, not a
+transport failure. Do not migrate until every catalog reference has a verified
+source. The tool never assesses catalog coverage, even for non-empty roots.
 
 Directories are private (0700), files are private (0600), and existing destinations
 or partial files are never overwritten. Failure retains partial data but publishes

@@ -32,7 +32,7 @@ walk() (
         if [ -d "$item" ]; then
             walk "$item" "$(( $2 + 1 ))" || exit $?
         elif [ -f "$item" ]; then
-            case "$item" in *.jar) printf '%s\000' "$item" ;; esac
+            case "$item" in *.[jJ][aA][rR]) printf '%s\000' "$item" ;; esac
         fi
     done
 )
@@ -67,8 +67,10 @@ def source_root(value):
 
 
 def paths_from_listing(data):
+    if not data:
+        return []  # A successfully inspected directory can legitimately be empty.
     require(len(data) <= 4 * 1024 * 1024 and data.endswith(b"\0"),
-            "JAR inventory is empty, incomplete or too large.")
+            "JAR inventory is incomplete or too large.")
     try:
         paths = [p.decode("utf-8") for p in data[:-1].split(b"\0")]
     except UnicodeError:
@@ -76,7 +78,7 @@ def paths_from_listing(data):
     for name in paths:
         path = PurePosixPath(name)
         require(name.startswith("./") and str(path) == name[2:] and ".." not in path.parts
-                and name.endswith(".jar") and "\\" not in name
+                and name.lower().endswith(".jar") and "\\" not in name
                 and not any(ord(c) < 32 for c in name), "Unsafe or unsupported source filename.")
     require(len(paths) <= 10000 and len(paths) == len(set(paths)), "Ambiguous JAR inventory.")
     return sorted(p[2:] for p in paths)
@@ -221,6 +223,9 @@ def capture(kube, namespace, backends, database, root, database_name, expected_d
     output.mkdir(mode=0o700, parents=False, exist_ok=False)
     report = {"namespace": namespace, "capturedAt": datetime.now(timezone.utc).isoformat(),
               "pods": [p.__dict__ for p in sources + [mongo]], "files": [],
+              "sourceInventories": [{"pod": p.name, "root": root, "jarCount": len(files)}
+                                    for p, files in zip(sources, listings)],
+              "catalogCoverage": "not assessed; verify every catalog reference before migration",
               "consistency": "online preparation; write-paused checkpoint and restore rehearsal still required"}
     remaining = maximum
     for pod, files in zip(sources, listings):
@@ -249,13 +254,17 @@ def capture(kube, namespace, backends, database, root, database_name, expected_d
     report["databaseBackup"] = {"path": str(archive.resolve()), "sha256": digest, "sizeBytes": size}
     require([kube.pod(*p) for p in backends] + [kube.pod(*database)] == sources + [mongo],
             "A source pod identity, image or restart count changed during capture.")
-    manifest = output / "preservation.json"
-    pending = output / "preservation.json.partial"
+    empty = sum(not files for files in listings)
+    report["status"] = "SOURCE_REVIEW_REQUIRED" if empty else "CAPTURED"
+    manifest = output / ("capture-review.json" if empty else "preservation.json")
+    pending = manifest.with_name(manifest.name + ".partial")
     with os.fdopen(os.open(pending, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600), "w") as target:
         json.dump(report, target, indent=2); target.write("\n"); target.flush(); os.fsync(target.fileno())
     os.link(pending, manifest)
     pending.unlink()
     print(f"Verified {len(report['files'])} JAR copies from {len(sources)} stable backend replicas and a gzip-checked database archive.")
+    if empty:
+        print(f"Source review required: {empty} of {len(sources)} reviewed JAR roots are empty. The database archive is verified; no migration-ready preservation inventory was published.")
     print("Online preparation only: a write-paused checkpoint and restore rehearsal remain required.")
     return report
 
@@ -308,9 +317,9 @@ def main():
             work = Path(temporary)
             selected = cluster_connection(work) if args.in_cluster else (
                 ["--context=" + args.context] if args.context else ["--kubeconfig=" + str(args.kubeconfig)])
-            capture(Kubernetes(namespace, selected, work / "cache"), namespace, backends, database,
-                    args.jar_root, args.database or "", args.expected_backend_digest or "", output)
-        return 0
+            report = capture(Kubernetes(namespace, selected, work / "cache"), namespace, backends, database,
+                             args.jar_root, args.database or "", args.expected_backend_digest or "", output)
+        return 2 if report["status"] == "SOURCE_REVIEW_REQUIRED" else 0
     except CaptureError as error:
         print(str(error), file=sys.stderr)
     except (OSError, ValueError, KeyError, EOFError):
