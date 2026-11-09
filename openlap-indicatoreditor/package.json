@@ -18,7 +18,7 @@
     "@mui/icons-material": "^7.3.11",
     "@mui/lab": "^7.0.1-beta.25",
     "@mui/material": "^7.3.11",
-    "@mui/styled-engine-sc": "^7.3.10",
+    "@mui/styled-engine-sc": "^9.5.0",
     "@mui/x-data-grid": "^8.29.1",
     "@mui/x-date-pickers": "^8.29.0",
     "@tiptap/pm": "^3.33.0",
