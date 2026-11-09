@@ -389,15 +389,31 @@ The following legacy DELETE operations now return HTTP 409 with code
 - `/v1/visualizations/delete?fileName=...`
 
 Use the existing admin Enable/Disable controls to retire plugins while keeping
-saved indicators functional. Dependency-safe removal, immutable S3 artifacts and
-the new upload/update workflows are subsequent increments. See the
+saved indicators functional. Dependency-safe removal and the new upload/update
+workflows are subsequent increments. See the
 [issue #1 plan](../docs/issue-1-plugin-management-plan.md) for migration and rollout.
 
 An edge-only S3-compatible storage pilot has now passed live two-client access,
-network isolation and persistence checks after storage pod replacement. The
-backend still uses its existing local plugin files; connecting the artifact
-registry/cache and migrating installed JARs are the next implementation unit.
-Production storage and application deployments have not been changed by the pilot.
+network isolation and persistence checks after storage pod replacement. This
+branch now also includes a content-addressed Mongo artifact registry, S3 adapter,
+verified per-backend cache and explicit inventory/check/apply migration utility.
+Real MongoDB/Garage tests verify preservation of existing records and independent
+backend execution after the source JAR is removed.
+
+The default remains `PLUGIN_STORAGE_MODE=local`. In opt-in S3 mode, startup verifies
+all installed artifacts, local discovery and legacy plugin mutations are blocked,
+and cache limits prevent unbounded growth without evicting active JARs. There is
+no local fallback after an S3 error. Existing live JARs have not been imported, and
+the backend changes have not been deployed. Preserve files from every live replica
+before any rollout. See the [artifact migration guide](../docs/plugin-artifact-migration.md)
+for environment settings, commands, recovery and the remaining release gates.
+
+Run the full backend suite and opt-in disposable MongoDB/Garage integration tests:
+
+```bash
+./mvnw test
+python3 scripts/test-plugin-artifacts.py
+```
 
 Run the file, real-JAR version isolation, deletion and authorization regressions:
 

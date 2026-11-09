@@ -1,8 +1,9 @@
 # Issue #1: plugin management with S3-compatible storage
 
-Status: lifecycle protections implemented on `feat/shoeb-plugin-management-s3`;
-edge storage pilot deployed and verified; backend artifact integration next.
-Updated: 2026-11-08.
+Status: lifecycle protections and backend artifact integration implemented on
+`feat/shoeb-plugin-management-s3`; edge storage pilot deployed and verified;
+live JAR preservation and application migration remain pending.
+Updated: 2026-11-09.
 Issue: [Create an admin panel #1](https://github.com/ude-soco/openlap-official/issues/1).
 
 This is the current plan for the remaining analytics and visualization management
@@ -50,8 +51,9 @@ The first increment establishes local lifecycle protections:
 These changes are not yet deployed. Before deploying strict JAR-path resolution,
 inventory existing database paths and artifacts as described under Migration and
 rollback; inconsistent historical paths now fail explicitly instead of silently
-loading a different binary. Artifact migration, backend S3 integration, modern
-management workflows and the usage overview remain pending.
+loading a different binary. The artifact migration tool and backend S3 integration
+are now implemented below; live migration, modern management workflows and the
+usage overview remain pending.
 
 The edge storage pilot was deployed and verified on 2026-11-08 through the private
 continuous-delivery repository:
@@ -74,8 +76,33 @@ continuous-delivery repository:
 
 The application has not yet been connected to the bucket, and existing plugin
 JARs have not been migrated. Production resources and application image pins
-were not changed by the pilot. The next implementation unit is the artifact
-registry, verified local cache and explicit migration path in phase 3.
+were not changed by the pilot.
+
+Phase 3 is implemented on the feature branch and verified locally:
+
+- A primary-MongoDB artifact registry records content-addressed JAR identities
+  and retryable STAGED/READY states. The S3 adapter snapshots/verifies sources,
+  verifies existing objects before reuse and verifies stored bytes before READY.
+- Each backend has an exclusive, bounded local cache. Downloads are coordinated,
+  checked and atomically published. Cache admission limits preserve JARs still
+  needed by classloaders; warm verified caches survive a storage outage.
+- Opt-in S3 execution resolves the artifact attached to the catalog. Startup
+  verifies the complete installed catalog, including disabled plugins. Local
+  discovery and legacy mutations cannot alter an artifact-backed catalog.
+- The standalone inventory/check/apply utility imports existing binaries without
+  changing IDs, metadata, enabled flags, visualization DBRefs or indicator
+  references. Missing sources and conflicting replica copies require an explicit
+  mapping; partial storage failures are retryable before catalog attachment.
+- Real MongoDB/Garage integration tests cover catalog parity, repeat and concurrent
+  imports, partial failures, corrupt objects and independent backend caches
+  loading real analytics/visualization classes after deletion of their source JAR.
+  The protocol probe establishes that Garage ignores conditional PUT; application
+  integrity uses verified content-addressed snapshots and readback instead.
+
+No live application migration or backend rollout has occurred. Preserve binaries
+from every running replica before replacing pods, then verify actual edge replica
+execution and restart recovery. The [artifact migration guide](./plugin-artifact-migration.md)
+records the commands, configuration and recovery procedure. Phases 4–8 remain open.
 
 ## Storage and execution design
 
@@ -140,8 +167,8 @@ disk or an enforced filesystem limit.
 The pilot selected Garage v2.5.0 using a plain StatefulSet without Kubernetes
 discovery CRDs. Its official release and job images are digest-pinned. The service
 uses a non-root init step to prepare private service-owned credential files and
-requires no new Kubernetes API permissions. Backend SDK compatibility will be
-tested during the application integration unit.
+requires no new Kubernetes API permissions. Backend SDK compatibility has now
+passed against the same Garage image in disposable integration tests.
 
 A single storage instance using local-path is suitable for proving integration.
 Production needs an explicit availability decision, an off-node backup location,
