@@ -98,8 +98,9 @@ staged catalog records manually while a worker might still be writing them.
 Mongo transactions are not required. A partial write can leave hidden rows or
 unattached artifacts, but it does not publish a subset of entries. Retrying the
 same installation completes its rows without creating duplicate catalog IDs.
-Staging/object cleanup and cancellation are deferred to the dependency and
-retention work in phase 6; this workflow performs no hard deletion.
+Idle reviews can be discarded and restored, and expired artifacts can be cleaned
+through the separate [removal and retention workflow](./plugin-removal-and-retention.md).
+Installation itself performs no hard deletion.
 
 Success and failure outcomes for upload, inspection and activation use the
 existing admin audit log. Plugin/driver exception text is not copied into audit
@@ -126,8 +127,8 @@ catalog item returns HTTP 409 / `PLUGIN_INSTALLATION_INCOMPLETE`. Storage/cache
 errors retain the phase 3 error codes and do not trigger local fallback.
 
 Legacy local create/upload/reload/populate routes remain blocked in S3 mode and
-direct maintainers to the new Add workflow. Legacy deletion remains blocked until
-the dependency-safe removal workflow is implemented.
+direct maintainers to the new Add workflow. Legacy deletion remains retired; use
+the guarded removal review in Details & versions.
 
 ## Verification and rollout
 
@@ -143,6 +144,7 @@ No live backend has been replaced or migrated by this implementation. Before edg
 rollout, preserve JARs from every running backend, migrate and verify their exact
 bytes, inject the S3 configuration, then test old indicators and these new flows
 on every replica and after restart. Production still requires the agreed backup,
-restore and availability gates. Metadata/version editing, guarded deletion and
-the usage overview remain phases 6–7. Metadata and replacement/version management
-are implemented in the [version management guide](./plugin-version-management.md).
+restore and availability gates. Metadata and replacement/version management are
+implemented in the [version management guide](./plugin-version-management.md);
+guarded removal/recovery and the usage overview are described in the
+[removal and retention guide](./plugin-removal-and-retention.md).

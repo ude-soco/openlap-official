@@ -4,7 +4,8 @@ This is the phase 3 backend implementation for [issue #1](https://github.com/ude
 It adds explicit artifact migration and S3 execution. The subsequent
 [upload/review/activation workflow](./plugin-upload-workflow.md) is also implemented
 on this branch, together with [metadata/version management](./plugin-version-management.md).
-Safe deletion and the usage overview remain later phases.
+Guarded removal/recovery and the usage overview are also implemented on the
+feature branch; see [removal and retention](./plugin-removal-and-retention.md).
 The application defaults to **local** mode; deployment never imports JARs automatically.
 
 ## Storage model

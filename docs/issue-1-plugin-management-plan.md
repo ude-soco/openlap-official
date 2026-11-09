@@ -1,6 +1,7 @@
 # Issue #1: plugin management with S3-compatible storage
 
-Status: lifecycle protections, artifact integration, Add, metadata editing and replacement versions implemented on
+Status: lifecycle protections, artifact integration, Add, metadata/version management,
+guarded removal/recovery and usage overview implemented on
 `feat/shoeb-plugin-management-s3`; edge storage pilot deployed and verified;
 live JAR preservation and application migration remain pending.
 Updated: 2026-11-09.
@@ -14,11 +15,11 @@ historical and includes gaps that have since been fixed.
 
 | Issue requirement | Current implementation | Remaining work |
 | --- | --- | --- |
-| Manage analytics methods | Catalog, usage counts, enable/disable, staged Add, edit details, replacement versions and history on feature branch | Safe deletion; live acceptance |
-| Manage visualization methods | Library/type catalogs, usage counts, enable/disable, staged Add, edit details, replacement versions and history on feature branch | Safe deletion; live acceptance |
+| Manage analytics methods | Catalog, staged Add, metadata/version editing, enable/disable, guarded removal/recovery and usage overview on feature branch | Live migration and acceptance |
+| Manage visualization methods | Library/type catalogs, staged Add, metadata/version editing, enable/disable, guarded removal/recovery and usage overview on feature branch | Live migration and acceptance |
 | Upload and add methods | Validated S3 upload, explicit inspection, review and atomic installation on feature branch | Preserved-JAR migration, rollout and edge acceptance |
-| Delete and update methods | Legacy delete routes now reject removal; enable/disable remains available | Reference checks, shared-artifact protection, version handling, confirmations and recovery |
-| Dashboard showing methods in use | Counts per item from saved indicators and distinct creators | Overview with totals, most-used methods and unused items, with clear metric labels |
+| Delete and update methods | Metadata/version edits, authoritative dependency checks, coordinated removal, shared-artifact retention and disabled restore on feature branch | Guarded rollout and edge acceptance |
+| Dashboard showing methods in use | Aggregate totals, most-used and zero-reference entries, filters/search/sorting and per-version saved-indicator/creator counts on feature branch | Edge acceptance |
 
 Admin routing, role guards, audit logging and soft-disable are already available.
 The current code also validates plugin filenames and restricts legacy reload and
@@ -44,16 +45,16 @@ The first increment establishes local lifecycle protections:
   classloaders for different artifact paths. Retired versions still execute, and
   loaders remain available for lazy dependency loading until application shutdown.
 - The five legacy delete operations return HTTP 409 / `PLUGIN_DELETE_UNAVAILABLE`
-  before accessing catalog records or files. This temporary restriction prevents
-  dangling references and shared-JAR deletion until the guarded removal workflow
-  in phase 6 is implemented. Enable/disable controls are unchanged.
+  before accessing catalog records or files. This restriction prevents unsafe
+  deletion through old routes. Use the separate guarded removal workflow
+  implemented in phase 6. Enable/disable controls are unchanged.
 
 These changes are not yet deployed. Before deploying strict JAR-path resolution,
 inventory existing database paths and artifacts as described under Migration and
 rollback; inconsistent historical paths now fail explicitly instead of silently
 loading a different binary. The artifact migration tool and backend S3 integration
-are now implemented below; live migration, modern management workflows and the
-usage overview remain pending.
+are now implemented below; live migration and acceptance remain pending. The following
+management phases are implemented on the feature branch.
 
 The edge storage pilot was deployed and verified on 2026-11-08 through the private
 continuous-delivery repository:
@@ -145,7 +146,31 @@ Phase 5 is implemented and tested on the feature branch:
   conflict recovery, mapping, interrupted activation and history navigation.
 
 See the [version management guide](./plugin-version-management.md). Live migration
-and acceptance remain pending; implementation phases 6–8 remain open.
+and acceptance remain pending.
+
+Phases 6 and 7 are implemented and tested on the feature branch:
+
+- Removal reviews check saved indicators, persisted editor drafts, specification
+  cards and pending installations. Durable write reservations coordinate saves
+  with removal; journaled freezes and conditional revisions make retries safe.
+- Removed entries retain catalog IDs and shared binaries, offer disabled restore
+  for 30 days by default, and preserve version history. Interrupted operations
+  can resume. Idle upload reviews can be discarded and restored.
+- Explicit, confirmed retention cleanup rechecks dependencies, protects shared
+  artifacts and recovery windows, verifies bytes and records retryable failures.
+  Purged keys remain permanently retired. Removal defaults to disabled until all
+  writer replicas have reference guards.
+- The dashboard shows installed/enabled/disabled entry totals, saved-indicator
+  and distinct-creator totals, most-used and zero-reference filters, sorting,
+  search and pagination. Failed usage requests display unavailable counts.
+- 295 backend tests, 24 real MongoDB/Garage integration tests and 56 frontend
+  tests pass. The frontend production build and changed-file lint pass. Local
+  desktop/mobile browser checks cover blocked/stale removal, disabled restore,
+  cleanup retry, discarded reviews and dashboard sorting/filtering/errors.
+
+See the [removal, retention and usage guide](./plugin-removal-and-retention.md)
+for the rollout gate and recovery procedure. Live JAR preservation, migration,
+edge acceptance and production rollout (phase 8) remain outstanding.
 
 ## Storage and execution design
 

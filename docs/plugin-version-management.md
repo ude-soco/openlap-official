@@ -126,7 +126,8 @@ the new admin routes. Browser smoke tests cover both domains on desktop and
 mobile, conflict recovery, mapping, interrupted activation, previous-version
 disabling and history navigation.
 
-Safe deletion and the usage overview remain phases 6–7. Edge rollout still needs
+Guarded removal/recovery and the usage overview are now implemented; see the
+[removal and retention guide](./plugin-removal-and-retention.md). Edge rollout still needs
 preserved JARs from every live replica, explicit migration and replica/restart
 acceptance. Production also requires the agreed backup/restore and availability
 gates. An old image that only understands local JAR paths is insufficient rollback
