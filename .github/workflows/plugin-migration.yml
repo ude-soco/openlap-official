@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}-plugin-migration
@@ -18,20 +17,18 @@ jobs:
   image:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      image-id: ${{ steps.build.outputs.imageid }}
+      tags: ${{ steps.meta.outputs.tags }}
+      archive-id: ${{ steps.archive.outputs.artifact-id }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
-
-      - name: Login to container registry
-        if: github.event_name == 'push'
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get image metadata
         id: meta
@@ -53,16 +50,15 @@ jobs:
           context: openlap-analyticsframework
           file: openlap-analyticsframework/Dockerfile.plugin-migration
           platforms: linux/amd64
-          push: ${{ github.event_name == 'push' }}
-          load: ${{ github.event_name == 'pull_request' }}
+          push: false
+          load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          provenance: ${{ github.event_name == 'push' && 'mode=max' || 'false' }}
+          provenance: false
           cache-from: type=gha,scope=plugin-migration
           cache-to: type=gha,mode=max,scope=plugin-migration
 
       - name: Verify credential-free entrypoint
-        if: github.event_name == 'pull_request'
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
         run: |
@@ -75,3 +71,104 @@ jobs:
           test "$status" -eq 1
           test "$(wc -c < migration-smoke.log)" -le 2048
           grep -Fq 'Use --inventory FILE, --check FILE or --apply FILE' migration-smoke.log
+
+      - name: Obtain reviewed public plugin history
+        shell: bash
+        env:
+          GIT_CONFIG_NOSYSTEM: '1'
+          GIT_CONFIG_GLOBAL: /dev/null
+          GIT_CONFIG_COUNT: '0'
+          GIT_NO_LAZY_FETCH: '1'
+          GIT_NO_REPLACE_OBJECTS: '1'
+          GIT_TERMINAL_PROMPT: '0'
+          GIT_ASKPASS: /bin/false
+          SSH_ASKPASS: /bin/false
+        run: >-
+          git -c credential.helper= -c credential.interactive=false
+          -c protocol.allow=never -c protocol.https.allow=always
+          fetch --no-tags --depth=1 --no-recurse-submodules
+          https://github.com/ude-soco/openlap-official.git
+          4768ec732c667940e00dfc5a87e0300ed0a7ef75
+
+      - name: Generate all reviewed historical C3 chart types
+        env:
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+        run: python3 -B openlap-analyticsframework/scripts/verify-legacy-c3.py --image "$IMAGE_ID"
+
+      - name: Retain the exact tested image for publication
+        if: github.event_name == 'push'
+        env:
+          TESTED_IMAGE_ID: ${{ steps.build.outputs.imageid }}
+        run: |
+          set -eu
+          umask 077
+          mkdir "$RUNNER_TEMP/migration-image"
+          docker image save --output "$RUNNER_TEMP/migration-image/image.tar" "$TESTED_IMAGE_ID"
+          printf '%s\n' "$TESTED_IMAGE_ID" > "$RUNNER_TEMP/migration-image/image-id.txt"
+          printf '%s\n' "$GITHUB_SHA" > "$RUNNER_TEMP/migration-image/source-revision.txt"
+          cd "$RUNNER_TEMP/migration-image"
+          sha256sum image.tar > image.sha256
+
+      - name: Upload verified image archive
+        if: github.event_name == 'push'
+        id: archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: tested-plugin-migration-image
+          path: ${{ runner.temp }}/migration-image/
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
+
+  publish:
+    if: github.event_name == 'push'
+    needs: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download this run's verified image
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.image.outputs.archive-id }}
+          path: ${{ runner.temp }}/migration-image
+
+      - name: Verify and load the tested image without rebuilding
+        env:
+          TESTED_IMAGE_ID: ${{ needs.image.outputs.image-id }}
+        run: |
+          set -eu
+          cd "$RUNNER_TEMP/migration-image"
+          sha256sum --check image.sha256
+          test "$(cat image-id.txt)" = "$TESTED_IMAGE_ID"
+          test "$(cat source-revision.txt)" = "$GITHUB_SHA"
+          docker image load --input image.tar
+          test "$(docker image inspect "$TESTED_IMAGE_ID" --format '{{.Id}}')" = "$TESTED_IMAGE_ID"
+
+      - name: Login to container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish the exact tested image
+        env:
+          TESTED_IMAGE_ID: ${{ needs.image.outputs.image-id }}
+          TESTED_IMAGE_TAGS: ${{ needs.image.outputs.tags }}
+        run: |
+          set -eu
+          test -n "$TESTED_IMAGE_TAGS"
+          while IFS= read -r migration_tag; do
+            test -n "$migration_tag" || continue
+            case "$migration_tag" in
+              "$IMAGE_NAME":*) ;;
+              *) exit 1 ;;
+            esac
+            docker image tag "$TESTED_IMAGE_ID" "$migration_tag"
+            docker image push "$migration_tag"
+          done <<EOF
+          $TESTED_IMAGE_TAGS
+          EOF
