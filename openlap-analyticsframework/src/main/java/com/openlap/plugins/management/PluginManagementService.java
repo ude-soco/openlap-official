@@ -99,6 +99,8 @@ public class PluginManagementService {
       PluginInspection discovery = inspector.discover(kind, source);
       PluginArtifact artifact = registry.ensureStored(kind, source, ArtifactIntegrity.sha256(source), Files.size(source), actor);
       String operationId = target == null ? artifact.getId() : artifact.getId() + "-r-" + digest(target.getString("familyId") + ":" + target.getString("previousArtifactId"));
+      Document previous = mongo.findById(operationId, Document.class, OPERATIONS);
+      if (previous != null) return response(previous);
       if (target != null) {
         Document existing = mongo.findById(operationId, Document.class, OPERATIONS);
         if (existing != null) return response(existing);
@@ -111,7 +113,7 @@ public class PluginManagementService {
           .append("createdAt", new Date()).append("createdBy", actor);
       if (target != null) operation.put("replacementTarget", target);
       try { mongo.insert(operation, OPERATIONS); }
-      catch (DuplicateKeyException e) { return get(operationId); }
+      catch (DuplicateKeyException e) { new PluginReferenceFence(mongo).afterSave(operation); return get(operationId); }
       return response(operation);
     } finally {
       Files.deleteIfExists(source);
@@ -195,6 +197,7 @@ public class PluginManagementService {
           throw conflict("An installation entry changed. Keep it inactive and retry activation.");
         }
       }
+      versions.assignOrdinal(operation);
       mongo.updateFirst(Query.query(Criteria.where("_id").is(id).and("state").is("ACTIVATING")),
           new Update().set("state", "ACTIVE").set("activatedAt", new Date()).inc("version", 1).unset("lastError"), OPERATIONS);
       return get(id);
@@ -302,7 +305,11 @@ public class PluginManagementService {
     result.put("conflicts", "ACTIVE".equals(operation.getString("state")) ? Collections.emptyList() : conflicts(operation));
     if (operation.get("replacementTarget") != null) {
       Document target = operation.get("replacementTarget", Document.class);
-      result.put("replacementSource", versions.target(PluginCatalogKind.valueOf(target.getString("kind")), target.getString("targetId")));
+      try { result.put("replacementSource", versions.target(PluginCatalogKind.valueOf(target.getString("kind")), target.getString("targetId"))); }
+      catch (com.openlap.infrastructure.exception.ConflictException error) {
+        if (!"ACTIVE".equals(operation.getString("state"))) throw error;
+        result.put("replacementSource", operation.get("replacement"));
+      }
       if ("ACTIVE".equals(operation.getString("state"))) result.put("retirementTargets", versions.retirementTargets(operation));
     }
     return result;
@@ -312,6 +319,7 @@ public class PluginManagementService {
     Map<String, Object> result = new LinkedHashMap<>(operation);
     result.put("id", result.remove("_id"));
     result.remove("inspectionClaim");
+    result.remove("_pluginReferenceWrite");
     return result;
   }
 

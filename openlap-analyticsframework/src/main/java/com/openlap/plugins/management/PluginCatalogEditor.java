@@ -25,6 +25,10 @@ public class PluginCatalogEditor {
   }
 
   public Document read(PluginCatalogKind kind, String id) {
+    Document row = readIncludingRemoved(kind, id); visibility.requireRecordAvailable(row); return row;
+  }
+
+  public Document readIncludingRemoved(PluginCatalogKind kind, String id) {
     if (id == null || id.trim().isEmpty() || id.length() > 160) throw new ValidationException("Invalid catalog identifier.");
     Document row = mongo.getCollection(kind.collection).find(new Document("_id", id)).first();
     if (row == null && ObjectId.isValid(id)) row = mongo.getCollection(kind.collection).find(new Document("_id", new ObjectId(id))).first();
@@ -34,7 +38,7 @@ public class PluginCatalogEditor {
   }
 
   public Map<String, Object> details(PluginCatalogKind kind, String id) {
-    Document row = read(kind, id);
+    Document row = readIncludingRemoved(kind, id);
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("id", row.get("_id").toString());
     result.put("kind", kind.name());
@@ -43,11 +47,12 @@ public class PluginCatalogEditor {
     }
     result.put("version", revision(row));
     result.put("enabled", enabled(row));
-    result.put("editableFields", kind.editableFields);
+    result.put("removed", !visibility.isRecordAvailable(row)); result.put("removalState", row.get("removalState"));
+    result.put("editableFields", visibility.isRecordAvailable(row) ? kind.editableFields : java.util.Collections.emptyList());
     if (kind == PluginCatalogKind.VISUALIZATION_TYPE) {
       Object parent = row.get("visualizationLib");
       if (parent instanceof DBRef) {
-        Document library = read(PluginCatalogKind.VISUALIZATION_LIBRARY, ((DBRef) parent).getId().toString());
+        Document library = readIncludingRemoved(PluginCatalogKind.VISUALIZATION_LIBRARY, ((DBRef) parent).getId().toString());
         result.put("libraryId", library.get("_id").toString());
         result.put("library", library.getString("name"));
         result.put("creator", library.get("creator"));

@@ -58,8 +58,8 @@ public class VisualizationTypeServiceImpl implements VisualizationTypeService {
 
   private List<VisType> filterSelectableTypes(List<VisType> types) {
     return types.stream()
-        .filter(type -> pluginVisibility.isInstalled(type.getInstallationId()))
-        .filter(type -> type.getVisualizationLib() != null && pluginVisibility.isInstalled(type.getVisualizationLib().getInstallationId()))
+        .filter(type -> pluginVisibility.isVisible(type.getInstallationId(), "visualization-type", type.getId()))
+        .filter(type -> type.getVisualizationLib() != null && pluginVisibility.isVisible(type.getVisualizationLib().getInstallationId(), "visualization-library", type.getVisualizationLib().getId()))
         .filter(VisualizationTypeServiceImpl::isTypeSelectable)
         .collect(Collectors.toList());
   }

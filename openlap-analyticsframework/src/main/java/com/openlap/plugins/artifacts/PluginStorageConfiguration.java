@@ -13,6 +13,11 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 @EnableConfigurationProperties(PluginStorageProperties.class)
 public class PluginStorageConfiguration {
   @Bean
+  public com.openlap.plugins.management.PluginRemovalService pluginRemovalService(MongoTemplate mongo,
+      PluginStorageProperties properties, ObjectProvider<PluginArtifactRegistry> registry, ObjectProvider<PluginArtifactCache> cache) {
+    return new com.openlap.plugins.management.PluginRemovalService(mongo, properties, registry.getIfAvailable(), cache.getIfAvailable());
+  }
+  @Bean
   public PluginManagementService pluginManagementService(MongoTemplate mongo,
       PluginStorageProperties properties, ObjectProvider<PluginArtifactRegistry> registry, ObjectProvider<PluginArtifactCache> cache) {
     return new PluginManagementService(mongo, properties, registry.getIfAvailable(), cache.getIfAvailable());

@@ -65,9 +65,9 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
         throw new VisualizationTypeNotFoundException(
             "Visualization type with id" + typeId + " not found");
       }
-      pluginVisibility.requireInstalled(foundVisType.get().getInstallationId());
+      pluginVisibility.requireExecutable(foundVisType.get().getInstallationId(), "visualization-type", foundVisType.get().getId());
       if (foundVisType.get().getVisualizationLib() != null) {
-        pluginVisibility.requireInstalled(foundVisType.get().getVisualizationLib().getInstallationId());
+        pluginVisibility.requireExecutable(foundVisType.get().getVisualizationLib().getInstallationId(), "visualization-library", foundVisType.get().getVisualizationLib().getId());
       }
       return foundVisType.get();
     } catch (com.openlap.infrastructure.exception.ConflictException e) {
@@ -88,7 +88,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
         throw new VisualizationLibraryNotFoundException(
             "Visualization library with id" + libraryId + " not found");
       }
-      pluginVisibility.requireInstalled(foundVisLibrary.get().getInstallationId());
+      pluginVisibility.requireExecutable(foundVisLibrary.get().getInstallationId(), "visualization-library", foundVisLibrary.get().getId());
       return foundVisLibrary.get();
     } catch (com.openlap.infrastructure.exception.ConflictException e) {
       throw e;
@@ -309,7 +309,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
     Set<String> uniqueFileNames = new HashSet<>();
     List<VisualizationMethodFileNameResponse> responses = new ArrayList<>();
     for (VisLibrary visLibrary : foundAllVisualizationLibraries) {
-      if (!pluginVisibility.isInstalled(visLibrary.getInstallationId())) continue;
+      if (!pluginVisibility.isVisible(visLibrary.getInstallationId(), "visualization-library", visLibrary.getId())) continue;
       String fileName = visLibrary.getFrameworkLocation();
       if (uniqueFileNames.add(fileName)) {
         String modifiedFileName = fileName.replace(visualizerJarsFolder, "");
@@ -327,7 +327,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
         visualizationLibraryRepository.findAllByFrameworkLocation(frameworkLocation);
     List<VisualizationLibraryResponse> responses = new ArrayList<>();
     for (VisLibrary visLibrary : foundVisLibrary) {
-      if (!pluginVisibility.isInstalled(visLibrary.getInstallationId())) continue;
+      if (!pluginVisibility.isVisible(visLibrary.getInstallationId(), "visualization-library", visLibrary.getId())) continue;
       responses.add(
           new VisualizationLibraryResponse(
               visLibrary.getId(),

@@ -24,6 +24,8 @@ public class PluginStorageProperties {
   private Path cacheDirectory = Paths.get("data/plugin-cache");
   private long cacheMaxBytes = 1024L * 1024 * 1024;
   private int cacheMaxEntries = 256;
+  private boolean deletionEnabled;
+  private int retentionDays = 30;
 
   public void validateS3() {
     if (mode != Mode.S3 || endpoint == null || endpoint.getHost() == null

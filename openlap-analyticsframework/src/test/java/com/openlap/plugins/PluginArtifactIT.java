@@ -640,6 +640,84 @@ public class PluginArtifactIT {
     return result;
   }
 
+  @Test
+  public void removalChecksSavedIndicatorsDraftJsonCardsAndUnreadableConfigurations() throws Exception {
+    com.openlap.plugins.management.PluginRemovalService removal = removalService();
+    com.openlap.plugins.management.PluginCatalogKind kind = com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD;
+    mongo.getCollection("analytics-indicator").insertOne(new Document("analyticsTechniqueReference", new Document("analyticsTechnique", new DBRef("analytics-technique", methodId))));
+    mongo.getCollection("analytics-indicator-drafts").insertOne(new Document("session", "{\"analysis\":{\"selectedMethod\":{\"id\":\"" + methodId + "\"}}}"));
+    mongo.getCollection("openlap-isc").insertOne(new Document("status", "DRAFT").append("visRef", "{\"selectedType\":{\"id\":\"" + typeId + "\"}}"));
+    Map<String, Object> methodPreview = removal.preview(kind, methodId.toHexString());
+    @SuppressWarnings("unchecked") Map<String, Long> dependencies = (Map<String, Long>) methodPreview.get("dependencies");
+    assertThat(dependencies.get("savedIndicators")).isEqualTo(1);
+    assertThat(dependencies.get("indicatorDrafts")).isEqualTo(1);
+    assertThatThrownBy(() -> removal.remove(kind, methodId.toHexString(), removalVersions(methodPreview)))
+        .isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class);
+    assertThat(row("analytics-technique", methodId)).doesNotContainKey("removalState");
+    Map<String, Object> library = removal.preview(com.openlap.plugins.management.PluginCatalogKind.VISUALIZATION_LIBRARY, libraryId.toHexString());
+    assertThat(((Map<?, ?>) library.get("dependencies")).get("cardDrafts")).isEqualTo(1L);
+    mongo.getCollection("analytics-indicator-drafts").insertOne(new Document("session", "{unreadable"));
+    assertThat(((Map<?, ?>) removal.preview(kind, methodId.toHexString()).get("dependencies")).get("unreadableConfigurations")).isEqualTo(1L);
+  }
+
+  @Test
+  public void durableWriteReservationsCloseTheSaveVersusRemovalRace() throws Exception {
+    com.openlap.plugins.management.PluginRemovalService removal = removalService();
+    com.openlap.plugins.management.PluginCatalogKind kind = com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD;
+    com.openlap.plugins.management.PluginReferenceFence fence = new com.openlap.plugins.management.PluginReferenceFence(mongo);
+    Document draft = new Document("_id", "race-draft").append("session", "{\"analyticsTechniqueId\":\"" + methodId + "\"}");
+    fence.beforeSave(draft, "analytics-indicator-drafts");
+    Map<String, Object> review = removal.preview(kind, methodId.toHexString());
+    assertThat(review.get("inFlightWrites")).isEqualTo(1L);
+    assertThatThrownBy(() -> removal.remove(kind, methodId.toHexString(), removalVersions(review)))
+        .isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class);
+    // The reserved writer commits after the competing removal attempt has failed.
+    mongo.getCollection("analytics-indicator-drafts").insertOne(draft); fence.afterSave(draft);
+    assertThat(((Map<?, ?>) removal.preview(kind, methodId.toHexString()).get("dependencies")).get("indicatorDrafts")).isEqualTo(1L);
+    mongo.getCollection("analytics-indicator-drafts").deleteOne(new Document("_id", "race-draft"));
+    removal.remove(kind, methodId.toHexString(), removalVersions(removal.preview(kind, methodId.toHexString())));
+    org.springframework.context.support.GenericApplicationContext context = new org.springframework.context.support.GenericApplicationContext();
+    context.addApplicationListener(new com.openlap.plugins.management.PluginReferenceWriteListener(mongo)); context.refresh();
+    mongo.setApplicationContext(context); closeables.add(context);
+    assertThatThrownBy(() -> mongo.insert(new Document("session", "{\"analyticsTechniqueId\":\"" + methodId + "\"}"), "analytics-indicator-drafts"))
+        .isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class);
+    assertThat(mongo.getCollection("analytics-indicator-drafts").countDocuments()).isZero();
+  }
+
+  @Test
+  public void sharedJarAndLibraryRemovalKeepBytesAndRestoreAllEntriesDisabled() throws Exception {
+    migration.apply(migration.inventory(), registry);
+    com.openlap.plugins.management.PluginRemovalService removal = removalService();
+    com.openlap.plugins.management.PluginCatalogKind type = com.openlap.plugins.management.PluginCatalogKind.VISUALIZATION_TYPE;
+    Map<String, Object> removedType = removal.remove(type, typeId.toHexString(), removalVersions(removal.preview(type, typeId.toHexString())));
+    assertThat(new PluginCatalogVisibility(mongo).isVisible(null, "visualization-type", typeId.toHexString())).isFalse();
+    assertThat(new PluginCatalogVisibility(mongo).isVisible(null, "visualization-library", libraryId.toHexString())).isTrue();
+    assertThat(removal.restore((String) removedType.get("id")).get("state")).isEqualTo("RESTORED");
+    assertThat(row("visualization-type", typeId).getBoolean("enabled")).isFalse();
+    com.openlap.plugins.management.PluginCatalogKind library = com.openlap.plugins.management.PluginCatalogKind.VISUALIZATION_LIBRARY;
+    Map<String, Object> removed = removal.remove(library, libraryId.toHexString(), removalVersions(removal.preview(library, libraryId.toHexString())));
+    assertThat(row("visualization-library", libraryId).getString("removalState")).isEqualTo("REMOVED");
+    assertThat(row("visualization-type", typeId).getString("removalState")).isEqualTo("REMOVED");
+    PluginArtifact artifact = registry.ready(row("visualization-library", libraryId).getString("artifactId"), PluginKind.VISUALIZATION);
+    try (InputStream bytes = store.open(artifact)) { ArtifactIntegrity.copyVerified(bytes, java.io.OutputStream.nullOutputStream(), artifact); }
+    removal.restore((String) removed.get("id"));
+    assertThat(new PluginCatalogVisibility(mongo).isVisible(null, "visualization-type", typeId.toHexString())).isTrue();
+    assertThat(row("visualization-library", libraryId).getBoolean("enabled")).isFalse();
+    assertThat(row("visualization-type", typeId).get("visualizationLib")).isEqualTo(new DBRef("visualization-library", libraryId));
+  }
+
+  private com.openlap.plugins.management.PluginRemovalService removalService() throws Exception {
+    properties.setDeletionEnabled(true);
+    PluginArtifactCache cache = new PluginArtifactCache(temporary.newFolder().toPath(), 1000000, 20, store); closeables.add(cache);
+    return new com.openlap.plugins.management.PluginRemovalService(mongo, properties, registry, cache);
+  }
+
+  @SuppressWarnings("unchecked") private static Map<String, Object> removalVersions(Map<String, Object> preview) {
+    Map<String, Object> result = new java.util.LinkedHashMap<>();
+    for (Map<String, Object> row : (List<Map<String, Object>>) preview.get("affected")) result.put((String) row.get("key"), row.get("version"));
+    return result;
+  }
+
   private void assertOnlyArtifactChanged(String collection, ObjectId id, Document before) {
     Document after = row(collection, id);
     assertThat(after.remove("artifactId")).isInstanceOf(String.class);

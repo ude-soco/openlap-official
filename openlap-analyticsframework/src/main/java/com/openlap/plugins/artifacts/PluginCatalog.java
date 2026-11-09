@@ -90,7 +90,7 @@ public final class PluginCatalog {
   }
 
   private boolean installed(Document row) {
-    return visibility.isInstalled(row.getString("installationId"));
+    return visibility.isInstalled(row.getString("installationId")) && visibility.isRecordAvailable(row);
   }
 
   private static String referenceId(Object value) {

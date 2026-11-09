@@ -144,7 +144,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
             "Analytics Technique with id '" + techniqueId + "' not found: ");
       }
       log.info("Analytics technique found '{}'", foundTechnique.get().getName());
-      pluginVisibility.requireInstalled(foundTechnique.get().getInstallationId());
+      pluginVisibility.requireExecutable(foundTechnique.get().getInstallationId(), "analytics-technique", foundTechnique.get().getId());
       return foundTechnique.get();
     } catch (com.openlap.infrastructure.exception.ConflictException e) {
       throw e;
@@ -177,7 +177,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     try {
       List<AnalyticsTechnique> foundAllTechniques = analyticsTechniqueRepository.findAll();
       log.info("Successfully retrieved all analytics techniques");
-      return foundAllTechniques.stream().filter(item -> pluginVisibility.isInstalled(item.getInstallationId()))
+      return foundAllTechniques.stream().filter(item -> pluginVisibility.isVisible(item.getInstallationId(), "analytics-technique", item.getId()))
           .collect(Collectors.toList());
     } catch (Exception e) {
       log.error("Could not retrieve all analytics techniques", e);
@@ -349,7 +349,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     Set<String> uniqueFileNames = new HashSet<>();
     List<AnalyticsTechniqueFileNameResponse> responses = new ArrayList<>();
     for (AnalyticsTechnique analyticsTechnique : foundAllAnalyticsTechniques) {
-      if (!pluginVisibility.isInstalled(analyticsTechnique.getInstallationId())) continue;
+      if (!pluginVisibility.isVisible(analyticsTechnique.getInstallationId(), "analytics-technique", analyticsTechnique.getId())) continue;
       String fileName = analyticsTechnique.getFileName();
       if (uniqueFileNames.add(fileName)) {
         String modifiedFileName = fileName.replace(analyticsMethodsJarsFolder, "");
@@ -366,7 +366,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
         analyticsTechniqueRepository.findAllByFileName(frameworkLocation);
     List<AnalyticsTechniqueResponse> responses = new ArrayList<>();
     for (AnalyticsTechnique analyticsTechnique : allByFileName) {
-      if (!pluginVisibility.isInstalled(analyticsTechnique.getInstallationId())) continue;
+      if (!pluginVisibility.isVisible(analyticsTechnique.getInstallationId(), "analytics-technique", analyticsTechnique.getId())) continue;
       responses.add(
           new AnalyticsTechniqueResponse(
               analyticsTechnique.getId(),

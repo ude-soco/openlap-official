@@ -30,16 +30,18 @@ public class PluginVersions {
 
   public Document target(PluginCatalogKind kind, String id) {
     if (kind == PluginCatalogKind.VISUALIZATION_TYPE) throw new ValidationException("Upload a chart's new version through its visualization library.");
-    Document selected = editor.read(kind, id);
+    Document selected = editor.readIncludingRemoved(kind, id);
+    boolean removed = "REMOVED".equals(selected.getString("removalState"));
+    if (!removed) visibility.requireRecordAvailable(selected);
     String artifact = selected.getString("artifactId");
     if (artifact == null) throw conflict("Migrate this plugin's existing artifact before uploading a replacement.");
     String family = PluginCatalogEditor.family(kind, selected);
     List<Document> rows = new ArrayList<>();
     if (kind == PluginCatalogKind.ANALYTICS_METHOD) {
-      for (Document row : mongo.getCollection(kind.collection).find(new Document("artifactId", artifact))) if (installed(row)) rows.add(snapshot(row));
+      for (Document row : mongo.getCollection(kind.collection).find(new Document("artifactId", artifact))) if (installed(row) && (removed || visibility.isRecordAvailable(row))) rows.add(snapshot(row));
     } else {
       for (Document row : mongo.getCollection("visualization-type").find(new Document("visualizationLib", new DBRef(kind.collection, selected.get("_id"))))) {
-        if (installed(row)) rows.add(snapshot(row));
+        if (installed(row) && (removed || visibility.isRecordAvailable(row))) rows.add(snapshot(row));
       }
     }
     rows.sort(Comparator.comparing(row -> row.getString("id")));
@@ -47,7 +49,7 @@ public class PluginVersions {
     return new Document("kind", kind.name()).append("targetId", id).append("familyId", family)
         .append("previousArtifactId", artifact).append("entries", rows)
         .append("library", kind == PluginCatalogKind.VISUALIZATION_LIBRARY ? snapshot(selected) : null)
-        .append("latest", !hasSuccessor(family, artifact));
+        .append("removed", removed).append("latest", !hasSuccessor(family, artifact));
   }
 
   public Document plan(Document operation, Map<String, Object> request) {
@@ -150,11 +152,11 @@ public class PluginVersions {
 
   public Map<String, Object> history(PluginCatalogKind kind, String id) {
     if (kind == PluginCatalogKind.VISUALIZATION_TYPE) {
-      Document row = editor.read(kind, id);
+      Document row = editor.readIncludingRemoved(kind, id);
       DBRef library = (DBRef) row.get("visualizationLib");
       kind = PluginCatalogKind.VISUALIZATION_LIBRARY; id = library.getId().toString();
     }
-    Document selected = editor.read(kind, id);
+    Document selected = editor.readIncludingRemoved(kind, id);
     Document context = new Document("familyId", PluginCatalogEditor.family(kind, selected))
         .append("previousArtifactId", selected.getString("artifactId")).append("kind", kind.name());
     List<Document> rows = versionRows(kind, context);
@@ -165,15 +167,15 @@ public class PluginVersions {
       Document version = versions.computeIfAbsent(key, ignored -> new Document("artifactId", artifact).append("entries", new ArrayList<>())
           .append("selected", Objects.equals(artifact, selected.getString("artifactId"))));
       @SuppressWarnings("unchecked") List<Document> entries = (List<Document>) version.get("entries");
-      entries.add(snapshot(row));
+      Document entry = snapshot(row); entry.put("removed", !visibility.isRecordAvailable(row)); entries.add(entry);
+      version.put("ordinal", ordinal(kind, row, new HashSet<>()));
       if (row.getString("installationId") != null) {
         Document installation = mongo.getCollection("plugin-installation").find(new Document("_id", row.getString("installationId"))).first();
         if (installation != null) { version.put("activatedAt", installation.get("activatedAt")); version.put("filename", installation.get("filename")); }
       }
     }
     List<Document> ordered = new ArrayList<>(versions.values());
-    ordered.sort(Comparator.comparingLong(version -> version.get("activatedAt") instanceof java.util.Date
-        ? version.getDate("activatedAt").getTime() : 0L));
+    ordered.sort(Comparator.comparingLong(version -> ((Number) version.get("ordinal")).longValue()));
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("kind", kind.name()); result.put("familyId", context.getString("familyId")); result.put("versions", ordered);
     result.put("latest", selected.getString("artifactId") == null || !hasSuccessor(context.getString("familyId"), selected.getString("artifactId")));
@@ -187,8 +189,8 @@ public class PluginVersions {
     List<Document> source = kind == PluginCatalogKind.ANALYTICS_METHOD ? documents(plan, "entries") : Collections.singletonList(plan.get("library", Document.class));
     List<Document> result = new ArrayList<>();
     for (Document old : source) {
-      Document current = editor.read(kind, old.getString("id"));
-      result.add(snapshot(current));
+      Document current = editor.readIncludingRemoved(kind, old.getString("id"));
+      if (visibility.isRecordAvailable(current)) result.add(snapshot(current));
     }
     return result;
   }
@@ -210,8 +212,42 @@ public class PluginVersions {
   }
 
   private boolean hasSuccessor(String family, String artifact) {
-    return mongo.getCollection("plugin-installation").find(new Document("state", "ACTIVE")
-        .append("replacement.familyId", family).append("replacement.previousArtifactId", artifact)).first() != null;
+    PluginCatalogKind kind = artifact.startsWith("analytics-") ? PluginCatalogKind.ANALYTICS_METHOD : PluginCatalogKind.VISUALIZATION_LIBRARY;
+    List<Document> rows = versionRows(kind, new Document("familyId", family));
+    long selected = rows.stream().filter(row -> artifact.equals(row.getString("artifactId")))
+        .mapToLong(row -> ordinal(kind, row, new HashSet<>())).max().orElse(1);
+    return rows.stream().filter(row -> visibility.isRecordAvailable(row) || "REMOVING".equals(row.getString("removalState")))
+        .anyMatch(row -> ordinal(kind, row, new HashSet<>()) > selected);
+  }
+
+  /** Family-wide sequence remains monotonic through removal and restore of older versions. */
+  public void assignOrdinal(Document operation) {
+    if (operation.get("versionOrdinal") instanceof Number) return;
+    PluginCatalogKind kind = "ANALYTICS".equals(operation.getString("kind")) ? PluginCatalogKind.ANALYTICS_METHOD : PluginCatalogKind.VISUALIZATION_LIBRARY;
+    Document plan = operation.get("replacement", Document.class);
+    String family = plan == null ? (kind == PluginCatalogKind.ANALYTICS_METHOD ? operation.getString("artifactId") : libraryCatalogId(operation)) : plan.getString("familyId");
+    long base = versionRows(kind, new Document("familyId", family)).stream().mapToLong(row -> ordinal(kind, row, new HashSet<>())).max().orElse(plan == null ? 0 : 1);
+    String key = kind.name() + ":" + family;
+    try { mongo.insert(new Document("_id", key).append("ordinal", base), "plugin-version-family"); }
+    catch (org.springframework.dao.DuplicateKeyException ignored) {}
+    mongo.getCollection("plugin-version-family").updateOne(new Document("_id", key), new Document("$max", new Document("ordinal", base)));
+    Document next = mongo.findAndModify(org.springframework.data.mongodb.core.query.Query.query(org.springframework.data.mongodb.core.query.Criteria.where("_id").is(key)),
+        new org.springframework.data.mongodb.core.query.Update().inc("ordinal", 1), org.springframework.data.mongodb.core.FindAndModifyOptions.options().returnNew(true), Document.class, "plugin-version-family");
+    mongo.getCollection("plugin-installation").updateOne(new Document("_id", operation.getString("_id")).append("state", "ACTIVATING").append("versionOrdinal", null),
+        new Document("$set", new Document("versionOrdinal", next.get("ordinal"))));
+  }
+
+  private long ordinal(PluginCatalogKind kind, Document row, Set<String> seen) {
+    String installation = row.getString("installationId"); if (installation == null) return 1;
+    if (!seen.add(installation) || seen.size() > 128) throw conflict("The plugin version history needs repair before another lifecycle change.");
+    Document operation = mongo.getCollection("plugin-installation").find(new Document("_id", installation)).first();
+    if (operation == null) return 1;
+    if (operation.get("versionOrdinal") instanceof Number) return ((Number) operation.get("versionOrdinal")).longValue();
+    Document previous = operation.get("replacement", Document.class); if (previous == null) return 1;
+    for (Document ancestor : versionRows(kind, new Document("familyId", previous.getString("familyId")))) {
+      if (previous.getString("previousArtifactId").equals(ancestor.getString("artifactId"))) return ordinal(kind, ancestor, seen) + 1;
+    }
+    return 2;
   }
 
   private void requireLatest(Document context) {
@@ -232,7 +268,7 @@ public class PluginVersions {
     if (!installed(row)) return null;
     Object parent = row.get("visualizationLib");
     if (!(parent instanceof DBRef)) return null;
-    return PluginCatalogEditor.family(PluginCatalogKind.VISUALIZATION_LIBRARY, editor.read(PluginCatalogKind.VISUALIZATION_LIBRARY, ((DBRef) parent).getId().toString()));
+    return PluginCatalogEditor.family(PluginCatalogKind.VISUALIZATION_LIBRARY, editor.readIncludingRemoved(PluginCatalogKind.VISUALIZATION_LIBRARY, ((DBRef) parent).getId().toString()));
   }
 
   private static Document idQuery(String id) {

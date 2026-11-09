@@ -42,7 +42,7 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
   public List<AdminVisLibraryResponse> getVisualizationLibraries() {
     List<AdminVisLibraryResponse> result = new ArrayList<>();
     for (VisLibrary library : visualizationLibraryRepository.findAll()) {
-      if (!pluginVisibility.isInstalled(library.getInstallationId())) continue;
+      if (!pluginVisibility.isVisible(library.getInstallationId(), "visualization-library", library.getId())) continue;
       result.add(toLibraryResponse(library));
     }
     return result;
@@ -52,7 +52,7 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
   public List<AdminVisTypeResponse> getVisualizationTypes() {
     List<AdminVisTypeResponse> result = new ArrayList<>();
     for (VisType type : visualizationTypeRepository.findAll()) {
-      if (!pluginVisibility.isInstalled(type.getInstallationId())) continue;
+      if (!pluginVisibility.isVisible(type.getInstallationId(), "visualization-type", type.getId())) continue;
       result.add(toTypeResponse(type));
     }
     return result;
@@ -62,7 +62,7 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
   public List<AdminAnalyticsMethodResponse> getAnalyticsMethods() {
     List<AdminAnalyticsMethodResponse> result = new ArrayList<>();
     for (AnalyticsTechnique technique : analyticsTechniqueRepository.findAll()) {
-      if (!pluginVisibility.isInstalled(technique.getInstallationId())) continue;
+      if (!pluginVisibility.isVisible(technique.getInstallationId(), "analytics-technique", technique.getId())) continue;
       result.add(toMethodResponse(technique));
     }
     return result;
