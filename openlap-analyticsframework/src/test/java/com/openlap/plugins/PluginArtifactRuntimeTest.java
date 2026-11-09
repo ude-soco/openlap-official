@@ -103,7 +103,8 @@ public class PluginArtifactRuntimeTest {
     VisualizationLibraryRepository libraries = mock(VisualizationLibraryRepository.class);
     AnalyticsTechniqueServiceImpl analytics = new AnalyticsTechniqueServiceImpl(methods, resolver);
     VisualizationMethodUtilityServiceImpl visualization = new VisualizationMethodUtilityServiceImpl(types, libraries, resolver);
-    assertThatThrownBy(() -> analytics.createAnalyticsTechnique(null)).isInstanceOf(ConflictException.class);
+    assertThatThrownBy(() -> analytics.createAnalyticsTechnique(null)).isInstanceOf(ConflictException.class)
+        .hasMessage("Local plugin changes are unavailable in S3 mode. Artifact upload and activation are not enabled yet.");
     assertThatThrownBy(analytics::populateAnalyticsTechniques).isInstanceOf(ConflictException.class);
     assertThatThrownBy(() -> analytics.uploadAnalyticsTechniqueFile(null)).isInstanceOf(ConflictException.class);
     assertThatThrownBy(() -> analytics.reloadAnalyticsTechniqueFile(null)).isInstanceOf(ConflictException.class);
