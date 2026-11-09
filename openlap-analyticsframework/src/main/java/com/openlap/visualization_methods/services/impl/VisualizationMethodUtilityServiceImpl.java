@@ -1,5 +1,7 @@
 package com.openlap.visualization_methods.services.impl;
 
+import com.openlap.plugins.management.PluginCatalogVisibility;
+
 import com.openlap.configurations.Utils;
 import com.openlap.dataset.OpenLAPDataSetConfigValidationResult;
 import com.openlap.dataset.OpenLAPPortConfig;
@@ -47,6 +49,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
   private final VisualizationTypeRepository visualizationTypeRepository;
   private final VisualizationLibraryRepository visualizationLibraryRepository;
   private final PluginArtifactResolver pluginArtifactResolver;
+  private final PluginCatalogVisibility pluginVisibility;
 
   @Value("${visualizer.jars.folder}")
   String visualizerJarsFolder;
@@ -62,7 +65,13 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
         throw new VisualizationTypeNotFoundException(
             "Visualization type with id" + typeId + " not found");
       }
+      pluginVisibility.requireInstalled(foundVisType.get().getInstallationId());
+      if (foundVisType.get().getVisualizationLib() != null) {
+        pluginVisibility.requireInstalled(foundVisType.get().getVisualizationLib().getInstallationId());
+      }
       return foundVisType.get();
+    } catch (com.openlap.infrastructure.exception.ConflictException e) {
+      throw e;
     } catch (VisualizationTypeNotFoundException e) {
       throw e;
     } catch (Exception e) {
@@ -79,7 +88,10 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
         throw new VisualizationLibraryNotFoundException(
             "Visualization library with id" + libraryId + " not found");
       }
+      pluginVisibility.requireInstalled(foundVisLibrary.get().getInstallationId());
       return foundVisLibrary.get();
+    } catch (com.openlap.infrastructure.exception.ConflictException e) {
+      throw e;
     } catch (VisualizationLibraryNotFoundException e) {
       throw e;
     } catch (Exception e) {
@@ -192,6 +204,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
                 jarFile,
                 null,
                 true,
+                null,
                 null));
   }
 
@@ -296,6 +309,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
     Set<String> uniqueFileNames = new HashSet<>();
     List<VisualizationMethodFileNameResponse> responses = new ArrayList<>();
     for (VisLibrary visLibrary : foundAllVisualizationLibraries) {
+      if (!pluginVisibility.isInstalled(visLibrary.getInstallationId())) continue;
       String fileName = visLibrary.getFrameworkLocation();
       if (uniqueFileNames.add(fileName)) {
         String modifiedFileName = fileName.replace(visualizerJarsFolder, "");
@@ -313,6 +327,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
         visualizationLibraryRepository.findAllByFrameworkLocation(frameworkLocation);
     List<VisualizationLibraryResponse> responses = new ArrayList<>();
     for (VisLibrary visLibrary : foundVisLibrary) {
+      if (!pluginVisibility.isInstalled(visLibrary.getInstallationId())) continue;
       responses.add(
           new VisualizationLibraryResponse(
               visLibrary.getId(),

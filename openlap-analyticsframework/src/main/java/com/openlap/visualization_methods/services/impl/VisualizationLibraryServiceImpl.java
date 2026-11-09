@@ -1,5 +1,7 @@
 package com.openlap.visualization_methods.services.impl;
 
+import com.openlap.plugins.management.PluginCatalogVisibility;
+
 import com.openlap.infrastructure.exception.DatabaseOperationException;
 import com.openlap.plugins.LegacyPluginDeletionException;
 import com.openlap.visualization_methods.dto.VisualizationLibraryResponse;
@@ -20,6 +22,7 @@ public class VisualizationLibraryServiceImpl implements VisualizationLibraryServ
   private final VisualizationLibraryRepository visualizationLibraryRepository;
   private final VisualizationMethodUtilityService visualizationMethodUtilityService;
   private final VisualizationTypeRepository visualizationTypeRepository;
+  private final PluginCatalogVisibility pluginVisibility;
 
   @Override
   public List<VisualizationLibraryResponse> getAllVisualizationLibraries() {
@@ -31,7 +34,7 @@ public class VisualizationLibraryServiceImpl implements VisualizationLibraryServ
       List<VisualizationLibraryResponse> visualizationLibraryResponses = new ArrayList<>();
       for (VisLibrary visLibrary : foundAllVisualizationLibraries) {
         // Editor list: hide soft-disabled libraries from new indicator selection.
-        if (!visLibrary.isEnabled()) {
+        if (!visLibrary.isEnabled() || !pluginVisibility.isInstalled(visLibrary.getInstallationId())) {
           continue;
         }
         visualizationLibraryResponses.add(

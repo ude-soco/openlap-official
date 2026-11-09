@@ -10,14 +10,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.jar.JarFile;
 import lombok.Getter;
+import com.openlap.plugins.management.PluginCatalogVisibility;
 import org.bson.Document;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 /** Raw catalog reads preserve legacy IDs and avoid dereferencing unrelated indicator data. */
 public final class PluginCatalog {
   private final MongoTemplate mongo;
+  private final PluginCatalogVisibility visibility;
 
-  public PluginCatalog(MongoTemplate mongo) { this.mongo = mongo; }
+  public PluginCatalog(MongoTemplate mongo) { this.mongo = mongo; this.visibility = new PluginCatalogVisibility(mongo); }
 
   @Getter
   public static final class Entry {
@@ -45,16 +47,19 @@ public final class PluginCatalog {
   public List<Entry> entries() {
     List<Entry> entries = new ArrayList<>();
     for (Document method : mongo.findAll(Document.class, "analytics-technique")) {
+      if (!installed(method)) continue;
       entries.add(new Entry(PluginKind.ANALYTICS, method, "fileName", Collections.singletonList(className(method))));
     }
     Map<String, Document> libraries = new HashMap<>();
     Map<String, List<String>> classes = new HashMap<>();
     for (Document library : mongo.findAll(Document.class, "visualization-library")) {
+      if (!installed(library)) continue;
       String id = library.get("_id").toString();
       libraries.put(id, library);
       classes.put(id, new ArrayList<>());
     }
     for (Document type : mongo.findAll(Document.class, "visualization-type")) {
+      if (!installed(type)) continue;
       String parent = referenceId(type.get("visualizationLib"));
       if (!libraries.containsKey(parent)) {
         throw new PluginStorageException("PLUGIN_CATALOG_INVALID", "A visualization type references a missing library. Repair the catalog before migration.");
@@ -82,6 +87,10 @@ public final class PluginCatalog {
       throw new PluginStorageException("PLUGIN_CATALOG_INVALID", "An installed plugin has no implementing class.");
     }
     return name;
+  }
+
+  private boolean installed(Document row) {
+    return visibility.isInstalled(row.getString("installationId"));
   }
 
   private static String referenceId(Object value) {

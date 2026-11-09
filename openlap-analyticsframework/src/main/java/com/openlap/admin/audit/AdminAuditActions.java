@@ -18,6 +18,9 @@ public final class AdminAuditActions {
   public static final String CONTENT_UNPUBLISH = "CONTENT_UNPUBLISH";
   public static final String CONTENT_TRASH = "CONTENT_TRASH";
   public static final String CONTENT_RESTORE = "CONTENT_RESTORE";
+  public static final String PLUGIN_UPLOAD = "PLUGIN_UPLOAD";
+  public static final String PLUGIN_INSPECT = "PLUGIN_INSPECT";
+  public static final String PLUGIN_ACTIVATE = "PLUGIN_ACTIVATE";
 
   private AdminAuditActions() {}
 }

@@ -43,6 +43,13 @@ public class GlobalApiExceptionHandlerMockMvcTest {
 
   @Autowired private MockMvc mockMvc;
 
+  @Test
+  public void oversizedUploadsReturnAnActionableLimit() throws Exception {
+    mockMvc.perform(post("/test/oversized-upload")).andExpect(status().isPayloadTooLarge())
+        .andExpect(jsonPath("$.code").value("UPLOAD_TOO_LARGE"))
+        .andExpect(jsonPath("$.message").value("Choose a file no larger than 100 MiB."));
+  }
+
   // The main class's bootstrap CommandLineRunner @Bean is instantiated in the slice; mock its
   // collaborators so no MongoDB-backed services are required.
   @org.springframework.boot.test.mock.mockito.MockBean

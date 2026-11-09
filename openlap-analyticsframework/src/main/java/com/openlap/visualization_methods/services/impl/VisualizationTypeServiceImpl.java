@@ -1,5 +1,7 @@
 package com.openlap.visualization_methods.services.impl;
 
+import com.openlap.plugins.management.PluginCatalogVisibility;
+
 import com.google.gson.Gson;
 import com.openlap.dataset.OpenLAPColumnConfigData;
 import com.openlap.dataset.OpenLAPDataSet;
@@ -31,6 +33,7 @@ public class VisualizationTypeServiceImpl implements VisualizationTypeService {
   private final VisualizationTypeRepository visualizationTypeRepository;
   private final VisualizationMethodUtilityService visualizationMethodUtilityService;
   private final VisualizationLibraryRepository visualizationLibraryRepository;
+  private final PluginCatalogVisibility pluginVisibility;
 
   @Override
   public List<VisualizationTypeResponse> getAllVisualizationTypes() {
@@ -53,8 +56,10 @@ public class VisualizationTypeServiceImpl implements VisualizationTypeService {
         && visType.getVisualizationLib().isEnabled();
   }
 
-  private static List<VisType> filterSelectableTypes(List<VisType> types) {
+  private List<VisType> filterSelectableTypes(List<VisType> types) {
     return types.stream()
+        .filter(type -> pluginVisibility.isInstalled(type.getInstallationId()))
+        .filter(type -> type.getVisualizationLib() != null && pluginVisibility.isInstalled(type.getVisualizationLib().getInstallationId()))
         .filter(VisualizationTypeServiceImpl::isTypeSelectable)
         .collect(Collectors.toList());
   }

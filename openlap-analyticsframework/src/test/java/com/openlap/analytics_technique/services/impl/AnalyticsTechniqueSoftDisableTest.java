@@ -18,7 +18,7 @@ public class AnalyticsTechniqueSoftDisableTest {
 
   private final AnalyticsTechniqueRepository repository = mock(AnalyticsTechniqueRepository.class);
   private final AnalyticsTechniqueServiceImpl service =
-      new AnalyticsTechniqueServiceImpl(repository, com.openlap.plugins.artifacts.PluginArtifactResolver.local());
+      new AnalyticsTechniqueServiceImpl(repository, com.openlap.plugins.artifacts.PluginArtifactResolver.local(), com.openlap.plugins.management.PluginCatalogVisibility.legacyOnly());
 
   private static AnalyticsTechnique method(String id, Boolean enabled) {
     AnalyticsTechnique technique = new AnalyticsTechnique();

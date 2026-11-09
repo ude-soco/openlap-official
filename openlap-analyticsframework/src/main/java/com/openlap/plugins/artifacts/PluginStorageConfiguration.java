@@ -1,5 +1,7 @@
 package com.openlap.plugins.artifacts;
 
+import com.openlap.plugins.management.PluginManagementService;
+
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -10,6 +12,11 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 @Configuration
 @EnableConfigurationProperties(PluginStorageProperties.class)
 public class PluginStorageConfiguration {
+  @Bean
+  public PluginManagementService pluginManagementService(MongoTemplate mongo,
+      PluginStorageProperties properties, ObjectProvider<PluginArtifactRegistry> registry, ObjectProvider<PluginArtifactCache> cache) {
+    return new PluginManagementService(mongo, properties, registry.getIfAvailable(), cache.getIfAvailable());
+  }
   @Bean
   public PluginArtifactResolver pluginArtifactResolver(PluginStorageProperties properties,
       ObjectProvider<PluginArtifactRegistry> registry, ObjectProvider<PluginArtifactCache> cache) {

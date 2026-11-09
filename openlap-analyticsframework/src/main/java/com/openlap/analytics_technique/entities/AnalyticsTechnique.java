@@ -43,6 +43,9 @@ public class AnalyticsTechnique {
   /** Added explicitly by artifact migration; catalog IDs and legacy paths remain intact. */
   private String artifactId;
 
+  /** New entries remain invisible until their complete installation is ACTIVE. */
+  private String installationId;
+
   /** Treats a missing/null flag (legacy documents) as enabled. */
   public boolean isEnabled() {
     return enabled == null || enabled;

@@ -23,6 +23,8 @@ import com.openlap.plugins.artifacts.PluginStorageProperties;
 import com.openlap.plugins.artifacts.S3ArtifactObjectStore;
 import com.openlap.plugins.migration.PluginArtifactManifest;
 import com.openlap.plugins.migration.PluginArtifactMigration;
+import com.openlap.plugins.management.PluginCatalogVisibility;
+import com.openlap.plugins.management.PluginManagementService;
 import com.openlap.visualization_methods.repositories.VisualizationLibraryRepository;
 import com.openlap.visualization_methods.repositories.VisualizationTypeRepository;
 import com.openlap.visualization_methods.services.impl.VisualizationMethodUtilityServiceImpl;
@@ -34,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -48,6 +51,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.repository.support.MongoRepositoryFactory;
+import org.springframework.mock.web.MockMultipartFile;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -261,6 +265,192 @@ public class PluginArtifactIT {
     assertThat(artifacts.findById(expected.getId()).get().getState()).isEqualTo(PluginArtifact.State.STAGED);
   }
 
+  @Test
+  public void uploadsRequireExplicitInspectionAndBothKindsActivateWithoutReplacingExistingEntries() throws Exception {
+    Path managed = ManagedPluginFixture.create(source, "Upload" + UUID.randomUUID().toString().replace("-", ""), false);
+    PluginManagementService management = management(mongo);
+    System.clearProperty("openlap.fixture.inspected");
+    Map<String, Object> analytics = upload(management, managed, PluginKind.ANALYTICS);
+    Map<String, Object> visualization = upload(management, managed, PluginKind.VISUALIZATION);
+    assertThat(System.getProperty("openlap.fixture.inspected")).isNull();
+    assertThat(analytics.get("state")).isEqualTo("UPLOADED");
+    String analyticsId = (String) analytics.get("id");
+    long uploadedVersion = version(analytics);
+    assertThatThrownBy(() -> management.activate(analyticsId, uploadedVersion)).isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class);
+    assertThatThrownBy(() -> management.inspect(analyticsId, uploadedVersion, false)).isInstanceOf(com.openlap.infrastructure.exception.ValidationException.class);
+    assertThat(mongo.getCollection("analytics-technique").countDocuments()).isEqualTo(1);
+    analytics = management.inspect(analyticsId, version(analytics), true);
+    assertThat(analytics.get("state")).isEqualTo("INSPECTED");
+    assertThat(mongo.getCollection("analytics-technique").countDocuments()).isEqualTo(1);
+    analytics = management.activate(analyticsId, version(analytics));
+    String visualizationId = (String) visualization.get("id");
+    visualization = management.inspect(visualizationId, version(visualization), true);
+    visualization = management.activate(visualizationId, version(visualization));
+    assertThat(analytics.get("state")).isEqualTo("ACTIVE");
+    assertThat(visualization.get("state")).isEqualTo("ACTIVE");
+    assertThat(upload(management, managed, PluginKind.ANALYTICS).get("id")).isEqualTo(analyticsId);
+    assertThat(management.activate(analyticsId, -1L).get("state")).isEqualTo("ACTIVE");
+    assertThat(mongo.getCollection("analytics-technique").countDocuments()).isEqualTo(2);
+    assertThat(row("analytics-technique", methodId).getBoolean("enabled")).isFalse();
+    MongoRepositoryFactory repositories = new MongoRepositoryFactory(mongo);
+    com.openlap.visualization_methods.entities.VisLibrary library = repositories.getRepository(VisualizationLibraryRepository.class)
+        .findAll().stream().filter(item -> visualizationId.equals(item.getInstallationId())).findFirst().get();
+    assertThat(library.getVisualizationTypes()).hasSize(1);
+    assertThat(library.getVisualizationTypes().get(0).getVisualizationLib().getId()).isEqualTo(library.getId());
+    String chartId = library.getVisualizationTypes().get(0).getId();
+    PluginArtifactCache runtimeCache = new PluginArtifactCache(temporary.newFolder("managed-runtime").toPath(), 1000000, 10, store);
+    closeables.add(runtimeCache);
+    PluginArtifactResolver resolver = new PluginArtifactResolver(PluginStorageProperties.Mode.S3, registry, runtimeCache);
+    com.openlap.plugins.management.PluginCatalogVisibility visibility = new PluginCatalogVisibility(mongo);
+    AnalyticsTechniqueServiceImpl analyticsRuntime = new AnalyticsTechniqueServiceImpl(repositories.getRepository(AnalyticsTechniqueRepository.class), resolver, visibility);
+    VisualizationMethodUtilityServiceImpl visualRuntime = new VisualizationMethodUtilityServiceImpl(repositories.getRepository(VisualizationTypeRepository.class),
+        repositories.getRepository(VisualizationLibraryRepository.class), resolver, visibility);
+    try {
+      String method = repositories.getRepository(AnalyticsTechniqueRepository.class).findAll().stream()
+          .filter(item -> analyticsId.equals(item.getInstallationId())).findFirst().get().getId();
+      assertThat(analyticsRuntime.loadAnalyticsMethodInstance(method).getAnalyticsMethodName()).startsWith("Method Upload");
+      assertThat(visualRuntime.loadVisTypeInstance(chartId).getName()).startsWith("Chart Upload");
+    } finally { analyticsRuntime.closePluginLoaders(); visualRuntime.closePluginLoaders(); System.clearProperty("openlap.fixture.inspected"); }
+  }
+
+  @Test
+  public void partialActivationIsHiddenAndResumesWithoutDuplicateCatalogRows() throws Exception {
+    Path managed = ManagedPluginFixture.create(source, "Partial" + UUID.randomUUID().toString().replace("-", ""), false);
+    MongoTemplate interrupted = org.mockito.Mockito.spy(mongo);
+    java.util.concurrent.atomic.AtomicInteger writes = new java.util.concurrent.atomic.AtomicInteger();
+    org.mockito.Mockito.doAnswer(call -> {
+      if (writes.incrementAndGet() == 2) throw new org.springframework.dao.DataAccessResourceFailureException("simulated outage");
+      return call.callRealMethod();
+    }).when(interrupted).upsert(org.mockito.ArgumentMatchers.any(org.springframework.data.mongodb.core.query.Query.class),
+        org.mockito.ArgumentMatchers.any(org.springframework.data.mongodb.core.query.Update.class), org.mockito.ArgumentMatchers.anyString());
+    PluginManagementService management = management(interrupted);
+    Map<String, Object> upload = upload(management, managed, PluginKind.VISUALIZATION);
+    String id = (String) upload.get("id");
+    Map<String, Object> inspected = management.inspect(id, version(upload), true);
+    assertThatThrownBy(() -> management.activate(id, version(inspected))).isInstanceOf(org.springframework.dao.DataAccessException.class);
+    assertThat(management.get(id).get("state")).isEqualTo("ACTIVATING");
+    assertThat(new PluginCatalogVisibility(mongo).isInstalled(id)).isFalse();
+    assertThat(new PluginCatalog(mongo).entries()).hasSize(2); // Only the two original legacy entries.
+    Document staged = mongo.getCollection("visualization-type").find(new Document("installationId", id)).first();
+    assertThat(staged).isNotNull();
+    assertThatThrownBy(() -> new PluginCatalogVisibility(mongo).requireInstalled(id)).isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class);
+    MongoRepositoryFactory repositories = new MongoRepositoryFactory(mongo);
+    VisualizationTypeRepository types = repositories.getRepository(VisualizationTypeRepository.class);
+    VisualizationLibraryRepository libraries = repositories.getRepository(VisualizationLibraryRepository.class);
+    VisualizationMethodUtilityServiceImpl utility = new VisualizationMethodUtilityServiceImpl(types, libraries,
+        PluginArtifactResolver.local(), new PluginCatalogVisibility(mongo));
+    assertThatThrownBy(() -> utility.fetchVisualizationTypeMethod(staged.getString("_id")))
+        .isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class);
+    assertThat(new com.openlap.visualization_methods.services.impl.VisualizationTypeServiceImpl(types, utility, libraries,
+        new PluginCatalogVisibility(mongo)).getAllVisualizationTypes()).isEmpty();
+    assertThat(management.activate(id, version(management.get(id))).get("state")).isEqualTo("ACTIVE");
+    assertThat(mongo.getCollection("visualization-type").countDocuments(new Document("installationId", id))).isEqualTo(1);
+    assertThat(mongo.getCollection("visualization-library").countDocuments(new Document("installationId", id))).isEqualTo(1);
+  }
+
+  @Test
+  public void concurrentActivationAttemptsCannotReleaseAnInProgressCatalogLock() throws Exception {
+    Path managed = ManagedPluginFixture.create(source, "Concurrent" + UUID.randomUUID().toString().replace("-", ""), false);
+    java.util.concurrent.CountDownLatch entered = new java.util.concurrent.CountDownLatch(1);
+    java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+    MongoTemplate blocked = org.mockito.Mockito.spy(mongo);
+    org.mockito.Mockito.doAnswer(call -> {
+      entered.countDown();
+      if (!release.await(15, java.util.concurrent.TimeUnit.SECONDS)) throw new AssertionError("Activation test did not release its writer.");
+      return call.callRealMethod();
+    }).when(blocked).upsert(org.mockito.ArgumentMatchers.any(org.springframework.data.mongodb.core.query.Query.class),
+        org.mockito.ArgumentMatchers.any(org.springframework.data.mongodb.core.query.Update.class), org.mockito.ArgumentMatchers.anyString());
+    PluginManagementService first = management(blocked);
+    PluginManagementService second = management(mongo);
+    Map<String, Object> uploaded = upload(first, managed, PluginKind.ANALYTICS);
+    String id = (String) uploaded.get("id");
+    Map<String, Object> reviewed = first.inspect(id, version(uploaded), true);
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    try {
+      Future<Map<String, Object>> activation = executor.submit(() -> first.activate(id, version(reviewed)));
+      assertThat(entered.await(10, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+      assertThatThrownBy(() -> second.activate(id, version(second.get(id))))
+          .isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class).hasMessageContaining("in progress");
+      assertThat(new PluginCatalogVisibility(mongo).isInstalled(id)).isFalse();
+      Map<String, Object> visualization = upload(second, managed, PluginKind.VISUALIZATION);
+      String otherId = (String) visualization.get("id");
+      Map<String, Object> otherReview = second.inspect(otherId, version(visualization), true);
+      assertThatThrownBy(() -> second.activate(otherId, version(otherReview)))
+          .isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class).hasMessageContaining("must finish first");
+      release.countDown();
+      assertThat(activation.get().get("state")).isEqualTo("ACTIVE");
+      assertThat(second.activate(otherId, version(second.get(otherId))).get("state")).isEqualTo("ACTIVE");
+      assertThat(mongo.getCollection("analytics-technique").countDocuments(new Document("installationId", id))).isEqualTo(1);
+    } finally { release.countDown(); executor.shutdownNow(); }
+  }
+
+  @Test
+  public void differentBytesWithExistingEntryClassesCannotReplaceAnInstalledPlugin() throws Exception {
+    Path managed = ManagedPluginFixture.create(source, "Duplicate" + UUID.randomUUID().toString().replace("-", ""), false);
+    PluginManagementService management = management(mongo);
+    Map<String, Object> uploaded = upload(management, managed, PluginKind.ANALYTICS);
+    String id = (String) uploaded.get("id");
+    Map<String, Object> reviewed = management.inspect(id, version(uploaded), true);
+    management.activate(id, version(reviewed));
+    Path changed = source.resolve("different-bytes.jar");
+    try (java.util.jar.JarFile input = new java.util.jar.JarFile(managed.toFile());
+         java.util.jar.JarOutputStream output = new java.util.jar.JarOutputStream(Files.newOutputStream(changed))) {
+      for (java.util.jar.JarEntry entry : Collections.list(input.entries())) {
+        output.putNextEntry(new java.util.jar.JarEntry(entry.getName()));
+        try (InputStream bytes = input.getInputStream(entry)) { bytes.transferTo(output); }
+        output.closeEntry();
+      }
+      output.putNextEntry(new java.util.jar.JarEntry("version.txt"));
+      output.write(new byte[] {1});
+      output.closeEntry();
+    }
+    Map<String, Object> other = upload(management, changed, PluginKind.ANALYTICS);
+    String otherId = (String) other.get("id");
+    assertThat(otherId).isNotEqualTo(id);
+    assertThat((List<?>) other.get("conflicts")).isNotEmpty();
+    Map<String, Object> otherReview = management.inspect(otherId, version(other), true);
+    assertThatThrownBy(() -> management.activate(otherId, version(otherReview)))
+        .isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class).hasMessageContaining("Already installed");
+    assertThat(mongo.getCollection("analytics-technique").countDocuments()).isEqualTo(2);
+    assertThat(management.get(id).get("state")).isEqualTo("ACTIVE");
+  }
+
+  private PluginManagementService management(MongoTemplate template) throws Exception {
+    PluginArtifactCache cache = new PluginArtifactCache(temporary.newFolder().toPath(), 1000000, 20, store);
+    closeables.add(cache);
+    return new PluginManagementService(template, properties, registry, cache);
+  }
+
+  @Test
+  public void expiredCrashClaimsAndPostCommitLocksCanBeRecoveredExplicitly() throws Exception {
+    Path managed = ManagedPluginFixture.create(source, "Crash" + UUID.randomUUID().toString().replace("-", ""), false);
+    PluginManagementService management = management(mongo);
+    Map<String, Object> uploaded = upload(management, managed, PluginKind.ANALYTICS);
+    String id = (String) uploaded.get("id");
+    java.util.Date expired = java.util.Date.from(java.time.Instant.now().minusSeconds(660));
+    mongo.getCollection("plugin-installation").updateOne(new Document("_id", id),
+        new Document("$set", new Document("state", "INSPECTING").append("inspectionClaim", "abandoned")
+            .append("inspectionStartedAt", expired).append("version", 1L)));
+    Map<String, Object> review = management.inspect(id, 1L, true);
+    mongo.getCollection("plugin-management-lock").insertOne(new Document("_id", "catalog-activation")
+        .append("owner", id).append("claim", "crashed").append("running", true).append("startedAt", expired));
+    assertThat(management.activate(id, version(review)).get("state")).isEqualTo("ACTIVE");
+    // Simulate losing the final lock-cleanup acknowledgement after the ACTIVE commit.
+    mongo.getCollection("plugin-management-lock").insertOne(new Document("_id", "catalog-activation")
+        .append("owner", id).append("claim", "committed").append("running", true).append("startedAt", new java.util.Date()));
+    Map<String, Object> visualization = upload(management, managed, PluginKind.VISUALIZATION);
+    String nextId = (String) visualization.get("id");
+    Map<String, Object> nextReview = management.inspect(nextId, version(visualization), true);
+    assertThat(management.activate(nextId, version(nextReview)).get("state")).isEqualTo("ACTIVE");
+    assertThat(mongo.getCollection("plugin-management-lock").countDocuments()).isZero();
+  }
+
+  private Map<String, Object> upload(PluginManagementService management, Path jar, PluginKind kind) throws Exception {
+    return management.upload(kind, new MockMultipartFile("file", jar.getFileName().toString(), "application/java-archive", Files.readAllBytes(jar)), "test-admin");
+  }
+
+  private static long version(Map<String, Object> review) { return ((Number) review.get("version")).longValue(); }
+
   private void assertOnlyArtifactChanged(String collection, ObjectId id, Document before) {
     Document after = row(collection, id);
     assertThat(after.remove("artifactId")).isInstanceOf(String.class);
@@ -291,9 +481,9 @@ public class PluginArtifactIT {
       new PluginCatalogVerifier(new PluginCatalog(mongo), ownRegistry, cache).afterSingletonsInstantiated();
       // Real repositories exercise ObjectId conversion and visualization DBRef loading too.
       MongoRepositoryFactory repositories = new MongoRepositoryFactory(mongo);
-      analytics = new AnalyticsTechniqueServiceImpl(repositories.getRepository(AnalyticsTechniqueRepository.class), resolver);
+      analytics = new AnalyticsTechniqueServiceImpl(repositories.getRepository(AnalyticsTechniqueRepository.class), resolver, com.openlap.plugins.management.PluginCatalogVisibility.legacyOnly());
       visualization = new VisualizationMethodUtilityServiceImpl(repositories.getRepository(VisualizationTypeRepository.class),
-          repositories.getRepository(VisualizationLibraryRepository.class), resolver);
+          repositories.getRepository(VisualizationLibraryRepository.class), resolver, com.openlap.plugins.management.PluginCatalogVisibility.legacyOnly());
     }
 
     String assertLoads(String expected) {

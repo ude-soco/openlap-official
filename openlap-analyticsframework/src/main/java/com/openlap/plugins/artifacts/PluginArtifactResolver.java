@@ -25,7 +25,7 @@ public final class PluginArtifactResolver {
 
   public void requireLocalMutation() {
     if (usesObjectStorage()) throw new ConflictException("PLUGIN_MANAGEMENT_MIGRATION",
-        "Local plugin changes are unavailable in S3 mode. Artifact upload and activation are not enabled yet.");
+        "Local plugin changes are unavailable in S3 mode. Use Add methods or Add library in Administration.");
   }
 
   public Path resolve(PluginKind kind, String artifactId, String folder, String recordedPath) {

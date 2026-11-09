@@ -35,13 +35,13 @@ public class LegacyPluginDeletionTest {
     AnalyticsTechniqueRepository methods = mock(AnalyticsTechniqueRepository.class);
     VisualizationLibraryRepository libraries = mock(VisualizationLibraryRepository.class);
     VisualizationTypeRepository types = mock(VisualizationTypeRepository.class);
-    AnalyticsTechniqueServiceImpl analytics = new AnalyticsTechniqueServiceImpl(methods, com.openlap.plugins.artifacts.PluginArtifactResolver.local());
+    AnalyticsTechniqueServiceImpl analytics = new AnalyticsTechniqueServiceImpl(methods, com.openlap.plugins.artifacts.PluginArtifactResolver.local(), com.openlap.plugins.management.PluginCatalogVisibility.legacyOnly());
     VisualizationMethodUtilityServiceImpl utility =
-        new VisualizationMethodUtilityServiceImpl(types, libraries, com.openlap.plugins.artifacts.PluginArtifactResolver.local());
+        new VisualizationMethodUtilityServiceImpl(types, libraries, com.openlap.plugins.artifacts.PluginArtifactResolver.local(), com.openlap.plugins.management.PluginCatalogVisibility.legacyOnly());
     VisualizationLibraryServiceImpl libraryService =
-        new VisualizationLibraryServiceImpl(libraries, utility, types);
+        new VisualizationLibraryServiceImpl(libraries, utility, types, com.openlap.plugins.management.PluginCatalogVisibility.legacyOnly());
     VisualizationTypeServiceImpl typeService =
-        new VisualizationTypeServiceImpl(types, utility, libraries);
+        new VisualizationTypeServiceImpl(types, utility, libraries, com.openlap.plugins.management.PluginCatalogVisibility.legacyOnly());
     ReflectionTestUtils.setField(analytics, "analyticsMethodsJarsFolder", temporary.getRoot().toString());
     ReflectionTestUtils.setField(utility, "visualizerJarsFolder", temporary.getRoot().toString());
     Path jar = temporary.newFile("plugin.jar").toPath();

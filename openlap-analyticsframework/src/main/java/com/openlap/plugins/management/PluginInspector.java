@@ -13,7 +13,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -36,7 +35,6 @@ public final class PluginInspector {
     pool.appendClassPath(new LoaderClassPath(AnalyticsMethod.class.getClassLoader()));
     List<CtClass> resolved = new ArrayList<>();
     try (JarFile archive = new JarFile(jar.toFile())) {
-      pool.insertClassPath(jar.toString());
       List<String> names = archive.stream().filter(entry -> entry.getName().endsWith(".class"))
           .map(entry -> entry.getName().substring(0, entry.getName().length() - 6).replace('/', '.'))
           .sorted().collect(Collectors.toList());
@@ -45,13 +43,22 @@ public final class PluginInspector {
           throw invalid("Do not bundle OpenLAP template or dataset classes; use the supported provided dependencies.");
         }
         if (name.equals("module-info") || name.endsWith("package-info")) continue;
-        CtClass type = pool.get(name);
-        resolved.add(type);
+        // Parse directly from owned streams, avoiding a cached JarURLConnection
+        // that could retain a staging JAR after upload cleanup (especially on Windows).
+        try (java.io.InputStream input = archive.getInputStream(archive.getJarEntry(name.replace('.', '/') + ".class"))) {
+          CtClass type = pool.makeClass(input);
+          if (!name.equals(type.getName())) throw invalid("Class names must match their archive entry paths.");
+          resolved.add(type);
+        }
+      }
+      for (CtClass type : resolved) {
+        String name = type.getName();
         if (type.isInterface() || Modifier.isAbstract(type.getModifiers())) continue;
         boolean method = kind == PluginKind.ANALYTICS && type.subtypeOf(pool.get(AnalyticsMethod.class.getName()));
         boolean chart = kind == PluginKind.VISUALIZATION && type.subtypeOf(pool.get(VisualizationCodeGenerator.class.getName()));
         boolean library = kind == PluginKind.VISUALIZATION && type.subtypeOf(pool.get(VisualizationLibraryInfo.class.getName()));
         if (!method && !chart && !library) continue;
+        if (name.length() > 512) throw invalid("Plugin entry class names must be at most 512 characters.");
         if (AnalyticsMethod.class.getClassLoader().getResource(name.replace('.', '/') + ".class") != null) {
           throw invalid("A plugin entry conflicts with a class already provided by the backend.");
         }
@@ -71,7 +78,9 @@ public final class PluginInspector {
       return result;
     } catch (IOException | NotFoundException e) {
       throw invalid("Plugin classes or their dependencies could not be resolved. Check the supported template and public no-argument constructors.");
-    } finally { resolved.forEach(CtClass::detach); }
+    } catch (ValidationException e) { throw e; }
+    catch (RuntimeException | StackOverflowError e) { throw invalid("The archive contains unsupported or malformed class definitions."); }
+    finally { resolved.forEach(CtClass::detach); }
   }
 
   /** Executes trusted constructors and metadata methods, but never executes analytics or renders a chart. */

@@ -72,6 +72,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
       com.openlap.admin.controller.AdminCatalogController.class,
       com.openlap.admin.controller.AdminAuditController.class,
       com.openlap.admin.controller.AdminContentController.class,
+      com.openlap.admin.controller.AdminPluginController.class,
       com.openlap.content.PublicContentController.class
     })
 @Import({
@@ -103,6 +104,7 @@ public class SecurityAuthorizationMockMvcTest {
   @MockBean private AdminCatalogService adminCatalogService;
   @MockBean private AdminAuditService adminAuditService;
   @MockBean private com.openlap.content.ContentService contentService;
+  @MockBean private com.openlap.plugins.management.PluginManagementService pluginManagementService;
   @MockBean private AnalyticsTechniqueService analyticsTechniqueService;
   @MockBean private VisualizationLibraryService visualizationLibraryService;
   @MockBean private VisualizationTypeService visualizationTypeService;
@@ -114,6 +116,59 @@ public class SecurityAuthorizationMockMvcTest {
   // Bootstrap CommandLineRunner safety net (prevents any MongoDB access if it is invoked)
   @MockBean private UserRoleService userRoleService;
   @MockBean private EngineService engineService;
+
+  @Test
+  public void pluginWorkflowIsForbiddenWithoutSuperAdminForEveryOperation() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+    mockMvc.perform(get("/v1/admin/plugins").param("kind", "ANALYTICS"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(get("/v1/admin/plugins/example").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/v1/admin/plugins/upload")
+        .file(new org.springframework.mock.web.MockMultipartFile("file", "test.jar", "application/java-archive", new byte[] {1}))
+        .param("kind", "ANALYTICS").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden());
+    for (String action : new String[] {"inspect", "activate"}) {
+      mockMvc.perform(post("/v1/admin/plugins/example/" + action).header(AUTHORIZATION, "Bearer valid-token")
+          .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"trusted\":true}"))
+          .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+    }
+    org.mockito.Mockito.verifyZeroInteractions(pluginManagementService);
+  }
+
+  @Test
+  public void superAdminCanReadPluginUploadCapability() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    given(pluginManagementService.available()).willReturn(true);
+    given(pluginManagementService.recent(com.openlap.plugins.artifacts.PluginKind.ANALYTICS))
+        .willReturn(Collections.emptyList());
+    mockMvc.perform(get("/v1/admin/plugins").param("kind", "ANALYTICS").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.data.available").value(true));
+  }
+
+  @Test
+  public void superAdminCanInspectAndActivateWithAuditRecords() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    String id = "analytics-" + String.join("", Collections.nCopies(64, "a"));
+    java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+    result.put("id", id); result.put("filename", "example.jar"); result.put("state", "INSPECTED"); result.put("version", 2L);
+    given(pluginManagementService.inspect(id, 0L, true)).willReturn(result);
+    given(pluginManagementService.activate(id, 2L)).willReturn(result);
+    mockMvc.perform(post("/v1/admin/plugins/" + id + "/inspect").header(AUTHORIZATION, "Bearer valid-token")
+        .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"trusted\":true}"))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.data.state").value("INSPECTED"));
+    mockMvc.perform(post("/v1/admin/plugins/" + id + "/activate").header(AUTHORIZATION, "Bearer valid-token")
+        .contentType(MediaType.APPLICATION_JSON).content("{\"version\":2}"))
+        .andExpect(status().isOk());
+    for (String action : new String[] {"PLUGIN_INSPECT", "PLUGIN_ACTIVATE"}) {
+      org.mockito.Mockito.verify(adminAuditService).logSuccess(any(), org.mockito.ArgumentMatchers.eq(action),
+          org.mockito.ArgumentMatchers.eq("PLUGIN_INSTALLATION"), org.mockito.ArgumentMatchers.eq(id),
+          org.mockito.ArgumentMatchers.eq("example.jar"), any());
+    }
+  }
 
   @Test
   public void homepageContentReadsArePublicAndDoNotExposeDrafts() throws Exception {

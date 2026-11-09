@@ -101,10 +101,10 @@ public class PluginArtifactRuntimeTest {
     AnalyticsTechniqueRepository methods = mock(AnalyticsTechniqueRepository.class);
     VisualizationTypeRepository types = mock(VisualizationTypeRepository.class);
     VisualizationLibraryRepository libraries = mock(VisualizationLibraryRepository.class);
-    AnalyticsTechniqueServiceImpl analytics = new AnalyticsTechniqueServiceImpl(methods, resolver);
-    VisualizationMethodUtilityServiceImpl visualization = new VisualizationMethodUtilityServiceImpl(types, libraries, resolver);
+    AnalyticsTechniqueServiceImpl analytics = new AnalyticsTechniqueServiceImpl(methods, resolver, com.openlap.plugins.management.PluginCatalogVisibility.legacyOnly());
+    VisualizationMethodUtilityServiceImpl visualization = new VisualizationMethodUtilityServiceImpl(types, libraries, resolver, com.openlap.plugins.management.PluginCatalogVisibility.legacyOnly());
     assertThatThrownBy(() -> analytics.createAnalyticsTechnique(null)).isInstanceOf(ConflictException.class)
-        .hasMessage("Local plugin changes are unavailable in S3 mode. Artifact upload and activation are not enabled yet.");
+        .hasMessage("Local plugin changes are unavailable in S3 mode. Use Add methods or Add library in Administration.");
     assertThatThrownBy(analytics::populateAnalyticsTechniques).isInstanceOf(ConflictException.class);
     assertThatThrownBy(() -> analytics.uploadAnalyticsTechniqueFile(null)).isInstanceOf(ConflictException.class);
     assertThatThrownBy(() -> analytics.reloadAnalyticsTechniqueFile(null)).isInstanceOf(ConflictException.class);

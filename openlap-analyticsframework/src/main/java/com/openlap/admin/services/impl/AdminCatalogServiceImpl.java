@@ -1,5 +1,7 @@
 package com.openlap.admin.services.impl;
 
+import com.openlap.plugins.management.PluginCatalogVisibility;
+
 import com.openlap.admin.dto.AdminAnalyticsMethodResponse;
 import com.openlap.admin.dto.AdminVisLibraryResponse;
 import com.openlap.admin.dto.AdminVisTypeResponse;
@@ -33,11 +35,13 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
   private final AnalyticsTechniqueRepository analyticsTechniqueRepository;
   private final VisualizationMethodUtilityService visualizationMethodUtilityService;
   private final AnalyticsTechniqueService analyticsTechniqueService;
+  private final PluginCatalogVisibility pluginVisibility;
 
   @Override
   public List<AdminVisLibraryResponse> getVisualizationLibraries() {
     List<AdminVisLibraryResponse> result = new ArrayList<>();
     for (VisLibrary library : visualizationLibraryRepository.findAll()) {
+      if (!pluginVisibility.isInstalled(library.getInstallationId())) continue;
       result.add(toLibraryResponse(library));
     }
     return result;
@@ -47,6 +51,7 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
   public List<AdminVisTypeResponse> getVisualizationTypes() {
     List<AdminVisTypeResponse> result = new ArrayList<>();
     for (VisType type : visualizationTypeRepository.findAll()) {
+      if (!pluginVisibility.isInstalled(type.getInstallationId())) continue;
       result.add(toTypeResponse(type));
     }
     return result;
@@ -56,6 +61,7 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
   public List<AdminAnalyticsMethodResponse> getAnalyticsMethods() {
     List<AdminAnalyticsMethodResponse> result = new ArrayList<>();
     for (AnalyticsTechnique technique : analyticsTechniqueRepository.findAll()) {
+      if (!pluginVisibility.isInstalled(technique.getInstallationId())) continue;
       result.add(toMethodResponse(technique));
     }
     return result;

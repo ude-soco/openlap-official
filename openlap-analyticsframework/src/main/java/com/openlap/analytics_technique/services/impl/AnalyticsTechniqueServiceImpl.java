@@ -1,5 +1,7 @@
 package com.openlap.analytics_technique.services.impl;
 
+import com.openlap.plugins.management.PluginCatalogVisibility;
+
 import com.openlap.analytics_technique.dto.request.AnalyticsTechniqueRequest;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueFileNameResponse;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueInputParamResponse;
@@ -59,6 +61,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   private final AnalyticsTechniqueRepository analyticsTechniqueRepository;
   private final PluginArtifactResolver pluginArtifactResolver;
+  private final PluginCatalogVisibility pluginVisibility;
 
   private AnalyticsMethodsClassPathLoader getFolderNameFromResourcesFromJarFile(
       String jarFileName) {
@@ -114,6 +117,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
               analyticsTechnique.getImplementingClass(),
               analyticsTechnique.getOutputs(),
               true,
+              null,
               null));
       log.info("Successfully created analytics technique {}", analyticsTechnique);
     } catch (Exception e) {
@@ -140,7 +144,10 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
             "Analytics Technique with id '" + techniqueId + "' not found: ");
       }
       log.info("Analytics technique found '{}'", foundTechnique.get().getName());
+      pluginVisibility.requireInstalled(foundTechnique.get().getInstallationId());
       return foundTechnique.get();
+    } catch (com.openlap.infrastructure.exception.ConflictException e) {
+      throw e;
     } catch (Exception e) {
       throw new DatabaseOperationException(
           "Could not access database to find the analytics technique", e);
@@ -170,7 +177,8 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     try {
       List<AnalyticsTechnique> foundAllTechniques = analyticsTechniqueRepository.findAll();
       log.info("Successfully retrieved all analytics techniques");
-      return foundAllTechniques;
+      return foundAllTechniques.stream().filter(item -> pluginVisibility.isInstalled(item.getInstallationId()))
+          .collect(Collectors.toList());
     } catch (Exception e) {
       log.error("Could not retrieve all analytics techniques", e);
       throw new DatabaseOperationException("Failed to retrieve all analytics techniques", e);
@@ -240,6 +248,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
             className,
             null,
             true,
+            null,
             null);
 
     String outputs =
@@ -340,6 +349,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     Set<String> uniqueFileNames = new HashSet<>();
     List<AnalyticsTechniqueFileNameResponse> responses = new ArrayList<>();
     for (AnalyticsTechnique analyticsTechnique : foundAllAnalyticsTechniques) {
+      if (!pluginVisibility.isInstalled(analyticsTechnique.getInstallationId())) continue;
       String fileName = analyticsTechnique.getFileName();
       if (uniqueFileNames.add(fileName)) {
         String modifiedFileName = fileName.replace(analyticsMethodsJarsFolder, "");
@@ -356,6 +366,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
         analyticsTechniqueRepository.findAllByFileName(frameworkLocation);
     List<AnalyticsTechniqueResponse> responses = new ArrayList<>();
     for (AnalyticsTechnique analyticsTechnique : allByFileName) {
+      if (!pluginVisibility.isInstalled(analyticsTechnique.getInstallationId())) continue;
       responses.add(
           new AnalyticsTechniqueResponse(
               analyticsTechnique.getId(),
