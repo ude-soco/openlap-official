@@ -35,9 +35,9 @@ public class LegacyPluginDeletionTest {
     AnalyticsTechniqueRepository methods = mock(AnalyticsTechniqueRepository.class);
     VisualizationLibraryRepository libraries = mock(VisualizationLibraryRepository.class);
     VisualizationTypeRepository types = mock(VisualizationTypeRepository.class);
-    AnalyticsTechniqueServiceImpl analytics = new AnalyticsTechniqueServiceImpl(methods);
+    AnalyticsTechniqueServiceImpl analytics = new AnalyticsTechniqueServiceImpl(methods, com.openlap.plugins.artifacts.PluginArtifactResolver.local());
     VisualizationMethodUtilityServiceImpl utility =
-        new VisualizationMethodUtilityServiceImpl(types, libraries);
+        new VisualizationMethodUtilityServiceImpl(types, libraries, com.openlap.plugins.artifacts.PluginArtifactResolver.local());
     VisualizationLibraryServiceImpl libraryService =
         new VisualizationLibraryServiceImpl(libraries, utility, types);
     VisualizationTypeServiceImpl typeService =

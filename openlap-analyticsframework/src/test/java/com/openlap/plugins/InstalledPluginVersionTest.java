@@ -31,9 +31,9 @@ public class InstalledPluginVersionTest {
   @Rule public TemporaryFolder temporary = new TemporaryFolder();
   private final AnalyticsTechniqueRepository methods = mock(AnalyticsTechniqueRepository.class);
   private final VisualizationTypeRepository types = mock(VisualizationTypeRepository.class);
-  private final AnalyticsTechniqueServiceImpl analytics = new AnalyticsTechniqueServiceImpl(methods);
+  private final AnalyticsTechniqueServiceImpl analytics = new AnalyticsTechniqueServiceImpl(methods, com.openlap.plugins.artifacts.PluginArtifactResolver.local());
   private final VisualizationMethodUtilityServiceImpl visualization =
-      new VisualizationMethodUtilityServiceImpl(types, mock(VisualizationLibraryRepository.class));
+      new VisualizationMethodUtilityServiceImpl(types, mock(VisualizationLibraryRepository.class), com.openlap.plugins.artifacts.PluginArtifactResolver.local());
   private Path folder;
 
   @Before

@@ -22,6 +22,8 @@ import com.openlap.plugins.LegacyPluginDeletionException;
 import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.template.AnalyticsMethod;
 import com.openlap.plugins.PluginJarFiles;
+import com.openlap.plugins.artifacts.PluginArtifactResolver;
+import com.openlap.plugins.artifacts.PluginKind;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.PreDestroy;
 
@@ -56,6 +58,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
   private String analyticsMethodsClassDirectory;
 
   private final AnalyticsTechniqueRepository analyticsTechniqueRepository;
+  private final PluginArtifactResolver pluginArtifactResolver;
 
   private AnalyticsMethodsClassPathLoader getFolderNameFromResourcesFromJarFile(
       String jarFileName) {
@@ -81,7 +84,8 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
   @Override
   public AnalyticsMethod loadAnalyticsMethodInstance(String techniqueId) {
     AnalyticsTechnique technique = fetchAnalyticsTechniqueMethod(techniqueId);
-    String jarPath = PluginJarFiles.installedPath(analyticsMethodsJarsFolder, technique.getFileName())
+    String jarPath = pluginArtifactResolver.resolve(PluginKind.ANALYTICS, technique.getArtifactId(),
+        analyticsMethodsJarsFolder, technique.getFileName())
         .toString();
     AnalyticsMethodsClassPathLoader loader = loaderCache.computeIfAbsent(
         jarPath, AnalyticsMethodsClassPathLoader::new);
@@ -96,6 +100,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Override
   public void createAnalyticsTechnique(AnalyticsTechniqueRequest analyticsTechnique) {
+    pluginArtifactResolver.requireLocalMutation();
     log.info("Creating a new analytics technique...");
     try {
       analyticsTechniqueRepository.save(
@@ -108,7 +113,8 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
               analyticsTechnique.getFileName(),
               analyticsTechnique.getImplementingClass(),
               analyticsTechnique.getOutputs(),
-              true));
+              true,
+              null));
       log.info("Successfully created analytics technique {}", analyticsTechnique);
     } catch (Exception e) {
       log.error("Could not create analytics technique {}", analyticsTechnique, e);
@@ -174,6 +180,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
   // Populate Analytics Technique
   @Override
   public boolean populateAnalyticsTechniques() {
+    pluginArtifactResolver.requireLocalMutation();
     List<AnalyticsTechnique> existingAnalyticsMethods = fetchAllAnalyticsTechniquesMethod();
 
     try (Stream<Path> paths = Files.walk(Paths.get(analyticsMethodsJarsFolder))) {
@@ -232,7 +239,8 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
             jarFile,
             className,
             null,
-            true);
+            true,
+            null);
 
     String outputs =
         method.getOutputPorts().stream()
@@ -293,6 +301,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Override
   public void uploadAnalyticsTechniqueFile(MultipartFile file) {
+    pluginArtifactResolver.requireLocalMutation();
     String fileName = Utils.requireSafeJarFileName(file.getOriginalFilename());
     Utils.saveFile(file, analyticsMethodsJarsFolder, fileName);
     List<AnalyticsTechnique> existingAnalyticsMethods = fetchAllAnalyticsTechniquesMethod();
@@ -317,6 +326,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Override
   public void reloadAnalyticsTechniqueFile(String fileName) {
+    pluginArtifactResolver.requireLocalMutation();
     String safeFileName = Utils.requireSafeJarFileName(fileName);
     String frameworkLocation = analyticsMethodsJarsFolder + safeFileName;
     List<AnalyticsTechnique> existingAnalyticsMethods =

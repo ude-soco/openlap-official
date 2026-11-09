@@ -8,6 +8,8 @@ import com.openlap.plugins.LegacyPluginDeletionException;
 import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.template.VisualizationCodeGenerator;
 import com.openlap.plugins.PluginJarFiles;
+import com.openlap.plugins.artifacts.PluginArtifactResolver;
+import com.openlap.plugins.artifacts.PluginKind;
 import javax.annotation.PreDestroy;
 import com.openlap.template.VisualizationLibraryInfo;
 import com.openlap.visualization_methods.dto.VisualizationLibraryResponse;
@@ -44,6 +46,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class VisualizationMethodUtilityServiceImpl implements VisualizationMethodUtilityService {
   private final VisualizationTypeRepository visualizationTypeRepository;
   private final VisualizationLibraryRepository visualizationLibraryRepository;
+  private final PluginArtifactResolver pluginArtifactResolver;
 
   @Value("${visualizer.jars.folder}")
   String visualizerJarsFolder;
@@ -94,7 +97,8 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
     if (library == null) {
       throw new VisualizationClassLoaderException("The visualization type has no installed library.");
     }
-    String jarPath = PluginJarFiles.installedPath(visualizerJarsFolder, library.getFrameworkLocation())
+    String jarPath = pluginArtifactResolver.resolve(PluginKind.VISUALIZATION, library.getArtifactId(),
+        visualizerJarsFolder, library.getFrameworkLocation())
         .toString();
     VisualizerClassPathLoader loader = loaderCache.computeIfAbsent(
         jarPath, VisualizerClassPathLoader::new);
@@ -109,6 +113,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
 
   @Override
   public void populateVisualizationMethods() {
+    pluginArtifactResolver.requireLocalMutation();
     List<VisLibrary> existingVisualizationLibraries = visualizationLibraryRepository.findAll();
     List<VisType> existingVisualizationTypes = visualizationTypeRepository.findAll();
 
@@ -186,7 +191,8 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
                 libraryInfo.getDescription(),
                 jarFile,
                 null,
-                true));
+                true,
+                null));
   }
 
   private boolean isTypeAlreadyAdded(List<VisType> existingVisualizationTypes, String className) {
@@ -252,6 +258,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
 
   @Override
   public void uploadVisualizationMethodFile(MultipartFile file) {
+    pluginArtifactResolver.requireLocalMutation();
     String fileName = Utils.requireSafeJarFileName(file.getOriginalFilename());
     Utils.saveFile(file, visualizerJarsFolder, fileName);
 
@@ -279,6 +286,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
 
   @Override
   public void reloadVisualizationMethodFile(String fileName) {
+    pluginArtifactResolver.requireLocalMutation();
     findJarAndAddVisualizerMethod(Utils.requireSafeJarFileName(fileName));
   }
 
