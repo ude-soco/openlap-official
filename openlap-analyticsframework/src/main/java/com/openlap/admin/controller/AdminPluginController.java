@@ -5,6 +5,8 @@ import static com.openlap.admin.audit.AdminAuditActions.*;
 import static com.openlap.admin.audit.AdminResourceTypes.PLUGIN_INSTALLATION;
 import com.openlap.plugins.artifacts.PluginKind;
 import com.openlap.plugins.management.PluginManagementService;
+import com.openlap.plugins.management.PluginCatalogEditor;
+import com.openlap.plugins.management.PluginCatalogKind;
 import com.openlap.response.ApiSuccess;
 import java.io.IOException;
 import java.security.Principal;
@@ -20,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,6 +38,28 @@ import org.springframework.web.multipart.MultipartFile;
 public class AdminPluginController {
   private final PluginManagementService plugins;
   private final AdminAuditService audit;
+  private final PluginCatalogEditor catalog;
+
+  @GetMapping("/catalog/{kind}/{id}")
+  public ApiSuccess details(@PathVariable PluginCatalogKind kind, @PathVariable String id) {
+    return new ApiSuccess(HttpStatus.OK, "Plugin details found.", catalog.details(kind, id));
+  }
+
+  @GetMapping("/catalog/{kind}/{id}/history")
+  public ApiSuccess history(@PathVariable PluginCatalogKind kind, @PathVariable String id) {
+    return new ApiSuccess(HttpStatus.OK, "Plugin versions found.", plugins.history(kind, id));
+  }
+
+  @GetMapping("/catalog/{kind}/{id}/replacement-target")
+  public ApiSuccess replacementTarget(@PathVariable PluginCatalogKind kind, @PathVariable String id) {
+    return new ApiSuccess(HttpStatus.OK, "Replacement source found.", plugins.replacementTarget(kind, id));
+  }
+
+  @PatchMapping("/catalog/{kind}/{id}")
+  public ApiSuccess edit(@PathVariable PluginCatalogKind kind, @PathVariable String id,
+      @RequestBody Map<String, Object> body, HttpServletRequest request) throws IOException {
+    return mutate(request, PLUGIN_DETAILS_UPDATE, id, kind.name(), () -> catalog.edit(kind, id, body));
+  }
 
   @GetMapping
   public ApiSuccess list(@RequestParam PluginKind kind) {
@@ -49,8 +74,20 @@ public class AdminPluginController {
 
   @PostMapping(value = "/upload", consumes = "multipart/form-data")
   public ApiSuccess upload(@RequestParam PluginKind kind, @RequestPart("file") MultipartFile file,
+      @RequestParam(required = false) PluginCatalogKind replacementKind, @RequestParam(required = false) String replacementId,
       Principal principal, HttpServletRequest request) throws IOException {
-    return mutate(request, PLUGIN_UPLOAD, null, () -> plugins.upload(kind, file, principal == null ? "unknown" : principal.getName()));
+    return mutate(request, PLUGIN_UPLOAD, null, () -> plugins.upload(kind, file, principal == null ? "unknown" : principal.getName(), replacementKind, replacementId));
+  }
+
+  @PostMapping("/{id}/replacement")
+  public ApiSuccess configureReplacement(@PathVariable String id, @RequestBody Map<String, Object> body, HttpServletRequest request) throws IOException {
+    return mutate(request, PLUGIN_REPLACEMENT_REVIEW, id, () -> plugins.configureReplacement(id,
+        PluginCatalogEditor.requireVersion(body.get("version")), body));
+  }
+
+  @PostMapping("/{id}/retire-previous")
+  public ApiSuccess retirePrevious(@PathVariable String id, @RequestBody ReviewRequest body, HttpServletRequest request) throws IOException {
+    return mutate(request, PLUGIN_PREVIOUS_DISABLE, id, () -> plugins.retirePrevious(id, body.getVersion(), body.getExpectedVersions()));
   }
 
   @PostMapping("/{id}/inspect")
@@ -64,17 +101,26 @@ public class AdminPluginController {
   }
 
   private ApiSuccess mutate(HttpServletRequest request, String action, String id, Mutation mutation) throws IOException {
+    return mutate(request, action, id, PLUGIN_INSTALLATION, mutation);
+  }
+
+  private ApiSuccess mutate(HttpServletRequest request, String action, String id, String resource, Mutation mutation) throws IOException {
     try {
       Map<String, Object> result = mutation.run();
       Map<String, Object> metadata = new LinkedHashMap<>();
       for (String field : new String[] {"kind", "sha256", "state", "version"}) metadata.put(field, result.get(field));
-      try { audit.logSuccess(request, action, PLUGIN_INSTALLATION, String.valueOf(result.get("id")), String.valueOf(result.get("filename")), metadata); }
+      if (result.get("replacement") instanceof Map<?, ?>) {
+        Map<?, ?> plan = (Map<?, ?>) result.get("replacement");
+        metadata.put("previousArtifactId", plan.get("previousArtifactId")); metadata.put("familyId", plan.get("familyId"));
+      }
+      try { audit.logSuccess(request, action, resource, String.valueOf(result.get("id")),
+          String.valueOf(result.getOrDefault("filename", result.get("name"))), metadata); }
       catch (RuntimeException e) { log.warn("Plugin audit logging failed."); }
       return new ApiSuccess(HttpStatus.OK, "Plugin review updated.", result);
     } catch (RuntimeException | IOException e) {
       // Driver/plugin exception messages can contain private data; log only our bounded public contract.
       String message = e instanceof com.openlap.infrastructure.exception.OpenLapException ? e.getMessage() : "Plugin operation failed.";
-      try { audit.logFailure(request, action, PLUGIN_INSTALLATION, id, null, message, Collections.emptyMap()); }
+      try { audit.logFailure(request, action, resource, id, null, message, Collections.emptyMap()); }
       catch (RuntimeException auditError) { log.warn("Plugin audit logging failed."); }
       throw e;
     }
@@ -86,5 +132,6 @@ public class AdminPluginController {
   public static class ReviewRequest {
     private Long version;
     private Boolean trusted;
+    private Map<String, Object> expectedVersions;
   }
 }

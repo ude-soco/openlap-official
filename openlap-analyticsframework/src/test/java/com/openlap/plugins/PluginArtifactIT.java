@@ -486,6 +486,160 @@ public class PluginArtifactIT {
     assertThat(row("visualization-type", typeId).getString("description")).isEqualTo("Accessible chart description");
   }
 
+  @Test
+  public void replacementVersionsKeepOriginalExecutionMetadataAndDisabledStates() throws Exception {
+    for (PluginKind pluginKind : PluginKind.values()) {
+      com.openlap.plugins.management.PluginCatalogKind catalogKind = pluginKind == PluginKind.ANALYTICS
+          ? com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD : com.openlap.plugins.management.PluginCatalogKind.VISUALIZATION_LIBRARY;
+      String suffix = "Versions" + UUID.randomUUID().toString().replace("-", "");
+      PluginManagementService service = management(mongo);
+      Path firstJar = ManagedPluginFixture.create(source, suffix, false, "v1");
+      Map<String, Object> first = upload(service, firstJar, pluginKind);
+      String firstId = (String) first.get("id");
+      first = service.inspect(firstId, version(first), true);
+      service.activate(firstId, version(first));
+      Document original = mongo.getCollection(catalogKind.collection).find(new Document("installationId", firstId)).first();
+      String oldId = original.get("_id").toString();
+      com.openlap.plugins.management.PluginCatalogEditor editor = new com.openlap.plugins.management.PluginCatalogEditor(mongo);
+      Map<String, Object> edit = new java.util.LinkedHashMap<>();
+      edit.put("version", 0L); edit.put("name", "Administrator " + suffix); edit.put("description", "Preserved metadata"); edit.put("creator", "Admin attribution");
+      editor.edit(catalogKind, oldId, edit);
+      if (pluginKind == PluginKind.ANALYTICS) editor.setEnabled(catalogKind, oldId, false);
+      else {
+        Document chart = mongo.getCollection("visualization-type").find(new Document("installationId", firstId)).first();
+        editor.setEnabled(com.openlap.plugins.management.PluginCatalogKind.VISUALIZATION_TYPE, chart.getString("_id"), false);
+      }
+      Path secondJar = ManagedPluginFixture.create(source, suffix, false, "v2");
+      Map<String, Object> second = service.upload(pluginKind, new MockMultipartFile("file", "v2.jar", "application/java-archive", Files.readAllBytes(secondJar)), "admin", catalogKind, oldId);
+      String secondId = (String) second.get("id");
+      assertThat(secondId).contains("-r-");
+      second = service.inspect(secondId, version(second), true);
+      assertThat((List<?>) second.get("conflicts")).isEmpty();
+      Map<String, Object> mapping = mapping(second);
+      second = service.configureReplacement(secondId, version(second), mapping);
+      // A concurrent edit requires another explicit mapping review, without altering the old version.
+      Map<String, Object> changed = new java.util.LinkedHashMap<>();
+      changed.put("version", editor.details(catalogKind, oldId).get("version")); changed.put("description", "Concurrent metadata");
+      editor.edit(catalogKind, oldId, changed);
+      long stale = version(second);
+      assertThatThrownBy(() -> service.activate(secondId, stale)).isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class);
+      second = service.get(secondId);
+      assertThat(second.get("state")).isEqualTo("INSPECTED");
+      second = service.configureReplacement(secondId, version(second), mapping(second));
+      second = service.activate(secondId, version(second));
+      Document replacement = mongo.getCollection(catalogKind.collection).find(new Document("installationId", secondId)).first();
+      assertThat(replacement.get("artifactId")).isNotEqualTo(secondId);
+      assertThat(replacement.getString("name")).isEqualTo("Administrator " + suffix);
+      assertThat(replacement.getString("description")).isEqualTo("Concurrent metadata");
+      assertThat(replacement.getString("previousId")).isEqualTo(oldId);
+      assertThat(replacement.get("_id")).isNotEqualTo(original.get("_id"));
+      if (pluginKind == PluginKind.ANALYTICS) assertThat(replacement.getBoolean("enabled")).isFalse();
+      else assertThat(mongo.getCollection("visualization-type").find(new Document("installationId", secondId)).first().getBoolean("enabled")).isFalse();
+      assertThat(((List<?>) service.history(catalogKind, oldId).get("versions"))).hasSize(2);
+      assertThat(service.history(catalogKind, oldId).get("latest")).isEqualTo(false);
+      assertThat(service.upload(pluginKind, new MockMultipartFile("file", "v2.jar", "application/java-archive", Files.readAllBytes(secondJar)), "admin", catalogKind, oldId).get("id")).isEqualTo(secondId);
+      // Disabling the original is an explicit action after activation, using its latest revision.
+      if (pluginKind == PluginKind.ANALYTICS) editor.setEnabled(catalogKind, oldId, true);
+      second = service.get(secondId);
+      Map<String, Object> expected = new java.util.LinkedHashMap<>();
+      @SuppressWarnings("unchecked") List<Map<String, Object>> targets = (List<Map<String, Object>>) second.get("retirementTargets");
+      for (Map<String, Object> target : targets) if (Boolean.TRUE.equals(target.get("enabled"))) expected.put((String) target.get("id"), target.get("version"));
+      Map<String, Object> retirementEdit = new java.util.LinkedHashMap<>();
+      retirementEdit.put("version", editor.details(catalogKind, oldId).get("version")); retirementEdit.put("description", "Edited after retirement review");
+      editor.edit(catalogKind, oldId, retirementEdit);
+      long reviewedRetirement = version(second);
+      assertThatThrownBy(() -> service.retirePrevious(secondId, reviewedRetirement, expected))
+          .isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class);
+      assertThat(editor.details(catalogKind, oldId).get("enabled")).isEqualTo(true);
+      second = service.get(secondId);
+      @SuppressWarnings("unchecked") List<Map<String, Object>> refreshedTargets = (List<Map<String, Object>>) second.get("retirementTargets");
+      expected.clear();
+      for (Map<String, Object> target : refreshedTargets) if (Boolean.TRUE.equals(target.get("enabled"))) expected.put((String) target.get("id"), target.get("version"));
+      service.retirePrevious(secondId, version(second), expected);
+      assertThat(editor.details(catalogKind, oldId).get("enabled")).isEqualTo(false);
+      MongoRepositoryFactory repositories = new MongoRepositoryFactory(mongo);
+      PluginArtifactCache runtime = new PluginArtifactCache(temporary.newFolder().toPath(), 1000000, 20, store); closeables.add(runtime);
+      PluginArtifactResolver resolver = new PluginArtifactResolver(PluginStorageProperties.Mode.S3, registry, runtime);
+      PluginCatalogVisibility visibility = new PluginCatalogVisibility(mongo);
+      if (pluginKind == PluginKind.ANALYTICS) {
+        AnalyticsTechniqueServiceImpl analytics = new AnalyticsTechniqueServiceImpl(repositories.getRepository(AnalyticsTechniqueRepository.class), resolver, visibility);
+        try {
+          assertThat(analytics.loadAnalyticsMethodInstance(oldId).getAnalyticsMethodName()).isEqualTo("Method v1");
+          assertThat(analytics.loadAnalyticsMethodInstance(replacement.getString("_id")).getAnalyticsMethodName()).isEqualTo("Method v2");
+        } finally { analytics.closePluginLoaders(); }
+      } else {
+        VisualizationMethodUtilityServiceImpl visuals = new VisualizationMethodUtilityServiceImpl(repositories.getRepository(VisualizationTypeRepository.class), repositories.getRepository(VisualizationLibraryRepository.class), resolver, visibility);
+        try {
+          String oldChart = mongo.getCollection("visualization-type").find(new Document("installationId", firstId)).first().getString("_id");
+          String newChart = mongo.getCollection("visualization-type").find(new Document("installationId", secondId)).first().getString("_id");
+          assertThat(visuals.loadVisTypeInstance(oldChart).getName()).isEqualTo("Chart v1");
+          assertThat(visuals.loadVisTypeInstance(newChart).getName()).isEqualTo("Chart v2");
+        } finally { visuals.closePluginLoaders(); }
+      }
+      Path thirdJar = ManagedPluginFixture.create(source, suffix, false, "v3");
+      String newId = replacement.getString("_id");
+      Map<String, Object> third = service.upload(pluginKind, new MockMultipartFile("file", "v3.jar", "application/java-archive", Files.readAllBytes(thirdJar)), "admin", catalogKind, newId);
+      String thirdId = (String) third.get("id");
+      third = service.inspect(thirdId, version(third), true);
+      third = service.configureReplacement(thirdId, version(third), mapping(third));
+      assertThat(service.activate(thirdId, version(third)).get("state")).isEqualTo("ACTIVE");
+      assertThat((List<?>) service.history(catalogKind, oldId).get("versions")).hasSize(3);
+    }
+  }
+
+  @Test
+  public void replacementMappingsHandleRemovedAndReintroducedEntriesExplicitly() throws Exception {
+    String suffix = "Mapping" + UUID.randomUUID().toString().replace("-", "");
+    PluginManagementService service = management(mongo);
+    com.openlap.plugins.management.PluginCatalogKind kind = com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD;
+    Path originalJar = ManagedPluginFixture.create(source, suffix, false, "v1", true);
+    Map<String, Object> original = upload(service, originalJar, PluginKind.ANALYTICS);
+    String originalOp = (String) original.get("id");
+    original = service.inspect(originalOp, version(original), true); service.activate(originalOp, version(original));
+    List<Document> oldRows = new ArrayList<>(); mongo.getCollection(kind.collection).find(new Document("installationId", originalOp)).into(oldRows);
+    Document oldMain = oldRows.stream().filter(row -> !row.getString("implementingClass").endsWith("Extra")).findFirst().get();
+    String mainId = oldMain.getString("_id");
+    Path nextJar = ManagedPluginFixture.create(source, suffix, false, "v2", false);
+    Map<String, Object> next = service.upload(PluginKind.ANALYTICS, new MockMultipartFile("file", "v2.jar", "application/java-archive", Files.readAllBytes(nextJar)), "admin", kind, mainId);
+    String nextOp = (String) next.get("id"); next = service.inspect(nextOp, version(next), true);
+    Map<String, Object> plan = mapping(next);
+    @SuppressWarnings("unchecked") Map<String, Object> mappings = (Map<String, Object>) plan.get("mappings");
+    for (Document row : oldRows) if (row.getString("implementingClass").endsWith("Extra")) mappings.put(row.getString("_id"), null);
+    Map<String, Object> invalid = new java.util.LinkedHashMap<>(plan);
+    invalid.put("mappings", Collections.singletonMap(mainId, oldMain.getString("implementingClass")));
+    long reviewed = version(next);
+    assertThatThrownBy(() -> service.configureReplacement(nextOp, reviewed, invalid)).isInstanceOf(com.openlap.infrastructure.exception.ValidationException.class);
+    next = service.configureReplacement(nextOp, version(next), plan); service.activate(nextOp, version(next));
+    assertThat(mongo.getCollection(kind.collection).countDocuments(new Document("installationId", nextOp))).isEqualTo(1);
+    Document second = mongo.getCollection(kind.collection).find(new Document("installationId", nextOp)).first();
+    new com.openlap.plugins.management.PluginCatalogEditor(mongo).setEnabled(kind, second.getString("_id"), false);
+    Path thirdJar = ManagedPluginFixture.create(source, suffix, false, "v3", true);
+    Map<String, Object> third = service.upload(PluginKind.ANALYTICS, new MockMultipartFile("file", "v3.jar", "application/java-archive", Files.readAllBytes(thirdJar)), "admin", kind, second.getString("_id"));
+    String thirdOp = (String) third.get("id"); third = service.inspect(thirdOp, version(third), true);
+    third = service.configureReplacement(thirdOp, version(third), mapping(third)); service.activate(thirdOp, version(third));
+    List<Document> installed = new ArrayList<>(); mongo.getCollection(kind.collection).find(new Document("installationId", thirdOp)).into(installed);
+    assertThat(installed).hasSize(2);
+    assertThat(installed.stream().filter(row -> row.getString("implementingClass").endsWith("Extra")).findFirst().get().getBoolean("enabled")).isTrue();
+    assertThat(installed.stream().filter(row -> !row.getString("implementingClass").endsWith("Extra")).findFirst().get().getBoolean("enabled")).isFalse();
+    assertThat(mongo.getCollection(kind.collection).countDocuments(new Document("installationId", originalOp))).isEqualTo(2);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Map<String, Object> mapping(Map<String, Object> review) {
+    Map<String, Object> source = (Map<String, Object>) review.get("replacementSource");
+    Map<String, Object> expected = new java.util.LinkedHashMap<>();
+    Map<String, Object> mappings = new java.util.LinkedHashMap<>();
+    for (Map<String, Object> row : (List<Map<String, Object>>) source.get("entries")) {
+      expected.put((String) row.get("id"), row.get("version"));
+      mappings.put((String) row.get("id"), row.get("implementingClass"));
+    }
+    if (source.get("library") != null) {
+      Map<String, Object> library = (Map<String, Object>) source.get("library"); expected.put((String) library.get("id"), library.get("version"));
+    }
+    Map<String, Object> result = new java.util.LinkedHashMap<>(); result.put("expectedVersions", expected); result.put("mappings", mappings);
+    return result;
+  }
+
   private void assertOnlyArtifactChanged(String collection, ObjectId id, Document before) {
     Document after = row(collection, id);
     assertThat(after.remove("artifactId")).isInstanceOf(String.class);

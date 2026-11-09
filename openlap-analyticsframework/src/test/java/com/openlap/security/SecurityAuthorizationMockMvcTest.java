@@ -105,6 +105,7 @@ public class SecurityAuthorizationMockMvcTest {
   @MockBean private AdminAuditService adminAuditService;
   @MockBean private com.openlap.content.ContentService contentService;
   @MockBean private com.openlap.plugins.management.PluginManagementService pluginManagementService;
+  @MockBean private com.openlap.plugins.management.PluginCatalogEditor pluginCatalogEditor;
   @MockBean private AnalyticsTechniqueService analyticsTechniqueService;
   @MockBean private VisualizationLibraryService visualizationLibraryService;
   @MockBean private VisualizationTypeService visualizationTypeService;
@@ -129,11 +130,17 @@ public class SecurityAuthorizationMockMvcTest {
         .file(new org.springframework.mock.web.MockMultipartFile("file", "test.jar", "application/java-archive", new byte[] {1}))
         .param("kind", "ANALYTICS").header(AUTHORIZATION, "Bearer valid-token"))
         .andExpect(status().isForbidden());
-    for (String action : new String[] {"inspect", "activate"}) {
+    for (String action : new String[] {"inspect", "activate", "replacement", "retire-previous"}) {
       mockMvc.perform(post("/v1/admin/plugins/example/" + action).header(AUTHORIZATION, "Bearer valid-token")
           .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"trusted\":true}"))
           .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
     }
+    mockMvc.perform(get("/v1/admin/plugins/catalog/ANALYTICS_METHOD/example").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(patch("/v1/admin/plugins/catalog/ANALYTICS_METHOD/example").header(AUTHORIZATION, "Bearer valid-token")
+        .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"name\":\"Edit\"}"))
+        .andExpect(status().isForbidden());
+    org.mockito.Mockito.verifyZeroInteractions(pluginCatalogEditor);
     org.mockito.Mockito.verifyZeroInteractions(pluginManagementService);
   }
 
@@ -168,6 +175,22 @@ public class SecurityAuthorizationMockMvcTest {
           org.mockito.ArgumentMatchers.eq("PLUGIN_INSTALLATION"), org.mockito.ArgumentMatchers.eq(id),
           org.mockito.ArgumentMatchers.eq("example.jar"), any());
     }
+  }
+
+  @Test
+  public void superAdminCanEditPluginDetailsWithResourceSpecificAudit() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+    result.put("id", "method-1"); result.put("kind", "ANALYTICS_METHOD"); result.put("name", "Edited name"); result.put("version", 1L);
+    given(pluginCatalogEditor.edit(org.mockito.ArgumentMatchers.eq(com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD),
+        org.mockito.ArgumentMatchers.eq("method-1"), any())).willReturn(result);
+    mockMvc.perform(patch("/v1/admin/plugins/catalog/ANALYTICS_METHOD/method-1").header(AUTHORIZATION, "Bearer valid-token")
+        .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"name\":\"Edited name\"}"))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.data.version").value(1));
+    org.mockito.Mockito.verify(adminAuditService).logSuccess(any(), org.mockito.ArgumentMatchers.eq("PLUGIN_DETAILS_UPDATE"),
+        org.mockito.ArgumentMatchers.eq("ANALYTICS_METHOD"), org.mockito.ArgumentMatchers.eq("method-1"),
+        org.mockito.ArgumentMatchers.eq("Edited name"), any());
   }
 
   @Test

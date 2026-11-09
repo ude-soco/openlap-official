@@ -12,6 +12,14 @@ import javax.tools.ToolProvider;
 
 final class ManagedPluginFixture {
   static Path create(Path folder, String suffix, boolean broken) throws Exception {
+    return create(folder, suffix, broken, suffix);
+  }
+
+  static Path create(Path folder, String suffix, boolean broken, String marker) throws Exception {
+    return create(folder, suffix, broken, marker, false);
+  }
+
+  static Path create(Path folder, String suffix, boolean broken, String marker, boolean extra) throws Exception {
     Map<String, String> sources = new LinkedHashMap<>();
     String analytics = "ManagedAnalytics" + suffix;
     String library = "ManagedLibrary" + suffix;
@@ -23,14 +31,16 @@ final class ManagedPluginFixture {
         + " setParams(new com.openlap.dynamicparam.OpenLAPDynamicParams()); setType(\"test\"); }"
         + " protected void implementationExecution() {throw new AssertionError(\"Must not execute during inspection\");}"
         + " public Boolean hasPMML(){return false;} public java.io.InputStream getPMMLInputStream(){return null;}"
-        + " public String getAnalyticsMethodName(){" + (broken ? "throw new IllegalStateException(\"private-plugin-detail\");" : "return \"Method " + suffix + "\";") + "}"
+        + " public String getAnalyticsMethodName(){" + (broken ? "throw new IllegalStateException(\"private-plugin-detail\");" : "return \"Method " + marker + "\";") + "}"
         + " public String getAnalyticsMethodDescription(){return \"Fixture\";}"
         + " public String getAnalyticsMethodCreator(){return \"Test\";} }");
+    if (extra) sources.put(analytics + "Extra", "public class " + analytics + "Extra extends " + analytics + " {"
+        + " public String getAnalyticsMethodName(){return \"Extra " + marker + "\";} }");
     sources.put(library, "public class " + library + " extends com.openlap.template.VisualizationLibraryInfo {"
-        + " public String getName(){return \"Library " + suffix + "\";} public String getDescription(){return \"Fixture\";}"
+        + " public String getName(){return \"Library " + marker + "\";} public String getDescription(){return \"Fixture\";}"
         + " public String getDeveloperName(){return \"Test\";} }");
     sources.put(chart, "public class " + chart + " extends com.openlap.template.VisualizationCodeGenerator {"
-        + " public String getName(){return \"Chart " + suffix + "\";}"
+        + " public String getName(){return \"Chart " + marker + "\";}"
         + " public com.openlap.template.model.ChartConfiguration getConfiguration(){return new com.openlap.template.model.ChartConfiguration("
         + String.join(",", java.util.Collections.nCopies(28, "false")) + ");}"
         + " public void initializeDataSetConfiguration(){setInput(new com.openlap.dataset.OpenLAPDataSet());}"

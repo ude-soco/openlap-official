@@ -111,12 +111,13 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
   }
 
   private AdminVisLibraryResponse toLibraryResponse(VisLibrary library) {
-    return new AdminVisLibraryResponse(
+    AdminVisLibraryResponse response = new AdminVisLibraryResponse(
         library.getId(),
         library.getCreator(),
         library.getName(),
         library.getDescription(),
         library.isEnabled());
+    response.setArtifactId(library.getArtifactId()); return response;
   }
 
   private AdminVisTypeResponse toTypeResponse(VisType type) {
@@ -127,12 +128,18 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
       String[] parts = type.getImplementingClass().split("\\.");
       imageCode = parts[parts.length - 1];
     }
-    return new AdminVisTypeResponse(
+    AdminVisTypeResponse response = new AdminVisTypeResponse(
         type.getId(), library, type.getName(), imageCode, type.isEnabled());
+    if (type.getVisualizationLib() != null) {
+      response.setLibraryId(type.getVisualizationLib().getId());
+      response.setArtifactId(type.getVisualizationLib().getArtifactId());
+    }
+    return response;
   }
 
   private AdminAnalyticsMethodResponse toMethodResponse(AnalyticsTechnique technique) {
-    return new AdminAnalyticsMethodResponse(
+    AdminAnalyticsMethodResponse response = new AdminAnalyticsMethodResponse(
         technique.getId(), technique.getName(), technique.getDescription(), technique.isEnabled());
+    response.setArtifactId(technique.getArtifactId()); return response;
   }
 }

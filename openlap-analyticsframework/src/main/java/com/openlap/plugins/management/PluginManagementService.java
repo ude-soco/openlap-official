@@ -50,6 +50,7 @@ public class PluginManagementService {
   private final PluginArtifactCache cache;
   private final PluginInspector inspector = new PluginInspector();
   private final ObjectMapper mapper = new ObjectMapper();
+  private final PluginVersions versions;
 
   public PluginManagementService(MongoTemplate mongo, PluginStorageProperties properties,
       PluginArtifactRegistry registry, PluginArtifactCache cache) {
@@ -57,6 +58,7 @@ public class PluginManagementService {
     this.properties = properties;
     this.registry = registry;
     this.cache = cache;
+    versions = new PluginVersions(mongo);
   }
 
   public boolean available() { return properties.getMode() == PluginStorageProperties.Mode.S3 && registry != null && cache != null; }
@@ -65,13 +67,28 @@ public class PluginManagementService {
     Query query = Query.query(Criteria.where("kind").is(kind.name()))
         .with(Sort.by(Sort.Direction.DESC, "createdAt")).limit(50);
     for (String field : Arrays.asList("filename", "kind", "state", "version", "createdAt")) query.fields().include(field);
+    query.fields().include("replacementTarget.targetId").include("replacementTarget.kind");
     return mongo.find(query, Document.class, OPERATIONS).stream().map(this::summary).collect(Collectors.toList());
   }
 
   public Map<String, Object> get(String id) { return response(operation(id)); }
 
+  public Map<String, Object> replacementTarget(PluginCatalogKind kind, String id) { return versions.target(kind, id); }
+  public Map<String, Object> history(PluginCatalogKind kind, String id) { return versions.history(kind, id); }
+
   public Map<String, Object> upload(PluginKind kind, MultipartFile upload, String actor) throws IOException {
+    return upload(kind, upload, actor, null, null);
+  }
+
+  public Map<String, Object> upload(PluginKind kind, MultipartFile upload, String actor,
+      PluginCatalogKind replacementKind, String replacementId) throws IOException {
     requireAvailable();
+    Document target = null;
+    if (replacementKind != null || replacementId != null) {
+      if (replacementKind == null || replacementId == null
+          || (kind == PluginKind.ANALYTICS) != (replacementKind == PluginCatalogKind.ANALYTICS_METHOD)) throw new ValidationException("Choose a replacement of the same plugin kind.");
+      target = versions.target(replacementKind, replacementId);
+    }
     if (upload == null) throw new ValidationException("Choose a JAR file.");
     String filename = Utils.requireSafeJarFileName(upload.getOriginalFilename());
     if (filename.length() > 255) throw new ValidationException("Use a JAR filename of at most 255 characters.");
@@ -81,13 +98,20 @@ public class PluginManagementService {
       PluginJarFiles.saveNew(upload, source);
       PluginInspection discovery = inspector.discover(kind, source);
       PluginArtifact artifact = registry.ensureStored(kind, source, ArtifactIntegrity.sha256(source), Files.size(source), actor);
-      Document operation = new Document("_id", artifact.getId()).append("artifactId", artifact.getId())
+      String operationId = target == null ? artifact.getId() : artifact.getId() + "-r-" + digest(target.getString("familyId") + ":" + target.getString("previousArtifactId"));
+      if (target != null) {
+        Document existing = mongo.findById(operationId, Document.class, OPERATIONS);
+        if (existing != null) return response(existing);
+        versions.requireNewBinary(target, artifact.getId());
+      }
+      Document operation = new Document("_id", operationId).append("artifactId", artifact.getId()).append("catalogSchema", 2)
           .append("kind", kind.name()).append("filename", filename).append("sha256", artifact.getSha256())
           .append("sizeBytes", artifact.getSizeBytes()).append("state", "UPLOADED").append("version", 0L)
           .append("classes", discovery.getClasses()).append("libraryClass", discovery.getLibraryClass())
           .append("createdAt", new Date()).append("createdBy", actor);
+      if (target != null) operation.put("replacementTarget", target);
       try { mongo.insert(operation, OPERATIONS); }
-      catch (DuplicateKeyException e) { return get(artifact.getId()); }
+      catch (DuplicateKeyException e) { return get(operationId); }
       return response(operation);
     } finally {
       Files.deleteIfExists(source);
@@ -112,7 +136,7 @@ public class PluginManagementService {
     Query owned = Query.query(Criteria.where("_id").is(id).and("state").is("INSPECTING").and("inspectionClaim").is(claim));
     try {
       PluginKind kind = PluginKind.valueOf(started.getString("kind"));
-      Path jar = cache.resolve(registry.ready(id, kind));
+      Path jar = cache.resolve(registry.ready(started.getString("artifactId"), kind));
       PluginInspection inspection = inspector.inspect(kind, jar);
       Document review = Document.parse(mapper.writeValueAsString(inspection));
       if (mongo.updateFirst(owned, new Update().set("inspection", review).set("state", "INSPECTED")
@@ -136,6 +160,7 @@ public class PluginManagementService {
     if ("ACTIVE".equals(before.getString("state"))) return response(before);
     String state = before.getString("state");
     if (!("INSPECTED".equals(state) || "ACTIVATING".equals(state))) throw conflict("Inspect the complete plugin contract before activation.");
+    versions.validateBeforeActivation(before, "INSPECTED".equals(state));
     if (mongo.updateFirst(versionQuery(id, version).addCriteria(Criteria.where("state").is(state)),
         new Update().set("state", "ACTIVATING").inc("version", 1).unset("lastError"), OPERATIONS).getMatchedCount() != 1) {
       throw conflict("The review changed. Refresh before activation.");
@@ -148,11 +173,12 @@ public class PluginManagementService {
       ownsLock = true;
       Document operation = operation(id);
       if ("ACTIVE".equals(operation.getString("state"))) return response(operation);
+      versions.validateBeforeActivation(operation, false);
       List<String> conflicts = conflicts(operation);
       if (!conflicts.isEmpty()) throw conflict(String.join(" ", conflicts));
       PluginKind kind = PluginKind.valueOf(operation.getString("kind"));
       // Warm and verify this backend too before publishing; no constructors are run here.
-      Path jar = cache.resolve(registry.ready(id, kind));
+      Path jar = cache.resolve(registry.ready(operation.getString("artifactId"), kind));
       PluginInspection discovered = inspector.discover(kind, jar);
       if (!discovered.getClasses().equals(list(operation, "classes", String.class))) throw conflict("Artifact discovery changed. Inspect again.");
       List<CatalogRow> rows = catalogRows(operation);
@@ -181,6 +207,26 @@ public class PluginManagementService {
         else mongo.updateFirst(owned, Update.update("running", false), LOCKS);
       }
     }
+  }
+
+  public Map<String, Object> configureReplacement(String id, Long version, Map<String, Object> request) {
+    requireAvailable();
+    Document operation = operation(id);
+    if (!"INSPECTED".equals(operation.getString("state"))) throw conflict("Save the replacement mapping after inspection and before activation.");
+    Document plan = versions.plan(operation, request);
+    if (mongo.updateFirst(versionQuery(id, version).addCriteria(Criteria.where("state").is("INSPECTED")),
+        new Update().set("replacement", plan).inc("version", 1), OPERATIONS).getMatchedCount() != 1) throw conflict("The review changed. Refresh before saving its mapping.");
+    return get(id);
+  }
+
+  public Map<String, Object> retirePrevious(String id, Long version, Map<String, Object> expectedVersions) {
+    requireAvailable();
+    Document operation = operation(id);
+    if (version == null || ((Number) operation.get("version")).longValue() != version) throw conflict("The review changed. Refresh before disabling the previous version.");
+    if (expectedVersions == null) throw new ValidationException("Review the current statuses of the previous version first.");
+    versions.retire(operation, expectedVersions);
+    mongo.updateFirst(versionQuery(id, version), new Update().set("previousRetiredAt", new Date()).inc("version", 1), OPERATIONS);
+    return get(id);
   }
 
   private void acquireLock(String id, String claim) {
@@ -215,23 +261,7 @@ public class PluginManagementService {
   }
 
   private List<String> conflicts(Document operation) {
-    List<String> conflicts = new ArrayList<>();
-    PluginKind kind = PluginKind.valueOf(operation.getString("kind"));
-    String collection = kind == PluginKind.ANALYTICS ? "analytics-technique" : "visualization-type";
-    for (String name : list(operation, "classes", String.class)) {
-      if (mongo.exists(Query.query(Criteria.where("implementingClass").is(name)
-          .and("installationId").ne(operation.getString("_id"))), collection)) {
-        conflicts.add("Already installed: " + name + ". Replacement versions are not available in this workflow yet.");
-      }
-    }
-    Document inspection = operation.get("inspection", Document.class);
-    if (kind == PluginKind.VISUALIZATION && inspection != null) {
-      String name = inspection.get("library", Document.class).getString("name");
-      if (mongo.exists(Query.query(Criteria.where("name").is(name).and("installationId").ne(operation.getString("_id"))), "visualization-library")) {
-        conflicts.add("A visualization library named " + name + " is already installed.");
-      }
-    }
-    return conflicts;
+    return versions.conflicts(operation);
   }
 
   private List<CatalogRow> catalogRows(Document operation) {
@@ -248,18 +278,20 @@ public class PluginManagementService {
           .append("enabled", true).append("name", entry.getString("name")).append("implementingClass", className);
       if (kind == PluginKind.ANALYTICS) {
         for (String field : Arrays.asList("creator", "description", "type", "outputs")) row.append(field, entry.get(field));
-        row.append("fileName", operation.getString("filename")).append("artifactId", id);
+        row.append("fileName", operation.getString("filename")).append("artifactId", operation.getString("artifactId"));
       } else {
         row.append("visualizationLib", new DBRef("visualization-library", libraryId))
             .append("chartConfiguration", entry.get("chartConfiguration"));
       }
+      versions.decorate(operation, kind == PluginKind.ANALYTICS ? PluginCatalogKind.ANALYTICS_METHOD : PluginCatalogKind.VISUALIZATION_TYPE, row);
       rows.add(new CatalogRow(kind == PluginKind.ANALYTICS ? "analytics-technique" : "visualization-type", row));
     }
     if (kind == PluginKind.VISUALIZATION) {
       Document library = new Document(inspection.get("library", Document.class));
       library.append("_id", libraryId).append("installationId", id).append("enabled", true)
-          .append("artifactId", id).append("frameworkLocation", operation.getString("filename"))
+          .append("artifactId", operation.getString("artifactId")).append("frameworkLocation", operation.getString("filename"))
           .append("visualizationTypes", rows.stream().map(row -> new DBRef(row.collection, row.document.get("_id"))).collect(Collectors.toList()));
+      versions.decorate(operation, PluginCatalogKind.VISUALIZATION_LIBRARY, library);
       rows.add(new CatalogRow("visualization-library", library));
     }
     return rows;
@@ -268,6 +300,11 @@ public class PluginManagementService {
   private Map<String, Object> response(Document operation) {
     Map<String, Object> result = summary(operation);
     result.put("conflicts", "ACTIVE".equals(operation.getString("state")) ? Collections.emptyList() : conflicts(operation));
+    if (operation.get("replacementTarget") != null) {
+      Document target = operation.get("replacementTarget", Document.class);
+      result.put("replacementSource", versions.target(PluginCatalogKind.valueOf(target.getString("kind")), target.getString("targetId")));
+      if ("ACTIVE".equals(operation.getString("state"))) result.put("retirementTargets", versions.retirementTargets(operation));
+    }
     return result;
   }
 
@@ -279,7 +316,7 @@ public class PluginManagementService {
   }
 
   private Document operation(String id) {
-    if (id == null || !id.matches("(analytics|visualizations)-[a-f0-9]{64}")) throw new ValidationException("Invalid plugin upload identifier.");
+    if (id == null || !id.matches("(analytics|visualizations)-[a-f0-9]{64}(-r-[a-f0-9]{64})?")) throw new ValidationException("Invalid plugin upload identifier.");
     Document operation = mongo.findById(id, Document.class, OPERATIONS);
     if (operation == null) throw new NotFoundException("Plugin upload not found.");
     return operation;
@@ -300,10 +337,12 @@ public class PluginManagementService {
     if (!available()) throw conflict("Plugin uploads require S3 storage and a completed artifact migration. Contact the deployment maintainer.");
   }
 
-  private static String catalogId(String operation, String entry) {
+  static String catalogId(String operation, String entry) { return "plugin-" + digest(operation + ":" + entry); }
+
+  private static String digest(String text) {
     try {
-      byte[] digest = MessageDigest.getInstance("SHA-256").digest((operation + ":" + entry).getBytes(StandardCharsets.UTF_8));
-      StringBuilder result = new StringBuilder("plugin-");
+      byte[] digest = MessageDigest.getInstance("SHA-256").digest(text.getBytes(StandardCharsets.UTF_8));
+      StringBuilder result = new StringBuilder();
       for (byte b : digest) result.append(String.format("%02x", b & 0xff));
       return result.toString();
     } catch (NoSuchAlgorithmException e) { throw new IllegalStateException("SHA-256 is unavailable."); }

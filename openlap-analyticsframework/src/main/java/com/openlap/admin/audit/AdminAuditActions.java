@@ -21,6 +21,9 @@ public final class AdminAuditActions {
   public static final String PLUGIN_UPLOAD = "PLUGIN_UPLOAD";
   public static final String PLUGIN_INSPECT = "PLUGIN_INSPECT";
   public static final String PLUGIN_ACTIVATE = "PLUGIN_ACTIVATE";
+  public static final String PLUGIN_DETAILS_UPDATE = "PLUGIN_DETAILS_UPDATE";
+  public static final String PLUGIN_REPLACEMENT_REVIEW = "PLUGIN_REPLACEMENT_REVIEW";
+  public static final String PLUGIN_PREVIOUS_DISABLE = "PLUGIN_PREVIOUS_DISABLE";
 
   private AdminAuditActions() {}
 }
