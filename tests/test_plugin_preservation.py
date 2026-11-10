@@ -252,6 +252,66 @@ class CaptureTests(unittest.TestCase):
             self.assertFalse((output / "preservation.json").exists())
             self.assertTrue((output / "preservation.json.partial").exists())
 
+    def test_post_link_cleanup_failure_rolls_back_completed_report(self):
+        for empty in [False, True]:
+            with self.subTest(empty=empty), tempfile.TemporaryDirectory() as tmp:
+                source = SourceFixture()
+                if empty:
+                    source.data = {}
+                output = Path(tmp) / "new"
+                manifest = output / ("capture-review.json" if empty else "preservation.json")
+                pending = manifest.with_name(manifest.name + ".partial")
+                real_unlink = Path.unlink
+                observed_post_link = []
+
+                def failed_cleanup(path, *args, **kwargs):
+                    if path == pending:
+                        self.assertTrue(manifest.exists())
+                        self.assertTrue(os.path.samefile(manifest, pending))
+                        observed_post_link.append(True)
+                        raise OSError("synthetic post-link cleanup failure")
+                    return real_unlink(path, *args, **kwargs)
+
+                with mock.patch.object(Path, "unlink", failed_cleanup), self.assertRaisesRegex(OSError, "post-link"):
+                    self.run_capture(source, output)
+                self.assertEqual(observed_post_link, [True])
+                self.assertFalse(manifest.exists())
+                report = json.loads(pending.read_text())
+                self.assertEqual(report["status"], "SOURCE_REVIEW_REQUIRED" if empty else "CAPTURED")
+                archive = output / "database.archive.gz"
+                self.assertEqual(gzip.decompress(archive.read_bytes()), b"synthetic Mongo archive")
+                self.assertEqual(report["databaseBackup"]["sha256"], hashlib.sha256(archive.read_bytes()).hexdigest())
+                for row in report["files"]:
+                    path = Path(row["sourcePath"])
+                    self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), row["sha256"])
+
+    def test_late_diagnostic_flush_failure_never_publishes_completed_report(self):
+        class FailedOutput:
+            def __init__(self):
+                self.text = ""
+            def write(self, text):
+                self.text += text
+                return len(text)
+            def flush(self):
+                if "Online preparation only:" in self.text:
+                    raise BrokenPipeError("synthetic final diagnostic flush failure")
+
+        for empty in [False, True]:
+            with self.subTest(empty=empty), tempfile.TemporaryDirectory() as tmp:
+                source = SourceFixture()
+                if empty:
+                    source.data = {}
+                output = Path(tmp) / "new"
+                name = "capture-review.json" if empty else "preservation.json"
+                diagnostic = FailedOutput()
+                with mock.patch.object(capture.sys, "stdout", diagnostic), self.assertRaises(BrokenPipeError):
+                    self.run_capture(source, output)
+                self.assertIn("Verified ", diagnostic.text)
+                self.assertIn("Online preparation only:", diagnostic.text)
+                self.assertFalse((output / name).exists())
+                report = json.loads((output / (name + ".partial")).read_text())
+                self.assertEqual(report["status"], "SOURCE_REVIEW_REQUIRED" if empty else "CAPTURED")
+
     def test_review_report_returns_a_distinct_non_success_exit_code(self):
         with tempfile.TemporaryDirectory() as tmp:
             arguments = ["capture.py", "--context", "fixture", "--namespace", "fixture",

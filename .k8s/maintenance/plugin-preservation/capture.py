@@ -273,12 +273,17 @@ def capture(kube, namespace, backends, database, root, database_name, expected_d
     pending = manifest.with_name(manifest.name + ".partial")
     with os.fdopen(os.open(pending, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600), "w") as target:
         json.dump(report, target, indent=2); target.write("\n"); target.flush(); os.fsync(target.fileno())
-    os.link(pending, manifest)
-    pending.unlink()
-    print(f"Verified {len(report['files'])} JAR copies from {len(sources)} stable backend replicas and a gzip-checked database archive.")
+    # Check diagnostic output before publishing a completed report, including buffered writes.
+    print(f"Verified {len(report['files'])} JAR copies from {len(sources)} stable backend replicas and a gzip-checked database archive.", flush=True)
     if empty:
-        print(f"Source review required: {empty} of {len(sources)} reviewed JAR roots are empty. The database archive is verified; no migration-ready preservation inventory was published.")
-    print("Online preparation only: a write-paused checkpoint and restore rehearsal remain required.")
+        print(f"Source review required: {empty} of {len(sources)} reviewed JAR roots are empty. The database archive is verified; no migration-ready preservation inventory was published.", flush=True)
+    print("Online preparation only: a write-paused checkpoint and restore rehearsal remain required.", flush=True)
+    os.link(pending, manifest)  # A link collision must never remove an existing report.
+    try:
+        pending.unlink()
+    except BaseException:
+        manifest.unlink()
+        raise
     return report
 
 

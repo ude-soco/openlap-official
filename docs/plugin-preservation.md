@@ -79,6 +79,9 @@ Directories are private (0700), files are private (0600), and existing destinati
 or partial files are never overwritten. Failure retains partial data but publishes
 no successful inventory. Read the manifest only as evidence of a completed run;
 the presence of individual copied files alone is insufficient.
+Final diagnostics must flush before publication. If removing the report's partial
+link fails after publication, the newly completed report is rolled back and its
+partial file remains available for review.
 
 The total retained data limit is 1800 MiB, including the database archive. Each
 JAR is limited to 256 MiB. These conservative bounds fit the optional 2 GiB volume;
@@ -97,6 +100,15 @@ Pod names in the Role. The Job requires these inputs:
 | `DATABASE_NAME` | Explicit primary database name |
 | `EXPECTED_BACKEND_DIGEST` | Reviewed `sha256:…` backend image identity |
 | `CHECKPOINT_ID` | New checkpoint directory name under `/backup` |
+
+Provision a **fresh, dedicated preservation claim** for this component. Never
+retarget its backup mount at an existing application volume or historical backup
+PVC. The Job sets `fsGroup: 1000` with `fsGroupChangePolicy: OnRootMismatch`; this
+can still change volume ownership/permissions when the root does not match and is
+not permission repair for retained backups. Keep the claim dedicated after its
+first use, retain it during cleanup, and use a fresh checkpoint directory for any
+later reviewed run. Verify access before a later run rather than changing retained
+volume permissions to make the Job succeed.
 
 Empty inputs fail before API requests or backup writes. The Role's placeholder
 names must be replaced with exactly the same targets as the Job. Never remove
@@ -156,8 +168,9 @@ data and a loopback-only API fixture, never a live
 configuration. They exercise shell-only inventories, symlink/path rejection,
 non-root directory access failures, failed inventory writes, missing/truncated
 framing, source changes, restart detection, archive truncation, size limits,
-exclusive publication, binary streaming, redacted errors and actual named-Pod
-client reads. Directory permission fixtures require an unprivileged user and
+exclusive publication, post-link cleanup rollback, late diagnostic flush failures,
+binary streaming, redacted errors and actual named-Pod client reads. Directory
+permission fixtures require an unprivileged user and
 are skipped when the local suite runs as root; the container checks use UID 1000.
 Container-level verification should also use the intended legacy base image and
 the maintenance image's pinned client. An exact released image may require the
