@@ -54,7 +54,7 @@ class SourceFixture:
                            1 if self.restarted and self.calls > 3 else 0)
 
     def compatibility(self):
-        return capture.compatibility_report(version_response())
+        return capture.compatibility_report(version_response(server=client.VERSION, client=client.VERSION))
 
     def inventory(self, _pod, _root):
         return sorted(self.data)
@@ -514,6 +514,8 @@ class CaptureTests(unittest.TestCase):
         local = subprocess.run(["kubectl", "version", "--client", "-o", "json"],
                                check=True, capture_output=True, timeout=10)
         client_info = json.loads(local.stdout)["clientVersion"]
+        if os.environ.get("PLUGIN_PRESERVATION_EXPECT_PIN") == "1":
+            self.assertEqual(client_info["gitVersion"], client.VERSION)
         class API(BaseHTTPRequestHandler):
             version = client_info
             def log_message(self, *_args):

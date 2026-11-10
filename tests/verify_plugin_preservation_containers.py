@@ -136,6 +136,7 @@ exec /bin/sh -ceu "$3" preserve "$root"
                    "--security-opt=no-new-privileges", "--tmpfs=/tools:rw,exec,size=128m,mode=0777",
                    "--tmpfs=/tmp:rw,size=128m,mode=1777", "--mount",
                    "type=bind,source=" + str(staged) + ",target=/verification,readonly",
+                   "--env=PLUGIN_PRESERVATION_EXPECT_PIN=1",
                    "--env=PATH=/tools:/usr/local/bin:/usr/bin:/bin", CAPTURE_IMAGE,
                    "/bin/sh", "-ec", prepare + "; "
                    "kubectl version --client; python3 -B -m unittest discover -s /verification/tests -p test_plugin_preservation.py"]
