@@ -1,0 +1,12 @@
+# Keep Garage and its API client immutable; no dependency installation at runtime.
+FROM dxflrs/garage@sha256:677e5b758e4425a325b811c425c026bf35a4bf42f7ddbaa773de3f4fd779a5a5 AS garage
+FROM python:3.13-slim-bookworm@sha256:a5a7017efc5969e00ae2b91c8eb0631049a569652aa4ffc4501769049ae45c72
+ARG TARGETARCH
+COPY --from=garage /garage /usr/local/bin/garage
+COPY scripts/garage-rf3.py /opt/openlap/garage-rf3.py
+RUN python3 -c 'import pathlib,struct,sys; data=pathlib.Path("/usr/local/bin/garage").read_bytes()[:20]; assert data[:4]==b"\x7fELF" and struct.unpack("<H",data[18:20])[0]=={"amd64":62,"arm64":183}[sys.argv[1]]' "$TARGETARCH" \
+    && /usr/local/bin/garage --version | grep -q '2.5.0' \
+    && chmod 0444 /opt/openlap/garage-rf3.py
+USER 1000:1000
+ENTRYPOINT ["python3", "-B", "/opt/openlap/garage-rf3.py"]
+CMD ["--configure-storage"]
