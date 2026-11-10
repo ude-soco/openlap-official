@@ -145,6 +145,36 @@ class RunnerTest(unittest.TestCase):
                 with self.assertRaises(OSError): runner.os.fstat(value)
             self.assertFalse(scratch.exists())
 
+    @unittest.skipUnless(hasattr(runner.os, "memfd_create"), "Linux anonymous RAM files")
+    def test_descriptor_allocation_never_changes_retained_installation_identity(self):
+        launches=[]
+        def launch(arguments, **options):
+            descriptors=options['pass_fds']; self.assertEqual(len(descriptors),3)
+            self.assertEqual(arguments[2],"/proc/self/fd/"+str(descriptors[2]))
+            for descriptor in descriptors:
+                self.assertEqual(runner.os.lseek(descriptor,0,runner.os.SEEK_CUR),0)
+            runtime=runner.os.pread(descriptors[2],65536,0).decode()
+            for descriptor in descriptors[:2]: self.assertIn('"/proc/self/fd/'+str(descriptor)+'"',runtime)
+            launches.append(tuple(descriptors))
+            raise OSError("fixture does not launch a process")
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary).resolve(); volume=root/"volume"; volume.mkdir(); data=volume/"garage"; data.mkdir()
+            inputs=root/"inputs"; inputs.mkdir()
+            (inputs/"rpc-secret").write_text("a"*64); (inputs/"admin-token").write_text("fixture-admin-token")
+            configuration=runner.Configuration(settings())
+            with patch.dict(runner.os.environ,{"POD_NAME":configuration.names[0],"POD_NAMESPACE":"fixture"}), \
+                 patch.object(runner.subprocess,"Popen",side_effect=launch):
+                with self.assertRaises(OSError): runner.server(configuration,inputs,data)
+                original=(data/".openlap-rf3-installation.json").read_bytes()
+                held=[runner.os.open("/dev/null",runner.os.O_RDONLY) for _ in range(8)]
+                try:
+                    with self.assertRaises(OSError): runner.server(runner.Configuration(settings()),inputs,data)
+                finally:
+                    for descriptor in held: runner.os.close(descriptor)
+            self.assertNotEqual(launches[0],launches[1])
+            self.assertEqual((data/".openlap-rf3-installation.json").read_bytes(),original)
+            self.assertEqual(runner.parse(original)['configurationSha256'],configuration.fingerprint)
+
     def test_http_redirect_never_forwards_administration_token(self):
         received = []
         class Destination(BaseHTTPRequestHandler):
