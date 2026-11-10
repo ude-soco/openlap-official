@@ -1,0 +1,79 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: garage-rf3-bootstrap
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 240
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: garage-rf3-bootstrap
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: bootstrap
+        image: ghcr.io/ude-soco/openlap-official-garage-rf3:configure-reviewed-digest
+        imagePullPolicy: Always
+        args: [--configure-storage]
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: "1"
+            memory: 128Mi
+        volumeMounts:
+        - name: settings
+          mountPath: /config
+          readOnly: true
+        - name: bootstrap-secrets
+          mountPath: /secrets
+          readOnly: true
+        - name: intent
+          mountPath: /inputs
+          readOnly: true
+        - name: output
+          mountPath: /outputs
+      volumes:
+      - name: settings
+        configMap:
+          name: garage-rf3-settings
+      - name: bootstrap-secrets
+        projected:
+          defaultMode: 0444
+          sources:
+          - secret:
+              name: configure-garage-rf3-node-secrets
+              items:
+              - key: admin-token
+                path: admin-token
+          - secret:
+              name: configure-garage-rf3-client-key
+              items:
+              - key: access-key-id
+                path: access-key-id
+              - key: secret-access-key
+                path: secret-access-key
+      - name: intent
+        # Replace with a reviewed ConfigMap for trusted follow-up verification.
+        emptyDir:
+          sizeLimit: 1Mi
+      - name: output
+        emptyDir:
+          sizeLimit: 1Mi

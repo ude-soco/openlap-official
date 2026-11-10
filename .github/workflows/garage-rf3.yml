@@ -1,0 +1,198 @@
+name: Build Garage RF3 image
+
+on:
+  push:
+    branches: [main]
+    tags: [garage-rf3-*]
+    paths:
+    - '.github/workflows/garage-rf3.yml'
+    - '.k8s/components/garage-rf3/**'
+    - 'openlap-analyticsframework/Dockerfile.garage-rf3'
+    - 'openlap-analyticsframework/scripts/garage-rf3.py'
+    - 'tests/test_garage_rf3.py'
+    - 'tests/test_garage_rf3_containers.py'
+    - 'tests/validate_garage_rf3_manifests.py'
+    - 'docs/plugin-storage-garage-rf3.md'
+  pull_request:
+    branches: [main]
+    paths:
+    - '.github/workflows/garage-rf3.yml'
+    - '.k8s/components/garage-rf3/**'
+    - 'openlap-analyticsframework/Dockerfile.garage-rf3'
+    - 'openlap-analyticsframework/scripts/garage-rf3.py'
+    - 'tests/test_garage_rf3.py'
+    - 'tests/test_garage_rf3_containers.py'
+    - 'tests/validate_garage_rf3_manifests.py'
+    - 'docs/plugin-storage-garage-rf3.md'
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}-garage-rf3
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      image-id: ${{ steps.build.outputs.imageid }}
+      tags: ${{ steps.meta.outputs.tags }}
+      archive-id: ${{ steps.archive.outputs.artifact-id }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Get image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          flavor: latest=false
+          tags: |
+            type=sha,format=long
+            type=edge,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=tag,enable=${{ startsWith(github.ref_name, 'garage-rf3-') }}
+            type=ref,event=pr
+
+      - name: Build Garage RF3 image
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: openlap-analyticsframework
+          file: openlap-analyticsframework/Dockerfile.garage-rf3
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
+          cache-from: type=gha,scope=garage-rf3
+          cache-to: type=gha,mode=max,scope=garage-rf3
+
+      - name: Verify credential-free runner contracts
+        run: python3 -B -m unittest discover -s tests -p test_garage_rf3.py -v
+
+      - name: Preload pinned public fixture clients
+        run: |
+          docker pull amazon/aws-cli@sha256:bba262340b0bc7cbf3a8a48612531263b56f4b280c4f036a07816af1b271bda0
+          docker pull ghcr.io/yannh/kubeconform@sha256:85dbef6b4b312b99133decc9c6fc9495e9fc5f92293d4ff3b7e1b30f5611823c
+
+      - name: Validate only synthetic Kubernetes inputs
+        run: python3 -B tests/validate_garage_rf3_manifests.py
+
+      - name: Verify the exact image against three disposable Garage nodes
+        env:
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+        run: python3 -B tests/test_garage_rf3_containers.py --image "$IMAGE_ID"
+
+      - name: Retain the exact tested image for publication
+        if: github.event_name == 'push'
+        env:
+          TESTED_IMAGE_ID: ${{ steps.build.outputs.imageid }}
+        run: |
+          set -eu
+          umask 077
+          mkdir "$RUNNER_TEMP/garage-rf3-image"
+          docker image save --output "$RUNNER_TEMP/garage-rf3-image/image.tar" "$TESTED_IMAGE_ID"
+          printf '%s\n' "$TESTED_IMAGE_ID" > "$RUNNER_TEMP/garage-rf3-image/image-id.txt"
+          printf '%s\n' "$GITHUB_SHA" > "$RUNNER_TEMP/garage-rf3-image/source-revision.txt"
+          cd "$RUNNER_TEMP/garage-rf3-image"
+          sha256sum image.tar > image.sha256
+
+      - name: Upload verified image archive
+        if: github.event_name == 'push'
+        id: archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: tested-garage-rf3-image
+          path: ${{ runner.temp }}/garage-rf3-image/
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
+
+  publish:
+    if: github.event_name == 'push'
+    needs: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download this run's verified image
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.image.outputs.archive-id }}
+          path: ${{ runner.temp }}/garage-rf3-image
+
+      - name: Verify and load the tested image without rebuilding
+        env:
+          TESTED_IMAGE_ID: ${{ needs.image.outputs.image-id }}
+        run: |
+          set -eu
+          cd "$RUNNER_TEMP/garage-rf3-image"
+          sha256sum --check image.sha256
+          test "$(cat image-id.txt)" = "$TESTED_IMAGE_ID"
+          test "$(cat source-revision.txt)" = "$GITHUB_SHA"
+          docker image load --input image.tar
+          test "$(docker image inspect "$TESTED_IMAGE_ID" --format '{{.Id}}')" = "$TESTED_IMAGE_ID"
+
+      - name: Login to container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish the exact tested image
+        env:
+          TESTED_IMAGE_ID: ${{ needs.image.outputs.image-id }}
+          TESTED_IMAGE_TAGS: ${{ needs.image.outputs.tags }}
+        run: |
+          set -eu
+          test -n "$TESTED_IMAGE_TAGS"
+          while IFS= read -r input_tag; do
+            test -n "$input_tag" || continue
+            case "$input_tag" in
+              "$IMAGE_NAME":*) ;;
+              *) exit 1 ;;
+            esac
+            docker image tag "$TESTED_IMAGE_ID" "$input_tag"
+            docker image push "$input_tag"
+          done <<EOF
+          $TESTED_IMAGE_TAGS
+          EOF
+
+      - name: Record immutable published identity
+        env:
+          TESTED_IMAGE_ID: ${{ needs.image.outputs.image-id }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os, re, subprocess
+          from pathlib import Path
+          image = os.environ['TESTED_IMAGE_ID']
+          refs = json.loads(subprocess.check_output(
+              ['docker', 'image', 'inspect', image, '--format', '{{json .RepoDigests}}'], text=True))
+          prefix = os.environ['IMAGE_NAME'] + '@'
+          refs = sorted(ref for ref in refs if ref.startswith(prefix)
+                        and re.fullmatch(r'sha256:[a-f0-9]{64}', ref[len(prefix):]))
+          if not refs:
+              raise SystemExit('The registry did not provide a verified immutable image reference.')
+          record = {'sourceRevision': os.environ['GITHUB_SHA'], 'testedImageId': image, 'references': refs}
+          Path('publication.json').write_text(json.dumps(record, indent=2) + '\n')
+          print(json.dumps(record))
+          PYTHON
+
+      - name: Retain publication record
+        uses: actions/upload-artifact@v7
+        with:
+          name: garage-rf3-publication
+          path: publication.json
+          if-no-files-found: error
+          retention-days: 7
