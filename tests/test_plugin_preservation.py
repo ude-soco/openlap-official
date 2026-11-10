@@ -15,7 +15,8 @@ import threading
 import unittest
 from unittest import mock
 
-SOURCE = Path(__file__).resolve().parents[1] / ".k8s/maintenance/plugin-preservation/capture.py"
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = ROOT / ".k8s/maintenance/plugin-preservation-code/capture.py"
 spec = importlib.util.spec_from_file_location("plugin_capture", SOURCE)
 capture = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = capture
@@ -24,6 +25,13 @@ client_spec = importlib.util.spec_from_file_location("preservation_client", SOUR
 client = importlib.util.module_from_spec(client_spec)
 client_spec.loader.exec_module(client)
 DIGEST = "sha256:" + "a" * 64
+
+
+def version_response(server="v1.31.9", client="v1.31.14"):
+    def info(version):
+        parts = version[1:].split(".")
+        return {"major": parts[0], "minor": parts[1], "gitVersion": version}
+    return json.dumps({"clientVersion": info(client), "serverVersion": info(server)}).encode()
 
 
 def inventory_frame(*paths):
@@ -44,6 +52,9 @@ class SourceFixture:
         self.calls += 1
         return capture.Pod(name, container, "uid-" + name, "node", DIGEST,
                            1 if self.restarted and self.calls > 3 else 0)
+
+    def compatibility(self):
+        return capture.compatibility_report(version_response())
 
     def inventory(self, _pod, _root):
         return sorted(self.data)
@@ -72,6 +83,117 @@ class CaptureTests(unittest.TestCase):
     def run_inventory(self, root, prefix=""):
         return subprocess.run(["/bin/sh", "-ceu", prefix + capture.LIST_JARS, "preserve", str(root)],
                               env={"PATH": "/no-external-programs"}, capture_output=True, timeout=10)
+
+    def test_version_skew_uses_actual_versions_and_inclusive_minor_boundaries(self):
+        for server, client_version, supported in [("v1.30.99", "v1.31.14", True),
+                ("v1.31.0", "v1.31.14", True), ("v1.32.0", "v1.31.14", True),
+                ("v1.29.9", "v1.31.14", False), ("v1.33.0", "v1.31.14", False),
+                ("v2.31.1", "v1.31.14", False), ("v1.35.0", "v1.35.2", True),
+                ("v1.32.6+k3s1", "v1.31.14", True), ("v1.31.8-eks-a1b2", "v1.31.14", True)]:
+            with self.subTest(server=server, client=client_version):
+                report = capture.compatibility_report(version_response(server, client_version))
+                self.assertEqual(report, {"schemaVersion": 1, "clientVersion": client_version,
+                                         "serverVersion": server, "supportedMinorSkew": supported})
+        data = json.loads(version_response()); data["serverVersion"]["minor"] += "+"
+        data["serverVersion"]["untrusted"] = "DO-NOT-EMIT"
+        self.assertTrue(capture.compatibility_report(json.dumps(data).encode())["supportedMinorSkew"])
+        self.assertNotIn("DO-NOT-EMIT", json.dumps(capture.compatibility_report(json.dumps(data).encode())))
+
+    def test_invalid_version_responses_fail_closed_and_redact_fields(self):
+        invalid = [b"", b"{", b"null", b"[]", b"\xff", b"{}", version_response()[:-1],
+                   b'{"clientVersion":null,"clientVersion":{}}', b'{"x":NaN}', b" " * 16385]
+        original = json.loads(version_response())
+        for field in ["clientVersion", "serverVersion"]:
+            for value in [None, [], "private-fixture", {}, {"gitVersion": "v1.31.4"},
+                          {"major": "1", "minor": "31", "gitVersion": "v1.32.4"},
+                          {"major": 1, "minor": "31", "gitVersion": "v1.31.4"},
+                          {"major": "1", "minor": "31", "gitVersion": "v1.31.4\nprivate-fixture"},
+                          {"major": "1", "minor": "31", "gitVersion": "v1.31.4+"}]:
+                document = dict(original); document[field] = value
+                invalid.append(json.dumps(document).encode())
+        for data in invalid:
+            with self.subTest(data=data[:80]), self.assertRaises(capture.CaptureError) as error:
+                capture.compatibility_report(data)
+            self.assertNotIn("private-fixture", str(error.exception))
+
+    def test_compatibility_only_needs_no_capture_inputs_or_namespace(self):
+        for in_cluster in [False, True]:
+            for supported in [False, True]:
+                report = capture.compatibility_report(version_response("v1.31.9" if supported else "v1.33.9"))
+                arguments = ["capture.py", "--compatibility-only"] + (["--in-cluster"] if in_cluster else ["--context", "fixture"])
+                with self.subTest(in_cluster=in_cluster, supported=supported), mock.patch.dict(os.environ, {}, clear=True), \
+                     mock.patch.object(sys, "argv", arguments), mock.patch.object(capture, "Kubernetes") as kube, \
+                     mock.patch.object(capture, "capture") as operation, mock.patch.object(capture, "cluster_connection", return_value=["--kubeconfig=synthetic"]), \
+                     mock.patch.object(sys, "stdout", new_callable=io.StringIO) as output:
+                    kube.return_value.compatibility.return_value = report
+                    self.assertEqual(capture.main(), 0 if supported else 1)
+                    self.assertIsNone(kube.call_args.args[0])
+                    self.assertEqual(kube.return_value.method_calls, [mock.call.compatibility()])
+                    operation.assert_not_called()
+                    self.assertEqual(output.getvalue(), json.dumps(report, sort_keys=True, separators=(",", ":")) + "\n")
+
+    def test_unsupported_or_invalid_compatibility_blocks_capture_before_source_access(self):
+        for invalid in [False, True]:
+            with self.subTest(invalid=invalid), tempfile.TemporaryDirectory() as tmp:
+                source = mock.Mock()
+                if invalid:
+                    source.compatibility.side_effect = capture.CaptureError("Invalid Kubernetes version response.")
+                else:
+                    source.compatibility.return_value = capture.compatibility_report(version_response("v1.33.0"))
+                output = Path(tmp) / "new"
+                with self.assertRaises(capture.CaptureError):
+                    self.run_capture(source, output)
+                self.assertEqual(source.method_calls, [mock.call.compatibility()])
+                self.assertFalse(output.exists())
+
+    def test_compatibility_output_failure_is_non_success(self):
+        for failure in ["write", "flush"]:
+            output = mock.Mock()
+            getattr(output, failure).side_effect = BrokenPipeError("private-fixture")
+            with self.subTest(failure=failure), mock.patch.dict(os.environ, {}, clear=True), \
+                 mock.patch.object(sys, "argv", ["capture.py", "--context", "fixture", "--compatibility-only"]), \
+                 mock.patch.object(capture.Kubernetes, "compatibility", return_value=capture.compatibility_report(version_response())), \
+                 mock.patch.object(sys, "stdout", output), mock.patch.object(sys, "stderr", new_callable=io.StringIO) as errors:
+                self.assertEqual(capture.main(), 1)
+                self.assertNotIn("private-fixture", errors.getvalue())
+
+    def test_real_version_subprocess_is_bounded_and_redacts_raw_errors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            kube = capture.Kubernetes(None, [], Path(tmp) / "cache")
+            cases = [("import sys;sys.stdout.write('x'*16385)", "storage limit"),
+                     ("import sys;sys.stderr.write('(Forbidden) private-fixture');sys.exit(1)", "permission denied")]
+            for script, message in cases:
+                kube.command = [sys.executable, "-c", script]
+                with self.subTest(script=script), self.assertRaisesRegex(capture.CaptureError, message) as error:
+                    kube.compatibility()
+                self.assertNotIn("private-fixture", str(error.exception))
+            kube.command = [sys.executable, "-c", "import time; time.sleep(5)"]
+            with self.assertRaisesRegex(capture.CaptureError, "connection timeout"):
+                kube.stream("client/server compatibility", [], maximum=16384, request_timeout=1, process_timeout=0.05)
+
+    def test_documented_cli_launchers_still_run(self):
+        result = subprocess.run([sys.executable, "-B", str(ROOT / ".k8s/maintenance/plugin-preservation/capture.py"), "--help"],
+                                capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0)
+        self.assertIn(b"--compatibility-only", result.stdout)
+
+    @unittest.skipUnless(shutil.which("kubectl"), "A real client is required for default-loader manifest checks")
+    def test_default_loader_renders_shared_code_without_capture_privileges(self):
+        for name, expected_kinds in [("plugin-preservation", ["ConfigMap", "ServiceAccount", "Role", "RoleBinding", "PersistentVolumeClaim", "Job", "NetworkPolicy"]),
+                                     ("plugin-preservation-compatibility", ["ConfigMap", "ServiceAccount", "Job", "NetworkPolicy"])]:
+            with self.subTest(component=name):
+                result = subprocess.run(["kubectl", "kustomize", str(ROOT / ".k8s/maintenance" / name)],
+                                        capture_output=True, check=True, timeout=15)
+                rendered = result.stdout.decode()
+                kinds = [line[6:] for line in rendered.splitlines() if line.startswith("kind: ")]
+                self.assertCountEqual(kinds, expected_kinds)
+                self.assertIn("clientVersion", rendered)
+                if name.endswith("compatibility"):
+                    job = next(part for part in rendered.split("\n---\n") if "\nkind: Job\n" in part)
+                    for forbidden in ["persistentVolumeClaim:", "fsGroup:", "fsGroupChangePolicy:",
+                                      "mountPath: /backup", "DATABASE_POD", "BACKEND_PODS"]:
+                        self.assertNotIn(forbidden, job)
+                    self.assertIn("        - --compatibility-only", job)
 
     def test_complete_checkpoint_verifies_both_replicas_and_archive(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -385,6 +507,49 @@ class CaptureTests(unittest.TestCase):
         with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(sys, "argv", ["capture.py", "--in-cluster"]), mock.patch.object(capture, "Kubernetes") as kube:
             self.assertEqual(capture.main(), 1)
             kube.assert_not_called()
+
+    @unittest.skipUnless(shutil.which("kubectl"), "A real client is required for the isolated protocol check")
+    def test_actual_client_compatibility_only_requests_version(self):
+        requested = []
+        local = subprocess.run(["kubectl", "version", "--client", "-o", "json"],
+                               check=True, capture_output=True, timeout=10)
+        client_info = json.loads(local.stdout)["clientVersion"]
+        class API(BaseHTTPRequestHandler):
+            version = client_info
+            def log_message(self, *_args):
+                pass
+            def do_GET(self):
+                path = self.path.split("?")[0]; requested.append(("GET", path))
+                if path != "/version":
+                    self.send_error(404); return
+                encoded = json.dumps(self.version).encode()
+                self.send_response(200); self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(encoded))); self.end_headers(); self.wfile.write(encoded)
+            def do_POST(self):
+                requested.append(("POST", self.path)); self.send_error(403)
+        server = ThreadingHTTPServer(("127.0.0.1", 0), API)
+        thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp); config = root / "fixture.json"
+                config.write_text(json.dumps({"apiVersion": "v1", "kind": "Config", "current-context": "fixture",
+                    "clusters": [{"name": "fixture", "cluster": {"server": "http://127.0.0.1:" + str(server.server_port)}}],
+                    "users": [{"name": "fixture", "user": {"token": "synthetic-test-only"}}],
+                    "contexts": [{"name": "fixture", "context": {"cluster": "fixture", "user": "fixture"}}]}))
+                for supported in [True, False]:
+                    API.version = client_info if supported else {"major": client_info["major"],
+                        "minor": str(int(client_info["minor"].rstrip("+")) + 2),
+                        "gitVersion": "v" + client_info["major"] + "." + str(int(client_info["minor"].rstrip("+")) + 2) + ".0"}
+                    result = subprocess.run([sys.executable, "-B", str(ROOT / ".k8s/maintenance/plugin-preservation/capture.py"),
+                        "--kubeconfig", str(config), "--compatibility-only"], capture_output=True, timeout=45,
+                        env={"PATH": os.environ["PATH"], "HOME": tmp})
+                    self.assertEqual(result.returncode, 0 if supported else 1, result.stderr)
+                    report = json.loads(result.stdout)
+                    self.assertEqual(report["supportedMinorSkew"], supported)
+                    self.assertEqual(report["clientVersion"], client_info["gitVersion"])
+                self.assertEqual(requested, [("GET", "/version"), ("GET", "/version")])
+        finally:
+            server.shutdown(); server.server_close(); thread.join()
 
     @unittest.skipUnless(shutil.which("kubectl"), "A real client is required for the isolated protocol check")
     def test_actual_client_reads_only_named_pod_metadata(self):

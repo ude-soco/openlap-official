@@ -4,12 +4,16 @@ on:
   pull_request:
     paths:
     - '.k8s/maintenance/plugin-preservation/**'
+    - '.k8s/maintenance/plugin-preservation-code/**'
+    - '.k8s/maintenance/plugin-preservation-compatibility/**'
     - 'tests/*plugin_preservation*.py'
     - '.github/workflows/plugin-preservation.yml'
   push:
     branches: [main]
     paths:
     - '.k8s/maintenance/plugin-preservation/**'
+    - '.k8s/maintenance/plugin-preservation-code/**'
+    - '.k8s/maintenance/plugin-preservation-compatibility/**'
     - 'tests/*plugin_preservation*.py'
     - '.github/workflows/plugin-preservation.yml'
 
