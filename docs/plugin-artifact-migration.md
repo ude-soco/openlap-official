@@ -202,6 +202,13 @@ python3 -B openlap-analyticsframework/scripts/verify-legacy-c3.py \
   --image REVIEWED_LOCAL_IMAGE_ID
 ```
 
+Application CI also runs these fixtures against the actual packaged backend JAR
+using `--runtime-layout spring-boot`. It extracts the built JAR only inside a
+network-isolated, unprivileged container and never starts the application server.
+The application publishes that verified image without rebuilding it. The
+reusable build workflow enables this gate explicitly for OpenLAP's single-platform
+release; callers that omit the option keep the existing build behavior.
+
 The verifier reads only reviewed local public Git objects, validates the historical
 JAR hash, and runs synthetic data in a read-only, nonroot container without
 networking, services or credentials. It tests generated JavaScript/HTML strings;

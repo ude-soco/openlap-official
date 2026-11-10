@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify historical C3 generation against a locally built migration image, without networking."""
+"""Verify historical C3 generation against a local migration or application image, offline."""
 
 import argparse
 import hashlib
@@ -68,14 +68,25 @@ def verify(options):
         jar.chmod(0o644)
         command = ["docker", "run", "--rm", "--pull=never", "--name=" + name, "--platform=linux/amd64",
                    "--network=none", "--read-only", "--user=1000:1000", "--cap-drop=ALL",
-                   "--security-opt=no-new-privileges", "--memory=512m", "--cpus=1", "--pids-limit=64",
+                   "--security-opt=no-new-privileges", "--memory=" + ("1g" if options.runtime_layout == "spring-boot" else "512m"),
+                   "--cpus=1", "--pids-limit=64",
                    "--tmpfs=/tmp:rw,noexec,nosuid,size=64m,mode=1777",
                    "--mount", "type=bind,source=" + str(jar) + ",target=/probe/plugin.jar,readonly",
-                   "--mount", "type=bind,source=" + str(probe) + ",target=/probe/LegacyC3RenderProbe.java,readonly",
-                   "--entrypoint=java", image, "-Xmx256m",
-                   "-Dlogback.configurationFile=/opt/plugin-migration/logback.xml", "--source", "11",
-                   "--class-path", "/opt/plugin-migration/classes:/opt/plugin-migration/lib/*",
-                   "/probe/LegacyC3RenderProbe.java", "/probe/plugin.jar"]
+                   "--mount", "type=bind,source=" + str(probe) + ",target=/probe/LegacyC3RenderProbe.java,readonly"]
+        if options.runtime_layout == "spring-boot":
+            # Unpack only the already-built application inside an ephemeral, isolated container.
+            # Do not start Spring, its HTTP server, account initialization or database clients.
+            command += ["--tmpfs=/runtime:rw,noexec,nosuid,size=512m,mode=1777",
+                        "--entrypoint=/bin/sh", image, "-ec",
+                        'cd /runtime; jar -xf /opt/app/openlap-analyticsframework.jar; '
+                        'exec java -Xmx256m --source 11 '
+                        '--class-path "/runtime/BOOT-INF/classes:/runtime/BOOT-INF/lib/*" '
+                        '/probe/LegacyC3RenderProbe.java /probe/plugin.jar']
+        else:
+            command += ["--entrypoint=java", image, "-Xmx256m",
+                        "-Dlogback.configurationFile=/opt/plugin-migration/logback.xml", "--source", "11",
+                        "--class-path", "/opt/plugin-migration/classes:/opt/plugin-migration/lib/*",
+                        "/probe/LegacyC3RenderProbe.java", "/probe/plugin.jar"]
         try:
             completed = subprocess.run(command, capture_output=True, timeout=90)
         except subprocess.TimeoutExpired:
@@ -93,7 +104,7 @@ def verify(options):
     coverage_valid = report.get("historicalSha256") == SHA256 and len(rows) == len(expected) and actual == expected
     failures = [row for row in rows if row.get("status") != "PASS" or row.get("assertions", 0) < 13]
     passed = coverage_valid and not completed.returncode and report.get("passed") == len(expected) and not failures
-    report.update(image=image, historicalCommit=COMMIT,
+    report.update(image=image, historicalCommit=COMMIT, runtimeLayout=options.runtime_layout,
                   status="PASS" if passed else "FAIL", containerExitCode=completed.returncode,
                   probeSha256=hashlib.sha256(probe.read_bytes()).hexdigest(),
                   scope="Java generator output assertions only; no browser, script downloads, services or credentials")
@@ -112,7 +123,9 @@ def verify(options):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--image", required=True, help="Already built local migration image ID or reference")
+    parser.add_argument("--image", required=True, help="Already built local image ID or reference")
+    parser.add_argument("--runtime-layout", choices=("migration", "spring-boot"), default="migration",
+                        help="Use the migration classpath or the actual packaged application JAR")
     parser.add_argument("--jar", type=Path, help="Verified historical JAR; otherwise read the pinned local Git blob")
     parser.add_argument("--output", type=Path, help="New JSON report path; existing files are never overwritten")
     options = parser.parse_args()
