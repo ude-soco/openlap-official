@@ -298,6 +298,8 @@ write-paused release checkpoint and rehearse restore before changing references.
 The optional [database checkpoint runner](./plugin-release-checkpoint.md) provides
 direct-source backup and isolated restore verification without Pod exec. Its
 external writer-freeze, S3-object and off-node retention gates remain explicit.
+The local [encrypted backup transport](./plugin-release-backup.md) supports age/rclone
+upload, independent readback and private recovery; database restore remains a separate gate.
 
 After every terminal result, remove the Job and operation-specific network access
 through the normal operational process. Retain input/output claims, source
