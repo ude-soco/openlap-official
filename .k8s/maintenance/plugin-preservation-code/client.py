@@ -6,10 +6,10 @@ import platform
 import sys
 import urllib.request
 
-VERSION = "v1.31.14"
+VERSION = "v1.35.10"
 SHA256 = {
-    "x86_64": ("amd64", "8791ec7c8966b61420d55103a5fb948de9f0ca3d7306d789734975ad9704bdb0"),
-    "aarch64": ("arm64", "3abb0c2d7121e1833831f56fd857a93de386e76d14b64baf86220d0afe495209"),
+    "x86_64": ("amd64", "c49a28f1f4efc4d475ed05f47f2ce8e563bf7bef69ed77fe1b924ea6d83b6327"),
+    "aarch64": ("arm64", "283f1be6a46b3695b625e25030106b8ffe18bd0d3a900f5b65c259ca407f04f5"),
 }
 
 

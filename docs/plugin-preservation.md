@@ -61,9 +61,18 @@ It does not prove source permissions, Pod readiness, release lifecycle/security
 support or database compatibility. One load-balanced API response does not attest
 every API server in a mixed-version control plane; operators must establish that
 the client is within policy for all servers it can reach. The pinned client is
-still 1.31.14, so its observed skew range is 1.30–1.32. There is no automatic
+1.35.10, so its observed skew range is 1.34–1.36. There is no automatic
 client-version selection or unreviewed download. A different client requires
 reviewed version/checksum pins and rerunning the protocol tests.
+
+The exact client pins were resolved on 2026-11-10 from the official
+[`stable-1.35.txt`](https://dl.k8s.io/release/stable-1.35.txt) release pointer.
+Runtime downloads use only `v1.35.10`, never that floating pointer:
+
+| Linux architecture | Official SHA-256 |
+| --- | --- |
+| amd64 | [`c49a28f1f4efc4d475ed05f47f2ce8e563bf7bef69ed77fe1b924ea6d83b6327`](https://dl.k8s.io/release/v1.35.10/bin/linux/amd64/kubectl.sha256) |
+| arm64 | [`283f1be6a46b3695b625e25030106b8ffe18bd0d3a900f5b65c259ca407f04f5`](https://dl.k8s.io/release/v1.35.10/bin/linux/arm64/kubectl.sha256) |
 
 A configured capture repeats the same gate before its first Pod GET, exec or
 backup directory creation. It records the observed versions in the completed
