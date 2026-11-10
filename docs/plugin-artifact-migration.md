@@ -7,6 +7,8 @@ on this branch, together with [metadata/version management](./plugin-version-man
 Guarded removal/recovery and the usage overview are also implemented on the
 feature branch; see [removal and retention](./plugin-removal-and-retention.md).
 The application defaults to **local** mode; deployment never imports JARs automatically.
+For production preparation, follow the [production release runbook](./plugin-production-rollout.md),
+including its separate off-node retrieval/restore and availability gates.
 
 ## Storage model
 
