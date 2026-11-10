@@ -13,6 +13,9 @@ destination alongside a separately retained local copy and the agreed production
 backup/retention design. Transfer success does not establish storage availability,
 account recovery, retention guarantees or an independent failure domain. Configure
 the provider through rclone outside this tool; no vendor endpoint is embedded.
+For a reviewed password-protected folder share, the optional
+[private local setup form](./plugin-backup-setup.md) collects its link and password
+in one handoff and creates a fresh local profile without contacting the provider.
 
 ## Prerequisites and trust
 

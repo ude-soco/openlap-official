@@ -5,15 +5,21 @@ on:
     paths:
     - '.github/workflows/plugin-release-backup.yml'
     - 'openlap-analyticsframework/scripts/plugin-release-backup.py'
+    - 'openlap-analyticsframework/scripts/plugin-backup-setup.py'
     - 'tests/test_plugin_release_backup.py'
+    - 'tests/test_plugin_backup_setup.py'
     - 'docs/plugin-release-backup.md'
+    - 'docs/plugin-backup-setup.md'
   push:
     branches: [main]
     paths:
     - '.github/workflows/plugin-release-backup.yml'
     - 'openlap-analyticsframework/scripts/plugin-release-backup.py'
+    - 'openlap-analyticsframework/scripts/plugin-backup-setup.py'
     - 'tests/test_plugin_release_backup.py'
+    - 'tests/test_plugin_backup_setup.py'
     - 'docs/plugin-release-backup.md'
+    - 'docs/plugin-backup-setup.md'
 
 permissions:
   contents: read
@@ -48,7 +54,9 @@ jobs:
         unzip -q "$tool_dir/rclone.zip" -d "$tool_dir"
         install -m 700 "$tool_dir/age/age" "$tool_dir/age/age-keygen" "$tool_dir/bin/"
         install -m 700 "$tool_dir/rclone-v1.76.0-linux-amd64/rclone" "$tool_dir/bin/rclone"
-        printf 'PLUGIN_BACKUP_AGE_BIN=%s\nPLUGIN_BACKUP_RCLONE_BIN=%s\n' \
-          "$tool_dir/bin/age" "$tool_dir/bin/rclone" >> "$GITHUB_ENV"
+        printf 'PLUGIN_BACKUP_AGE_BIN=%s\nPLUGIN_BACKUP_AGE_KEYGEN_BIN=%s\nPLUGIN_BACKUP_RCLONE_BIN=%s\n' \
+          "$tool_dir/bin/age" "$tool_dir/bin/age-keygen" "$tool_dir/bin/rclone" >> "$GITHUB_ENV"
     - name: Verify encrypted roundtrip and fail-closed recovery
       run: python3 -B -m unittest discover -s tests -p test_plugin_release_backup.py -v
+    - name: Verify private local operator handoff
+      run: python3 -B -m unittest discover -s tests -p test_plugin_backup_setup.py -v
