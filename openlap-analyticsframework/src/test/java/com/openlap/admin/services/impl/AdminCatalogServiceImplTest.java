@@ -37,7 +37,8 @@ public class AdminCatalogServiceImplTest {
           typeRepository,
           methodRepository,
           utilityService,
-          analyticsTechniqueService);
+          analyticsTechniqueService, com.openlap.plugins.management.PluginCatalogVisibility.legacyOnly(),
+          mock(com.openlap.plugins.management.PluginCatalogEditor.class));
 
   private static VisLibrary library(String id, Boolean enabled) {
     VisLibrary library = new VisLibrary();

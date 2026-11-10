@@ -1,5 +1,7 @@
 package com.openlap.admin.services.impl;
 
+import com.openlap.plugins.management.PluginCatalogVisibility;
+
 import com.openlap.admin.dto.AdminAnalyticsMethodResponse;
 import com.openlap.admin.dto.AdminVisLibraryResponse;
 import com.openlap.admin.dto.AdminVisTypeResponse;
@@ -33,11 +35,14 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
   private final AnalyticsTechniqueRepository analyticsTechniqueRepository;
   private final VisualizationMethodUtilityService visualizationMethodUtilityService;
   private final AnalyticsTechniqueService analyticsTechniqueService;
+  private final PluginCatalogVisibility pluginVisibility;
+  private final com.openlap.plugins.management.PluginCatalogEditor pluginEditor;
 
   @Override
   public List<AdminVisLibraryResponse> getVisualizationLibraries() {
     List<AdminVisLibraryResponse> result = new ArrayList<>();
     for (VisLibrary library : visualizationLibraryRepository.findAll()) {
+      if (!pluginVisibility.isVisible(library.getInstallationId(), "visualization-library", library.getId())) continue;
       result.add(toLibraryResponse(library));
     }
     return result;
@@ -47,6 +52,7 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
   public List<AdminVisTypeResponse> getVisualizationTypes() {
     List<AdminVisTypeResponse> result = new ArrayList<>();
     for (VisType type : visualizationTypeRepository.findAll()) {
+      if (!pluginVisibility.isVisible(type.getInstallationId(), "visualization-type", type.getId())) continue;
       result.add(toTypeResponse(type));
     }
     return result;
@@ -56,6 +62,7 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
   public List<AdminAnalyticsMethodResponse> getAnalyticsMethods() {
     List<AdminAnalyticsMethodResponse> result = new ArrayList<>();
     for (AnalyticsTechnique technique : analyticsTechniqueRepository.findAll()) {
+      if (!pluginVisibility.isVisible(technique.getInstallationId(), "analytics-technique", technique.getId())) continue;
       result.add(toMethodResponse(technique));
     }
     return result;
@@ -80,33 +87,37 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
   public AdminVisLibraryResponse setVisualizationLibraryEnabled(String id, boolean enabled) {
     VisLibrary library = visualizationMethodUtilityService.fetchVisualizationLibraryMethod(id);
     library.setEnabled(enabled);
+    pluginEditor.setEnabled(com.openlap.plugins.management.PluginCatalogKind.VISUALIZATION_LIBRARY, id, enabled);
     log.info("Admin set visualization library '{}' enabled={}", id, enabled);
-    return toLibraryResponse(visualizationLibraryRepository.save(library));
+    return toLibraryResponse(library);
   }
 
   @Override
   public AdminVisTypeResponse setVisualizationTypeEnabled(String id, boolean enabled) {
     VisType type = visualizationMethodUtilityService.fetchVisualizationTypeMethod(id);
     type.setEnabled(enabled);
+    pluginEditor.setEnabled(com.openlap.plugins.management.PluginCatalogKind.VISUALIZATION_TYPE, id, enabled);
     log.info("Admin set visualization type '{}' enabled={}", id, enabled);
-    return toTypeResponse(visualizationTypeRepository.save(type));
+    return toTypeResponse(type);
   }
 
   @Override
   public AdminAnalyticsMethodResponse setAnalyticsMethodEnabled(String id, boolean enabled) {
     AnalyticsTechnique technique = analyticsTechniqueService.fetchAnalyticsTechniqueMethod(id);
     technique.setEnabled(enabled);
+    pluginEditor.setEnabled(com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD, id, enabled);
     log.info("Admin set analytics method '{}' enabled={}", id, enabled);
-    return toMethodResponse(analyticsTechniqueRepository.save(technique));
+    return toMethodResponse(technique);
   }
 
   private AdminVisLibraryResponse toLibraryResponse(VisLibrary library) {
-    return new AdminVisLibraryResponse(
+    AdminVisLibraryResponse response = new AdminVisLibraryResponse(
         library.getId(),
         library.getCreator(),
         library.getName(),
         library.getDescription(),
         library.isEnabled());
+    response.setArtifactId(library.getArtifactId()); return response;
   }
 
   private AdminVisTypeResponse toTypeResponse(VisType type) {
@@ -117,12 +128,18 @@ public class AdminCatalogServiceImpl implements AdminCatalogService {
       String[] parts = type.getImplementingClass().split("\\.");
       imageCode = parts[parts.length - 1];
     }
-    return new AdminVisTypeResponse(
+    AdminVisTypeResponse response = new AdminVisTypeResponse(
         type.getId(), library, type.getName(), imageCode, type.isEnabled());
+    if (type.getVisualizationLib() != null) {
+      response.setLibraryId(type.getVisualizationLib().getId());
+      response.setArtifactId(type.getVisualizationLib().getArtifactId());
+    }
+    return response;
   }
 
   private AdminAnalyticsMethodResponse toMethodResponse(AnalyticsTechnique technique) {
-    return new AdminAnalyticsMethodResponse(
+    AdminAnalyticsMethodResponse response = new AdminAnalyticsMethodResponse(
         technique.getId(), technique.getName(), technique.getDescription(), technique.isEnabled());
+    response.setArtifactId(technique.getArtifactId()); return response;
   }
 }

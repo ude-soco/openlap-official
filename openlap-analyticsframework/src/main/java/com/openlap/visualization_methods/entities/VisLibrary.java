@@ -23,6 +23,11 @@ public class VisLibrary {
   /** Soft-disable flag. Boxed + default true so legacy documents (missing the field) read enabled. */
   private Boolean enabled = true;
 
+  /** All chart types in this library resolve through this immutable artifact version. */
+  private String artifactId;
+
+  private String installationId;
+
   /** Treats a missing/null flag (legacy documents) as enabled. */
   public boolean isEnabled() {
     return enabled == null || enabled;

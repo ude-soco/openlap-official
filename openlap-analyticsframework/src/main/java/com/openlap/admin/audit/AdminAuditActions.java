@@ -18,6 +18,17 @@ public final class AdminAuditActions {
   public static final String CONTENT_UNPUBLISH = "CONTENT_UNPUBLISH";
   public static final String CONTENT_TRASH = "CONTENT_TRASH";
   public static final String CONTENT_RESTORE = "CONTENT_RESTORE";
+  public static final String PLUGIN_UPLOAD = "PLUGIN_UPLOAD";
+  public static final String PLUGIN_INSPECT = "PLUGIN_INSPECT";
+  public static final String PLUGIN_ACTIVATE = "PLUGIN_ACTIVATE";
+  public static final String PLUGIN_DETAILS_UPDATE = "PLUGIN_DETAILS_UPDATE";
+  public static final String PLUGIN_REPLACEMENT_REVIEW = "PLUGIN_REPLACEMENT_REVIEW";
+  public static final String PLUGIN_PREVIOUS_DISABLE = "PLUGIN_PREVIOUS_DISABLE";
+  public static final String PLUGIN_REMOVE = "PLUGIN_REMOVE";
+  public static final String PLUGIN_RESTORE = "PLUGIN_RESTORE";
+  public static final String PLUGIN_ARTIFACT_CLEANUP = "PLUGIN_ARTIFACT_CLEANUP";
+  public static final String PLUGIN_UPLOAD_DISCARD = "PLUGIN_UPLOAD_DISCARD";
+  public static final String PLUGIN_UPLOAD_REOPEN = "PLUGIN_UPLOAD_REOPEN";
 
   private AdminAuditActions() {}
 }

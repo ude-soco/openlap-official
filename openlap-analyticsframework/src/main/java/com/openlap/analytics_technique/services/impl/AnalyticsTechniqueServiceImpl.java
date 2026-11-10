@@ -1,5 +1,7 @@
 package com.openlap.analytics_technique.services.impl;
 
+import com.openlap.plugins.management.PluginCatalogVisibility;
+
 import com.openlap.analytics_technique.dto.request.AnalyticsTechniqueRequest;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueFileNameResponse;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueInputParamResponse;
@@ -18,8 +20,14 @@ import com.openlap.dataset.OpenLAPDataSetConfigValidationResult;
 import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.dynamicparam.OpenLAPDynamicParam;
 import com.openlap.infrastructure.exception.DatabaseOperationException;
+import com.openlap.plugins.LegacyPluginDeletionException;
 import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.template.AnalyticsMethod;
+import com.openlap.plugins.PluginJarFiles;
+import com.openlap.plugins.artifacts.PluginArtifactResolver;
+import com.openlap.plugins.artifacts.PluginKind;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.PreDestroy;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +60,8 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
   private String analyticsMethodsClassDirectory;
 
   private final AnalyticsTechniqueRepository analyticsTechniqueRepository;
+  private final PluginArtifactResolver pluginArtifactResolver;
+  private final PluginCatalogVisibility pluginVisibility;
 
   private AnalyticsMethodsClassPathLoader getFolderNameFromResourcesFromJarFile(
       String jarFileName) {
@@ -72,38 +82,28 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     }
   }
 
+  private final Map<String, AnalyticsMethodsClassPathLoader> loaderCache = new ConcurrentHashMap<>();
+
   @Override
   public AnalyticsMethod loadAnalyticsMethodInstance(String techniqueId) {
-    log.info("Loading analytics technique instance with id: {}", techniqueId);
-    AnalyticsTechnique foundTechnique = fetchAnalyticsTechniqueMethod(techniqueId);
-    String className = foundTechnique.getImplementingClass();
-    File folder = new File(analyticsMethodsJarsFolder);
-    File[] jars = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
-    if (jars == null || jars.length == 0) {
-      throw new ServiceException("No analytics method JARs found in " + analyticsMethodsJarsFolder);
-    }
-    for (File jar : jars) {
-      try (AnalyticsMethodsClassPathLoader loader =
-          new AnalyticsMethodsClassPathLoader(jar.getAbsolutePath())) {
-        return loader.loadClass(className);
-      } catch (AnalyticsMethodClassLoaderException e) {
-        if (!e.getMessage().contains("not found")) throw e;
-      } catch (Exception e) {
-        // ignore and try next
-      }
-    }
+    AnalyticsTechnique technique = fetchAnalyticsTechniqueMethod(techniqueId);
+    String jarPath = pluginArtifactResolver.resolve(PluginKind.ANALYTICS, technique.getArtifactId(),
+        analyticsMethodsJarsFolder, technique.getFileName())
+        .toString();
+    AnalyticsMethodsClassPathLoader loader = loaderCache.computeIfAbsent(
+        jarPath, AnalyticsMethodsClassPathLoader::new);
+    return loader.loadClass(technique.getImplementingClass());
+  }
 
-    //    AnalyticsMethod analyticsMethod =
-    //        this.getFolderNameFromResourcesFromJarFile(null)
-    //            .loadClass(foundTechnique.getImplementingClass());
-    //    log.info("Found analytics technique {}", foundTechnique);
-    //    return analyticsMethod;
-    throw new ServiceException(
-        "Could not find class " + className + " in any analytics method JAR");
+  @PreDestroy
+  public void closePluginLoaders() {
+    loaderCache.values().forEach(AnalyticsMethodsClassPathLoader::close);
+    loaderCache.clear();
   }
 
   @Override
   public void createAnalyticsTechnique(AnalyticsTechniqueRequest analyticsTechnique) {
+    pluginArtifactResolver.requireLocalMutation();
     log.info("Creating a new analytics technique...");
     try {
       analyticsTechniqueRepository.save(
@@ -116,7 +116,9 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
               analyticsTechnique.getFileName(),
               analyticsTechnique.getImplementingClass(),
               analyticsTechnique.getOutputs(),
-              true));
+              true,
+              null,
+              null));
       log.info("Successfully created analytics technique {}", analyticsTechnique);
     } catch (Exception e) {
       log.error("Could not create analytics technique {}", analyticsTechnique, e);
@@ -142,7 +144,10 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
             "Analytics Technique with id '" + techniqueId + "' not found: ");
       }
       log.info("Analytics technique found '{}'", foundTechnique.get().getName());
+      pluginVisibility.requireExecutable(foundTechnique.get().getInstallationId(), "analytics-technique", foundTechnique.get().getId());
       return foundTechnique.get();
+    } catch (com.openlap.infrastructure.exception.ConflictException e) {
+      throw e;
     } catch (Exception e) {
       throw new DatabaseOperationException(
           "Could not access database to find the analytics technique", e);
@@ -172,7 +177,8 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     try {
       List<AnalyticsTechnique> foundAllTechniques = analyticsTechniqueRepository.findAll();
       log.info("Successfully retrieved all analytics techniques");
-      return foundAllTechniques;
+      return foundAllTechniques.stream().filter(item -> pluginVisibility.isVisible(item.getInstallationId(), "analytics-technique", item.getId()))
+          .collect(Collectors.toList());
     } catch (Exception e) {
       log.error("Could not retrieve all analytics techniques", e);
       throw new DatabaseOperationException("Failed to retrieve all analytics techniques", e);
@@ -182,6 +188,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
   // Populate Analytics Technique
   @Override
   public boolean populateAnalyticsTechniques() {
+    pluginArtifactResolver.requireLocalMutation();
     List<AnalyticsTechnique> existingAnalyticsMethods = fetchAllAnalyticsTechniquesMethod();
 
     try (Stream<Path> paths = Files.walk(Paths.get(analyticsMethodsJarsFolder))) {
@@ -240,7 +247,9 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
             jarFile,
             className,
             null,
-            true);
+            true,
+            null,
+            null);
 
     String outputs =
         method.getOutputPorts().stream()
@@ -301,9 +310,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Override
   public void uploadAnalyticsTechniqueFile(MultipartFile file) {
-    if (file.isEmpty()) {
-      throw new ServiceException("File is empty");
-    }
+    pluginArtifactResolver.requireLocalMutation();
     String fileName = Utils.requireSafeJarFileName(file.getOriginalFilename());
     Utils.saveFile(file, analyticsMethodsJarsFolder, fileName);
     List<AnalyticsTechnique> existingAnalyticsMethods = fetchAllAnalyticsTechniquesMethod();
@@ -323,21 +330,12 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Override
   public void deleteAnalyticsTechniqueFile(String fileName) {
-    String safeFileName = Utils.requireSafeJarFileName(fileName);
-    Utils.deleteFile(analyticsMethodsJarsFolder, safeFileName);
-    String frameworkLocation = analyticsMethodsJarsFolder + safeFileName;
-    List<AnalyticsTechnique> allByFileName =
-        analyticsTechniqueRepository.findAllByFileName(frameworkLocation);
-    if (!allByFileName.isEmpty()) {
-      analyticsTechniqueRepository.deleteAll(allByFileName);
-      log.info("Deleted all analytics technique from database");
-    } else {
-      log.warn("No analytics techniques found");
-    }
+    throw new LegacyPluginDeletionException();
   }
 
   @Override
   public void reloadAnalyticsTechniqueFile(String fileName) {
+    pluginArtifactResolver.requireLocalMutation();
     String safeFileName = Utils.requireSafeJarFileName(fileName);
     String frameworkLocation = analyticsMethodsJarsFolder + safeFileName;
     List<AnalyticsTechnique> existingAnalyticsMethods =
@@ -351,6 +349,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     Set<String> uniqueFileNames = new HashSet<>();
     List<AnalyticsTechniqueFileNameResponse> responses = new ArrayList<>();
     for (AnalyticsTechnique analyticsTechnique : foundAllAnalyticsTechniques) {
+      if (!pluginVisibility.isVisible(analyticsTechnique.getInstallationId(), "analytics-technique", analyticsTechnique.getId())) continue;
       String fileName = analyticsTechnique.getFileName();
       if (uniqueFileNames.add(fileName)) {
         String modifiedFileName = fileName.replace(analyticsMethodsJarsFolder, "");
@@ -367,6 +366,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
         analyticsTechniqueRepository.findAllByFileName(frameworkLocation);
     List<AnalyticsTechniqueResponse> responses = new ArrayList<>();
     for (AnalyticsTechnique analyticsTechnique : allByFileName) {
+      if (!pluginVisibility.isVisible(analyticsTechnique.getInstallationId(), "analytics-technique", analyticsTechnique.getId())) continue;
       responses.add(
           new AnalyticsTechniqueResponse(
               analyticsTechnique.getId(),
@@ -378,8 +378,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Override
   public void deleteAnalyticsMethod(String analyticsId) {
-    AnalyticsTechnique analyticsTechnique = fetchAnalyticsTechniqueMethod(analyticsId);
-    analyticsTechniqueRepository.delete(analyticsTechnique);
+    throw new LegacyPluginDeletionException();
   }
 
   @Override

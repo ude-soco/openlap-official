@@ -1,0 +1,74 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openlap-plugin-checkpoint
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: plugin-checkpoint
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: checkpoint
+        image: ghcr.io/ude-soco/openlap-official-plugin-checkpoint:configure-reviewed-digest
+        imagePullPolicy: Always
+        args: [--configure-checkpoint]
+        env:
+        - name: MONGODB_PRIMARY_URI
+          value: ""
+        - name: OPENLAP_MONGODB_DB
+          value: ""
+        - name: CHECKPOINT_SOURCE_HOST
+          value: ""
+        - name: CHECKPOINT_SOURCE_PORT
+          value: ""
+        - name: CHECKPOINT_ID
+          value: ""
+        - name: CHECKPOINT_FREEZE_EVIDENCE
+          value: ""
+        - name: CHECKPOINT_MAX_ARCHIVE_MIB
+          value: "256"
+        - name: CHECKPOINT_MAX_EXPANDED_MIB
+          value: "1024"
+        - name: CHECKPOINT_MAX_RESTORE_MIB
+          value: "1024"
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+            ephemeral-storage: 256Mi
+          limits:
+            cpu: "1"
+            memory: 1Gi
+            ephemeral-storage: 1536Mi
+        volumeMounts:
+        - name: outputs
+          mountPath: /outputs
+        - name: work
+          mountPath: /tmp
+      volumes:
+      # The existing operator-owned backup claim is retained outside this operation.
+      - name: outputs
+        persistentVolumeClaim:
+          claimName: configure-protected-checkpoint-volume
+      - name: work
+        emptyDir:
+          sizeLimit: 1280Mi

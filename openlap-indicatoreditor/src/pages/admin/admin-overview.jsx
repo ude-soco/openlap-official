@@ -4,9 +4,6 @@ import { Box, Button, Grid, Skeleton, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { Link as RouterLink } from "react-router-dom";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
-import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
-import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
-import AnalyticsOutlinedIcon from "@mui/icons-material/AnalyticsOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
@@ -17,21 +14,12 @@ import SectionCard from "../../common/components/section-card/section-card";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import { listContent } from "./utils/content-api.js";
 import {
-  requestAdminAnalyticsMethods,
   requestAdminAuditLogs,
-  requestAdminVisualizationLibraries,
-  requestAdminVisualizationTypes,
   requestUsers,
 } from "./utils/manage-apis";
 
-// Admin overview (read-only). Each card shows a live count from an existing list
-// API and, where a detail page exists, a "View" link to it. No
-// upload/delete/management actions are exposed here, and no new backend APIs are
-// introduced — counts come from existing list responses (array length, or the
-// Spring Page `totalElements` for the paginated users endpoint).
-//
-// Cards without a `to` (visualization libraries/types, analytics methods) get
-// their detail pages — and links — in later PRs.
+import PluginUsageOverview from "./components/plugin-usage-overview";
+
 const SECTIONS = [
   {
     key: "users",
@@ -43,36 +31,6 @@ const SECTIONS = [
     loader: (api) => requestUsers(api, 0, 1),
     to: "/admin/users",
     actionLabel: "View users",
-  },
-  {
-    key: "libraries",
-    title: "Visualization Libraries",
-    helper: "Installed chart libraries and their source plugins.",
-    icon: CategoryOutlinedIcon,
-    unit: "libraries",
-    loader: requestAdminVisualizationLibraries,
-    to: "/admin/visualizations/libraries",
-    actionLabel: "View details",
-  },
-  {
-    key: "types",
-    title: "Visualization Types",
-    helper: "Available chart types and their input requirements.",
-    icon: BarChartOutlinedIcon,
-    unit: "chart types",
-    loader: requestAdminVisualizationTypes,
-    to: "/admin/visualizations/types",
-    actionLabel: "View details",
-  },
-  {
-    key: "methods",
-    title: "Analytics Methods",
-    helper: "Available analytics methods, their inputs, and parameters.",
-    icon: AnalyticsOutlinedIcon,
-    unit: "methods",
-    loader: requestAdminAnalyticsMethods,
-    to: "/admin/analytics-methods",
-    actionLabel: "View details",
   },
   {
     key: "content",
@@ -187,6 +145,7 @@ const initialStats = () =>
 const AdminOverview = () => {
   const { api } = useContext(AuthContext);
   const [stats, setStats] = useState(initialStats);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const loadOne = useCallback(
     async (section) => {
@@ -232,7 +191,7 @@ const AdminOverview = () => {
         actions={
           <Button
             startIcon={<RefreshRoundedIcon />}
-            onClick={loadAll}
+            onClick={() => { loadAll(); setRefreshKey((value) => value + 1); }}
             disabled={anyLoading}
           >
             Refresh
@@ -244,7 +203,7 @@ const AdminOverview = () => {
         {SECTIONS.map((section) => (
           <Grid
             key={section.key}
-            size={{ xs: 12, sm: 6, lg: 3 }}
+            size={{ xs: 12, sm: 6, lg: 4 }}
             sx={{ display: "flex" }}
           >
             <SectionCard
@@ -273,6 +232,7 @@ const AdminOverview = () => {
           </Grid>
         ))}
       </Grid>
+      <PluginUsageOverview refreshKey={refreshKey} />
     </Stack>
   );
 };

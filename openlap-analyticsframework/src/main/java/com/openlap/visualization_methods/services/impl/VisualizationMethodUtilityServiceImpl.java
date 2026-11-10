@@ -1,11 +1,18 @@
 package com.openlap.visualization_methods.services.impl;
 
+import com.openlap.plugins.management.PluginCatalogVisibility;
+
 import com.openlap.configurations.Utils;
 import com.openlap.dataset.OpenLAPDataSetConfigValidationResult;
 import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.infrastructure.exception.DatabaseOperationException;
+import com.openlap.plugins.LegacyPluginDeletionException;
 import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.template.VisualizationCodeGenerator;
+import com.openlap.plugins.PluginJarFiles;
+import com.openlap.plugins.artifacts.PluginArtifactResolver;
+import com.openlap.plugins.artifacts.PluginKind;
+import javax.annotation.PreDestroy;
 import com.openlap.template.VisualizationLibraryInfo;
 import com.openlap.visualization_methods.dto.VisualizationLibraryResponse;
 import com.openlap.visualization_methods.dto.VisualizationMethodFileNameResponse;
@@ -41,6 +48,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class VisualizationMethodUtilityServiceImpl implements VisualizationMethodUtilityService {
   private final VisualizationTypeRepository visualizationTypeRepository;
   private final VisualizationLibraryRepository visualizationLibraryRepository;
+  private final PluginArtifactResolver pluginArtifactResolver;
+  private final PluginCatalogVisibility pluginVisibility;
 
   @Value("${visualizer.jars.folder}")
   String visualizerJarsFolder;
@@ -56,7 +65,13 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
         throw new VisualizationTypeNotFoundException(
             "Visualization type with id" + typeId + " not found");
       }
+      pluginVisibility.requireExecutable(foundVisType.get().getInstallationId(), "visualization-type", foundVisType.get().getId());
+      if (foundVisType.get().getVisualizationLib() != null) {
+        pluginVisibility.requireExecutable(foundVisType.get().getVisualizationLib().getInstallationId(), "visualization-library", foundVisType.get().getVisualizationLib().getId());
+      }
       return foundVisType.get();
+    } catch (com.openlap.infrastructure.exception.ConflictException e) {
+      throw e;
     } catch (VisualizationTypeNotFoundException e) {
       throw e;
     } catch (Exception e) {
@@ -73,7 +88,10 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
         throw new VisualizationLibraryNotFoundException(
             "Visualization library with id" + libraryId + " not found");
       }
+      pluginVisibility.requireExecutable(foundVisLibrary.get().getInstallationId(), "visualization-library", foundVisLibrary.get().getId());
       return foundVisLibrary.get();
+    } catch (com.openlap.infrastructure.exception.ConflictException e) {
+      throw e;
     } catch (VisualizationLibraryNotFoundException e) {
       throw e;
     } catch (Exception e) {
@@ -86,56 +104,28 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
 
   @Override
   public VisualizationCodeGenerator loadVisTypeInstance(String visTypeId) {
-    VisType visType = fetchVisualizationTypeMethod(visTypeId);
-    String className = visType.getImplementingClass();
-
-    File folder = new File(visualizerJarsFolder);
-    File[] jars = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
-    if (jars == null || jars.length == 0) {
-      throw new ServiceException("No visualizer JARs found in " + visualizerJarsFolder);
+    VisType type = fetchVisualizationTypeMethod(visTypeId);
+    VisLibrary library = type.getVisualizationLib();
+    if (library == null) {
+      throw new VisualizationClassLoaderException("The visualization type has no installed library.");
     }
-
-    for (File jar : jars) {
-      try {
-        VisualizerClassPathLoader loader =
-            loaderCache.computeIfAbsent(
-                jar.getAbsolutePath(), path -> new VisualizerClassPathLoader(path));
-        return loader.loadTypeClass(className);
-      } catch (VisualizationClassLoaderException e) {
-        if (!e.getMessage().contains("not found")) throw e;
-      } catch (Exception e) {
-        // ignore and try next
-      }
-    }
-
-    throw new ServiceException("Could not find class " + className + " in any visualizer JAR");
+    String jarPath = pluginArtifactResolver.resolve(PluginKind.VISUALIZATION, library.getArtifactId(),
+        visualizerJarsFolder, library.getFrameworkLocation())
+        .toString();
+    VisualizerClassPathLoader loader = loaderCache.computeIfAbsent(
+        jarPath, VisualizerClassPathLoader::new);
+    return loader.loadTypeClass(type.getImplementingClass());
   }
 
-//    @Override
-//    public VisualizationCodeGenerator loadVisTypeInstance(String visTypeId) {
-//      VisType visType = fetchVisualizationTypeMethod(visTypeId);
-//      String className = visType.getImplementingClass();
-//      // Try each JAR in the visualizer folder
-//      File folder = new File(visualizerJarsFolder);
-//      File[] jars = folder.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
-//      if (jars == null || jars.length == 0) {
-//        throw new ServiceException("No visualizer JARs found in " + visualizerJarsFolder);
-//      }
-//      for (File jar : jars) {
-//        try (VisualizerClassPathLoader loader =
-//            new VisualizerClassPathLoader(jar.getAbsolutePath())) {
-//          return loader.loadTypeClass(className);
-//        } catch (VisualizationClassLoaderException e) {
-//          if (!e.getMessage().contains("not found")) throw e;
-//        } catch (Exception e) {
-//          // ignore and try next
-//        }
-//      }
-//      throw new ServiceException("Could not find class " + className + " in any visualizer JAR");
-//    }
+  @PreDestroy
+  public void closePluginLoaders() {
+    loaderCache.values().forEach(VisualizerClassPathLoader::close);
+    loaderCache.clear();
+  }
 
   @Override
   public void populateVisualizationMethods() {
+    pluginArtifactResolver.requireLocalMutation();
     List<VisLibrary> existingVisualizationLibraries = visualizationLibraryRepository.findAll();
     List<VisType> existingVisualizationTypes = visualizationTypeRepository.findAll();
 
@@ -213,7 +203,9 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
                 libraryInfo.getDescription(),
                 jarFile,
                 null,
-                true));
+                true,
+                null,
+                null));
   }
 
   private boolean isTypeAlreadyAdded(List<VisType> existingVisualizationTypes, String className) {
@@ -279,9 +271,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
 
   @Override
   public void uploadVisualizationMethodFile(MultipartFile file) {
-    if (file.isEmpty()) {
-      throw new ServiceException("File is empty");
-    }
+    pluginArtifactResolver.requireLocalMutation();
     String fileName = Utils.requireSafeJarFileName(file.getOriginalFilename());
     Utils.saveFile(file, visualizerJarsFolder, fileName);
 
@@ -304,28 +294,12 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
 
   @Override
   public void deleteVisualizationMethodFile(String fileName) {
-    String safeFileName = Utils.requireSafeJarFileName(fileName);
-    Utils.deleteFile(visualizerJarsFolder, safeFileName);
-    String frameworkLocation = visualizerJarsFolder + safeFileName;
-    VisLibrary foundVisLibrary =
-        visualizationLibraryRepository.findByFrameworkLocation(frameworkLocation);
-    if (foundVisLibrary != null) {
-      List<String> visTypeIds =
-          foundVisLibrary.getVisualizationTypes().stream()
-              .map(VisType::getId)
-              .collect(Collectors.toList());
-
-      visTypeIds.forEach(visualizationTypeRepository::deleteById);
-
-      visualizationLibraryRepository.delete(foundVisLibrary);
-      log.info("Deleted VisLibrary and associated VisTypes");
-    } else {
-      log.warn("VisLibrary not found");
-    }
+    throw new LegacyPluginDeletionException();
   }
 
   @Override
   public void reloadVisualizationMethodFile(String fileName) {
+    pluginArtifactResolver.requireLocalMutation();
     findJarAndAddVisualizerMethod(Utils.requireSafeJarFileName(fileName));
   }
 
@@ -335,6 +309,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
     Set<String> uniqueFileNames = new HashSet<>();
     List<VisualizationMethodFileNameResponse> responses = new ArrayList<>();
     for (VisLibrary visLibrary : foundAllVisualizationLibraries) {
+      if (!pluginVisibility.isVisible(visLibrary.getInstallationId(), "visualization-library", visLibrary.getId())) continue;
       String fileName = visLibrary.getFrameworkLocation();
       if (uniqueFileNames.add(fileName)) {
         String modifiedFileName = fileName.replace(visualizerJarsFolder, "");
@@ -352,6 +327,7 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
         visualizationLibraryRepository.findAllByFrameworkLocation(frameworkLocation);
     List<VisualizationLibraryResponse> responses = new ArrayList<>();
     for (VisLibrary visLibrary : foundVisLibrary) {
+      if (!pluginVisibility.isVisible(visLibrary.getInstallationId(), "visualization-library", visLibrary.getId())) continue;
       responses.add(
           new VisualizationLibraryResponse(
               visLibrary.getId(),

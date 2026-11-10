@@ -1,0 +1,169 @@
+name: Build plugin checkpoint image
+
+on:
+  push:
+    branches: [main]
+    tags: [plugin-checkpoint-*]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}-plugin-checkpoint
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      image-id: ${{ steps.build.outputs.imageid }}
+      tags: ${{ steps.meta.outputs.tags }}
+      archive-id: ${{ steps.archive.outputs.artifact-id }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Get image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          flavor: latest=false
+          tags: |
+            type=sha,format=long
+            type=edge,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=tag,enable=${{ startsWith(github.ref_name, 'plugin-checkpoint-') }}
+            type=ref,event=pr
+
+      - name: Build checkpoint image
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: openlap-analyticsframework
+          file: openlap-analyticsframework/Dockerfile.plugin-checkpoint
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
+          cache-from: type=gha,scope=plugin-checkpoint
+          cache-to: type=gha,mode=max,scope=plugin-checkpoint
+
+      - name: Verify the exact checkpoint image against disposable MongoDB
+        env:
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+        run: python3 -B tests/test_plugin_checkpoint_containers.py --image "$IMAGE_ID"
+
+      - name: Retain the exact tested image for publication
+        if: github.event_name == 'push'
+        env:
+          TESTED_IMAGE_ID: ${{ steps.build.outputs.imageid }}
+        run: |
+          set -eu
+          umask 077
+          mkdir "$RUNNER_TEMP/plugin-checkpoint-image"
+          docker image save --output "$RUNNER_TEMP/plugin-checkpoint-image/image.tar" "$TESTED_IMAGE_ID"
+          printf '%s\n' "$TESTED_IMAGE_ID" > "$RUNNER_TEMP/plugin-checkpoint-image/image-id.txt"
+          printf '%s\n' "$GITHUB_SHA" > "$RUNNER_TEMP/plugin-checkpoint-image/source-revision.txt"
+          cd "$RUNNER_TEMP/plugin-checkpoint-image"
+          sha256sum image.tar > image.sha256
+
+      - name: Upload verified image archive
+        if: github.event_name == 'push'
+        id: archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: tested-plugin-checkpoint-image
+          path: ${{ runner.temp }}/plugin-checkpoint-image/
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
+
+  publish:
+    if: github.event_name == 'push'
+    needs: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download this run's verified image
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.image.outputs.archive-id }}
+          path: ${{ runner.temp }}/plugin-checkpoint-image
+
+      - name: Verify and load the tested image without rebuilding
+        env:
+          TESTED_IMAGE_ID: ${{ needs.image.outputs.image-id }}
+        run: |
+          set -eu
+          cd "$RUNNER_TEMP/plugin-checkpoint-image"
+          sha256sum --check image.sha256
+          test "$(cat image-id.txt)" = "$TESTED_IMAGE_ID"
+          test "$(cat source-revision.txt)" = "$GITHUB_SHA"
+          docker image load --input image.tar
+          test "$(docker image inspect "$TESTED_IMAGE_ID" --format '{{.Id}}')" = "$TESTED_IMAGE_ID"
+
+      - name: Login to container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish the exact tested image
+        env:
+          TESTED_IMAGE_ID: ${{ needs.image.outputs.image-id }}
+          TESTED_IMAGE_TAGS: ${{ needs.image.outputs.tags }}
+        run: |
+          set -eu
+          test -n "$TESTED_IMAGE_TAGS"
+          while IFS= read -r input_tag; do
+            test -n "$input_tag" || continue
+            case "$input_tag" in
+              "$IMAGE_NAME":*) ;;
+              *) exit 1 ;;
+            esac
+            docker image tag "$TESTED_IMAGE_ID" "$input_tag"
+            docker image push "$input_tag"
+          done <<EOF
+          $TESTED_IMAGE_TAGS
+          EOF
+
+      - name: Record immutable published identity
+        env:
+          TESTED_IMAGE_ID: ${{ needs.image.outputs.image-id }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os, re, subprocess
+          from pathlib import Path
+          image = os.environ['TESTED_IMAGE_ID']
+          refs = json.loads(subprocess.check_output(
+              ['docker', 'image', 'inspect', image, '--format', '{{json .RepoDigests}}'], text=True))
+          prefix = os.environ['IMAGE_NAME'] + '@'
+          refs = sorted(ref for ref in refs if ref.startswith(prefix)
+                        and re.fullmatch(r'sha256:[a-f0-9]{64}', ref[len(prefix):]))
+          if not refs:
+              raise SystemExit('The registry did not provide a verified immutable image reference.')
+          record = {'sourceRevision': os.environ['GITHUB_SHA'], 'testedImageId': image, 'references': refs}
+          Path('publication.json').write_text(json.dumps(record, indent=2) + '\n')
+          print(json.dumps(record))
+          PYTHON
+
+      - name: Retain publication record
+        uses: actions/upload-artifact@v7
+        with:
+          name: plugin-checkpoint-publication
+          path: publication.json
+          if-no-files-found: error
+          retention-days: 7

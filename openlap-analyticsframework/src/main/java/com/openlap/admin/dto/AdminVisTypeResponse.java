@@ -17,4 +17,10 @@ public class AdminVisTypeResponse {
   private String name;
   private String imageCode;
   private boolean enabled;
+  private String artifactId;
+  private String libraryId;
+
+  public AdminVisTypeResponse(String id, String library, String name, String imageCode, boolean enabled) {
+    this.id = id; this.library = library; this.name = name; this.imageCode = imageCode; this.enabled = enabled;
+  }
 }

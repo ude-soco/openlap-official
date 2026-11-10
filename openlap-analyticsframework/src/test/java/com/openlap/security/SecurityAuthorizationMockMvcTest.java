@@ -5,6 +5,7 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -71,6 +72,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
       com.openlap.admin.controller.AdminCatalogController.class,
       com.openlap.admin.controller.AdminAuditController.class,
       com.openlap.admin.controller.AdminContentController.class,
+      com.openlap.admin.controller.AdminPluginController.class,
       com.openlap.content.PublicContentController.class
     })
 @Import({
@@ -102,6 +104,10 @@ public class SecurityAuthorizationMockMvcTest {
   @MockBean private AdminCatalogService adminCatalogService;
   @MockBean private AdminAuditService adminAuditService;
   @MockBean private com.openlap.content.ContentService contentService;
+  @MockBean private com.openlap.plugins.management.PluginManagementService pluginManagementService;
+  @MockBean private com.openlap.plugins.management.PluginCatalogEditor pluginCatalogEditor;
+  @MockBean private com.openlap.plugins.management.PluginRemovalService pluginRemovalService;
+  @MockBean private com.openlap.plugins.management.PluginArtifactCleanup pluginArtifactCleanup;
   @MockBean private AnalyticsTechniqueService analyticsTechniqueService;
   @MockBean private VisualizationLibraryService visualizationLibraryService;
   @MockBean private VisualizationTypeService visualizationTypeService;
@@ -113,6 +119,110 @@ public class SecurityAuthorizationMockMvcTest {
   // Bootstrap CommandLineRunner safety net (prevents any MongoDB access if it is invoked)
   @MockBean private UserRoleService userRoleService;
   @MockBean private EngineService engineService;
+
+  @Test
+  public void pluginWorkflowIsForbiddenWithoutSuperAdminForEveryOperation() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+    mockMvc.perform(get("/v1/admin/plugins").param("kind", "ANALYTICS"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(get("/v1/admin/plugins/example").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/v1/admin/plugins/upload")
+        .file(new org.springframework.mock.web.MockMultipartFile("file", "test.jar", "application/java-archive", new byte[] {1}))
+        .param("kind", "ANALYTICS").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden());
+    for (String action : new String[] {"inspect", "activate", "replacement", "retire-previous", "discard", "reopen"}) {
+      mockMvc.perform(post("/v1/admin/plugins/example/" + action).header(AUTHORIZATION, "Bearer valid-token")
+          .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"trusted\":true}"))
+          .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+    }
+    mockMvc.perform(get("/v1/admin/plugins/catalog/ANALYTICS_METHOD/example").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(patch("/v1/admin/plugins/catalog/ANALYTICS_METHOD/example").header(AUTHORIZATION, "Bearer valid-token")
+        .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"name\":\"Edit\"}"))
+        .andExpect(status().isForbidden());
+    org.mockito.Mockito.verifyZeroInteractions(pluginCatalogEditor);
+    org.mockito.Mockito.verifyZeroInteractions(pluginManagementService);
+    for (String path : new String[] {"removed?kind=ANALYTICS_METHOD", "cleanup", "catalog/ANALYTICS_METHOD/example/removal"})
+      mockMvc.perform(get("/v1/admin/plugins/" + path).header(AUTHORIZATION, "Bearer valid-token")).andExpect(status().isForbidden());
+    for (String path : new String[] {"cleanup", "removals/example/restore", "removals/example/resume"})
+      mockMvc.perform(post("/v1/admin/plugins/" + path).header(AUTHORIZATION, "Bearer valid-token")
+          .contentType(MediaType.APPLICATION_JSON).content("{\"confirmed\":true}")).andExpect(status().isForbidden());
+    mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/v1/admin/plugins/catalog/ANALYTICS_METHOD/example")
+        .header(AUTHORIZATION, "Bearer valid-token").contentType(MediaType.APPLICATION_JSON).content("{\"expectedVersions\":{}}"))
+        .andExpect(status().isForbidden());
+    org.mockito.Mockito.verifyZeroInteractions(pluginRemovalService, pluginArtifactCleanup);
+  }
+
+  @Test
+  public void superAdminRemovalRecoveryAndCleanupAreAudited() throws Exception {
+    given(tokenService.verifyToken(any())).willReturn(new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    String token = "00000000-0000-0000-0000-000000000000";
+    java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+    result.put("id", token); result.put("catalogId", "method-1"); result.put("kind", "ANALYTICS_METHOD"); result.put("name", "Method"); result.put("state", "REMOVED");
+    given(pluginRemovalService.remove(org.mockito.ArgumentMatchers.eq(com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD), org.mockito.ArgumentMatchers.eq("method-1"), any())).willReturn(result);
+    given(pluginRemovalService.restore(token)).willReturn(result);
+    given(pluginArtifactCleanup.run(true, Collections.singletonList("analytics-" + String.join("", Collections.nCopies(64, "a"))))).willReturn(Collections.singletonMap("purged", 1));
+    mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/v1/admin/plugins/catalog/ANALYTICS_METHOD/method-1")
+        .header(AUTHORIZATION, "Bearer valid-token").contentType(MediaType.APPLICATION_JSON).content("{\"expectedVersions\":{\"analytics-technique:method-1\":0}}"))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.data.state").value("REMOVED"));
+    mockMvc.perform(post("/v1/admin/plugins/removals/" + token + "/restore").header(AUTHORIZATION, "Bearer valid-token")).andExpect(status().isOk());
+    mockMvc.perform(post("/v1/admin/plugins/cleanup").header(AUTHORIZATION, "Bearer valid-token")
+        .contentType(MediaType.APPLICATION_JSON).content("{\"confirmed\":true,\"artifactIds\":[\"analytics-" + String.join("", Collections.nCopies(64, "a")) + "\"]}")).andExpect(status().isOk());
+    org.mockito.Mockito.verify(adminAuditService).logSuccess(any(), org.mockito.ArgumentMatchers.eq("PLUGIN_REMOVE"), org.mockito.ArgumentMatchers.eq("ANALYTICS_METHOD"), org.mockito.ArgumentMatchers.eq("method-1"), org.mockito.ArgumentMatchers.eq("Method"), any());
+    org.mockito.Mockito.verify(adminAuditService).logSuccess(any(), org.mockito.ArgumentMatchers.eq("PLUGIN_RESTORE"), org.mockito.ArgumentMatchers.eq("PLUGIN_REMOVAL"), org.mockito.ArgumentMatchers.eq(token), org.mockito.ArgumentMatchers.eq("Method"), any());
+    org.mockito.Mockito.verify(adminAuditService).logSuccess(any(), org.mockito.ArgumentMatchers.eq("PLUGIN_ARTIFACT_CLEANUP"), org.mockito.ArgumentMatchers.eq("PLUGIN_INSTALLATION"), org.mockito.ArgumentMatchers.eq("retention-cleanup"), any(), any());
+  }
+
+  @Test
+  public void superAdminCanReadPluginUploadCapability() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    given(pluginManagementService.available()).willReturn(true);
+    given(pluginManagementService.recent(com.openlap.plugins.artifacts.PluginKind.ANALYTICS))
+        .willReturn(Collections.emptyList());
+    mockMvc.perform(get("/v1/admin/plugins").param("kind", "ANALYTICS").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.data.available").value(true));
+  }
+
+  @Test
+  public void superAdminCanInspectAndActivateWithAuditRecords() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    String id = "analytics-" + String.join("", Collections.nCopies(64, "a"));
+    java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+    result.put("id", id); result.put("filename", "example.jar"); result.put("state", "INSPECTED"); result.put("version", 2L);
+    given(pluginManagementService.inspect(id, 0L, true)).willReturn(result);
+    given(pluginManagementService.activate(id, 2L)).willReturn(result);
+    mockMvc.perform(post("/v1/admin/plugins/" + id + "/inspect").header(AUTHORIZATION, "Bearer valid-token")
+        .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"trusted\":true}"))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.data.state").value("INSPECTED"));
+    mockMvc.perform(post("/v1/admin/plugins/" + id + "/activate").header(AUTHORIZATION, "Bearer valid-token")
+        .contentType(MediaType.APPLICATION_JSON).content("{\"version\":2}"))
+        .andExpect(status().isOk());
+    for (String action : new String[] {"PLUGIN_INSPECT", "PLUGIN_ACTIVATE"}) {
+      org.mockito.Mockito.verify(adminAuditService).logSuccess(any(), org.mockito.ArgumentMatchers.eq(action),
+          org.mockito.ArgumentMatchers.eq("PLUGIN_INSTALLATION"), org.mockito.ArgumentMatchers.eq(id),
+          org.mockito.ArgumentMatchers.eq("example.jar"), any());
+    }
+  }
+
+  @Test
+  public void superAdminCanEditPluginDetailsWithResourceSpecificAudit() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+    result.put("id", "method-1"); result.put("kind", "ANALYTICS_METHOD"); result.put("name", "Edited name"); result.put("version", 1L);
+    given(pluginCatalogEditor.edit(org.mockito.ArgumentMatchers.eq(com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD),
+        org.mockito.ArgumentMatchers.eq("method-1"), any())).willReturn(result);
+    mockMvc.perform(patch("/v1/admin/plugins/catalog/ANALYTICS_METHOD/method-1").header(AUTHORIZATION, "Bearer valid-token")
+        .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"name\":\"Edited name\"}"))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.data.version").value(1));
+    org.mockito.Mockito.verify(adminAuditService).logSuccess(any(), org.mockito.ArgumentMatchers.eq("PLUGIN_DETAILS_UPDATE"),
+        org.mockito.ArgumentMatchers.eq("ANALYTICS_METHOD"), org.mockito.ArgumentMatchers.eq("method-1"),
+        org.mockito.ArgumentMatchers.eq("Edited name"), any());
+  }
 
   @Test
   public void homepageContentReadsArePublicAndDoNotExposeDrafts() throws Exception {
@@ -442,6 +552,28 @@ public class SecurityAuthorizationMockMvcTest {
   }
 
   // --- Plugin-management hardening: reload/populate are SUPER_ADMIN-only; reads stay open ---
+
+  @Test
+  public void legacyPluginDeletesStillRequireAnAdminToken() throws Exception {
+    for (String path : new String[] {
+        "/v1/analytics/methods/delete?fileName=x.jar", "/v1/analytics/methods/method-id",
+        "/v1/visualizations/delete?fileName=x.jar", "/v1/visualizations/libraries/library-id",
+        "/v1/visualizations/types/type-id"}) {
+      // Preserve the existing unauthenticated contract (403 / AUTH_REQUIRED).
+      mockMvc.perform(delete(path)).andExpect(status().isForbidden())
+          .andExpect(jsonPath("$.code").value("AUTH_REQUIRED"));
+    }
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("user@mail.com", new String[] {"ROLE_USER"}, "tok", null));
+    for (String path : new String[] {
+        "/v1/analytics/methods/delete?fileName=x.jar", "/v1/analytics/methods/method-id",
+        "/v1/visualizations/delete?fileName=x.jar", "/v1/visualizations/libraries/library-id",
+        "/v1/visualizations/types/type-id"}) {
+      mockMvc.perform(delete(path).header(AUTHORIZATION, "Bearer valid-token"))
+          .andExpect(status().isForbidden())
+          .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+    }
+  }
 
   @Test
   public void normalUserForbiddenOnAnalyticsReload() throws Exception {

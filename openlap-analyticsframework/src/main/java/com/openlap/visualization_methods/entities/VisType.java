@@ -30,6 +30,8 @@ public class VisType {
   /** Soft-disable flag. Boxed + default true so legacy documents (missing the field) read enabled. */
   private Boolean enabled = true;
 
+  private String installationId;
+
   /** Treats a missing/null flag (legacy documents) as enabled. */
   public boolean isEnabled() {
     return enabled == null || enabled;

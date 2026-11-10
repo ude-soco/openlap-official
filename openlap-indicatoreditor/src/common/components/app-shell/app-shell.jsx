@@ -95,6 +95,7 @@ const AppShell = ({ window, children }) => {
           component="main"
           sx={{
             flexGrow: 1,
+            minWidth: 0,
             pt: 3,
             width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           }}
