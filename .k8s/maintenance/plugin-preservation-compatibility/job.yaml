@@ -1,0 +1,96 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openlap-plugin-preservation-compatibility
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 180
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: plugin-preservation-compatibility
+    spec:
+      serviceAccountName: openlap-plugin-preservation-compatibility
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+      - name: client
+        image: python@sha256:e064671ca452259bab50e8e2c7bd896e39e9a343bb06ca25234adf6fe18d0fc7
+        command: [python3, -B, /capture/client.py]
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 128Mi
+        volumeMounts:
+        - name: code
+          mountPath: /capture
+          readOnly: true
+        - name: tools
+          mountPath: /tools
+      containers:
+      - name: compatibility
+        image: python@sha256:e064671ca452259bab50e8e2c7bd896e39e9a343bb06ca25234adf6fe18d0fc7
+        command: [python3, -B, /capture/capture.py, --in-cluster, --compatibility-only]
+        env:
+        - name: PATH
+          value: /tools:/usr/local/bin:/usr/bin:/bin
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 128Mi
+        volumeMounts:
+        - name: code
+          mountPath: /capture
+          readOnly: true
+        - name: tools
+          mountPath: /tools
+          readOnly: true
+        - name: work
+          mountPath: /tmp
+        - name: identity
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          readOnly: true
+      volumes:
+      - name: code
+        configMap:
+          name: openlap-plugin-preservation-code
+      - name: tools
+        emptyDir:
+          sizeLimit: 128Mi
+      - name: work
+        emptyDir:
+          sizeLimit: 32Mi
+      - name: identity
+        projected:
+          defaultMode: 292
+          sources:
+          - serviceAccountToken:
+              path: token
+              expirationSeconds: 600
+          - configMap:
+              name: kube-root-ca.crt
+              items:
+              - key: ca.crt
+                path: ca.crt

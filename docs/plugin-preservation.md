@@ -36,6 +36,63 @@ does not enumerate configurations or print credential contents. Container names
 default to `web` and `mongo`; the default JAR root is `/opt/app/data/jars`.
 Explicit flags support other supported installations.
 
+### Check client/server compatibility first
+
+Before authorizing source Pod access, run a metadata-only check with an explicit
+connection. It needs no namespace, Pod names, database, checkpoint or output path:
+
+```sh
+python3 .k8s/maintenance/plugin-preservation/capture.py \
+  --context APPROVED_CONTEXT --compatibility-only
+```
+
+The command runs only `kubectl version -o json`, with a 25-second API timeout,
+35-second process limit and 16 KiB response limit. It prints one canonical JSON
+object containing `schemaVersion`, `clientVersion`, `serverVersion` and
+`supportedMinorSkew`. Only validated version strings are printed; other client
+or server metadata and raw errors are withheld. Exit 0 means the observed versions
+share a major version and differ by at most one minor version. Valid unsupported
+versions produce `supportedMinorSkew: false` and exit 1; missing or malformed
+versions, request errors and output failures also exit 1. Require valid complete
+JSON **and** successful process/Job completion.
+
+This follows the [Kubernetes kubectl skew policy](https://kubernetes.io/releases/version-skew-policy/#kubectl).
+It does not prove source permissions, Pod readiness, release lifecycle/security
+support or database compatibility. One load-balanced API response does not attest
+every API server in a mixed-version control plane; operators must establish that
+the client is within policy for all servers it can reach. The pinned client is
+still 1.31.14, so its observed skew range is 1.30–1.32. There is no automatic
+client-version selection or unreviewed download. A different client requires
+reviewed version/checksum pins and rerunning the protocol tests.
+
+A configured capture repeats the same gate before its first Pod GET, exec or
+backup directory creation. It records the observed versions in the completed
+manifest. Invalid or unsupported versions stop capture. Missing capture inputs
+still fail before any API request.
+
+For an in-cluster check, the separate opt-in Kustomization is
+`.k8s/maintenance/plugin-preservation-compatibility`. It reuses the same code and
+pinned client preparation, but has **no PVC, fsGroup, Pod Role/Binding or database
+inputs**. Its ServiceAccount has only the cluster's existing default discovery
+access; a denied `/version` request fails closed without adding permissions.
+Only its main container receives the short-lived projected identity. Its temporary
+client configuration contains token/CA file paths, never token values. The Job
+has a 180-second deadline and no retries or TTL. Review API/download egress and DNS
+selectors for the installation; allowed HTTPS ports do not restrict destination
+hosts. Keep the ConfigMap, ServiceAccount and network policy available before the
+Job, verify the terminal result, then remove all four resources. Neither component
+is included in the application base.
+Run compatibility and capture sequentially, cleaning up the compatibility
+resources before configuring capture. Both reuse the same generated code
+ConfigMap identity; do not combine the two sibling Kustomizations in one build
+or remove that ConfigMap while a capture still needs it.
+
+Do not turn the capture Job into a version probe by changing its arguments: its
+backup mount and fsGroup can affect retained volume permissions before Python
+starts. The compatibility Job uses only temporary volumes, code and its identity.
+The original CLI paths remain thin launchers; the shared implementation and
+ConfigMap generator live in `.k8s/maintenance/plugin-preservation-code`.
+
 For each named pod, the client retrieves only its UID, node, container image,
 readiness and restart count. There is no namespace-wide Pod list. A shell-builtin
 inventory includes nested and hidden directories, rejects symlinks, limits depth,
@@ -176,3 +233,10 @@ Container-level verification should also use the intended legacy base image and
 the maintenance image's pinned client. An exact released image may require the
 operator's registry access; a base-image reproduction does not prove the underlying
 error from a live run whose raw diagnostic was not retained.
+If direct client downloads are unavailable inside Docker, pass
+`--kubectl /protected-tools/OFFICIAL_LINUX_CLIENT` to the container verifier. It
+checks the native architecture's existing reviewed SHA before staging that file,
+rechecks it through the same installer inside the maintenance image, and runs the
+maintenance suite with `--network=none` and `--pull=never`. The two pinned images
+must already be available locally; the flag never selects or downloads a different
+client version.

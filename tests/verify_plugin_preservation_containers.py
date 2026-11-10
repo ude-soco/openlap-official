@@ -1,19 +1,23 @@
 """Opt-in Docker checks; only allowlisted source files and synthetic data are mounted."""
+import argparse
 import hashlib
 import importlib.util
 import os
 from pathlib import Path
+import platform
 import shutil
 import subprocess
 import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-COMPONENT = ROOT / ".k8s/maintenance/plugin-preservation"
+COMPONENT = ROOT / ".k8s/maintenance/plugin-preservation-code"
 BASE_IMAGE = "amazoncorretto@sha256:019e58087ba4c114c817094f70d3d522bcd13e80ce9edbba6e1c67e5700bad63"
 CAPTURE_IMAGE = "python@sha256:e064671ca452259bab50e8e2c7bd896e39e9a343bb06ca25234adf6fe18d0fc7"
 spec = importlib.util.spec_from_file_location("container_capture", COMPONENT / "capture.py")
 capture = importlib.util.module_from_spec(spec); sys.modules[spec.name] = capture; spec.loader.exec_module(capture)
+client_spec = importlib.util.spec_from_file_location("container_client", COMPONENT / "client.py")
+client = importlib.util.module_from_spec(client_spec); client_spec.loader.exec_module(client)
 
 
 def readable_tree(root):
@@ -22,6 +26,9 @@ def readable_tree(root):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--kubectl", type=Path, help="Optional official Linux client; exact reviewed architecture/SHA verified before use")
+    options = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix="plugin-preserve-containers-") as temporary:
         root = Path(temporary)
         fixture = root / "synthetic"; fixture.mkdir()
@@ -96,17 +103,41 @@ exec /bin/sh -ceu "$3" preserve "$root"
 
         staged = root / "source"
         (staged / "tests").mkdir(parents=True)
-        code = staged / ".k8s/maintenance/plugin-preservation"; code.mkdir(parents=True)
+        code = staged / ".k8s/maintenance/plugin-preservation-code"; code.mkdir(parents=True)
         for name in ["capture.py", "client.py"]:
             shutil.copyfile(COMPONENT / name, code / name)
+        launchers = staged / ".k8s/maintenance/plugin-preservation"; launchers.mkdir()
+        for name in ["capture.py", "client.py"]:
+            shutil.copyfile(ROOT / ".k8s/maintenance/plugin-preservation" / name, launchers / name)
+        for component, names in {
+                "plugin-preservation": ["kustomization.yaml", "access.yaml", "job.yaml", "network.yaml", "volume.yaml"],
+                "plugin-preservation-code": ["kustomization.yaml"],
+                "plugin-preservation-compatibility": ["kustomization.yaml", "account.yaml", "job.yaml", "network.yaml"]}.items():
+            destination = staged / ".k8s/maintenance" / component
+            destination.mkdir(exist_ok=True)
+            for name in names:
+                shutil.copyfile(ROOT / ".k8s/maintenance" / component / name, destination / name)
         shutil.copyfile(ROOT / "tests/test_plugin_preservation.py", staged / "tests/test_plugin_preservation.py")
+        prepare = "python3 -B /verification/.k8s/maintenance/plugin-preservation/client.py"
+        offline = []
+        if options.kubectl:
+            if options.kubectl.is_symlink() or not options.kubectl.is_file():
+                raise ValueError("The offline client must be a regular file")
+            architecture, expected = client.SHA256[{"arm64": "aarch64"}.get(platform.machine(), platform.machine())]
+            with options.kubectl.open("rb") as stream:
+                client.install(stream, staged / "kubectl", expected)
+            prepare = ("python3 -B -c 'import sys; from pathlib import Path; import platform; "
+                       "sys.path.insert(0,\"/verification/.k8s/maintenance/plugin-preservation-code\"); "
+                       "import client; client.install(open(\"/verification/kubectl\",\"rb\"),"
+                       "Path(\"/tools/kubectl\"),client.SHA256[platform.machine()][1])'")
+            offline = ["--pull=never", "--network=none", "--platform=linux/" + architecture]
         readable_tree(staged)
-        command = ["docker", "run", "--rm", "--read-only", "--user=1000:1000", "--cap-drop=ALL",
+        command = ["docker", "run", "--rm"] + offline + ["--read-only", "--user=1000:1000", "--cap-drop=ALL",
                    "--security-opt=no-new-privileges", "--tmpfs=/tools:rw,exec,size=128m,mode=0777",
                    "--tmpfs=/tmp:rw,size=128m,mode=1777", "--mount",
                    "type=bind,source=" + str(staged) + ",target=/verification,readonly",
                    "--env=PATH=/tools:/usr/local/bin:/usr/bin:/bin", CAPTURE_IMAGE,
-                   "/bin/sh", "-ec", "python3 -B /verification/.k8s/maintenance/plugin-preservation/client.py; "
+                   "/bin/sh", "-ec", prepare + "; "
                    "kubectl version --client; python3 -B -m unittest discover -s /verification/tests -p test_plugin_preservation.py"]
         subprocess.run(command, check=True, timeout=180)
         print("PASS: complete regressions in the pinned maintenance image with its verified client.")
