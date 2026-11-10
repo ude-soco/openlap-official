@@ -105,11 +105,45 @@ class RunnerTest(unittest.TestCase):
             (credentials / "rpc-secret").write_text("a"*64)
             (credentials / "admin-token").write_text("fixture-admin-token")
             with patch.dict(runner.os.environ, {"POD_NAME": config.names[0], "POD_NAMESPACE": "fixture"}), \
+                 patch.object(runner, "secret_descriptor", side_effect=lambda _value: runner.os.open("/dev/null",runner.os.O_RDONLY)), \
                  patch.object(runner.subprocess, "Popen", side_effect=OSError("synthetic startup failure")) as process:
                 with self.assertRaises(OSError): runner.server(config, credentials, volume / "garage")
                 process.assert_called_once()
             self.assertTrue(lost.is_dir())
             self.assertTrue((volume / "garage/.openlap-rf3-installation.json").is_file())
+
+    @unittest.skipUnless(hasattr(runner.os, "memfd_create"), "Linux anonymous RAM files")
+    def test_anonymous_credential_file_is_private_sealed_and_not_named_on_disk(self):
+        descriptor=runner.secret_descriptor("disposable-fixture-value")
+        try:
+            self.assertEqual(runner.os.fstat(descriptor).st_mode & 0o777, 0o600)
+            self.assertEqual(runner.os.fstat(descriptor).st_nlink, 0)
+            self.assertEqual(runner.os.read(descriptor,128),b"disposable-fixture-value")
+            with self.assertRaises(OSError): runner.os.write(descriptor,b"changed")
+            with self.assertRaises(OSError): runner.os.ftruncate(descriptor,0)
+        finally: runner.os.close(descriptor)
+
+    def test_child_teardown_error_cannot_skip_credential_handle_cleanup(self):
+        config=runner.Configuration(settings()); descriptors=[]
+        def descriptor(_value):
+            result=runner.os.open("/dev/null",runner.os.O_RDONLY); descriptors.append(result); return result
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary).resolve(); volume=root/"volume"; volume.mkdir(); data=volume/"garage"; data.mkdir()
+            inputs=root/"inputs"; inputs.mkdir()
+            (inputs/"rpc-secret").write_text("a"*64); (inputs/"admin-token").write_text("fixture-admin-token")
+            scratch=root/"scratch"; scratch.mkdir()
+            with patch.dict(runner.os.environ,{"POD_NAME":config.names[0],"POD_NAMESPACE":"fixture"}), \
+                 patch.object(runner.tempfile,"mkdtemp",return_value=str(scratch)), \
+                 patch.object(runner,"secret_descriptor",side_effect=descriptor), \
+                 patch.object(runner.subprocess,"Popen") as process, \
+                 patch.object(runner,"self_info",side_effect=runner.Unexpected), \
+                 patch.object(runner.os,"killpg",side_effect=PermissionError("fixture teardown failure")):
+                process.return_value.poll.return_value=None
+                with self.assertRaises(PermissionError): runner.server(config,inputs,data)
+            self.assertEqual(len(descriptors),2)
+            for value in descriptors:
+                with self.assertRaises(OSError): runner.os.fstat(value)
+            self.assertFalse(scratch.exists())
 
     def test_http_redirect_never_forwards_administration_token(self):
         received = []

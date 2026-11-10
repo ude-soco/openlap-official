@@ -83,9 +83,10 @@ def main():
     common = ["run", "--rm", "--pull=never", "--read-only", "--user=1000:1000", "--cap-drop=ALL",
               "--security-opt=no-new-privileges", "--pids-limit=100", "--memory=512m"]
 
-    def call(arguments, payload=None, expected=0, timeout=180):
+    def call(arguments, payload=None, expected=0, timeout=180, credentials=None):
         try:
-            result = subprocess.run(docker + arguments, input=payload, capture_output=True, timeout=timeout, env=environment)
+            result = subprocess.run(docker + arguments, input=payload, capture_output=True, timeout=timeout,
+                                    env=dict(environment, **(credentials or {})))
         except (OSError, subprocess.SubprocessError):
             raise AssertionError("Disposable RF3 operation timed out or could not start") from None
         if expected is not None and result.returncode != expected:
@@ -147,12 +148,13 @@ def main():
 
     def s3(index, arguments, success=True):
         result=call(common + ["--network="+name, "--tmpfs=/tmp:rw,nosuid,noexec,size=8m,mode=1777",
-                      "--env-file="+str(work/'aws.env'), "--env=AWS_CONFIG_FILE=/dev/null",
+                      "--env=AWS_ACCESS_KEY_ID", "--env=AWS_SECRET_ACCESS_KEY", "--env=AWS_CONFIG_FILE=/dev/null",
                       "--env=AWS_SHARED_CREDENTIALS_FILE=/dev/null", "--env=AWS_EC2_METADATA_DISABLED=true",
                       "--env=AWS_MAX_ATTEMPTS=1", "--env=AWS_DEFAULT_REGION=garage", "--env=AWS_PAGER=",
                       "--mount=type=bind,source="+str(work/'payload')+",target=/payload,readonly", AWS,
                       "--endpoint-url", "http://"+dns[index]+":3900", "--region", "garage", "--no-cli-pager",
-                      "--cli-connect-timeout", "2", "--cli-read-timeout", "45", *arguments], expected=None, timeout=60)
+                      "--cli-connect-timeout", "2", "--cli-read-timeout", "45", *arguments], expected=None, timeout=60,
+                    credentials={"AWS_ACCESS_KEY_ID":fixture['access-key-id'],"AWS_SECRET_ACCESS_KEY":fixture['secret-access-key']})
         classification = next((label for marker,label in ((b'Read timeout','client read timeout'),(b'Connect timeout','client connect timeout'),
                               (b'InternalError','server internal failure'),(b'ServiceUnavailable','service unavailable'),(b'AccessDenied','access denied'))
                               if marker in result.stderr),'raw diagnostics withheld')
@@ -181,8 +183,6 @@ def main():
         assert denied.returncode != 0 and b'operation incomplete' in denied.stderr; count+=1
         staged=True
         private_helper(payload=json.dumps(fixture).encode())
-        (work/'aws.env').write_text('AWS_ACCESS_KEY_ID='+fixture['access-key-id']+'\nAWS_SECRET_ACCESS_KEY='+fixture['secret-access-key']+'\n')
-        (work/'aws.env').chmod(0o600)
         write_config()
         call(["network","create","--internal",name]); network=True
         for index in range(3): node(index)

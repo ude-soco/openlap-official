@@ -77,7 +77,7 @@ def main():
         assert job['template']['spec']['containers'][0]['args'] == ['--configure-storage']
         policies=[row for row in documents if row['kind']=='NetworkPolicy']; assert len(policies)==2
         assert all(set(policy['spec']['policyTypes'])=={'Ingress','Egress'} for policy in policies)
-        assert not any('argocd.argoproj.io' in key for row in documents for key in row['metadata'].get('annotations',{}))
+        assert not any(key.partition('/')[0] == 'argocd.argoproj.io' for row in documents for key in row['metadata'].get('annotations',{}))
         before=document(documents,'ConfigMap')['metadata']['name']
         config['expectedNodeIds']=['a'*64,'b'*64,'c'*64]
         config['expectedBucketId']='d'*64

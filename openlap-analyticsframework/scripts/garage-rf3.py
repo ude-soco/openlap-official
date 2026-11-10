@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Explicit fresh Garage RF3 setup and verification; no Kubernetes API client."""
 import argparse
+import fcntl
 import hashlib
 import json
 import os
@@ -152,6 +153,26 @@ def secret(directory, name):
     value = read(Path(directory) / name, 1024).decode("ascii").removesuffix("\n")
     require(16 <= len(value) <= 512 and all(33 <= ord(character) <= 126 for character in value))
     return value
+
+
+def secret_descriptor(value):
+    # Linux-only runner: sealed anonymous RAM files expose no filesystem entry.
+    descriptor = os.memfd_create("openlap-garage-credential", os.MFD_CLOEXEC | os.MFD_ALLOW_SEALING)
+    try:
+        os.fchmod(descriptor, 0o600)
+        remaining = value.encode("ascii")
+        while remaining:
+            count = os.write(descriptor, remaining)
+            require(count > 0)
+            remaining = remaining[count:]
+        os.lseek(descriptor, 0, os.SEEK_SET)
+        seals = fcntl.F_SEAL_WRITE | fcntl.F_SEAL_GROW | fcntl.F_SEAL_SHRINK | fcntl.F_SEAL_SEAL
+        fcntl.fcntl(descriptor, fcntl.F_ADD_SEALS, seals)
+        require(fcntl.fcntl(descriptor, fcntl.F_GET_SEALS) & seals == seals)
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
 
 
 class Api:
@@ -424,23 +445,23 @@ def server(config, directory, data):
         require(not any((data / "meta").iterdir()) and not any((data / "blocks").iterdir()))
     work = Path(tempfile.mkdtemp(prefix="openlap-garage-", dir="/tmp"))
     process = None
+    descriptors = []
     try:
         rpc, admin = secret(directory, "rpc-secret"), secret(directory, "admin-token")
         require(re.fullmatch(r"[a-f0-9]{64}", rpc))
-        for name, value in (("rpc", rpc), ("admin", admin)):
-            with open(work / name, "x", encoding="ascii") as stream:
-                stream.write(value)
+        for value in (rpc, admin):
+            descriptors.append(secret_descriptor(value))
         peers = config.value["expectedNodeIds"]
         bootstrap_peers = [] if not peers else [peers[i] + "@" + config.dns[i] + ":3901" for i in range(3) if i != index]
         settings = ('replication_factor=3\nconsistency_mode="consistent"\ndb_engine="lmdb"\nmetadata_fsync=true\ndata_fsync=true\n'
                     'metadata_auto_snapshot_interval="6h"\nmetadata_dir=' + json.dumps(str(data / "meta")) + '\ndata_dir=' + json.dumps(str(data / "blocks")) + '\n'
-                    'rpc_bind_addr="0.0.0.0:3901"\nrpc_public_addr=' + json.dumps(config.dns[index] + ":3901") + '\nrpc_secret_file=' + json.dumps(str(work / "rpc")) + '\n'
+                    'rpc_bind_addr="0.0.0.0:3901"\nrpc_public_addr=' + json.dumps(config.dns[index] + ":3901") + '\nrpc_secret_file=' + json.dumps("/proc/self/fd/" + str(descriptors[0])) + '\n'
                     'bootstrap_peers=' + json.dumps(bootstrap_peers) + '\n[s3_api]\ns3_region=' + json.dumps(config.value["region"]) + '\napi_bind_addr="0.0.0.0:3900"\n'
-                    '[admin]\napi_bind_addr="0.0.0.0:3903"\nadmin_token_file=' + json.dumps(str(work / "admin")) + '\nmetrics_require_token=true\n')
+                    '[admin]\napi_bind_addr="0.0.0.0:3903"\nadmin_token_file=' + json.dumps("/proc/self/fd/" + str(descriptors[1])) + '\nmetrics_require_token=true\n')
         (work / "garage.toml").write_text(settings)
         environment = {"PATH": "/usr/local/bin:/usr/bin:/bin", "HOME": str(work), "TMPDIR": str(work), "LANG": "C"}
         process = subprocess.Popen([GARAGE, "-c", str(work / "garage.toml"), "server"], stdout=subprocess.DEVNULL,
-                                   stderr=subprocess.DEVNULL, start_new_session=True, env=environment)
+                                   stderr=subprocess.DEVNULL, start_new_session=True, env=environment, pass_fds=tuple(descriptors))
         api = Api(admin, seconds=30)
         while True:
             require(process.poll() is None)
@@ -461,14 +482,23 @@ def server(config, directory, data):
             require(own == peers[index])
         require(process.wait() == 0)
     finally:
-        if process is not None and process.poll() is None:
-            os.killpg(process.pid, signal.SIGTERM)
+        try:
+            if process is not None and process.poll() is None:
+                try:
+                    os.killpg(process.pid, signal.SIGTERM)
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        os.killpg(process.pid, signal.SIGKILL)
+                        process.wait()
+                except ProcessLookupError:
+                    pass
+        finally:
             try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                os.killpg(process.pid, signal.SIGKILL)
-                process.wait()
-        shutil.rmtree(work)
+                for descriptor in descriptors:
+                    os.close(descriptor)
+            finally:
+                shutil.rmtree(work)
 
 
 def ready(config, directory, data):
