@@ -294,6 +294,67 @@ through the normal operational process. Retain input/output claims, source
 artifacts, the reviewed manifest and backups. Check the operation's bounded result;
 never infer catalog coverage or successful rollout from a Job being created.
 
+## Preflight with reproducible historical inputs
+
+When the runtime JARs are missing and the reviewed recovery policy is appropriate,
+`.k8s/maintenance/plugin-recovery-preflight` stages the two pinned public archives
+and runs the existing read-only `--check` action. It is an optional maintenance
+component; normal application installation does not select it.
+
+Build and test the source-only input image using the application-owned staging
+script and `Dockerfile.plugin-inputs`, then publish the exact tested image using
+the `plugin-inputs-*` maintenance tag workflow. Record its immutable digest.
+Neither the source image nor the public repository may contain an installation's
+catalog IDs, recorded paths, reviewed manifest or credential values. Supply the
+reviewed manifest privately as an operator-owned ConfigMap and record its exact
+SHA-256. Retain the original inventory and source provenance independently.
+
+The source-only init container receives the manifest as a read-only regular-file
+`subPath` mount. It verifies the approved manifest digest and fixed public JAR
+identities, creates `/staging/input` exclusively with private permissions, and
+copies only those reviewed inputs. Existing destinations, symlinks, unexpected
+paths and incomplete or altered copies fail. It publishes completion provenance
+last. The `--verify` action checks a completed input directory without writing.
+
+The checker mounts that same fresh `emptyDir` through `subPath: input`, read-only
+at `/inputs`, after initialization succeeds. Thus each manifest's logical source
+paths remain `/inputs/jars/...` without relying on volume ownership changes. Both
+containers run as UID/GID 1000 with read-only root filesystems, dropped
+capabilities and no API token. There is no root initializer, `fsGroup`, retained
+volume mount or permission repair. Temporary copies disappear with the Job;
+the verified public source bundle/image and private manifest must remain retained
+outside it for repeat checks and any later approved apply operation.
+
+Before selecting the component, configure and review:
+
+- The tested input image and migration image, both by immutable digest.
+- Exactly one private manifest ConfigMap reference and its reviewed file hash.
+  Mount `manifest.json` using the defined `subPath`; projected directory symlinks
+  are deliberately not accepted by the stager.
+- Explicit primary MongoDB URI/database in the checker only. Supply no S3
+  credentials, application `envFrom`, API identity or execution grants.
+- DNS and primary MongoDB egress only, no inbound access, one attempt and a finite
+  deadline. A Pod-level policy applies to both containers; only the checker is
+  configured to contact MongoDB. Use a database read-only principal when available.
+  On an unauthenticated database, reviewed CLI behavior is read-only but the
+  network capability itself can permit writes; review that operational access.
+- Fresh operation names, appropriate image-pull references and temporary policy
+  ordering. Keep controller-specific ordering and protection in the environment
+  overlay, rather than making the reusable component depend on a GitOps controller.
+
+Preflight re-queries the complete current catalog, preserving IDs and recorded
+paths while checking source containment, archive structure, sizes, SHA-256 and
+every required class entry. Success proves those checks against that catalog at
+that moment; it does not execute plugins, establish historical byte equivalence,
+verify rendering or enforce a writer freeze. Remove the temporary Job, manifest
+ConfigMap and operation policy after any terminal result. Keep the reviewed
+manifest, source provenance, original inventory and backups in protected storage.
+
+Do not convert this preflight into an apply by changing its arguments alone.
+Apply additionally needs the verified writer freeze and release checkpoint below,
+reviewed S3 access and a separately reviewed operation. The same image digests,
+manifest bytes and logical source paths can be staged again for that operation.
+
 ## Recovery and release gates
 
 Retain the pre-migration database backup, preserved JARs and reviewed manifest.

@@ -1,0 +1,96 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openlap-plugin-recovery-preflight
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: plugin-recovery-preflight
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+      - name: stage-reviewed-inputs
+        # Publish and review this source-only image before selecting its digest.
+        image: ghcr.io/ude-soco/openlap-official-plugin-inputs:configure-reviewed-digest
+        imagePullPolicy: Always
+        args:
+        - --manifest
+        - /manifest/manifest.json
+        - --manifest-sha256
+        - configure-reviewed-manifest-sha256
+        - --destination
+        - /staging/input
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: "1"
+            memory: 256Mi
+        volumeMounts:
+        - name: manifest
+          mountPath: /manifest/manifest.json
+          subPath: manifest.json
+          readOnly: true
+        - name: inputs
+          mountPath: /staging
+      containers:
+      - name: check
+        image: ghcr.io/ude-soco/openlap-official-plugin-migration:configure-reviewed-digest
+        imagePullPolicy: Always
+        args: [--check, /inputs/manifest.json, --source-root, /inputs/jars]
+        env:
+        - name: MONGODB_PRIMARY_URI
+          value: ""
+        - name: OPENLAP_MONGODB_DB
+          value: ""
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: "1"
+            memory: 1Gi
+        volumeMounts:
+        - name: inputs
+          mountPath: /inputs
+          subPath: input
+          readOnly: true
+        - name: work
+          mountPath: /tmp
+      volumes:
+      - name: manifest
+        configMap:
+          name: configure-reviewed-plugin-manifest
+          defaultMode: 0444
+      # The unprivileged init container creates a fresh private input directory.
+      # No retained volume, fsGroup, ownership repair or API access is needed.
+      - name: inputs
+        emptyDir:
+          sizeLimit: 8Mi
+      - name: work
+        emptyDir:
+          sizeLimit: 256Mi
