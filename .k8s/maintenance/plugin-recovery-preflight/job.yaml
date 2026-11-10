@@ -85,7 +85,7 @@ spec:
       - name: manifest
         configMap:
           name: configure-reviewed-plugin-manifest
-          defaultMode: 0444
+          defaultMode: 292 # 0444, expressed in decimal for YAML parser consistency.
       # The unprivileged init container creates a fresh private input directory.
       # No retained volume, fsGroup, ownership repair or API access is needed.
       - name: inputs

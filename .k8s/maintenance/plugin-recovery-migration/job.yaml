@@ -87,7 +87,7 @@ spec:
         - name: manifest
           configMap:
             name: configure-reviewed-plugin-manifest
-            defaultMode: 444
+          defaultMode: 292 # 0444, expressed in decimal for YAML parser consistency.
         - name: inputs
           emptyDir:
             sizeLimit: 8Mi
