@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
 import { BasicContext } from "../../basic-indicator";
 import {
@@ -26,6 +26,7 @@ import CustomTooltip from "../../../../../../common/components/custom-tooltip/cu
 import WorkflowSection from "../../../../../../common/components/workflow-section/workflow-section.jsx";
 import SectionCard from "../../../../../../common/components/section-card/section-card.jsx";
 import { getStepStatus } from "../../utils/basic-workflow-ui.js";
+import { getAnalyzedRowCount } from "../../utils/analyzed-data.js";
 
 export default function Analysis() {
   const { api } = useContext(AuthContext);
@@ -34,28 +35,44 @@ export default function Analysis() {
   const [state, setState] = useState({
     loadingPreview: false,
     previewError: false,
+    previewComplete: false,
   });
+  const requestVersion = useRef(0);
+  const indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
+  const analysisRef = buildAnalysisRef(analysis);
+  const selectionKey = JSON.stringify({ indicatorQuery, ...analysisRef });
+
+  // Discard requests for selections that changed while the analysis was running.
+  useEffect(() => {
+    setState({ loadingPreview: false, previewError: false, previewComplete: false });
+    return () => { requestVersion.current += 1; };
+  }, [selectionKey]);
 
   const handlePreviewAnalyzedData = async () => {
-    let indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
-    let analysisRef = buildAnalysisRef(analysis);
-    setState((p) => ({ ...p, loadingPreview: true, previewError: false }));
+    const version = ++requestVersion.current;
+    setState({ loadingPreview: true, previewError: false, previewComplete: false });
+    setAnalysis((p) => ({ ...p, analyzedData: {} }));
     try {
       const analyzedData = await fetchAnalyzedData(
         api,
         indicatorQuery,
         analysisRef
       );
+      if (version !== requestVersion.current) return;
       setAnalysis((p) => ({ ...p, analyzedData: analyzedData.data }));
-      setState((p) => ({ ...p, loadingPreview: false }));
+      setState({ loadingPreview: false, previewError: false, previewComplete: true });
     } catch (error) {
-      setState((p) => ({ ...p, loadingPreview: false, previewError: true }));
+      if (version !== requestVersion.current) return;
+      setState({ loadingPreview: false, previewError: true, previewComplete: false });
       console.error("Error analyzing data:", error);
     }
   };
 
   const handleCheckDisabled = () => {
-    return Object.keys(analysis.analyzedData).length === 0;
+    return (
+      getAnalyzedRowCount(analysis.analyzedData) === 0 ||
+      state.loadingPreview || state.previewError
+    );
   };
 
   const handleCheckPreviewDisabled = () => {
@@ -128,49 +145,46 @@ export default function Analysis() {
                   title="Preview results"
                   helper="Run the analysis to preview the data that will feed your visualization."
                 >
-                  {hasAnalyzedData ? (
-                    <AnalyzedDataTable />
-                  ) : state.loadingPreview ? (
+                  {state.loadingPreview ? (
                     <Stack gap={1.5} alignItems="center" sx={{ py: 3 }}>
                       <CircularProgress />
                       <Typography variant="body2" color="text.secondary">
                         Running analysis…
                       </Typography>
                     </Stack>
+                  ) : state.previewError ? (
+                    <Alert severity="error">
+                      The analysis could not be run. Please check your inputs
+                      and filters, then try again.
+                    </Alert>
+                  ) : hasAnalyzedData || state.previewComplete ? (
+                    <AnalyzedDataTable />
                   ) : (
-                    <Stack
-                      gap={2}
-                      alignItems="center"
-                      sx={{ py: 3, textAlign: "center" }}
-                    >
-                      {state.previewError && (
-                        <Alert severity="error" sx={{ width: "100%" }}>
-                          The analysis could not be run. Please check your inputs
-                          and filters, then try again.
-                        </Alert>
-                      )}
+                    <Stack alignItems="center" sx={{ py: 3, textAlign: "center" }}>
                       <Typography variant="body2" color="text.secondary">
-                        {state.previewError
-                          ? "Adjust your selections and run the preview again."
-                          : "Choose your inputs and parameters, then run a preview of the analysed data."}
+                        Choose your inputs and parameters, then run a preview of
+                        the analysed data.
                       </Typography>
-                      <Stack direction="row" gap={1} alignItems="center">
-                        <Button
-                          variant="contained"
-                          disabled={previewDisabled}
-                          onClick={handlePreviewAnalyzedData}
-                        >
-                          {state.previewError ? "Try again" : "Preview"}
-                        </Button>
-                        {previewDisabled && (
-                          <CustomTooltip
-                            type="help"
-                            message={`The Preview button is disabled until:<br/>● A required <b>Input</b> of the analytics method is selected.<br/>● At least one <b>Activity</b> is selected in <b>Filters</b>.`}
-                          />
-                        )}
-                      </Stack>
                     </Stack>
                   )}
+                  <Stack direction="row" gap={1} alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
+                    <Button
+                      variant="contained"
+                      disabled={previewDisabled || state.loadingPreview}
+                      onClick={handlePreviewAnalyzedData}
+                    >
+                      {state.loadingPreview ? "Running analysis…"
+                        : state.previewError ? "Try again"
+                        : hasAnalyzedData || state.previewComplete ? "Run preview again"
+                        : "Preview"}
+                    </Button>
+                    {previewDisabled && (
+                      <CustomTooltip
+                        type="help"
+                        message={`The Preview button is disabled until:<br/>● A required <b>Input</b> of the analytics method is selected.<br/>● At least one <b>Activity</b> is selected in <b>Filters</b>.`}
+                      />
+                    )}
+                  </Stack>
                 </SectionCard>
               </>
             )}
