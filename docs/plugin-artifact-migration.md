@@ -364,6 +364,12 @@ Do not convert this preflight into an apply by changing its arguments alone.
 Apply additionally needs the verified writer freeze and release checkpoint below,
 reviewed S3 access and a separately reviewed operation. The same image digests,
 manifest bytes and logical source paths can be staged again for that operation.
+The separate `.k8s/maintenance/plugin-recovery-migration` component provides that
+staging layout with a default-denied action and a distinct Pod/policy selector.
+Select `--apply /inputs/manifest.json --source-root /inputs/jars` only after the
+freeze/checkpoint gates pass, then configure the exact S3 destination and scoped
+client Secret key references plus its reviewed ingress/egress permissions. It
+mounts no retained backup volume and supplies no S3 access by default.
 
 ## Recovery and release gates
 
