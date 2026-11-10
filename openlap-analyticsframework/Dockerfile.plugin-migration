@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1.7
+FROM maven:3.9-eclipse-temurin-11@sha256:7bb84a451705605a47d24eb844d4d9ab03e33e131a507db76aafe25db3907f64 AS build
+WORKDIR /build
+
+COPY pom.xml ./
+COPY src/main/java ./src/main/java
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn --batch-mode --no-transfer-progress compile dependency:copy-dependencies \
+      -DincludeScope=runtime -DoutputDirectory=/build/target/migration-lib
+
+FROM amazoncorretto:25@sha256:019e58087ba4c114c817094f70d3d522bcd13e80ce9edbba6e1c67e5700bad63
+WORKDIR /opt/plugin-migration
+
+# Deliberately omit application resources and uploaded plugin JARs.
+COPY --from=build /build/target/classes ./classes
+COPY --from=build /build/target/migration-lib ./lib
+RUN printf '%s\n' '<configuration><root level="OFF"/></configuration>' > logback.xml \
+    && printf '%s\n' '#!/bin/sh' 'set -eu' 'umask 077' \
+      'exec java -Dlogback.configurationFile=/opt/plugin-migration/logback.xml -cp "/opt/plugin-migration/classes:/opt/plugin-migration/lib/*" com.openlap.plugins.migration.PluginArtifactMigrationApplication "$@"' \
+      > /usr/local/bin/plugin-migration \
+    && chmod 0555 /usr/local/bin/plugin-migration
+
+USER 1000:1000
+ENTRYPOINT ["/usr/local/bin/plugin-migration"]

@@ -1,0 +1,14 @@
+# The official image provides MongoDB 4.4.30 and Database Tools 100.10.0.
+# Keep the runtime and tools together: their native library dependencies matter.
+FROM --platform=linux/amd64 mongo@sha256:4be76f674fc4b27859816811b8baa3c51830eb1dbf4ca81a51e26b79edd662ef
+
+WORKDIR /opt/openlap-checkpoint
+COPY scripts/plugin-checkpoint/ /opt/openlap-checkpoint/
+RUN for tool in bash mongo mongod mongodump mongorestore gzip sha256sum timeout stat mktemp cmp ln sync head wc du; do command -v "$tool" >/dev/null || exit 1; done \
+    && mongod --version | grep -q 'v4.4.30' \
+    && mongodump --version | grep -q '100.10.0' \
+    && mongorestore --version | grep -q '100.10.0' \
+    && chmod 0555 checkpoint.sh && chmod 0444 report.js
+USER 1000:1000
+ENTRYPOINT ["/usr/bin/timeout", "--kill-after=10s", "540s", "/bin/bash", "--noprofile", "--norc", "/opt/openlap-checkpoint/checkpoint.sh"]
+CMD ["--configure-checkpoint"]

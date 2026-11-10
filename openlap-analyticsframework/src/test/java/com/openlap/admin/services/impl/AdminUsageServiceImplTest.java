@@ -60,6 +60,8 @@ public class AdminUsageServiceImplTest {
             indicator(USER_B, LIB, TYPE_2, METHOD));
 
     AdminUsageResponse usage = AdminUsageServiceImpl.computeUsage(indicators);
+    assertThat(usage.getSavedIndicatorCount()).isEqualTo(3L);
+    assertThat(usage.getUniqueCreatorCount()).isEqualTo(2L);
 
     Map<String, UsageCount> libraries = byId(usage.getVisualizationLibraries());
     assertThat(libraries.get(LIB).getIndicatorCount()).isEqualTo(3);
@@ -89,6 +91,8 @@ public class AdminUsageServiceImplTest {
     Map<String, UsageCount> libraries = byId(usage.getVisualizationLibraries());
     assertThat(libraries.get(LIB).getIndicatorCount()).isEqualTo(2);
     // Only USER_A is a known creator; the second indicator had no createdBy.
+    assertThat(usage.getSavedIndicatorCount()).isEqualTo(3L);
+    assertThat(usage.getUniqueCreatorCount()).isEqualTo(1L);
     assertThat(libraries.get(LIB).getUniqueUserCount()).isEqualTo(1);
 
     Map<String, UsageCount> types = byId(usage.getVisualizationTypes());
@@ -97,5 +101,16 @@ public class AdminUsageServiceImplTest {
     Map<String, UsageCount> methods = byId(usage.getAnalyticsMethods());
     assertThat(methods.get(METHOD).getIndicatorCount()).isEqualTo(1);
     assertThat(methods.get(METHOD).getUniqueUserCount()).isEqualTo(0);
+  }
+
+  @Test
+  public void totalsIncludeRecordsWithoutPluginsAndCountCreatorsAcrossAllKindsOnlyOnce() {
+    Document dangling = new Document("createdBy", new Document("$id", USER_A))
+        .append("analyticsTechniqueReference", new Document("analyticsTechnique", new Document("$id", "missing-method")));
+    AdminUsageResponse usage = AdminUsageServiceImpl.computeUsage(Arrays.asList(dangling,
+        indicator(USER_A, LIB, TYPE_1, METHOD), indicator(USER_B, null, null, null), new Document()));
+    assertThat(usage.getSavedIndicatorCount()).isEqualTo(4L);
+    assertThat(usage.getUniqueCreatorCount()).isEqualTo(2L);
+    assertThat(byId(usage.getAnalyticsMethods()).get("missing-method").getIndicatorCount()).isEqualTo(1);
   }
 }

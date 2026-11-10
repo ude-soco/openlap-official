@@ -7,10 +7,8 @@ compose.yaml
 # container, so the host's target/ must never enter the build context.
 target
 
-# Workstation and uploaded JARs are deliberately excluded from the build context.
-# OpenLAP does not generate these binaries. Local-mode installations need reviewed
-# plugin artifacts at runtime; Git/CI supplies only the tracked placeholder folders.
-# Do not package arbitrary local binaries without provenance and checksum review.
+# Instance plugin JARs are uploaded or restored separately. Preserve them before
+# replacing a pod; the image includes directory placeholders through .gitkeep.
 jars/analytics_techniques/*.jar
 jars/visualization_methods/*.jar
 

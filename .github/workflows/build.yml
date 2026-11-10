@@ -17,6 +17,10 @@ on:
         type: boolean
         default: false
         required: false
+      verify_plugin_runtime:
+        type: boolean
+        default: false
+        required: false
       timeout:
         type: number
         default: 20
@@ -48,6 +52,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v7
+      with:
+        persist-credentials: false
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v4
@@ -56,6 +62,12 @@ jobs:
       uses: docker/setup-buildx-action@v4
       with:
         platforms:  ${{ inputs.platforms }}
+
+    - name: Check verified runtime platform
+      if: inputs.verify_plugin_runtime
+      env:
+        BUILD_PLATFORMS: ${{ inputs.platforms }}
+      run: test "$BUILD_PLATFORMS" = linux/amd64
 
     - name: Login to container registry
       if:   ${{ inputs.push }}
@@ -93,7 +105,26 @@ jobs:
     - name: Determine Git commit timestamp
       run: echo "TIMESTAMP=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
+    - name: Obtain reviewed public chart history
+      if: inputs.verify_plugin_runtime && matrix.service == 'openlap-analyticsframework'
+      env:
+        GIT_CONFIG_NOSYSTEM: '1'
+        GIT_CONFIG_GLOBAL: /dev/null
+        GIT_CONFIG_COUNT: '0'
+        GIT_NO_LAZY_FETCH: '1'
+        GIT_NO_REPLACE_OBJECTS: '1'
+        GIT_TERMINAL_PROMPT: '0'
+        GIT_ASKPASS: /bin/false
+        SSH_ASKPASS: /bin/false
+      run: >-
+        git -c credential.helper= -c credential.interactive=false
+        -c protocol.allow=never -c protocol.https.allow=always
+        fetch --no-tags --depth=1 --no-recurse-submodules
+        https://github.com/ude-soco/openlap-official.git
+        4768ec732c667940e00dfc5a87e0300ed0a7ef75
+
     - name: Build and push container image
+      id: build
       uses: docker/build-push-action@v7
       env:
         SOURCE_DATE_EPOCH: ${{ env.TIMESTAMP }}
@@ -103,13 +134,44 @@ jobs:
         context:    ${{ matrix.service }}
         tags:       ${{ steps.meta.outputs.tags }}
         labels:     ${{ steps.meta.outputs.labels }}
-        push:       ${{ inputs.push }}
+        push:       ${{ inputs.push && !inputs.verify_plugin_runtime }}
+        load:       ${{ inputs.verify_plugin_runtime }}
         cache-from: type=gha
         cache-to:   type=gha,mode=max
         build-args: |
           VITE_EMAIL_TEMPLATE_ID=${{ vars.VITE_EMAIL_TEMPLATE_ID }}
           VITE_EMAIL_SERVICE_ID=${{ vars.VITE_EMAIL_SERVICE_ID }}
           VITE_EMAIL_PUBLIC_KEY=${{ vars.VITE_EMAIL_PUBLIC_KEY }}
+
+    - name: Verify historical charts against the packaged backend
+      if: inputs.verify_plugin_runtime && matrix.service == 'openlap-analyticsframework'
+      env:
+        TESTED_IMAGE_ID: ${{ steps.build.outputs.imageid }}
+      run: >-
+        python3 -B openlap-analyticsframework/scripts/verify-legacy-c3.py
+        --image "$TESTED_IMAGE_ID" --runtime-layout spring-boot
+
+    - name: Publish the verified image without rebuilding
+      if: inputs.push && inputs.verify_plugin_runtime
+      env:
+        TESTED_IMAGE_ID: ${{ steps.build.outputs.imageid }}
+        TESTED_IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        EXPECTED_IMAGE_NAME: ${{ steps.image_name.outputs.full }}
+      run: |
+        set -eu
+        test "$(docker image inspect "$TESTED_IMAGE_ID" --format '{{.Id}}')" = "$TESTED_IMAGE_ID"
+        test -n "$TESTED_IMAGE_TAGS"
+        while IFS= read -r release_tag; do
+          test -n "$release_tag" || continue
+          case "$release_tag" in
+            "$EXPECTED_IMAGE_NAME":*) ;;
+            *) exit 1 ;;
+          esac
+          test "$(docker image inspect "$release_tag" --format '{{.Id}}')" = "$TESTED_IMAGE_ID"
+          docker image push "$release_tag"
+        done <<EOF
+        $TESTED_IMAGE_TAGS
+        EOF
 
     - name: Output tags
       if: inputs.push

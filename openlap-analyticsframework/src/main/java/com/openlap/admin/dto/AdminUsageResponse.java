@@ -13,4 +13,10 @@ public class AdminUsageResponse {
   private List<UsageCount> visualizationLibraries;
   private List<UsageCount> visualizationTypes;
   private List<UsageCount> analyticsMethods;
+  private long savedIndicatorCount;
+  private long uniqueCreatorCount;
+
+  public AdminUsageResponse(List<UsageCount> libraries, List<UsageCount> types, List<UsageCount> methods) {
+    this(libraries, types, methods, 0L, 0L);
+  }
 }

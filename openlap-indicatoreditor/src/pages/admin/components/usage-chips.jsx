@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { Chip, Skeleton, Stack, Typography } from "@mui/material";
 
-// Compact "Used by N indicators / N users" cell. Driven by useAdminUsage state:
+// Compact "Used by N indicators / N creators" cell. Driven by useAdminUsage state:
 // loading → skeleton, error → "Usage unavailable" (never blocks the page), ready
 // → two chips (an item absent from the usage map means 0, shown explicitly).
 const UsageChips = ({ status, usage }) => {
@@ -27,7 +27,7 @@ const UsageChips = ({ status, usage }) => {
       <Chip
         size="small"
         variant="outlined"
-        label={`${users} ${users === 1 ? "user" : "users"}`}
+        label={`${users} ${users === 1 ? "creator" : "creators"}`}
       />
     </Stack>
   );

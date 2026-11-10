@@ -15,6 +15,7 @@ import { BasicContext } from "../../../basic-indicator";
 import CustomTooltip from "../../../../../../../common/components/custom-tooltip/custom-tooltip";
 import EmptyState from "../../../../../../../common/components/empty-state/empty-state";
 import { DataTypes } from "../../../../../../indicator-specification-cards/creator/utils/data/config";
+import { getAnalyzedRowCount } from "../../../utils/analyzed-data.js";
 
 const AnalyzedDataTable = () => {
   const {
@@ -42,7 +43,7 @@ const AnalyzedDataTable = () => {
     ${DataTypes[type.toLowerCase()].description}`;
   };
 
-  const numRows = columns[0]?.data.length ?? 0;
+  const numRows = getAnalyzedRowCount(analyzedData);
 
   // Friendly empty result: the method ran but produced no rows.
   if (numRows === 0) {

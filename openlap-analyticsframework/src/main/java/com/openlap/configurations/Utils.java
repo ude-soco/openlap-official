@@ -2,6 +2,7 @@ package com.openlap.configurations;
 
 import com.openlap.infrastructure.exception.InvalidFileNameException;
 import com.openlap.infrastructure.exception.ServiceException;
+import com.openlap.plugins.PluginJarFiles;
 import java.io.*;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -89,24 +90,9 @@ public class Utils {
   }
 
   public static void saveFile(MultipartFile fileToSave, String savingFolder, String fileName) {
-    createFolderIfNotExisting(savingFolder);
-    // Resolve to a validated, contained path before writing (defense in depth against traversal).
     Path target = resolveSafeJarPath(savingFolder, fileName);
-    try (BufferedOutputStream stream =
-        new BufferedOutputStream(new FileOutputStream(target.toFile()))) {
-      stream.write(fileToSave.getBytes());
-    } catch (IOException e) {
-      throw new ServiceException("Could not save plugin file '" + target.getFileName() + "'.", e);
-    }
+    PluginJarFiles.saveNew(fileToSave, target);
     log.info("File '{}' saved in '{}'", target.getFileName(), savingFolder);
-  }
-
-  private static void createFolderIfNotExisting(String savingFolder) throws SecurityException {
-    File theDir = new File(savingFolder);
-    if (!theDir.exists()) {
-      theDir.mkdir();
-      log.info("Folder created: {}", savingFolder);
-    }
   }
 
   public static void deleteFolder(String deletionFolder) {

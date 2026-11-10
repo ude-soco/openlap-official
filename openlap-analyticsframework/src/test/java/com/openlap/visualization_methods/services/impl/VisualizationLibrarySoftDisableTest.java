@@ -24,7 +24,7 @@ public class VisualizationLibrarySoftDisableTest {
   private final VisualizationTypeRepository typeRepository =
       mock(VisualizationTypeRepository.class);
   private final VisualizationLibraryServiceImpl service =
-      new VisualizationLibraryServiceImpl(libraryRepository, utilityService, typeRepository);
+      new VisualizationLibraryServiceImpl(libraryRepository, utilityService, typeRepository, com.openlap.plugins.management.PluginCatalogVisibility.legacyOnly());
 
   private static VisLibrary library(String id, Boolean enabled) {
     VisLibrary library = new VisLibrary();

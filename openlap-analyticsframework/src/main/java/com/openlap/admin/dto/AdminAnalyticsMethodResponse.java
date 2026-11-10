@@ -13,4 +13,9 @@ public class AdminAnalyticsMethodResponse {
   private String name;
   private String description;
   private boolean enabled;
+  private String artifactId;
+
+  public AdminAnalyticsMethodResponse(String id, String name, String description, boolean enabled) {
+    this.id = id; this.name = name; this.description = description; this.enabled = enabled;
+  }
 }

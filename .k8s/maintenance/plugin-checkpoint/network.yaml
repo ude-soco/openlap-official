@@ -1,0 +1,12 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: openlap-plugin-checkpoint
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: plugin-checkpoint
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  # Select only reviewed DNS and primary MongoDB egress; restore stays on loopback.
+  egress: []

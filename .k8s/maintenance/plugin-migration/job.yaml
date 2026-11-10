@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openlap-plugin-migration
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: plugin-migration
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: migrate
+        # The operator must replace this placeholder with a reviewed immutable digest.
+        image: ghcr.io/ude-soco/openlap-official-plugin-migration:configure-reviewed-digest
+        imagePullPolicy: Always
+        # No action, database or storage destination is selected automatically.
+        args: [--configure-migration-action]
+        env:
+        - name: MONGODB_PRIMARY_URI
+          value: ""
+        - name: OPENLAP_MONGODB_DB
+          value: ""
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: "1"
+            memory: 1Gi
+        volumeMounts:
+        - name: inputs
+          mountPath: /inputs
+          readOnly: true
+        - name: outputs
+          mountPath: /outputs
+        - name: work
+          mountPath: /tmp
+      volumes:
+      # Preprovision separate operator-owned claims; the Job creates/deletes neither.
+      - name: inputs
+        persistentVolumeClaim:
+          claimName: configure-plugin-migration-inputs
+          readOnly: true
+      - name: outputs
+        persistentVolumeClaim:
+          claimName: configure-plugin-migration-outputs
+      - name: work
+        emptyDir:
+          sizeLimit: 256Mi

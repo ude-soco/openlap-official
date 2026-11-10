@@ -364,6 +364,82 @@ title 300 characters; news body 30000 text characters (a hard break counts as on
 publication authors/venue 2000 each; URLs 2048; publication year 1000–2999. All validation is
 enforced on the backend as well as in the editor.
 
+## Plugin lifecycle migration (issue #1)
+
+The current feature branch establishes protections ahead of S3-backed plugin
+management. Existing JAR uploads are staged and statically inspected before
+publication, with a 100 MiB upload limit, 256 MiB expanded archive limit and 10000
+entry limit. Invalid or empty archives return HTTP 400 (`INVALID_PLUGIN_JAR`).
+An existing filename, including a symlink, returns HTTP 409 (`PLUGIN_FILE_EXISTS`)
+and is never overwritten. The local filesystem must support same-directory hard
+links for atomic publication; unsupported filesystems fail without replacing data.
+Archive validation does not sandbox or establish trust in uploaded code.
+
+Runtime loaders use the catalog's recorded JAR path within the configured plugin
+directory. They do not search other JARs for a matching class. This keeps versions
+with identical class names independent. Verify historical `fileName` and
+`frameworkLocation` values against installed binaries before deploying this change.
+Missing or inconsistent paths need deliberate migration, not automatic fallback.
+
+The following legacy DELETE operations now return HTTP 409 with code
+`PLUGIN_DELETE_UNAVAILABLE`, before modifying files or catalog data:
+
+- `/v1/analytics/methods/{id}` and `/v1/analytics/methods/delete?fileName=...`
+- `/v1/visualizations/libraries/{id}` and `/v1/visualizations/types/{id}`
+- `/v1/visualizations/delete?fileName=...`
+
+Use the existing admin Enable/Disable controls to retire plugins while keeping
+saved indicators functional. Dependency-safe removal and the new upload/update
+workflows are subsequent increments. See the
+[issue #1 plan](../docs/issue-1-plugin-management-plan.md) for migration and rollout.
+
+An edge-only S3-compatible storage pilot has now passed live two-client access,
+network isolation and persistence checks after storage pod replacement. This
+branch now also includes a content-addressed Mongo artifact registry, S3 adapter,
+verified per-backend cache and explicit inventory/check/apply migration utility.
+Real MongoDB/Garage tests verify preservation of existing records and independent
+backend execution after the source JAR is removed.
+
+The default remains `PLUGIN_STORAGE_MODE=local`. In opt-in S3 mode, startup verifies
+all installed artifacts, local discovery and legacy plugin mutations are blocked,
+and cache limits prevent unbounded growth without evicting active JARs. There is
+no local fallback after an S3 error. Existing live JARs have not been imported, and
+the backend changes have not been deployed. Preserve files from every live replica
+before any rollout. See the [artifact migration guide](../docs/plugin-artifact-migration.md)
+for environment settings, commands, recovery and the remaining release gates.
+
+SUPER_ADMIN users can now use **Add methods** or **Add library** in the admin
+catalogs for the shared upload, inspection, review and activation workflow.
+Inspection requires explicit trust confirmation before running constructors.
+Incomplete installations stay hidden from catalog selection and runtime fetches;
+saved reviews and interrupted activations can be resumed. Identical uploads are
+idempotent; replacing an existing entry class uses the explicit version workflow.
+The new workflow requires S3 mode after the existing-artifact migration. It has
+not been deployed. See the [upload workflow guide](../docs/plugin-upload-workflow.md)
+for supported JAR contracts, APIs and recovery.
+
+**Details & versions** now supports metadata editing with revision checks and
+grouped history. **Upload new version** adds an explicit old-to-new mapping review,
+inherits edited details and disabled states, and installs separate immutable
+catalog IDs. Previous versions remain executable for existing indicators.
+After activation, admins can separately confirm disabling the previous entries
+for new selections. See the [version management guide](../docs/plugin-version-management.md)
+for API contracts and concurrency/recovery behavior. These changes remain on the
+feature branch and have not been deployed.
+
+Run the full backend suite and opt-in disposable MongoDB/Garage integration tests:
+
+```bash
+./mvnw test
+python3 scripts/test-plugin-artifacts.py
+```
+
+Run the file, real-JAR version isolation, deletion and authorization regressions:
+
+```bash
+./mvnw -Dtest=PluginJarFilesTest,InstalledPluginVersionTest,LegacyPluginDeletionTest,SecurityAuthorizationMockMvcTest test
+```
+
 # Troubleshooting
 
 - **MongoDB not running / connection refused** — ensure `docker compose up -d mongo` is running and

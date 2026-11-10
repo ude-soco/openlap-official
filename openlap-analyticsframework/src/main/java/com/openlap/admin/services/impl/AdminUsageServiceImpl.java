@@ -43,12 +43,16 @@ public class AdminUsageServiceImpl implements AdminUsageService {
     Map<String, Tally> libraries = new HashMap<>();
     Map<String, Tally> types = new HashMap<>();
     Map<String, Tally> methods = new HashMap<>();
+    long savedIndicatorCount = 0;
+    Set<String> creators = new HashSet<>();
 
     for (Document indicator : indicators) {
       if (indicator == null) {
         continue;
       }
       String userId = refId(indicator.get("createdBy"));
+      savedIndicatorCount++;
+      if (userId != null) creators.add(userId);
 
       Document visRef = asDocument(indicator.get("visualizationTechniqueReference"));
       if (visRef != null) {
@@ -62,7 +66,7 @@ public class AdminUsageServiceImpl implements AdminUsageService {
       }
     }
 
-    return new AdminUsageResponse(toList(libraries), toList(types), toList(methods));
+    return new AdminUsageResponse(toList(libraries), toList(types), toList(methods), savedIndicatorCount, creators.size());
   }
 
   private static void tally(Map<String, Tally> counts, String id, String userId) {

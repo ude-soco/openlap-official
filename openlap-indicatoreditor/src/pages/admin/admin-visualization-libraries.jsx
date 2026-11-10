@@ -28,6 +28,9 @@ import {
 import { useAdminUsage } from "./utils/use-admin-usage";
 import UsageChips from "./components/usage-chips";
 import CatalogStatusControl from "./components/catalog-status-control";
+import PluginCatalogActions from "./components/plugin-catalog-actions";
+import PluginUploadControl from "./components/plugin-upload-control";
+import PluginRecoveryControl from "./components/plugin-recovery-control";
 
 const SKELETON_ROWS = 4;
 
@@ -39,7 +42,7 @@ const errorMessage = (error, fallback) =>
  * GET /v1/admin/visualizations/libraries, including disabled items. The "Chart
  * types" count is a best-effort enhancement derived from the admin types list
  * (grouped by library name); if that call fails the page still renders with "—"
- * counts. No upload/delete actions.
+ * counts. Adding a library uses the shared staged upload workflow.
  */
 const AdminVisualizationLibraries = () => {
   const { api } = useContext(AuthContext);
@@ -78,7 +81,8 @@ const AdminVisualizationLibraries = () => {
         : [];
       types.forEach((type) => {
         if (type?.library) {
-          counts[type.library] = (counts[type.library] || 0) + 1;
+          const key = type.libraryId || type.library;
+          counts[key] = (counts[key] || 0) + 1;
         }
       });
     } else {
@@ -131,13 +135,17 @@ const AdminVisualizationLibraries = () => {
         ]}
         subtitle="Installed visualization libraries and their source plugins."
         actions={
-          status === "ready" ? (
+          <Stack direction="row" gap={1} alignItems="center">
+          {status === "ready" ? (
             <Chip
               label={`${libraries.length} ${
                 libraries.length === 1 ? "library" : "libraries"
               }`}
             />
-          ) : null
+          ) : null}
+          <PluginRecoveryControl kind="VISUALIZATION_LIBRARY" onChanged={load} />
+          <PluginUploadControl kind="VISUALIZATION" onActivated={load} />
+          </Stack>
         }
       />
 
@@ -172,6 +180,7 @@ const AdminVisualizationLibraries = () => {
                   <TableCell align="right">Chart types</TableCell>
                   <TableCell>Usage</TableCell>
                   <TableCell>Status</TableCell>
+                  <TableCell>Actions</TableCell>
                   <TableCell>Description</TableCell>
                 </TableRow>
               </TableHead>
@@ -197,7 +206,8 @@ const AdminVisualizationLibraries = () => {
                         <TableCell>
                           <Skeleton />
                         </TableCell>
-                      </TableRow>
+                      <TableCell><Skeleton width={120} /></TableCell>
+                        </TableRow>
                     ))
                   : libraries.map((library) => (
                       <TableRow key={library.id || library.name} hover>
@@ -205,6 +215,7 @@ const AdminVisualizationLibraries = () => {
                           <Typography variant="body2" fontWeight={600}>
                             {library.name || "—"}
                           </Typography>
+                            {library.artifactId && <Chip size="small" variant="outlined" label={`Version ${library.artifactId.slice(-64, -56)}`} title={library.artifactId} sx={{ mt: 0.5 }} />}
                           {library.id && (
                             <Typography variant="caption" color="text.secondary">
                               {library.id}
@@ -214,7 +225,7 @@ const AdminVisualizationLibraries = () => {
                         <TableCell>{library.creator || "—"}</TableCell>
                         <TableCell align="right">
                           {library.name
-                            ? typeCountByLibrary[library.name] ?? "—"
+                            ? typeCountByLibrary[library.id] ?? typeCountByLibrary[library.name] ?? "—"
                             : "—"}
                         </TableCell>
                         <TableCell>
@@ -234,6 +245,7 @@ const AdminVisualizationLibraries = () => {
                             }
                           />
                         </TableCell>
+                              <TableCell><PluginCatalogActions kind="VISUALIZATION_LIBRARY" entry={library} onSaved={load} /></TableCell>
                         <TableCell>
                           <Typography variant="body2" color="text.secondary">
                             {library.description || "—"}

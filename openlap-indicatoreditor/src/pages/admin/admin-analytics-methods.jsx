@@ -35,6 +35,9 @@ import {
 import { useAdminUsage } from "./utils/use-admin-usage";
 import UsageChips from "./components/usage-chips";
 import CatalogStatusControl from "./components/catalog-status-control";
+import PluginCatalogActions from "./components/plugin-catalog-actions";
+import PluginUploadControl from "./components/plugin-upload-control";
+import PluginRecoveryControl from "./components/plugin-recovery-control";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
 const SKELETON_ROWS = 5;
@@ -47,7 +50,7 @@ const errorMessage = (error, fallback) =>
  * (id, name, description, enabled), including disabled items. A method's inputs and
  * parameters come from GET /v1/analytics/methods/input-params/{id}, which
  * resolves the method's class from its JAR server-side — so they are loaded
- * lazily, only when a row is expanded. No upload/delete/reload actions.
+ * lazily, only when a row is expanded. New entries use the shared staged upload workflow.
  */
 const AdminAnalyticsMethods = () => {
   const { api } = useContext(AuthContext);
@@ -148,9 +151,10 @@ const AdminAnalyticsMethods = () => {
 
   const loading = status === "loading";
   const showSkeleton = loading && methods.length === 0;
+  const currentPage = Math.min(page, Math.max(0, Math.ceil(methods.length / size) - 1));
   const pagedMethods = useMemo(
-    () => methods.slice(page * size, page * size + size),
-    [methods, page, size]
+    () => methods.slice(currentPage * size, (currentPage + 1) * size),
+    [methods, currentPage, size]
   );
 
   const renderChips = (items) =>
@@ -224,13 +228,17 @@ const AdminAnalyticsMethods = () => {
         ]}
         subtitle="Available analytics methods and, on expand, their inputs and parameters."
         actions={
-          status === "ready" ? (
+          <Stack direction="row" gap={1} alignItems="center">
+          {status === "ready" ? (
             <Chip
               label={`${methods.length} ${
                 methods.length === 1 ? "method" : "methods"
               }`}
             />
-          ) : null
+          ) : null}
+          <PluginRecoveryControl kind="ANALYTICS_METHOD" onChanged={loadMethods} />
+          <PluginUploadControl kind="ANALYTICS" onActivated={loadMethods} />
+          </Stack>
         }
       />
 
@@ -266,6 +274,7 @@ const AdminAnalyticsMethods = () => {
                     <TableCell>Description</TableCell>
                     <TableCell>Usage</TableCell>
                     <TableCell>Status</TableCell>
+                  <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -287,6 +296,7 @@ const AdminAnalyticsMethods = () => {
                           <TableCell>
                             <Skeleton width={160} />
                           </TableCell>
+                        <TableCell><Skeleton width={120} /></TableCell>
                         </TableRow>
                       ))
                     : pagedMethods.map((method) => {
@@ -314,6 +324,7 @@ const AdminAnalyticsMethods = () => {
                                 <Typography variant="body2" fontWeight={600}>
                                   {method.name || "—"}
                                 </Typography>
+                            {method.artifactId && <Chip size="small" variant="outlined" label={`Version ${method.artifactId.slice(-64, -56)}`} title={method.artifactId} sx={{ mt: 0.5 }} />}
                                 {id && (
                                   <Typography
                                     variant="caption"
@@ -345,10 +356,11 @@ const AdminAnalyticsMethods = () => {
                                   }
                                 />
                               </TableCell>
+                              <TableCell><PluginCatalogActions kind="ANALYTICS_METHOD" entry={method} onSaved={loadMethods} /></TableCell>
                             </TableRow>
                             <TableRow>
                               <TableCell
-                                colSpan={5}
+                                colSpan={6}
                                 sx={{
                                   py: 0,
                                   borderBottom: expanded ? undefined : "none",
@@ -368,7 +380,7 @@ const AdminAnalyticsMethods = () => {
             <TablePagination
               component="div"
               count={methods.length}
-              page={page}
+              page={currentPage}
               onPageChange={handleChangePage}
               rowsPerPage={size}
               onRowsPerPageChange={handleChangeRowsPerPage}

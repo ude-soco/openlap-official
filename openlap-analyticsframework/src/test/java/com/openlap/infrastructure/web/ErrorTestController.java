@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/test")
 public class ErrorTestController {
+  @PostMapping("/oversized-upload")
+  public void oversizedUpload() { throw new org.springframework.web.multipart.MaxUploadSizeExceededException(100L * 1024 * 1024); }
 
   @PostMapping("/openlap-notfound")
   public void openlapNotFound() {

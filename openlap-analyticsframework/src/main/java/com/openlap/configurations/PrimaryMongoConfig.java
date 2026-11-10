@@ -26,6 +26,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
       "com.openlap.analytics_module.repositories",
       "com.openlap.analytics_technique.repositories",
       "com.openlap.admin.audit",
+      "com.openlap.plugins.artifacts",
       "com.openlap.user.repositories",
       "com.openlap.visualization_methods.repositories",
       "com.openlap.isc_module.repositories"
