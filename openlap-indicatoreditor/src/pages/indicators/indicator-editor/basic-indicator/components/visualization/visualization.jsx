@@ -34,6 +34,7 @@ import SectionCard from "../../../../../../common/components/section-card/sectio
 import { getStepStatus } from "../../utils/basic-workflow-ui.js";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
 import PaletteIcon from "@mui/icons-material/Palette";
+import { getAnalyzedRowCount } from "../../utils/analyzed-data.js";
 import {
   requestCreateBasicIndicator,
   requestUpdateBasicIndicator,
@@ -71,7 +72,7 @@ export default function Visualization() {
     if (
       visualization.inputs.length === 0 ||
       !allInputsHaveSelected(visualization.inputs) ||
-      Object.keys(analysis.analyzedData).length === 0
+      getAnalyzedRowCount(analysis.analyzedData) === 0
     ) {
       return;
     }
@@ -113,10 +114,10 @@ export default function Visualization() {
     return () => {
       cancelled = true;
     };
-    // Re-run the preview only when the chart inputs/params change (not when the
-    // callbacks or analyzedData identity change). Deps are intentional.
+    // Invalidate in-flight charts when analysis changes, including reruns that
+    // produce the same number of rows.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visualization.inputs, visualization.params]);
+  }, [visualization.inputs, visualization.params, analysis.analyzedData]);
 
   const handleLoadPreviewVisualization = async () => {
     let indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
@@ -198,7 +199,7 @@ export default function Visualization() {
     return (
       visualization.inputs.length === 0 ||
       !allInputsHaveSelected(visualization.inputs) ||
-      Object.keys(analysis.analyzedData).length === 0 ||
+      getAnalyzedRowCount(analysis.analyzedData) === 0 ||
       state.previewError ||
       !visualization.previewData?.displayCode?.length
     );
@@ -218,7 +219,7 @@ export default function Visualization() {
 
   const configReady =
     visualization.inputs.length > 0 &&
-    Object.keys(analysis.analyzedData).length > 0;
+    getAnalyzedRowCount(analysis.analyzedData) > 0;
 
   // Read-only confidence checklist shown above Save. Reflects state only — it
   // does not gate saving (Save stays governed by handleCheckDisabled()).
@@ -233,7 +234,7 @@ export default function Visualization() {
     },
     {
       label: "Analysis preview generated",
-      done: Object.keys(analysis.analyzedData).length > 0,
+      done: getAnalyzedRowCount(analysis.analyzedData) > 0,
     },
     {
       label: "Chart selected and configured",
