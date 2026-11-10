@@ -3,8 +3,8 @@
 Status: lifecycle protections, artifact integration, Add, metadata/version management,
 guarded removal/recovery and usage overview implemented on
 `feat/shoeb-plugin-management-s3`; edge storage pilot deployed and verified;
-edge preservation and catalog inventory completed; reviewed recovery preflight,
-application migration and release acceptance remain pending.
+edge preservation, catalog inventory and reviewed recovery preflight completed;
+write-paused checkpoint, application migration and release acceptance remain pending.
 Updated: 2026-11-10.
 Issue: [Create an admin panel #1](https://github.com/ude-soco/openlap-official/issues/1).
 
@@ -82,8 +82,13 @@ JAR roots are empty even though catalog registrations remain. The protected
 database captures and original catalog inventory are retained. Recovery from
 pinned public historical artifacts requires an explicitly reviewed mapping and
 read-only class-coverage preflight; filenames and counts alone are insufficient.
+That preflight passed against the current edge catalog; its temporary resources
+were removed and the original captures remain protected. This establishes static
+class coverage rather than plugin execution or application acceptance.
 The application-owned preflight component stages reproducible inputs without
-root access, retained-volume permission changes or S3 credentials. Production
+root access, retained-volume permission changes or S3 credentials. The separate
+checkpoint runner has passed disposable restoration/failure fixtures; its actual
+write-paused edge checkpoint remains pending. Production
 resources and application image pins were not changed by the pilot.
 
 Phase 3 is implemented on the feature branch and verified locally:
