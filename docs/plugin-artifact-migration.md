@@ -295,6 +295,9 @@ not enforce a distributed maintenance lock; legacy whole-document saves can drop
 additive references after migration. Verify the operator's actual freeze mechanism
 before applying; an acknowledgement variable is insufficient. Preserve a
 write-paused release checkpoint and rehearse restore before changing references.
+The optional [database checkpoint runner](./plugin-release-checkpoint.md) provides
+direct-source backup and isolated restore verification without Pod exec. Its
+external writer-freeze, S3-object and off-node retention gates remain explicit.
 
 After every terminal result, remove the Job and operation-specific network access
 through the normal operational process. Retain input/output claims, source
