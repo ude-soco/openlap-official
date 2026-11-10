@@ -140,7 +140,7 @@ class RunnerTest(unittest.TestCase):
                  patch.object(runner.os,"killpg",side_effect=PermissionError("fixture teardown failure")):
                 process.return_value.poll.return_value=None
                 with self.assertRaises(PermissionError): runner.server(config,inputs,data)
-            self.assertEqual(len(descriptors),2)
+            self.assertEqual(len(descriptors),3)
             for value in descriptors:
                 with self.assertRaises(OSError): runner.os.fstat(value)
             self.assertFalse(scratch.exists())

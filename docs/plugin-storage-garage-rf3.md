@@ -95,7 +95,8 @@ permission. Application-level deletion/retention guards remain separate.
 
 Only the designated containers see their projected credential files. The server
 copies its RPC/admin values into sealed anonymous Linux RAM files with mode 0600
-and passes only the two inherited descriptor paths to Garage. No named credential
+and passes their inherited descriptor paths to Garage. The generated configuration
+is a third sealed anonymous RAM file. No named credential or runtime configuration
 copy is written to a filesystem. Descriptor handles close when the processes exit.
 It does not disable Garage's permission
 check, pass secrets in argv or inherit ambient Garage credential overrides.

@@ -458,9 +458,11 @@ def server(config, directory, data):
                     'rpc_bind_addr="0.0.0.0:3901"\nrpc_public_addr=' + json.dumps(config.dns[index] + ":3901") + '\nrpc_secret_file=' + json.dumps("/proc/self/fd/" + str(descriptors[0])) + '\n'
                     'bootstrap_peers=' + json.dumps(bootstrap_peers) + '\n[s3_api]\ns3_region=' + json.dumps(config.value["region"]) + '\napi_bind_addr="0.0.0.0:3900"\n'
                     '[admin]\napi_bind_addr="0.0.0.0:3903"\nadmin_token_file=' + json.dumps("/proc/self/fd/" + str(descriptors[1])) + '\nmetrics_require_token=true\n')
-        (work / "garage.toml").write_text(settings)
+        # Keep the generated config anonymous and immutable too. It contains
+        # public settings and descriptor paths, never the credential values.
+        descriptors.append(secret_descriptor(settings))
         environment = {"PATH": "/usr/local/bin:/usr/bin:/bin", "HOME": str(work), "TMPDIR": str(work), "LANG": "C"}
-        process = subprocess.Popen([GARAGE, "-c", str(work / "garage.toml"), "server"], stdout=subprocess.DEVNULL,
+        process = subprocess.Popen([GARAGE, "-c", "/proc/self/fd/" + str(descriptors[2]), "server"], stdout=subprocess.DEVNULL,
                                    stderr=subprocess.DEVNULL, start_new_session=True, env=environment, pass_fds=tuple(descriptors))
         api = Api(admin, seconds=30)
         while True:
