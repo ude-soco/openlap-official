@@ -89,9 +89,16 @@
         return {mongo: new Mongo(uri), database: database};
     }
     function snapshot() {
-        var local = env("CHECKPOINT_PHASE") === "restored";
+        var local = ["restored", "rehearsal-restored"].indexOf(env("CHECKPOINT_PHASE")) !== -1;
         var selected = local ? {mongo: isolatedConnection(), database: env("OPENLAP_MONGODB_DB")} : connection();
         var db = selected.mongo.getDB(selected.database);
+        if (env("CHECKPOINT_PHASE") === "rehearsal-restored") {
+            var databases = selected.mongo.getDB("admin").runCommand({listDatabases: 1, nameOnly: true, maxTimeMS: 5000});
+            require(databases.ok === 1 && Array.isArray(databases.databases));
+            require(databases.databases.every(function(item) {
+                return [selected.database, "admin", "config", "local"].indexOf(item.name) !== -1;
+            }));
+        }
         var hello = selected.mongo.getDB("admin").runCommand({isMaster: 1, maxTimeMS: 5000});
         require(hello.ok === 1 && hello.ismaster === true && hello.msg !== "isdbgrid");
         var build = selected.mongo.getDB("admin").runCommand({buildInfo: 1, maxTimeMS: 5000});
@@ -163,9 +170,76 @@
             sourceIdentityMd5: before.sourceIdentityMd5, collections: before.collections,
             scope: "One primary database; no S3 objects, external writers, off-node copy or application acceptance verified"}));
     }
+    function keys(value, expected) {
+        require(value !== null && typeof value === "object" && !Array.isArray(value));
+        require(JSON.stringify(Object.keys(value).sort()) === JSON.stringify(expected.slice().sort()));
+    }
+    function integer(value, minimum, maximum) {
+        require(typeof value === "number" && isFinite(value) && Math.floor(value) === value && value >= minimum && value <= maximum);
+    }
+    function collectionRows(rows) {
+        require(Array.isArray(rows) && rows.length > 0 && rows.length <= 256);
+        var previous = "";
+        return rows.map(function(row) {
+            keys(row, ["name", "count", "identityMd5", "dataMd5", "optionsMd5", "indexesMd5"]);
+            require(typeof row.name === "string" && /^[A-Za-z][A-Za-z0-9_.-]{0,119}$/.test(row.name));
+            require(!/^(system\.|tmp\.)/.test(row.name) && row.name > previous);
+            previous = row.name;
+            integer(row.count, 0, 1000000);
+            [row.identityMd5, row.dataMd5, row.optionsMd5, row.indexesMd5].forEach(requireDigest);
+            return {name: row.name, count: row.count, identityMd5: row.identityMd5,
+                    dataMd5: row.dataMd5, optionsMd5: row.optionsMd5, indexesMd5: row.indexesMd5};
+        });
+    }
+    function originalReport() {
+        var report = read(env("CHECKPOINT_WORK") + "/original-report.json");
+        keys(report, ["schemaVersion", "status", "checkpointId", "freezeEvidenceId", "freezeVerification", "database",
+            "sourceServerVersion", "restoreServerVersion", "fcv", "databaseToolsVersion", "archiveFile", "archiveSha256",
+            "archiveSizeBytes", "expandedArchiveBytes", "gzipValidated", "sourceBeforeAfterMatched", "restoredMatched",
+            "sourceIdentityMd5", "collections", "scope"]);
+        require(report.schemaVersion === 1 && report.status === "DUMP_AND_ISOLATED_RESTORE_VERIFIED");
+        require(typeof report.checkpointId === "string" && /^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(report.checkpointId));
+        require(typeof report.freezeEvidenceId === "string" && /^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,159}$/.test(report.freezeEvidenceId));
+        require(report.freezeVerification === "External operator prerequisite; not enforced or proven by this tool");
+        require(typeof report.database === "string" && /^[A-Za-z][A-Za-z0-9_-]{0,62}$/.test(report.database));
+        require(["admin", "config", "local"].indexOf(report.database) === -1);
+        require(typeof report.sourceServerVersion === "string" && /^4\.4\.[0-9]{1,3}$/.test(report.sourceServerVersion));
+        require(report.restoreServerVersion === "4.4.30" && report.fcv === "4.4" && report.databaseToolsVersion === "100.10.0");
+        require(report.archiveFile === "database.archive.gz" && typeof report.archiveSha256 === "string" && /^[a-f0-9]{64}$/.test(report.archiveSha256));
+        integer(report.archiveSizeBytes, 1, 1073741824);
+        integer(report.expandedArchiveBytes, 1, 1073741824);
+        require(report.gzipValidated === true && report.sourceBeforeAfterMatched === true && report.restoredMatched === true);
+        requireDigest(report.sourceIdentityMd5);
+        require(report.scope === "One primary database; no S3 objects, external writers, off-node copy or application acceptance verified");
+        report.collections = collectionRows(report.collections);
+        return report;
+    }
+    function rehearsalFinish() {
+        var original = originalReport(), restored = read(env("CHECKPOINT_WORK") + "/restored.json");
+        require(original.database === restored.database && original.fcv === restored.fcv && restored.serverVersion === "4.4.30");
+        require(JSON.stringify(original.collections) === JSON.stringify(collectionRows(restored.collections)));
+        require(env("CHECKPOINT_ARCHIVE_SHA256") === original.archiveSha256);
+        require(env("CHECKPOINT_ARCHIVE_SIZE") === String(original.archiveSizeBytes));
+        require(env("CHECKPOINT_EXPANDED_SIZE") === String(original.expandedArchiveBytes));
+        var reportSha = env("CHECKPOINT_EXPECTED_REPORT_SHA256");
+        require(/^[a-f0-9]{64}$/.test(reportSha));
+        print(JSON.stringify({schemaVersion: 1, status: "RETRIEVED_ARCHIVE_RESTORE_VERIFIED",
+            rehearsalId: env("CHECKPOINT_ID"), originalCheckpointId: original.checkpointId, originalReportSha256: reportSha,
+            database: original.database, originalSourceServerVersion: original.sourceServerVersion,
+            restoreServerVersion: restored.serverVersion, fcv: restored.fcv, databaseToolsVersion: "100.10.0",
+            archiveSha256: original.archiveSha256, archiveSizeBytes: original.archiveSizeBytes,
+            expandedArchiveBytes: original.expandedArchiveBytes, gzipValidated: true, restoredMatched: true,
+            originalSourceIdentityMd5: original.sourceIdentityMd5, collections: original.collections,
+            scope: "Retrieved DB archive only; no live source, new freeze, S3 objects, off-node custody or retention, or application acceptance verified"}));
+    }
     try {
         if (env("CHECKPOINT_PHASE") === "local-ready") { isolatedConnection(); print("LOCAL_READY"); }
         else if (env("CHECKPOINT_PHASE") === "finish") { finish(); }
-        else { require(["source-before", "source-after", "restored"].indexOf(env("CHECKPOINT_PHASE")) !== -1); snapshot(); }
+        else if (env("CHECKPOINT_PHASE") === "rehearsal-validate") {
+            var original = originalReport();
+            print(original.database + " " + original.archiveSha256 + " " + original.archiveSizeBytes + " " + original.expandedArchiveBytes);
+        }
+        else if (env("CHECKPOINT_PHASE") === "rehearsal-finish") { rehearsalFinish(); }
+        else { require(["source-before", "source-after", "restored", "rehearsal-restored"].indexOf(env("CHECKPOINT_PHASE")) !== -1); snapshot(); }
     } catch (_) { print("CHECKPOINT_VALIDATION_FAILED"); quit(1); }
 }());

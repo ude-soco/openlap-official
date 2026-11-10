@@ -1,7 +1,7 @@
 """Opt-in disposable MongoDB 4.4 checkpoint fixtures; no live or credential sources.
 
 Run: python3 -B tests/test_plugin_checkpoint_containers.py
-Only the new Dockerfile and its two scripts enter the image build context.
+Only the checkpoint Dockerfile and its fixed scripts enter the image build context.
 """
 import argparse
 from contextlib import contextmanager
@@ -46,15 +46,21 @@ directory=/outputs/$2
 if [[ $action == no-report ]]; then
     if [[ -L $directory ]]; then exit; fi
     [[ ! -e $directory/checkpoint.json && ! -L $directory/checkpoint.json ]]
+    [[ ! -e $directory/rehearsal.json && ! -L $directory/rehearsal.json ]]
     exit
 fi
 [[ -d $directory && ! -L $directory ]]
 if [[ $action == file ]]; then
     [[ $# == 3 ]]
-    case $3 in database.archive.gz|database.archive.gz.partial) ;; *) exit 1 ;; esac
+    case $3 in database.archive.gz|database.archive.gz.partial|publication-fault-triggered) ;; *) exit 1 ;; esac
     target=$directory/$3
     [[ -f $target && ! -L $target ]]
     printf '{"sizeBytes":%s}\n' "$(stat -c %s -- "$target")"
+elif [[ $action == rehearsal-summary ]]; then
+    [[ -f $directory/rehearsal.json && ! -L $directory/rehearsal.json ]]
+    report_sha=$(sha256sum -- "$directory/rehearsal.json"); report_sha=${report_sha%% *}
+    printf '{"reportSha256":"%s","directoryMode":"%s","reportMode":"%s"}\n' \
+        "$report_sha" "$(stat -c %a -- "$directory")" "$(stat -c %a -- "$directory/rehearsal.json")"
 elif [[ $action == summary ]]; then
     [[ -f $directory/checkpoint.json && ! -L $directory/checkpoint.json ]]
     [[ -f $directory/database.archive.gz && ! -L $directory/database.archive.gz ]]
@@ -66,6 +72,78 @@ elif [[ $action == summary ]]; then
 else
     exit 1
 fi
+'''
+
+# Only this fixed helper stages/mutates synthetic retrieved copies. Capture input
+# is read-only; the separate fixture inputs mount is writable only for setup.
+INPUT_HELPER = r'''
+set -euo pipefail
+umask 077
+[[ -d /inputs && ! -L /inputs ]]
+action=$1
+if [[ $action == cleanup ]]; then
+    shopt -s nullglob dotglob
+    for entry in /inputs/*; do rm -rf -- "$entry"; done
+    exit
+fi
+if [[ $action == empty ]]; then
+    shopt -s nullglob dotglob
+    entries=(/inputs/*)
+    [[ ${#entries[@]} == 0 ]]
+    exit
+fi
+[[ $# == 3 && $2 =~ ^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$ ]]
+directory=/inputs/$2
+if [[ $action == stage ]]; then
+    [[ -d /captures/verified && ! -L /captures/verified ]]
+    if [[ $3 == ancestor-symlink ]]; then
+        ln -s -- retrieved /inputs/$2
+    else
+        mkdir -m 0700 -- "$directory"
+        cp -- /captures/verified/checkpoint.json /captures/verified/database.archive.gz "$directory/"
+        case $3 in
+            original) ;;
+            corrupt-report) printf '%s\n' '{"private":"PRIVATE-FIXTURE-VALUE-MUST-NOT-BE-LOGGED"' > "$directory/checkpoint.json" ;;
+            oversized-report) head -c 262145 /dev/zero > "$directory/checkpoint.json" ;;
+            corrupt-archive) printf X | dd of="$directory/database.archive.gz" bs=1 count=1 conv=notrunc status=none ;;
+            archive-symlink) mv -- "$directory/database.archive.gz" "$directory/archive.original"; ln -s -- archive.original "$directory/database.archive.gz" ;;
+            report-symlink) mv -- "$directory/checkpoint.json" "$directory/report.original"; ln -s -- report.original "$directory/checkpoint.json" ;;
+            schema|false-flag|source-identity|archive-size|expanded-size|logical-data|logical-count|logical-indexes|logical-options|corrupt-gzip)
+                if [[ $3 == corrupt-gzip ]]; then printf 'corruption' >> "$directory/database.archive.gz"; fi
+                archive_sha=$(sha256sum -- "$directory/database.archive.gz"); archive_sha=${archive_sha%% *}
+                FIXTURE_CASE_REPORT="$directory/checkpoint.json" FIXTURE_MUTATION="$3" \
+                FIXTURE_ARCHIVE_SHA256="$archive_sha" FIXTURE_ARCHIVE_SIZE="$(stat -c %s -- "$directory/database.archive.gz")" \
+                mongo --nodb --norc --quiet --eval '
+                    (function() {
+                        var path = _getEnv("FIXTURE_CASE_REPORT"), report = JSON.parse(cat(path));
+                        switch (_getEnv("FIXTURE_MUTATION")) {
+                            case "schema": report.unexpectedField = true; break;
+                            case "false-flag": report.restoredMatched = false; break;
+                            case "source-identity": report.sourceIdentityMd5 = "00000000000000000000000000000000"; break;
+                            case "archive-size": report.archiveSizeBytes += 1; break;
+                            case "expanded-size": report.expandedArchiveBytes += 1; break;
+                            case "logical-data": report.collections[0].dataMd5 = "00000000000000000000000000000000"; break;
+                            case "logical-count": report.collections[0].count += 1; break;
+                            case "logical-indexes": report.collections[0].indexesMd5 = "00000000000000000000000000000000"; break;
+                            case "logical-options": report.collections[0].optionsMd5 = "00000000000000000000000000000000"; break;
+                            case "corrupt-gzip":
+                                report.archiveSha256 = _getEnv("FIXTURE_ARCHIVE_SHA256");
+                                report.archiveSizeBytes = Number(_getEnv("FIXTURE_ARCHIVE_SIZE")); break;
+                            default: quit(1);
+                        }
+                        writeFile(path + ".mutated", JSON.stringify(report) + "\n");
+                    }());' >/dev/null
+                mv -- "$directory/checkpoint.json.mutated" "$directory/checkpoint.json"
+                ;;
+            *) exit 1 ;;
+        esac
+    fi
+elif [[ $action != summary || $3 != original ]]; then
+    exit 1
+fi
+report_sha=$(sha256sum -- "$directory/checkpoint.json"); report_sha=${report_sha%% *}
+archive_sha=$(sha256sum -- "$directory/database.archive.gz"); archive_sha=${archive_sha%% *}
+printf '{"reportSha256":"%s","archiveSha256":"%s"}\n' "$report_sha" "$archive_sha"
 '''
 
 
@@ -102,6 +180,7 @@ def main():
         shutil.copyfile(MODULE / "Dockerfile.plugin-checkpoint", context / "Dockerfile")
         shutil.copytree(MODULE / "scripts/plugin-checkpoint", context / "scripts/plugin-checkpoint")
         outputs = work / "outputs"; outputs.mkdir(mode=0o777); outputs.chmod(0o777)
+        inputs = work / "inputs"; inputs.mkdir(mode=0o777); inputs.chmod(0o777)
         docker = ["docker", "--config", str(config)]
         created_image = created_network = created_source = False
 
@@ -127,6 +206,18 @@ def main():
                            "--user=1000:1000", "--cap-drop=ALL", "--security-opt=no-new-privileges",
                            "--memory=64m", "--pids-limit=32", mount, "--entrypoint=/bin/bash", MONGO,
                            "--noprofile", "--norc", "-c", OUTPUT_HELPER, "fixture-output-helper", action, *arguments], timeout=30)
+            return json.loads(result.stdout) if result.stdout else None
+
+        def input_helper(action, identifier="unused", mutation="original"):
+            mount = "--mount=type=bind,source=" + str(inputs) + ",target=/inputs"
+            if action in ("summary", "empty"):
+                mount += ",readonly"
+            result = call(["run", "--rm", "--pull=never", "--platform=linux/amd64", "--network=none", "--read-only",
+                           "--user=1000:1000", "--cap-drop=ALL", "--security-opt=no-new-privileges",
+                           "--memory=128m", "--pids-limit=32", mount,
+                           "--mount=type=bind,source=" + str(outputs) + ",target=/captures,readonly",
+                           "--entrypoint=/bin/bash", MONGO, "--noprofile", "--norc", "-c", INPUT_HELPER,
+                           "fixture-input-helper", action, identifier, mutation], timeout=30)
             return json.loads(result.stdout) if result.stdout else None
 
         try:
@@ -205,7 +296,8 @@ def main():
             checkpoint("loopback-source", extra=["--env=CHECKPOINT_SOURCE_HOST=127.0.0.1", "--env=MONGODB_PRIMARY_URI=mongodb://127.0.0.1:27017/checkpoint_fixture"]); passed += 1
             checkpoint("uri-option", extra=["--env=MONGODB_PRIMARY_URI=mongodb://source-mongo:27017/checkpoint_fixture?tlsInsecure=true"]); passed += 1
             checkpoint("../traversal"); passed += 1
-            checkpoint("verified", success=True); passed += 1
+            verified = checkpoint("verified", success=True)
+            verified_report = json.loads(verified.stdout.splitlines()[1]); passed += 1
             old = output_helper("summary", "verified")["reportSha256"]
             result = call(base + ["--env=CHECKPOINT_ID=verified", image, "--checkpoint"], expected=None)
             assert result.returncode != 0 and output_helper("summary", "verified")["reportSha256"] == old
@@ -264,14 +356,96 @@ exec /usr/bin/mongod --bind_ip=127.0.0.1 --port=37017 --dbpath=/tmp/unrelated-db
             mongo("for(var i=0;i<70;i++){db.getSiblingDB('cursor_fixture').createCollection('collection_'+i)}")
             checkpoint('metadata-cursor', extra=['--env=OPENLAP_MONGODB_DB=cursor_fixture', '--env=MONGODB_PRIMARY_URI=mongodb://source-mongo:27017/cursor_fixture'], success=True, counts=[0] * 70)
             passed += 1
+
+            retrieved = input_helper("stage", "retrieved")
+            assert retrieved["reportSha256"] == old
+            assert retrieved["archiveSha256"] == verified_report["archiveSha256"]
+
+            def rehearse(identifier, case="retrieved", expected_sha=None, extra=(), success=False, readonly=True, preserve_existing=False, expected_message=None):
+                mount = "--mount=type=bind,source=" + str(inputs) + ",target=/inputs"
+                if readonly:
+                    mount += ",readonly"
+                arguments = ["run", "--rm", "--pull=never", "--platform=linux/amd64", "--network=none", "--read-only",
+                             "--user=1000:1000", "--cap-drop=ALL", "--security-opt=no-new-privileges",
+                             "--memory=1g", "--pids-limit=100", "--tmpfs=/tmp:rw,nosuid,noexec,size=768m,mode=1777",
+                             mount, "--mount=type=bind,source=" + str(outputs) + ",target=/outputs",
+                             "--env=CHECKPOINT_ID=" + identifier,
+                             "--env=CHECKPOINT_ARCHIVE_PATH=/inputs/" + case + "/database.archive.gz",
+                             "--env=CHECKPOINT_REPORT_PATH=/inputs/" + case + "/checkpoint.json",
+                             "--env=CHECKPOINT_MAX_ARCHIVE_MIB=8", "--env=CHECKPOINT_MAX_EXPANDED_MIB=16",
+                             "--env=CHECKPOINT_MAX_RESTORE_MIB=512"]
+                if expected_sha is not None:
+                    arguments.append("--env=CHECKPOINT_EXPECTED_REPORT_SHA256=" + expected_sha)
+                result = call(arguments + list(extra) + [image, "--rehearse-archive"], expected=None)
+                assert SENTINEL not in result.stdout + result.stderr, "Retrieved fixture data escaped into console output"
+                if success:
+                    fixed = next((line for line in result.stderr.splitlines() if line.startswith('Checkpoint rehearsal incomplete:')), 'private diagnostics withheld')
+                    assert result.returncode == 0, "Retrieved archive rehearsal failed; " + fixed
+                    assert result.stdout.startswith("OPENLAP-CHECKPOINT-REHEARSAL-REPORT-V1\n")
+                    assert result.stdout.endswith("OPENLAP-CHECKPOINT-REHEARSAL-REPORT-END-V1\n")
+                    report = json.loads(result.stdout.splitlines()[1])
+                    assert report["status"] == "RETRIEVED_ARCHIVE_RESTORE_VERIFIED"
+                    assert report["originalReportSha256"] == expected_sha
+                    assert report["archiveSha256"] == verified_report["archiveSha256"]
+                    assert report["collections"] == verified_report["collections"]
+                    stored = output_helper("rehearsal-summary", identifier)
+                    assert stored["reportSha256"] == hashlib.sha256((result.stdout.splitlines()[1] + '\n').encode()).hexdigest()
+                    assert stored["directoryMode"] == "700" and stored["reportMode"] == "600"
+                else:
+                    assert result.returncode != 0
+                    if not preserve_existing:
+                        output_helper("no-report", identifier)
+                    if expected_message:
+                        assert expected_message in result.stderr, "Rehearsal did not reach the expected safety gate"
+                return result
+
+            rehearse("rehearsed", expected_sha=old, success=True); passed += 1
+            assert input_helper("summary", "retrieved") == retrieved
+            provenance = input_helper("stage", "retrieved-source-identity", "source-identity")
+            result = rehearse("rehearsed-source-identity", case="retrieved-source-identity",
+                              expected_sha=provenance["reportSha256"], success=True)
+            assert json.loads(result.stdout.splitlines()[1])["originalSourceIdentityMd5"] == "0" * 32
+            passed += 1
+            rehearsal_sha = output_helper("rehearsal-summary", "rehearsed")["reportSha256"]
+            # Reusing a destination must preserve its successful report byte-for-byte.
+            result = rehearse("rehearsed", expected_sha=old, preserve_existing=True)
+            assert result.returncode != 0
+            assert output_helper("rehearsal-summary", "rehearsed")["reportSha256"] == rehearsal_sha
+            passed += 1
+            rehearse("rehearsal-missing-trust"); passed += 1
+            rehearse("rehearsal-wrong-trust", expected_sha="0" * 64); passed += 1
+            for mutation in ("corrupt-report", "schema", "false-flag", "oversized-report", "corrupt-archive",
+                             "archive-size", "expanded-size", "logical-data", "logical-count", "logical-indexes",
+                             "logical-options", "corrupt-gzip", "archive-symlink", "report-symlink", "ancestor-symlink"):
+                case = "retrieved-" + mutation
+                staged = input_helper("stage", case, mutation)
+                expected_message = "rehearsal report verification failed" if mutation.startswith("logical-") else None
+                if mutation == "corrupt-archive":
+                    expected_message = "retrieved archive bytes differ from the trusted report"
+                rehearse("rehearsal-" + mutation, case=case, expected_sha=staged["reportSha256"], expected_message=expected_message)
+                passed += 1
+            rehearse("rehearsal-writable-inputs", expected_sha=old, readonly=False); passed += 1
+            rehearse("rehearsal-forbidden-source", expected_sha=old,
+                     extra=["--env=MONGODB_PRIMARY_URI=mongodb://" + SENTINEL + "@unreachable.invalid:1/private"])
+            passed += 1
+            failure = work / "rehearsal-publication-failure"; failure.mkdir(mode=0o755)
+            stub = failure / "sync"
+            stub.write_text('#!/bin/bash\nset -eu\nif [[ ${2-} == /outputs/rehearsal-publication-failure ]]; then : > "$2/publication-fault-triggered"; exit 31; fi\nexec /usr/bin/sync "$@"\n')
+            stub.chmod(0o755)
+            rehearse("rehearsal-publication-failure", expected_sha=old,
+                     extra=["--mount=type=bind,source=" + str(failure) + ",target=/fixture-bin,readonly",
+                            "--env=PATH=/fixture-bin:/usr/bin:/bin"])
+            output_helper("file", "rehearsal-publication-failure", "publication-fault-triggered")
+            passed += 1
         finally:
             original_failure = sys.exc_info()[0] is not None
             cleanup_failed = False
-            try:
-                output_helper("cleanup")
-                output_helper("empty")
-            except (AssertionError, OSError, subprocess.SubprocessError):
-                cleanup_failed = True
+            for helper in (input_helper, output_helper):
+                try:
+                    helper("cleanup")
+                    helper("empty")
+                except (AssertionError, OSError, subprocess.SubprocessError):
+                    cleanup_failed = True
             removals = []
             if created_source:
                 removals.append(["rm", "-f", name])
