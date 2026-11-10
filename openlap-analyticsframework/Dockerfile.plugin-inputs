@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile:1.7
+# Official Python 3.12.16; runtime uses only its standard library.
+FROM python@sha256:e064671ca452259bab50e8e2c7bd896e39e9a343bb06ca25234adf6fe18d0fc7
+WORKDIR /opt/plugin-inputs
+
+# Build from an isolated context produced by prepare-plugin-recovery.py.
+# Never include a private catalog manifest or a repository checkout in this context.
+COPY --chmod=0444 stage-plugin-inputs.py ./stage.py
+COPY --chmod=0444 jars/analytics/AnalyticsMethods-Prototypes-1.0-SNAPSHOT.jar ./jars/analytics/AnalyticsMethods-Prototypes-1.0-SNAPSHOT.jar
+COPY --chmod=0444 jars/visualizations/Visualizer-C3-1.0-SNAPSHOT.jar ./jars/visualizations/Visualizer-C3-1.0-SNAPSHOT.jar
+RUN chmod 0555 jars jars/analytics jars/visualizations \
+    && python3 -B -c 'import runpy; module = runpy.run_path("stage.py"); module["verified_sources"]()'
+
+USER 1000:1000
+ENTRYPOINT ["python3", "-B", "/opt/plugin-inputs/stage.py"]

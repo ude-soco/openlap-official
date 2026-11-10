@@ -312,8 +312,8 @@ SHA-256. Retain the original inventory and source provenance independently.
 The source-only init container receives the manifest as a read-only regular-file
 `subPath` mount. It verifies the approved manifest digest and fixed public JAR
 identities, creates `/staging/input` exclusively with private permissions, and
-copies only those reviewed inputs. Existing destinations, symlinks, unexpected
-paths and incomplete or altered copies fail. It publishes completion provenance
+copies only those reviewed inputs. Existing destinations, symlinks, unsafe
+filesystem paths and incomplete or altered copies fail. It publishes completion provenance
 last. The `--verify` action checks a completed input directory without writing.
 
 The checker mounts that same fresh `emptyDir` through `subPath: input`, read-only
