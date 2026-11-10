@@ -1,0 +1,177 @@
+name: Build push-only plugin backup image
+
+on:
+  push:
+    branches: [main]
+    tags: [plugin-backup-upload-*]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}-plugin-backup-upload
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      image-id: ${{ steps.identity.outputs.image-id }}
+      tags: ${{ steps.meta.outputs.tags }}
+      archive-id: ${{ steps.archive.outputs.artifact-id }}
+      archive-sha: ${{ steps.saved.outputs.archive-sha }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Prepare only public runtime sources
+        run: |
+          set -eu
+          umask 077
+          mkdir "$RUNNER_TEMP/backup-upload-context"
+          cp -- openlap-analyticsframework/Dockerfile.plugin-backup-upload \
+            "$RUNNER_TEMP/backup-upload-context/"
+          cp -- openlap-analyticsframework/scripts/plugin-release-backup.py \
+            openlap-analyticsframework/scripts/plugin-backup-upload.py \
+            openlap-analyticsframework/scripts/plugin-backup-upload-entrypoint.sh \
+            "$RUNNER_TEMP/backup-upload-context/"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Get image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          flavor: latest=false
+          tags: |
+            type=sha,format=long
+            type=edge,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=tag,enable=${{ startsWith(github.ref_name, 'plugin-backup-upload-') }}
+            type=ref,event=pr
+
+      - name: Build without publishing
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ runner.temp }}/backup-upload-context
+          file: ${{ runner.temp }}/backup-upload-context/Dockerfile.plugin-backup-upload
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
+          cache-from: type=gha,scope=plugin-backup-upload
+          cache-to: type=gha,mode=max,scope=plugin-backup-upload
+
+      - name: Resolve the exact loaded image identity
+        id: identity
+        env:
+          BUILT_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          python3 - <<'PYTHON'
+          import os, re, subprocess
+          tag = os.environ['BUILT_TAGS'].splitlines()[0]
+          if not tag.startswith(os.environ['IMAGE_NAME'] + ':'):
+              raise SystemExit('Unexpected image name.')
+          image = subprocess.check_output(['docker', 'image', 'inspect', tag, '--format', '{{.Id}}'], text=True).strip()
+          if not re.fullmatch(r'sha256:[a-f0-9]{64}', image):
+              raise SystemExit('Invalid loaded image identity.')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('image-id=' + image + '\n')
+          PYTHON
+
+      - name: Verify bounded typed-report safeguards
+        run: python3 -B -m unittest discover -s tests -p test_plugin_backup_upload.py -v
+
+      - name: Verify exact image as UID1000 with projected synthetic configuration
+        env:
+          IMAGE_ID: ${{ steps.identity.outputs.image-id }}
+        run: python3 -B tests/verify_plugin_backup_upload_image.py --image "$IMAGE_ID"
+
+      - name: Retain the exact tested image for publication
+        if: github.event_name == 'push'
+        id: saved
+        env:
+          TESTED_IMAGE_ID: ${{ steps.identity.outputs.image-id }}
+        run: |
+          set -eu
+          umask 077
+          mkdir "$RUNNER_TEMP/backup-upload-image"
+          docker image save --output "$RUNNER_TEMP/backup-upload-image/image.tar" "$TESTED_IMAGE_ID"
+          printf '%s\n' "$TESTED_IMAGE_ID" > "$RUNNER_TEMP/backup-upload-image/image-id.txt"
+          printf '%s\n' "$GITHUB_SHA" > "$RUNNER_TEMP/backup-upload-image/source-revision.txt"
+          cd "$RUNNER_TEMP/backup-upload-image"
+          sha256sum image.tar > image.sha256
+          printf 'archive-sha=%s\n' "$(sha256sum image.tar | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload verified image archive
+        if: github.event_name == 'push'
+        id: archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: tested-plugin-backup-upload-image
+          path: ${{ runner.temp }}/backup-upload-image/
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
+
+  publish:
+    if: github.event_name == 'push'
+    needs: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download this run's exact tested image
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.image.outputs.archive-id }}
+          path: ${{ runner.temp }}/backup-upload-image
+
+      - name: Verify and load without rebuilding
+        env:
+          TESTED_IMAGE_ID: ${{ needs.image.outputs.image-id }}
+          TESTED_ARCHIVE_SHA: ${{ needs.image.outputs.archive-sha }}
+        run: |
+          set -eu
+          cd "$RUNNER_TEMP/backup-upload-image"
+          printf '%s  image.tar\n' "$TESTED_ARCHIVE_SHA" | sha256sum --check --status
+          sha256sum --check image.sha256
+          test "$(cat image-id.txt)" = "$TESTED_IMAGE_ID"
+          test "$(cat source-revision.txt)" = "$GITHUB_SHA"
+          docker image load --input image.tar
+          test "$(docker image inspect "$TESTED_IMAGE_ID" --format '{{.Id}}')" = "$TESTED_IMAGE_ID"
+
+      - name: Login to container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish the tested archive's image
+        env:
+          TESTED_IMAGE_ID: ${{ needs.image.outputs.image-id }}
+          TESTED_IMAGE_TAGS: ${{ needs.image.outputs.tags }}
+        run: |
+          set -eu
+          test -n "$TESTED_IMAGE_TAGS"
+          while IFS= read -r release_tag; do
+            test -n "$release_tag" || continue
+            case "$release_tag" in
+              "$IMAGE_NAME":*) ;;
+              *) exit 1 ;;
+            esac
+            docker image tag "$TESTED_IMAGE_ID" "$release_tag"
+            docker image push "$release_tag"
+          done <<EOF
+          $TESTED_IMAGE_TAGS
+          EOF

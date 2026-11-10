@@ -5,6 +5,8 @@ completed database checkpoint and explicitly reviewed source/artifact folders
 from a local POSIX operator host. It uses the official `age` and `rclone` clients;
 it implements no encryption algorithm, account login or database restoration.
 No Kubernetes component, scheduled task or application default is installed.
+The separate [opt-in push-only Job](./plugin-backup-upload-job.md) packages this
+flow for reviewed read-only source volumes and a bounded typed receipt report.
 
 Use an account-backed cloud drive, including sciebo, as a secondary encrypted
 destination alongside a separately retained local copy and the agreed production
