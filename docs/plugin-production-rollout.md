@@ -336,3 +336,73 @@ checkpoint archives/reports, independently retained copies and required S3
 objects through the agreed recovery period. Confirm the temporary workload is
 absent and retained data remains available. Cleanup does not authorize catalog,
 binary, backup or volume deletion.
+
+## 9. Review recurring capture separately from recovery checks
+
+The operator-side [independent recovery runner](./plugin-release-backup.md#independently-check-a-retained-release-on-an-operator-host)
+can rehearse a retained release without production access. Its disabled local
+schedule is preparation for periodic recovery checks, not a fresh-backup service.
+Current capture and object export require a real externally enforced writer
+freeze. Plain `mongodump`, matching before/after `dbHash`, a successful restore
+or a caller-supplied freeze evidence string cannot establish an online consistent
+database/S3 checkpoint. Do not schedule those tools against active writers by
+inventing a recurring evidence ID.
+
+For the current standalone MongoDB deployment, the smallest capture proposal is
+a reviewed, time-bounded backend maintenance window. This is not implemented or
+approved by the recovery-check schedule. A reusable producer must satisfy all of
+the following before activation:
+
+1. Review the primary database and every database/S3 writer, including background
+   work, other installations and external administrators. Pin all runtime images
+   and bound actual archive/object sizes, free space, source access and deadlines
+   before pausing anything. Exclude unrelated databases from the claim.
+2. Coordinate GitOps and other replica controllers through their real source of
+   truth. A controller scaling a Deployment to zero while GitOps restores two
+   replicas does not establish a freeze. Do not assume permission to change an
+   Argo Application or Helm-owned setting; obtain that concrete reviewed change
+   through its authorized owner when it is outside the current access scope.
+3. Limit mutations to the named backend Deployment's scale subresource. No Pod
+   exec, Secret reads, arbitrary workload creation or cluster-wide grants belong
+   in a pause controller. Necessary read access to verify Deployment generation,
+   owned ReplicaSets and Pods must be scoped and separately reviewed. Record
+   original replicas, resource UIDs and operation identity durably before pause.
+4. Establish an independent, tested resume watchdog before accepting the pause.
+   It must survive producer failure and node/process loss, compare operation and
+   resource identity, and restore only this operation's original replica count.
+   A `finally` block in the capturing process is insufficient. A watchdog expiry
+   invalidates unfinished capture before resuming writers; no successful frozen
+   checkpoint may be published after its freeze has expired. Whole-cluster or
+   control-plane failure remains an explicit availability limit, not a guarantee
+   that a process can always resume unavailable infrastructure.
+5. Verify the new observed scale generation, zero active and terminating backend
+   Pods, and the reviewed status of all other writers. Only then run fresh
+   checkpoint capture, full isolated database rehearsal/indexing and complete S3
+   export. Keep both stores frozen until these bound, mutually associated outputs
+   are complete. Each phase must fit inside the remaining freeze deadline.
+6. Resume compatible backends and verify readiness/API health even on failed or
+   interrupted capture. Do not publish a partial release as successful. Encrypt,
+   upload/read back and independently retrieve/rehearse the completed immutable
+   output using the existing contracts. Preserve partial output for review and
+   report any missed freshness or recovery target.
+
+A proposed review profile is one daily capture and one weekly independent full
+recovery check, retaining at least seven complete off-node release sets. Select
+the actual time, maximum API outage, retention and recovery targets with the
+operator. A 15-minute maximum pause is a proposed failure cutoff, not evidence
+that the current tools can finish every allowed payload in that time. Qualify
+the chosen data-size profile and interruption/watchdog cases on isolated systems
+first. The fresh-capture producer must remain unconfigured until this review and
+qualification are complete. A short-lived upload share is not a recurring backup
+destination: the operator must prepare a suitable approved destination/profile
+privately before activation. This does not authorize changing credentials.
+
+A MongoDB replica set with a qualified consistent backup/oplog procedure is a
+larger infrastructure alternative when API outages are unacceptable. It still
+needs an explicit DB/S3 consistency contract, immutable-object retention across
+the restore point, separate failure domains and independent recovery testing;
+adding a replica alone does not satisfy those requirements. A durable application
+maintenance barrier is another future option, but it must cover every writer,
+drain in-flight/background/startup work and fail closed across replica failure.
+An HTTP-only toggle does not provide that guarantee. Neither alternative is part
+of the operator-side recovery runner.

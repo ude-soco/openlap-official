@@ -5,14 +5,22 @@ on:
     paths:
     - '.github/workflows/plugin-release-backup.yml'
     - 'openlap-analyticsframework/scripts/plugin-release-backup.py'
+    - 'openlap-analyticsframework/scripts/check-plugin-backup-recovery.py'
     - 'tests/test_plugin_release_backup.py'
+    - 'tests/test_plugin_recovery_check.py'
+    - 'docs/examples/plugin-recovery-check.json'
+    - 'docs/examples/org.openlap.plugin-recovery-check.plist'
     - 'docs/plugin-release-backup.md'
   push:
     branches: [main]
     paths:
     - '.github/workflows/plugin-release-backup.yml'
     - 'openlap-analyticsframework/scripts/plugin-release-backup.py'
+    - 'openlap-analyticsframework/scripts/check-plugin-backup-recovery.py'
     - 'tests/test_plugin_release_backup.py'
+    - 'tests/test_plugin_recovery_check.py'
+    - 'docs/examples/plugin-recovery-check.json'
+    - 'docs/examples/org.openlap.plugin-recovery-check.plist'
     - 'docs/plugin-release-backup.md'
 
 permissions:
@@ -52,3 +60,5 @@ jobs:
           "$tool_dir/bin/age" "$tool_dir/bin/rclone" >> "$GITHUB_ENV"
     - name: Verify encrypted roundtrip and fail-closed recovery
       run: python3 -B -m unittest discover -s tests -p test_plugin_release_backup.py -v
+    - name: Verify independent recovery orchestration boundaries
+      run: python3 -B -m unittest discover -s tests -p test_plugin_recovery_check.py -v
