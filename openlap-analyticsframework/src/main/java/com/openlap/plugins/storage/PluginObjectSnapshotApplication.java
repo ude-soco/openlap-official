@@ -209,8 +209,7 @@ public final class PluginObjectSnapshotApplication {
   static final class Snapshot {
     final Index index; final Map<String, Long> inventory = new TreeMap<>(); final List<JsonNode> rows = new ArrayList<>(); final Path root; final String hash;
     Snapshot(Path root, String manifestHash, String indexHash, String checkpointHash, Path rehearsalIndex) throws Exception {
-      this.root = physical(root); VersityStorageApplication.privateDirectory(root); VersityStorageApplication.privateDirectory(root.resolve("bodies"));
-      require(VersityStorageApplication.entries(root).equals(new HashSet<>(Arrays.asList(INDEX_NAME, MANIFEST_NAME, "bodies"))));
+      this.root = physical(root); VersityStorageApplication.privateDirectory(root);
       index = new Index(root.resolve(INDEX_NAME), indexHash, checkpointHash);
       Index restored = new Index(rehearsalIndex, indexHash, checkpointHash); require(Arrays.equals(index.bytes, restored.bytes));
       byte[] bytes = metadata(root.resolve(MANIFEST_NAME)); hash = VersityStorageApplication.hash(bytes); require(hash.equals(sha(manifestHash)));
@@ -222,6 +221,13 @@ public final class PluginObjectSnapshotApplication {
           && string(manifest.path("databaseAssociationScope")).equals("verified-index-only")
           && manifest.path("recoveryVerified").isBoolean() && !manifest.path("recoveryVerified").booleanValue()
           && manifest.path("objects").isArray() && manifest.path("objects").size() <= MAX_OBJECTS);
+      // The regular-file transporter omits empty directories. Authenticated empty
+      // snapshots need no body directory, and validation never recreates inputs.
+      Set<String> expected = new HashSet<>(Arrays.asList(INDEX_NAME, MANIFEST_NAME));
+      boolean hasBodies = VersityStorageApplication.entries(root).contains("bodies");
+      require(hasBodies || manifest.path("objects").size() == 0);
+      if (hasBodies) { expected.add("bodies"); VersityStorageApplication.privateDirectory(root.resolve("bodies")); }
+      require(VersityStorageApplication.entries(root).equals(expected));
       Set<String> files = new HashSet<>(); String previous = ""; long total = 0;
       for (JsonNode entry : manifest.path("objects")) {
         fields(entry, "objectKey sha256 sizeBytes contentType metadata bodyPath classification"); String key = string(entry.path("objectKey")); long size = size(entry.path("sizeBytes"));
@@ -230,7 +236,7 @@ public final class PluginObjectSnapshotApplication {
         PluginArtifact artifact = artifact(key, size); privateBody(root.resolve(string(entry.path("bodyPath"))), artifact);
         files.add(Path.of(string(entry.path("bodyPath"))).getFileName().toString()); rows.add(entry); inventory.put(key, size); total += size; require(total <= MAX_TOTAL);
       }
-      require(VersityStorageApplication.entries(root.resolve("bodies")).equals(files)); index.inventory(inventory);
+      require(hasBodies ? VersityStorageApplication.entries(root.resolve("bodies")).equals(files) : files.isEmpty()); index.inventory(inventory);
       require(manifest.path("objectCount").isInt() && manifest.path("objectCount").intValue() == rows.size()
           && manifest.path("totalBytes").isIntegralNumber() && manifest.path("totalBytes").canConvertToLong() && manifest.path("totalBytes").longValue() == total);
     }

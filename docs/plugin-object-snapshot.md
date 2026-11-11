@@ -20,6 +20,10 @@ manifest. The manifest is published last. Incomplete folders are never adopted
 or overwritten. Limits are 1,000 objects, 100 MiB per object, 2 GiB of bodies and
 1 MiB per metadata document. Object key, byte SHA-256, size, content type and SHA
 metadata are verified together.
+The regular-file transporter omits empty directories. Restore therefore permits
+an absent `bodies/` directory only for an authenticated zero-object snapshot;
+it never creates or changes a retrieved input directory. Nonempty snapshots
+require their exact private body directory and files.
 
 Restore accepts only a fresh fixed local `/storage` volume, initializes the
 qualified provider from separately supplied operator identities, and writes

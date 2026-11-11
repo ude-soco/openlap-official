@@ -103,6 +103,28 @@ public final class PluginObjectSnapshotQualification {
         require(rejected);
       } finally { Files.write(body, bytes); }
     }
+    Path bodies = root.resolve("bodies"), savedBodies = Path.of("/backup/saved-bodies");
+    Files.move(bodies, savedBodies);
+    try {
+      boolean rejected = false;
+      try { new PluginObjectSnapshotApplication.Snapshot(root, manifestHash, indexHash, CHECKPOINT, regenerated); }
+      catch (Exception mismatch) { rejected = true; }
+      require(rejected == !snapshot.rows.isEmpty());
+      require(!Files.exists(bodies)); // Empty transport inputs remain unchanged.
+      Files.writeString(bodies, "not a directory"); Files.setPosixFilePermissions(bodies, PosixFilePermissions.fromString("rw-------"));
+      rejected = false;
+      try { new PluginObjectSnapshotApplication.Snapshot(root, manifestHash, indexHash, CHECKPOINT, regenerated); } catch (Exception mismatch) { rejected = true; }
+      require(rejected); Files.delete(bodies);
+      Files.createSymbolicLink(bodies, savedBodies); rejected = false;
+      try { new PluginObjectSnapshotApplication.Snapshot(root, manifestHash, indexHash, CHECKPOINT, regenerated); } catch (Exception mismatch) { rejected = true; }
+      require(rejected); Files.delete(bodies);
+    } finally { Files.deleteIfExists(bodies); Files.move(savedBodies, bodies); }
+    Path stray = root.resolve("unexpected-file"); Files.writeString(stray, "unexpected");
+    try {
+      boolean rejected = false;
+      try { new PluginObjectSnapshotApplication.Snapshot(root, manifestHash, indexHash, CHECKPOINT, regenerated); } catch (Exception mismatch) { rejected = true; }
+      require(rejected);
+    } finally { Files.delete(stray); }
     VersityStorageApplication.result("GENERATED_SNAPSHOT_VALIDATION_PASSED", Collections.emptyMap());
   }
   static void beforeWrite() throws Exception {
