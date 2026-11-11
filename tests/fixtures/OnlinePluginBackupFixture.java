@@ -101,11 +101,45 @@ public final class OnlinePluginBackupFixture {
     }
     CombinedPluginRecoveryFixture.verify(false, orphans());
   }
+  static void manifestNegatives(String[] args) throws Exception {
+    require(args.length == 5 && VersityStorageApplication.entries(VersityStorageApplication.ROOT).isEmpty());
+    Path original = Path.of(args[1]), copy = Files.createTempDirectory("generated-invalid-online-");
+    Files.setPosixFilePermissions(copy, java.nio.file.attribute.PosixFilePermissions.fromString("rwx------"));
+    try (var paths = Files.walk(original)) {
+      for (Path path : (Iterable<Path>) paths::iterator) {
+        if (path.equals(original)) continue;
+        Path target = copy.resolve(original.relativize(path));
+        if (Files.isDirectory(path)) Files.createDirectory(target);
+        else Files.copy(path, target);
+        Files.setPosixFilePermissions(target, java.nio.file.attribute.PosixFilePermissions.fromString(Files.isDirectory(path) ? "rwx------" : "rw-------"));
+      }
+    }
+    byte[] originalBytes = Files.readAllBytes(original.resolve("snapshot.json"));
+    for (int variant = 0; variant < 7; variant++) {
+      var manifest = (com.fasterxml.jackson.databind.node.ObjectNode) VersityStorageApplication.JSON.readTree(originalBytes);
+      if (variant == 0) manifest.put("schemaVersion", 3);
+      else if (variant == 1) manifest.put("format", PluginObjectSnapshotApplication.FORMAT);
+      else if (variant == 2) manifest.remove("objectSelectionPolicy");
+      else if (variant == 3) manifest.put("objectSelectionPolicy", "ASSUMED_CURRENT_BUCKET");
+      else if (variant == 4) manifest.put("physicalDeletionDisabled", false);
+      else if (variant == 5) manifest.put("freezeEvidenceId", "invented-freeze");
+      else manifest.put("objectCount", manifest.path("objectCount").intValue() + 1);
+      byte[] bytes = PluginObjectSnapshotApplication.encoded(manifest); Files.write(copy.resolve("snapshot.json"), bytes);
+      boolean rejected = false;
+      try { PluginObjectSnapshotApplication.restoreFresh(copy, VersityStorageApplication.hash(bytes), args[2], args[3], Path.of(args[4])); }
+      catch (Exception mismatch) { rejected = true; }
+      require(rejected && PluginObjectSnapshotApplication.phase.equals("complete snapshot and database association validation")
+          && VersityStorageApplication.entries(VersityStorageApplication.ROOT).isEmpty());
+    }
+    require(java.util.Arrays.equals(originalBytes, Files.readAllBytes(original.resolve("snapshot.json"))));
+    VersityStorageApplication.result("GENERATED_ONLINE_MANIFEST_PREWRITE_REJECTIONS_VERIFIED", Collections.singletonMap("cases", 7));
+  }
   public static void main(String[] args) throws Exception {
     require(args.length > 0);
     if (args[0].equals("--export-concurrent")) export(args, false);
     else if (args[0].equals("--frozen-reject-concurrent")) export(args, true);
     else if (args[0].equals("--verify-cold")) cold();
+    else if (args[0].equals("--validate-manifest-negatives")) manifestNegatives(args);
     else require(false);
   }
 }

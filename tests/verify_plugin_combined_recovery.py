@@ -373,6 +373,14 @@ def main():
                             "-ceu", CHECKPOINT.OUTPUT_HELPER, "fixture", "no-report", "rejected-" + mutation], "invalid replay publishes no report or index")
                 original = index(captures, "source-capture", frozen, "frozen-index", report_sha)
                 require(original["emptyRegisteredPluginSnapshot"] == empty)
+                if options.online and not empty:
+                    rejected = run(["run", "--rm", "--network=none", *common, mount(frozen, "/index", True), mount(snapshots, "/snapshot"),
+                        "--env=PLUGIN_DELETION_ENABLED=true", "--env=PLUGIN_STORAGE_S3_ENDPOINT=http://gateway:9000", "--entrypoint=/usr/local/bin/openlap-object-snapshot", snapshot_image,
+                        "--export-online", "/index/frozen-index/artifact-index.json", original["artifactIndexSha256"], report_sha, "/snapshot/rejected-deletion-enabled"],
+                        "online export requires explicit deletion protection", success=False)
+                    require(rejected.returncode != 0 and b"explicit physical deletion protection" in rejected.stderr)
+                    run(["run", "--rm", "--network=none", "--user=1000:1000", mount(snapshots, "/snapshot", True), "--entrypoint=/bin/sh", snapshot_image,
+                        "-ceu", "test ! -e /snapshot/rejected-deletion-enabled"], "deletion-enabled export rejected before writes")
                 export_class = "OnlinePluginBackupFixture" if options.online and not empty else "PluginObjectSnapshotApplication"
                 export_action = "--export-concurrent" if options.online and not empty else "--export-online" if options.online else "--export"
                 exported = java(export_class, [export_action, "/index/frozen-index/artifact-index.json", original["artifactIndexSha256"], report_sha, "/snapshot/export"],
@@ -430,6 +438,9 @@ def main():
                 require(recovered_index["artifactIndexSha256"] == original["artifactIndexSha256"])
                 print("PASS: " + case + " independent encrypted retrieval, UID staging and regenerated index", flush=True)
                 fresh_objects = volume(case + "-fresh-object-store")
+                if options.online:
+                    java("OnlinePluginBackupFixture", ["--validate-manifest-negatives", "/backup/retrieved/sources/objects", original["artifactIndexSha256"], report_sha,
+                        "/index/regenerated/artifact-index.json"], [mount(staged, "/backup", True), mount(regenerated, "/index", True), mount(fresh_objects, "/storage")])
                 restored = java("PluginObjectSnapshotApplication", ["--restore-fresh", "/backup/retrieved/sources/objects", snapshot["manifestSha256"],
                                original["artifactIndexSha256"], report_sha, "/index/regenerated/artifact-index.json"],
                                [mount(staged, "/backup", True), mount(regenerated, "/index", True), mount(fresh_objects, "/storage")], root=True)
