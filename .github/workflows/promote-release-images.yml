@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       confirmation_version:
-        description: 'Type 0.0.6 to publish the reviewed image digests as stable tags'
+        description: 'Stable version with a committed docs/releases/VERSION-images.json review plan'
         type: string
         required: true
 
@@ -50,7 +50,7 @@ jobs:
       - name: Retain immutable promotion evidence
         uses: actions/upload-artifact@v7
         with:
-          name: release-image-promotion-0.0.6
+          name: release-image-promotion-${{ inputs.confirmation_version }}
           path: release-image-promotion.json
           if-no-files-found: error
           retention-days: 30

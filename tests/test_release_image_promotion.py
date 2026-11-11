@@ -5,7 +5,9 @@ import importlib.util
 import json
 from pathlib import Path
 import subprocess
+import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("promotion", ROOT / "scripts/promote-release-images.py")
@@ -18,8 +20,8 @@ OTHER = "sha256:" + "f" * 64
 
 
 class FakeRegistry:
-    def __init__(self):
-        self.refs = P.checked_plan(PLAN, ENV)
+    def __init__(self, plan=PLAN, environment=ENV):
+        self.refs = P.checked_plan(plan, environment)
         self.manifests = {source: digest for source, _, digest in self.refs}
         self.calls = []
         self.corrupt_copy = False
@@ -40,6 +42,42 @@ class FakeRegistry:
 
 
 class PromotionTests(unittest.TestCase):
+    def test_only_committed_matching_plans_select_the_release_pair(self):
+        for version in ("0.0.6", "0.0.7"):
+            environment = dict(ENV, CONFIRMATION_VERSION=version)
+            plan = P.load_plan(environment)
+            registry = FakeRegistry(plan, environment)
+            report = P.promote(plan, environment, registry)
+            self.assertEqual(report["version"], version)
+            self.assertTrue(all(row["target"].endswith(":" + version) for row in report["images"]))
+
+    def test_version_cannot_select_paths_or_mutable_tags(self):
+        for value in ("../0.0.7", "0.0.7/../../secret", "latest", "edge", "v0.0.7",
+                      "00.0.7", "0.0.7-rc1", "0.0.7\n", "1" * 40, None):
+            with self.subTest(value=value), self.assertRaises(P.PromotionError):
+                P.load_plan(dict(ENV, CONFIRMATION_VERSION=value))
+
+    def test_missing_oversized_or_linked_plan_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(P, "RELEASES", Path(directory)):
+            path = Path(directory) / "0.0.6-images.json"
+            with self.assertRaises(P.PromotionError):
+                P.load_plan(ENV)
+            path.write_text("x" * 16385)
+            with self.assertRaises(P.PromotionError):
+                P.load_plan(ENV)
+            path.unlink()
+            target = Path(directory) / "another.json"
+            target.write_text(json.dumps(PLAN))
+            path.symlink_to(target)
+            with self.assertRaises(P.PromotionError):
+                P.load_plan(ENV)
+
+    def test_confirmation_must_match_the_loaded_plan_before_registry_access(self):
+        registry = FakeRegistry()
+        with self.assertRaises(P.PromotionError):
+            P.promote(PLAN, dict(ENV, CONFIRMATION_VERSION="0.0.7"), registry)
+        self.assertEqual(registry.calls, [])
+
     def test_exact_pair_published_only_after_complete_preflight(self):
         registry = FakeRegistry()
         report = P.promote(PLAN, ENV, registry)
