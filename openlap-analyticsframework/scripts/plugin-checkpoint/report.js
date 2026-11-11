@@ -214,7 +214,7 @@
         report.collections = collectionRows(report.collections);
         return report;
     }
-    function rehearsalFinish() {
+    function rehearsalResult() {
         var original = originalReport(), restored = read(env("CHECKPOINT_WORK") + "/restored.json");
         require(original.database === restored.database && original.fcv === restored.fcv && restored.serverVersion === "4.4.30");
         require(JSON.stringify(original.collections) === JSON.stringify(collectionRows(restored.collections)));
@@ -223,14 +223,27 @@
         require(env("CHECKPOINT_EXPANDED_SIZE") === String(original.expandedArchiveBytes));
         var reportSha = env("CHECKPOINT_EXPECTED_REPORT_SHA256");
         require(/^[a-f0-9]{64}$/.test(reportSha));
-        print(JSON.stringify({schemaVersion: 1, status: "RETRIEVED_ARCHIVE_RESTORE_VERIFIED",
+        return {schemaVersion: 1, status: "RETRIEVED_ARCHIVE_RESTORE_VERIFIED",
             rehearsalId: env("CHECKPOINT_ID"), originalCheckpointId: original.checkpointId, originalReportSha256: reportSha,
             database: original.database, originalSourceServerVersion: original.sourceServerVersion,
             restoreServerVersion: restored.serverVersion, fcv: restored.fcv, databaseToolsVersion: "100.10.0",
             archiveSha256: original.archiveSha256, archiveSizeBytes: original.archiveSizeBytes,
             expandedArchiveBytes: original.expandedArchiveBytes, gzipValidated: true, restoredMatched: true,
             originalSourceIdentityMd5: original.sourceIdentityMd5, collections: original.collections,
-            scope: "Retrieved DB archive only; no live source, new freeze, S3 objects, off-node custody or retention, or application acceptance verified"}));
+            scope: "Retrieved DB archive only; no live source, new freeze, S3 objects, off-node custody or retention, or application acceptance verified"};
+    }
+    function rehearsalFinish() { print(JSON.stringify(rehearsalResult())); }
+    function artifactIndex() {
+        var verified = rehearsalResult(); // Reuse all original-report/archive/collection checks.
+        load("/opt/openlap-checkpoint/artifact-index.js");
+        print(JSON.stringify(OpenLAPPluginArtifactIndex.project(isolatedConnection().getDB(verified.database),
+            originalReport(), env("CHECKPOINT_EXPECTED_REPORT_SHA256"))));
+    }
+    function artifactSummary() {
+        load("/opt/openlap-checkpoint/artifact-index.js");
+        var index = read(env("CHECKPOINT_WORK") + "/artifact-index.json");
+        print(JSON.stringify(OpenLAPPluginArtifactIndex.summary(index, env("CHECKPOINT_INDEX_SHA256"),
+            Number(env("CHECKPOINT_INDEX_SIZE")), env("CHECKPOINT_REHEARSAL_REPORT_SHA256"))));
     }
     try {
         if (env("CHECKPOINT_PHASE") === "local-ready") { isolatedConnection(); print("LOCAL_READY"); }
@@ -240,6 +253,8 @@
             print(original.database + " " + original.archiveSha256 + " " + original.archiveSizeBytes + " " + original.expandedArchiveBytes);
         }
         else if (env("CHECKPOINT_PHASE") === "rehearsal-finish") { rehearsalFinish(); }
+        else if (env("CHECKPOINT_PHASE") === "rehearsal-plugin-index") { artifactIndex(); }
+        else if (env("CHECKPOINT_PHASE") === "rehearsal-plugin-index-summary") { artifactSummary(); }
         else { require(["source-before", "source-after", "restored", "rehearsal-restored"].indexOf(env("CHECKPOINT_PHASE")) !== -1); snapshot(); }
     } catch (_) { print("CHECKPOINT_VALIDATION_FAILED"); quit(1); }
 }());

@@ -26,10 +26,14 @@ var OpenLAPPluginArtifactIndex = (function() {
         require(typeof value === "number" && isFinite(value) && Math.floor(value) === value && value >= minimum && value <= maximum);
         return value;
     }
-    function ref(value, collection) {
+    function ref(value, collection, extended) {
         require(object(value) && typeof value.$ref === "string" && own(value, "$id"));
         require(!collection || value.$ref === collection);
-        return {collection: value.$ref, id: id(value.$id)};
+        var target = value.$id;
+        if (extended && document(target) && Object.keys(target).length === 1 && own(target, "$oid")) {
+            require(typeof target.$oid === "string" && /^[a-f0-9]{24}$/.test(target.$oid)); target = target.$oid;
+        }
+        return {collection: value.$ref, id: id(target)};
     }
     function prefix(kind) { require(kind === "ANALYTICS" || kind === "VISUALIZATION"); return kind === "ANALYTICS" ? "analytics" : "visualizations"; }
     function artifactId(value) { value = id(value); require(/^(analytics|visualizations)-[a-f0-9]{64}$/.test(value)); return value; }
@@ -47,6 +51,10 @@ var OpenLAPPluginArtifactIndex = (function() {
             fcv: original.fcv, databaseToolsVersion: original.databaseToolsVersion};
     }
     function project(db, original, reportSha) {
+        function localRef(value, collection, extended) {
+            require(object(value) && (optional(value.$db) || value.$db === original.database));
+            return ref(value, collection, extended);
+        }
         var rows = map(), byId = map(), evidence = [], totalRows = 0, totalBytes = 0, reportCollections = map();
         original.collections.forEach(function(row) { reportCollections[row.name] = row; });
         COLLECTIONS.forEach(function(name) {
@@ -140,7 +148,7 @@ var OpenLAPPluginArtifactIndex = (function() {
         });
         function catalogArtifact(collection, row) {
             if (collection === "visualization-type") {
-                var parent = ref(row.visualizationLib, "visualization-library"), library = byId[parent.collection][parent.id];
+                var parent = localRef(row.visualizationLib, "visualization-library"), library = byId[parent.collection][parent.id];
                 return library && !optional(library.artifactId) ? artifactId(library.artifactId) : null;
             }
             return optional(row.artifactId) ? null : artifactId(row.artifactId);
@@ -167,7 +175,7 @@ var OpenLAPPluginArtifactIndex = (function() {
             rows[collection].forEach(function(row) {
                 var key = id(row._id), active = available[collection][key];
                 if (collection === "visualization-type") {
-                    var parent = ref(row.visualizationLib, "visualization-library");
+                    var parent = localRef(row.visualizationLib, "visualization-library");
                     edge(collection, key, "chart-parent-library", parent.collection, parent.id, true, active);
                     if (active) requireCatalog(collection, key, parent.collection, parent.id);
                 } else if (optional(row.artifactId)) legacy.push({collection: collection, catalogId: key, available: active});
@@ -183,7 +191,7 @@ var OpenLAPPluginArtifactIndex = (function() {
                 if (collection === "visualization-library" && !optional(row.visualizationTypes)) {
                     require(Array.isArray(row.visualizationTypes) && row.visualizationTypes.length <= 1000);
                     row.visualizationTypes.forEach(function(value) {
-                        var target = ref(value, "visualization-type");
+                        var target = localRef(value, "visualization-type");
                         edge(collection, key, "library-chart-type", target.collection, target.id, true, active);
                     });
                 }
@@ -214,7 +222,7 @@ var OpenLAPPluginArtifactIndex = (function() {
                 edge("plugin-removal", row._id, "removal-snapshot", snapshot._collection, id(snapshot._id), true, false);
                 if (!optional(snapshot.artifactId)) edge("plugin-removal", row._id, "removal-snapshot-artifact", "plugin-artifact", artifactId(snapshot.artifactId), true, false);
                 if (snapshot._collection === "visualization-type") {
-                    var parent = ref(snapshot.visualizationLib, "visualization-library");
+                    var parent = localRef(snapshot.visualizationLib, "visualization-library");
                     edge("plugin-removal", row._id, "removal-snapshot-library", parent.collection, parent.id, true, false);
                 }
             });
@@ -235,7 +243,7 @@ var OpenLAPPluginArtifactIndex = (function() {
                 edge(collection, source, "known-catalog-id", targetCollection, value, false, executable);
                 if (executable) requireCatalog(collection, source, targetCollection, value);
                 if (targetCollection === "visualization-type") {
-                    var parent = ref(byId[targetCollection][value].visualizationLib, "visualization-library");
+                    var parent = localRef(byId[targetCollection][value].visualizationLib, "visualization-library");
                     edge(collection, source, "known-chart-parent", parent.collection, parent.id, false, executable);
                 }
             });
@@ -263,8 +271,8 @@ var OpenLAPPluginArtifactIndex = (function() {
             require(depth <= 48 && ++nodes <= MAX_NODES);
             if (optional(value)) return;
             if (object(value) && typeof value.$ref === "string" && own(value, "$id")) {
-                var reference = ref(value);
-                if (CATALOG.indexOf(reference.collection) !== -1 || reference.collection === "analytics-indicator") {
+                if (CATALOG.indexOf(value.$ref) !== -1 || value.$ref === "analytics-indicator") {
+                    var reference = localRef(value, null, jsonMode);
                     edge(collection, source, "typed-dbref", reference.collection, reference.id, true, executable);
                     if (executable && CATALOG.indexOf(reference.collection) !== -1) requireCatalog(collection, source, reference.collection, reference.id);
                 }
