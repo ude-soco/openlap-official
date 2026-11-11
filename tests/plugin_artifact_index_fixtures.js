@@ -100,6 +100,10 @@ load("/opt/openlap-checkpoint/artifact-index.js");
             replacement: {entries: [{id: "chart"}], mappings: {chart: "new-chart-class"}, library: {id: "library"}}}]});
     check(replacement.readyForS3Export && replacement.associations.filter(function(row) { return row.relation === "replacement-target-entry" || row.relation === "replacement-mapping"; })
         .every(function(row) { return row.targetCollection === "visualization-type" && row.targetId === "chart" && row.resolved; })); passed++;
+    var fieldNames = {_id: "field-names", kind: "ANALYTICS", state: "INSPECTED", artifactId: artifact("a")._id, replacementTarget: {removed: true}};
+    Object.defineProperty(fieldNames, "__proto__", {value: {selected: new DBRef("analytics-technique", "missing")}, enumerable: true});
+    var preservedNames = index({"plugin-artifact": [artifact("a")], "plugin-installation": [fieldNames]});
+    check(!preservedNames.readyForS3Export && preservedNames.summary.danglingTypedReferenceCount === 1); passed++;
     [129, 200].forEach(function(count) {
         var document = {"plugin-artifact": [artifact("1", "READY", "VISUALIZATION")],
             "visualization-library": [{_id: "large-library", artifactId: artifact("1", "READY", "VISUALIZATION")._id,

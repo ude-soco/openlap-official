@@ -304,7 +304,7 @@ var OpenLAPPluginArtifactIndex = (function() {
         EXECUTABLE.forEach(function(collection) { rows[collection].forEach(function(row) {
             var checked = row;
             if (collection === "plugin-installation" && object(row.replacementTarget) && row.replacementTarget.removed === true) {
-                checked = {}; Object.keys(row).forEach(function(key) { if (key !== "replacement" && key !== "replacementTarget") checked[key] = row[key]; });
+                checked = map(); Object.keys(row).forEach(function(key) { if (key !== "replacement" && key !== "replacementTarget") checked[key] = row[key]; });
             }
             walk(checked, null, 0, collection, id(row._id), collection !== "plugin-installation", false);
         }); });
