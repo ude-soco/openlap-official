@@ -1,8 +1,8 @@
 package com.openlap.plugins.storage;
 
 import com.mongodb.DBRef;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.openlap.plugins.artifacts.ArtifactIntegrity;
 import com.openlap.plugins.artifacts.PluginArtifact;
 import com.openlap.plugins.artifacts.PluginKind;
@@ -61,8 +61,8 @@ public final class CombinedPluginRecoveryFixture {
     VersityStorageApplication.Settings settings = new VersityStorageApplication.Settings(false);
     URI endpoint = URI.create(System.getenv("PLUGIN_STORAGE_S3_ENDPOINT"));
     Map<String, Long> expected = new TreeMap<>(additionalOrphans); int registryCount = 0;
-    try (MongoClient mongo = new MongoClient(new MongoClientURI("mongodb://recovered-mongo:27017/" + DATABASE
-             + "?serverSelectionTimeoutMS=3000&connectTimeoutMS=3000&socketTimeoutMS=5000"));
+    try (MongoClient mongo = MongoClients.create("mongodb://recovered-mongo:27017/" + DATABASE
+             + "?serverSelectionTimeoutMS=3000&connectTimeoutMS=3000&socketTimeoutMS=5000");
          S3ArtifactObjectStore store = S3ArtifactObjectStore.connect(PluginObjectSnapshotApplication.properties(settings, endpoint));
          var s3 = VersityStorageApplication.client(settings, endpoint, false)) {
       var db = mongo.getDatabase(DATABASE);
