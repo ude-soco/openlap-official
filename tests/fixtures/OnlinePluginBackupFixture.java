@@ -101,11 +101,67 @@ public final class OnlinePluginBackupFixture {
     }
     CombinedPluginRecoveryFixture.verify(false, orphans());
   }
+  static void manifestNegatives(String[] args) throws Exception {
+    require(args.length == 5 && VersityStorageApplication.entries(VersityStorageApplication.ROOT).isEmpty());
+    Path original = Path.of(args[1]), copy = Files.createTempDirectory("generated-invalid-online-");
+    Files.setPosixFilePermissions(copy, java.nio.file.attribute.PosixFilePermissions.fromString("rwx------"));
+    try (var paths = Files.walk(original)) {
+      for (Path path : (Iterable<Path>) paths::iterator) {
+        if (path.equals(original)) continue;
+        Path target = copy.resolve(original.relativize(path));
+        if (Files.isDirectory(path)) Files.createDirectory(target);
+        else Files.copy(path, target);
+        Files.setPosixFilePermissions(target, java.nio.file.attribute.PosixFilePermissions.fromString(Files.isDirectory(path) ? "rwx------" : "rw-------"));
+      }
+    }
+    byte[] originalBytes = Files.readAllBytes(original.resolve("snapshot.json"));
+    for (int variant = 0; variant < 7; variant++) {
+      var manifest = (com.fasterxml.jackson.databind.node.ObjectNode) VersityStorageApplication.JSON.readTree(originalBytes);
+      if (variant == 0) manifest.put("schemaVersion", 3);
+      else if (variant == 1) manifest.put("format", PluginObjectSnapshotApplication.FORMAT);
+      else if (variant == 2) manifest.remove("objectSelectionPolicy");
+      else if (variant == 3) manifest.put("objectSelectionPolicy", "ASSUMED_CURRENT_BUCKET");
+      else if (variant == 4) manifest.put("physicalDeletionDisabled", false);
+      else if (variant == 5) manifest.put("freezeEvidenceId", "invented-freeze");
+      else manifest.put("objectCount", manifest.path("objectCount").intValue() + 1);
+      byte[] bytes = PluginObjectSnapshotApplication.encoded(manifest); Files.write(copy.resolve("snapshot.json"), bytes);
+      boolean rejected = false;
+      try { PluginObjectSnapshotApplication.restoreFresh(copy, VersityStorageApplication.hash(bytes), args[2], args[3], Path.of(args[4])); }
+      catch (Exception mismatch) { rejected = true; }
+      require(rejected && PluginObjectSnapshotApplication.phase.equals("complete snapshot and database association validation")
+          && VersityStorageApplication.entries(VersityStorageApplication.ROOT).isEmpty());
+    }
+    require(java.util.Arrays.equals(originalBytes, Files.readAllBytes(original.resolve("snapshot.json"))));
+    VersityStorageApplication.result("GENERATED_ONLINE_MANIFEST_PREWRITE_REJECTIONS_VERIFIED", Collections.singletonMap("cases", 7));
+  }
+  static void modernClient(boolean source) throws Exception {
+    // Match PrimaryMongoConfig's modern client and existing one-host/db-path
+    // URI shape: no replicaSet/directConnection option is added for this check.
+    String uri = "mongodb://" + (source ? "source-mongo" : "recovered-mongo") + ":27017/plugin_recovery_fixture";
+    try (com.mongodb.client.MongoClient client = com.mongodb.client.MongoClients.create(uri)) {
+      var database = client.getDatabase("plugin_recovery_fixture");
+      require(database.runCommand(new org.bson.Document("ping", 1)).getDouble("ok") == 1.0);
+      var collection = database.getCollection("online-driver-compatibility");
+      if (source) {
+        collection.insertOne(new org.bson.Document("_id", "plain-modern-client").append("value", 1).append("mode", "plain-uri"));
+        var result = collection.updateOne(com.mongodb.client.model.Filters.eq("_id", "plain-modern-client"),
+            new org.bson.Document("$set", new org.bson.Document("value", 2)));
+        require(result.getMatchedCount() == 1 && result.getModifiedCount() == 1);
+      }
+      var marker = collection.find(com.mongodb.client.model.Filters.eq("_id", "plain-modern-client")).first();
+      require(marker != null && marker.getInteger("value") == 2 && marker.getString("mode").equals("plain-uri") && collection.countDocuments() == 1);
+    }
+    VersityStorageApplication.result(source ? "GENERATED_MODERN_PLAIN_SOURCE_URI_VERIFIED" : "GENERATED_MODERN_PLAIN_RESTORED_URI_VERIFIED",
+        Collections.singletonMap("plainUriModernClientVerified", true));
+  }
   public static void main(String[] args) throws Exception {
     require(args.length > 0);
     if (args[0].equals("--export-concurrent")) export(args, false);
     else if (args[0].equals("--frozen-reject-concurrent")) export(args, true);
     else if (args[0].equals("--verify-cold")) cold();
+    else if (args[0].equals("--validate-manifest-negatives")) manifestNegatives(args);
+    else if (args[0].equals("--verify-modern-source-uri")) modernClient(true);
+    else if (args[0].equals("--verify-modern-restored-uri")) modernClient(false);
     else require(false);
   }
 }

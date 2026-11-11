@@ -23,6 +23,13 @@ manifest. The manifest is published last. Incomplete folders are never adopted
 or overwritten. Limits are 1,000 objects, 100 MiB per object, 2 GiB of bodies and
 1 MiB per metadata document. Object key, byte SHA-256, size, content type and SHA
 metadata are verified together.
+Optional `PLUGIN_SNAPSHOT_MAX_TOTAL_BYTES` (positive, at most 2 GiB) and
+`PLUGIN_SNAPSHOT_MAX_OBJECTS` (0–1,000) lower the initial cut's payload budget;
+their defaults retain the limits above. Invalid caps fail before output writes.
+The complete cut's count/bytes must fit before any object body is downloaded;
+the exporter never truncates the cut to make it fit. Reserve checkpoint,
+index/manifest and encrypted-transport overhead separately when composing a
+bounded release upload. These settings do not change the snapshot format.
 The regular-file transporter omits empty directories. Restore therefore permits
 an absent `bodies/` directory only for an authenticated zero-object snapshot;
 it never creates or changes a retrieved input directory. Nonempty snapshots

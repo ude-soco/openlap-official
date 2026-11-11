@@ -17,7 +17,10 @@
             removalOperation: "removed-operation", visualizationTypes: [new DBRef("visualization-type", "removed-chart")]});
         d["visualization-type"].insertOne({_id: "removed-chart", visualizationLib: new DBRef("visualization-library", "removed-library"),
             removalState: "REMOVED", removalOperation: "removed-operation"});
-        d["plugin-installation"].insertOne({_id: "discarded-installation", kind: "ANALYTICS", state: "DISCARDED", artifactId: versions.discarded._id});
+        d["plugin-installation"].insertMany([
+            {_id: "discarded-installation", kind: "ANALYTICS", state: "DISCARDED", artifactId: versions.discarded._id},
+            {_id: "pending-upload", kind: "ANALYTICS", state: "UPLOADED", artifactId: versions.older._id},
+            {_id: "pending-inspection-review", kind: "ANALYTICS", state: "INSPECTED", artifactId: versions.current._id}]);
         d["plugin-removal"].insertMany([
             {_id: "removed-operation", kind: "VISUALIZATION_LIBRARY", catalogId: "removed-library", state: "REMOVED", rows: [
                 {_collection: "visualization-library", _id: "removed-library", artifactId: versions.removed._id},

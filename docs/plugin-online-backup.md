@@ -16,7 +16,8 @@ and tool image identities separately.
 Native Database Tools omit `admin.system.keys` and config collections other than
 `chunks`, `collections`, `databases`, `settings`, `shards`, `tags` and `version`.
 The source validator permits the expected omitted server bookkeeping
-`config.system.sessions` and `config.transactions`; it rejects other config
+`config.system.sessions`, `config.transactions`, `config.image_collection` and
+an empty `config.system.indexBuilds`; it rejects other config
 namespaces instead of silently losing custom data. Replication/session history
 and the source replica-set configuration are not a physical server clone. Other
 unsupported system collections, views, capped collections, unfinished index
@@ -109,6 +110,12 @@ source or edit a restored snapshot to make the index pass. An unsuccessful
 attempt must not produce a successful upload/acceptance receipt. A fresh Pod and
 fresh scratch directory are required for any automatic Job retry.
 
+Idle `UPLOADED`, `INSPECTION_FAILED` and `INSPECTED` review rows are supported
+when their typed artifact binding resolves to a matching READY registry object.
+Their database records and required bytes are preserved even before activation.
+A STAGED/missing artifact binding fails clearly. The tools never inspect or
+execute the JAR to make this decision.
+
 After a successful index, run the packaged snapshot launcher:
 
 ```text
@@ -156,6 +163,10 @@ volumes, independent retrieved reindexing, and separate cold MongoDB/object
 association readback. Generated class-free JARs are never executed. This proves
 the tested synthetic recovery path; it is not production application or chart
 execution, external custody or a zero-downtime database conversion claim.
+The same packaged modern MongoDB client also inserts, updates and reads a
+generated marker through the application's plain one-host/database-path URI
+shape after replica-set initialization; a fresh modern client verifies that
+marker after cold restoration, without adding a `replicaSet` URI option.
 
 The native MongoDB behavior is pinned to the
 [100.10.0 dump source](https://github.com/mongodb/mongo-tools/blob/100.10.0/mongodump/mongodump.go),
@@ -164,5 +175,7 @@ The native MongoDB behavior is pinned to the
 [replay implementation](https://github.com/mongodb/mongo-tools/blob/100.10.0/mongorestore/oplog.go),
 [namespace policy](https://github.com/mongodb/mongo-tools/blob/100.10.0/mongodump/prepare.go)
 and [config collection policy](https://github.com/mongodb/mongo-tools/blob/100.10.0/common/dumprestore/config.go).
+The expected omitted bookkeeping names come from the versioned
+[MongoDB 4.4.30 namespace definitions](https://github.com/mongodb/mongo/blob/r4.4.30/src/mongo/db/namespace_string.cpp).
 The one-time restart follows the versioned
 [MongoDB 4.4 conversion guidance](https://github.com/mongodb/docs/blob/v4.4/source/tutorial/convert-standalone-to-replica-set.txt).
