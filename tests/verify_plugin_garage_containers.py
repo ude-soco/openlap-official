@@ -57,6 +57,10 @@ def main():
             volumes.append(volume)
         with tempfile.TemporaryDirectory(prefix=prefix) as directory:
             fixtures = Path(directory)
+            # Native Linux preserves the runner's UID and mkdtemp's 0700 mode.
+            # This directory contains only generated disposable fixture keys;
+            # fixed UID1000 clients must be able to traverse its read-only bind.
+            fixtures.chmod(0o755)
             files = {'rpc-secret': secrets.token_hex(32), 'admin-token': secrets.token_urlsafe(32),
                      'metrics-token': secrets.token_urlsafe(32)}
             for name, value in files.items():
