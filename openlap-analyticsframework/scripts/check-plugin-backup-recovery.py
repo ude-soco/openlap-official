@@ -233,6 +233,12 @@ class Docker:
         with tempfile.TemporaryFile(dir=self.output) as out, tempfile.TemporaryFile(dir=self.output) as err:
             result = subprocess.run(self.command + list(args), stdout=out, stderr=err, stdin=subprocess.DEVNULL,
                                     timeout=timeout, env=self.env, preexec_fn=limits)
+            if success and result.returncode:
+                err.seek(0); diagnostic = err.read(MIB).decode(errors="replace").lower()
+                publish(self.output / ("docker-failure-" + uuid.uuid4().hex[:12] + ".json"), {
+                    "schemaVersion": 1, "status": "DOCKER_CLIENT_FAILED", "exitCode": result.returncode,
+                    "command": list(args)[:2], "classification": [name for name in (
+                        "permission denied", "no such image", "cannot connect", "not found", "unsupported", "platform", "no space") if name in diagnostic]})
             require(not success or result.returncode == 0)
             require(os.fstat(out.fileno()).st_size <= MIB and os.fstat(err.fileno()).st_size <= MIB)
             out.seek(0)
@@ -379,9 +385,10 @@ def recover(options, output, transport):
                   "scope": "Retrieved primary-database/plugin-object recovery only; no fresh live checkpoint, application execution, secondary database or availability verified"}
         publish(output / "recovery-receipt.json", report)
         return report, 0 if fresh and cleanup else 2
-    except (Exception, KeyboardInterrupt):
+    except (Exception, KeyboardInterrupt) as error:
         try:
-            publish(output / "recovery-failure.json", {"schemaVersion": 1, "status": "PLUGIN_RECOVERY_CHECK_INCOMPLETE", "stage": stage})
+            publish(output / "recovery-failure.json", {"schemaVersion": 1, "status": "PLUGIN_RECOVERY_CHECK_INCOMPLETE", "stage": stage,
+                                                      "errorType": type(error).__name__})
         except Exception:
             pass
         raise

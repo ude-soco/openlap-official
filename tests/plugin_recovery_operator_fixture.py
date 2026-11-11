@@ -86,8 +86,9 @@ def verify(prepared):
     result_code = runner.main(["--config", str(prepared["config"])])
     if result_code:
         failures = list(prepared["state"].glob("check-*/recovery-failure.json"))
-        stage = json.loads(failures[0].read_bytes()).get("stage", "unavailable") if len(failures) == 1 else "runner-preflight"
-        raise AssertionError("Generated operator recovery failed during " + stage)
+        detail = json.loads(failures[0].read_bytes()) if len(failures) == 1 else {"stage": "runner-preflight"}
+        docker_failures = [json.loads(path.read_bytes()) for path in prepared["state"].glob("check-*/docker-failure-*.json")]
+        raise AssertionError("Generated operator recovery failed: " + json.dumps({"detail": detail, "dockerFailures": docker_failures}))
     receipts = list(prepared["state"].glob("check-*/recovery-receipt.json")); require(len(receipts) == 1)
     result = json.loads(receipts[0].read_bytes())
     require(result["status"] == "INDEPENDENT_PLUGIN_RECOVERY_VERIFIED" and result["objectCount"] == prepared["objectCount"])
