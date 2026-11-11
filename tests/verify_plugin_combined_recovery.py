@@ -103,24 +103,35 @@ def require(value, message="Combined recovery fixture failed."):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ["snapshot", "checkpoint", "transport"]:
+    for name in ["snapshot", "checkpoint", "transport", "uploader"]:
         parser.add_argument("--" + name + "-image", help="Optional exact local sha256 image ID; otherwise build public sources")
     parser.add_argument("--online", action="store_true", help="Qualify full-instance online oplog capture and immutable object export cut")
+    parser.add_argument("--verify-recurring-producer", action="store_true", help="Use the packaged capture/index/export/uploader wrappers and recover their actual ciphertext")
     parser.add_argument("--report", type=Path, help="Optional new absolute file for the bounded non-sensitive typed proof")
     parser.add_argument("--verify-operator-runner", action="store_true", help="Also qualify the host-native operator recovery runner for both generated release sets")
     parser.add_argument("--operator-native-tools", type=Path, help="Verified host-native age/age-keygen/rclone directory; Linux fixtures otherwise extract the pinned clients from the transport image")
     options = parser.parse_args()
+    require(not options.uploader_image or options.verify_recurring_producer)
+    recurring_fixture = module("recurring_producer_fixture", ROOT / "tests/plugin_recurring_producer_fixture.py") if options.verify_recurring_producer else None
+    record_codec = module("recurring_record_codec", ROOT / "scripts/plugin-recurring-record.py") if options.verify_recurring_producer else None
+    upload_codec = module("producer_upload_codec", MODULE / "scripts/plugin-backup-upload.py") if options.verify_recurring_producer else None
     source_revision = subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip()
     require(not subprocess.check_output(["git", "-C", str(ROOT), "status", "--porcelain"], text=True), "Commit the public fixture inputs before qualification.")
     public_inputs = [Path(__file__), ROOT / "tests/test_plugin_checkpoint_containers.py", ROOT / "tests/verify_plugin_versity_containers.py",
         ROOT / "tests/fixtures/CombinedPluginRecoveryFixture.java", ROOT / "tests/fixtures/PluginObjectSnapshotQualification.java",
         ROOT / "tests/fixtures/plugin_combined_seed.js", ROOT / "tests/fixtures/Dockerfile.plugin-recovery-transport",
         MODULE / "pom.xml", MODULE / "Dockerfile.plugin-storage-versity", MODULE / "Dockerfile.plugin-checkpoint", MODULE / "scripts/plugin-release-backup.py",
-        MODULE / "scripts/check-plugin-backup-recovery.py", ROOT / "tests/plugin_recovery_operator_fixture.py"]
+        MODULE / "scripts/check-plugin-backup-recovery.py", MODULE / "scripts/plugin-recurring-export.py", ROOT / "tests/plugin_recovery_operator_fixture.py"]
+    if options.verify_recurring_producer:
+        public_inputs += [ROOT / "tests/plugin_recurring_producer_fixture.py", MODULE / "Dockerfile.plugin-backup-upload", ROOT / "scripts/plugin-recurring-record.py"]
+        public_inputs += [MODULE / "scripts" / name for name in ["plugin-backup-upload.py", "plugin-backup-upload-entrypoint.sh", "plugin-recurring-backup.py"]]
     if options.online: public_inputs += [ROOT / "tests/fixtures/OnlinePluginBackupFixture.java", ROOT / "tests/fixtures/plugin_online_transactions.js"]
     def source_inventory():
         paths = public_inputs + sorted(path for path in (MODULE / "src/main/java").rglob("*") if path.is_file()) \
             + sorted(path for path in (MODULE / "scripts/plugin-checkpoint").rglob("*") if path.is_file())
+        if options.verify_recurring_producer:
+            for component in ["plugin-recurring-backup", "plugin-frozen-backup"]:
+                paths += sorted(path for path in (ROOT / ".k8s/maintenance" / component).rglob("*") if path.is_file())
         return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths}
     original_inputs = source_inventory()
     source_input_sha = hashlib.sha256(json.dumps(original_inputs, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
@@ -153,7 +164,7 @@ def main():
             try:
                 result = subprocess.run(docker + arguments, capture_output=True, timeout=timeout, env=environment)
             except subprocess.TimeoutExpired:
-                if owned: subprocess.run(docker + ["rm", "--force", owned], capture_output=True, timeout=20, env=environment)
+                if owned: subprocess.run(docker + ["rm", "--force", "--volumes", owned], capture_output=True, timeout=20, env=environment)
                 raise AssertionError("Combined fixture timeout during " + stage)
             diagnostic = result.stderr.decode("utf-8", errors="replace")[-3000:] if stage.endswith("public image build") else ""
             require(not success or result.returncode == 0, "Combined fixture failed during " + stage + ("\n" + diagnostic if diagnostic else ""))
@@ -168,11 +179,17 @@ def main():
                 (context / "src/main").mkdir(parents=True)
                 for name in ["pom.xml", "Dockerfile.plugin-storage-versity"]: shutil.copyfile(MODULE / name, context / name)
                 shutil.copytree(MODULE / "src/main/java", context / "src/main/java")
+                shutil.copyfile(MODULE / "scripts/plugin-recurring-export.py", context / "plugin-recurring-export.py")
                 dockerfile = "Dockerfile.plugin-storage-versity"
             elif kind == "checkpoint":
                 (context / "scripts").mkdir()
                 shutil.copytree(MODULE / "scripts/plugin-checkpoint", context / "scripts/plugin-checkpoint")
                 dockerfile = "Dockerfile.plugin-checkpoint"; shutil.copyfile(MODULE / dockerfile, context / dockerfile)
+            elif kind == "uploader":
+                dockerfile = "Dockerfile.plugin-backup-upload"; shutil.copyfile(MODULE / dockerfile, context / dockerfile)
+                for name in ["plugin-release-backup.py", "plugin-backup-upload.py", "plugin-backup-upload-entrypoint.sh", "plugin-recurring-backup.py", "plugin-recurring-export.py"]:
+                    shutil.copyfile(MODULE / "scripts" / name, context / name)
+                shutil.copyfile(ROOT / "scripts/plugin-recurring-record.py", context / "plugin-recurring-record.py")
             else:
                 dockerfile = "Dockerfile.plugin-recovery-transport"
                 shutil.copyfile(ROOT / "tests/fixtures" / dockerfile, context / dockerfile)
@@ -241,11 +258,13 @@ def main():
                         "-ceu", java_script, "fixture", "com.openlap.plugins.storage." + class_name, *arguments], "native Java " + class_name, timeout=120)
 
         def index(inputs, input_path, output, identifier, report_sha):
-            result = run(["run", "--rm", "--network=none", *checkpoint_common, mount(inputs, "/inputs", True), mount(output, "/outputs"),
-                          "--env=CHECKPOINT_ID=" + identifier, "--env=CHECKPOINT_EXPECTED_REPORT_SHA256=" + report_sha,
-                          "--env=CHECKPOINT_ARCHIVE_PATH=/inputs/" + input_path + "/database.archive.gz",
-                          "--env=CHECKPOINT_REPORT_PATH=/inputs/" + input_path + "/checkpoint.json", checkpoint_image,
-                          "--index-online-plugin-artifacts" if options.online else "--index-plugin-artifacts"], "verified restored index", timeout=240)
+            if options.verify_recurring_producer and identifier == "frozen-index": result = producer.index(output)
+            else:
+                result = run(["run", "--rm", "--network=none", *checkpoint_common, mount(inputs, "/inputs", True), mount(output, "/outputs"),
+                              "--env=CHECKPOINT_ID=" + identifier, "--env=CHECKPOINT_EXPECTED_REPORT_SHA256=" + report_sha,
+                              "--env=CHECKPOINT_ARCHIVE_PATH=/inputs/" + input_path + "/database.archive.gz",
+                              "--env=CHECKPOINT_REPORT_PATH=/inputs/" + input_path + "/checkpoint.json", checkpoint_image,
+                              "--index-online-plugin-artifacts" if options.online else "--index-plugin-artifacts"], "verified restored index", timeout=240)
             lines = result.stdout.decode().splitlines()
             require(len(lines) == 3 and lines[0] == "OPENLAP-CHECKPOINT-PLUGIN-INDEX-REPORT-V1" and lines[2] == "OPENLAP-CHECKPOINT-PLUGIN-INDEX-REPORT-END-V1")
             summary = json.loads(lines[1]); require(summary["readyForS3Export"] and summary["associationsResolved"])
@@ -253,6 +272,7 @@ def main():
 
         try:
             snapshot_image, checkpoint_image, transport_image = build("snapshot"), build("checkpoint"), build("transport")
+            uploader_image = build("uploader") if options.verify_recurring_producer else None
             operator_fixture = operator_tools = None
             if options.verify_operator_runner:
                 operator_fixture = module("operator_fixture", ROOT / "tests/plugin_recovery_operator_fixture.py")
@@ -281,6 +301,8 @@ def main():
                                  "--env=CHECKPOINT_MAX_EXPANDED_MIB=" + ("64" if options.online else "16"), "--env=CHECKPOINT_MAX_RESTORE_MIB=512"]
             for empty in [False, True]:
                 case = "empty" if empty else "versions"; source_net = network(case + "-source")
+                producer = recurring_fixture.Producer(run=run, volume=volume, mount=mount, checkpoint_image=checkpoint_image, snapshot_image=snapshot_image,
+                    uploader_image=uploader_image, transport_image=transport_image, checkpoint_common=checkpoint_common, sdk_common=common, staging=staging, online=options.online) if options.verify_recurring_producer else None
                 db_data, gateway_data, control, captures, frozen, snapshots = [volume(case + "-" + suffix) for suffix in ["db", "gateway", "seed", "capture", "index", "snapshot"]]
                 source_db, source_gateway = token + "-" + case + "-mongo", token + "-" + case + "-gateway"
                 start_mongo(source_db, source_net, "source-mongo", db_data)
@@ -324,6 +346,12 @@ def main():
                     containers.append(writer)
                 def capture(identifier, replacements=(), success=True):
                     # Later explicit fixture overrides are intentional negative inputs.
+                    if producer and identifier == "source-capture":
+                        require(not replacements)
+                        env = ["--env=MONGODB_PRIMARY_URI=mongodb://source-mongo:27017/" + ("" if options.online else "plugin_recovery_fixture"),
+                            "--env=OPENLAP_MONGODB_DB=plugin_recovery_fixture", "--env=CHECKPOINT_SOURCE_HOST=source-mongo", "--env=CHECKPOINT_SOURCE_PORT=27017"]
+                        env += ["--env=CHECKPOINT_REPLICA_SET=online-fixture-rs"] if options.online else ["--env=CHECKPOINT_FREEZE_EVIDENCE=generated-writers-stopped"]
+                        return producer.capture(source_net, env, captures)
                     result = run(["run", "--rm", "--network=" + source_net, *checkpoint_common, mount(captures, "/outputs"),
                         "--env=MONGODB_PRIMARY_URI=mongodb://source-mongo:27017/" + ("" if options.online else "plugin_recovery_fixture"), "--env=OPENLAP_MONGODB_DB=plugin_recovery_fixture",
                         "--env=CHECKPOINT_SOURCE_HOST=source-mongo", "--env=CHECKPOINT_SOURCE_PORT=27017",
@@ -417,42 +445,92 @@ def main():
                             "-ceu", check], "invalid caps fail before output writes, oversized cuts before body downloads")
                 export_class = "OnlinePluginBackupFixture" if options.online and not empty else "PluginObjectSnapshotApplication"
                 export_action = "--export-concurrent" if options.online and not empty else "--export-online" if options.online else "--export"
-                exported = java(export_class, [export_action, "/index/frozen-index/artifact-index.json", original["artifactIndexSha256"], report_sha, "/snapshot/export"],
-                                [mount(frozen, "/index", True), mount(snapshots, "/snapshot")], source_net,
-                                extra_env=(["--env=PLUGIN_SNAPSHOT_MAX_TOTAL_BYTES=8388608", "--env=PLUGIN_SNAPSHOT_MAX_OBJECTS=" + ("0" if empty else "8")] if options.online else []))
+                if producer:
+                    late_writer = None
+                    if options.online and not empty:
+                        java("OnlinePluginBackupFixture", ["--prepare-cut-orphans"], [], source_net)
+                        late_writer = token + "-" + case + "-late-writer"
+                        run(["run", "--detach", "--name", late_writer, "--network=" + source_net, *common, *sources,
+                            producer.sub("objects", "/producer-objects", True), "--env=PLUGIN_STORAGE_S3_ENDPOINT=http://gateway:9000", "--entrypoint=/bin/sh", snapshot_image,
+                            "-ceu", java_script, "fixture", "com.openlap.plugins.storage.OnlinePluginBackupFixture", "--write-late-after-first-body",
+                            "/producer-objects/objects-" + producer.uid + "/bodies/0000.jar"], "generated concurrent producer object writer")
+                        containers.append(late_writer)
+                        for _ in range(100):
+                            ready = run(["exec", late_writer, "/bin/sh", "-ceu", "test -f /tmp/late-writer-ready"], "producer concurrent writer readiness", success=False)
+                            if ready.returncode == 0: break
+                            time.sleep(0.1)
+                        require(ready.returncode == 0)
+                    exported = producer.export(source_net, snapshots)
+                    if late_writer:
+                        require(run(["wait", late_writer], "native concurrent object writer completion").stdout.strip() == b"0"); remove_container(late_writer)
+                else:
+                    exported = java(export_class, [export_action, "/index/frozen-index/artifact-index.json", original["artifactIndexSha256"], report_sha, "/snapshot/export"],
+                                    [mount(frozen, "/index", True), mount(snapshots, "/snapshot")], source_net,
+                                    extra_env=(["--env=PLUGIN_SNAPSHOT_MAX_TOTAL_BYTES=8388608", "--env=PLUGIN_SNAPSHOT_MAX_OBJECTS=" + ("0" if empty else "8")] if options.online else []))
                 snapshot = json.loads(exported.stdout.splitlines()[-1]); require(snapshot["objectCount"] == (0 if empty else 8 if options.online else 6))
                 if options.online and not empty:
+                    if producer:
+                        cut = java("OnlinePluginBackupFixture", ["--verify-native-cut", "/snapshot/export"], [mount(snapshots, "/snapshot", True)], source_net)
+                        snapshot.update(json.loads(cut.stdout))
                     require(snapshot["concurrentNewKeyExcluded"] and snapshot["cutOrphansPreserved"])
                     java("OnlinePluginBackupFixture", ["--frozen-reject-concurrent", "/index/frozen-index/artifact-index.json", original["artifactIndexSha256"], report_sha, "/snapshot/frozen-negative"],
                         [mount(frozen, "/index", True), mount(snapshots, "/snapshot")], source_net)
-                operator_case = None
-                if operator_fixture:
-                    operator_case = operator_fixture.prepare(case, snapshot["objectCount"], staging, operator_tools, run, COPY, mount,
-                        captures, snapshots, transport_image, checkpoint_image, snapshot_image, report_sha,
-                        original["artifactIndexSha256"], snapshot["manifestSha256"], docker, endpoint, generated_freeze_time, online=options.online)
+                operator_case = None; producer_sources = []
                 print("PASS: " + case + " actual checkpoint, verified index and object export", flush=True)
-                operator, custody, remote = [volume(case + "-" + suffix, 501) for suffix in ["operator", "custody", "remote"]]
-                copied = run(["run", "--rm", "--network=none", "--user=0:0", "--cap-drop=ALL", "--cap-add=DAC_OVERRIDE", "--cap-add=CHOWN", "--read-only",
-                              mount(captures, "/checkpoint", True), mount(snapshots, "/snapshot", True), mount(operator, "/destination"),
-                              "--entrypoint=python3", transport_image, "-B", "-c", COPY, "upload", "501"], "new operator upload staging")
-                require(json.loads(copied.stdout)["sourceMetadataUnchanged"])
+                if producer:
+                    actual_custody, actual_remote = volume(case + "-producer-custody", 501), volume(case + "-producer-remote")
+                    initialized = run(["run", "--rm", "--network=none", "--user=501:501", mount(actual_custody, "/control"), "--entrypoint=python3", transport_image,
+                        "-B", "-c", CONTROL, "initialize"], "native generated producer age identity")
+                    recipient = json.loads(initialized.stdout)["recipient"]
+                    uploaded = producer.upload(recipient, actual_remote)
+                    if options.online:
+                        record = record_codec.parse_frame(uploaded.stdout)
+                        require(record["podUid"] == producer.uid and record["checkpointReportSha256"] == report_sha
+                            and record["artifactIndexSha256"] == original["artifactIndexSha256"] and record["snapshotManifestSha256"] == snapshot["manifestSha256"]
+                            and record["archiveSha256"] == report["archiveSha256"] and record["objectCount"] == snapshot["objectCount"])
+                        actual_receipt = record["uploadReceipt"]
+                    else: actual_receipt = upload_codec.parse_report(uploaded.stdout, report_sha)
+                    if operator_fixture:
+                        operator_case = operator_fixture.prepare_existing_producer(case, snapshot["objectCount"], staging, operator_tools, run, mount,
+                            actual_remote, actual_custody, transport_image, checkpoint_image, snapshot_image, actual_receipt, report_sha,
+                            original["artifactIndexSha256"], snapshot["manifestSha256"], docker, endpoint,
+                            report["captureStartedAt"] if options.online else generated_freeze_time, online=options.online)
+                    custody, remote = volume(case + "-retrieval-custody", 501), volume(case + "-retrieval-remote", 501)
+                    receipt = producer.retain(actual_remote, actual_custody, remote, custody)
+                    require(receipt["receiptSha256"] == hashlib.sha256(upload_codec.backup.json_bytes(actual_receipt)).hexdigest())
+                    operator = None
+                    producer_sources = [producer.workspace, producer.scratch, actual_remote, actual_custody]
+                else:
+                    if operator_fixture:
+                        operator_case = operator_fixture.prepare(case, snapshot["objectCount"], staging, operator_tools, run, COPY, mount,
+                            captures, snapshots, transport_image, checkpoint_image, snapshot_image, report_sha,
+                            original["artifactIndexSha256"], snapshot["manifestSha256"], docker, endpoint, generated_freeze_time, online=options.online)
+                    operator, custody, remote = [volume(case + "-" + suffix, 501) for suffix in ["operator", "custody", "remote"]]
+                    copied = run(["run", "--rm", "--network=none", "--user=0:0", "--cap-drop=ALL", "--cap-add=DAC_OVERRIDE", "--cap-add=CHOWN", "--read-only",
+                                  mount(captures, "/checkpoint", True), mount(snapshots, "/snapshot", True), mount(operator, "/destination"),
+                                  "--entrypoint=python3", transport_image, "-B", "-c", COPY, "upload", "501"], "new operator upload staging")
+                    require(json.loads(copied.stdout)["sourceMetadataUnchanged"])
+                    transport_common = ["--user=501:501", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges", "--tmpfs=/tmp:rw,size=32m,mode=1777",
+                                        mount(custody, "/control"), mount(remote, "/remote")]
+                    initialized = run(["run", "--rm", "--network=none", *transport_common, "--entrypoint=python3", transport_image, "-B", "-c", CONTROL, "initialize"], "native generated age identity")
+                    recipient = json.loads(initialized.stdout)["recipient"]
                 transport_common = ["--user=501:501", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges", "--tmpfs=/tmp:rw,size=32m,mode=1777",
                                     mount(custody, "/control"), mount(remote, "/remote")]
-                initialized = run(["run", "--rm", "--network=none", *transport_common, "--entrypoint=python3", transport_image, "-B", "-c", CONTROL, "initialize"], "native generated age identity")
-                recipient = json.loads(initialized.stdout)["recipient"]
                 args = ["--age", "/tools/age", "--rclone", "/tools/rclone", "--rclone-config", "/control/rclone.conf", "--remote", "fixture:releases",
                         "--checkpoint-report-sha256", report_sha, "--max-bytes", "8388608", "--max-files", "1000", "--timeout-seconds", "120"]
-                run(["run", "--rm", "--network=none", *transport_common, mount(operator, "/operator"), transport_image, "push", *args,
-                     "--checkpoint", "/operator/checkpoint", "--source", "objects=/operator/snapshot", "--recipient", recipient, "--output", "/operator/upload"], "native encrypted push/readback")
-                receipt = json.loads(run(["run", "--rm", "--network=none", *transport_common, mount(operator, "/operator", True), "--entrypoint=python3", transport_image,
-                                          "-B", "-c", CONTROL, "retain-receipt"], "independent receipt retention").stdout)
+                if not producer:
+                    run(["run", "--rm", "--network=none", *transport_common, mount(operator, "/operator"), transport_image, "push", *args,
+                         "--checkpoint", "/operator/checkpoint", "--source", "objects=/operator/snapshot", "--recipient", recipient, "--output", "/operator/upload"], "native encrypted push/readback")
+                    receipt = json.loads(run(["run", "--rm", "--network=none", *transport_common, mount(operator, "/operator", True), "--entrypoint=python3", transport_image,
+                                              "-B", "-c", CONTROL, "retain-receipt"], "independent receipt retention").stdout)
                 if writer:
                     run(["run", "--rm", "--network=none", "--user=1000:1000", mount(control, "/control"), "--entrypoint=/bin/bash", checkpoint_image,
                         "-ceu", "umask 077; printf done > /control/stop"], "stop generated transaction writer")
                     require(run(["wait", writer], "transaction writer completion").stdout.strip() == b"0"); remove_container(writer)
                     require(transaction_client("state")["committedTransactions"] > writes_after)
                 remove_container(source_gateway); remove_container(source_db)
-                for source in [db_data, gateway_data, control, captures, frozen, snapshots, operator]: remove_volume(source)
+                for source in [db_data, gateway_data, control, captures, frozen, snapshots, operator, *producer_sources]:
+                    if source: remove_volume(source)
                 run(["network", "rm", source_net], "source network removal"); networks.remove(source_net)
                 print("PASS: " + case + " native encrypted push and source data removal", flush=True)
                 operator_proof = operator_fixture.verify(operator_case, run) if operator_case else None
@@ -509,6 +587,10 @@ def main():
                         "sourceOplogAdvancedDuringCapture": True, "writesBeforeSampleImmediatelyPrecedesCapture": True,
                         "modernPlainSourceUriReadWriteVerified": True, "modernPlainRestoredUriMarkerVerified": True,
                         "immutableObjectCutVerified": True, "laterNewKeysExcluded": not empty, "invalidOnlineInputsRejected": not empty, "activeFencePreservedAndWholeCaptureRetried": not empty})
+                if producer:
+                    evidence[-1]["packagedProducer"] = {"mode": "ONLINE" if options.online else "FROZEN", "podUid": producer.uid,
+                        "captureIndexExportAndUploaderVerified": True, "freshEmptyDirGroupSemanticsVerified": True,
+                        "actualProducerCiphertextRecovered": True, "allOriginalProducerScratchAndCustodyRemoved": True}
                 if operator_proof: evidence[-1]["operatorRecoveryCheck"] = operator_proof
                 print("PASS: " + case + " actual checkpoint/index, encrypted retrieval, fresh storage and cold associations", flush=True)
                 remove_container(recovered_gateway); remove_container(recovered_db)
@@ -517,6 +599,7 @@ def main():
                 "snapshot": snapshot_image, "checkpoint": checkpoint_image, "transport": transport_image}, "cases": evidence,
                 "sourceRevision": source_revision, "sourceInputSha256": source_input_sha, "sourceInputFileCount": len(original_inputs),
                 "scope": "Generated local recovery only; no external custody, production acceptance or availability verified."}
+            if uploader_image: proof["images"]["uploader"] = uploader_image
             encoded = (json.dumps(proof, sort_keys=True, separators=(",", ":")) + "\n").encode()
             require(len(encoded) <= 16384)
             if options.report:

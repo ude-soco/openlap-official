@@ -154,6 +154,43 @@ public final class OnlinePluginBackupFixture {
     VersityStorageApplication.result(source ? "GENERATED_MODERN_PLAIN_SOURCE_URI_VERIFIED" : "GENERATED_MODERN_PLAIN_RESTORED_URI_VERIFIED",
         Collections.singletonMap("plainUriModernClientVerified", true));
   }
+  static void prepareOrphans() throws Exception {
+    VersityStorageApplication.Settings settings = new VersityStorageApplication.Settings(false);
+    try (S3ArtifactObjectStore store = S3ArtifactObjectStore.connect(PluginObjectSnapshotApplication.properties(settings, URI.create(System.getenv("PLUGIN_STORAGE_S3_ENDPOINT"))))) {
+      for (String label : new String[]{"cut-orphan-a", "cut-orphan-b"}) put(store, label);
+    }
+    VersityStorageApplication.result("GENERATED_CUT_ORPHANS_PREPARED", Collections.singletonMap("objectCount", 2));
+  }
+  static void lateWriter(String[] args) throws Exception {
+    require(args.length == 2 && args[1].matches("/producer-objects/objects-[a-f0-9-]{36}/bodies/0000[.]jar"));
+    Path first = Path.of(args[1]), manifest = first.getParent().getParent().resolve("snapshot.json");
+    VersityStorageApplication.Settings settings = new VersityStorageApplication.Settings(false);
+    try (S3ArtifactObjectStore store = S3ArtifactObjectStore.connect(PluginObjectSnapshotApplication.properties(settings, URI.create(System.getenv("PLUGIN_STORAGE_S3_ENDPOINT"))))) {
+      try (var input = store.open(artifact("cut-orphan-a"))) { ArtifactIntegrity.copyVerified(input, java.io.OutputStream.nullOutputStream(), artifact("cut-orphan-a")); }
+      Files.writeString(Path.of("/tmp/late-writer-ready"), "ready", java.nio.file.StandardOpenOption.CREATE_NEW);
+      long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(60);
+      while (!Files.exists(first)) { require(System.nanoTime() < deadline); Thread.sleep(1); }
+      require(!Files.exists(manifest)); PluginObjectSnapshotQualification.put(store, "late-online-key", PluginKind.ANALYTICS);
+      require(!Files.exists(manifest));
+    }
+    VersityStorageApplication.result("GENERATED_NEW_KEY_DURING_NATIVE_EXPORT_VERIFIED", Collections.emptyMap());
+  }
+  static void verifyCut(String[] args) throws Exception {
+    require(args.length == 2);
+    var manifest = VersityStorageApplication.JSON.readTree(Files.readAllBytes(Path.of(args[1]).resolve("snapshot.json")));
+    require(manifest.path("schemaVersion").intValue() == 2 && manifest.path("objectCount").intValue() == 8);
+    Map<String, Long> cut = new TreeMap<>();
+    for (var row : manifest.path("objects")) cut.put(row.path("objectKey").textValue(), row.path("sizeBytes").longValue());
+    require(!cut.containsKey(PluginObjectSnapshotQualification.artifact("late-online-key", PluginKind.ANALYTICS).getObjectKey())
+        && cut.entrySet().containsAll(orphans().entrySet()));
+    VersityStorageApplication.Settings settings = new VersityStorageApplication.Settings(false);
+    try (var client = VersityStorageApplication.client(settings, URI.create(System.getenv("PLUGIN_STORAGE_S3_ENDPOINT")), false)) {
+      var observed = PluginObjectSnapshotApplication.inventory(client, settings.bucket);
+      require(observed.size() == 9 && observed.entrySet().containsAll(cut.entrySet()));
+    }
+    Map<String, Object> result = new LinkedHashMap<>(); result.put("concurrentNewKeyExcluded", true); result.put("cutOrphansPreserved", true);
+    VersityStorageApplication.result("GENERATED_NATIVE_IMMUTABLE_CUT_VERIFIED", result);
+  }
   public static void main(String[] args) throws Exception {
     require(args.length > 0);
     if (args[0].equals("--export-concurrent")) export(args, false);
@@ -162,6 +199,9 @@ public final class OnlinePluginBackupFixture {
     else if (args[0].equals("--validate-manifest-negatives")) manifestNegatives(args);
     else if (args[0].equals("--verify-modern-source-uri")) modernClient(true);
     else if (args[0].equals("--verify-modern-restored-uri")) modernClient(false);
+    else if (args[0].equals("--prepare-cut-orphans")) prepareOrphans();
+    else if (args[0].equals("--write-late-after-first-body")) lateWriter(args);
+    else if (args[0].equals("--verify-native-cut")) verifyCut(args);
     else require(false);
   }
 }
