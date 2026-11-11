@@ -1,0 +1,11 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: openlap-plugin-object-snapshot-export
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: plugin-object-snapshot-export
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress: []
