@@ -138,7 +138,8 @@ public final class OnlinePluginBackupFixture {
     // Match PrimaryMongoConfig's modern client and existing one-host/db-path
     // URI shape: no replicaSet/directConnection option is added for this check.
     String uri = "mongodb://" + (source ? "source-mongo" : "recovered-mongo") + ":27017/plugin_recovery_fixture";
-    try (com.mongodb.client.MongoClient client = com.mongodb.client.MongoClients.create(uri)) {
+    com.mongodb.client.MongoClient client = com.mongodb.client.MongoClients.create(uri);
+    try {
       var database = client.getDatabase("plugin_recovery_fixture");
       require(database.runCommand(new org.bson.Document("ping", 1)).getDouble("ok") == 1.0);
       var collection = database.getCollection("online-driver-compatibility");
@@ -150,7 +151,7 @@ public final class OnlinePluginBackupFixture {
       }
       var marker = collection.find(com.mongodb.client.model.Filters.eq("_id", "plain-modern-client")).first();
       require(marker != null && marker.getInteger("value") == 2 && marker.getString("mode").equals("plain-uri") && collection.countDocuments() == 1);
-    }
+    } finally { client.close(); }
     VersityStorageApplication.result(source ? "GENERATED_MODERN_PLAIN_SOURCE_URI_VERIFIED" : "GENERATED_MODERN_PLAIN_RESTORED_URI_VERIFIED",
         Collections.singletonMap("plainUriModernClientVerified", true));
   }
