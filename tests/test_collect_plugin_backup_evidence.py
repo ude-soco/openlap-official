@@ -8,6 +8,8 @@ import io
 import json
 import os
 from pathlib import Path
+import plistlib
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -304,6 +306,30 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual(C.objects(b'{"metadata":{"name":"one"}}\n---\n{"metadata":{"name":"two"}}\n')[1]['metadata']['name'], 'two')
         for body in [b'[]', b'{"a":1,"a":2}', b'{"a":NaN}', b'{}\n---\n']:
             with self.assertRaises(C.CollectionError): C.objects(body)
+
+    def test_disabled_schedules_and_minimal_outside_git_tool_tree(self):
+        examples = ROOT / 'docs/examples'
+        for name, check in [('org.openlap.plugin-backup-evidence.plist', False),
+                            ('org.openlap.plugin-backup-weekly-recovery.plist', True)]:
+            value = plistlib.loads((examples / name).read_bytes())
+            self.assertIs(value['Disabled'], True); self.assertIs(value['RunAtLoad'], False)
+            self.assertEqual('--run-check' in value['ProgramArguments'], check)
+            self.assertTrue(value['ProgramArguments'][2].endswith('/scripts/collect-plugin-backup-evidence.py'))
+        example = json.loads((examples / 'plugin-backup-evidence-collection.json').read_bytes())
+        self.assertEqual(set(example), C.REQUIRED | set(C.DEFAULTS))
+        self.assertEqual(set(example['accepted_runtime_image_ids']), set(C.ROLES))
+        installed = self.root / 'installed-public-tools'; installed.mkdir(mode=0o700)
+        paths = ['scripts/collect-plugin-backup-evidence.py', 'scripts/plugin-recurring-record.py',
+                 'openlap-analyticsframework/scripts/check-plugin-backup-recovery.py',
+                 'openlap-analyticsframework/scripts/plugin-release-backup.py',
+                 'openlap-analyticsframework/scripts/plugin-backup-upload.py']
+        for relative in paths:
+            target = installed / relative; target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / relative, target)
+        result = subprocess.run([C.sys.executable, '-B', str(installed / paths[0]), '--help'],
+                                stdin=subprocess.DEVNULL, capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0)
+        self.assertIn(b'--run-check', result.stdout)
 
 
 if __name__ == '__main__': unittest.main()
