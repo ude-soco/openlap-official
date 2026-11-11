@@ -29,8 +29,14 @@
             app = reader.getDatabase("plugin_recovery_fixture"); other = reader.getDatabase("online_other_fixture");
         }
         var state = app["online-counter"].findOne({_id: "state"}), events = other.events.countDocuments({});
-        assert(state.seq === state.left && state.seq === -state.right && state.seq === events);
-        assert(app["online-padding"].countDocuments({}) === 1024);
+        var padding = app["online-padding"].countDocuments({});
+        if (!state || state.seq !== state.left || state.seq !== -state.right || state.seq !== events || padding !== 1024) {
+            // Only fixed generated fixture counters, never application records.
+            function counter(value) { return typeof value === "number" && isFinite(value) && Math.floor(value) === value && Math.abs(value) <= 10000 ? value : null; }
+            print(JSON.stringify({status: "GENERATED_TRANSACTION_STATE_REJECTED", statePresent: !!state,
+                seq: counter(state && state.seq), left: counter(state && state.left), right: counter(state && state.right),
+                events: counter(events), padding: counter(padding)})); quit(1);
+        }
         if (reader) { reader.commitTransaction(); reader.endSession(); }
         print(JSON.stringify({committedTransactions: state.seq, crossDatabaseInvariantVerified: true, paddingDocuments: 1024}));
     } else quit(1);

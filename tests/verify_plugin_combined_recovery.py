@@ -315,7 +315,17 @@ def main():
                 def transaction_client(phase, host="source-mongo", net=source_net):
                     result = run(["run", "--rm", "--network=" + net, "--user=1000:1000", *sources,
                         "--env=FIXTURE_PHASE=" + phase, "--env=FIXTURE_HOST=" + host, "--entrypoint=mongo", checkpoint_image,
-                        "--nodb", "--norc", "--quiet", "/fixture/plugin_online_transactions.js"], "generated transaction " + phase)
+                        "--nodb", "--norc", "--quiet", "/fixture/plugin_online_transactions.js"], "generated transaction " + phase, success=False)
+                    if result.returncode:
+                        diagnostic = "unclassified native fixture failure; client output withheld"
+                        try:
+                            value = json.loads(result.stdout)
+                            require(set(value) == {"status", "statePresent", "seq", "left", "right", "events", "padding"}
+                                and value["status"] == "GENERATED_TRANSACTION_STATE_REJECTED" and type(value["statePresent"]) is bool
+                                and all(value[key] is None or type(value[key]) is int and abs(value[key]) <= 10000 for key in ("seq", "left", "right", "events", "padding")))
+                            diagnostic = json.dumps(value, sort_keys=True)
+                        except (ValueError, AssertionError): pass
+                        require(False, "Generated transaction " + phase + " failed: " + diagnostic)
                     return json.loads(result.stdout) if phase == "state" else None
                 if options.online:
                     transaction_client("seed")
@@ -562,6 +572,14 @@ def main():
                 fresh_db = volume(case + "-fresh-db"); start_mongo(recovered_db, recovery_net, "recovered-mongo", fresh_db)
                 run(["run", "--rm", "--network=" + recovery_net, "--user=1000:1000", mount(staged, "/inputs", True), "--entrypoint=mongorestore", checkpoint_image,
                      "--host=recovered-mongo", "--archive=/inputs/retrieved/checkpoint/database.archive.gz", "--gzip", *(["--oplogReplay"] if options.online else []), "--stopOnError", "--numParallelCollections=1"], "fresh retrieved database restore")
+                before_restart_transactions = transaction_client("state", "recovered-mongo", recovery_net) if options.online else None
+                # Complete and verify the restored state before testing a crash.
+                # mongorestore return alone is not an explicit journal/fsync
+                # barrier for this independent standalone target's applyOps.
+                flushed = run(["run", "--rm", "--network=" + recovery_net, "--user=1000:1000", "--entrypoint=mongo", checkpoint_image,
+                    "--norc", "--quiet", "--host=recovered-mongo", "--eval",
+                    "assert.commandWorked(db.getSiblingDB('admin').runCommand({fsync:1}));print('GENERATED_RESTORED_DATABASE_FSYNC_VERIFIED');"], "fresh restored database durability barrier")
+                require(flushed.stdout.strip() == b"GENERATED_RESTORED_DATABASE_FSYNC_VERIFIED")
                 run(["kill", "--signal=KILL", recovered_db], "recovered database cold shutdown"); run(["start", recovered_db], "recovered database cold restart"); wait_mongo(recovery_net, "recovered-mongo")
                 start_gateway(recovered_gateway, recovery_net, fresh_objects)
                 run(["kill", "--signal=KILL", recovered_gateway], "recovered gateway cold shutdown"); run(["start", recovered_gateway], "recovered gateway cold restart")
@@ -569,6 +587,7 @@ def main():
                 restored_transactions = None
                 if options.online:
                     restored_transactions = transaction_client("state", "recovered-mongo", recovery_net)
+                    require(restored_transactions == before_restart_transactions, "Journaled cold restart changed restored generated transaction state.")
                     require(writes_before <= restored_transactions["committedTransactions"] <= writes_after)
                     modern = java("OnlinePluginBackupFixture", ["--verify-modern-restored-uri"], [], recovery_net)
                     require(json.loads(modern.stdout)["plainUriModernClientVerified"])
@@ -580,6 +599,7 @@ def main():
                                  "receiptSha256": receipt["receiptSha256"], "cipherSha256": receipt["cipherSha256"], "objectCount": snapshot["objectCount"],
                                  "sourceDataRemovedBeforeRetrieval": True, "uid501InputUnchanged": True, "uid1000FreshStagingVerified": True,
                                  "regeneratedDatabaseIndexMatched": True, "coldDatabaseAndObjectReadbackVerified": True})
+                evidence[-1]["restoredDatabaseFsyncBeforeForcedRestartVerified"] = True
                 if options.online:
                     evidence[-1].update({"captureMode": "INSTANCE_WIDE_OPLOG", "fullInstanceOplogReplayVerified": True,
                         "standaloneDataPreservedDuringReplicaSetConversion": True, "writesBeforeCapture": writes_before, "writesAfterCapture": writes_after,

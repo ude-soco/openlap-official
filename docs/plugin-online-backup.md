@@ -167,6 +167,10 @@ The same packaged modern MongoDB client also inserts, updates and reads a
 generated marker through the application's plain one-host/database-path URI
 shape after replica-set initialization; a fresh modern client verifies that
 marker after cold restoration, without adding a `replicaSet` URI option.
+The separate restored MongoDB check verifies the transaction state, completes an
+explicit server `fsync`, then forces a restart and requires the exact same
+transaction state. A completed restore and durable target form the starting point
+for this crash/readback check.
 
 The native MongoDB behavior is pinned to the
 [100.10.0 dump source](https://github.com/mongodb/mongo-tools/blob/100.10.0/mongodump/mongodump.go),
