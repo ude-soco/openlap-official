@@ -103,6 +103,8 @@ const DataTableManager = () => {
   }, []);
 
   const handleCellClick = useCallback((params) => {
+    if (!params.isEditable) return;
+
     setState((p) => ({
       ...p,
       cellModesModel: {
