@@ -11,6 +11,7 @@ import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
+PYTHON_IMAGE = "python@sha256:e064671ca452259bab50e8e2c7bd896e39e9a343bb06ca25234adf6fe18d0fc7"
 SYNTHETIC = {
     "ROOT_ACCESS_KEY_ID": "SYNTHETICROOTACCESS01",
     "ROOT_SECRET_ACCESS_KEY": "synthetic-root-secret-for-isolated-fixtures-only-12345",
@@ -25,7 +26,17 @@ def require(value, message="Container qualification failed."):
 
 
 def run(arguments, success=True, timeout=60):
-    result = subprocess.run(["docker", *arguments], capture_output=True, timeout=timeout)
+    arguments = list(arguments)
+    owned = None
+    if arguments[0] == "run" and "--rm" in arguments and "--name" not in arguments:
+        owned = "openlap-versity-fixture-client-" + uuid.uuid4().hex[:12]
+        arguments[1:1] = ["--name", owned]
+    try:
+        result = subprocess.run(["docker", *arguments], capture_output=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        if owned:
+            subprocess.run(["docker", "rm", "--force", owned], capture_output=True, timeout=15)
+        raise
     if success:
         diagnostic = result.stderr.decode("utf-8", errors="replace")[-2048:]
         for value in SYNTHETIC.values():
@@ -41,7 +52,9 @@ def main():
     require(re.fullmatch(r"sha256:[a-f0-9]{64}", options.image) is not None)
     token = "openlap-versity-qualification-" + uuid.uuid4().hex[:12]
     volume, network, server = token + "-data", token + "-network", token + "-server"
-    created_volume = created_network = created_server = False
+    credential_volume = token + "-credentials"
+    proxy = token + "-lost-ack"
+    created_volume = created_network = created_server = created_proxy = created_credentials = False
     checks = []
     with tempfile.TemporaryDirectory(prefix="openlap-versity-fixtures-") as temporary:
         fixture = Path(temporary)
@@ -50,14 +63,19 @@ def main():
             directory = fixture / role
             directory.mkdir(mode=0o755)
             os.chmod(directory, 0o755)
+            version = directory / "..fixture-v1"
+            version.mkdir(mode=0o755)
+            os.chmod(version, 0o755)
+            (directory / "..data").symlink_to(version.name)
             for name in names:
-                (directory / name).write_text(SYNTHETIC[name])
-                os.chmod(directory / name, 0o444)
+                (version / name).write_text(SYNTHETIC[name])
+                os.chmod(version / name, 0o444)
+                (directory / name).symlink_to("..data/" + name)
         common = ["--platform=linux/amd64", "--user=1000:1000", "--read-only", "--cap-drop=ALL",
                   "--security-opt=no-new-privileges", "--tmpfs=/tmp:rw,size=64m,mode=1777",
                   "--env=PLUGIN_STORAGE_S3_BUCKET=openlap-qualification", "--env=PLUGIN_STORAGE_S3_REGION=us-east-1",
-                  "--mount=type=bind,source=" + str(fixture / "client") + ",target=/run/openlap-client,readonly"]
-        root_secret = ["--mount=type=bind,source=" + str(fixture / "root") + ",target=/run/openlap-root,readonly"]
+                  "--mount=type=volume,source=" + credential_volume + ",target=/run/openlap-client,volume-subpath=client,readonly"]
+        root_secret = ["--mount=type=volume,source=" + credential_volume + ",target=/run/openlap-root,volume-subpath=root,readonly"]
         source_mount = ["--mount=type=bind,source=" + str(ROOT / "tests" / "fixtures") + ",target=/fixture,readonly"]
         readonly_data = ["--mount=type=volume,source=" + volume + ",target=/storage,readonly",
                          "--mount=type=volume,source=" + volume + ",target=/objects,volume-subpath=objects",
@@ -72,6 +90,14 @@ def main():
                         *source_mount, *data, "--env=PLUGIN_STORAGE_S3_ENDPOINT=http://gateway:9000",
                         "--entrypoint=/bin/sh", options.image, "-ceu", fixture_script, "fixture", *([mode] if mode else [])])
         try:
+            run(["volume", "create", "--label=com.openlap.test=versity-qualification", credential_volume]); created_credentials = True
+            run(["run", "--rm", "--network=none", "--user=0:0", "--entrypoint=/bin/sh",
+                 "--mount=type=bind,source=" + str(fixture) + ",target=/fixture-keys,readonly",
+                 "--mount=type=volume,source=" + credential_volume + ",target=/keys", options.image, "-ceu",
+                 "cp -a /fixture-keys/root /keys/root\ncp -a /fixture-keys/client /keys/client\nchown -R 0:0 /keys\n"
+                 "cp -a /keys/root /keys/escape-root\nrm /keys/escape-root/ROOT_SECRET_ACCESS_KEY\n"
+                 "ln -s /run/openlap-client/PLUGIN_STORAGE_S3_SECRET_KEY /keys/escape-root/ROOT_SECRET_ACCESS_KEY\n"
+                 "cp -a /keys/root /keys/drift-root\nprintf '%s' 'synthetic-rotated-root-secret-for-drift-fixture-only' > /keys/drift-root/..fixture-v1/ROOT_SECRET_ACCESS_KEY"])
             result = run(["run", "--rm", "--network=none", *common, options.image], success=False)
             require(result.returncode != 0 and b"Storage operation failed during argument validation." in result.stderr)
             checks.append("unconfigured action fails before mounting data/root identity")
@@ -79,7 +105,7 @@ def main():
             # Only this newly created empty fixture volume is prepared. Production has no root repair initializer.
             run(["run", "--rm", "--network=none", "--user=0:0", "--entrypoint=/bin/sh",
                  "--mount=type=volume,source=" + volume + ",target=/storage", options.image,
-                 "-ceu", "chown 1000:1000 /storage; chmod 0700 /storage"])
+                 "-ceu", "chown 0:1000 /storage\nchmod 2770 /storage"])
             result = run(["run", "--rm", "--network=none", *common, *root_secret,
                           "--mount=type=volume,source=" + volume + ",target=/storage", options.image, "--bootstrap-fresh"], timeout=90)
             report = json.loads(result.stdout)
@@ -93,6 +119,11 @@ def main():
                           options.image, "--check-state"])
             require(json.loads(result.stdout)["status"] == "STORAGE_STATE_VERIFIED")
             checks.append("retained state verifies with read-only IAM/root mount")
+            for role, expected_phase in [("escape-root", b"projected credential validation"), ("drift-root", b"retained configuration identity verification")]:
+                changed = ["--mount=type=volume,source=" + credential_volume + ",target=/run/openlap-root,volume-subpath=" + role + ",readonly"]
+                negative = run(["run", "--rm", "--network=none", *common, *changed, *readonly_data, options.image, "--check-state"], success=False)
+                require(negative.returncode != 0 and expected_phase in negative.stderr)
+            checks.append("root-owned0444 projected-secret layout works; escaping links and credential drift rejected")
             java_fixture("--fsync-error")
             checks.append("unsupported filesystem sync propagates as failure")
             java_fixture("--state-negatives", data=["--mount=type=volume,source=" + volume + ",target=/storage"], root=True)
@@ -124,6 +155,18 @@ def main():
                     and not report["catalogChanged"] and not report["pluginExecuted"])
             require(not any(value.encode() in result.stdout + result.stderr for value in SYNTHETIC.values()))
             checks.append("real application SDK absent404/put/get/metadata/delete without root identity")
+            run(["run", "--detach", "--name", proxy, "--network=" + network, "--network-alias=lost-ack",
+                 "--platform=linux/amd64", "--user=1000:1000", "--read-only", "--cap-drop=ALL",
+                 "--security-opt=no-new-privileges", *source_mount, PYTHON_IMAGE,
+                 "python3", "-B", "/fixture/versity_lost_ack.py"]); created_proxy = True
+            lost = run(["run", "--rm", "--network=" + network, *common,
+                        "--env=PLUGIN_STORAGE_S3_ENDPOINT=http://lost-ack:9000", options.image, "--probe"], success=False)
+            require(lost.returncode != 0 and b"Storage operation failed during application storage probe." in lost.stderr)
+            events = [json.loads(line) for line in run(["logs", proxy]).stdout.splitlines()]
+            require(any(event == {"status": "SYNTHETIC_PUT_ACCEPTED_ACK_DISCARDED"} for event in events)
+                    and any(event == {"status": "SYNTHETIC_DELETE_ACKNOWLEDGED"} for event in events), "Synthetic wire event mismatch: " + str(events))
+            java_fixture("--empty-bucket", net=network)
+            checks.append("lost accepted-PUT acknowledgement still triggers verified synthetic-object cleanup")
             fixture_source = ROOT / "tests" / "fixtures" / "VersityStorageQualification.java"
             require(fixture_source.is_file())
             result = java_fixture(net=network)
@@ -145,9 +188,11 @@ def main():
             checks.append("abrupt gateway kill and cold Java process retain acknowledged bytes/metadata and static IAM")
             print(json.dumps({"schemaVersion": 1, "image": options.image, "checksPassed": checks}, indent=2))
         finally:
+            if created_proxy: run(["rm", "--force", proxy], success=False)
             if created_server: run(["rm", "--force", server], success=False)
             if created_network: run(["network", "rm", network], success=False)
             if created_volume: run(["volume", "rm", volume], success=False)
+            if created_credentials: run(["volume", "rm", credential_volume], success=False)
 
 
 if __name__ == "__main__":

@@ -26,6 +26,9 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.security.MessageDigest;
@@ -154,6 +157,25 @@ public final class VersityStorageApplication {
     }
     return names;
   }
+  static void safeObjectTree(Path root) throws Exception {
+    int[] visited = {0};
+    Files.walkFileTree(root, Collections.emptySet(), 32, new SimpleFileVisitor<Path>() {
+      private void bounded() { require(++visited[0] <= 20000); }
+      @Override public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attributes) throws java.io.IOException {
+        bounded();
+        try { privateDirectory(path); } catch (Exception unsafe) { throw new java.io.IOException("Unsafe retained storage tree."); }
+        return FileVisitResult.CONTINUE;
+      }
+      @Override public FileVisitResult visitFile(Path path, BasicFileAttributes attributes) throws java.io.IOException {
+        bounded();
+        require(attributes.isRegularFile() && !attributes.isSymbolicLink()
+            && ((Number) Files.getAttribute(path, "unix:uid", LinkOption.NOFOLLOW_LINKS)).intValue() == 1000
+            && ((Number) Files.getAttribute(path, "unix:nlink", LinkOption.NOFOLLOW_LINKS)).intValue() == 1
+            && Files.getPosixFilePermissions(path, LinkOption.NOFOLLOW_LINKS).equals(PosixFilePermissions.fromString("rw-------")));
+        return FileVisitResult.CONTINUE;
+      }
+    });
+  }
   static S3Client client(Settings s, URI endpoint, boolean root) {
     return S3Client.builder().endpointOverride(endpoint).region(Region.of(s.region))
         .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(
@@ -267,6 +289,7 @@ public final class VersityStorageApplication {
     require(entries(ROOT).equals(new HashSet<>(Arrays.asList("objects", "iam", "lease", MARKER))));
     require(entries(objects).equals(new HashSet<>(Arrays.asList(s.bucket, ".vgwlocks"))));
     privateDirectory(objects.resolve(".vgwlocks"));
+    phase = "retained object tree verification"; safeObjectTree(objects);
     Path bucket = objects.resolve(s.bucket);
     phase = "retained bucket directory verification"; privateDirectory(bucket);
     phase = "retained IAM account verification"; verifyIam(s, iam);
@@ -369,7 +392,7 @@ public final class VersityStorageApplication {
     Files.write(source, payload); boolean created = false;
     try (S3ArtifactObjectStore store = S3ArtifactObjectStore.connect(properties); S3Client client = client(s, endpoint, false)) {
       try {
-        missing(store, artifact); store.putIfAbsent(artifact, source); created = true;
+        missing(store, artifact); created = true; store.putIfAbsent(artifact, source);
         try (InputStream input = store.open(artifact)) { ArtifactIntegrity.copyVerified(input, java.io.OutputStream.nullOutputStream(), artifact); }
         var head = client.headObject(b -> b.bucket(s.bucket).key(artifact.getObjectKey()));
         require(head.contentLength() == payload.length && "application/java-archive".equals(head.contentType())

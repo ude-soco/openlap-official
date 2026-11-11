@@ -33,6 +33,10 @@ public final class VersityStorageQualification {
     try { operation.run(); throw new IllegalStateException("Denied action succeeded."); }
     catch (S3Exception denied) { require(denied.statusCode() == 403); }
   }
+  private static void blockedRead(Runnable operation) {
+    try { operation.run(); throw new IllegalStateException("Forbidden read succeeded."); }
+    catch (S3Exception denied) { require(denied.statusCode() == 403 || denied.statusCode() == 404); }
+  }
   @FunctionalInterface private interface Operation { void run() throws Exception; }
   private static void rejected(Operation operation) throws Exception {
     boolean failed = false; try { operation.run(); } catch (Exception expected) { failed = true; } require(failed);
@@ -96,12 +100,30 @@ public final class VersityStorageQualification {
           marker.put("iamSha256", VersityStorageApplication.hash(changed)); Files.write(data.resolve("installation.json"), VersityStorageApplication.JSON.writeValueAsBytes(marker));
           rejected(() -> VersityStorageApplication.verifyState(settings, objects, iam));
         } finally { Files.write(iam.resolve("users.json"), usersBytes); Files.write(data.resolve("installation.json"), markerBytes); }
+        step = "retained credential symlink rejected before serving";
+        Path pluginDirectory = objects.resolve(settings.bucket).resolve("plugins/analytics");
+        Files.createDirectories(pluginDirectory, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------")));
+        Path link = pluginDirectory.resolve("credential-leak.jar");
+        try { Files.createSymbolicLink(link, Path.of("/run/openlap-root/ROOT_SECRET_ACCESS_KEY")); rejected(() -> VersityStorageApplication.verifyState(settings, objects, iam)); }
+        finally { Files.deleteIfExists(link); }
+        step = "retained hardlink rejected before serving";
+        Path payload = pluginDirectory.resolve("hardlink-source.jar"), duplicate = pluginDirectory.resolve("hardlink-target.jar");
+        try {
+          Files.writeString(payload, "synthetic nonexecutable object"); Files.setPosixFilePermissions(payload, PosixFilePermissions.fromString("rw-------"));
+          Files.createLink(duplicate, payload); rejected(() -> VersityStorageApplication.verifyState(settings, objects, iam));
+        } finally { Files.deleteIfExists(duplicate); Files.deleteIfExists(payload); }
         step = "restored test state still verifies"; VersityStorageApplication.verifyState(settings, objects, iam);
         System.out.println("Retained state rejection fixtures passed."); return;
       }
-      boolean readOnly = args.length == 1 && args[0].equals("--read-persisted"); require(args.length == 0 || readOnly);
+      boolean readOnly = args.length == 1 && args[0].equals("--read-persisted");
+      boolean emptyBucket = args.length == 1 && args[0].equals("--empty-bucket"); require(args.length == 0 || readOnly || emptyBucket);
       VersityStorageApplication.Settings settings = new VersityStorageApplication.Settings(false);
       URI endpoint = URI.create(System.getenv("PLUGIN_STORAGE_S3_ENDPOINT"));
+      if (emptyBucket) {
+        step = "lost acknowledgement cleanup verification";
+        try (S3Client client = VersityStorageApplication.client(settings, endpoint, false)) { require(client.listObjectsV2(b -> b.bucket(settings.bucket)).contents().isEmpty()); }
+        System.out.println("Empty-bucket fixture passed."); return;
+      }
       PluginStorageProperties properties = new PluginStorageProperties(); properties.setMode(PluginStorageProperties.Mode.S3);
       properties.setEndpoint(endpoint); properties.setBucket(settings.bucket); properties.setRegion(settings.region);
       properties.setAccessKey(settings.appAccess); properties.setSecretKey(settings.appSecret);
@@ -130,6 +152,8 @@ public final class VersityStorageQualification {
           denied(() -> client.putObject(b -> b.bucket(settings.bucket).key("outside/forbidden"), RequestBody.fromString("synthetic")));
           denied(() -> client.getObjectAsBytes(b -> b.bucket(settings.bucket).key("outside/forbidden")));
           denied(() -> client.deleteObject(b -> b.bucket(settings.bucket).key("outside/forbidden")));
+          blockedRead(() -> client.getObjectAsBytes(b -> b.bucket(settings.bucket).key("plugins/analytics/../../../../storage/iam/users.json")));
+          blockedRead(() -> client.getObjectAsBytes(b -> b.bucket(settings.bucket).key("plugins/analytics/%2e%2e/%2e%2e/%2e%2e/%2e%2e/storage/iam/users.json")));
           step = "anonymous reads denied";
           HttpResponse<Void> anonymous = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build().send(
               HttpRequest.newBuilder(URI.create(endpoint + "/" + settings.bucket + "/" + artifact.getObjectKey()))
