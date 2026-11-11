@@ -171,6 +171,11 @@
                 require(++total <= 512 && info.type === "collection" && !info.options.capped && info.info && info.info.uuid);
                 require(/^[A-Za-z][A-Za-z0-9_.-]{0,119}$/.test(info.name) && !/^tmp\./.test(info.name));
                 require(["admin", "config"].indexOf(name) !== -1 || !/^system\./.test(info.name));
+                // Native full dumps/replay omit most config namespaces. Only
+                // recognized server bookkeeping may be omitted; arbitrary data
+                // stored there must not silently disappear from a backup.
+                if (name === "config") require(["chunks", "collections", "databases", "settings", "shards", "tags", "version",
+                    "system.sessions", "transactions"].indexOf(info.name) !== -1);
                 var indexes = commandRows(db, {listIndexes: info.name, includeBuildUUIDs: true, cursor: {batchSize: 64}, maxTimeMS: 30000}, 64);
                 indexes.forEach(function(index) { require(!index.buildUUID && !index.spec); });
                 indexes.sort(function(a,b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });

@@ -329,6 +329,13 @@ def main():
                         run(["run", "--rm", "--network=none", "--user=1000:1000", mount(captures, "/outputs", True), "--entrypoint=/bin/bash", checkpoint_image,
                             "-ceu", "test ! -e /outputs/rejected-" + label], "invalid online configuration rejected before writes")
                     run(["run", "--rm", "--network=" + source_net, "--entrypoint=mongo", checkpoint_image, "--norc", "--quiet", "--host=source-mongo", "--eval",
+                        "db.getSiblingDB('config')['generated-custom-data'].insertOne({_id:'must-not-be-silently-skipped'});"], "generated unsupported config data")
+                    require(capture("rejected-omitted-namespace", success=False).returncode != 0)
+                    run(["run", "--rm", "--network=none", "--user=1000:1000", mount(captures, "/outputs", True), "--entrypoint=/bin/bash", checkpoint_image,
+                        "-ceu", "test ! -e /outputs/rejected-omitted-namespace"], "unsupported source namespace rejected before writes")
+                    run(["run", "--rm", "--network=" + source_net, "--entrypoint=mongo", checkpoint_image, "--norc", "--quiet", "--host=source-mongo", "--eval",
+                        "assert(db.getSiblingDB('config')['generated-custom-data'].drop());"], "remove only generated negative fixture namespace")
+                    run(["run", "--rm", "--network=" + source_net, "--entrypoint=mongo", checkpoint_image, "--norc", "--quiet", "--host=source-mongo", "--eval",
                         "db.getSiblingDB('plugin_recovery_fixture')['plugin-management-lock'].insertOne({_id:'generated-active-operation',owner:'fixture'});"], "generated active management fence")
                     fenced = capture("fenced-capture"); fenced_lines = fenced.stdout.decode().splitlines()
                     fenced_sha = hashlib.sha256((fenced_lines[1] + "\n").encode()).hexdigest()

@@ -1,5 +1,10 @@
 # Plugin release database checkpoint
 
+This page describes the frozen schema v1 path. The explicit
+[online full-instance oplog mode](plugin-online-backup.md) has separate capture,
+rehearsal and index actions and requires a reviewed single-member replica set.
+Selecting it does not weaken the frozen prerequisites below.
+
 The opt-in `.k8s/maintenance/plugin-checkpoint` component preserves one explicit
 primary database and rehearses restoration inside its own temporary storage.
 It uses the official MongoDB 4.4.30 runtime and Database Tools 100.10.0, starts no

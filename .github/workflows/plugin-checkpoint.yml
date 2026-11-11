@@ -16,7 +16,7 @@ env:
 jobs:
   image:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     outputs:
       image-id: ${{ steps.build.outputs.imageid }}
       tags: ${{ steps.meta.outputs.tags }}
@@ -61,6 +61,22 @@ jobs:
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
         run: python3 -B tests/test_plugin_checkpoint_containers.py --image "$IMAGE_ID"
+
+      - name: Check strict online report metadata
+        run: node tests/plugin_online_report_fixtures.js
+
+      - name: Prove online encrypted recovery with the same exact checkpoint image
+        env:
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+        run: python3 -B tests/verify_plugin_combined_recovery.py --online --checkpoint-image "$IMAGE_ID" --report "$RUNNER_TEMP/plugin-online-checkpoint-recovery.json"
+
+      - name: Retain bounded synthetic online checkpoint proof
+        uses: actions/upload-artifact@v7
+        with:
+          name: plugin-online-checkpoint-recovery-proof
+          path: ${{ runner.temp }}/plugin-online-checkpoint-recovery.json
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Retain the exact tested image for publication
         if: github.event_name == 'push'
