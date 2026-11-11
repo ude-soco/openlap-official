@@ -1,5 +1,6 @@
 package com.openlap.user.validation;
 
+import java.nio.charset.StandardCharsets;
 import java.util.function.IntPredicate;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -9,6 +10,7 @@ import jakarta.validation.ConstraintValidatorContext;
  *
  * <ul>
  *   <li>between {@value #MIN_LENGTH} and {@value #MAX_LENGTH} characters
+ *   <li>at most {@value #MAX_UTF8_BYTES} UTF-8 bytes
  *   <li>at least one uppercase letter
  *   <li>at least one lowercase letter
  *   <li>at least one number
@@ -25,6 +27,7 @@ public class PasswordValidator implements ConstraintValidator<ValidPassword, Str
 
   static final int MIN_LENGTH = 12;
   static final int MAX_LENGTH = 64;
+  static final int MAX_UTF8_BYTES = 72;
 
   /** Allowed special characters: ! " § $ % &amp; / ( ) = ? * + # - _ . : , ; @ ("§" is U+00A7). */
   static final String ALLOWED_SPECIALS = "!\"§$%&/()=?*+#-_.:,;@";
@@ -65,6 +68,10 @@ public class PasswordValidator implements ConstraintValidator<ValidPassword, Str
     }
     if (!onlyAllowedCharacters(password)) {
       return "Password contains an invalid character. Only letters, numbers and the allowed special characters are permitted";
+    }
+    if (password.getBytes(StandardCharsets.UTF_8).length > MAX_UTF8_BYTES) {
+      return "Password must use at most " + MAX_UTF8_BYTES
+          + " UTF-8 bytes; shorten it or use fewer § characters";
     }
     return null;
   }
