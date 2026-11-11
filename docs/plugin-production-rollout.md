@@ -1,8 +1,9 @@
 # Production plugin release runbook
 
 Use this procedure to prepare and review an installation's transition from local
-plugin JARs to verified S3 artifacts. It does not provision storage, provide high
-availability, transport backups or enforce a maintenance window. Normal
+plugin JARs to verified S3 artifacts, or initialize an installation with no
+registered plugins. It does not itself provision storage, provide high
+availability or enforce a maintenance window. Normal
 application installation does not select the optional maintenance components.
 Configure those components separately and pin their public source revision and
 tested container image digests. Keep application base selection unchanged during
@@ -41,6 +42,24 @@ The supported tooling and its limits are:
 | Migration CLI | Inventory, read-only check and explicit artifact apply | Capture/stage source files, review mappings, pause writers and approve changes |
 | Reviewed source preparer/stager | Recover/stage only the fixed public artifacts in its reviewed policy | Prove those bytes cover this installation; preserve any other/custom versions |
 | Checkpoint runner | Dump one supported live primary database and restore that fresh archive into its own isolated temporary MongoDB | Off-node export, retrieval, restoration of retrieved archives, S3 preservation and availability |
+| Retrieved checkpoint rehearsal/index | Verify a retrieved archive in isolated MongoDB and project a deterministic plugin artifact index | Trusted original report hash, independent retrieval and application acceptance |
+| Logical object snapshot | Export all managed object bytes/metadata; restore only into a fresh isolated qualified provider using an independently regenerated index | Actual writer drain, trusted checkpoint/index hashes and off-node transport |
+| Encrypted release transport/uploader | Encrypt, push and independently retrieve a bounded release set | Approved scoped destination, separate recovery identity custody and actual restore proof |
+
+The optional [single-instance provider](./plugin-storage-versity.md) separates
+fresh bootstrap from normal serving. Create a dedicated fresh claim, initialize
+it with the gateway stopped, verify the terminal bootstrap result, then remove
+that Job before starting the gateway and its application-only probe. Retain the
+claim through cleanup. First-use `fsGroup` is confined to the fresh claim; normal
+serving never repairs retained state. This provides persistence across Pod
+replacement, not high availability or an off-node backup.
+
+Before activation, require the provider/container checks and the combined
+database-index, encrypted retrieval and fresh-provider recovery proof described
+in the [snapshot guide](./plugin-object-snapshot.md). A fixture that supplies a
+handwritten index, a warm cache or the original source volume does not establish
+that combined recovery path. Select the exact tested/published image, not a
+rebuilt substitute.
 
 ## 2. Capture complete sources before replacing pods
 
@@ -61,6 +80,13 @@ and provenance. Verify copies are complete and readable. An empty file listing
 does not prove that a missing catalog binary never existed. Resolve every missing
 or conflicting source, including different binaries with the same filename.
 Retain the exact previous image/runtime dependencies needed for rollback.
+
+For an installation reporting no plugins, reconcile all replicas' source roots
+with the actual database catalogs and independently verified checkpoint index.
+Empty directories alone are insufficient. An empty registered snapshot requires
+no factory imports or copied entries from another environment; preserve the
+whole database, including users and homepage content. If new registrations appear
+before the writer drain, repeat coverage review before replacing any old Pod.
 
 Known public history can supply reviewed source bytes through the
 [recovery procedure](./plugin-artifact-migration.md#recover-reviewed-historical-source-artifacts).
@@ -117,7 +143,7 @@ writers stopped through migration and resume only compatible backends under the
 reviewed rollout plan. Restrict plugin mutations until acceptance completes.
 
 Run the opt-in [database checkpoint](./plugin-release-checkpoint.md) against the
-explicit supported source. The current runner accepts only `--checkpoint`,
+explicit supported source using its explicit `--checkpoint` action. Capture
 requires MongoDB 4.4/FCV 4.4 and matching source host/port, and restores only to its
 own fresh, attested loopback target. Review its archive/expanded/restore budgets,
 actual output/scratch space and finite deadlines before the window. Unsupported
@@ -156,14 +182,64 @@ Require evidence of all of the following:
    Verify the exact required plugin objects/source bytes are also retrievable,
    and record restoration time and any limits relevant to the recovery objective.
 
-**Current capability gap:** the checkpoint runner has no retrieved-archive input,
-backup transport, retrieve action or restore-only mode. Its successful internal
-roundtrip restores its freshly generated archive and does not satisfy the
-off-node retrieval/restore gate. Do not invent `--restore` or `--archive` flags,
-redirect it at a live restore target, or call its local success off-node recovery.
-A separately reviewed tool/procedure must produce this evidence. If that
-capability or the destination is unavailable, production preparation remains
-incomplete and apply must wait.
+Use the supported [encrypted release transporter](./plugin-release-backup.md),
+or the opt-in [push-only uploader](./plugin-backup-upload-job.md), for this step.
+Keep the private age identity solely on the operator host, with a separately
+retained recovery copy. The cluster uploader receives only its folder-scoped
+client configuration and public recipient. Import its bounded typed receipt only
+after independently observing terminal success for the exact reviewed Job and
+log source. A receipt or upload readback alone is not a successful restore.
+
+Choose the recovery gate for the actual frozen state:
+
+- For a wholly local legacy catalog, first prove independent retrieval and
+  `--rehearse-archive` restoration of the complete MongoDB checkpoint plus exact
+  retained local source coverage. Legacy catalog rows without artifact references
+  correctly make an artifact index unready for S3 export; do not bypass that
+  result. After migration, take a new consistent checkpoint and pass the complete
+  S3 recovery gate below before releasing writers.
+- For an already S3-managed or verified empty registered snapshot, project the
+  frozen checkpoint with `--index-plugin-artifacts`, then export against that
+  exact index and original checkpoint-report hash. Include snapshot, copied index
+  and checkpoint archive/report in one encrypted release. An empty catalog still
+  requires export: source orphans may make its bucket snapshot nonempty. Do not
+  replace the database index with an assumed empty document.
+- Mixed legacy and S3 state needs a separately proven complete preservation path.
+  The current snapshot consumer requires a fully resolved, legacy-free index.
+  Stop if that condition prevents complete preservation; do not discard legacy
+  rows, ignore managed objects or treat a local-only backup as complete.
+
+For the S3 recovery gate, pull through the independent client, verify/decrypt the exact retained
+ciphertext, and use only those retrieved files for a fresh
+`--index-plugin-artifacts` rehearsal. Require byte-identical regenerated index
+SHA-256, full database fingerprints and `readyForS3Export` before
+`--restore-fresh`. Supply separately prepared destination identities; the
+destination must be isolated fresh storage, never the live endpoint. Require
+the final object restore result and complete cold inventory/metadata checks,
+including retained versions and source orphans. Both zero-object and populated
+recovery must work without source MongoDB, original object volumes or caches.
+
+Use distinct input/output claims per operation. One supported layout uses a
+retained operator output claim A and a separately provisioned checkpoint/export
+claim C for the S3-ready case: capture to C, project C read-only into A, export the index from A
+read-only into a new directory on C, then upload checkpoint and snapshot from C
+read-only with ciphertext/receipt/scratch on A. The uploader's writable output
+must be genuinely distinct from every input backing volume. First-use writable
+access on C must be prepared without also mounting or changing retained A. Review
+claim topology before its first consumer: local volumes used together must be
+schedulable on a common node. Constrain fresh C's first consumer to A's verified
+placement when required; a shared namespace or different PVC names does not
+establish compatible topology. Do not attach A to a first-use `fsGroup` Pod merely
+to influence scheduling. Review
+actual free space: A needs roughly three selected payload copies plus retained
+data, not merely a nominal PVC request. No later operation adds `fsGroup` to
+repair retained inputs. Local operator-owned retrieved files may be copied into
+fresh UID-1000 recovery staging; preserve their original bytes and permissions.
+
+Do not invent a live-target `--restore` mode. The checkpoint runner's internal
+roundtrip alone does not satisfy off-node recovery. If independent retrieval or
+fresh restoration is unavailable or fails, keep apply blocked and follow the
+agreed abort/resume procedure.
 
 ## 6. Approve apply and verify the attachment
 
@@ -179,6 +255,12 @@ scoped credential key references:
 ```yaml
 args: [--apply, /inputs/manifest.json, --source-root, /inputs/jars]
 ```
+
+For a reconciled empty installation, verified source coverage plus the frozen
+index's `emptyRegisteredPluginSnapshot` permits a fresh S3 configuration without
+inventing a migration manifest or importing defaults. Recheck this condition
+under the writer drain. A nonempty or unresolved index returns to the complete
+mapping/migration procedure above; it must not be cleared to fit the empty case.
 
 The opt-in migration component requires `PLUGIN_STORAGE_MODE=s3`, primary MongoDB
 access and reviewed S3 egress. It repeats preflight, stores and reads back verified
@@ -235,6 +317,12 @@ separate approval after runtime/recovery acceptance. Review
 retention configuration consistent across replicas, and use its authoritative
 reference review rather than dashboard usage counts. Application recovery-window
 settings do not define backup retention.
+
+For the single-instance Versity option, keep physical deletion disabled even
+after all application writers are upgraded: current qualification establishes
+PutObject durability, not durable physical DeleteObject under filesystem/node
+failure. Logical removal and retained versions remain available. Document this
+provider-specific limit separately from application reference checks.
 
 After each terminal maintenance result, remove temporary Jobs, private manifest
 ConfigMaps and operation-specific network access through the normal deployment
