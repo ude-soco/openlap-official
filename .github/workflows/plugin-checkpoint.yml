@@ -68,13 +68,26 @@ jobs:
       - name: Prove online encrypted recovery with the same exact checkpoint image
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
-        run: python3 -B tests/verify_plugin_combined_recovery.py --online --verify-operator-runner --checkpoint-image "$IMAGE_ID" --report "$RUNNER_TEMP/plugin-online-checkpoint-recovery.json"
+        run: python3 -B tests/verify_plugin_combined_recovery.py --online --verify-recurring-producer --verify-operator-runner --checkpoint-image "$IMAGE_ID" --report "$RUNNER_TEMP/plugin-online-checkpoint-recovery.json"
 
       - name: Retain bounded synthetic online checkpoint proof
         uses: actions/upload-artifact@v7
         with:
           name: plugin-online-checkpoint-recovery-proof
           path: ${{ runner.temp }}/plugin-online-checkpoint-recovery.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Prove packaged frozen recovery with the same exact checkpoint image
+        env:
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+        run: python3 -B tests/verify_plugin_combined_recovery.py --verify-recurring-producer --verify-operator-runner --checkpoint-image "$IMAGE_ID" --report "$RUNNER_TEMP/plugin-frozen-checkpoint-recovery.json"
+
+      - name: Retain bounded synthetic frozen checkpoint proof
+        uses: actions/upload-artifact@v7
+        with:
+          name: plugin-frozen-checkpoint-recovery-proof
+          path: ${{ runner.temp }}/plugin-frozen-checkpoint-recovery.json
           if-no-files-found: error
           retention-days: 7
 

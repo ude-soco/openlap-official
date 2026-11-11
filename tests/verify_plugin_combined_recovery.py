@@ -589,6 +589,7 @@ def main():
                         "immutableObjectCutVerified": True, "laterNewKeysExcluded": not empty, "invalidOnlineInputsRejected": not empty, "activeFencePreservedAndWholeCaptureRetried": not empty})
                 if producer:
                     evidence[-1]["packagedProducer"] = {"mode": "ONLINE" if options.online else "FROZEN", "podUid": producer.uid,
+                        "destinationValidityMode": "unlimited" if producer.validity == "unlimited" else "dated",
                         "captureIndexExportAndUploaderVerified": True, "freshEmptyDirGroupSemanticsVerified": True,
                         "actualProducerCiphertextRecovered": True, "allOriginalProducerScratchAndCustodyRemoved": True}
                 if operator_proof: evidence[-1]["operatorRecoveryCheck"] = operator_proof

@@ -84,8 +84,9 @@ class Producer:
                  "import os,pathlib,stat;p=pathlib.Path('/fresh');assert not list(p.iterdir());os.chown(p,0,1000);p.chmod(0o2770);m=p.stat();assert(m.st_uid,m.st_gid,stat.S_IMODE(m.st_mode))==(0,1000,0o2770)"],
                 "fresh emptyDir group model")
         self.relative = "run-" + self.uid
+        self.validity = (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%SZ") if online else "unlimited"
         self.env = ["--env=BACKUP_POD_UID=" + self.uid, "--env=BACKUP_DESTINATION_APPROVED=true",
-            "--env=BACKUP_DESTINATION_VALID_UNTIL=" + (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "--env=BACKUP_DESTINATION_VALID_UNTIL=" + self.validity,
             "--env=BACKUP_MINIMUM_DESTINATION_VALIDITY_SECONDS=3600", "--env=BACKUP_MAX_BYTES=8388608", "--env=BACKUP_MAX_FILES=1000",
             "--env=BACKUP_TIMEOUT_SECONDS=120", "--env=BACKUP_WORKSPACE_MAX_BYTES=1342177280", "--env=BACKUP_SCRATCH_MAX_BYTES=805306368",
             "--env=PLUGIN_DELETION_ENABLED=false"]
