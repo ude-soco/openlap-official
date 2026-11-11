@@ -31,10 +31,10 @@
     "jwt-decode": "^4.0.0",
     "notistack": "^3.0.2",
     "openlap-indicatoreditor": "file:",
-    "papaparse": "^5.5.4",
+    "papaparse": "^5.7.0",
     "prop-types": "^15.8.1",
     "react": "^19.3.1",
-    "react-apexcharts": "^1.9.0",
+    "react-apexcharts": "^2.2.0",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.2",
     "uuid": "^13.0.2"
