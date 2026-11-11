@@ -1,7 +1,7 @@
 package com.openlap.analytics_statements.repositories;
 
 import com.openlap.analytics_statements.entities.LrsClient;
-import javax.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;

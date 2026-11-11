@@ -3,7 +3,7 @@ package com.openlap.analytics_statements.services;
 import com.openlap.analytics_statements.dtos.request.*;
 import com.openlap.dataset.OpenLAPDataSet;
 import java.util.List;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 public interface StatementService {
 

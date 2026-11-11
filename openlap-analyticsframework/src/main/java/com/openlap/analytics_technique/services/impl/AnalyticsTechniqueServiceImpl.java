@@ -27,7 +27,7 @@ import com.openlap.plugins.PluginJarFiles;
 import com.openlap.plugins.artifacts.PluginArtifactResolver;
 import com.openlap.plugins.artifacts.PluginKind;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +37,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.openlap.visualization_methods.exceptions.VisualizationClassLoaderException;
 import com.openlap.visualization_methods.utilities.VisualizerClassPathLoader;

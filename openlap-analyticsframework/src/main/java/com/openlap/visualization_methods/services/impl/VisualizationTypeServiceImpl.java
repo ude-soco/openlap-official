@@ -20,7 +20,7 @@ import com.openlap.visualization_methods.services.VisualizationTypeService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -15,19 +15,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig {
   @Value("${server.token}")
   String jwtToken;
 
@@ -40,91 +42,78 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
   private final RestAccessDeniedHandler accessDeniedHandler;
   private final AuthTokenProperties authTokenProperties;
 
-  @Override
-  protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-    auth.userDetailsService(userDetailsService).passwordEncoder(bCryptPasswordEncoder);
+  @Bean
+  public AuthenticationManager authenticationManager() {
+    DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+    provider.setPasswordEncoder(bCryptPasswordEncoder);
+    return new ProviderManager(provider);
   }
 
-  @Override
-  protected void configure(HttpSecurity http) throws Exception {
-    http.csrf().disable();
-    http.headers().frameOptions().disable();
-    http.sessionManagement().sessionCreationPolicy(STATELESS);
+  @Bean
+  public SecurityFilterChain securityFilterChain(
+      HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
+    http.authenticationManager(authenticationManager);
+    http.csrf(AbstractHttpConfigurer::disable);
+    http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
+    http.sessionManagement(session -> session.sessionCreationPolicy(STATELESS));
+    http.cors(cors -> cors.configurationSource(corsConfigurationSource));
 
-    // CORS configuration
-    http.cors().configurationSource(corsConfigurationSource);
-
-    http.authorizeRequests()
-        .antMatchers("/login/**", "/v1/register/**", "/v1/token/refresh/**", "/v1/code/**")
-        .permitAll();
-    http.authorizeRequests()
-        .antMatchers(HttpMethod.GET, "/v1/content/news", "/v1/content/publications")
-        .permitAll();
-    // All admin-management endpoints live under /v1/admin/** and are SUPER_ADMIN-only.
-    // Declared early (antMatchers are first-match-wins) so no broader rule can shadow it.
-    http.authorizeRequests()
-        .antMatchers("/v1/admin/**")
-        .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString());
-    http.authorizeRequests()
-        .antMatchers("/v1/lrs/**")
-        .hasAnyAuthority(RoleType.ROLE_DATA_PROVIDER.toString());
-    http.authorizeRequests()
-        .antMatchers("/v1/users/my/lrs/**", "/v1/isc/**", "/v1/analytics/goals/**")
-        .hasAnyAuthority(RoleType.ROLE_USER.toString(), RoleType.ROLE_USER_WITHOUT_LRS.toString());
-    // Admin-only user administration (list users). Must precede the broader
-    // "/v1/users/my/**" self-service rule below (antMatchers are first-match-wins).
-    // Matches only the exact list path and its trailing-slash form, so
-    // "/v1/users/my/**" continues to work for normal users.
-    http.authorizeRequests()
-        .antMatchers("/v1/users", "/v1/users/")
-        .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString());
-    http.authorizeRequests()
-        .antMatchers("/v1/users/my/**")
+    http.authorizeHttpRequests(authorize -> authorize
+        .requestMatchers("/login/**", "/v1/register/**", "/v1/token/refresh/**", "/v1/code/**")
+        .permitAll()
+        .requestMatchers(HttpMethod.GET, "/v1/content/news", "/v1/content/publications")
+        .permitAll()
+        // All admin-management endpoints live under /v1/admin/** and are SUPER_ADMIN-only.
+        // Declared early (requestMatchers are first-match-wins) so no broader rule can shadow it.
+        .requestMatchers("/v1/admin/**")
+        .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString())
+        .requestMatchers("/v1/lrs/**")
+        .hasAnyAuthority(RoleType.ROLE_DATA_PROVIDER.toString())
+        .requestMatchers("/v1/users/my/lrs/**", "/v1/isc/**", "/v1/analytics/goals/**")
+        .hasAnyAuthority(RoleType.ROLE_USER.toString(), RoleType.ROLE_USER_WITHOUT_LRS.toString())
+        // Admin-only user administration (list users). Must precede the broader
+        // "/v1/users/my/**" self-service rule below (requestMatchers are first-match-wins).
+        // Matches only the exact list path and its trailing-slash form, so
+        // "/v1/users/my/**" continues to work for normal users.
+        .requestMatchers("/v1/users", "/v1/users/")
+        .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString())
+        .requestMatchers("/v1/users/my/**")
         .hasAnyAuthority(
             RoleType.ROLE_USER.toString(),
             RoleType.ROLE_USER_WITHOUT_LRS.toString(),
             RoleType.ROLE_SUPER_ADMIN.toString(),
-            RoleType.ROLE_DATA_PROVIDER.toString());
-    http.authorizeRequests()
-        .antMatchers("/v1/indicators/**", "/v1/questions/**", "/v1/statements/**")
-        .hasAnyAuthority(RoleType.ROLE_USER.toString());
-    // Harden the state-changing plugin endpoints that are exposed via GET (reload/populate): lock
-    // them to SUPER_ADMIN. This MUST precede the broad GET rule below (antMatchers are
-    // first-match-wins) which would otherwise grant ROLE_USER. The "/**" suffix also covers the
-    // trailing-slash form. Read-only catalog GETs (method/library/type lists, input-params) are
-    // NOT matched here and remain available to ROLE_USER via the broad GET rule.
-    http.authorizeRequests()
-        .antMatchers(
+            RoleType.ROLE_DATA_PROVIDER.toString())
+        .requestMatchers("/v1/indicators/**", "/v1/questions/**", "/v1/statements/**")
+        .hasAnyAuthority(RoleType.ROLE_USER.toString())
+        // Harden the state-changing plugin endpoints that are exposed via GET (reload/populate): lock
+        // them to SUPER_ADMIN. This MUST precede the broad GET rule below (requestMatchers are
+        // first-match-wins) which would otherwise grant ROLE_USER. The "/**" suffix also covers the
+        // trailing-slash form. Read-only catalog GETs (method/library/type lists, input-params) are
+        // NOT matched here and remain available to ROLE_USER via the broad GET rule.
+        .requestMatchers(
             "/v1/analytics/methods/reload/**",
             "/v1/analytics/methods/populate/**",
             "/v1/visualizations/reload/**")
-        .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString());
-    http.authorizeRequests()
-        .antMatchers(
+        .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString())
+        .requestMatchers(
             HttpMethod.GET, "/v1/analytics/**", "/v1/visualizations/**", "/v1/analytics/goals/**")
-        .hasAnyAuthority(RoleType.ROLE_USER.toString(), RoleType.ROLE_SUPER_ADMIN.toString());
-    http.authorizeRequests()
-        .antMatchers("/v1/roles/**", "/v1/engine/**", "/v1/analytics/**", "/v1/visualizations/**")
-        .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString());
-    http.authorizeRequests().anyRequest().authenticated();
+        .hasAnyAuthority(RoleType.ROLE_USER.toString(), RoleType.ROLE_SUPER_ADMIN.toString())
+        .requestMatchers("/v1/roles/**", "/v1/engine/**", "/v1/analytics/**", "/v1/visualizations/**")
+        .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString())
+        .anyRequest().authenticated());
 
     // Render authentication/authorization failures with the unified error envelope.
     // (Rendering only — the authorization rules above are unchanged.)
-    http.exceptionHandling()
+    http.exceptionHandling(exceptions -> exceptions
         .authenticationEntryPoint(authenticationEntryPoint)
-        .accessDeniedHandler(accessDeniedHandler);
+        .accessDeniedHandler(accessDeniedHandler));
 
     http.addFilter(
         new CustomAuthenticationFilter(
-            authenticationManagerBean(), jwtToken, errorResponseWriter, authTokenProperties));
+            authenticationManager, jwtToken, errorResponseWriter, authTokenProperties));
     http.addFilterBefore(
         new CustomAuthorizationFilter(tokenService, errorResponseWriter),
         UsernamePasswordAuthenticationFilter.class);
-  }
-
-  @Bean
-  @Override
-  public AuthenticationManager authenticationManagerBean() throws Exception {
-    return super.authenticationManagerBean();
+    return http.build();
   }
 }

@@ -1,7 +1,7 @@
 package com.openlap.user.dto.request;
 
 import com.openlap.user.validation.ValidPassword;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 /**

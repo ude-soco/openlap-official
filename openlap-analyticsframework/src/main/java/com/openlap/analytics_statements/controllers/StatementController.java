@@ -4,7 +4,7 @@ import com.openlap.analytics_statements.dtos.request.*;
 import com.openlap.analytics_statements.services.StatementService;
 import com.openlap.response.ApiSuccess;
 import java.util.List;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

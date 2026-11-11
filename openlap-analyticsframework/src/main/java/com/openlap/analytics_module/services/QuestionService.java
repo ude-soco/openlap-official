@@ -3,8 +3,8 @@ package com.openlap.analytics_module.services;
 import com.openlap.analytics_module.dto.requests.analytics_question.AnalyticsQuestionRequest;
 import com.openlap.analytics_module.dto.response.analytics_question.AnalyticsQuestionResponse;
 import com.openlap.analytics_module.entities.AnalyticsQuestion;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 
 public interface QuestionService {

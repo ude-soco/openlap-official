@@ -2,7 +2,7 @@ package com.openlap.user.dto.request;
 
 import com.openlap.user.entities.RoleType;
 import java.util.Set;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

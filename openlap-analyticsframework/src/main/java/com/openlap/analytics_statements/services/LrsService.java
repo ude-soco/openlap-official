@@ -7,8 +7,8 @@ import com.openlap.analytics_statements.entities.LrsRole;
 import com.openlap.analytics_statements.entities.LrsStore;
 import com.openlap.user.dto.response.utils.LrsProviderResponse;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 public interface LrsService {
   LrsRole getAdminRole();

@@ -1,6 +1,6 @@
 package com.openlap.isc_module.dto.request;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Data

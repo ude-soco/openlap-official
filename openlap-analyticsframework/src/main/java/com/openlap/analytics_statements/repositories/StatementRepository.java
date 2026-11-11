@@ -8,7 +8,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
-import javax.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface StatementRepository extends MongoRepository<Statement, String> {
 

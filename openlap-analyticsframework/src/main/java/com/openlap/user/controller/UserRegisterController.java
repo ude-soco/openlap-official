@@ -8,7 +8,7 @@ import com.openlap.response.ApiSuccess;
 import com.openlap.user.dto.request.UserRequest;
 import com.openlap.user.services.UserRegisterService;
 import java.util.List;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

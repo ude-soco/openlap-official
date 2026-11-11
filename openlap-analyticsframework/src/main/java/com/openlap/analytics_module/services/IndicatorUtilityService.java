@@ -11,7 +11,7 @@ import com.openlap.visualization_methods.entities.VisType;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface IndicatorUtilityService {
 

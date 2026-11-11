@@ -6,8 +6,8 @@ import com.openlap.analytics_module.dto.response.indicator.*;
 import com.openlap.analytics_module.services.IndicatorService;
 import com.openlap.response.ApiSuccess;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

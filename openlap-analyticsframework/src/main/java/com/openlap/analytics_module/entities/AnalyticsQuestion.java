@@ -3,7 +3,7 @@ package com.openlap.analytics_module.entities;
 import com.openlap.user.entities.User;
 import java.time.LocalDate;
 import java.util.List;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

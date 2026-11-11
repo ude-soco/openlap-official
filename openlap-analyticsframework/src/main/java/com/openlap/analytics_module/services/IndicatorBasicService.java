@@ -8,7 +8,7 @@ import com.openlap.dataset.OpenLAPDataSet;
 import com.openlap.user.entities.User;
 
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface IndicatorBasicService {
   OpenLAPDataSet analyzeIndicator(IndicatorAnalysisRequest indicatorAnalysisRequest);

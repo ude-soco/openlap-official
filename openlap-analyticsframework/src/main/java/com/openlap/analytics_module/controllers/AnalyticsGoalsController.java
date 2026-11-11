@@ -4,7 +4,7 @@ import com.openlap.analytics_module.dto.requests.analytics_goal.AnalyticsGoalReq
 import com.openlap.analytics_module.dto.requests.analytics_goal.AnalyticsGoalStatusRequest;
 import com.openlap.analytics_module.services.AnalyticsGoalsService;
 import com.openlap.response.ApiSuccess;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,8 +1,8 @@
 package com.openlap.user.validation;
 
 import java.util.function.IntPredicate;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 /**
  * Enforces the OpenLAP password policy:

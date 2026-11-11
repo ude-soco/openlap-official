@@ -5,7 +5,7 @@ import com.openlap.user.dto.request.RoleRequest;
 import com.openlap.user.dto.request.RoleToUserRequest;
 import com.openlap.user.entities.User;
 import com.openlap.user.services.UserRoleService;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import com.openlap.user.services.UserService;
 import lombok.RequiredArgsConstructor;

@@ -4,7 +4,7 @@ import com.openlap.analytics_module.dto.requests.indicator.IndicatorCompositeMer
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorCompositePreviewRequest;
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorCompositeRequest;
 import com.openlap.dataset.OpenLAPDataSet;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface IndicatorCompositeService {
   OpenLAPDataSet mergeIndicatorsForCompositeIndicator(

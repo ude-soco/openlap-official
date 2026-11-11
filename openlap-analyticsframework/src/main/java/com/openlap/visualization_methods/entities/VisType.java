@@ -1,6 +1,6 @@
 package com.openlap.visualization_methods.entities;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import com.openlap.template.model.ChartConfiguration;
 import lombok.*;
