@@ -110,9 +110,10 @@ def main():
         ROOT / "tests/fixtures/CombinedPluginRecoveryFixture.java", ROOT / "tests/fixtures/PluginObjectSnapshotQualification.java",
         ROOT / "tests/fixtures/plugin_combined_seed.js", ROOT / "tests/fixtures/Dockerfile.plugin-recovery-transport",
         MODULE / "pom.xml", MODULE / "Dockerfile.plugin-storage-versity", MODULE / "Dockerfile.plugin-checkpoint", MODULE / "scripts/plugin-release-backup.py"]
-    public_inputs += sorted((MODULE / "src/main/java").rglob("*.java")) + sorted((MODULE / "scripts/plugin-checkpoint").glob("*"))
     def source_inventory():
-        return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in public_inputs}
+        paths = public_inputs + sorted(path for path in (MODULE / "src/main/java").rglob("*") if path.is_file()) \
+            + sorted(path for path in (MODULE / "scripts/plugin-checkpoint").rglob("*") if path.is_file())
+        return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths}
     original_inputs = source_inventory()
     source_input_sha = hashlib.sha256(json.dumps(original_inputs, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     token = "openlap-combined-recovery-" + uuid.uuid4().hex[:10]
@@ -183,10 +184,10 @@ def main():
             return name
 
         def mount(volume, target, readonly=False, subpath=None):
-            return "--mount=type=volume,source=" + volume + ",target=" + target + (",volume-subpath=" + subpath if subpath else "") + (",readonly" if readonly else "")
+            return "--mount=type=volume,volume-nocopy,source=" + volume + ",target=" + target + (",volume-subpath=" + subpath if subpath else "") + (",readonly" if readonly else "")
 
         def remove_container(name):
-            run(["rm", "--force", name], "task container removal"); containers.remove(name)
+            run(["rm", "--force", "--volumes", name], "task container removal"); containers.remove(name)
 
         def remove_volume(name):
             run(["volume", "rm", name], "source data removal"); volumes.remove(name)
@@ -342,7 +343,7 @@ def main():
                 "sourceRevision": source_revision, "sourceInputSha256": source_input_sha, "sourceInputFileCount": len(original_inputs),
                 "scope": "Generated local recovery only; no external custody, production acceptance or availability verified."}, indent=2))
         finally:
-            for name in reversed(containers): run(["rm", "--force", name], "fixture cleanup", success=False)
+            for name in reversed(containers): run(["rm", "--force", "--volumes", name], "fixture cleanup", success=False)
             for name in reversed(networks): run(["network", "rm", name], "fixture cleanup", success=False)
             for name in reversed(volumes): run(["volume", "rm", name], "fixture cleanup", success=False)
             for name in reversed(images): run(["image", "rm", name], "fixture cleanup", success=False)
