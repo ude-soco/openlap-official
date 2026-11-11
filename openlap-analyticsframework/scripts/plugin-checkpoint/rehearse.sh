@@ -165,6 +165,8 @@ if [[ $index_plugins == true ]]; then
     run_private 'plugin artifact index summary' 256 "$work/index-summary.json" env CHECKPOINT_PHASE=rehearsal-plugin-index-summary \
         CHECKPOINT_INDEX_SHA256="$index_sha" CHECKPOINT_INDEX_SIZE="$index_size" CHECKPOINT_REHEARSAL_REPORT_SHA256="$rehearsal_sha" \
         mongo --nodb --norc --quiet /opt/openlap-checkpoint/report.js
+    summary_size=$(stat -c %s -- "$work/index-summary.json")
+    [[ $summary_size -gt 0 && $summary_size -le 4096 ]] || fail 'plugin artifact index summary exceeds its format budget'
 fi
 kill "$monitor_pid" 2>/dev/null || true; wait "$monitor_pid" 2>/dev/null || true; monitor_pid=
 kill "$mongod_pid" 2>/dev/null || true; wait "$mongod_pid" 2>/dev/null || true; mongod_pid=

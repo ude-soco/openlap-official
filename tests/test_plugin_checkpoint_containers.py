@@ -47,15 +47,25 @@ if [[ $action == no-report ]]; then
     if [[ -L $directory ]]; then exit; fi
     [[ ! -e $directory/checkpoint.json && ! -L $directory/checkpoint.json ]]
     [[ ! -e $directory/rehearsal.json && ! -L $directory/rehearsal.json ]]
+    [[ ! -e $directory/artifact-index.json && ! -L $directory/artifact-index.json ]]
     exit
 fi
 [[ -d $directory && ! -L $directory ]]
 if [[ $action == file ]]; then
     [[ $# == 3 ]]
-    case $3 in database.archive.gz|database.archive.gz.partial|publication-fault-triggered) ;; *) exit 1 ;; esac
+    case $3 in database.archive.gz|database.archive.gz.partial|artifact-index.json.partial|publication-fault-triggered) ;; *) exit 1 ;; esac
     target=$directory/$3
     [[ -f $target && ! -L $target ]]
     printf '{"sizeBytes":%s}\n' "$(stat -c %s -- "$target")"
+elif [[ $action == artifact-index ]]; then
+    [[ -f $directory/artifact-index.json && ! -L $directory/artifact-index.json ]]
+    [[ -f $directory/rehearsal.json && ! -L $directory/rehearsal.json ]]
+    index_sha=$(sha256sum -- "$directory/artifact-index.json"); index_sha=${index_sha%% *}
+    rehearsal_sha=$(sha256sum -- "$directory/rehearsal.json"); rehearsal_sha=${rehearsal_sha%% *}
+    printf '{"index":'; cat -- "$directory/artifact-index.json"
+    printf ',"indexSha256":"%s","indexSizeBytes":%s,"rehearsalReportSha256":"%s","directoryMode":"%s","indexMode":"%s"}\n' \
+        "$index_sha" "$(stat -c %s -- "$directory/artifact-index.json")" "$rehearsal_sha" \
+        "$(stat -c %a -- "$directory")" "$(stat -c %a -- "$directory/artifact-index.json")"
 elif [[ $action == rehearsal-summary ]]; then
     [[ -f $directory/rehearsal.json && ! -L $directory/rehearsal.json ]]
     report_sha=$(sha256sum -- "$directory/rehearsal.json"); report_sha=${report_sha%% *}
@@ -92,15 +102,16 @@ if [[ $action == empty ]]; then
     [[ ${#entries[@]} == 0 ]]
     exit
 fi
-[[ $# == 3 && $2 =~ ^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$ ]]
+[[ ( $# == 3 || $# == 4 ) && $2 =~ ^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$ ]]
 directory=/inputs/$2
 if [[ $action == stage ]]; then
-    [[ -d /captures/verified && ! -L /captures/verified ]]
+    capture=${4:-verified}
+    [[ $capture =~ ^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$ && -d /captures/$capture && ! -L /captures/$capture ]]
     if [[ $3 == ancestor-symlink ]]; then
         ln -s -- retrieved /inputs/$2
     else
         mkdir -m 0700 -- "$directory"
-        cp -- /captures/verified/checkpoint.json /captures/verified/database.archive.gz "$directory/"
+        cp -- "/captures/$capture/checkpoint.json" "/captures/$capture/database.archive.gz" "$directory/"
         case $3 in
             original) ;;
             corrupt-report) printf '%s\n' '{"private":"PRIVATE-FIXTURE-VALUE-MUST-NOT-BE-LOGGED"' > "$directory/checkpoint.json" ;;
@@ -170,6 +181,7 @@ def main():
         parser.error('--image must be an immutable local Docker image ID')
     passed = 0
     name = "openlap-checkpoint-test-" + uuid.uuid4().hex[:10]
+    index_volume = name + "-index"
     image = args.image or name + ":test"
     with fixture_workspace() as work:
         config = work / "docker-config"; config.mkdir()
@@ -182,7 +194,7 @@ def main():
         outputs = work / "outputs"; outputs.mkdir(mode=0o777); outputs.chmod(0o777)
         inputs = work / "inputs"; inputs.mkdir(mode=0o777); inputs.chmod(0o777)
         docker = ["docker", "--config", str(config)]
-        created_image = created_network = created_source = False
+        created_image = created_network = created_source = created_index_volume = False
 
         def call(args, timeout=180, expected=0):
             try:
@@ -198,8 +210,9 @@ def main():
             return call(["run", "--rm", "--platform=linux/amd64", "--network=" + name,
                          "--entrypoint=mongo", MONGO, "--quiet", "--host=source-mongo", "--eval", code])
 
-        def output_helper(action, *arguments):
-            mount = "--mount=type=bind,source=" + str(outputs) + ",target=/outputs"
+        def output_helper(action, *arguments, index_outputs=False):
+            mount = ("--mount=type=volume,source=" + index_volume + ",target=/outputs" if index_outputs
+                     else "--mount=type=bind,source=" + str(outputs) + ",target=/outputs")
             if action not in ("cleanup", "symlink"):
                 mount += ",readonly"
             result = call(["run", "--rm", "--pull=never", "--platform=linux/amd64", "--network=none", "--read-only",
@@ -208,7 +221,7 @@ def main():
                            "--noprofile", "--norc", "-c", OUTPUT_HELPER, "fixture-output-helper", action, *arguments], timeout=30)
             return json.loads(result.stdout) if result.stdout else None
 
-        def input_helper(action, identifier="unused", mutation="original"):
+        def input_helper(action, identifier="unused", mutation="original", capture="verified"):
             mount = "--mount=type=bind,source=" + str(inputs) + ",target=/inputs"
             if action in ("summary", "empty"):
                 mount += ",readonly"
@@ -217,7 +230,7 @@ def main():
                            "--memory=128m", "--pids-limit=32", mount,
                            "--mount=type=bind,source=" + str(outputs) + ",target=/captures,readonly",
                            "--entrypoint=/bin/bash", MONGO, "--noprofile", "--norc", "-c", INPUT_HELPER,
-                           "fixture-input-helper", action, identifier, mutation], timeout=30)
+                           "fixture-input-helper", action, identifier, mutation, capture], timeout=30)
             return json.loads(result.stdout) if result.stdout else None
 
         try:
@@ -226,6 +239,29 @@ def main():
             else:
                 call(["buildx", "build", "--load", "--platform=linux/amd64", "--network=none", "-t", image, str(context)])
                 created_image = True
+            # Projection rules are tested against real BSON types in a no-server,
+            # no-network shell; only this public synthetic fixture is mounted.
+            projected = call(["run", "--rm", "--pull=never", "--platform=linux/amd64", "--network=none", "--read-only",
+                "--user=1000:1000", "--cap-drop=ALL", "--security-opt=no-new-privileges", "--memory=256m",
+                "--mount=type=bind,source=" + str(ROOT / "tests/plugin_artifact_index_fixtures.js") + ",target=/fixtures/projection.js,readonly",
+                "--entrypoint=mongo", image, "--nodb", "--norc", "--quiet", "/fixtures/projection.js"])
+            assert re.fullmatch(r"PASS: [0-9]+ synthetic artifact index projection fixtures\n", projected.stdout)
+            assert SENTINEL not in projected.stdout + projected.stderr
+            print(projected.stdout.strip(), flush=True)
+            call(["volume", "create", index_volume]); created_index_volume = True
+            # Test-only preparation models a retained fsGroup-owned claim. The
+            # installable index mode itself has no initializer or chmod/chown.
+            call(["run", "--rm", "--platform=linux/amd64", "--network=none", "--read-only", "--user=0:0",
+                "--cap-drop=ALL", "--cap-add=CHOWN", "--security-opt=no-new-privileges",
+                "--mount=type=volume,source=" + index_volume + ",target=/outputs", "--entrypoint=/bin/bash", MONGO,
+                "--noprofile", "--norc", "-c", "chmod 0700 /outputs; chown 1000:1000 /outputs"])
+            def index_parent(mode):
+                call(["run", "--rm", "--platform=linux/amd64", "--network=none", "--read-only", "--user=1000:1000",
+                    "--cap-drop=ALL", "--security-opt=no-new-privileges",
+                    "--mount=type=volume,source=" + index_volume + ",target=/outputs", "--entrypoint=/bin/bash", MONGO,
+                    "--noprofile", "--norc", "-c", 'chmod "$1" /outputs; [[ $(stat -c %a /outputs) == "$2" ]]',
+                    "fixture-sgid-parent", mode, mode.lstrip("0")])
+            index_parent("02770")
             call(["network", "create", "--internal", name])
             created_network = True
             call(["run", "-d", "--name=" + name, "--network=" + name, "--network-alias=source-mongo",
@@ -361,14 +397,16 @@ exec /usr/bin/mongod --bind_ip=127.0.0.1 --port=37017 --dbpath=/tmp/unrelated-db
             assert retrieved["reportSha256"] == old
             assert retrieved["archiveSha256"] == verified_report["archiveSha256"]
 
-            def rehearse(identifier, case="retrieved", expected_sha=None, extra=(), success=False, readonly=True, preserve_existing=False, expected_message=None):
+            def rehearse(identifier, case="retrieved", expected_sha=None, extra=(), success=False, readonly=True, preserve_existing=False, expected_message=None, plugin_index=False):
                 mount = "--mount=type=bind,source=" + str(inputs) + ",target=/inputs"
                 if readonly:
                     mount += ",readonly"
+                output_mount = ("--mount=type=volume,source=" + index_volume + ",target=/outputs" if plugin_index
+                                else "--mount=type=bind,source=" + str(outputs) + ",target=/outputs")
                 arguments = ["run", "--rm", "--pull=never", "--platform=linux/amd64", "--network=none", "--read-only",
                              "--user=1000:1000", "--cap-drop=ALL", "--security-opt=no-new-privileges",
                              "--memory=1g", "--pids-limit=100", "--tmpfs=/tmp:rw,nosuid,noexec,size=768m,mode=1777",
-                             mount, "--mount=type=bind,source=" + str(outputs) + ",target=/outputs",
+                             mount, output_mount,
                              "--env=CHECKPOINT_ID=" + identifier,
                              "--env=CHECKPOINT_ARCHIVE_PATH=/inputs/" + case + "/database.archive.gz",
                              "--env=CHECKPOINT_REPORT_PATH=/inputs/" + case + "/checkpoint.json",
@@ -376,11 +414,26 @@ exec /usr/bin/mongod --bind_ip=127.0.0.1 --port=37017 --dbpath=/tmp/unrelated-db
                              "--env=CHECKPOINT_MAX_RESTORE_MIB=512"]
                 if expected_sha is not None:
                     arguments.append("--env=CHECKPOINT_EXPECTED_REPORT_SHA256=" + expected_sha)
-                result = call(arguments + list(extra) + [image, "--rehearse-archive"], expected=None)
+                result = call(arguments + list(extra) + [image, "--index-plugin-artifacts" if plugin_index else "--rehearse-archive"], expected=None)
                 assert SENTINEL not in result.stdout + result.stderr, "Retrieved fixture data escaped into console output"
                 if success:
                     fixed = next((line for line in result.stderr.splitlines() if line.startswith('Checkpoint rehearsal incomplete:')), 'private diagnostics withheld')
                     assert result.returncode == 0, "Retrieved archive rehearsal failed; " + fixed
+                    if plugin_index:
+                        assert result.stdout.startswith("OPENLAP-CHECKPOINT-PLUGIN-INDEX-REPORT-V1\n")
+                        assert result.stdout.endswith("OPENLAP-CHECKPOINT-PLUGIN-INDEX-REPORT-END-V1\n")
+                        summary = json.loads(result.stdout.splitlines()[1])
+                        assert summary["status"] == "CHECKPOINT_PLUGIN_ARTIFACT_INDEX_VERIFIED"
+                        assert summary["originalCheckpointReportSha256"] == expected_sha
+                        stored = output_helper("artifact-index", identifier, index_outputs=True)
+                        assert summary["artifactIndexSha256"] == stored["indexSha256"]
+                        assert summary["artifactIndexSizeBytes"] == stored["indexSizeBytes"]
+                        assert summary["rehearsalReportSha256"] == stored["rehearsalReportSha256"]
+                        assert stored["index"]["binding"]["originalCheckpointReportSha256"] == expected_sha
+                        assert stored["index"]["binding"]["archiveSha256"] == input_helper("summary", case)["archiveSha256"]
+                        assert stored["directoryMode"] == "2700" and stored["indexMode"] == "600"
+                        assert SENTINEL not in json.dumps(stored)
+                        return stored
                     assert result.stdout.startswith("OPENLAP-CHECKPOINT-REHEARSAL-REPORT-V1\n")
                     assert result.stdout.endswith("OPENLAP-CHECKPOINT-REHEARSAL-REPORT-END-V1\n")
                     report = json.loads(result.stdout.splitlines()[1])
@@ -394,7 +447,7 @@ exec /usr/bin/mongod --bind_ip=127.0.0.1 --port=37017 --dbpath=/tmp/unrelated-db
                 else:
                     assert result.returncode != 0
                     if not preserve_existing:
-                        output_helper("no-report", identifier)
+                        output_helper("no-report", identifier, index_outputs=plugin_index)
                     if expected_message:
                         assert expected_message in result.stderr, "Rehearsal did not reach the expected safety gate"
                 return result
@@ -437,10 +490,80 @@ exec /usr/bin/mongod --bind_ip=127.0.0.1 --port=37017 --dbpath=/tmp/unrelated-db
                             "--env=PATH=/fixture-bin:/usr/bin:/bin"])
             output_helper("file", "rehearsal-publication-failure", "publication-fault-triggered")
             passed += 1
+
+            empty_index = rehearse("indexed-empty", expected_sha=old, success=True, plugin_index=True)
+            assert empty_index["index"]["emptyRegisteredPluginSnapshot"] is True
+            assert empty_index["index"]["readyForS3Export"] is True
+            assert empty_index["index"]["artifacts"] == []
+            assert empty_index["index"]["objectBytesVerified"] is False
+            passed += 1
+            index_parent("02700")
+            empty_repeat = rehearse("indexed-empty-repeat", expected_sha=old, success=True, plugin_index=True)
+            assert empty_repeat["indexSha256"] == empty_index["indexSha256"]
+            passed += 1
+            rehearse("indexed-wrong-trust", expected_sha="0" * 64, plugin_index=True)
+            passed += 1
+            rehearse("indexed-source-forbidden", expected_sha=old, plugin_index=True,
+                extra=["--env=MONGODB_PRIMARY_URI=mongodb://" + SENTINEL + "@unreachable.invalid:1/private"])
+            passed += 1
+            mongo("""(function() {
+                var d=db.getSiblingDB('artifact_index_fixture');
+                function hash(c) { return new Array(65).join(c); }
+                function artifact(c,state) { var h=hash(c); return {_id:'analytics-'+h,kind:'ANALYTICS',sha256:h,
+                    sizeBytes:NumberLong(19),objectKey:'plugins/analytics/'+h+'.jar',state:state||'READY',createdBy:'%s'}; }
+                d.users.insertOne({_id:'operator',password:'%s'});
+                d['plugin-artifact'].insertMany([artifact('a'),artifact('b'),artifact('c'),artifact('d'),artifact('e','STAGED'),artifact('f','PURGED')]);
+                d['analytics-technique'].insertMany([
+                    {_id:'current',artifactId:artifact('a')._id,enabled:true},
+                    {_id:'older',artifactId:artifact('b')._id,enabled:false,previousId:'current',pluginFamilyId:artifact('a')._id},
+                    {_id:'recoverable',artifactId:artifact('c')._id,removalState:'REMOVED',removalOperation:'removed'},
+                    {_id:'purged-history',artifactId:artifact('f')._id,removalState:'REMOVED',removalOperation:'purged'}]);
+                d['plugin-installation'].insertMany([
+                    {_id:'discarded',kind:'ANALYTICS',artifactId:artifact('d')._id,state:'DISCARDED'},
+                    {_id:'old-active',kind:'ANALYTICS',artifactId:artifact('f')._id,state:'ACTIVE'}]);
+                d['plugin-removal'].insertMany([
+                    {_id:'removed',kind:'ANALYTICS_METHOD',catalogId:'recoverable',state:'REMOVED',rows:[{_id:'recoverable',_collection:'analytics-technique',artifactId:artifact('c')._id}]},
+                    {_id:'purged',kind:'ANALYTICS_METHOD',catalogId:'purged-history',state:'REMOVED',rows:[{_id:'purged-history',_collection:'analytics-technique',artifactId:artifact('f')._id}]}]);
+                d['plugin-version-family'].insertOne({_id:'ANALYTICS_METHOD:'+artifact('a')._id,ordinal:NumberLong(2)});
+                d['analytics-indicator'].insertOne({_id:ObjectId('000000000000000000000001'),
+                    analyticsTechniqueReference:{analyticsTechnique:new DBRef('analytics-technique','current')},
+                    configurationRequest:JSON.stringify({previous:'older'}),createdBy:'%s',
+                    _pluginReferenceWrite:{token:'completed-marker',pins:[{rawId:'not-a-current-reservation'}]}});
+            }());""" % (SENTINEL, SENTINEL, SENTINEL))
+            checkpoint("index-source", extra=["--env=OPENLAP_MONGODB_DB=artifact_index_fixture",
+                "--env=MONGODB_PRIMARY_URI=mongodb://source-mongo:27017/artifact_index_fixture"], success=True,
+                counts=[1, 4, 6, 2, 2, 1, 1])
+            source_indexed = input_helper("stage", "index-retrieved", capture="index-source")
+            indexed = rehearse("indexed-versions", case="index-retrieved", expected_sha=source_indexed["reportSha256"], success=True, plugin_index=True)
+            body = indexed["index"]
+            assert body["readyForS3Export"] and body["associationsResolved"] and not body["emptyRegisteredPluginSnapshot"]
+            assert body["summary"]["requiredObjectCount"] == 4
+            assert body["summary"]["optionalStagedCount"] == body["summary"]["purgedCount"] == 1
+            assert body["summary"]["catalogEntryCount"] == 4 and body["summary"]["installationCount"] == 2
+            assert body["objectBytesVerified"] is False and body["s3RestoreVerified"] is False
+            assert [a["presenceRequirement"] for a in body["artifacts"]] == ["REQUIRED"] * 4 + ["OPTIONAL_STAGED", "MUST_BE_ABSENT"]
+            passed += 1
+            repeated = rehearse("indexed-versions-repeat", case="index-retrieved", expected_sha=source_indexed["reportSha256"], success=True, plugin_index=True)
+            assert repeated["indexSha256"] == indexed["indexSha256"]
+            assert input_helper("summary", "index-retrieved") == source_indexed
+            passed += 1
+            rehearse("indexed-versions", case="index-retrieved", expected_sha=source_indexed["reportSha256"], plugin_index=True, preserve_existing=True)
+            assert output_helper("artifact-index", "indexed-versions", index_outputs=True)["indexSha256"] == indexed["indexSha256"]
+            passed += 1
+            index_failure = work / "index-publication-failure"; index_failure.mkdir(mode=0o755)
+            (index_failure / "sync").write_text('#!/bin/bash\nset -eu\nif [[ ${2-} == /outputs/index-publication-failure/artifact-index.json.partial ]]; then exit 31; fi\nexec /usr/bin/sync "$@"\n')
+            (index_failure / "sync").chmod(0o755)
+            rehearse("index-publication-failure", expected_sha=old, plugin_index=True,
+                extra=["--mount=type=bind,source=" + str(index_failure) + ",target=/fixture-bin,readonly", "--env=PATH=/fixture-bin:/usr/bin:/bin"])
+            output_helper("file", "index-publication-failure", "artifact-index.json.partial", index_outputs=True)
+            passed += 1
         finally:
             original_failure = sys.exc_info()[0] is not None
             cleanup_failed = False
-            for helper in (input_helper, output_helper):
+            helpers = [input_helper, output_helper]
+            if created_index_volume:
+                helpers.append(lambda action: output_helper(action, index_outputs=True))
+            for helper in helpers:
                 try:
                     helper("cleanup")
                     helper("empty")
@@ -453,6 +576,8 @@ exec /usr/bin/mongod --bind_ip=127.0.0.1 --port=37017 --dbpath=/tmp/unrelated-db
                 removals.append(["network", "rm", name])
             if created_image:
                 removals.append(["image", "rm", image])
+            if created_index_volume:
+                removals.append(["volume", "rm", index_volume])
             for removal in removals:
                 try:
                     result = subprocess.run(docker + removal, capture_output=True, timeout=30)

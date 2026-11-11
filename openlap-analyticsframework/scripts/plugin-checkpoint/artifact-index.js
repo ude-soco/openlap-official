@@ -14,7 +14,13 @@ var OpenLAPPluginArtifactIndex = (function() {
     function own(value, key) { return Object.prototype.hasOwnProperty.call(value, key); }
     function map() { return Object.create(null); }
     function object(value) { return value !== null && typeof value === "object" && !Array.isArray(value); }
-    function document(value) { return object(value) && (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null); }
+    function document(value) {
+        if (!object(value)) return false;
+        var prototype = Object.getPrototypeOf(value);
+        // Mongo's native BSON document prototype differs from Object.prototype,
+        // but retains the Object constructor. Own "constructor" fields are data.
+        return prototype === null || prototype.constructor === Object;
+    }
     function optional(value) { return value === null || typeof value === "undefined"; }
     function id(value) {
         if (typeof ObjectId === "function" && value instanceof ObjectId) value = value.str;
@@ -121,7 +127,7 @@ var OpenLAPPluginArtifactIndex = (function() {
         rows["plugin-removal"].forEach(function(row) {
             require(["REMOVED", "RESTORED", "CANCELLED"].indexOf(row.state) !== -1);
             kindCollection(row.kind); id(row.catalogId);
-            require(Array.isArray(row.rows) && row.rows.length > 0 && row.rows.length <= 128);
+            require(Array.isArray(row.rows) && row.rows.length > 0 && row.rows.length <= 200);
         });
         var available = map();
         CATALOG.forEach(function(collection) {
@@ -201,17 +207,18 @@ var OpenLAPPluginArtifactIndex = (function() {
             if (optional(value)) return;
             require(document(value));
             var collection = operation.kind === "ANALYTICS" ? "analytics-technique" : "visualization-library";
+            var entries = operation.kind === "ANALYTICS" ? "analytics-technique" : "visualization-type";
             if (!optional(value.previousArtifactId)) edge("plugin-installation", operation._id, relation + "-artifact", "plugin-artifact", artifactId(value.previousArtifactId), true, false);
             if (!optional(value.familyId)) history("plugin-installation", operation._id, relation + "-family", value.familyId, collection);
             if (!optional(value.targetId)) edge("plugin-installation", operation._id, relation + "-target", collection, id(value.targetId), true, false);
             if (!optional(value.entries)) {
                 require(Array.isArray(value.entries) && value.entries.length <= 128);
-                value.entries.forEach(function(entry) { require(document(entry)); edge("plugin-installation", operation._id, relation + "-entry", collection, id(entry.id), true, false); });
+                value.entries.forEach(function(entry) { require(document(entry)); edge("plugin-installation", operation._id, relation + "-entry", entries, id(entry.id), true, false); });
             }
             if (!optional(value.library)) { require(document(value.library)); edge("plugin-installation", operation._id, relation + "-library", "visualization-library", id(value.library.id), true, false); }
             if (!optional(value.mappings)) {
                 require(document(value.mappings));
-                Object.keys(value.mappings).forEach(function(key) { edge("plugin-installation", operation._id, relation + "-mapping", collection, id(key), true, false); });
+                Object.keys(value.mappings).forEach(function(key) { edge("plugin-installation", operation._id, relation + "-mapping", entries, id(key), true, false); });
             }
         }
         rows["plugin-installation"].forEach(function(row) { plan(row, row.replacementTarget, "replacement-target"); plan(row, row.replacement, "replacement"); });
@@ -324,12 +331,18 @@ var OpenLAPPluginArtifactIndex = (function() {
     }
     function summary(index, sha, size, rehearsalSha) {
         require(index.schemaVersion === 1 && index.projectionPolicy === POLICY && index.status === "CHECKPOINT_PLUGIN_ARTIFACT_INDEX_VERIFIED");
-        [sha, rehearsalSha].forEach(function(value) { require(typeof value === "string" && /^[a-f0-9]{64}$/.test(value)); });
+        [sha, rehearsalSha, index.binding.originalCheckpointReportSha256, index.binding.archiveSha256].forEach(function(value) { require(typeof value === "string" && /^[a-f0-9]{64}$/.test(value)); });
         number(size, 1, MAX_METADATA);
+        var fields = ["artifactCount", "requiredObjectCount", "optionalStagedCount", "purgedCount", "catalogEntryCount",
+            "installationCount", "removalCount", "familyCount", "knownAssociationCount", "danglingTypedReferenceCount",
+            "legacyCatalogEntryCount", "associationIssueCount"], counts = {};
+        require(document(index.summary) && JSON.stringify(Object.keys(index.summary).sort()) === JSON.stringify(fields.slice().sort()));
+        fields.forEach(function(name) { counts[name] = number(index.summary[name], 0, 20000); });
+        [index.associationsResolved, index.readyForS3Export, index.emptyRegisteredPluginSnapshot].forEach(function(value) { require(typeof value === "boolean"); });
         return {schemaVersion: 1, status: index.status, projectionPolicy: POLICY,
             originalCheckpointReportSha256: index.binding.originalCheckpointReportSha256, archiveSha256: index.binding.archiveSha256,
             artifactIndexSha256: sha, artifactIndexSizeBytes: size, rehearsalReportSha256: rehearsalSha,
-            counts: index.summary, associationsResolved: index.associationsResolved, readyForS3Export: index.readyForS3Export,
+            counts: counts, associationsResolved: index.associationsResolved, readyForS3Export: index.readyForS3Export,
             emptyRegisteredPluginSnapshot: index.emptyRegisteredPluginSnapshot, objectBytesVerified: false, s3RestoreVerified: false};
     }
     return {project: project, summary: summary};
