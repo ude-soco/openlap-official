@@ -64,7 +64,7 @@ rs.prerequisites(admin(), expected); cases++;
 for (const server of [admin('5.0.0'), admin('4.4.30', '4.2'), admin('4.4.30', '4.4', 'other'), admin('4.4.30', '4.4', expected.name, 32)]) {
   rejected(() => rs.prerequisites(server, expected), 20); cases++;
 }
-function lifecycle({ existing = true, race = false, unavailable = false, wrongHost = false, mode = 'initialize', storedOplogMiB = 16 } = {}) {
+function lifecycle({ existing = true, race = false, unavailable = false, wrongHost = false, mode = 'initialize', storedOplogMiB = 16, freeBytes = 1024 ** 3 } = {}) {
   const calls = []; let attempts = 0, clock = 0, exit;
   const stored = clone(config); if (wrongHost) stored.members[0].host = 'another:27017';
   const database = {
@@ -79,6 +79,7 @@ function lifecycle({ existing = true, race = false, unavailable = false, wrongHo
       if (operation === 'isMaster') return { ok: 1, ismaster: true, setName: expected.name,
         me: expected.host, primary: expected.host, hosts: [expected.host] };
       if (operation === 'collStats') return { ok: 1, capped: true, maxSize: storedOplogMiB * 1048576 };
+      if (operation === 'dbStats') return { ok: 1, fsTotalSize: 2 * 1024 ** 3, fsUsedSize: 2 * 1024 ** 3 - freeBytes };
       throw new Error('Unexpected lifecycle command');
     }
   };
@@ -92,6 +93,7 @@ function lifecycle({ existing = true, race = false, unavailable = false, wrongHo
 for (const options of [{ existing: false }, { existing: false, race: true }, { existing: true }]) {
   const result = lifecycle(options); assert.equal(result.exit, 0);
   assert.equal(result.calls.filter(name => name === 'replSetInitiate').length, options.existing ? 0 : 1);
+  assert.equal(result.calls.filter(name => name === 'dbStats').length, options.existing ? 0 : 1);
   assert(!result.calls.includes('replSetReconfig')); cases++;
 }
 const wrong = lifecycle({ wrongHost: true }); assert.equal(wrong.exit, 30);
@@ -102,4 +104,16 @@ const verifyOnly = lifecycle({ existing: false, mode: 'verify' }); assert.equal(
 assert(!verifyOnly.calls.includes('replSetInitiate')); cases++;
 const resized = lifecycle({ storedOplogMiB: 32 }); assert.equal(resized.exit, 30);
 assert(!resized.calls.includes('replSetInitiate') && !resized.calls.includes('replSetResizeOplog')); cases++;
+const lowCapacity = lifecycle({ existing: false, freeBytes: 272 * 1048576 - 1 });
+assert.equal(lowCapacity.exit, 21); assert(!lowCapacity.calls.includes('replSetInitiate')); cases++;
+const existingLowCapacity = lifecycle({ existing: true, freeBytes: 0 });
+assert.equal(existingLowCapacity.exit, 0); assert(!existingLowCapacity.calls.includes('dbStats')); cases++;
+const threshold = lifecycle({ existing: false, freeBytes: 272 * 1048576 });
+assert.equal(threshold.exit, 0); cases++;
+for (const stats of [
+  { ok: 0 }, { ok: 1 }, { ok: 1, fsTotalSize: 1000, fsUsedSize: 1001 },
+  { ok: 1, fsTotalSize: Infinity, fsUsedSize: 0 }, { ok: 1, fsTotalSize: 1024 ** 3, fsUsedSize: -1 },
+  { ok: 1, fsTotalSize: 1024 ** 3, fsUsedSize: 0.5 }]) {
+  rejected(() => rs.initialCapacity({ getSiblingDB: () => ({ runCommand: () => stats }) }, expected), 21); cases++;
+}
 console.log(JSON.stringify({ status: 'SYNTHETIC_REPLICA_SET_CONFIGURATION_VERIFIED', cases }));

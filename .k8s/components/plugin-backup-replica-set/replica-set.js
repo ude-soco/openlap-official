@@ -65,6 +65,14 @@
         require(oplog.ok === 1 && oplog.capped === true && numeric(oplog.maxSize) === expected.oplogMiB * 1048576, 30);
         return true;
     }
+    function initialCapacity(admin, expected) {
+        var stats = admin.getSiblingDB('local').runCommand({ dbStats: 1, scale: 1 });
+        var total = numeric(stats.fsTotalSize), used = numeric(stats.fsUsedSize);
+        var required = (expected.oplogMiB + 256) * 1048576;
+        require(stats.ok === 1 && isFinite(total) && isFinite(used) && Math.floor(total) === total
+                && Math.floor(used) === used && total <= 9007199254740991 && total > used && used >= 0
+                && total - used >= required, 21, 'new-oplog-filesystem-capacity');
+    }
     function main() {
         var expected = settings({ OPENLAP_MONGODB_REPLICA_SET: _getEnv('OPENLAP_MONGODB_REPLICA_SET'),
             OPENLAP_MONGODB_REPLICA_HOST: _getEnv('OPENLAP_MONGODB_REPLICA_HOST'),
@@ -93,6 +101,9 @@
             require(advertised && advertised.ok === 1, 40);
             require(advertised.host === local.host && numeric(advertised.pid) === numeric(local.pid), 31);
             if (current.ok !== 1) {
+                // Existing configurations skip this new-allocation gate. This
+                // is a real filesystem observation, never the PVC request.
+                initialCapacity(admin, expected);
                 var initiated = admin.runCommand({ replSetInitiate: { _id: expected.name, members: [{ _id: 0, host: expected.host }] } });
                 require(initiated.ok === 1 || initiated.code === 23, 40);
             }
@@ -107,7 +118,7 @@
         require(false, 40);
     }
     if (typeof module !== 'undefined' && module.exports) {
-        module.exports = { settings: settings, configuration: configuration, prerequisites: prerequisites, primary: primary };
+        module.exports = { settings: settings, configuration: configuration, prerequisites: prerequisites, primary: primary, initialCapacity: initialCapacity };
     } else {
         try { main(); quit(0); } catch (error) { quit(error.exitCode || 50); }
     }

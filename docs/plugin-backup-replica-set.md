@@ -61,6 +61,15 @@ input. A local-path PVC request does not enforce a physical disk quota, and an
 oplog's configured size is not an unconditional disk-use ceiling. Online capture
 must independently reject an overrun or missing oplog interval.
 
+Before **first initialization only**, the helper reads MongoDB 4.4's native
+`local` database filesystem statistics and requires available filesystem bytes
+of at least the explicit oplog budget **plus 256 MiB headroom**. Missing, invalid
+or insufficient statistics reject initialization before `rs.initiate`; they do
+not trigger a claim resize or permission change. This observation is additional
+to the operator's capacity/quota review and is not a reservation against other
+node users. An already configured matching replica set skips this new-allocation
+gate on restart, while still verifying its existing oplog budget and primary.
+
 ## Lifecycle and readiness
 
 The same MongoDB container receives `--replSet` and `--oplogSize`; existing

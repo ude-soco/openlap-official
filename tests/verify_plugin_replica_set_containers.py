@@ -192,6 +192,7 @@ def main():
         hook(first, expected='MONGODB_REPLICA_SET_EXISTING_CONFIGURATION_REJECTED')
         assert config_identity(first) == multi_fingerprint and len(config(first)['members']) == 2
         print(json.dumps({'status': 'OPTIONAL_SINGLE_NODE_REPLICA_SET_QUALIFIED',
+                          'nativeNewOplogFilesystemCapacityGuardVerified': True,
                           'retainedStandaloneVolumeConverted': True, 'dataIndexesAndVolumeOwnershipPreserved': True,
                           'concurrentMajorityJournaledWrites': 200, 'sameVolumeRestartVerified': True,
                           'unhealthySelfHostBootstrapVerified': True, 'idempotentConfigurationIdentityVerified': True,
