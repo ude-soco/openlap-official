@@ -80,3 +80,7 @@ objects, absent PURGED history, source orphans, changed bytes/index mismatch,
 validation before storage writes, fresh-only restore and cold client readback.
 These are generated index consumer fixtures. They do not replace a combined
 test using an actual verified database index and retrieved/decrypted snapshot.
+The default verifier tests the packaged image class. The explicit development
+flag `--compile-snapshot-source` instead compiles that class into scratch against
+a foundation image; that mode is reported separately and is not final image
+qualification. Continuous integration builds the runtime and uses the default.

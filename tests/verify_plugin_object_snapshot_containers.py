@@ -17,6 +17,8 @@ spec.loader.exec_module(gateway)
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--image", required=True)
+    parser.add_argument("--compile-snapshot-source", action="store_true",
+                        help="Development only: compile snapshot source against a foundation image instead of testing its packaged class")
     options = parser.parse_args()
     gateway.require(gateway.re.fullmatch(r"sha256:[a-f0-9]{64}", options.image) is not None)
     token = "openlap-object-snapshot-" + uuid.uuid4().hex[:12]
@@ -27,8 +29,10 @@ def main():
     with tempfile.TemporaryDirectory(prefix="openlap-object-snapshot-fixtures-") as temporary:
         staging = Path(temporary)
         # Only these public sources and generated dummy identities enter containers.
-        for source in [ROOT / "tests/fixtures/PluginObjectSnapshotQualification.java",
-                       ROOT / "openlap-analyticsframework/src/main/java/com/openlap/plugins/storage/PluginObjectSnapshotApplication.java"]:
+        public_sources = [ROOT / "tests/fixtures/PluginObjectSnapshotQualification.java"]
+        if options.compile_snapshot_source:
+            public_sources.append(ROOT / "openlap-analyticsframework/src/main/java/com/openlap/plugins/storage/PluginObjectSnapshotApplication.java")
+        for source in public_sources:
             shutil.copyfile(source, staging / source.name)
         for role, names in {"root": ["ROOT_ACCESS_KEY_ID", "ROOT_SECRET_ACCESS_KEY"],
                             "client": ["PLUGIN_STORAGE_S3_ACCESS_KEY", "PLUGIN_STORAGE_S3_SECRET_KEY"]}.items():
@@ -46,8 +50,11 @@ def main():
                   "--mount=type=bind,source=" + str(staging / "client") + ",target=/run/openlap-client,readonly"]
         root_secret = ["--mount=type=bind,source=" + str(staging / "root") + ",target=/run/openlap-root,readonly"]
         sources = ["--mount=type=bind,source=" + str(staging) + ",target=/fixture,readonly"]
-        script = ("umask 077\njavac -cp '/opt/openlap-storage/classes:/opt/openlap-storage/lib/*' -d /tmp "
-                  "/fixture/PluginObjectSnapshotApplication.java /fixture/PluginObjectSnapshotQualification.java\n"
+        packaged = "/opt/openlap-storage/classes/com/openlap/plugins/storage/PluginObjectSnapshotApplication.class"
+        compile_inputs = ("/fixture/PluginObjectSnapshotApplication.java " if options.compile_snapshot_source else "")
+        script = ("umask 077\n" + ("" if options.compile_snapshot_source else "test -f " + packaged + "\n")
+                  + "javac -cp '/opt/openlap-storage/classes:/opt/openlap-storage/lib/*' -d /tmp "
+                  + compile_inputs + "/fixture/PluginObjectSnapshotQualification.java\n"
                   "exec java -Dlogback.configurationFile=/opt/openlap-storage/logback.xml "
                   "-cp '/tmp:/opt/openlap-storage/classes:/opt/openlap-storage/lib/*' \"$@\"")
 
@@ -112,6 +119,7 @@ def main():
                 gateway.run(["rm", "--force", server])
                 servers.remove(server)
             print(json.dumps({"schemaVersion": 1, "image": options.image, "checksPassed": checks,
+                              "snapshotClassSource": "development-scratch-compilation" if options.compile_snapshot_source else "packaged-image-class",
                               "databaseFixtureScope": "Generated index consumer contract only; no real database rehearsal claimed."}, indent=2))
         finally:
             for server in servers:
