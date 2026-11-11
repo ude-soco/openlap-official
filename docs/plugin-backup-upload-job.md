@@ -191,3 +191,130 @@ python3 -B tests/verify_plugin_backup_upload_image.py --image LOCAL_SHA256_IMAGE
 The exact-image verifier uses allowlisted synthetic read-only mounts, a projected
 base64 key, a disposable local rclone alias, UID 1000, a read-only root and no
 network. No provider account, operator config/identity or browser profile is used.
+# Fresh capture compositions
+
+Two optional public compositions reuse the checkpoint, snapshot and native
+uploader runtimes. Neither is selected by the application base.
+
+- `.k8s/maintenance/plugin-recurring-backup` is a **suspended** nightly CronJob,
+  fixed to the qualified online replica-set capture mode. Each run captures new
+  source data, independently replays/indexes its archive, exports the immutable
+  object cut and encrypts/uploads/readbacks that same release. It does not upload
+  a previously retained checkpoint. `concurrencyPolicy: Forbid`,
+  `restartPolicy: Never` and `backoffLimit: 1` bound overlap/retries. A failed
+  attempt gets a new Pod UID and emptyDir; all capture phases run again.
+- `.k8s/maintenance/plugin-frozen-backup` is a supervised one-time Job. It uses
+  the existing frozen primary-database contracts and emits the existing
+  `OPENLAP-UPLOAD-RECEIPT-V1` frame. An actual externally enforced writer freeze
+  and its separately verified evidence identifier are mandatory. Defaults are
+  unconfigured, with no source, destination approval or freeze evidence. The
+  Job does not pause writers or manufacture evidence. It has no retries.
+
+The scope is the production **primary MongoDB instance and plugin S3 objects**.
+The separate LearningLocker/LRS database is outside these compositions. A
+single-node replica set enables the qualified online oplog procedure; it does
+not add storage redundancy or high availability.
+
+Both options execute `capture`, `index` and `export` init containers followed by
+the `uploader` container. Source URI/replica-set inputs belong only to capture;
+index receives no source selectors or credentials; export receives only the
+ordinary S3 client; uploader receives only the scoped native backup profile and
+public age recipient. No root S3 identity, encryption private key, Kubernetes
+API identity, Pod exec grant or retained PVC is mounted.
+
+Each Pod creates `run-POD_UID` exclusively and private subdirectories beneath a
+fresh emptyDir. Later phases mount completed inputs read-only and their separate
+output subdirectory writable. `fsGroup: 1000` is restricted to these fresh
+emptyDir/Secret volumes; it must never be applied to retained provider, database
+or backup data. Private UID1000 directories permit mode 0700 or inherited 02700
+with no group/other access. Files remain owner-only, single-link 0600. No stage
+adopts previous output or repairs retained ownership.
+
+Nightly capture/upload runs in the cluster independently of the operator's Mac.
+Independent off-node recovery remains a separate gate. The optional host
+collector/check requires an awake, logged-in Mac, available Docker and a valid
+existing Argo CD session. Its disabled templates do not establish active
+independent recovery automation. It fails closed on missing/stale evidence or
+authentication failure, and must not replace trusted original hashes with a
+mutable `latest.json` from the same upload account.
+
+## Activation and instance image selection
+
+Before selecting an option, qualify its exact runtime images and whole
+composition on isolated storage. Configure one reviewed source URI with the
+correct contract: frozen capture requires the explicit selected database path;
+online capture requires the empty path and explicit replica-set identity.
+Neither wrapper silently converts one URI contract into the other. Enforce
+physical deletion disabled across all writers before online object export.
+
+Supply `BACKUP_DESTINATION_APPROVED=true` and the approved UTC
+`BACKUP_DESTINATION_VALID_UNTIL` only after verifying recurring-use permission,
+account scope, quota and actual access. The default recurring validity margin is
+seven days; the supervised one-time default is one hour. These are activation
+checks, not proof that a provider will honor credentials until that time. Native
+authenticated upload and readback remain mandatory. An expiring upload share
+must not be treated as an ongoing backup destination. Operator-owned credential
+preparation remains a separate private handoff; never put values in an overlay
+literal, command argument, public source or operational record.
+
+Keep a running provider's existing qualified image when only introducing the
+new export tool. A global Kustomize `images` rule for the provider repository
+also rewrites export Job/CronJob references, even when those explicitly name a
+new digest. Replace that instance-wide rule with a targeted image patch for the
+existing storage Deployment, preserving its current Pod template. Pin the export
+init container separately to its newly qualified helper image. Compare the
+synthetic full composition to prove the serving provider, PVC identity and
+unrelated application settings remain unchanged. Do not render real Secret
+values for this check.
+
+The public NetworkPolicies deny all ingress/egress. Instance overrides must
+allow only the reviewed primary MongoDB, S3 Service, necessary DNS and approved
+off-node HTTPS endpoint. The serving S3 ingress policy needs the specific backup
+Pod selector as well as its existing backend selector. Establish these rules
+before starting a supervised Job or unsuspending the CronJob. A backup profile
+or unauthenticated MongoDB network path may confer broader capability if
+misused; deploying the qualified immutable programs and scoped policies is part
+of the instance review.
+
+## Default storage and runtime bounds
+
+Defaults use a 256 MiB aggregate transport payload, at most 2,048 source
+entries, a 16 MiB compressed database archive, 64 MiB expanded stream and 512 MiB
+isolated replay disk budget. The source exporter receives a lower count/byte
+ceiling derived from the actual archive/report/index sizes, reserving a complete
+1 MiB snapshot manifest. It rejects an oversized complete cut **before** body
+downloads; it never truncates a snapshot to make it fit.
+
+The shared workspace peak includes original payload, tar, encrypted output and
+encrypted readback, plus transport per-file/manifest/age overhead and auxiliary
+metadata. For payload bound `P` and source-entry bound `F`, the checked byte
+budget is:
+
+```text
+4*P + 3*((F+4)*2048 + 1 MiB) + 2*(4 MiB) + 4 MiB
+```
+
+The default is about 1,051 MiB, below the 1,280 MiB workspace. A separate
+768 MiB scratch emptyDir covers replay disk, two archive copies and 32 MiB
+auxiliary reserve; the default checked bound is 576 MiB. The Pod's effective
+2,304 MiB ephemeral-storage limit covers both emptyDirs plus logs. Capacity
+requests are not proof of free node storage: capture checks actual available
+workspace space and the native runners check archive/replay space. Review all
+limits together when changing a payload/file/archive/replay budget.
+
+Online Job deadlines are one hour with at most one fresh-Pod retry; supervised
+frozen Jobs are bounded to thirty minutes with no retry. Individual capture and
+index calls retain their 540-second process limits, export is bounded to 1,200
+seconds and native transfer to its configured timeout. A proposed ten-minute
+maintenance window still requires qualification against the actual small
+release profile; these maximum deadlines are not a completion-time promise.
+
+Capture/index logs contain only their existing bounded native metadata frames;
+export emits its native hash/count result. Online upload emits the new bounded
+`OPENLAP-RECURRING-BACKUP-V1` record, binding Pod UID, original checkpoint/index/
+snapshot hashes, conservative capture time and canonical upload receipt. It
+explicitly reports `recoveryVerified: false`. Accept it only after the original
+Pod/Job has terminal success and its ownership and qualified runtime identities
+have been verified. Independent native retrieval, full replay/index comparison
+and fresh S3 cold restore must then pass before claiming recovery acceptance.
+

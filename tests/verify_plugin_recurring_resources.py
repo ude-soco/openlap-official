@@ -1,7 +1,9 @@
 """Public suspended/default-unconfigured backup composition; never reads a live overlay."""
 import argparse
 from pathlib import Path
+import shutil
 import subprocess
+import tempfile
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -65,6 +67,36 @@ def check(resource, online):
     else: assert capture_env["CHECKPOINT_FREEZE_EVIDENCE"]["value"] == "" and "CHECKPOINT_REPLICA_SET" not in capture_env
 
 
+def separate_provider_pins():
+    """A maintenance helper upgrade must not silently repin the serving gateway."""
+    repository = "ghcr.io/ude-soco/openlap-official-plugin-storage-versity"
+    old_digest = "sha256:" + "0" * 64; new_digest = "sha256:" + "1" * 64
+    old_reference = repository + "@" + old_digest; new_reference = repository + "@" + new_digest
+    with tempfile.TemporaryDirectory(prefix="openlap-public-image-composition-") as temporary:
+        fixture = Path(temporary)
+        shutil.copytree(ROOT / ".k8s/storage/plugin-versity", fixture / "storage")
+        shutil.copytree(ROOT / ".k8s/maintenance/plugin-recurring-backup", fixture / "recurring")
+        cron_path = fixture / "recurring/cronjob.yaml"
+        cron = yaml.safe_load(cron_path.read_text()); cron["spec"]["jobTemplate"]["spec"]["template"]["spec"]["initContainers"][2]["image"] = new_reference
+        cron_path.write_text(yaml.safe_dump(cron, sort_keys=False))
+        selection = {"apiVersion": "kustomize.config.k8s.io/v1beta1", "kind": "Kustomization", "namespace": "synthetic-image-isolation",
+            "namePrefix": "fixture-", "resources": ["storage"], "patches": [{"target": {"kind": "Deployment", "name": "openlap-plugin-versity"},
+            "patch": "- op: replace\n  path: /spec/template/spec/containers/0/image\n  value: " + old_reference}]}
+        def built(value):
+            (fixture / "kustomization.yaml").write_text(yaml.safe_dump(value, sort_keys=False))
+            return list(yaml.safe_load_all(subprocess.check_output(["kubectl", "--kubeconfig=/dev/null", "kustomize", str(fixture)], timeout=30)))
+        before = next(row for row in built(selection) if row["kind"] == "Deployment")
+        selection["resources"].append("recurring")
+        combined = built(selection)
+        after = next(row for row in combined if row["kind"] == "Deployment")
+        assert before == after and after["spec"]["template"]["spec"]["containers"][0]["image"] == old_reference
+        scheduled = next(row for row in combined if row["kind"] == "CronJob")
+        assert scheduled["spec"]["jobTemplate"]["spec"]["template"]["spec"]["initContainers"][2]["image"] == new_reference
+        selection["images"] = [{"name": repository, "digest": old_digest}]
+        overwritten = next(row for row in built(selection) if row["kind"] == "CronJob")
+        assert overwritten["spec"]["jobTemplate"]["spec"]["template"]["spec"]["initContainers"][2]["image"] == old_reference
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--validator", type=Path); options = parser.parse_args()
     for online, option in ((True, "plugin-recurring-backup"), (False, "plugin-frozen-backup")):
@@ -73,7 +105,8 @@ def main():
         check(next(row for row in resources if row["kind"] != "NetworkPolicy"), online)
         policy = next(row for row in resources if row["kind"] == "NetworkPolicy")
         assert policy["spec"]["ingress"] == [] and policy["spec"]["egress"] == []
-    print("PASS: recurring/frozen defaults, coherent budgets, fresh retry and scoped stage inputs")
+    separate_provider_pins()
+    print("PASS: recurring/frozen defaults, coherent budgets, scoped stages and independent serving/export image pins")
 
 
 if __name__ == "__main__": main()
