@@ -48,7 +48,8 @@ if [[ $stage == capture && $mode == FROZEN ]]; then
     [[ ${CHECKPOINT_FREEZE_EVIDENCE-} =~ ^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,159}$ ]] || fail
 fi
 private_directory() {
-    [[ -d $1 && ! -L $1 && $(stat -c %u -- "$1") == 1000 && $(stat -c %a -- "$1") == 700 ]] || fail
+    [[ -d $1 && ! -L $1 && $(stat -c %u -- "$1") == 1000 ]] || fail
+    case $(stat -c %a -- "$1") in 700|2700) ;; *) fail ;; esac
 }
 private_file() {
     [[ -f $1 && ! -L $1 && $(stat -c %u -- "$1") == 1000 && $(stat -c %a -- "$1") == 600 && $(stat -c %h -- "$1") == 1 ]] || fail

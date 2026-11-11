@@ -28,10 +28,11 @@ def check(resource, online):
     assert pod["restartPolicy"] == "Never" and pod["automountServiceAccountToken"] is False
     assert pod["nodeSelector"] == {"kubernetes.io/os": "linux", "kubernetes.io/arch": "amd64"}
     security = pod["securityContext"]
-    assert security == {"runAsNonRoot": True, "runAsUser": 1000, "runAsGroup": 1000, "seccompProfile": {"type": "RuntimeDefault"}}
+    assert security == {"runAsNonRoot": True, "runAsUser": 1000, "runAsGroup": 1000, "fsGroup": 1000, "seccompProfile": {"type": "RuntimeDefault"}}
     assert [container["name"] for container in pod["initContainers"]] == ["capture", "index", "export"]
     assert [container["name"] for container in pod["containers"]] == ["uploader"]
     assert not any("persistentVolumeClaim" in volume for volume in pod["volumes"])
+    assert all(set(volume) <= {"name", "emptyDir", "secret"} for volume in pod["volumes"])
     volumes = {volume["name"]: volume for volume in pod["volumes"]}
     assert volumes["workspace"]["emptyDir"]["sizeLimit"] == "1280Mi" and volumes["scratch"]["emptyDir"]["sizeLimit"] == "768Mi"
     mode = "online" if online else "frozen"

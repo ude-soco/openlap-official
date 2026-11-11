@@ -19,7 +19,7 @@ def private(path, directory=False):
     path = Path(path); require(path.is_absolute() and path.resolve() == path)
     info = path.lstat()
     require((stat.S_ISDIR(info.st_mode) if directory else stat.S_ISREG(info.st_mode))
-            and info.st_uid == 1000 and stat.S_IMODE(info.st_mode) == (0o700 if directory else 0o600)
+            and info.st_uid == 1000 and stat.S_IMODE(info.st_mode) in ((0o700, 0o2700) if directory else (0o600,))
             and (directory or info.st_nlink == 1))
     return path
 

@@ -4,7 +4,9 @@ import hashlib
 import importlib.util
 import os
 from pathlib import Path
+import stat
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest import mock
 
@@ -45,6 +47,14 @@ class SnapshotTests(unittest.TestCase):
         PRODUCER.snapshot_files(self.root, self.manifest, self.index, "2" * 64, "1" * 64, "3" * 64, BACKUP, BACKUP.Deadline(5), online=online)
 
     def test_complete_online_object_cut_is_verified(self): self.validate()
+
+    def test_private_directories_allow_only_owner_access_with_optional_sgid(self):
+        for mode in (0o700, 0o2700):
+            with self.subTest(mode=mode), mock.patch.object(Path, "lstat", return_value=SimpleNamespace(st_uid=1000, st_mode=stat.S_IFDIR | mode, st_nlink=2)):
+                self.assertEqual(EXPORT.private(self.root, directory=True), self.root)
+        for mode in (0o750, 0o2750, 0o2770, 0o1700):
+            with self.subTest(mode=mode), mock.patch.object(Path, "lstat", return_value=SimpleNamespace(st_uid=1000, st_mode=stat.S_IFDIR | mode, st_nlink=2)):
+                with self.assertRaises(Exception): EXPORT.private(self.root, directory=True)
 
     def test_frozen_manifest_remains_supported_without_online_claims(self):
         self.manifest.update(schemaVersion=1, format="OPENLAP_PLUGIN_OBJECT_SNAPSHOT_V1")
