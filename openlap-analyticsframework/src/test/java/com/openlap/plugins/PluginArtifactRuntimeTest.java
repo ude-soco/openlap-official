@@ -7,7 +7,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.openlap.analytics_engine.services.impl.EngineServiceImpl;
@@ -92,7 +92,7 @@ public class PluginArtifactRuntimeTest {
         new PluginArtifactRegistry(repository, mongo, store), null);
     assertThatThrownBy(verifier::afterSingletonsInstantiated).isInstanceOf(PluginStorageException.class)
         .hasFieldOrPropertyWithValue("code", "PLUGIN_MIGRATION_REQUIRED");
-    verifyZeroInteractions(repository, store);
+    verifyNoInteractions(repository, store);
   }
 
   @Test
@@ -111,7 +111,7 @@ public class PluginArtifactRuntimeTest {
     assertThatThrownBy(visualization::populateVisualizationMethods).isInstanceOf(ConflictException.class);
     assertThatThrownBy(() -> visualization.uploadVisualizationMethodFile(null)).isInstanceOf(ConflictException.class);
     assertThatThrownBy(() -> visualization.reloadVisualizationMethodFile(null)).isInstanceOf(ConflictException.class);
-    verifyZeroInteractions(methods, types, libraries);
+    verifyNoInteractions(methods, types, libraries);
   }
 
   @Test
@@ -131,6 +131,6 @@ public class PluginArtifactRuntimeTest {
         new PluginArtifactResolver(PluginStorageProperties.Mode.S3, null, null));
     assertThat(engine.initializeDatabase()).isTrue();
     verify(goals).populateAnalyticsGoal();
-    verifyZeroInteractions(analytics, visualization);
+    verifyNoInteractions(analytics, visualization);
   }
 }

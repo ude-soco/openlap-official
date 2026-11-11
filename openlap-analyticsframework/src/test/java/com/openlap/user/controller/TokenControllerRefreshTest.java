@@ -31,9 +31,11 @@ import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.jackson2.autoconfigure.Jackson2AutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
@@ -48,6 +50,7 @@ import org.springframework.test.web.servlet.MockMvc;
     excludeFilters =
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
 @AutoConfigureMockMvc(addFilters = false)
+@ImportAutoConfiguration(Jackson2AutoConfiguration.class)
 @Import({
   ApiErrorResponseFactory.class,
   ErrorResponseWriter.class,
@@ -64,13 +67,13 @@ public class TokenControllerRefreshTest {
 
   @Autowired private MockMvc mockMvc;
 
-  @MockBean private UserService userService;
-  @MockBean private TokenService tokenService;
+  @MockitoBean private UserService userService;
+  @MockitoBean private TokenService tokenService;
 
   // bootstrap CommandLineRunner collaborators
-  @MockBean private UserRegisterService userRegisterService;
-  @MockBean private UserRoleService userRoleService;
-  @MockBean private EngineService engineService;
+  @MockitoBean private UserRegisterService userRegisterService;
+  @MockitoBean private UserRoleService userRoleService;
+  @MockitoBean private EngineService engineService;
 
   @Test
   public void refreshWithInvalidTokenReturnsUnifiedEnvelope() throws Exception {

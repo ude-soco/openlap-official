@@ -15,9 +15,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.jackson2.autoconfigure.Jackson2AutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
@@ -41,6 +43,7 @@ import org.springframework.test.web.servlet.MockMvc;
     excludeFilters =
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
 @AutoConfigureMockMvc(addFilters = false)
+@ImportAutoConfiguration(Jackson2AutoConfiguration.class)
 @Import(ApiErrorResponseFactory.class)
 @TestPropertySource(properties = "openlap.api.error.legacy-compat=true")
 public class AnalyticsModuleErrorMappingMockMvcTest {
@@ -48,9 +51,9 @@ public class AnalyticsModuleErrorMappingMockMvcTest {
   @Autowired private MockMvc mockMvc;
 
   // bootstrap CommandLineRunner collaborators (kept off MongoDB)
-  @MockBean private UserRegisterService userRegisterService;
-  @MockBean private UserRoleService userRoleService;
-  @MockBean private EngineService engineService;
+  @MockitoBean private UserRegisterService userRegisterService;
+  @MockitoBean private UserRoleService userRoleService;
+  @MockitoBean private EngineService engineService;
 
   @Before
   public void seedTraceId() {

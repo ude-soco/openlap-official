@@ -10,8 +10,10 @@ import com.openlap.security.SecurityConfig;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.jackson2.autoconfigure.Jackson2AutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
@@ -28,11 +30,12 @@ import org.springframework.test.web.servlet.MockMvc;
 @RunWith(SpringRunner.class)
 @WebMvcTest(
     controllers = ErrorTestController.class,
-    // Exclude the app's WebSecurityConfigurerAdapter; this slice tests error mapping, not security,
+    // Exclude the app's security configuration; this slice tests error mapping, not security,
     // and runs with addFilters=false. Avoids pulling in its UserDetailsService/etc. dependencies.
     excludeFilters =
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
 @AutoConfigureMockMvc(addFilters = false)
+@ImportAutoConfiguration(Jackson2AutoConfiguration.class)
 @Import({
   ApiErrorResponseFactory.class,
   com.openlap.infrastructure.error.ErrorResponseWriter.class,
@@ -52,13 +55,13 @@ public class GlobalApiExceptionHandlerMockMvcTest {
 
   // The main class's bootstrap CommandLineRunner @Bean is instantiated in the slice; mock its
   // collaborators so no MongoDB-backed services are required.
-  @org.springframework.boot.test.mock.mockito.MockBean
+  @org.springframework.test.context.bean.override.mockito.MockitoBean
   private com.openlap.user.services.UserRegisterService userRegisterService;
 
-  @org.springframework.boot.test.mock.mockito.MockBean
+  @org.springframework.test.context.bean.override.mockito.MockitoBean
   private com.openlap.user.services.UserRoleService userRoleService;
 
-  @org.springframework.boot.test.mock.mockito.MockBean
+  @org.springframework.test.context.bean.override.mockito.MockitoBean
   private com.openlap.analytics_engine.services.EngineService engineService;
 
   @Test

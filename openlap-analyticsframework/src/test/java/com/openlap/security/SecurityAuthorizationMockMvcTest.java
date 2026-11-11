@@ -7,8 +7,10 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.openlap.admin.audit.AdminAuditService;
@@ -40,8 +42,10 @@ import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.jackson2.autoconfigure.Jackson2AutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
@@ -51,6 +55,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.CorsConfiguration;
 
 /**
  * Characterization tests for the authorization rules in {@link SecurityConfig}, driven through the
@@ -75,6 +80,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
       com.openlap.admin.controller.AdminPluginController.class,
       com.openlap.content.PublicContentController.class
     })
+@ImportAutoConfiguration(Jackson2AutoConfiguration.class)
 @Import({
   SecurityConfig.class,
   AuthTokenProperties.class,
@@ -93,32 +99,80 @@ public class SecurityAuthorizationMockMvcTest {
   @Autowired private MockMvc mockMvc;
 
   // SecurityConfig collaborators
-  @MockBean private UserDetailsService userDetailsService;
-  @MockBean private TokenService tokenService;
-  @MockBean private BCryptPasswordEncoder bCryptPasswordEncoder;
-  @MockBean private UrlBasedCorsConfigurationSource corsConfigurationSource;
+  @MockitoBean private UserDetailsService userDetailsService;
+  @MockitoBean private TokenService tokenService;
+  @MockitoBean private BCryptPasswordEncoder bCryptPasswordEncoder;
+  @MockitoBean private UrlBasedCorsConfigurationSource corsConfigurationSource;
 
   // Controller collaborators
-  @MockBean private UserService userService;
-  @MockBean private AdminUsageService adminUsageService;
-  @MockBean private AdminCatalogService adminCatalogService;
-  @MockBean private AdminAuditService adminAuditService;
-  @MockBean private com.openlap.content.ContentService contentService;
-  @MockBean private com.openlap.plugins.management.PluginManagementService pluginManagementService;
-  @MockBean private com.openlap.plugins.management.PluginCatalogEditor pluginCatalogEditor;
-  @MockBean private com.openlap.plugins.management.PluginRemovalService pluginRemovalService;
-  @MockBean private com.openlap.plugins.management.PluginArtifactCleanup pluginArtifactCleanup;
-  @MockBean private AnalyticsTechniqueService analyticsTechniqueService;
-  @MockBean private VisualizationLibraryService visualizationLibraryService;
-  @MockBean private VisualizationTypeService visualizationTypeService;
-  @MockBean private VisualizationMethodUtilityService visualizationMethodUtilityService;
-  @MockBean private UserRegisterService userRegisterService;
-  @MockBean private StatementService statementService;
-  @MockBean private LrsService lrsService;
+  @MockitoBean private UserService userService;
+  @MockitoBean private AdminUsageService adminUsageService;
+  @MockitoBean private AdminCatalogService adminCatalogService;
+  @MockitoBean private AdminAuditService adminAuditService;
+  @MockitoBean private com.openlap.content.ContentService contentService;
+  @MockitoBean private com.openlap.plugins.management.PluginManagementService pluginManagementService;
+  @MockitoBean private com.openlap.plugins.management.PluginCatalogEditor pluginCatalogEditor;
+  @MockitoBean private com.openlap.plugins.management.PluginRemovalService pluginRemovalService;
+  @MockitoBean private com.openlap.plugins.management.PluginArtifactCleanup pluginArtifactCleanup;
+  @MockitoBean private AnalyticsTechniqueService analyticsTechniqueService;
+  @MockitoBean private VisualizationLibraryService visualizationLibraryService;
+  @MockitoBean private VisualizationTypeService visualizationTypeService;
+  @MockitoBean private VisualizationMethodUtilityService visualizationMethodUtilityService;
+  @MockitoBean private UserRegisterService userRegisterService;
+  @MockitoBean private StatementService statementService;
+  @MockitoBean private LrsService lrsService;
 
   // Bootstrap CommandLineRunner safety net (prevents any MongoDB access if it is invoked)
-  @MockBean private UserRoleService userRoleService;
-  @MockBean private EngineService engineService;
+  @MockitoBean private UserRoleService userRoleService;
+  @MockitoBean private EngineService engineService;
+
+  @Test
+  public void loginUsesTheConfiguredAuthenticationProviderAndIssuesTokens() throws Exception {
+    given(userDetailsService.loadUserByUsername("login@example.test"))
+        .willReturn(org.springframework.security.core.userdetails.User
+            .withUsername("login@example.test").password("stored-hash")
+            .authorities("ROLE_USER").build());
+    given(bCryptPasswordEncoder.matches("correct-password", "stored-hash")).willReturn(true);
+
+    mockMvc.perform(post("/login")
+            .param("userEmail", "login@example.test").param("password", "correct-password"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.access_token").isNotEmpty())
+        .andExpect(jsonPath("$.refresh_token").isNotEmpty());
+  }
+
+  @Test
+  public void loginWithIncorrectPasswordRetainsTheUnifiedFailureEnvelope() throws Exception {
+    given(userDetailsService.loadUserByUsername("login@example.test"))
+        .willReturn(org.springframework.security.core.userdetails.User
+            .withUsername("login@example.test").password("stored-hash")
+            .authorities("ROLE_USER").build());
+    given(bCryptPasswordEncoder.matches("wrong-password", "stored-hash")).willReturn(false);
+
+    mockMvc.perform(post("/login")
+            .param("userEmail", "login@example.test").param("password", "wrong-password"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"))
+        .andExpect(jsonPath("$.cause").doesNotExist());
+  }
+
+  @Test
+  public void allowedCorsPreflightDoesNotRequireAnAccessToken() throws Exception {
+    CorsConfiguration cors = new CorsConfiguration();
+    cors.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
+    cors.setAllowedMethods(Collections.singletonList("GET"));
+    cors.setAllowedHeaders(Collections.singletonList("Authorization"));
+    cors.setAllowCredentials(true);
+    given(corsConfigurationSource.getCorsConfiguration(any())).willReturn(cors);
+
+    mockMvc.perform(options("/v1/admin/usage")
+            .header("Origin", "http://localhost:5173")
+            .header("Access-Control-Request-Method", "GET")
+            .header("Access-Control-Request-Headers", "Authorization"))
+        .andExpect(status().isOk())
+        .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"));
+    org.mockito.Mockito.verifyNoInteractions(tokenService);
+  }
 
   @Test
   public void pluginWorkflowIsForbiddenWithoutSuperAdminForEveryOperation() throws Exception {
@@ -142,8 +196,8 @@ public class SecurityAuthorizationMockMvcTest {
     mockMvc.perform(patch("/v1/admin/plugins/catalog/ANALYTICS_METHOD/example").header(AUTHORIZATION, "Bearer valid-token")
         .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"name\":\"Edit\"}"))
         .andExpect(status().isForbidden());
-    org.mockito.Mockito.verifyZeroInteractions(pluginCatalogEditor);
-    org.mockito.Mockito.verifyZeroInteractions(pluginManagementService);
+    org.mockito.Mockito.verifyNoInteractions(pluginCatalogEditor);
+    org.mockito.Mockito.verifyNoInteractions(pluginManagementService);
     for (String path : new String[] {"removed?kind=ANALYTICS_METHOD", "cleanup", "catalog/ANALYTICS_METHOD/example/removal"})
       mockMvc.perform(get("/v1/admin/plugins/" + path).header(AUTHORIZATION, "Bearer valid-token")).andExpect(status().isForbidden());
     for (String path : new String[] {"cleanup", "removals/example/restore", "removals/example/resume"})
@@ -152,7 +206,7 @@ public class SecurityAuthorizationMockMvcTest {
     mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/v1/admin/plugins/catalog/ANALYTICS_METHOD/example")
         .header(AUTHORIZATION, "Bearer valid-token").contentType(MediaType.APPLICATION_JSON).content("{\"expectedVersions\":{}}"))
         .andExpect(status().isForbidden());
-    org.mockito.Mockito.verifyZeroInteractions(pluginRemovalService, pluginArtifactCleanup);
+    org.mockito.Mockito.verifyNoInteractions(pluginRemovalService, pluginArtifactCleanup);
   }
 
   @Test

@@ -14,9 +14,11 @@ import com.openlap.user.services.UserService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.jackson2.autoconfigure.Jackson2AutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
@@ -34,17 +36,18 @@ import org.springframework.test.web.servlet.MockMvc;
     excludeFilters =
         @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class))
 @AutoConfigureMockMvc(addFilters = false)
+@ImportAutoConfiguration(Jackson2AutoConfiguration.class)
 @Import(ApiErrorResponseFactory.class)
 public class UserAccountUpdateValidationMockMvcTest {
 
   @Autowired private MockMvc mockMvc;
 
   // Controller dependency under test.
-  @MockBean private UserService userService;
+  @MockitoBean private UserService userService;
   // Bootstrap CommandLineRunner collaborators (kept off MongoDB), mirroring the user error test.
-  @MockBean private UserRegisterService userRegisterService;
-  @MockBean private UserRoleService userRoleService;
-  @MockBean private EngineService engineService;
+  @MockitoBean private UserRegisterService userRegisterService;
+  @MockitoBean private UserRoleService userRoleService;
+  @MockitoBean private EngineService engineService;
 
   @Test
   public void updateProfileRejectsBlankName() throws Exception {

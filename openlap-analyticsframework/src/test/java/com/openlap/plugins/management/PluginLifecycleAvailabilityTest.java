@@ -3,7 +3,7 @@ package com.openlap.plugins.management;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.openlap.infrastructure.exception.ConflictException;
 import com.openlap.plugins.artifacts.ArtifactObjectStore;
@@ -33,7 +33,7 @@ public class PluginLifecycleAvailabilityTest {
     assertThat(cleanup.available()).isFalse();
     assertThatThrownBy(() -> cleanup.run(true, Collections.emptyList()))
         .isInstanceOf(ConflictException.class).hasMessageContaining("PLUGIN_DELETION_ENABLED");
-    verifyZeroInteractions(mongo, store);
+    verifyNoInteractions(mongo, store);
 
     properties.setDeletionEnabled(true);
     assertThat(cleanup.available()).isTrue();
