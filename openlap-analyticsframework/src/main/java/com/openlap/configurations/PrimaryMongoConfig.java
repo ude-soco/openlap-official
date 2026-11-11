@@ -49,6 +49,6 @@ public class PrimaryMongoConfig {
   @Primary
   @Bean(name = "primaryMongoTemplate")
   public MongoTemplate primaryMongoTemplate() {
-    return new MongoTemplate(primaryMongoClient(), mongoDatabase);
+    return MongoTemplateFactory.create(primaryMongoClient(), mongoDatabase);
   }
 }

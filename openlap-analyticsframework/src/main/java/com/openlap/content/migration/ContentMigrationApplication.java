@@ -1,6 +1,7 @@
 package com.openlap.content.migration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openlap.configurations.MongoTemplateFactory;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.openlap.content.ContentValidator;
@@ -17,7 +18,7 @@ public final class ContentMigrationApplication {
     boolean resume = Arrays.asList(args).contains("--resume-abandoned");
     MongoClient client = MongoClients.create(uri);
     try {
-      MongoTemplate template = new MongoTemplate(client, database);
+      MongoTemplate template = MongoTemplateFactory.create(client, database);
       boolean imported = new HomepageContentMigration(template, new ContentValidator(), new ObjectMapper()).migrate(resume);
       System.out.println(imported ? "Homepage content migrated: 7 news entries and 9 publications."
           : "Homepage content migration already completed; no content changed.");

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.mongodb.DBRef;
+import com.openlap.configurations.MongoTemplateFactory;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.openlap.analytics_technique.repositories.AnalyticsTechniqueRepository;
@@ -93,7 +94,7 @@ public class PluginArtifactIT {
     store = S3ArtifactObjectStore.connect(properties);
     closeables.add(store);
     client = MongoClients.create(mongoEndpoint.toString());
-    mongo = new MongoTemplate(client, "plugin_artifacts_it_" + UUID.randomUUID().toString().replace("-", ""));
+    mongo = MongoTemplateFactory.create(client, "plugin_artifacts_it_" + UUID.randomUUID().toString().replace("-", ""));
     artifacts = new MongoRepositoryFactory(mongo).getRepository(PluginArtifactRepository.class);
     registry = new PluginArtifactRegistry(artifacts, mongo, store);
     source = temporary.newFolder("sources").toPath();

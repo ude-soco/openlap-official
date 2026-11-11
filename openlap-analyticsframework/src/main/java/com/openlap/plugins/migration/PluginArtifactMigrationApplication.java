@@ -1,6 +1,7 @@
 package com.openlap.plugins.migration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openlap.configurations.MongoTemplateFactory;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.openlap.plugins.artifacts.PluginArtifactRegistry;
@@ -60,7 +61,7 @@ public final class PluginArtifactMigrationApplication {
     ObjectMapper mapper = new ObjectMapper();
     MongoClient client = MongoClients.create(uri);
     try {
-      MongoTemplate mongo = new MongoTemplate(client, database);
+      MongoTemplate mongo = MongoTemplateFactory.create(client, database);
       PluginArtifactMigration migration = new PluginArtifactMigration(mongo, roots);
       if ("--inventory".equals(action) || "--inventory-report".equals(action)) {
         PluginArtifactManifest manifest = migration.inventory();
