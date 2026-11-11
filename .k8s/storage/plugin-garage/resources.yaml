@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openlap-plugin-storage-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: openlap-plugin-storage-server
+type: Opaque
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: openlap-plugin-storage-client
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openlap-plugin-storage
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: openlap-official
+    app.kubernetes.io/component: openlap-plugin-storage
+  ports:
+  - name: s3
+    port: 3900
+    targetPort: s3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openlap-plugin-storage-admin
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: openlap-official
+    app.kubernetes.io/component: openlap-plugin-storage
+  ports:
+  - name: admin
+    port: 3903
+    targetPort: health
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: openlap-plugin-storage
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: openlap-official
+      app.kubernetes.io/component: openlap-plugin-storage
+  policyTypes: [Ingress, Egress]
+  egress: []
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: openlap-official
+          app.kubernetes.io/component: openlap-analyticsframework
+          service: web
+    - podSelector:
+        matchLabels:
+          openlap-plugin-storage-client: "true"
+    ports:
+    - protocol: TCP
+      port: 3900
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: openlap-official
+          app.kubernetes.io/component: openlap-plugin-storage-bootstrap
+    ports:
+    - protocol: TCP
+      port: 3903

@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: openlap-plugin-storage
+spec:
+  serviceName: openlap-plugin-storage
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: openlap-official
+      app.kubernetes.io/component: openlap-plugin-storage
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: openlap-official
+        app.kubernetes.io/component: openlap-plugin-storage
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+      - name: prepare-secrets
+        image: python@sha256:e064671ca452259bab50e8e2c7bd896e39e9a343bb06ca25234adf6fe18d0fc7
+        command: [python3, -B, /init/prepare-secrets.py]
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests: {cpu: 25m, memory: 32Mi}
+          limits: {cpu: 200m, memory: 64Mi}
+        volumeMounts:
+        - {name: init, mountPath: /init, readOnly: true}
+        - {name: projected-secrets, mountPath: /projected-secrets, readOnly: true}
+        - {name: secrets, mountPath: /secrets}
+      containers:
+      - name: garage
+        image: dxflrs/garage@sha256:677e5b758e4425a325b811c425c026bf35a4bf42f7ddbaa773de3f4fd779a5a5
+        command: [/garage]
+        args: [-c, /etc/garage/garage.toml, server, --single-node]
+        env:
+        - {name: RUST_LOG, value: info}
+        ports:
+        - {name: s3, containerPort: 3900}
+        - {name: health, containerPort: 3903}
+        startupProbe:
+          httpGet: {path: /health, port: health}
+          periodSeconds: 5
+          failureThreshold: 60
+        readinessProbe:
+          httpGet: {path: /health, port: health}
+          periodSeconds: 10
+          timeoutSeconds: 3
+        livenessProbe:
+          tcpSocket: {port: health}
+          periodSeconds: 30
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {cpu: '1', memory: 512Mi}
+        volumeMounts:
+        - {name: config, mountPath: /etc/garage, readOnly: true}
+        - {name: secrets, mountPath: /secrets, readOnly: true}
+        - {name: data, mountPath: /var/lib/garage}
+      volumes:
+      - name: config
+        configMap: {name: openlap-plugin-storage}
+      - name: projected-secrets
+        secret:
+          secretName: openlap-plugin-storage-server
+          defaultMode: 0440
+          items:
+          - {key: GARAGE_RPC_SECRET, path: rpc-secret}
+          - {key: GARAGE_METRICS_TOKEN, path: metrics-token}
+          - {key: GARAGE_ADMIN_TOKEN, path: admin-token}
+      - name: secrets
+        emptyDir: {medium: Memory, sizeLimit: 1Mi}
+      - name: init
+        configMap: {name: openlap-plugin-storage-init}
+      - name: data
+        persistentVolumeClaim: {claimName: openlap-plugin-storage-data}

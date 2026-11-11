@@ -1,0 +1,38 @@
+name: Verify optional Garage configuration
+
+on:
+  pull_request:
+    paths:
+    - '.k8s/storage/plugin-garage/**'
+    - '.k8s/maintenance/plugin-garage-bootstrap/**'
+    - '.k8s/maintenance/plugin-garage-smoke/**'
+    - 'tests/*plugin_garage*'
+    - '.github/workflows/plugin-garage-configuration.yml'
+  push:
+    branches: [main]
+    paths:
+    - '.k8s/storage/plugin-garage/**'
+    - '.k8s/maintenance/plugin-garage-bootstrap/**'
+    - '.k8s/maintenance/plugin-garage-smoke/**'
+    - 'tests/*plugin_garage*'
+    - '.github/workflows/plugin-garage-configuration.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  configuration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        persist-credentials: false
+    - name: Install the synthetic fixture parser
+      run: python3 -m pip install --disable-pip-version-check PyYAML==6.0.3
+    - name: Check configuration and credential boundaries
+      run: python3 -B -m unittest discover -s tests -p test_plugin_garage_configuration.py
+    - name: Check synthetic manifest composition
+      run: python3 -B tests/validate_plugin_garage_manifests.py
+    - name: Verify the pinned provider and independent clients locally
+      run: python3 -B tests/verify_plugin_garage_containers.py

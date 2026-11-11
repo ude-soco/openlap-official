@@ -1,0 +1,94 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openlap-plugin-storage-smoke
+spec:
+  completions: 2
+  parallelism: 2
+  backoffLimit: 1
+  activeDeadlineSeconds: 180
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: openlap-official
+        app.kubernetes.io/component: openlap-plugin-storage-smoke
+        openlap-plugin-storage-client: "true"
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: smoke
+        image: public.ecr.aws/aws-cli/aws-cli@sha256:eedfdcb56e9a1b02fabcf656977ca226f40860c6672aca41d435e036bc95a075
+        command: [/bin/sh, /smoke/smoke-test.sh]
+        env:
+        - name: PLUGIN_STORAGE_PILOT_CHECK_NETWORK
+          value: "true"
+        - name: GARAGE_ADMIN_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: openlap-plugin-storage
+              key: GARAGE_ADMIN_ENDPOINT
+        - name: AWS_ENDPOINT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: openlap-plugin-storage
+              key: PLUGIN_STORAGE_S3_ENDPOINT
+        - name: AWS_DEFAULT_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: openlap-plugin-storage
+              key: PLUGIN_STORAGE_S3_REGION
+        - name: PLUGIN_STORAGE_S3_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: openlap-plugin-storage
+              key: PLUGIN_STORAGE_S3_BUCKET
+        - name: PLUGIN_STORAGE_PILOT_REQUIRE_EXISTING
+          valueFrom:
+            configMapKeyRef:
+              name: openlap-plugin-storage
+              key: PLUGIN_STORAGE_PILOT_REQUIRE_EXISTING
+        - name: PLUGIN_STORAGE_PERSISTENCE_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: openlap-plugin-storage
+              key: PLUGIN_STORAGE_PERSISTENCE_KEY
+              optional: true
+        - name: PLUGIN_STORAGE_PERSISTENCE_SHA256
+          valueFrom:
+            configMapKeyRef:
+              name: openlap-plugin-storage
+              key: PLUGIN_STORAGE_PERSISTENCE_SHA256
+              optional: true
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: openlap-plugin-storage-client
+              key: PLUGIN_STORAGE_S3_ACCESS_KEY
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openlap-plugin-storage-client
+              key: PLUGIN_STORAGE_S3_SECRET_KEY
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests: {cpu: 50m, memory: 128Mi}
+          limits: {cpu: 500m, memory: 256Mi}
+        volumeMounts:
+        - {name: smoke, mountPath: /smoke, readOnly: true}
+        - {name: work, mountPath: /tmp}
+      volumes:
+      - name: smoke
+        configMap: {name: openlap-plugin-storage-smoke}
+      - name: work
+        emptyDir: {sizeLimit: 16Mi}

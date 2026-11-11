@@ -1,0 +1,24 @@
+# Optional single-process Garage store. Use a separately designed replicated
+# topology for high availability; these files do not turn one disk into a backup.
+replication_factor = 1
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+metadata_snapshots_dir = "/var/lib/garage/snapshots"
+db_engine = "lmdb"
+metadata_fsync = true
+data_fsync = true
+metadata_auto_snapshot_interval = "6h"
+block_ram_buffer_max = "32MiB"
+block_max_concurrent_writes_per_request = 2
+rpc_bind_addr = "127.0.0.1:3901"
+rpc_public_addr = "127.0.0.1:3901"
+rpc_secret_file = "/secrets/rpc-secret"
+
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "[::]:3900"
+
+[admin]
+api_bind_addr = "0.0.0.0:3903"
+admin_token_file = "/secrets/admin-token"
+metrics_token_file = "/secrets/metrics-token"
