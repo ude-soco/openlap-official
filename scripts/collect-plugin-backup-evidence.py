@@ -151,7 +151,7 @@ def config(path):
             and active != template and active != Path(path))
     # Only stat the native Argo credential file. Never open or hash it.
     credential = physical(options['argocd_config'])
-    require(credential not in (template, active, Path(path)))
+    require(credential not in (template, active, Path(path)) and state not in credential.parents)
     executable = Path(options['argocd']); require(executable.is_absolute())
     physical(executable.resolve(), private=False); require(os.access(executable, os.X_OK))
     return options

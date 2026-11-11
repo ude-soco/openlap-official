@@ -1,6 +1,6 @@
 # Retaining recurring backup evidence
 
-The optional collector retains a trusted receipt from the latest nightly online backup before Kubernetes Job history is removed. Its scope is the production primary MongoDB instance and plugin S3 objects. LearningLocker/LRS and other MongoDB instances are excluded. Collection verifies cluster provenance and uploaded-release hashes; it does not by itself prove recovery.
+The optional collector retains a trusted receipt from the latest nightly online backup before Kubernetes Job history is removed. Its scope is the selected primary MongoDB installation and plugin S3 objects. LearningLocker/LRS and other MongoDB instances are excluded. Collection verifies cluster provenance and uploaded-release hashes; it does not by itself prove recovery.
 
 The cluster CronJob creates backups independently of the Mac. The Mac must be awake and logged in, with its existing Argo CD session valid, for daily collection. A full independent recovery check additionally needs its qualified native age/rclone tools, private decryption identity, local Docker socket and prequalified Linux/amd64 images. Neither example schedule is installed or enabled by this repository. This is a prepared operator workflow, not a claim that unattended independent recovery is operational.
 
@@ -17,7 +17,7 @@ PUBLIC-TOOLS/
   openlap-analyticsframework/scripts/plugin-backup-upload.py
 ```
 
-Retain the selected commit and file SHA-256 values with installation records. The tools need Python 3 and its standard library, not a source checkout, application images, or secrets copied into the tool tree. Container image qualification and local availability are separate prerequisites of the full recovery runner. Existing native Argo, age and rclone credential files remain private operator references. Installing these public files creates or changes no credentials. The existing approved sciebo destination is unlimited and has no expiry; authenticated upload/readback is still verified for every release.
+Retain the selected commit and file SHA-256 values with installation records. The tools need Python 3 and its standard library, not a source checkout, application images, or secrets copied into the tool tree. Container image qualification and local availability are separate prerequisites of the full recovery runner. Existing native Argo, age and rclone credential files remain private operator references. Installing these public files creates or changes no credentials. For an operator-confirmed destination without expiry, use the explicit `unlimited` setting; authenticated upload/readback remains mandatory.
 
 Create private configuration and state directories outside Git with mode `0700`. Copy [the collector example](examples/plugin-backup-evidence-collection.json) into a private single-link `0600` JSON file. Fill public resource names, the trusted installed CronJob UID, immutable image references and finite accepted runtime image IDs from the reviewed deployment and image qualification records. A registry manifest/index digest can differ from a container runtime image ID: both are required, and neither is guessed from the other. Recreating the CronJob requires a reviewed UID refresh; the collector rejects the changed identity.
 

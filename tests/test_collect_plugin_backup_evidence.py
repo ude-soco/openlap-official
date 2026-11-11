@@ -174,6 +174,12 @@ class CollectorTests(unittest.TestCase):
         with self.assertRaises(C.CollectionError): self.collect()
         self.assertFalse(self.active.exists())
 
+    def test_argocd_create_job_ten_digit_action_name_still_requires_exact_owner(self):
+        self.client.job['name'] = self.options['cronjob'] + '-2611111200'
+        self.client.pod['name'] = self.client.job['name'] + '-abcde'
+        self.client.pod_owner = self.client.owner('Job', self.client.job)
+        self.assertTrue(self.collect()['selectionChanged'])
+
     def sibling(self, phase='Failed'):
         sibling = self.client.meta(self.client.job['name'] + '-retry', '55555555-5555-5555-5555-555555555555', '2026-11-11T11:59:59Z')
         self.client.pods.insert(0, {'metadata': sibling})
@@ -301,6 +307,16 @@ class CollectorTests(unittest.TestCase):
         self.assertNotIn('SENSITIVE_NATIVE_TOKEN', stderr.getvalue())
         self.assertIn('BACKUP_EVIDENCE_COLLECTION_INCOMPLETE', stderr.getvalue())
         self.assertFalse(self.active.exists())
+
+    def test_native_credential_cannot_alias_any_collector_custody_path(self):
+        aliased = self.state / 'selection.json'
+        aliased.write_text('SYNTHETIC_NATIVE_SESSION_MUST_NEVER_BE_PARSED'); aliased.chmod(0o600)
+        options = dict(self.options, argocd_config=str(aliased)); self.write(self.path, options)
+        original = C.snapshot
+        def guarded(path, **kwargs):
+            self.assertNotEqual(Path(path), aliased)
+            return original(path, **kwargs)
+        with mock.patch.object(C, 'snapshot', side_effect=guarded), self.assertRaises(C.CollectionError): C.config(self.path)
 
     def test_multiple_json_resource_format_rejects_duplicates_and_arrays(self):
         self.assertEqual(C.objects(b'{"metadata":{"name":"one"}}\n---\n{"metadata":{"name":"two"}}\n')[1]['metadata']['name'], 'two')
