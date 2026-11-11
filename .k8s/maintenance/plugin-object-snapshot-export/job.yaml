@@ -1,0 +1,82 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openlap-plugin-object-snapshot-export
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 1200
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: plugin-object-snapshot-export
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: export
+        image: ghcr.io/ude-soco/openlap-official-plugin-storage-versity:configure-reviewed-digest
+        imagePullPolicy: Always
+        command: [/usr/local/bin/openlap-object-snapshot]
+        args: [--configure-export]
+        env:
+        - name: PLUGIN_STORAGE_S3_BUCKET
+          value: ""
+        - name: PLUGIN_STORAGE_S3_REGION
+          value: ""
+        - name: PLUGIN_STORAGE_S3_ENDPOINT
+          value: ""
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+            ephemeral-storage: 64Mi
+          limits:
+            cpu: "1"
+            memory: 512Mi
+            ephemeral-storage: 128Mi
+        volumeMounts:
+        - name: inputs
+          mountPath: /inputs
+          readOnly: true
+        - name: outputs
+          mountPath: /outputs
+        - name: client-credentials
+          mountPath: /run/openlap-client
+          readOnly: true
+        - name: work
+          mountPath: /tmp
+      volumes:
+      # Existing, genuinely separate claims; this operation owns neither one.
+      - name: inputs
+        persistentVolumeClaim:
+          claimName: configure-readonly-verified-index-volume
+          readOnly: true
+      - name: outputs
+        persistentVolumeClaim:
+          claimName: configure-separate-protected-snapshot-volume
+      - name: client-credentials
+        secret:
+          secretName: openlap-plugin-storage-client
+          defaultMode: 292
+          items:
+          - key: PLUGIN_STORAGE_S3_ACCESS_KEY
+            path: PLUGIN_STORAGE_S3_ACCESS_KEY
+          - key: PLUGIN_STORAGE_S3_SECRET_KEY
+            path: PLUGIN_STORAGE_S3_SECRET_KEY
+      - name: work
+        emptyDir:
+          sizeLimit: 64Mi

@@ -1,0 +1,44 @@
+name: Validate optional plugin snapshot resources
+
+on:
+  pull_request:
+    paths:
+    - '.k8s/maintenance/plugin-object-snapshot-export/**'
+    - '.k8s/maintenance/plugin-checkpoint-output/**'
+    - '.k8s/maintenance/plugin-preservation/volume.yaml'
+    - '.k8s/maintenance/plugin-checkpoint-rehearsal/**'
+    - '.k8s/maintenance/plugin-backup-upload/**'
+    - '.k8s/maintenance/plugin-backup-upload-credentials/**'
+    - '.k8s/storage/plugin-versity-credentials/**'
+    - '.k8s/storage/plugin-versity/volume.yaml'
+    - 'tests/verify_plugin_snapshot_resources.py'
+    - '.github/workflows/plugin-snapshot-resources.yml'
+  push:
+    branches: [main]
+    paths:
+    - '.k8s/maintenance/plugin-object-snapshot-export/**'
+    - '.k8s/maintenance/plugin-checkpoint-output/**'
+    - '.k8s/maintenance/plugin-preservation/volume.yaml'
+    - '.k8s/maintenance/plugin-checkpoint-rehearsal/**'
+    - '.k8s/maintenance/plugin-backup-upload/**'
+    - '.k8s/maintenance/plugin-backup-upload-credentials/**'
+    - '.k8s/storage/plugin-versity-credentials/**'
+    - '.k8s/storage/plugin-versity/volume.yaml'
+    - 'tests/verify_plugin_snapshot_resources.py'
+    - '.github/workflows/plugin-snapshot-resources.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  resources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        persist-credentials: false
+    - name: Install the fixture parser
+      run: python3 -m pip install --disable-pip-version-check PyYAML==6.0.2
+    - name: Verify public defaults and synthetic volume composition
+      run: python3 -B tests/verify_plugin_snapshot_resources.py
