@@ -9,11 +9,19 @@ on:
     - 'tests/test_plugin_release_backup.py'
     - 'tests/test_plugin_online_release_backup.py'
     - 'tests/test_plugin_recurring_backup.py'
+    - 'tests/test_plugin_recurring_record.py'
+    - 'tests/test_collect_plugin_backup_evidence.py'
+    - 'scripts/plugin-recurring-record.py'
+    - 'scripts/collect-plugin-backup-evidence.py'
     - 'openlap-analyticsframework/scripts/plugin-recurring-backup.py'
     - 'openlap-analyticsframework/scripts/plugin-recurring-export.py'
     - 'tests/test_plugin_recovery_check.py'
     - 'docs/examples/plugin-recovery-check.json'
     - 'docs/examples/org.openlap.plugin-recovery-check.plist'
+    - 'docs/examples/plugin-backup-evidence-collection.json'
+    - 'docs/examples/org.openlap.plugin-backup-evidence.plist'
+    - 'docs/examples/org.openlap.plugin-backup-weekly-recovery.plist'
+    - 'docs/plugin-backup-evidence-collection.md'
     - 'docs/plugin-release-backup.md'
   push:
     branches: [main]
@@ -24,11 +32,19 @@ on:
     - 'tests/test_plugin_release_backup.py'
     - 'tests/test_plugin_online_release_backup.py'
     - 'tests/test_plugin_recurring_backup.py'
+    - 'tests/test_plugin_recurring_record.py'
+    - 'tests/test_collect_plugin_backup_evidence.py'
+    - 'scripts/plugin-recurring-record.py'
+    - 'scripts/collect-plugin-backup-evidence.py'
     - 'openlap-analyticsframework/scripts/plugin-recurring-backup.py'
     - 'openlap-analyticsframework/scripts/plugin-recurring-export.py'
     - 'tests/test_plugin_recovery_check.py'
     - 'docs/examples/plugin-recovery-check.json'
     - 'docs/examples/org.openlap.plugin-recovery-check.plist'
+    - 'docs/examples/plugin-backup-evidence-collection.json'
+    - 'docs/examples/org.openlap.plugin-backup-evidence.plist'
+    - 'docs/examples/org.openlap.plugin-backup-weekly-recovery.plist'
+    - 'docs/plugin-backup-evidence-collection.md'
     - 'docs/plugin-release-backup.md'
 
 permissions:
@@ -74,3 +90,7 @@ jobs:
       run: python3 -B -m unittest discover -s tests -p test_plugin_online_release_backup.py -v
     - name: Verify fresh producer integrity and default denial
       run: python3 -B -m unittest discover -s tests -p test_plugin_recurring_backup.py -v
+    - name: Verify canonical recurring backup records
+      run: python3 -B -m unittest discover -s tests -p test_plugin_recurring_record.py -v
+    - name: Verify trusted evidence collection and installed tool layout
+      run: python3 -B -m unittest discover -s tests -p test_collect_plugin_backup_evidence.py -v

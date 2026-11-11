@@ -1,0 +1,28 @@
+{
+  "argocd": "/CONFIGURE/VERIFIED/argocd",
+  "argocd_config": "/CONFIGURE/PRIVATE/existing-argocd-session",
+  "argocd_context": "CONFIGURE_EXISTING_CONTEXT",
+  "application": "configure-openlap-prod",
+  "namespace": "configure-openlap-prod",
+  "cronjob": "configure-plugin-backup",
+  "expected_cronjob_uid": "CONFIGURE_TRUSTED_INSTALLED_CRONJOB_UID",
+  "images": {
+    "capture": "ghcr.io/ude-soco/openlap-official-plugin-checkpoint@sha256:CONFIGURE_QUALIFIED_MANIFEST_DIGEST",
+    "index": "ghcr.io/ude-soco/openlap-official-plugin-checkpoint@sha256:CONFIGURE_QUALIFIED_MANIFEST_DIGEST",
+    "export": "ghcr.io/ude-soco/openlap-official-plugin-storage-versity@sha256:CONFIGURE_QUALIFIED_MANIFEST_DIGEST",
+    "uploader": "ghcr.io/ude-soco/openlap-official-plugin-backup-upload@sha256:CONFIGURE_QUALIFIED_MANIFEST_DIGEST"
+  },
+  "accepted_runtime_image_ids": {
+    "capture": ["sha256:CONFIGURE_QUALIFIED_RUNTIME_IMAGE_DIGEST"],
+    "index": ["sha256:CONFIGURE_QUALIFIED_RUNTIME_IMAGE_DIGEST"],
+    "export": ["sha256:CONFIGURE_QUALIFIED_RUNTIME_IMAGE_DIGEST"],
+    "uploader": ["sha256:CONFIGURE_QUALIFIED_RUNTIME_IMAGE_DIGEST"]
+  },
+  "recovery_template": "/CONFIGURE/PRIVATE/qualified-recovery-template.json",
+  "active_recovery_config": "/CONFIGURE/PRIVATE/managed-active-recovery.json",
+  "state_directory": "/CONFIGURE/PRIVATE/BACKUP-EVIDENCE",
+  "timeout_seconds": 25,
+  "max_attempt_age_hours": 26,
+  "max_clock_skew_seconds": 300,
+  "initial_active_config_sha256": null
+}
