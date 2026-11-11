@@ -1,13 +1,17 @@
 // Start Vite on loopback, then run with an externally installed Playwright:
 // NODE_PATH=/path/to/playwright/node_modules OPENLAP_TEST_BASE_URL=http://127.0.0.1:5181 \
 //   node scripts/test-dependency-updates.cjs
+// OPENLAP_TEST_PRODUCTION=1 builds an isolated fixture and starts its own preview
+// on loopback port 5183. The app's normal dist output is never changed.
 // Uses WebKit only. No application server, account, or live API is needed.
 const { webkit } = require("playwright");
 const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
+const os = require("node:os");
 const path = require("node:path");
 
-const base = new URL(process.env.OPENLAP_TEST_BASE_URL || "http://127.0.0.1:5181");
+const production = process.env.OPENLAP_TEST_PRODUCTION === "1";
+const base = new URL(process.env.OPENLAP_TEST_BASE_URL || `http://127.0.0.1:${production ? 5183 : 5181}`);
 assert.equal(base.protocol, "http:");
 assert.ok(["127.0.0.1", "localhost", "[::1]"].includes(base.hostname));
 assert.equal(base.username + base.password + base.search + base.hash, "");
@@ -16,6 +20,9 @@ assert.equal(base.username + base.password + base.search + base.hash, "");
 // real components. It is removed even when a check fails; no manifest changes.
 const fixtureName = `.dependency-updates-${process.pid}.jsx`;
 const fixturePath = path.join(__dirname, fixtureName);
+const appRoot = path.resolve(__dirname, "..");
+const htmlName = `dependency-updates-${process.pid}.html`;
+const htmlPath = path.join(appRoot, htmlName);
 const fixtureSource = String.raw`
 import React, { StrictMode, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -138,6 +145,7 @@ async function gridChecks(page) {
 
   await row("row-a").getByRole("checkbox").click();
   await selectionCount(page, 1);
+  assert.equal(await grid.locator(".MuiDataGrid-cell--editing").count(), 0, "Checkbox selection must not start cell editing");
   await row("row-b").getByRole("checkbox").click();
   await selectionCount(page, 2);
   await row("row-a").getByRole("checkbox").click();
@@ -168,6 +176,8 @@ async function gridChecks(page) {
     const { dataset, requirements } = window.__dependencyFixture.snapshot();
     return dataset.columns[0].headerName === "Updated category" && requirements.data[0].value === "Updated category";
   });
+  assert.deepEqual(await page.evaluate(() => window.__dependencyFixture.snapshot().dataset.rows.map((r) => r.id)), ["row-a", "row-c"]);
+  assert.equal(await page.evaluate(() => window.__dependencyFixture.snapshot().dataset.rows.some((r) => "__check__" in r)), false);
 
   await page.getByRole("button", { name: "Load pagination fixture", exact: true }).click();
   await page.waitForFunction(() => document.querySelectorAll(".MuiDataGrid-row").length === 10);
@@ -211,7 +221,11 @@ async function chartChecks(page) {
     await appChart.getByRole("button", { name: "Close customization", exact: true }).click();
     await appChart.getByRole("button", { name: "Customize chart", exact: true }).waitFor();
   }
+  await page.waitForFunction(() => document.querySelectorAll('[data-testid="app-chart"] .apexcharts-svg').length === 1);
+  const previousWidth = await appChart.locator(".apexcharts-svg").evaluate((svg) => Number(svg.getAttribute("width")));
   await page.setViewportSize({ width: 1100, height: 1000 });
+  await page.waitForFunction((previousWidth) => Number(document.querySelector(
+    '[data-testid="app-chart"] .apexcharts-svg')?.getAttribute("width")) < previousWidth - 100, previousWidth);
 
   await page.getByRole("button", { name: "Show wrapper fixture", exact: true }).click();
   await page.waitForFunction(() => document.querySelectorAll('[data-testid="wrapper-charts"] .apexcharts-svg').length === 2);
@@ -245,10 +259,29 @@ async function csvChecks(page) {
 }
 
 (async () => {
-  let browser, page;
+  let browser, page, previewServer, outDir;
+  let fixtureWritten = false, htmlWritten = false;
   const failures = [];
-  await fs.writeFile(fixturePath, fixtureSource, { flag: "wx" });
+  const requestedPaths = [];
   try {
+    await fs.writeFile(fixturePath, fixtureSource, { flag: "wx" });
+    fixtureWritten = true;
+    if (production) {
+      outDir = await fs.mkdtemp(path.join(os.tmpdir(), "openlap-dependency-production-"));
+      await fs.writeFile(htmlPath, `<!doctype html><html><head><meta charset="utf-8">
+        <meta http-equiv="Content-Security-Policy" content="connect-src 'self';">
+        <title>Bundled dependency fixture</title></head><body style="margin:24px">
+        <main id="fixture"></main><script type="module" src="/scripts/${fixtureName}"></script></body></html>`, { flag: "wx" });
+      htmlWritten = true;
+      const { build, preview } = await import("vite");
+      const config = { root: appRoot, configFile: path.join(appRoot, "vite.config.js"), logLevel: "warn",
+        build: { outDir, emptyOutDir: true, rolldownOptions: { input: htmlPath } } };
+      console.log("Building isolated production dependency fixture...");
+      await build(config);
+      previewServer = await preview({ ...config, preview: {
+        host: base.hostname.replace(/^\[|\]$/g, ""), port: Number(base.port || 80), strictPort: true, open: false,
+      } });
+    }
     browser = await webkit.launch({ headless: true,
       ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}) });
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, serviceWorkers: "block" });
@@ -258,6 +291,8 @@ async function csvChecks(page) {
         failures.push("Blocked unexpected request: " + url.origin + url.pathname);
         return route.abort();
       }
+      requestedPaths.push(url.pathname);
+      if (production) return route.continue();
       if (url.pathname !== "/__dependency_updates__") return route.continue();
       return route.fulfill({ contentType: "text/html", body: `<!doctype html><html><head>
         <meta charset="utf-8"><title>Isolated dependency regression fixture</title>
@@ -276,12 +311,17 @@ async function csvChecks(page) {
     page = await context.newPage();
     page.setDefaultTimeout(15000);
     page.on("pageerror", (error) => failures.push(error.message));
-    await page.goto(new URL("/__dependency_updates__", base).href);
+    await page.goto(new URL(production ? `/${htmlName}` : "/__dependency_updates__", base).href);
     await gridChecks(page);
     await chartChecks(page);
     await csvChecks(page);
+    if (production) {
+      assert.ok(requestedPaths.some((pathname) => /^\/assets\/.+\.js$/.test(pathname)), "Production fixture must load bundled JavaScript");
+      assert.equal(requestedPaths.some((pathname) => /^\/(src|scripts|node_modules|@vite|@react-refresh)(\/|$)/.test(pathname)), false,
+        "Production fixture must not load development modules");
+    }
     assert.deepEqual(failures, [], "No browser errors or unexpected network requests");
-    console.log("PASS: WebKit dependency regression checks; all traffic stayed on loopback");
+    console.log(`PASS: WebKit ${production ? "production bundle" : "development"} dependency checks; all traffic stayed on loopback`);
   } catch (error) {
     if (failures.length) console.error("Browser diagnostics:", failures);
     if (page) console.error("Fixture diagnostics:", await page.evaluate(() => ({
@@ -291,7 +331,18 @@ async function csvChecks(page) {
     })).catch(() => "Page unavailable"));
     throw error;
   } finally {
-    if (browser) await browser.close();
-    await fs.unlink(fixturePath);
+    try {
+      if (browser) await browser.close();
+    } finally {
+      try {
+        if (previewServer) await previewServer.close();
+      } finally {
+        await Promise.all([
+          ...(fixtureWritten ? [fs.rm(fixturePath, { force: true })] : []),
+          ...(htmlWritten ? [fs.rm(htmlPath, { force: true })] : []),
+          ...(outDir ? [fs.rm(outDir, { recursive: true, force: true })] : []),
+        ]);
+      }
+    }
   }
 })().catch((error) => { console.error(error); process.exitCode = 1; });
