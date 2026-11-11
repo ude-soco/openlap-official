@@ -413,7 +413,7 @@ def main():
                 if operator_fixture:
                     operator_case = operator_fixture.prepare(case, snapshot["objectCount"], staging, operator_tools, run, COPY, mount,
                         captures, snapshots, transport_image, checkpoint_image, snapshot_image, report_sha,
-                        original["artifactIndexSha256"], snapshot["manifestSha256"], docker, endpoint, generated_freeze_time)
+                        original["artifactIndexSha256"], snapshot["manifestSha256"], docker, endpoint, generated_freeze_time, online=options.online)
                 print("PASS: " + case + " actual checkpoint, verified index and object export", flush=True)
                 operator, custody, remote = [volume(case + "-" + suffix, 501) for suffix in ["operator", "custody", "remote"]]
                 copied = run(["run", "--rm", "--network=none", "--user=0:0", "--cap-drop=ALL", "--cap-add=DAC_OVERRIDE", "--cap-add=CHOWN", "--read-only",
