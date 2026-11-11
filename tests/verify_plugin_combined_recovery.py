@@ -137,6 +137,8 @@ def main():
 
         def run(arguments, stage, timeout=180, success=True):
             owned = None; arguments = list(arguments)
+            if arguments[0] == "run" and not any(arg == "--platform" or arg.startswith("--platform=") for arg in arguments):
+                arguments[1:1] = ["--platform=linux/amd64"]
             if arguments[0] == "run" and "--rm" in arguments and "--name" not in arguments:
                 owned = token + "-client-" + uuid.uuid4().hex[:8]; arguments[1:1] = ["--name", owned]
             try:
@@ -194,7 +196,7 @@ def main():
 
         def start_mongo(name, net, alias, data):
             run(["run", "--detach", "--name", name, "--network=" + net, "--network-alias=" + alias, "--read-only", "--user=1000:1000",
-                 "--cap-drop=ALL", "--security-opt=no-new-privileges", "--memory=512m", "--tmpfs=/tmp:rw,size=32m,mode=1777",
+                 "--cap-drop=ALL", "--security-opt=no-new-privileges", "--memory=768m", "--tmpfs=/tmp:rw,size=32m,mode=1777",
                  mount(data, "/data/db"), "--entrypoint=mongod", CHECKPOINT.MONGO, "--bind_ip_all", "--nounixsocket", "--wiredTigerCacheSizeGB=0.25",
                  "--setParameter=ttlMonitorEnabled=false", "--setParameter=diagnosticDataCollectionEnabled=false", "--quiet"], "fresh MongoDB start")
             containers.append(name)
