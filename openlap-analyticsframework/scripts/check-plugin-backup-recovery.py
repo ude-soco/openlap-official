@@ -220,7 +220,7 @@ class Docker:
     def __init__(self, options, output):
         self.options = options; self.output = output
         self.token = "openlap-recovery-check-" + uuid.uuid4().hex
-        self.volumes = []; self.containers = []
+        self.volumes = []; self.containers = []; self.image_lineage = {}
         docker_config = output / "docker-config"; docker_config.mkdir(mode=0o700)
         executable = Path(options["docker"])
         require(executable.is_absolute() and str(executable) == os.path.normpath(str(executable))
@@ -258,14 +258,29 @@ class Docker:
             return result.returncode, out.read(MIB)
 
     def image(self, reference):
-        _, body = self.call(["image", "inspect", "--platform=linux/amd64", reference, "--format={{.Id}} {{.Os}} {{.Architecture}}"])
-        values = body.decode().strip().split()
-        require(len(values) == 3 and re.fullmatch(r"sha256:[a-f0-9]{64}", values[0]) and values[1:] == ["linux", "amd64"])
-        # A full immutable input ID may identify an OCI index in Docker's
-        # containerd store. Platform selection can report its child config ID;
-        # it need not equal that index ID. Execute only the original immutable
-        # reference and record both identities, never substitute a mutable tag.
-        return values[0]
+        template = '{"id":{{json .Id}},"os":{{json .Os}},"architecture":{{json .Architecture}},"repoDigests":{{json .RepoDigests}},"descriptor":{{json .Descriptor}}}'
+        def inspect(platform):
+            _, body = self.call(["image", "inspect", *(["--platform=linux/amd64"] if platform else []), reference, "--format=" + template])
+            require(len(body) <= 65536); value = json.loads(body)
+            require(isinstance(value, dict) and re.fullmatch(r"sha256:[a-f0-9]{64}", value.get("id", "")))
+            descriptor = value.get("descriptor") or {}
+            require(isinstance(descriptor, dict))
+            descriptor_id = descriptor.get("digest")
+            require(descriptor_id is None or re.fullmatch(r"sha256:[a-f0-9]{64}", descriptor_id))
+            return value, descriptor_id
+        root, root_descriptor = inspect(False)
+        requested = reference.split("@")[-1]
+        repository_match = reference in (root.get("repoDigests") or [])
+        require(requested in (root["id"], root_descriptor) or repository_match)
+        selected, selected_descriptor = inspect(True)
+        require(selected.get("os") == "linux" and selected.get("architecture") == "amd64")
+        # A bound immutable index can select a different child config. Inspect
+        # both through the same input reference; never execute the inspected
+        # child ID or substitute a mutable tag.
+        self.image_lineage[reference] = {"requestedReference": reference, "rootImageId": root["id"],
+            "rootDescriptorDigest": root_descriptor, "repositoryDigestMatched": repository_match,
+            "selectedImageId": selected["id"], "selectedDescriptorDigest": selected_descriptor, "platform": "linux/amd64"}
+        return selected["id"]
 
     def volume(self, name, helper):
         value = self.token + "-" + name
@@ -402,6 +417,7 @@ def recover(options, output, transport):
                   "artifactIndexSha256": options["artifact_index_sha256"], "snapshotManifestSha256": options["snapshot_manifest_sha256"],
                   "archiveSha256": checkpoint.get("archiveSha256"), "releaseId": receipt["releaseId"], "images": images,
                   "imageReferences": {"checkpoint": options["checkpoint_image"], "snapshot": options["snapshot_image"], "helper": HELPER_IMAGE},
+                  "imageLineage": getattr(docker, "image_lineage", {}),
                   "independentlyDownloadedAndDecrypted": True, "isolatedDatabaseRestoreVerified": True,
                   "independentDatabaseIndexMatched": True, "freshObjectStoreColdReadbackVerified": True,
                   "objectCount": objects.get("objectCount"), "sourceMetadataUnchanged": True,

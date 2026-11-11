@@ -197,12 +197,22 @@ class RunnerTests(unittest.TestCase):
 
 class DockerContainmentTests(unittest.TestCase):
     def test_platform_preflight_records_child_identity_without_retagging_index(self):
-        docker = CHECK.Docker.__new__(CHECK.Docker); calls = []
+        docker = CHECK.Docker.__new__(CHECK.Docker); docker.image_lineage = {}; calls = []
         child = "sha256:" + "b" * 64; index = "sha256:" + "a" * 64
-        docker.call = lambda args, **kw: (calls.append(args) or (0, (child + " linux amd64\n").encode()))
+        def call(args, **kw):
+            calls.append(args); selected = "--platform=linux/amd64" in args; value = child if selected else index
+            return 0, encoded({"id": value, "os": "linux", "architecture": "amd64", "repoDigests": [], "descriptor": {"digest": value}})
+        docker.call = call
         self.assertEqual(docker.image(index), child)
         self.assertIn(index, calls[0])
-        self.assertIn("--platform=linux/amd64", calls[0])
+        self.assertIn("--platform=linux/amd64", calls[1])
+        self.assertEqual(docker.image_lineage[index]["rootDescriptorDigest"], index)
+        self.assertEqual(docker.image_lineage[index]["selectedImageId"], child)
+
+    def test_platform_preflight_rejects_unbound_immutable_root(self):
+        docker = CHECK.Docker.__new__(CHECK.Docker); docker.image_lineage = {}
+        docker.call = lambda args, **kw: (0, encoded({"id": "sha256:" + "b" * 64, "repoDigests": [], "descriptor": None}))
+        with self.assertRaises(CHECK.RecoveryError): docker.image("sha256:" + "a" * 64)
 
     def test_verified_multicall_executable_keeps_invocation_name(self):
         with tempfile.TemporaryDirectory(prefix="openlap-public-multicall-") as temporary:
