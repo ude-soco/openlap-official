@@ -298,6 +298,15 @@ def main():
                 if options.online:
                     transaction_client("seed")
                     baseline = transaction_client("state")
+                    if not empty:
+                        rejected = run(["run", "--rm", "--network=" + source_net, *checkpoint_common, mount(captures, "/outputs"),
+                            "--env=MONGODB_PRIMARY_URI=mongodb://source-mongo:27017/", "--env=OPENLAP_MONGODB_DB=plugin_recovery_fixture",
+                            "--env=CHECKPOINT_SOURCE_HOST=source-mongo", "--env=CHECKPOINT_SOURCE_PORT=27017", "--env=CHECKPOINT_REPLICA_SET=online-fixture-rs",
+                            "--env=PLUGIN_DELETION_ENABLED=false", "--env=CHECKPOINT_ID=rejected-standalone", checkpoint_image, "--checkpoint-online"],
+                            "online capture rejects standalone source", success=False)
+                        require(rejected.returncode != 0 and b"source validation failed" in rejected.stderr)
+                        run(["run", "--rm", "--network=none", "--user=1000:1000", mount(captures, "/outputs", True), "--entrypoint=/bin/bash", checkpoint_image,
+                            "-ceu", "test ! -e /outputs/rejected-standalone"], "standalone rejection occurs before writes")
                     run(["stop", "--time=20", source_db], "preserved standalone clean shutdown"); remove_container(source_db)
                     start_mongo(source_db, source_net, "source-mongo", db_data, replica=True)
                     run(["run", "--rm", "--network=" + source_net, "--entrypoint=mongo", checkpoint_image, "--norc", "--quiet", "--host=source-mongo", "--eval",
@@ -313,7 +322,6 @@ def main():
                         mount(control, "/control"), *sources, "--env=FIXTURE_PHASE=write", "--entrypoint=mongo", checkpoint_image,
                         "--nodb", "--norc", "--quiet", "/fixture/plugin_online_transactions.js"], "concurrent generated transactions")
                     containers.append(writer)
-                    writes_before = transaction_client("state")["committedTransactions"]
                 def capture(identifier, replacements=(), success=True):
                     # Later explicit fixture overrides are intentional negative inputs.
                     result = run(["run", "--rm", "--network=" + source_net, *checkpoint_common, mount(captures, "/outputs"),
@@ -330,7 +338,8 @@ def main():
                     return result
                 if options.online and not empty:
                     for label, replacement in [("database-path", "MONGODB_PRIMARY_URI=mongodb://source-mongo:27017/plugin_recovery_fixture"),
-                        ("wrong-replica", "CHECKPOINT_REPLICA_SET=wrong-set"), ("physical-deletion", "PLUGIN_DELETION_ENABLED=true")]:
+                        ("wrong-replica", "CHECKPOINT_REPLICA_SET=wrong-set"), ("physical-deletion", "PLUGIN_DELETION_ENABLED=true"),
+                        ("missing-physical-protection", "PLUGIN_DELETION_ENABLED=")]:
                         require(capture("rejected-" + label, ["--env=" + replacement], False).returncode != 0)
                         run(["run", "--rm", "--network=none", "--user=1000:1000", mount(captures, "/outputs", True), "--entrypoint=/bin/bash", checkpoint_image,
                             "-ceu", "test ! -e /outputs/rejected-" + label], "invalid online configuration rejected before writes")
@@ -355,6 +364,7 @@ def main():
                     run(["run", "--rm", "--network=" + source_net, "--entrypoint=mongo", checkpoint_image, "--norc", "--quiet", "--host=source-mongo", "--eval",
                         "db.getSiblingDB('plugin_recovery_fixture')['plugin-management-lock'].deleteOne({_id:'generated-active-operation'});"], "complete generated operation before whole recapture")
                 generated_freeze_time = datetime.now(timezone.utc).isoformat()
+                if options.online: writes_before = transaction_client("state")["committedTransactions"]
                 captured = capture("source-capture")
                 lines = captured.stdout.decode().splitlines()
                 require(len(lines) == 3 and lines[0] == ("OPENLAP-CHECKPOINT-ONLINE-REPORT-V2" if options.online else "OPENLAP-CHECKPOINT-REPORT-V1"))
@@ -362,6 +372,9 @@ def main():
                     writes_after = transaction_client("state")["committedTransactions"]
                     require(writes_after > writes_before, "No concurrent transactions overlapped actual online capture.")
                 report_sha = hashlib.sha256((lines[1] + "\n").encode()).hexdigest(); report = json.loads(lines[1])
+                if options.online:
+                    first, last = report["sourceOplogBefore"], report["sourceOplogAfter"]
+                    require((first["seconds"], first["increment"]) < (last["seconds"], last["increment"]), "No generated oplog progress occurred during the recorded capture interval.")
                 if options.online and not empty:
                     require(report["captureMode"] == "INSTANCE_WIDE_OPLOG" and report["oplogReplayVerified"] and "freezeEvidence" not in report and "sourceBeforeAfterMatched" not in report)
                     invalid_inputs, invalid_outputs = volume(case + "-invalid-inputs"), volume(case + "-invalid-outputs")
@@ -475,6 +488,7 @@ def main():
                     evidence[-1].update({"captureMode": "INSTANCE_WIDE_OPLOG", "fullInstanceOplogReplayVerified": True,
                         "standaloneDataPreservedDuringReplicaSetConversion": True, "writesBeforeCapture": writes_before, "writesAfterCapture": writes_after,
                         "recoveredCommittedTransactions": restored_transactions["committedTransactions"], "crossDatabaseTransactionInvariantVerified": True,
+                        "sourceOplogAdvancedDuringCapture": True, "writesBeforeSampleImmediatelyPrecedesCapture": True,
                         "immutableObjectCutVerified": True, "laterNewKeysExcluded": not empty, "invalidOnlineInputsRejected": not empty, "activeFencePreservedAndWholeCaptureRetried": not empty})
                 if operator_proof: evidence[-1]["operatorRecoveryCheck"] = operator_proof
                 print("PASS: " + case + " actual checkpoint/index, encrypted retrieval, fresh storage and cold associations", flush=True)
