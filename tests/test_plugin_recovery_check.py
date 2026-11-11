@@ -196,6 +196,14 @@ class RunnerTests(unittest.TestCase):
 
 
 class DockerContainmentTests(unittest.TestCase):
+    def test_platform_preflight_records_child_identity_without_retagging_index(self):
+        docker = CHECK.Docker.__new__(CHECK.Docker); calls = []
+        child = "sha256:" + "b" * 64; index = "sha256:" + "a" * 64
+        docker.call = lambda args, **kw: (calls.append(args) or (0, (child + " linux amd64\n").encode()))
+        self.assertEqual(docker.image(index), child)
+        self.assertIn(index, calls[0])
+        self.assertIn("--platform=linux/amd64", calls[0])
+
     def test_verified_multicall_executable_keeps_invocation_name(self):
         with tempfile.TemporaryDirectory(prefix="openlap-public-multicall-") as temporary:
             root = Path(temporary).resolve(); binary = root / "docker-tools"

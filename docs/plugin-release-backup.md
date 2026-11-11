@@ -200,6 +200,9 @@ record; a local image ID alone does not establish qualification. Mutable image
 tags are rejected. The fixed public Python helper image is also preloaded by
 immutable digest. Docker must support `image inspect --platform=linux/amd64`
 and volume subpath mounts. Use only an explicit local Unix Docker socket.
+Docker's containerd image store may resolve an immutable index ID to a different
+platform config ID. The receipt records both the immutable input references and
+the selected Linux amd64 IDs; execution retains the original immutable reference.
 
 Create the configured owner-only state directory, then run:
 

@@ -261,7 +261,10 @@ class Docker:
         _, body = self.call(["image", "inspect", "--platform=linux/amd64", reference, "--format={{.Id}} {{.Os}} {{.Architecture}}"])
         values = body.decode().strip().split()
         require(len(values) == 3 and re.fullmatch(r"sha256:[a-f0-9]{64}", values[0]) and values[1:] == ["linux", "amd64"])
-        require(not reference.startswith("sha256:") or values[0] == reference)
+        # A full immutable input ID may identify an OCI index in Docker's
+        # containerd store. Platform selection can report its child config ID;
+        # it need not equal that index ID. Execute only the original immutable
+        # reference and record both identities, never substitute a mutable tag.
         return values[0]
 
     def volume(self, name, helper):
@@ -398,6 +401,7 @@ def recover(options, output, transport):
                   "uploadReceiptSha256": options["receipt_sha256"], "checkpointReportSha256": options["checkpoint_report_sha256"],
                   "artifactIndexSha256": options["artifact_index_sha256"], "snapshotManifestSha256": options["snapshot_manifest_sha256"],
                   "archiveSha256": checkpoint.get("archiveSha256"), "releaseId": receipt["releaseId"], "images": images,
+                  "imageReferences": {"checkpoint": options["checkpoint_image"], "snapshot": options["snapshot_image"], "helper": HELPER_IMAGE},
                   "independentlyDownloadedAndDecrypted": True, "isolatedDatabaseRestoreVerified": True,
                   "independentDatabaseIndexMatched": True, "freshObjectStoreColdReadbackVerified": True,
                   "objectCount": objects.get("objectCount"), "sourceMetadataUnchanged": True,
