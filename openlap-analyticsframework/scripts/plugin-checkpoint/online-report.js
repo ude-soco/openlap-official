@@ -210,11 +210,11 @@
             "archiveFile", "archiveSha256", "archiveSizeBytes", "expandedArchiveBytes", "gzipValidated", "oplogReplayVerified", "sourceMetadataMatched", "sourceIdentityMd5",
             "sourceReplicaSet", "sourceOplogBefore", "sourceOplogAfter", "captureStartedAt", "captureCompletedAt", "oplogRangeValidation", "fingerprintAuthority", "databases", "collections", "scope"]);
         require(value.schemaVersion === 2 && value.status === "INSTANCE_WIDE_OPLOG_REPLAY_VERIFIED" && value.captureMode === "INSTANCE_WIDE_OPLOG");
-        require(/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(value.checkpointId)); selectedDatabase(value.database);
-        require(/^4\.4\.[0-9]{1,3}$/.test(value.sourceServerVersion) && value.restoreServerVersion === "4.4.30" && value.fcv === "4.4" && value.databaseToolsVersion === "100.10.0");
+        require(typeof value.checkpointId === "string" && /^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(value.checkpointId)); selectedDatabase(value.database);
+        require(typeof value.sourceServerVersion === "string" && /^4\.4\.[0-9]{1,3}$/.test(value.sourceServerVersion) && value.restoreServerVersion === "4.4.30" && value.fcv === "4.4" && value.databaseToolsVersion === "100.10.0");
         require(value.archiveFile === "database.archive.gz"); sha(value.archiveSha256); integer(value.archiveSizeBytes, 1, 1073741824); integer(value.expandedArchiveBytes, 1, 1073741824);
         require(value.gzipValidated === true && value.oplogReplayVerified === true && value.sourceMetadataMatched === true); requireDigest(value.sourceIdentityMd5);
-        keys(value.sourceReplicaSet, ["name", "identityMd5"]); require(/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(value.sourceReplicaSet.name)); requireDigest(value.sourceReplicaSet.identityMd5);
+        keys(value.sourceReplicaSet, ["name", "identityMd5"]); require(typeof value.sourceReplicaSet.name === "string" && /^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(value.sourceReplicaSet.name)); requireDigest(value.sourceReplicaSet.identityMd5);
         var first = timestamp(value.sourceOplogBefore), last = timestamp(value.sourceOplogAfter);
         require(first.seconds < last.seconds || (first.seconds === last.seconds && first.increment <= last.increment));
         require(utc(value.captureStartedAt) <= utc(value.captureCompletedAt));
