@@ -295,8 +295,10 @@ def recover(options, output, transport):
     docker = Docker(options, output)
     completed = False; stage = "qualified-image-preflight"
     try:
-        images = {"checkpoint": docker.image(options["checkpoint_image"]), "snapshot": docker.image(options["snapshot_image"]),
-                  "helper": docker.image(HELPER_IMAGE)}
+        images = {}
+        for role, reference in (("checkpoint", options["checkpoint_image"]), ("snapshot", options["snapshot_image"]), ("helper", HELPER_IMAGE)):
+            stage = "qualified-" + role + "-image-preflight"
+            images[role] = docker.image(reference)
         download = output / "download"
         stage = "independent-native-retrieval"
         pull = ["pull", "--age", options["age"], "--rclone", options["rclone"], "--rclone-config", options["rclone_config"],
