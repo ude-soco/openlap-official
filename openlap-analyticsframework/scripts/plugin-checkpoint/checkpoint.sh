@@ -5,6 +5,15 @@ set -euo pipefail
 ulimit -c 0
 umask 077
 export LC_ALL=C
+if [[ $# == 1 && $1 == --checkpoint-online ]]; then
+    exec /bin/bash --noprofile --norc /opt/openlap-checkpoint/online.sh --checkpoint-online
+fi
+if [[ $# == 1 && $1 == --rehearse-online-archive ]]; then
+    exec /bin/bash --noprofile --norc /opt/openlap-checkpoint/online-rehearse.sh
+fi
+if [[ $# == 1 && $1 == --index-online-plugin-artifacts ]]; then
+    exec /bin/bash --noprofile --norc /opt/openlap-checkpoint/online-rehearse.sh --plugin-index
+fi
 if [[ $# == 1 && $1 == --rehearse-archive ]]; then
     exec /bin/bash --noprofile --norc /opt/openlap-checkpoint/rehearse.sh
 fi
