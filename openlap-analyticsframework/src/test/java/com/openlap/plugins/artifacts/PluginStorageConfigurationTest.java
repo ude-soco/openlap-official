@@ -54,4 +54,15 @@ public class PluginStorageConfigurationTest {
           assertThat(context.getBean(PluginArtifactResolver.class).usesObjectStorage()).isTrue();
         });
   }
+
+  @Test
+  public void explicitLogicalRemovalBindsWithoutEnablingPhysicalDeletion() {
+    runner().withPropertyValues("openlap.plugins.removal-enabled=true", "openlap.plugins.deletion-enabled=false")
+        .run(context -> {
+          assertThat(context).hasNotFailed();
+          PluginStorageProperties properties = context.getBean(PluginStorageProperties.class);
+          assertThat(properties.isLogicalRemovalEnabled()).isTrue();
+          assertThat(properties.isDeletionEnabled()).isFalse();
+        });
+  }
 }

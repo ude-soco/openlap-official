@@ -731,9 +731,66 @@ public class PluginArtifactIT {
   }
 
   @Test
+  public void logicalRecoveryWorksWhileEligiblePhysicalDeletionIsDisabled() throws Exception {
+    migration.apply(migration.inventory(), registry);
+    com.openlap.plugins.management.PluginRemovalService removal = removalService();
+    assertThat(properties.isDeletionEnabled()).isFalse();
+    Path orphan = ManagedPluginFixture.create(source, "Retained" + UUID.randomUUID().toString().replace("-", ""), false);
+    PluginArtifact retained = registry.ensureStored(PluginKind.ANALYTICS, orphan, ArtifactIntegrity.sha256(orphan), Files.size(orphan), "test");
+    mongo.getCollection("plugin-artifact").updateOne(new Document("_id", retained.getId()), new Document("$set",
+        new Document("createdAt", java.util.Date.from(java.time.Instant.now().minusSeconds(40L * 86400)))));
+    com.openlap.plugins.management.PluginArtifactCleanup cleanup = new com.openlap.plugins.management.PluginArtifactCleanup(mongo, properties, store, removal);
+    Map<String, Object> cleanupReview = cleanup.preview();
+    assertThat(cleanupReview.get("available")).isEqualTo(false);
+    @SuppressWarnings("unchecked") List<Map<String, Object>> candidates = (List<Map<String, Object>>) cleanupReview.get("artifacts");
+    assertThat(candidates).anySatisfy(candidate -> {
+      assertThat(candidate.get("id")).isEqualTo(retained.getId());
+      assertThat(candidate.get("eligible")).isEqualTo(true);
+    });
+    assertThatThrownBy(() -> cleanup.run(true, Collections.singletonList(retained.getId())))
+        .isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class)
+        .hasFieldOrPropertyWithValue("code", "PLUGIN_CLEANUP_UNAVAILABLE");
+    assertThat(artifacts.findById(retained.getId()).get().getState()).isEqualTo(PluginArtifact.State.READY);
+    try (InputStream bytes = store.open(retained)) { ArtifactIntegrity.copyVerified(bytes, java.io.OutputStream.nullOutputStream(), retained); }
+
+    com.openlap.plugins.management.PluginCatalogKind kind = com.openlap.plugins.management.PluginCatalogKind.VISUALIZATION_LIBRARY;
+    Map<String, Object> review = removal.preview(kind, libraryId.toHexString());
+    assertThat(review.get("available")).isEqualTo(true);
+    Map<String, Object> removed = removal.remove(kind, libraryId.toHexString(), removalVersions(review));
+    assertThat(removal.remove(kind, libraryId.toHexString(), removalVersions(review)).get("id")).isEqualTo(removed.get("id"));
+    String token = (String) removed.get("id");
+    assertThat(removal.restore(token).get("state")).isEqualTo("RESTORED");
+    long restoredVersion = ((Number) row("visualization-library", libraryId).get("managementVersion")).longValue();
+    assertThat(removal.restore(token).get("state")).isEqualTo("RESTORED");
+    assertThat(row("visualization-library", libraryId).get("managementVersion")).isEqualTo(restoredVersion);
+    assertThat(row("visualization-library", libraryId).getBoolean("enabled")).isFalse();
+    assertThat(row("visualization-type", typeId).get("visualizationLib")).isEqualTo(new DBRef("visualization-library", libraryId));
+  }
+
+  @Test
+  public void logicalRestoreDoesNotResurrectAPurgedArtifactTombstone() throws Exception {
+    migration.apply(migration.inventory(), registry);
+    com.openlap.plugins.management.PluginRemovalService removal = removalService();
+    com.openlap.plugins.management.PluginCatalogKind kind = com.openlap.plugins.management.PluginCatalogKind.VISUALIZATION_LIBRARY;
+    Map<String, Object> removed = removal.remove(kind, libraryId.toHexString(), removalVersions(removal.preview(kind, libraryId.toHexString())));
+    String token = (String) removed.get("id"), artifactId = row("visualization-library", libraryId).getString("artifactId");
+    // Historical physical cleanup may have retired a key before this deployment disabled deletion.
+    mongo.getCollection("plugin-artifact").updateOne(new Document("_id", artifactId),
+        new Document("$set", new Document("state", "PURGED").append("purgedAt", new java.util.Date())));
+    for (int attempt = 0; attempt < 2; attempt++) {
+      assertThatThrownBy(() -> removal.restore(token)).isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class)
+          .hasMessageContaining("required artifact is unavailable");
+      assertThat(artifacts.findById(artifactId).get().getState()).isEqualTo(PluginArtifact.State.PURGED);
+      assertThat(row("visualization-library", libraryId).getString("removalState")).isEqualTo("REMOVED");
+      assertThat(new PluginCatalogVisibility(mongo).isVisible(null, "visualization-library", libraryId.toHexString())).isFalse();
+    }
+  }
+
+  @Test
   public void retentionCleanupPreservesLiveAndRecentSharedArtifactsThenRetiresTheKey() throws Exception {
     migration.apply(migration.inventory(), registry);
     com.openlap.plugins.management.PluginRemovalService removal = removalService();
+    properties.setDeletionEnabled(true);
     com.openlap.plugins.management.PluginArtifactCleanup cleanup = new com.openlap.plugins.management.PluginArtifactCleanup(mongo, properties, store, removal);
     java.util.Date expired = java.util.Date.from(java.time.Instant.now().minusSeconds(40L * 86400));
     mongo.getCollection("plugin-artifact").updateMany(new Document(), new Document("$set", new Document("createdAt", expired).append("removedAt", expired)));
@@ -754,6 +811,7 @@ public class PluginArtifactIT {
 
   @Test
   public void cleanupOnlyDeletesTheArtifactsIncludedInTheConfirmedReview() throws Exception {
+    properties.setDeletionEnabled(true);
     Path first = ManagedPluginFixture.create(source, "Reviewed" + UUID.randomUUID().toString().replace("-", ""), false);
     Path second = ManagedPluginFixture.create(source, "Unreviewed" + UUID.randomUUID().toString().replace("-", ""), false);
     PluginArtifact reviewed = registry.ensureStored(PluginKind.ANALYTICS, first, ArtifactIntegrity.sha256(first), Files.size(first), "test");
@@ -768,6 +826,7 @@ public class PluginArtifactIT {
 
   @Test
   public void cleanupFailuresRemainRetryableAndUnknownWritesBlockPurging() throws Exception {
+    properties.setDeletionEnabled(true);
     Path managed = ManagedPluginFixture.create(source, "Cleanup" + UUID.randomUUID().toString().replace("-", ""), false);
     PluginArtifact artifact = registry.ensureStored(PluginKind.ANALYTICS, managed, ArtifactIntegrity.sha256(managed), Files.size(managed), "test");
     java.util.Date expired = java.util.Date.from(java.time.Instant.now().minusSeconds(40L * 86400));
@@ -790,6 +849,7 @@ public class PluginArtifactIT {
 
   @Test
   public void discardedReviewsCanBeRestoredAndPurgedAncestorsRemainUsableAsMetadata() throws Exception {
+    properties.setDeletionEnabled(true);
     org.springframework.context.support.GenericApplicationContext context = new org.springframework.context.support.GenericApplicationContext();
     context.addApplicationListener(new com.openlap.plugins.management.PluginReferenceWriteListener(mongo)); context.refresh();
     mongo.setApplicationContext(context); closeables.add(context);
@@ -821,7 +881,7 @@ public class PluginArtifactIT {
   }
 
   private com.openlap.plugins.management.PluginRemovalService removalService() throws Exception {
-    properties.setDeletionEnabled(true);
+    properties.setRemovalEnabled(true);
     PluginArtifactCache cache = new PluginArtifactCache(temporary.newFolder().toPath(), 1000000, 20, store); closeables.add(cache);
     return new com.openlap.plugins.management.PluginRemovalService(mongo, properties, registry, cache);
   }

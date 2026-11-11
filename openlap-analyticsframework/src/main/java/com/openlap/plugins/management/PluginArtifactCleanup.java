@@ -26,6 +26,10 @@ public class PluginArtifactCleanup {
     this.mongo = mongo; this.properties = properties; this.store = store; this.removal = removal;
   }
 
+  public boolean available() {
+    return removal.available() && properties.isDeletionEnabled() && store != null;
+  }
+
   public Map<String, Object> preview() {
     List<Map<String, Object>> candidates = new ArrayList<>();
     Date cutoff = cutoff();
@@ -38,7 +42,7 @@ public class PluginArtifactCleanup {
       String blocked = blocked(row, cutoff); item.put("eligible", blocked == null); item.put("reason", blocked);
       candidates.add(item);
     }
-    Map<String, Object> result = new LinkedHashMap<>(); result.put("available", removal.available()); result.put("retentionDays", properties.getRetentionDays()); result.put("artifacts", candidates);
+    Map<String, Object> result = new LinkedHashMap<>(); result.put("available", available()); result.put("retentionDays", properties.getRetentionDays()); result.put("artifacts", candidates);
     return result;
   }
 
@@ -48,7 +52,7 @@ public class PluginArtifactCleanup {
   }
 
   public Map<String, Object> run(boolean confirmed, List<String> reviewedIds) {
-    if (!confirmed || !removal.available() || store == null) throw new ConflictException("PLUGIN_CLEANUP_UNAVAILABLE", "Confirm cleanup after the reference guards and retention settings are enabled.");
+    if (!confirmed || !available()) throw new ConflictException("PLUGIN_CLEANUP_UNAVAILABLE", "Physical artifact deletion requires PLUGIN_DELETION_ENABLED, guarded removal and confirmed retention cleanup.");
     if (reviewedIds == null || reviewedIds.size() > 100 || reviewedIds.stream().anyMatch(id -> id == null || !id.matches("(analytics|visualizations)-[a-f0-9]{64}")))
       throw new com.openlap.infrastructure.exception.ValidationException("Supply the reviewed artifact IDs for cleanup.");
     removal.finishCompletedRecoveries();

@@ -156,6 +156,17 @@ public class SecurityAuthorizationMockMvcTest {
   }
 
   @Test
+  public void superAdminSeesLogicalRecoveryWithoutPhysicalCleanupAvailability() throws Exception {
+    given(tokenService.verifyToken(any())).willReturn(new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    given(pluginRemovalService.available()).willReturn(true);
+    given(pluginArtifactCleanup.available()).willReturn(false);
+    given(pluginRemovalService.removed(com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD)).willReturn(Collections.emptyList());
+    mockMvc.perform(get("/v1/admin/plugins/removed").param("kind", "ANALYTICS_METHOD").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.data.available").value(true))
+        .andExpect(jsonPath("$.data.cleanupAvailable").value(false)).andExpect(jsonPath("$.data.entries").isEmpty());
+  }
+
+  @Test
   public void superAdminRemovalRecoveryAndCleanupAreAudited() throws Exception {
     given(tokenService.verifyToken(any())).willReturn(new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
     String token = "00000000-0000-0000-0000-000000000000";

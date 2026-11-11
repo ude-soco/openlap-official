@@ -35,7 +35,7 @@ public class PluginRemovalService {
     editor = new PluginCatalogEditor(mongo); visibility = new PluginCatalogVisibility(mongo);
   }
 
-  public boolean available() { return properties.getMode() == PluginStorageProperties.Mode.S3 && properties.isDeletionEnabled(); }
+  public boolean available() { return properties.getMode() == PluginStorageProperties.Mode.S3 && properties.isLogicalRemovalEnabled(); }
 
   public Map<String, Object> preview(PluginCatalogKind kind, String id) {
     Document selected = editor.readIncludingRemoved(kind, id);
@@ -294,6 +294,6 @@ public class PluginRemovalService {
   @SuppressWarnings("unchecked") private static List<Document> rows(Document row) { return (List<Document>) row.get("rows"); }
   private int retentionDays() { if (properties.getRetentionDays() < 1) throw conflict("Configure a positive artifact retention period."); return properties.getRetentionDays(); }
   private static Date recoveryStart(Document operation) { return operation.getDate("removedAt") == null ? operation.getDate("createdAt") : operation.getDate("removedAt"); }
-  private void requireAvailable() { if (!available()) throw conflict("Removal is available after all backend replicas use reference guards and PLUGIN_DELETION_ENABLED is enabled."); }
+  private void requireAvailable() { if (!available()) throw conflict("Removal and recovery are available after all backend replicas use reference guards and PLUGIN_REMOVAL_ENABLED is enabled."); }
   private static ConflictException conflict(String message) { return new ConflictException("PLUGIN_REMOVAL_BLOCKED", message); }
 }
