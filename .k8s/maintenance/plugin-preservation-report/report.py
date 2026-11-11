@@ -147,8 +147,14 @@ def validate(report, filename, checkpoint):
 
 
 def private(metadata, directory=False):
+    mode = stat.S_IMODE(metadata.st_mode)
+    # A private directory created below an fsGroup-prepared claim inherits SGID.
+    # It changes group inheritance, not group/other access. No other special bit
+    # is accepted, and regular report files keep their exact private modes.
+    if directory:
+        mode &= ~stat.S_ISGID
     require(metadata.st_uid == os.getuid()
-            and stat.S_IMODE(metadata.st_mode) in ((0o500, 0o700) if directory else (0o400, 0o600)))
+            and mode in ((0o500, 0o700) if directory else (0o400, 0o600)))
     require(stat.S_ISDIR(metadata.st_mode) if directory else stat.S_ISREG(metadata.st_mode))
     required = 0o500 if directory else 0o400
     require(metadata.st_mode & required == required and (directory or metadata.st_nlink == 1))

@@ -223,7 +223,10 @@ python3 -B .k8s/maintenance/plugin-preservation-report/report.py \
 Use the **original physical backup-root path** used by capture. Manifest paths
 must match that root and checkpoint exactly; a relocated copy is not accepted.
 Every path ancestor must be physical, not a symlink. The checkpoint directory
-must be owned by the current UID and mode 0700 or 0500. The completed report must
+must be owned by the current UID and mode 0700 or 0500, optionally with SGID
+(02700 or 02500). Linux propagates SGID from an fsGroup-prepared preservation
+claim to a newly created private checkpoint directory; it grants no group/other
+access. Setuid, sticky and all group/other permissions remain unsupported. The completed report must
 be a regular single-link file owned by that UID and mode 0600 or 0400. Exactly one
 of `preservation.json` or `capture-review.json` must exist, with no adjacent partial
 report. Ambiguous, partial, changing, malformed or oversized input fails closed.
@@ -267,11 +270,13 @@ python3 -B tests/verify_plugin_preservation_report_containers.py
 ```
 
 The container verifier copies only allowlisted public sources and synthetic
-metadata. It runs the exact pinned image as UID 1000 with a read-only root and no
-network/capabilities, then reads a genuinely read-only synthetic volume. A scoped
+fixtures. It runs the exact pinned image as UID 1000 with a read-only root and no
+network/capabilities, then reads a genuinely read-only synthetic volume created
+by the real capture producer below a private SGID parent. A scoped
 fixture initializer prepares only that disposable volume's ownership; the reader
-and installable component contain no initializer or ownership mutation. No
-archive or JAR fixture contents are needed. Optional `--schema-validator PATH`
+and installable component contain no initializer or ownership mutation. Producer
+fixtures create only synthetic JAR/gzip data; the reader still opens only report
+metadata. Optional `--schema-validator PATH`
 runs a trusted local kubeconform against the public render using strict Kubernetes
 1.35 schemas; the verifier never loads a live configuration or renders an operator
 overlay.
