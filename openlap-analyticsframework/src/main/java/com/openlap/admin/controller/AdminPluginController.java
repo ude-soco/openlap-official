@@ -55,7 +55,8 @@ public class AdminPluginController {
 
   @GetMapping("/removed")
   public ApiSuccess removed(@RequestParam PluginCatalogKind kind) {
-    Map<String, Object> data = new LinkedHashMap<>(); data.put("available", removal.available()); data.put("entries", removal.removed(kind));
+    Map<String, Object> data = new LinkedHashMap<>(); data.put("available", removal.available());
+    data.put("cleanupAvailable", cleanup.available()); data.put("entries", removal.removed(kind));
     return new ApiSuccess(HttpStatus.OK, "Removed entries found.", data);
   }
 

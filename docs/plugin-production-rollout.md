@@ -310,7 +310,7 @@ rollback alone is sufficient.
 
 ## 8. Keep deletion gated and clean up operation resources
 
-Keep `PLUGIN_DELETION_ENABLED=false` until every writer of indicators, drafts,
+Keep `PLUGIN_REMOVAL_ENABLED=false` until every writer of indicators, drafts,
 cards and installation reviews runs the guarded S3 implementation. Removal is a
 separate approval after runtime/recovery acceptance. Review
 [removal and retention](./plugin-removal-and-retention.md#deployment-gate), keep
@@ -321,11 +321,12 @@ settings do not define backup retention.
 For the single-instance Versity option, keep physical deletion disabled even
 after all application writers are upgraded: current qualification establishes
 PutObject durability, not durable physical DeleteObject under filesystem/node
-failure. With `PLUGIN_DELETION_ENABLED=false`, the current application also
-disables logical removal and restore. Uploads and version management remain
-available, and existing versions are retained. Document this initial-release
-limit separately from application reference checks; do not enable the flag to
-bypass the provider durability requirement.
+failure. Keep `PLUGIN_DELETION_ENABLED=false`; after the guarded rollout and
+recovery acceptance, separately enable `PLUGIN_REMOVAL_ENABLED=true` for logical
+removal, resume and restore. Stored JARs remain retained and the reference fences,
+recovery windows and purged-key tombstones remain enforced. Explicitly set both
+flags consistently across replicas. Do not enable physical deletion to bypass
+the provider durability requirement.
 
 After each terminal maintenance result, remove temporary Jobs, private manifest
 ConfigMaps and operation-specific network access through the normal deployment
