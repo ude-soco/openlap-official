@@ -96,6 +96,11 @@ public final class CombinedPluginRecoveryFixture {
         Document removed = db.getCollection("visualization-library").find(eq("_id", "removed-library")).first();
         require(removed != null && removed.getString("removalState").equals("REMOVED") && removed.getString("artifactId").equals(artifact(VERSIONS[2]).getId()));
         require(db.getCollection("plugin-installation").find(eq("_id", "discarded-installation")).first().getString("state").equals("DISCARDED"));
+        require(db.getCollection("plugin-installation").find(eq("_id", "pending-upload")).first().getString("state").equals("UPLOADED")
+            && db.getCollection("plugin-installation").find(eq("_id", "pending-upload")).first().getString("artifactId").equals(artifact(VERSIONS[1]).getId()));
+        require(db.getCollection("plugin-installation").find(eq("_id", "pending-inspection-review")).first().getString("state").equals("INSPECTED")
+            && db.getCollection("plugin-installation").find(eq("_id", "pending-inspection-review")).first().getString("artifactId").equals(artifact(VERSIONS[0]).getId()));
+        require(db.getCollection("plugin-installation").countDocuments() == 3);
         require(db.getCollection("plugin-removal").countDocuments() == 2 && db.getCollection("plugin-version-family").countDocuments() == 1);
       }
       require(db.getCollection("plugin-artifact").countDocuments() == registryCount);

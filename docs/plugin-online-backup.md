@@ -109,6 +109,12 @@ source or edit a restored snapshot to make the index pass. An unsuccessful
 attempt must not produce a successful upload/acceptance receipt. A fresh Pod and
 fresh scratch directory are required for any automatic Job retry.
 
+Idle `UPLOADED`, `INSPECTION_FAILED` and `INSPECTED` review rows are supported
+when their typed artifact binding resolves to a matching READY registry object.
+Their database records and required bytes are preserved even before activation.
+A STAGED/missing artifact binding fails clearly. The tools never inspect or
+execute the JAR to make this decision.
+
 After a successful index, run the packaged snapshot launcher:
 
 ```text
