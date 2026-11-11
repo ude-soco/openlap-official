@@ -75,6 +75,7 @@ def separate_provider_pins():
     with tempfile.TemporaryDirectory(prefix="openlap-public-image-composition-") as temporary:
         fixture = Path(temporary)
         shutil.copytree(ROOT / ".k8s/storage/plugin-versity", fixture / "storage")
+        shutil.copytree(ROOT / ".k8s/storage/plugin-versity-credentials", fixture / "plugin-versity-credentials")
         shutil.copytree(ROOT / ".k8s/maintenance/plugin-recurring-backup", fixture / "recurring")
         cron_path = fixture / "recurring/cronjob.yaml"
         cron = yaml.safe_load(cron_path.read_text()); cron["spec"]["jobTemplate"]["spec"]["template"]["spec"]["initContainers"][2]["image"] = new_reference

@@ -317,4 +317,3 @@ explicitly reports `recoveryVerified: false`. Accept it only after the original
 Pod/Job has terminal success and its ownership and qualified runtime identities
 have been verified. Independent native retrieval, full replay/index comparison
 and fresh S3 cold restore must then pass before claiming recovery acceptance.
-
