@@ -3,12 +3,14 @@ name: Verify optional backup replica set
 on:
   pull_request:
     paths:
+    - '.k8s/base/**'
     - '.k8s/components/plugin-backup-replica-set/**'
     - 'tests/*plugin_replica_set*'
     - '.github/workflows/plugin-replica-set.yml'
   push:
     branches: [main]
     paths:
+    - '.k8s/base/**'
     - '.k8s/components/plugin-backup-replica-set/**'
     - 'tests/*plugin_replica_set*'
     - '.github/workflows/plugin-replica-set.yml'

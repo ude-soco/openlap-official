@@ -40,12 +40,12 @@ def main():
         command(['rm', '--force', '--volumes', name])
         containers.remove(name)
 
-    def start(label, data, *, replica=True, alias=None):
+    def start(label, data, *, replica=True, alias=None, published=True):
         name = token + '-' + label
         alias = alias or label
         host = alias + ':27017'
         args = ['run', '-d', '--name', name, '--label', 'org.openlap.rs-fixture=' + token,
-                '--platform=linux/amd64', '--network', network, '--network-alias', alias,
+                '--platform=linux/amd64', '--network', network, '--network-alias', alias if published else label,
                 '--memory=768m', '--pids-limit=256', '--security-opt=no-new-privileges',
                 '--mount=type=volume,source=' + data + ',target=/data/db',
                 '--tmpfs=/data/configdb:rw,nosuid,size=16777216',
@@ -119,13 +119,27 @@ def main():
         hook(server, 'verify', expected='MONGODB_REPLICA_SET_SERVER_PREREQUISITE_REJECTED')
         remove(server)
         stage = 'retained standalone volume starts with explicit replica-set options'
-        server, host = start('primary', data, alias='mongo-service')
+        server, host = start('primary', data, alias='mongo-service', published=False)
         hook(server, 'verify', expected='MONGODB_REPLICA_SET_INITIALIZATION_OR_PRIMARY_UNAVAILABLE')
         state = command(['inspect', server, '--format={{.State.Health.Status}}']).stdout.strip()
         assert state in (b'starting', b'unhealthy')
-        # Docker DNS remains available while unhealthy. This models the service
-        # contract proven separately by publishNotReadyAddresses in the fixture.
-        hook(server)
+        # The asynchronous startup-probe action may wait for endpoint
+        # publication while the main process is already running with an IP.
+        # Do not run this as a blocking postStart action.
+        startup = subprocess.Popen(['docker', 'exec', server, '/bin/bash', '--noprofile', '--norc',
+                                    '/opt/openlap-replica-set/replica-set.sh', 'initialize'],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        time.sleep(1)
+        assert startup.poll() is None
+        address = command(['inspect', server, '--format={{json .NetworkSettings.Networks}}']).stdout
+        assert json.loads(address)[network]['IPAddress']
+        js(server, 'assert.eq(94,db.adminCommand({replSetGetConfig:1}).code)')
+        # Reconnect only this fresh fixture endpoint to publish its stable alias;
+        # the initializer and database continue, and the retained data is untouched.
+        command(['network', 'disconnect', network, server])
+        command(['network', 'connect', '--alias', 'mongo-service', network, server])
+        output, errors = startup.communicate(timeout=180)
+        assert startup.returncode == 0 and output.strip() == b'MONGODB_SINGLE_NODE_PRIMARY_VERIFIED' and not errors
         hook(server, 'verify')
         fingerprint = config_identity(server)
         js(server, "assert.eq('before-rs',db.getSiblingDB('openlap_fixture').records.findOne({_id:'retained'}).value)")
@@ -196,6 +210,7 @@ def main():
                           'retainedStandaloneVolumeConverted': True, 'dataIndexesAndVolumeOwnershipPreserved': True,
                           'concurrentMajorityJournaledWrites': 200, 'sameVolumeRestartVerified': True,
                           'unhealthySelfHostBootstrapVerified': True, 'idempotentConfigurationIdentityVerified': True,
+                          'delayedEndpointPublicationWhileInitializerRunsVerified': True,
                           'wrongSetHostAndOplogBudgetRejected': True, 'wrongAdvertisedServerRejectedBeforeInitialization': True,
                           'unsupportedInitialFcvRejectedWithoutUpgrade': True,
                           'nonDefaultMemberAndMultiMemberConfigurationsRejected': True,

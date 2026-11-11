@@ -73,7 +73,7 @@ gate on restart, while still verifying its existing oplog budget and primary.
 ## Lifecycle and readiness
 
 The same MongoDB container receives `--replSet` and `--oplogSize`; existing
-arguments remain in order. A bounded `postStart` script polls loopback, checks the
+arguments remain in order. A bounded **startup probe** polls loopback, checks the
 server/FCV/startup settings and reads the replica-set configuration. It initializes
 only an explicitly `NotYetInitialized` server, after proving that the advertised
 Service reaches this same process. A racing `AlreadyInitialized` response is
@@ -95,10 +95,18 @@ the Pod to reach its own Service on TCP27017. The readiness probe only verifies
 the exact configuration, oplog budget and writable primary; it never initializes
 or reconfigures a server.
 
+The initializer is deliberately outside a blocking `postStart` hook. Kubernetes
+1.35 runs startup probes in separate workers after the container is running,
+allowing normal Pod IP/status and Service-endpoint publication while initialization
+waits. The existing image entrypoint and main process remain unchanged. Liveness
+and readiness wait for successful startup verification; a failed startup probe
+causes a container restart without reconfiguring retained metadata.
+
 This lifecycle works without Argo CD and needs no PostSync Job, sync wave,
 Kubernetes API identity or terminal access. Apply the normal supported manifests;
-the bounded hook waits for the database and its self-service route. A failure
-leaves the Pod unready and emits a fixed status without raw MongoDB output.
+the bounded startup-probe worker waits for the database and its self-service route
+independently of container creation. A failure leaves the Pod unready and emits a
+fixed status without raw MongoDB output.
 
 Removing the component is not a database rollback procedure: replica-set metadata
 persists on the claim. Use the installation's reviewed maintenance/recovery
@@ -122,10 +130,17 @@ checks data/index preservation and concurrent journaled majority writes, repeats
 initialization, restarts with the same volume, and rejects wrong set/host/budget,
 wrong advertised process, non-default and multi-member configurations.
 
-Docker DNS remains available while a container is unhealthy; the local test
-combines that property with a synthetic assertion of Kubernetes'
-`publishNotReadyAddresses` contract. It does not claim to have exercised a real
-Kubernetes endpoint controller or the live installation's network policies.
+The local test withholds the advertised Docker DNS alias while an asynchronous
+initializer is running, verifies the database still has an IP and is uninitialized,
+then publishes the alias and requires successful initialization. It combines this
+with a synthetic assertion of Kubernetes' `publishNotReadyAddresses` contract.
+It does not claim to have exercised a real Kubernetes endpoint controller or the
+live installation's network policies.
 
 Primary references: [MongoDB oplog](https://www.mongodb.com/docs/manual/core/replica-set-oplog/),
 [Kubernetes lifecycle hooks](https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/).
+The versioned Kubernetes 1.35
+[probe manager](https://github.com/kubernetes/kubernetes/blob/v1.35.0/pkg/kubelet/prober/prober_manager.go#L172-L200),
+[probe worker](https://github.com/kubernetes/kubernetes/blob/v1.35.0/pkg/kubelet/prober/worker.go#L194-L273)
+and [EndpointSlice construction](https://github.com/kubernetes/kubernetes/blob/v1.35.0/staging/src/k8s.io/endpointslice/utils.go#L33-L52)
+define the separate worker and unready-address behavior used here.

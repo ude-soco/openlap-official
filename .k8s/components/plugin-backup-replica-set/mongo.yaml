@@ -23,10 +23,12 @@ spec:
             configMapKeyRef:
               name: openlap-plugin-backup-replica-set
               key: oplogSizeMiB
-        lifecycle:
-          postStart:
-            exec:
-              command: [/bin/bash, --noprofile, --norc, /opt/openlap-replica-set/replica-set.sh, initialize]
+        startupProbe:
+          exec:
+            command: [/bin/bash, --noprofile, --norc, /opt/openlap-replica-set/replica-set.sh, initialize]
+          periodSeconds: 10
+          timeoutSeconds: 155
+          failureThreshold: 1
         readinessProbe:
           exec:
             command: [/bin/bash, --noprofile, --norc, /opt/openlap-replica-set/replica-set.sh, verify]

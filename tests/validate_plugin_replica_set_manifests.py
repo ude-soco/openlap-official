@@ -51,6 +51,10 @@ patches:
             resources:
               requests: {cpu: 10m, memory: 64Mi}
               limits: {cpu: 500m, memory: 256Mi}
+            lifecycle:
+              preStop:
+                exec:
+                  command: [/bin/true]
 '''
     if selected:
         value += '''components: [replica-set]
@@ -97,7 +101,10 @@ def verify(before, after):
     container['env'] = [entry for entry in container['env'] if entry['name'] not in names]
     assert container['resources'] == previous['resources']
     assert container['envFrom'] == previous['envFrom']
-    assert container.pop('lifecycle')['postStart']['exec']['command'][-1] == 'initialize'
+    assert 'postStart' not in container.get('lifecycle', {})
+    startup = container.pop('startupProbe')
+    assert startup['exec']['command'][-1] == 'initialize'
+    assert startup['timeoutSeconds'] == 155 and startup['failureThreshold'] == 1
     readiness = container.pop('readinessProbe')
     assert readiness['exec']['command'][-1] == 'verify' and readiness['timeoutSeconds'] == 10
     mounts = [item for item in container['volumeMounts'] if item['name'] == 'plugin-backup-replica-set']
