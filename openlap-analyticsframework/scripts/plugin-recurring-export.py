@@ -46,11 +46,12 @@ def guard():
     require(re.fullmatch(r"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}", uid))
     require(os.environ.get("BACKUP_DESTINATION_APPROVED") == "true" and os.environ.get("PLUGIN_DELETION_ENABLED") == "false")
     until = os.environ.get("BACKUP_DESTINATION_VALID_UNTIL", "")
-    require(re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", until))
-    expiry = datetime.fromisoformat(until.replace("Z", "+00:00"))
-    minimum = os.environ.get("BACKUP_MINIMUM_DESTINATION_VALIDITY_SECONDS", "604800")
-    require(re.fullmatch(r"[1-9][0-9]{0,7}", minimum) and int(minimum) <= 31536000)
-    require((expiry - datetime.now(timezone.utc)).total_seconds() > int(minimum))
+    if until != "unlimited":
+        require(re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", until))
+        expiry = datetime.fromisoformat(until.replace("Z", "+00:00"))
+        minimum = os.environ.get("BACKUP_MINIMUM_DESTINATION_VALIDITY_SECONDS", "604800")
+        require(re.fullmatch(r"[1-9][0-9]{0,7}", minimum) and int(minimum) <= 31536000)
+        require((expiry - datetime.now(timezone.utc)).total_seconds() > int(minimum))
     return uid
 
 

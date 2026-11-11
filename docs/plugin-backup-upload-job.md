@@ -247,14 +247,17 @@ online capture requires the empty path and explicit replica-set identity.
 Neither wrapper silently converts one URI contract into the other. Enforce
 physical deletion disabled across all writers before online object export.
 
-Supply `BACKUP_DESTINATION_APPROVED=true` and the approved UTC
-`BACKUP_DESTINATION_VALID_UNTIL` only after verifying recurring-use permission,
-account scope, quota and actual access. The default recurring validity margin is
-seven days; the supervised one-time default is one hour. These are activation
-checks, not proof that a provider will honor credentials until that time. Native
-authenticated upload and readback remain mandatory. An expiring upload share
-must not be treated as an ongoing backup destination. Operator-owned credential
-preparation remains a separate private handoff; never put values in an overlay
+Supply `BACKUP_DESTINATION_APPROVED=true` and explicitly configure
+`BACKUP_DESTINATION_VALID_UNTIL` after verifying recurring-use permission,
+account scope, quota and actual access. Use the exact value `unlimited` for an
+approved destination without expiry; it requires no invented deadline or
+credential change. For a destination that does expire, provide its approved UTC
+expiry. Only the dated form applies the configured validity margin (seven days
+for recurring defaults, one hour for supervised defaults). Empty and unknown
+values fail closed. These checks do not guarantee future provider access; native
+authenticated upload and readback remain mandatory. Existing private credential
+files remain unchanged. When a credential actually needs creation or rotation,
+use the operator's private mechanism and never put its values in an overlay
 literal, command argument, public source or operational record.
 
 Keep a running provider's existing qualified image when only introducing the

@@ -48,6 +48,17 @@ class SnapshotTests(unittest.TestCase):
 
     def test_complete_online_object_cut_is_verified(self): self.validate()
 
+    def test_unlimited_destination_is_explicit_and_still_requires_approval(self):
+        environment = {"BACKUP_POD_UID": "01234567-89ab-cdef-0123-456789abcdef", "BACKUP_DESTINATION_APPROVED": "true",
+                       "BACKUP_DESTINATION_VALID_UNTIL": "unlimited", "PLUGIN_DELETION_ENABLED": "false"}
+        with mock.patch.object(os, "getuid", return_value=1000), mock.patch.object(os, "getgid", return_value=1000), mock.patch.object(EXPORT.sys, "platform", "linux"):
+            with mock.patch.dict(os.environ, environment, clear=True): self.assertEqual(EXPORT.guard(), environment["BACKUP_POD_UID"])
+            for invalid in ("", "never", "Unlimited", "invalid"):
+                with self.subTest(value=invalid), mock.patch.dict(os.environ, {**environment, "BACKUP_DESTINATION_VALID_UNTIL": invalid}, clear=True):
+                    with self.assertRaises(Exception): EXPORT.guard()
+            with mock.patch.dict(os.environ, {**environment, "BACKUP_DESTINATION_APPROVED": "false"}, clear=True):
+                with self.assertRaises(Exception): EXPORT.guard()
+
     def test_private_directories_allow_only_owner_access_with_optional_sgid(self):
         for mode in (0o700, 0o2700):
             with self.subTest(mode=mode), mock.patch.object(Path, "lstat", return_value=SimpleNamespace(st_uid=1000, st_mode=stat.S_IFDIR | mode, st_nlink=2)):

@@ -19,14 +19,16 @@ uid=${BACKUP_POD_UID-}
 [[ $uid =~ ^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$ ]] || fail
 [[ ${BACKUP_DESTINATION_APPROVED-} == true ]] || fail
 until=${BACKUP_DESTINATION_VALID_UNTIL-}
-[[ $until =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]] || fail
-normalized=$(date -u -d "$until" '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null) || fail
-[[ $normalized == "$until" ]] || fail
-minimum=${BACKUP_MINIMUM_DESTINATION_VALIDITY_SECONDS:-604800}
-[[ $minimum =~ ^[1-9][0-9]{0,7}$ && $minimum -le 31536000 ]] || fail
-expiry=$(date -u -d "$until" +%s 2>/dev/null) || fail
-now=$(date -u +%s) || fail
-[[ $expiry -gt $((now + minimum)) ]] || fail
+if [[ $until != unlimited ]]; then
+    [[ $until =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]] || fail
+    normalized=$(date -u -d "$until" '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null) || fail
+    [[ $normalized == "$until" ]] || fail
+    minimum=${BACKUP_MINIMUM_DESTINATION_VALIDITY_SECONDS:-604800}
+    [[ $minimum =~ ^[1-9][0-9]{0,7}$ && $minimum -le 31536000 ]] || fail
+    expiry=$(date -u -d "$until" +%s 2>/dev/null) || fail
+    now=$(date -u +%s) || fail
+    [[ $expiry -gt $((now + minimum)) ]] || fail
+fi
 payload=${BACKUP_MAX_BYTES:-268435456}
 files=${BACKUP_MAX_FILES:-2048}
 workspace_budget=${BACKUP_WORKSPACE_MAX_BYTES:-1342177280}
