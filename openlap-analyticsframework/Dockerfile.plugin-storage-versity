@@ -23,7 +23,10 @@ RUN printf '%s\n' '<configuration><root level="OFF"/></configuration>' > logback
     && printf '%s\n' '#!/bin/sh' 'set -eu' 'umask 077' \
       'exec java -Dlogback.configurationFile=/opt/openlap-storage/logback.xml -cp "/opt/openlap-storage/classes:/opt/openlap-storage/lib/*" com.openlap.plugins.storage.VersityStorageApplication "$@"' \
       > /usr/local/bin/openlap-storage \
-    && chmod 0555 /usr/local/bin/openlap-storage /usr/local/bin/versitygw
+    && printf '%s\n' '#!/bin/sh' 'set -eu' 'umask 077' \
+      'exec java -Dlogback.configurationFile=/opt/openlap-storage/logback.xml -cp "/opt/openlap-storage/classes:/opt/openlap-storage/lib/*" com.openlap.plugins.storage.PluginObjectSnapshotApplication "$@"' \
+      > /usr/local/bin/openlap-object-snapshot \
+    && chmod 0555 /usr/local/bin/openlap-storage /usr/local/bin/openlap-object-snapshot /usr/local/bin/versitygw
 USER 1000:1000
 ENTRYPOINT ["/usr/local/bin/openlap-storage"]
 CMD ["--configure-storage"]
