@@ -34,7 +34,8 @@ GATEWAY = module("gateway_fixture", ROOT / "tests/verify_plugin_versity_containe
 # apply only to newly created destination entries, never retained input files.
 COPY = r'''
 import hashlib,json,os,pathlib,shutil,stat,sys
-mode,uid=sys.argv[1],int(sys.argv[2]); destination=pathlib.Path('/destination')
+mode=sys.argv[1]; destination=pathlib.Path('/destination')
+uid=destination.stat().st_uid if sys.argv[2]=='host-projection' else int(sys.argv[2])
 assert not list(destination.iterdir())
 def inventory(root):
     records=[]

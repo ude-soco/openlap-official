@@ -47,8 +47,10 @@ def prepare(case, count, staging, tools, run, copy_code, mount, capture, snapsho
                   "--cap-add=DAC_OVERRIDE", "--cap-add=CHOWN", "--security-opt=no-new-privileges",
                   mount(capture, "/checkpoint", True), mount(snapshot, "/snapshot", True),
                   "--mount=type=bind,source=" + str(payload) + ",target=/destination", "--entrypoint=python3", transport_image,
-                  "-B", "-c", copy_code, "upload", str(os.getuid())], "fresh host generated release staging")
+                  "-B", "-c", copy_code, "upload", "host-projection"], "fresh host generated release staging")
     require(json.loads(copied.stdout)["sourceMetadataUnchanged"])
+    for path in [payload, *payload.rglob('*')]:
+        require(path.stat().st_uid == os.getuid())
     profile = root / "rclone.conf"; remote = root / "remote"; remote.mkdir(mode=0o700)
     profile.write_text("[fixture]\ntype = alias\nremote = " + str(remote) + "\n"); profile.chmod(0o600)
     identity = root / "identity.txt"
