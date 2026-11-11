@@ -384,6 +384,7 @@ def atomic_json(path, value):
 
 
 def lock(path):
+    """Serialize cooperating writers; this advisory lock cannot block manual edits."""
     physical(path.parent, directory=True)
     descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     info = os.fstat(descriptor)
@@ -500,6 +501,11 @@ def selection_before(options):
 
 
 def publish_selection(options, record, evidence, folder, old_active, old_stored, old_state, template):
+    """Publish collector-owned selection with advisory locks and fingerprint checks.
+
+    A noncooperating edit after the final check can still be overwritten by the
+    atomic rename. Manual maintenance must stop collection and use its locks.
+    """
     record_hash = record_codec.record_sha256(record)
     if old_state is not None and old_state['recordSha256'] == record_hash:
         require(old_state['cronjobUid'] == evidence['cronjob']['uid'] and old_state['jobUid'] == evidence['job']['uid']

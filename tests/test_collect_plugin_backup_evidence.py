@@ -246,7 +246,7 @@ class CollectorTests(unittest.TestCase):
         self.client.body = C.record_codec.frame(record)
         with self.assertRaises(C.CollectionError): self.collect()
 
-    def test_cas_preserves_a_concurrent_operator_selection(self):
+    def test_prepublication_fingerprint_check_preserves_an_observed_operator_edit(self):
         self.collect(); prior_state = (self.state / 'selection.json').read_bytes(); self.advance()
         edited = json.loads(self.active.read_bytes()); edited['remote'] = 'fixture:operator-reviewed-other-selection'
         manual = C.backup.json_bytes(edited)
