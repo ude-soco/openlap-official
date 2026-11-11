@@ -34,3 +34,49 @@ it does not establish universal coverage of arbitrary legacy serialized fields.
 Export alone does not prove recovery. End-to-end recovery additionally requires
 the retrieved and decrypted snapshot, verified database rehearsal, and the
 fresh-provider restore result.
+
+The standalone Java entry point is
+`com.openlap.plugins.storage.PluginObjectSnapshotApplication` with the same
+runtime classpath as the optional gateway. Its explicit arguments are:
+
+```text
+--export TRUSTED_INDEX INDEX_SHA256 ORIGINAL_CHECKPOINT_SHA256 NEW_OUTPUT_DIRECTORY
+--restore-fresh SNAPSHOT_DIRECTORY MANIFEST_SHA256 INDEX_SHA256 ORIGINAL_CHECKPOINT_SHA256 REGENERATED_INDEX
+```
+
+All file paths must be absolute, physical paths. Input metadata and body files
+must be private regular files owned by UID 1000. Keep a snapshot immutable while
+restoring; a read-only input mount is the intended execution contract. The index
+supplied to `--export` and the independently regenerated index supplied to restore
+come from the checkpoint tool's explicit verified index mode. Copying the first
+index does not substitute for the second database rehearsal. The full index is
+preserved byte-for-byte; the Java consumer deliberately does not reimplement its
+MongoDB projection rules.
+
+Export receives only the projected application-client configuration and an
+explicit `PLUGIN_STORAGE_S3_ENDPOINT`. Restore receives separate projected root
+and client configuration; its destination is always the fixed local `/storage`
+and `http://127.0.0.1:9000`, regardless of the export endpoint setting. The storage
+volume must be fresh, dedicated and externally isolated. Initialization and
+restore failures retain partial state for review and never adopt it on retry.
+During this isolated restore operation IAM is initialized once and its retained
+identity is checked before each provider startup. Normal serving uses the
+foundation component's read-only IAM mount.
+
+Only hashes, byte/object counts and fixed status fields are printed. Consume
+`FRESH_LOCAL_PLUGIN_OBJECT_RESTORE_VERIFIED` as the final success result; the
+fresh provider's initialization status alone does not report restored data.
+The manifest itself always records `recoveryVerified: false`; the separate
+restore result binds its hash and the matched index and checkpoint/archive hashes.
+
+The generated fixture verifier is:
+
+```sh
+python3 -B tests/verify_plugin_object_snapshot_containers.py --image sha256:EXACT_LOCAL_GATEWAY_IMAGE_ID
+```
+
+It tests the empty case, older/removed READY versions, present and absent STAGED
+objects, absent PURGED history, source orphans, changed bytes/index mismatch,
+validation before storage writes, fresh-only restore and cold client readback.
+These are generated index consumer fixtures. They do not replace a combined
+test using an actual verified database index and retrieved/decrypted snapshot.
