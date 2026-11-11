@@ -336,20 +336,23 @@ def recover(options, output, transport):
                 and snapshot.get("originalCheckpointReportSha256") == options["checkpoint_report_sha256"]
                 and snapshot.get("archiveSha256") == checkpoint.get("archiveSha256"))
         stage = "fresh-volume-preparation"
-        staged, index, storage, identities = [docker.volume(name, images["helper"]) for name in ("staging", "index", "storage", "identities")]
+        # Execute the reviewed reference, not an inspected config ID: Docker's
+        # containerd store need not expose a multi-platform child config as a
+        # separately addressable local image. The platform is fixed on every run.
+        staged, index, storage, identities = [docker.volume(name, HELPER_IMAGE) for name in ("staging", "index", "storage", "identities")]
         stage = "fresh-uid1000-staging"
-        copy = docker.run(images["helper"], ["-B", "-c", STAGE, "copy", before[0], str(os.getuid()), str(options["max_bytes"] + MIB), str(options["max_files"])],
+        copy = docker.run(HELPER_IMAGE, ["-B", "-c", STAGE, "copy", before[0], str(os.getuid()), str(options["max_bytes"] + MIB), str(options["max_files"])],
                           ["--mount=type=bind,source=" + str(source) + ",target=/source,readonly", docker.mount(staged, "/destination")],
                           user="0:0", capabilities=["DAC_OVERRIDE", "CHOWN"], entrypoint="python3")
         copy_report = json_result(copy, "FRESH_UID1000_COPY_VERIFIED"); require(copy_report.get("sourceMetadataUnchanged") is True)
         stage = "disposable-local-identity-generation"
-        json_result(docker.run(images["helper"], ["-B", "-c", STAGE, "credentials"], [docker.mount(identities, "/control")], entrypoint="python3"),
+        json_result(docker.run(HELPER_IMAGE, ["-B", "-c", STAGE, "credentials"], [docker.mount(identities, "/control")], entrypoint="python3"),
                     "DISPOSABLE_LOCAL_RECOVERY_IDENTITIES_CREATED")
         env = ["CHECKPOINT_ID=regenerated", "CHECKPOINT_EXPECTED_REPORT_SHA256=" + options["checkpoint_report_sha256"],
                "CHECKPOINT_REPORT_PATH=/inputs/retrieved/checkpoint/checkpoint.json", "CHECKPOINT_ARCHIVE_PATH=/inputs/retrieved/checkpoint/database.archive.gz"]
         for name in ("archive", "expanded", "restore"): env += ["CHECKPOINT_MAX_" + name.upper() + "_MIB=" + str(options["max_" + name + "_mib"])]
         stage = "isolated-database-rehearsal"
-        checked = docker.run(images["checkpoint"], ["--index-plugin-artifacts"], [docker.mount(staged, "/inputs", True), docker.mount(index, "/outputs")],
+        checked = docker.run(options["checkpoint_image"], ["--index-plugin-artifacts"], [docker.mount(staged, "/inputs", True), docker.mount(index, "/outputs")],
                              env=env, timeout=600, scratch=str(options["max_restore_mib"] + 256) + "m")
         lines = checked.decode().splitlines()
         require(len(lines) == 3 and lines[0] == "OPENLAP-CHECKPOINT-PLUGIN-INDEX-REPORT-V1"
@@ -358,7 +361,7 @@ def recover(options, output, transport):
                                          and db.get("artifactIndexSha256") == options["artifact_index_sha256"]
                                          and db.get("originalCheckpointReportSha256") == options["checkpoint_report_sha256"])
         stage = "fresh-object-store-rehearsal"
-        restored = docker.run(images["snapshot"], ["--restore-fresh", "/backup/retrieved/sources/" + options["snapshot_label"],
+        restored = docker.run(options["snapshot_image"], ["--restore-fresh", "/backup/retrieved/sources/" + options["snapshot_label"],
                               options["snapshot_manifest_sha256"], options["artifact_index_sha256"], options["checkpoint_report_sha256"],
                               "/index/regenerated/artifact-index.json"],
                               [docker.mount(staged, "/backup", True), docker.mount(index, "/index", True), docker.mount(storage, "/storage"),

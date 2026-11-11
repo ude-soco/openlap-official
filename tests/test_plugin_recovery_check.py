@@ -48,6 +48,7 @@ class RunnerTests(unittest.TestCase):
             def image(self, reference): return "sha256:" + "a" * 64
             def volume(self, name, helper): owner.calls.append(("volume", name)); return "synthetic-" + name
             def run(self, image, args, mounts, **kwargs):
+                owner.calls.append(("image-reference", image))
                 owner.calls.append(("run", args, mounts, kwargs))
                 if "initialize" in args: return encoded({"status": "FRESH_RECOVERY_VOLUME_INITIALIZED"})
                 if "copy" in args: return encoded({"status": "FRESH_UID1000_COPY_VERIFIED", "sourceMetadataUnchanged": True, "sourceProjectionUid": 0})
@@ -123,6 +124,11 @@ class RunnerTests(unittest.TestCase):
         self.assertNotIn(self.options["identity_file"], joined)
         self.assertNotIn(self.options["rclone_config"], joined)
         self.assertNotIn("MONGODB_PRIMARY_URI", joined)
+        references = [row[1] for row in self.calls if row[0] == "image-reference"]
+        self.assertIn(CHECK.HELPER_IMAGE, references)
+        self.assertIn(self.options["checkpoint_image"], references)
+        self.assertIn(self.options["snapshot_image"], references)
+        self.assertNotIn("sha256:" + "a" * 64, references)
 
     def test_index_mismatch_never_starts_object_restore_or_publishes_success(self):
         self.bad_index = True
