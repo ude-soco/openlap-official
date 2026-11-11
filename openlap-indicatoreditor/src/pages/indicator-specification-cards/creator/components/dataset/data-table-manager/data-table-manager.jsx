@@ -3,12 +3,10 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import { ISCContext } from "../../../isc-context.js";
-import { ClearAll as ClearAllIcon } from "@mui/icons-material";
 import { alpha } from "@mui/material/styles";
 import Footer from "./components/footer.jsx";
 import NoRowsOverlay from "./components/no-rows-overlay.jsx";
@@ -53,9 +51,7 @@ const DataTableManager = () => {
   };
   const [state, setState] = useState({
     cellModesModel: {},
-    selectionModel: [],
-    value: "",
-    anchorEl: null,
+    selectionModel: { type: "include", ids: new Set() },
     page: 1,
     pageSize: 10,
     gridHeight: 450,
@@ -101,7 +97,6 @@ const DataTableManager = () => {
   }, [state.pageSize, dataset.rows]);
 
   const apiRef = useGridApiRef();
-  const popperRef = useRef();
 
   const handleCellModesModelChange = useCallback((newModel) => {
     setState((p) => ({ ...p, cellModesModel: newModel }));
@@ -154,22 +149,6 @@ const DataTableManager = () => {
     apiRef.current.showColumnMenu(params.field);
   };
 
-  const handlePopperOpen = (event) => {
-    const id = event.currentTarget.dataset.id;
-    const row = dataset.rows.find((r) => r.id === id);
-    setState((p) => ({ ...p, value: row, anchorEl: event.currentTarget }));
-  };
-
-  const handlePopperClose = (event) => {
-    if (
-      state.anchorEl == null ||
-      popperRef.current.contains(event.nativeEvent.relatedTarget)
-    ) {
-      return;
-    }
-    setState((p) => ({ ...p, anchorEl: null }));
-  };
-
   const paginatedRows = dataset.rows.slice(
     (state.page - 1) * state.pageSize,
     state.page * state.pageSize
@@ -192,9 +171,9 @@ const DataTableManager = () => {
         columns={displayColumns}
         rows={paginatedRows}
         apiRef={apiRef}
-        columnMenuClearIcon={<ClearAllIcon />}
         cellModesModel={state.cellModesModel}
         checkboxSelection
+        disableRowSelectionExcludeModel
         disableRowSelectionOnClick={true}
         disableColumnMenu={false}
         columnHeaderHeight={58}
@@ -207,22 +186,14 @@ const DataTableManager = () => {
         pageSizeOptions={[5, 10, 25]}
         processRowUpdate={handleProcessRowUpdate}
         rowHeight={44}
-        selectionModel={state.selectionModel}
+        rowSelectionModel={state.selectionModel}
         showCellVerticalBorder
-        showFooterRowCount
-        showFooterSelectedRowCount
         slots={{
           noRowsOverlay: () => <NoRowsOverlay />,
           columnMenu: (props) => <ColumnMenu props={props} />,
           footer: () => <Footer state={state} setState={setState} />,
         }}
         sx={style.dataGrid}
-        componentsProps={{
-          row: {
-            onMouseEnter: handlePopperOpen,
-            onMouseLeave: handlePopperClose,
-          },
-        }}
       />
     </>
   );

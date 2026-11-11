@@ -1,4 +1,5 @@
 import { useContext } from "react";
+import PropTypes from "prop-types";
 import {
   Button,
   Divider,
@@ -20,9 +21,12 @@ const Footer = ({ state, setState }) => {
   const handleDeleteSelectedRows = () => {
     setDataset((p) => ({
       ...p,
-      rows: p.rows.filter((row) => !state.selectionModel.includes(row.id)),
+      rows: p.rows.filter((row) => !state.selectionModel.ids.has(row.id)),
     }));
-    setState((p) => ({ ...p, selectionModel: [] }));
+    setState((p) => ({
+      ...p,
+      selectionModel: { type: "include", ids: new Set() },
+    }));
   };
 
   const handlePageChange = (event, newPage) => {
@@ -54,10 +58,10 @@ const Footer = ({ state, setState }) => {
       >
         <Grid size="grow">
           <Grid container spacing={1} alignItems="center">
-            {state.selectionModel.length !== 0 && (
+            {state.selectionModel.ids.size !== 0 && (
               <>
                 <Typography variant="body2">
-                  {state.selectionModel.length} row(s) selected
+                  {state.selectionModel.ids.size} row(s) selected
                 </Typography>
                 <Tooltip
                   arrow
@@ -103,6 +107,18 @@ const Footer = ({ state, setState }) => {
       </Grid>
     </>
   );
+};
+
+Footer.propTypes = {
+  state: PropTypes.shape({
+    page: PropTypes.number.isRequired,
+    pageSize: PropTypes.number.isRequired,
+    selectionModel: PropTypes.shape({
+      type: PropTypes.oneOf(["include"]).isRequired,
+      ids: PropTypes.instanceOf(Set).isRequired,
+    }).isRequired,
+  }).isRequired,
+  setState: PropTypes.func.isRequired,
 };
 
 export default Footer;
