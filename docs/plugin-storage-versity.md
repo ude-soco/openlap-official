@@ -53,9 +53,12 @@ filesystem must support owner access, user xattrs, atomic publication, locks and
 directory fsync.
 
 Keep `PLUGIN_DELETION_ENABLED=false` for this option until durable deletion has
-been separately established. Logical removal and retained versions remain
-available. Deleting the probe's unregistered synthetic object tests API cleanup;
-it does not prove durable physical purge after a node or filesystem failure.
+been separately established. The current application uses this flag to gate
+logical removal and restore as well as physical deletion, so those operations
+are unavailable in this initial release. Uploads and version management remain
+available, and existing versions are retained. Deleting the probe's unregistered
+synthetic object tests API cleanup; it does not prove durable physical purge
+after a node or filesystem failure.
 
 The optional resource sets are separate:
 

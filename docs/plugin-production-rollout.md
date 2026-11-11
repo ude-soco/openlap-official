@@ -321,8 +321,11 @@ settings do not define backup retention.
 For the single-instance Versity option, keep physical deletion disabled even
 after all application writers are upgraded: current qualification establishes
 PutObject durability, not durable physical DeleteObject under filesystem/node
-failure. Logical removal and retained versions remain available. Document this
-provider-specific limit separately from application reference checks.
+failure. With `PLUGIN_DELETION_ENABLED=false`, the current application also
+disables logical removal and restore. Uploads and version management remain
+available, and existing versions are retained. Document this initial-release
+limit separately from application reference checks; do not enable the flag to
+bypass the provider durability requirement.
 
 After each terminal maintenance result, remove temporary Jobs, private manifest
 ConfigMaps and operation-specific network access through the normal deployment
