@@ -235,8 +235,8 @@ def main():
                 time.sleep(0.2)
             require(False, "Generated gateway did not become ready.")
 
-        def java(class_name, arguments, mounts, net="none", root=False):
-            return run(["run", "--rm", "--network=" + net, *common, *(root_secret if root else []), *sources, *mounts,
+        def java(class_name, arguments, mounts, net="none", root=False, extra_env=()):
+            return run(["run", "--rm", "--network=" + net, *common, *extra_env, *(root_secret if root else []), *sources, *mounts,
                         "--env=PLUGIN_STORAGE_S3_ENDPOINT=http://gateway:9000", "--entrypoint=/bin/sh", snapshot_image,
                         "-ceu", java_script, "fixture", "com.openlap.plugins.storage." + class_name, *arguments], "native Java " + class_name, timeout=120)
 
@@ -393,17 +393,30 @@ def main():
                 original = index(captures, "source-capture", frozen, "frozen-index", report_sha)
                 require(original["emptyRegisteredPluginSnapshot"] == empty)
                 if options.online and not empty:
-                    rejected = run(["run", "--rm", "--network=none", *common, mount(frozen, "/index", True), mount(snapshots, "/snapshot"),
-                        "--env=PLUGIN_DELETION_ENABLED=true", "--env=PLUGIN_STORAGE_S3_ENDPOINT=http://gateway:9000", "--entrypoint=/usr/local/bin/openlap-object-snapshot", snapshot_image,
-                        "--export-online", "/index/frozen-index/artifact-index.json", original["artifactIndexSha256"], report_sha, "/snapshot/rejected-deletion-enabled"],
-                        "online export requires explicit deletion protection", success=False)
-                    require(rejected.returncode != 0 and b"explicit physical deletion protection" in rejected.stderr)
-                    run(["run", "--rm", "--network=none", "--user=1000:1000", mount(snapshots, "/snapshot", True), "--entrypoint=/bin/sh", snapshot_image,
-                        "-ceu", "test ! -e /snapshot/rejected-deletion-enabled"], "deletion-enabled export rejected before writes")
+                    for label, override, phase in [
+                        ("deletion-enabled", "PLUGIN_DELETION_ENABLED=true", "explicit physical deletion protection"),
+                        ("zero-bytes", "PLUGIN_SNAPSHOT_MAX_TOTAL_BYTES=0", "export budget validation"),
+                        ("over-hard-bytes", "PLUGIN_SNAPSHOT_MAX_TOTAL_BYTES=2147483649", "export budget validation"),
+                        ("negative-count", "PLUGIN_SNAPSHOT_MAX_OBJECTS=-1", "export budget validation"),
+                        ("over-hard-count", "PLUGIN_SNAPSHOT_MAX_OBJECTS=1001", "export budget validation"),
+                        ("invalid-cap", "PLUGIN_SNAPSHOT_MAX_TOTAL_BYTES=invalid", "export budget validation"),
+                        ("cut-bytes", "PLUGIN_SNAPSHOT_MAX_TOTAL_BYTES=1", "export cut budget validation"),
+                        ("cut-count", "PLUGIN_SNAPSHOT_MAX_OBJECTS=0", "export cut budget validation")]:
+                        rejected = run(["run", "--rm", "--network=" + source_net, *common, mount(frozen, "/index", True), mount(snapshots, "/snapshot"),
+                            "--env=" + override, "--env=PLUGIN_STORAGE_S3_ENDPOINT=http://gateway:9000", "--entrypoint=/usr/local/bin/openlap-object-snapshot", snapshot_image,
+                            "--export-online", "/index/frozen-index/artifact-index.json", original["artifactIndexSha256"], report_sha, "/snapshot/rejected-" + label],
+                            "online export protection and budget rejection", success=False)
+                        require(rejected.returncode != 0 and ("during " + phase + ".").encode() in rejected.stderr)
+                        check = "test ! -e /snapshot/rejected-" + label
+                        if phase == "export cut budget validation":
+                            check = "test ! -e /snapshot/rejected-" + label + "/bodies/0000.jar; test ! -e /snapshot/rejected-" + label + "/snapshot.json"
+                        run(["run", "--rm", "--network=none", "--user=1000:1000", mount(snapshots, "/snapshot", True), "--entrypoint=/bin/sh", snapshot_image,
+                            "-ceu", check], "invalid caps fail before output writes, oversized cuts before body downloads")
                 export_class = "OnlinePluginBackupFixture" if options.online and not empty else "PluginObjectSnapshotApplication"
                 export_action = "--export-concurrent" if options.online and not empty else "--export-online" if options.online else "--export"
                 exported = java(export_class, [export_action, "/index/frozen-index/artifact-index.json", original["artifactIndexSha256"], report_sha, "/snapshot/export"],
-                                [mount(frozen, "/index", True), mount(snapshots, "/snapshot")], source_net)
+                                [mount(frozen, "/index", True), mount(snapshots, "/snapshot")], source_net,
+                                extra_env=(["--env=PLUGIN_SNAPSHOT_MAX_TOTAL_BYTES=8388608", "--env=PLUGIN_SNAPSHOT_MAX_OBJECTS=" + ("0" if empty else "8")] if options.online else []))
                 snapshot = json.loads(exported.stdout.splitlines()[-1]); require(snapshot["objectCount"] == (0 if empty else 8 if options.online else 6))
                 if options.online and not empty:
                     require(snapshot["concurrentNewKeyExcluded"] and snapshot["cutOrphansPreserved"])

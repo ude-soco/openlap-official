@@ -179,12 +179,20 @@ public final class PluginObjectSnapshotApplication {
   static boolean inventoryMatches(Map<String, Long> first, Map<String, Long> observed, boolean online) {
     return online ? observed.entrySet().containsAll(first.entrySet()) : first.equals(observed);
   }
+  static long exportLimit(String name, long fallback, long minimum, long maximum) {
+    String value = System.getenv().getOrDefault(name, Long.toString(fallback));
+    require(value.length() <= 10 && value.matches("0|[1-9][0-9]*"));
+    long parsed = Long.parseLong(value); require(parsed >= minimum && parsed <= maximum); return parsed;
+  }
   static void exportSnapshot(Path indexPath, String indexHash, String checkpointHash, Path output, boolean online) throws Exception {
     phase = "trusted index validation"; Index index = new Index(indexPath, indexHash, checkpointHash);
     if (online) {
       phase = "explicit physical deletion protection";
       require("false".equals(System.getenv("PLUGIN_DELETION_ENABLED")));
     }
+    phase = "export budget validation";
+    long maximumBytes = exportLimit("PLUGIN_SNAPSHOT_MAX_TOTAL_BYTES", MAX_TOTAL, 1, MAX_TOTAL);
+    long maximumObjects = exportLimit("PLUGIN_SNAPSHOT_MAX_OBJECTS", MAX_OBJECTS, 0, MAX_OBJECTS);
     require(output.isAbsolute() && output.normalize().equals(output)); physical(output.getParent());
     phase = "application export configuration"; VersityStorageApplication.Settings settings = new VersityStorageApplication.Settings(false);
     URI endpoint = URI.create(System.getenv().getOrDefault("PLUGIN_STORAGE_S3_ENDPOINT", "")); properties(settings, endpoint).validateS3();
@@ -196,6 +204,8 @@ public final class PluginObjectSnapshotApplication {
     try (S3Client client = VersityStorageApplication.client(settings, endpoint, false)) {
       phase = online ? "immutable object inventory cut" : "frozen object inventory";
       Map<String, Long> first = inventory(client, settings.bucket); index.inventory(first);
+      phase = "export cut budget validation";
+      require(first.size() <= maximumObjects && first.values().stream().mapToLong(Long::longValue).sum() <= maximumBytes);
       for (Map.Entry<String, Long> object : first.entrySet()) {
         Map<String, Object> row = row(object.getKey(), object.getValue(), rows.size(), index);
         phase = "object byte export"; download(client, settings.bucket, artifact(object.getKey(), object.getValue()), output.resolve((String) row.get("bodyPath")));
