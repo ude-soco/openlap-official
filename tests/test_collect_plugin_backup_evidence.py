@@ -318,6 +318,40 @@ class CollectorTests(unittest.TestCase):
             return original(path, **kwargs)
         with mock.patch.object(C, 'snapshot', side_effect=guarded), self.assertRaises(C.CollectionError): C.config(self.path)
 
+    def test_active_configuration_cannot_alias_absent_custody_ledger_or_journal(self):
+        for name in ('selection.json', 'selection-pending.json'):
+            with self.subTest(name=name):
+                aliased = self.state / name
+                self.assertFalse(aliased.exists())
+                options = dict(self.options, active_recovery_config=str(aliased))
+                self.write(self.path, options)
+                before = self.path.read_bytes(), self.template.read_bytes()
+                stderr = io.StringIO()
+                with mock.patch.object(C, 'NativeArgo', side_effect=AssertionError('No metadata access expected')) as native, contextlib.redirect_stderr(stderr):
+                    self.assertEqual(C.main(['--config', str(self.path)]), 1)
+                native.assert_not_called()
+                self.assertIn('BACKUP_EVIDENCE_COLLECTION_INCOMPLETE', stderr.getvalue())
+                self.assertEqual(list(self.state.iterdir()), [])
+                self.assertFalse(self.active.exists())
+                self.assertEqual((self.path.read_bytes(), self.template.read_bytes()), before)
+
+    def test_configuration_and_template_must_also_stay_outside_custody(self):
+        for field in ('collector_config', 'recovery_template'):
+            with self.subTest(field=field):
+                aliased = self.state / ('selection.json' if field == 'collector_config' else 'selection-pending.json')
+                options = dict(self.options)
+                if field == 'collector_config':
+                    self.write(aliased, options); config_path = aliased
+                else:
+                    self.write(aliased, json.loads(self.template.read_bytes()))
+                    options['recovery_template'] = str(aliased)
+                    self.write(self.path, options); config_path = self.path
+                before = {item.name: item.read_bytes() for item in self.state.iterdir()}
+                with self.assertRaises(C.CollectionError): C.config(config_path)
+                self.assertEqual({item.name: item.read_bytes() for item in self.state.iterdir()}, before)
+                self.assertFalse(self.active.exists())
+                aliased.unlink()
+
     def test_multiple_json_resource_format_rejects_duplicates_and_arrays(self):
         self.assertEqual(C.objects(b'{"metadata":{"name":"one"}}\n---\n{"metadata":{"name":"two"}}\n')[1]['metadata']['name'], 'two')
         for body in [b'[]', b'{"a":1,"a":2}', b'{"a":NaN}', b'{}\n---\n']:

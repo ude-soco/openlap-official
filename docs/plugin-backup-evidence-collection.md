@@ -25,6 +25,8 @@ The `argocd_config` path references the existing native CLI session. The collect
 
 Use an already qualified [recovery configuration](examples/plugin-recovery-check.json) as `recovery_template`, also a private single-link `0600` JSON file. Keep the native binary/profile/key paths, approved remote, qualified restore-image pins and resource budgets in that template. The separate `active_recovery_config` path is managed by the collector. Start with that path absent and `initial_active_config_sha256: null`; adopting an existing active file instead requires its exact locally reviewed SHA-256. The state directory must already exist, be owner-only `0700`, and differ from the recovery runner's scratch state directory.
 
+Keep the collector configuration, recovery template and active recovery configuration outside the entire collector state directory. That directory is reserved for generated custody records, locks, the selection ledger and its pending journal; even an absent configuration file cannot use one of those paths.
+
 Treat `active_recovery_config` and the selection state as collector-owned files. Before manual maintenance, stop its schedules and any running collector, then coordinate changes through the same advisory locks. Routine settings belong in the reviewed template and collector configuration. Do not edit the active selection while a collector is running.
 
 ## Daily custody and weekly independent recovery

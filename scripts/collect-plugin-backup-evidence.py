@@ -149,6 +149,9 @@ def config(path):
             and str(active) == os.path.normpath(str(active))
             and not any(ord(character) < 32 or ord(character) == 127 for character in str(active))
             and active != template and active != Path(path))
+    # Custody owns its complete directory tree, including the selection ledger
+    # and journal. Configuration paths must never alias these generated files.
+    require(all(state not in item.parents for item in (Path(path), template, active)))
     # Only stat the native Argo credential file. Never open or hash it.
     credential = physical(options['argocd_config'])
     require(credential not in (template, active, Path(path)) and state not in credential.parents)
