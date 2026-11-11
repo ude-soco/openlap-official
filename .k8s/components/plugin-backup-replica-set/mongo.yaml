@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openlap-official-openlap-analyticsframework-mongo
+spec:
+  template:
+    spec:
+      containers:
+      - name: mongo
+        env:
+        - name: OPENLAP_MONGODB_REPLICA_SET
+          valueFrom:
+            configMapKeyRef:
+              name: openlap-plugin-backup-replica-set
+              key: replicaSetName
+        - name: OPENLAP_MONGODB_REPLICA_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: openlap-plugin-backup-replica-set
+              key: advertisedHost
+        - name: OPENLAP_MONGODB_OPLOG_SIZE_MIB
+          valueFrom:
+            configMapKeyRef:
+              name: openlap-plugin-backup-replica-set
+              key: oplogSizeMiB
+        lifecycle:
+          postStart:
+            exec:
+              command: [/bin/bash, --noprofile, --norc, /opt/openlap-replica-set/replica-set.sh, initialize]
+        readinessProbe:
+          exec:
+            command: [/bin/bash, --noprofile, --norc, /opt/openlap-replica-set/replica-set.sh, verify]
+          periodSeconds: 5
+          timeoutSeconds: 10
+          failureThreshold: 3
+        volumeMounts:
+        - name: plugin-backup-replica-set
+          mountPath: /opt/openlap-replica-set
+          readOnly: true
+      volumes:
+      - name: plugin-backup-replica-set
+        configMap:
+          name: openlap-plugin-backup-replica-set
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openlap-official-openlap-analyticsframework-mongo
+spec:
+  publishNotReadyAddresses: true
