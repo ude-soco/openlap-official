@@ -204,6 +204,78 @@ policy immediately afterward, including on failure. Retain the PVC and all data.
 A completed Job or its deadline does not revoke its RoleBinding. No Job TTL is
 set, avoiding automatic recreation by a desired-state controller.
 
+## Read completed preservation metadata without backup content
+
+After capture is terminal and its temporary access is removed, the separate
+`.k8s/maintenance/plugin-preservation-report` component can validate the completed
+manifest on the retained claim. It never opens the database archive or JAR files,
+contacts a database, or receives a Kubernetes API identity. It emits only bounded
+manifest metadata, including the manifest SHA-256/size, recorded source identities,
+JAR counts/file metadata and recorded database archive SHA-256/size.
+
+The standalone reader also works outside Kubernetes:
+
+```sh
+python3 -B .k8s/maintenance/plugin-preservation-report/report.py \
+  --backup-root /protected-backups --checkpoint-id REVIEWED_CHECKPOINT
+```
+
+Use the **original physical backup-root path** used by capture. Manifest paths
+must match that root and checkpoint exactly; a relocated copy is not accepted.
+Every path ancestor must be physical, not a symlink. The checkpoint directory
+must be owned by the current UID and mode 0700 or 0500. The completed report must
+be a regular single-link file owned by that UID and mode 0600 or 0400. Exactly one
+of `preservation.json` or `capture-review.json` must exist, with no adjacent partial
+report. Ambiguous, partial, changing, malformed or oversized input fails closed.
+The reader checks the producer's exact current schema, types, paths, hashes,
+source/file counts and status relationships before printing any report.
+
+For Kubernetes, configure `CHECKPOINT_ID` explicitly and replace
+`configure-reviewed-preservation-volume` with the **existing, already-owned**
+preservation claim. The component creates no PVC and mounts the claim read-only
+at `/backup`. Verify UID/GID 1000 can read/search the checkpoint beforehand; do
+not add `fsGroup`, a root initializer, ownership repair or another writable mount
+of the same claim. The component has a separate generated code ConfigMap, no
+ServiceAccount/Role/Binding/Secret, no token, a read-only root, no capabilities,
+deny-all ingress/egress, a 120-second deadline and no retries or TTL. Keep its code
+and policy available before the Job. It is not selected by the application base.
+
+The report is one canonical JSON line framed by
+`OPENLAP-PRESERVATION-METADATA-V1` and
+`OPENLAP-PRESERVATION-METADATA-END-V1`, each on its own line. Input is limited to
+1 MiB and framed output to 64 KiB; excessive output fails instead of truncating.
+Accept it only with independently observed terminal Job success for the exact
+reviewed Job/code/image/claim and a complete valid frame. Output write or flush
+failure exits nonzero even if a complete-looking footer reached the log.
+
+Reader success means `PRESERVATION_MANIFEST_METADATA_VALIDATED`. A valid
+`SOURCE_REVIEW_REQUIRED` capture report also makes the **reader** exit zero; it
+does not make that capture migration-ready. All four flags remain explicitly
+false: `backupBytesVerified`, `catalogCoverageVerified`, `consistencyVerified`
+and `restoreVerified`. Archive/JAR hashes and sizes are **recorded manifest
+values**, not new byte verification. The producer report does not record the
+database name; retain the separately reviewed capture inputs. Writer pause,
+catalog/source reconciliation, off-node custody and isolated restore are still
+separate requirements. Remove the reader Job/Pod, code ConfigMap and policy after
+any terminal result, retaining the claim and every report/data file.
+
+Credential-free verification:
+
+```sh
+python3 -B -m unittest discover -s tests -p test_plugin_preservation_report.py
+python3 -B tests/verify_plugin_preservation_report_containers.py
+```
+
+The container verifier copies only allowlisted public sources and synthetic
+metadata. It runs the exact pinned image as UID 1000 with a read-only root and no
+network/capabilities, then reads a genuinely read-only synthetic volume. A scoped
+fixture initializer prepares only that disposable volume's ownership; the reader
+and installable component contain no initializer or ownership mutation. No
+archive or JAR fixture contents are needed. Optional `--schema-validator PATH`
+runs a trusted local kubeconform against the public render using strict Kubernetes
+1.35 schemas; the verifier never loads a live configuration or renders an operator
+overlay.
+
 ## Failure diagnosis and recovery
 
 Errors identify the failed step: pod identity, JAR inventory, copy, source
