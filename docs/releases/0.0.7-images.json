@@ -1,0 +1,15 @@
+{
+  "version": "0.0.7",
+  "repository": "ude-soco/openlap-official",
+  "sourceRevision": "1bc7a3ee0d66b4b2750222702b4a098f141b2265",
+  "images": [
+    {
+      "service": "openlap-analyticsframework",
+      "digest": "sha256:4a0310f687f6d341c75bbf175067721018e13e540aad822b5034df98ec35f054"
+    },
+    {
+      "service": "openlap-indicatoreditor",
+      "digest": "sha256:8980df9f7f7d45df13da1b25e1b1103ac798b9ef2e9754ef74c5d57894e8d750"
+    }
+  ]
+}
