@@ -86,3 +86,6 @@ The default verifier tests the packaged image class. The explicit development
 flag `--compile-snapshot-source` instead compiles that class into scratch against
 a foundation image; that mode is reported separately and is not final image
 qualification. Continuous integration builds the runtime and uses the default.
+The gateway workflow runs both provider and snapshot qualification against the
+same loaded image ID before saving that exact tested image for publication.
+The publication job verifies and loads that archive without rebuilding it.
