@@ -99,6 +99,75 @@ def cleanup_failed_fixture(prepared, run):
                 run(arguments, "generated operator fixture resource removal")
 
 
+COPY_PRODUCER_CIPHER = r'''
+import hashlib,json,os,pathlib,re,shutil,stat,sys
+name,relative,expected,size=sys.argv[1:]; size=int(size)
+assert re.fullmatch(r'release-[0-9]{8}T[0-9]{6}Z-[a-f0-9]{32}\.tar\.age',name)
+assert re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9/_-]{0,120}',relative) and all(p not in ('','..','.') for p in relative.split('/'))
+assert re.fullmatch(r'[a-f0-9]{64}',expected) and 0<size<=64*1024*1024
+destination=pathlib.Path('/destination'); assert not list(destination.iterdir())
+uid=destination.stat().st_uid
+sources=[pathlib.Path('/remote')/relative/name,pathlib.Path('/custody/identity.txt')]
+def identity(path,owner,maximum):
+ meta=path.lstat(); assert stat.S_ISREG(meta.st_mode) and meta.st_uid==owner and stat.S_IMODE(meta.st_mode)==0o600 and meta.st_nlink==1 and 0<meta.st_size<=maximum
+ digest=hashlib.sha256()
+ with path.open('rb') as stream:
+  while True:
+   block=stream.read(1024*1024)
+   if not block: break
+   digest.update(block)
+ return (meta.st_dev,meta.st_ino,meta.st_uid,meta.st_gid,meta.st_mode,meta.st_nlink,meta.st_size,meta.st_mtime_ns,meta.st_ctime_ns,digest.hexdigest())
+before=[identity(sources[0],1000,64*1024*1024),identity(sources[1],501,65536)]
+assert (before[0][6],before[0][-1])==(size,expected)
+remote=destination/'remote'; remote.mkdir(mode=0o700)
+folder=remote
+for part in relative.split('/'):
+ folder=folder/part; folder.mkdir(mode=0o700)
+for source,target,record in zip(sources,[folder/name,destination/'identity.txt'],before):
+ with source.open('rb') as stream,os.fdopen(os.open(target,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600),'wb') as output:
+  shutil.copyfileobj(stream,output)
+ assert hashlib.sha256(target.read_bytes()).hexdigest()==record[-1]
+for path in [*remote.rglob('*'),remote,destination/'identity.txt']: os.chown(path,uid,uid)
+assert [identity(sources[0],1000,64*1024*1024),identity(sources[1],501,65536)]==before
+print(json.dumps({'status':'ACTUAL_PRODUCER_CIPHERTEXT_MIRRORED','sourceMetadataUnchanged':True,'cipherSha256':expected,'cipherSizeBytes':size}))
+'''
+
+
+def prepare_existing_producer(case, count, staging, tools, run, mount, remote, custody, transport_image,
+                              checkpoint_image, snapshot_image, receipt, checkpoint_hash, index_hash, snapshot_hash,
+                              docker, endpoint, recovery_point, online=False, remote_directory="releases"):
+    """Mirror the actual generated producer ciphertext; never upload a substitute."""
+    upload = load("producer_fixture_receipt", SCRIPTS / "plugin-backup-upload.py")
+    upload.typed_receipt(receipt, checkpoint_hash)
+    for volume in (remote, custody): require(isinstance(volume, str) and volume.startswith("openlap-") and "/" not in volume)
+    root = staging.resolve() / ("operator-actual-producer-" + case); root.mkdir(mode=0o700)
+    mirror = root / "mirror"; mirror.mkdir(mode=0o700)
+    copied = run(["run", "--rm", "--network=none", "--user=0:0", "--read-only", "--cap-drop=ALL",
+                  "--cap-add=DAC_OVERRIDE", "--cap-add=CHOWN", "--security-opt=no-new-privileges",
+                  mount(remote, "/remote", True), mount(custody, "/custody", True),
+                  "--mount=type=bind,source=" + str(mirror) + ",target=/destination", "--entrypoint=python3", transport_image,
+                  "-B", "-c", COPY_PRODUCER_CIPHER, receipt["objectName"], remote_directory, receipt["cipherSha256"], str(receipt["cipherSizeBytes"])],
+                 "independent mirror of actual producer ciphertext")
+    result = json.loads(copied.stdout)
+    require(result["status"] == "ACTUAL_PRODUCER_CIPHERTEXT_MIRRORED" and result["sourceMetadataUnchanged"] is True)
+    for path in [mirror, *mirror.rglob('*')]:
+        require(path.stat().st_uid == os.getuid() and path.stat().st_mode & 0o077 == 0)
+    profile = root / "rclone.conf"
+    profile.write_text("[fixture]\ntype = alias\nremote = " + str(mirror / "remote") + "\n"); profile.chmod(0o600)
+    receipt_path = root / "receipt.json"; receipt_path.write_bytes(upload.backup.json_bytes(receipt)); receipt_path.chmod(0o600)
+    state = root / "checks"; state.mkdir(mode=0o700)
+    payload = root / "removed-source-placeholder"; payload.mkdir(mode=0o700)
+    options = {"age": str(tools / "age"), "rclone": str(tools / "rclone"), "rclone_config": str(profile), "remote": "fixture:" + remote_directory,
+               "identity_file": str(mirror / "identity.txt"), "receipt": str(receipt_path), "receipt_sha256": hashlib.sha256(receipt_path.read_bytes()).hexdigest(),
+               "checkpoint_report_sha256": checkpoint_hash, "artifact_index_sha256": index_hash, "snapshot_manifest_sha256": snapshot_hash,
+               "recovery_point_at": recovery_point, "snapshot_label": "objects", "state_directory": str(state),
+               "docker": str(Path(docker[0]).absolute()), "docker_host": endpoint, "checkpoint_image": checkpoint_image, "snapshot_image": snapshot_image,
+               "max_bytes": 16 * 1024 * 1024, "max_files": 1000, "timeout_seconds": 120,
+               "max_archive_mib": 8, "max_expanded_mib": 64 if online else 16, "max_restore_mib": 512}
+    config = root / "recovery-check.json"; config.write_text(json.dumps(options) + "\n"); config.chmod(0o600)
+    return {"root": root, "payload": payload, "config": config, "state": state, "objectCount": count, "producerCiphertextUsed": True}
+
+
 def verify(prepared, run):
     # The caller has already removed the original source containers/volumes and
     # network. Remove these host plaintext source copies before independent pull.
@@ -117,5 +186,7 @@ def verify(prepared, run):
     for field in ("independentlyDownloadedAndDecrypted", "isolatedDatabaseRestoreVerified", "independentDatabaseIndexMatched",
                   "freshObjectStoreColdReadbackVerified", "sourceMetadataUnchanged", "dockerScratchCleanupComplete", "backupFreshnessWithinPolicy"):
         require(result[field] is True)
-    return {"objectCount": result["objectCount"], "receiptSha256": hashlib.sha256(receipts[0].read_bytes()).hexdigest(),
-            "nativeOperatorRunnerVerified": True, "sourceDataRemovedBeforeRunner": True}
+    proof = {"objectCount": result["objectCount"], "receiptSha256": hashlib.sha256(receipts[0].read_bytes()).hexdigest(),
+             "nativeOperatorRunnerVerified": True, "sourceDataRemovedBeforeRunner": True}
+    if prepared.get("producerCiphertextUsed"): proof["actualProducerCiphertextRecovered"] = True
+    return proof
