@@ -238,6 +238,12 @@ independent recovery automation. It fails closed on missing/stale evidence or
 authentication failure, and must not replace trusted original hashes with a
 mutable `latest.json` from the same upload account.
 
+The [evidence collection guide](plugin-backup-evidence-collection.md) supplies
+the reviewed five-file public tool layout, private configuration example and
+disabled daily custody and weekly collector-with-recovery schedules. Weekly
+checks select fresh trusted evidence before restoring; the optional daily
+collector retains intervening original receipts before cluster history expires.
+
 ## Activation and instance image selection
 
 Before selecting an option, qualify its exact runtime images and whole
