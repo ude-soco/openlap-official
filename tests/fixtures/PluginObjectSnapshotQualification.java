@@ -113,11 +113,13 @@ public final class PluginObjectSnapshotQualification {
     boolean rejected = false;
     try { PluginObjectSnapshotApplication.restoreFresh(Path.of("/backup/export"), "0".repeat(64), indexHash, CHECKPOINT, regenerated); }
     catch (Exception mismatch) { rejected = true; }
-    require(rejected && VersityStorageApplication.entries(VersityStorageApplication.ROOT).isEmpty());
+    require(rejected && PluginObjectSnapshotApplication.phase.equals("complete snapshot and database association validation")
+        && VersityStorageApplication.entries(VersityStorageApplication.ROOT).isEmpty());
     rejected = false;
     try { PluginObjectSnapshotApplication.restoreFresh(Path.of("/backup/export"), manifestHash, indexHash, "0".repeat(64), regenerated); }
     catch (Exception mismatch) { rejected = true; }
-    require(rejected && VersityStorageApplication.entries(VersityStorageApplication.ROOT).isEmpty());
+    require(rejected && PluginObjectSnapshotApplication.phase.equals("complete snapshot and database association validation")
+        && VersityStorageApplication.entries(VersityStorageApplication.ROOT).isEmpty());
     VersityStorageApplication.result("GENERATED_PREWRITE_VALIDATION_PASSED", Collections.emptyMap());
   }
   public static void main(String[] args) throws Exception {

@@ -73,6 +73,10 @@ def main():
                                 "-ceu", script, "fixture", "com.openlap.plugins.storage." + class_name, *arguments], success=success, timeout=60)
 
         try:
+            if not options.compile_snapshot_source:
+                unconfigured = gateway.run(["run", "--rm", "--network=none", *common,
+                                            "--entrypoint=/usr/local/bin/openlap-object-snapshot", options.image], success=False)
+                gateway.require(unconfigured.returncode != 0 and b"snapshot failed during argument validation" in unconfigured.stderr)
             gateway.run(["network", "create", "--internal", "--label=com.openlap.test=object-snapshot", network])
             created_network = True
             for empty in [False, True]:
@@ -104,7 +108,7 @@ def main():
                 java("PluginObjectSnapshotQualification", ["--validate-snapshot"], writable_backup)
                 immutable_backup = ["--mount=type=volume,source=" + backup + ",target=/backup,readonly"]
                 destination = ["--mount=type=volume,source=" + restored + ",target=/storage"]
-                java("PluginObjectSnapshotQualification", ["--validate-before-write"], [*immutable_backup, *destination])
+                java("PluginObjectSnapshotQualification", ["--validate-before-write"], [*immutable_backup, *destination], root=True)
                 args = ["--restore-fresh", "/backup/export", snapshot["manifestSha256"], fixture["artifactIndexSha256"],
                         fixture["originalCheckpointReportSha256"], "/backup/regenerated-index.json"]
                 recovered = java("PluginObjectSnapshotApplication", args, [*immutable_backup, *destination], root=True)

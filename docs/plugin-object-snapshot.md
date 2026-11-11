@@ -37,7 +37,9 @@ fresh-provider restore result.
 
 The standalone Java entry point is
 `com.openlap.plugins.storage.PluginObjectSnapshotApplication` with the same
-runtime classpath as the optional gateway. Its explicit arguments are:
+runtime classpath as the optional gateway. The image provides
+`/usr/local/bin/openlap-object-snapshot` as its explicit launcher; the gateway's
+default entry point is unchanged. Its explicit arguments are:
 
 ```text
 --export TRUSTED_INDEX INDEX_SHA256 ORIGINAL_CHECKPOINT_SHA256 NEW_OUTPUT_DIRECTORY
