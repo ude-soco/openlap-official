@@ -8,6 +8,9 @@ on:
     - 'openlap-analyticsframework/scripts/check-plugin-backup-recovery.py'
     - 'tests/test_plugin_release_backup.py'
     - 'tests/test_plugin_online_release_backup.py'
+    - 'tests/test_plugin_recurring_backup.py'
+    - 'openlap-analyticsframework/scripts/plugin-recurring-backup.py'
+    - 'openlap-analyticsframework/scripts/plugin-recurring-export.py'
     - 'tests/test_plugin_recovery_check.py'
     - 'docs/examples/plugin-recovery-check.json'
     - 'docs/examples/org.openlap.plugin-recovery-check.plist'
@@ -20,6 +23,9 @@ on:
     - 'openlap-analyticsframework/scripts/check-plugin-backup-recovery.py'
     - 'tests/test_plugin_release_backup.py'
     - 'tests/test_plugin_online_release_backup.py'
+    - 'tests/test_plugin_recurring_backup.py'
+    - 'openlap-analyticsframework/scripts/plugin-recurring-backup.py'
+    - 'openlap-analyticsframework/scripts/plugin-recurring-export.py'
     - 'tests/test_plugin_recovery_check.py'
     - 'docs/examples/plugin-recovery-check.json'
     - 'docs/examples/org.openlap.plugin-recovery-check.plist'
@@ -66,3 +72,5 @@ jobs:
       run: python3 -B -m unittest discover -s tests -p test_plugin_recovery_check.py -v
     - name: Verify online checkpoint transport without weakening frozen checkpoints
       run: python3 -B -m unittest discover -s tests -p test_plugin_online_release_backup.py -v
+    - name: Verify fresh producer integrity and default denial
+      run: python3 -B -m unittest discover -s tests -p test_plugin_recurring_backup.py -v

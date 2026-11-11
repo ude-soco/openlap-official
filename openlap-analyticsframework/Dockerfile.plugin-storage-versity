@@ -19,7 +19,9 @@ COPY --from=build /build/target/classes ./classes
 COPY --from=build /build/target/storage-lib ./lib
 COPY --from=build /provider/versitygw /usr/local/bin/versitygw
 COPY --from=build /provider/LICENSE /provider/NOTICE ./provider-license/
-RUN printf '%s\n' '<configuration><root level="OFF"/></configuration>' > logback.xml \
+COPY --chmod=0444 plugin-recurring-export.py ./plugin-recurring-export.py
+RUN command -v python3 >/dev/null \
+    && printf '%s\n' '<configuration><root level="OFF"/></configuration>' > logback.xml \
     && printf '%s\n' '#!/bin/sh' 'set -eu' 'umask 077' \
       'exec java -Dlogback.configurationFile=/opt/openlap-storage/logback.xml -cp "/opt/openlap-storage/classes:/opt/openlap-storage/lib/*" com.openlap.plugins.storage.VersityStorageApplication "$@"' \
       > /usr/local/bin/openlap-storage \

@@ -33,6 +33,7 @@ jobs:
           set -eu
           mkdir -p "$RUNNER_TEMP/versity-context/src/main"
           cp openlap-analyticsframework/pom.xml openlap-analyticsframework/Dockerfile.plugin-storage-versity "$RUNNER_TEMP/versity-context/"
+          cp openlap-analyticsframework/scripts/plugin-recurring-export.py "$RUNNER_TEMP/versity-context/"
           cp -R openlap-analyticsframework/src/main/java "$RUNNER_TEMP/versity-context/src/main/"
 
       - name: Set up Docker Buildx
