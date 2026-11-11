@@ -167,3 +167,80 @@ config, identity or browser profile. Without both binary paths, real-client case
 are skipped; that is not complete integration validation.
 The focused `plugin-release-backup.yml` workflow installs the checksum-pinned
 official Linux clients and runs these same fixtures without cloud credentials.
+
+## Independently check a retained release on an operator host
+
+`check-plugin-backup-recovery.py` composes the native pull action with the
+qualified isolated database and object-store restore actions. It downloads the
+encrypted object again; an existing local download is never substituted. It
+does not capture a fresh live backup or require a new application outage.
+
+Copy [the example configuration](./examples/plugin-recovery-check.json) to a
+private directory outside Git, set mode 0600, and configure paths and hashes
+from the independently retained release record. Supply no credential values in
+this JSON: only the paths to the native rclone profile and age identity. Keep
+the encryption identity and its recovery copy outside the application cluster.
+The rclone profile must still be valid for the approved off-node destination.
+A successful check today does not extend a share's expiry.
+
+Use already qualified checkpoint and snapshot images. Preload their exact
+Linux amd64 references before the check; the runner never pulls or builds an
+image. A full local `sha256:IMAGE_ID` is supported when a verified image archive
+has no registry RepoDigest. Retain its original publication/archive verification
+record; a local image ID alone does not establish qualification. Mutable image
+tags are rejected. The fixed public Python helper image is also preloaded by
+immutable digest. Docker must support `image inspect --platform=linux/amd64`
+and volume subpath mounts. Use only an explicit local Unix Docker socket.
+
+Create the configured owner-only state directory, then run:
+
+```sh
+python3 -B openlap-analyticsframework/scripts/check-plugin-backup-recovery.py \
+  --config /PRIVATE/plugin-recovery-check.json
+```
+
+The runner locks that state directory against overlapping checks and creates a
+fresh private run directory. Only native age/rclone consume credential files;
+neither is mounted into Docker. Retrieved data is mounted read-only, checked for
+private ownership, links and byte/entry budgets, and copied to a fresh UID1000
+volume. Docker Desktop's UID0 bind projection is accepted only when its complete
+content/mode fingerprint matches the host-owned input. Existing files are never
+chmod/chowned; before/after metadata checks verify they remained unchanged.
+
+Every restore container has no external network, a read-only root, bounded
+memory/processes and dropped capabilities. The only root helper capabilities
+are the explicitly needed read/copy and fresh-volume ownership capabilities.
+Fresh randomly generated local storage identities are discarded with those
+isolated targets; production S3 credentials and Kubernetes access are absent.
+The database tool restores the full archive and independently regenerates the
+plugin index. Its hash must equal the trusted frozen index before any object
+restore. The object tool initializes a fresh local provider, restores bytes and
+metadata, restarts it, and verifies cold readback against that regenerated index.
+
+Success writes `recovery-receipt.json` with hashes, exact image IDs and the
+status `INDEPENDENT_PLUGIN_RECOVERY_VERIFIED`. This proves retrieved primary
+database/plugin-object recovery within the index's association scope. It does
+not prove application execution, secondary-database recovery, fresh live
+capture, or production availability. Exit status 0 additionally requires a
+backup within the configured age policy and complete Docker scratch cleanup.
+Status 2 means the restore passed but the backup is stale/future-dated or scratch
+cleanup is incomplete; treat it as an operational failure needing attention.
+Status 1 indicates an incomplete check with no final recovery receipt.
+
+Original downloaded/encrypted files and receipts remain private on the host.
+Successful scratch removal checks this run's unique resource labels; no global
+Docker prune is used. On failure the runner stops its own containers and retains
+scratch volumes plus `docker-resources.json` for a scoped review. A host/daemon
+crash can leave resources needing that review. Protect retained plaintext and
+establish an explicit local retention policy before enabling recurring runs.
+
+The [launchd example](./examples/org.openlap.plugin-recovery-check.plist) is
+disabled and is not installed by the tool. It proposes Sunday 04:00 in the Mac's
+local time; review that timezone, private log paths, available disk, Docker
+availability and sleep/offline behavior before enabling it. Validate an actual
+independent check first. Monitor exit status, receipt age and backup freshness;
+loading a schedule alone does not establish monitoring or successful recovery.
+Keep it disabled until the destination's recurring-use permission and credential
+validity are established. Update the private trusted receipt/hash selection only
+through the approved backup publication process. Rechecking one fixed release
+does not establish that new production writes are backed up.
