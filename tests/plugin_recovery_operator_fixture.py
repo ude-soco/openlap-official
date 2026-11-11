@@ -39,7 +39,7 @@ def clients(directory, run, image, staging, token, containers):
 
 
 def prepare(case, count, staging, tools, run, copy_code, mount, capture, snapshot, transport_image,
-            checkpoint_image, snapshot_image, checkpoint_hash, index_hash, snapshot_hash, docker, endpoint, recovery_point):
+            checkpoint_image, snapshot_image, checkpoint_hash, index_hash, snapshot_hash, docker, endpoint, recovery_point, online=False):
     transport = load("operator_fixture_transport", SCRIPTS / "plugin-release-backup.py")
     root = staging.resolve() / ("operator-native-" + case); root.mkdir(mode=0o700)
     payload = root / "payload"; payload.mkdir(mode=0o700)
@@ -51,6 +51,10 @@ def prepare(case, count, staging, tools, run, copy_code, mount, capture, snapsho
     require(json.loads(copied.stdout)["sourceMetadataUnchanged"])
     for path in [payload, *payload.rglob('*')]:
         require(path.stat().st_uid == os.getuid())
+    if online:
+        captured = json.loads((payload / "checkpoint/checkpoint.json").read_bytes())
+        require(captured["schemaVersion"] == 2 and captured["captureMode"] == "INSTANCE_WIDE_OPLOG")
+        recovery_point = captured["captureStartedAt"]
     profile = root / "rclone.conf"; remote = root / "remote"; remote.mkdir(mode=0o700)
     profile.write_text("[fixture]\ntype = alias\nremote = " + str(remote) + "\n"); profile.chmod(0o600)
     identity = root / "identity.txt"
@@ -74,7 +78,7 @@ def prepare(case, count, staging, tools, run, copy_code, mount, capture, snapsho
                "docker": str(Path(docker[0]).absolute()), "docker_host": endpoint,
                "checkpoint_image": checkpoint_image, "snapshot_image": snapshot_image,
                "max_bytes": 8388608, "max_files": 1000, "timeout_seconds": 120,
-               "max_archive_mib": 8, "max_expanded_mib": 16, "max_restore_mib": 512}
+               "max_archive_mib": 8, "max_expanded_mib": 64 if online else 16, "max_restore_mib": 512}
     config = root / "recovery-check.json"; config.write_text(json.dumps(options) + "\n"); config.chmod(0o600)
     return {"root": root, "payload": payload, "config": config, "state": state, "objectCount": count}
 
