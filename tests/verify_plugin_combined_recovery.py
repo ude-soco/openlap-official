@@ -103,6 +103,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ["snapshot", "checkpoint", "transport"]:
         parser.add_argument("--" + name + "-image", help="Optional exact local sha256 image ID; otherwise build public sources")
+    parser.add_argument("--report", type=Path, help="Optional new absolute file for the bounded non-sensitive typed proof")
     options = parser.parse_args()
     source_revision = subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip()
     require(not subprocess.check_output(["git", "-C", str(ROOT), "status", "--porcelain"], text=True), "Commit the public fixture inputs before qualification.")
@@ -338,10 +339,18 @@ def main():
                 print("PASS: " + case + " actual checkpoint/index, encrypted retrieval, fresh storage and cold associations", flush=True)
                 remove_container(recovered_gateway); remove_container(recovered_db)
             require(source_inventory() == original_inputs, "Public source inputs changed during qualification.")
-            print(json.dumps({"schemaVersion": 1, "status": "SYNTHETIC_ENCRYPTED_PLUGIN_RECOVERY_VERIFIED", "images": {
+            proof = {"schemaVersion": 1, "status": "SYNTHETIC_ENCRYPTED_PLUGIN_RECOVERY_VERIFIED", "images": {
                 "snapshot": snapshot_image, "checkpoint": checkpoint_image, "transport": transport_image}, "cases": evidence,
                 "sourceRevision": source_revision, "sourceInputSha256": source_input_sha, "sourceInputFileCount": len(original_inputs),
-                "scope": "Generated local recovery only; no external custody, production acceptance or availability verified."}, indent=2))
+                "scope": "Generated local recovery only; no external custody, production acceptance or availability verified."}
+            encoded = (json.dumps(proof, sort_keys=True, separators=(",", ":")) + "\n").encode()
+            require(len(encoded) <= 16384)
+            if options.report:
+                require(options.report.is_absolute() and options.report.parent.resolve() == options.report.parent)
+                descriptor = os.open(options.report, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)
+                with os.fdopen(descriptor, "wb") as output:
+                    output.write(encoded); output.flush(); os.fsync(output.fileno())
+            print(json.dumps(proof, indent=2))
         finally:
             for name in reversed(containers): run(["rm", "--force", "--volumes", name], "fixture cleanup", success=False)
             for name in reversed(networks): run(["network", "rm", name], "fixture cleanup", success=False)

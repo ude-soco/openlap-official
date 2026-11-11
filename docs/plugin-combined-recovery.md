@@ -56,6 +56,12 @@ that no object directory needs to be recreated in immutable retrieved inputs.
 
 The final typed report records source revision, exact fixture image IDs and the
 original report/archive/index/snapshot/ciphertext/receipt hashes for both cases.
+The starting clean revision and a rechecked hash inventory of every allowlisted
+public source input bind the evidence to the code actually staged for the run.
+`--report /ABSOLUTE/NEW-proof.json` saves this non-sensitive result to a new private
+file of at most 16 KiB. CI retains only that typed file as
+`plugin-combined-recovery-proof`; no archive, identity, configuration or payload
+is included in the artifact.
 Successful process exit and both complete case results are required. This proof
 does not replace provider/account recovery, off-node backup custody or production
 application acceptance.
