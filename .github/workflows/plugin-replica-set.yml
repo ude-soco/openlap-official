@@ -1,0 +1,36 @@
+name: Verify optional backup replica set
+
+on:
+  pull_request:
+    paths:
+    - '.k8s/base/**'
+    - '.k8s/components/plugin-backup-replica-set/**'
+    - 'tests/*plugin_replica_set*'
+    - '.github/workflows/plugin-replica-set.yml'
+  push:
+    branches: [main]
+    paths:
+    - '.k8s/base/**'
+    - '.k8s/components/plugin-backup-replica-set/**'
+    - 'tests/*plugin_replica_set*'
+    - '.github/workflows/plugin-replica-set.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  replica-set:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        persist-credentials: false
+    - name: Verify exact settings and fail-closed configuration guards
+      run: node tests/test_plugin_replica_set_configuration.js
+    - name: Install the synthetic manifest parser
+      run: python3 -m pip install --disable-pip-version-check PyYAML==6.0.3
+    - name: Compare optional public composition
+      run: python3 -B tests/validate_plugin_replica_set_manifests.py
+    - name: Qualify standalone data retention initialization and restart locally
+      run: python3 -B tests/verify_plugin_replica_set_containers.py
