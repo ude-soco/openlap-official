@@ -27,6 +27,11 @@ REPORT = "checkpoint/checkpoint.json"
 ARCHIVE = "checkpoint/database.archive.gz"
 MANIFEST = "release-manifest.json"
 COMPLETE = "DUMP_AND_ISOLATED_RESTORE_VERIFIED"
+ONLINE_COMPLETE = "INSTANCE_WIDE_OPLOG_REPLAY_VERIFIED"
+ONLINE_SCOPE = "Full dump eligible source instance excluding local; selected application projection only; no separate MongoDB instance, S3 bytes, freeze, off-node custody or application acceptance verified"
+ONLINE_KEYS = {"schemaVersion", "status", "captureMode", "checkpointId", "database", "sourceServerVersion", "restoreServerVersion", "fcv", "databaseToolsVersion",
+               "archiveFile", "archiveSha256", "archiveSizeBytes", "expandedArchiveBytes", "gzipValidated", "oplogReplayVerified", "sourceMetadataMatched", "sourceIdentityMd5",
+               "sourceReplicaSet", "sourceOplogBefore", "sourceOplogAfter", "captureStartedAt", "captureCompletedAt", "oplogRangeValidation", "fingerprintAuthority", "databases", "collections", "scope"}
 
 
 class BackupError(Exception):
@@ -156,13 +161,78 @@ def read_json(path, expected_sha, deadline):
     return parse_json(data)
 
 
+def online_time(value):
+    require(isinstance(value, str) and re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z", value))
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        require(parsed.isoformat(timespec="milliseconds").replace("+00:00", "Z") == value)
+        return parsed
+    except ValueError:
+        raise BackupError("Invalid checkpoint UTC timestamp.") from None
+
+
+def online_rows(rows, system=False):
+    require(isinstance(rows, list) and 0 < len(rows) <= 256)
+    previous = ""
+    for row in rows:
+        require(isinstance(row, dict) and set(row) == {"name", "count", "identityMd5", "dataMd5", "optionsMd5", "indexesMd5"})
+        name = row["name"]
+        require(isinstance(name, str) and re.fullmatch(r"[A-Za-z][A-Za-z0-9_.-]{0,119}", name)
+                and name > previous and not name.startswith("tmp.") and (system or not name.startswith("system.")))
+        require(type(row["count"]) is int and 0 <= row["count"] <= 1000000)
+        require(all(isinstance(row[key], str) and re.fullmatch(r"[a-f0-9]{32}", row[key])
+                    for key in ("identityMd5", "dataMd5", "optionsMd5", "indexesMd5")))
+        previous = name
+
+
+def validate_online_report(report):
+    require(set(report) == ONLINE_KEYS and report["status"] == ONLINE_COMPLETE and report["captureMode"] == "INSTANCE_WIDE_OPLOG"
+            and report["archiveFile"] == "database.archive.gz")
+    require(all(report[key] is True for key in ("gzipValidated", "oplogReplayVerified", "sourceMetadataMatched")))
+    require(report["restoreServerVersion"] == "4.4.30" and isinstance(report["sourceServerVersion"], str)
+            and re.fullmatch(r"4\.4\.[0-9]{1,3}", report["sourceServerVersion"]))
+    require(isinstance(report["checkpointId"], str) and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,79}", report["checkpointId"]))
+    require(report["oplogRangeValidation"] == "NATIVE_MONGODUMP_COMPLETE_RANGE"
+            and report["fingerprintAuthority"] == "ISOLATED_FULL_OPLOG_REPLAY" and report["scope"] == ONLINE_SCOPE)
+    require(online_time(report["captureStartedAt"]) <= online_time(report["captureCompletedAt"]))
+    replica = report["sourceReplicaSet"]
+    require(isinstance(replica, dict) and set(replica) == {"name", "identityMd5"}
+            and isinstance(replica["name"], str) and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,79}", replica["name"])
+            and isinstance(replica["identityMd5"], str) and re.fullmatch(r"[a-f0-9]{32}", replica["identityMd5"]))
+    timestamps = []
+    for key in ("sourceOplogBefore", "sourceOplogAfter"):
+        value = report[key]
+        require(isinstance(value, dict) and set(value) == {"seconds", "increment"}
+                and all(type(value[name]) is int and 0 <= value[name] <= 4294967295 for name in ("seconds", "increment")))
+        timestamps.append((value["seconds"], value["increment"]))
+    require(timestamps[0] <= timestamps[1])
+    databases = report["databases"]
+    require(isinstance(databases, list) and 0 < len(databases) <= 16)
+    previous = ""; total = 0; selected = []
+    for row in databases:
+        require(isinstance(row, dict) and set(row) == {"name", "collections"})
+        name = row["name"]
+        require(isinstance(name, str) and re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,62}", name) and name != "local" and name > previous)
+        online_rows(row["collections"], system=name in ("admin", "config"))
+        total += len(row["collections"]); require(total <= 512)
+        if name == report["database"]: selected.append(row["collections"])
+        previous = name
+    online_rows(report["collections"])
+    require(len(selected) == 1 and selected[0] == report["collections"])
+
+
 def validate_checkpoint(directory, expected_sha, maximum, deadline):
     report = read_json(directory / "checkpoint.json", expected_sha, deadline)
-    require(type(report.get("schemaVersion")) is int and report["schemaVersion"] == 1
-            and report.get("status") == COMPLETE and report.get("archiveFile") == "database.archive.gz")
-    require(all(report.get(key) is True for key in ("gzipValidated", "sourceBeforeAfterMatched", "restoredMatched")))
-    require(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,79}", report.get("checkpointId", ""))
-            and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:/-]{0,159}", report.get("freezeEvidenceId", "")))
+    version = report.get("schemaVersion")
+    require(type(version) is int)
+    if version == 1:
+        require(report.get("status") == COMPLETE and report.get("archiveFile") == "database.archive.gz")
+        require(all(report.get(key) is True for key in ("gzipValidated", "sourceBeforeAfterMatched", "restoredMatched")))
+        require(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,79}", report.get("checkpointId", ""))
+                and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:/-]{0,159}", report.get("freezeEvidenceId", "")))
+    else:
+        require(version == 2 and (directory / "checkpoint.json").stat().st_size <= 262144)
+        validate_online_report(report)
     database = report.get("database", "")
     require(re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,62}", database) and database not in ("admin", "config", "local"))
     require(report.get("fcv") == "4.4" and report.get("databaseToolsVersion") == "100.10.0"

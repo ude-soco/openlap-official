@@ -356,6 +356,15 @@ def recover(options, output, transport):
             require(metadata_digest(snapshot_path / filename) == expected)
         checkpoint = read_json(source / "checkpoint/checkpoint.json")
         snapshot = read_json(snapshot_path / "snapshot.json")
+        online = checkpoint.get("schemaVersion") == 2 and checkpoint.get("captureMode") == "INSTANCE_WIDE_OPLOG"
+        if online:
+            require(checkpoint.get("status") == "INSTANCE_WIDE_OPLOG_REPLAY_VERIFIED"
+                    and utc_time(options["recovery_point_at"]) <= utc_time(checkpoint.get("captureStartedAt")))
+            require(snapshot.get("schemaVersion") == 2 and snapshot.get("format") == "OPENLAP_PLUGIN_OBJECT_SNAPSHOT_IMMUTABLE_CUT_V1"
+                    and snapshot.get("objectSelectionPolicy") == "IMMUTABLE_KEYS_AT_EXPORT_CUT"
+                    and snapshot.get("physicalDeletionDisabled") is True)
+        else:
+            require(checkpoint.get("schemaVersion") == 1 and checkpoint.get("status") == "DUMP_AND_ISOLATED_RESTORE_VERIFIED")
         require(snapshot.get("artifactIndexSha256") == options["artifact_index_sha256"]
                 and snapshot.get("originalCheckpointReportSha256") == options["checkpoint_report_sha256"]
                 and snapshot.get("archiveSha256") == checkpoint.get("archiveSha256"))
@@ -376,7 +385,8 @@ def recover(options, output, transport):
                "CHECKPOINT_REPORT_PATH=/inputs/retrieved/checkpoint/checkpoint.json", "CHECKPOINT_ARCHIVE_PATH=/inputs/retrieved/checkpoint/database.archive.gz"]
         for name in ("archive", "expanded", "restore"): env += ["CHECKPOINT_MAX_" + name.upper() + "_MIB=" + str(options["max_" + name + "_mib"])]
         stage = "isolated-database-rehearsal"
-        checked = docker.run(options["checkpoint_image"], ["--index-plugin-artifacts"], [docker.mount(staged, "/inputs", True), docker.mount(index, "/outputs")],
+        index_action = "--index-online-plugin-artifacts" if online else "--index-plugin-artifacts"
+        checked = docker.run(options["checkpoint_image"], [index_action], [docker.mount(staged, "/inputs", True), docker.mount(index, "/outputs")],
                              env=env, timeout=600, scratch=str(options["max_restore_mib"] + 256) + "m")
         lines = checked.decode().splitlines()
         require(len(lines) == 3 and lines[0] == "OPENLAP-CHECKPOINT-PLUGIN-INDEX-REPORT-V1"
@@ -416,6 +426,7 @@ def recover(options, output, transport):
                   "uploadReceiptSha256": options["receipt_sha256"], "checkpointReportSha256": options["checkpoint_report_sha256"],
                   "artifactIndexSha256": options["artifact_index_sha256"], "snapshotManifestSha256": options["snapshot_manifest_sha256"],
                   "archiveSha256": checkpoint.get("archiveSha256"), "releaseId": receipt["releaseId"], "images": images,
+                  "checkpointSchemaVersion": checkpoint["schemaVersion"], "checkpointCaptureMode": "INSTANCE_WIDE_OPLOG" if online else "FROZEN_PRIMARY_DATABASE",
                   "imageReferences": {"checkpoint": options["checkpoint_image"], "snapshot": options["snapshot_image"], "helper": HELPER_IMAGE},
                   "imageLineage": getattr(docker, "image_lineage", {}),
                   "independentlyDownloadedAndDecrypted": True, "isolatedDatabaseRestoreVerified": True,
@@ -424,7 +435,7 @@ def recover(options, output, transport):
                   "dockerSourceProjectionUid": copy_report.get("sourceProjectionUid"), "dockerScratchCleanupComplete": cleanup,
                   "backupFreshnessWithinPolicy": fresh, "maximumBackupAgeHours": options["max_backup_age_hours"],
                   "trustedRecoveryPointAt": options["recovery_point_at"],
-                  "scope": "Retrieved primary-database/plugin-object recovery only; no fresh live checkpoint, application execution, secondary database or availability verified"}
+                  "scope": "Retrieved checkpoint/plugin-object recovery only; no fresh live checkpoint, application execution, separate MongoDB instance or availability verified"}
         publish(output / "recovery-receipt.json", report)
         return report, 0 if fresh and cleanup else 2
     except (Exception, KeyboardInterrupt) as error:

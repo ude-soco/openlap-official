@@ -16,7 +16,7 @@ env:
 jobs:
   image:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     outputs:
       image-id: ${{ steps.identity.outputs.image-id }}
       tags: ${{ steps.meta.outputs.tags }}
@@ -38,6 +38,9 @@ jobs:
           cp -- openlap-analyticsframework/scripts/plugin-release-backup.py \
             openlap-analyticsframework/scripts/plugin-backup-upload.py \
             openlap-analyticsframework/scripts/plugin-backup-upload-entrypoint.sh \
+            openlap-analyticsframework/scripts/plugin-recurring-backup.py \
+            openlap-analyticsframework/scripts/plugin-recurring-export.py \
+            scripts/plugin-recurring-record.py \
             "$RUNNER_TEMP/backup-upload-context/"
 
       - name: Set up Docker Buildx
@@ -93,6 +96,26 @@ jobs:
         env:
           IMAGE_ID: ${{ steps.identity.outputs.image-id }}
         run: python3 -B tests/verify_plugin_backup_upload_image.py --image "$IMAGE_ID"
+
+      - name: Prove actual online producer recovery with the same exact uploader image
+        env:
+          IMAGE_ID: ${{ steps.identity.outputs.image-id }}
+        run: python3 -B tests/verify_plugin_combined_recovery.py --online --verify-recurring-producer --verify-operator-runner --uploader-image "$IMAGE_ID" --report "$RUNNER_TEMP/plugin-online-uploader-recovery.json"
+
+      - name: Prove actual frozen producer recovery with the same exact uploader image
+        env:
+          IMAGE_ID: ${{ steps.identity.outputs.image-id }}
+        run: python3 -B tests/verify_plugin_combined_recovery.py --verify-recurring-producer --verify-operator-runner --uploader-image "$IMAGE_ID" --report "$RUNNER_TEMP/plugin-frozen-uploader-recovery.json"
+
+      - name: Retain bounded synthetic uploader recovery proofs
+        uses: actions/upload-artifact@v7
+        with:
+          name: plugin-uploader-recovery-proofs
+          path: |
+            ${{ runner.temp }}/plugin-online-uploader-recovery.json
+            ${{ runner.temp }}/plugin-frozen-uploader-recovery.json
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Retain the exact tested image for publication
         if: github.event_name == 'push'

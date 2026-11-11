@@ -36,6 +36,8 @@ public final class PluginObjectSnapshotApplication {
   static final long MAX_OBJECT = 100L * 1024 * 1024;
   static final long MAX_TOTAL = 2L * 1024 * 1024 * 1024;
   static final String FORMAT = "OPENLAP_PLUGIN_OBJECT_SNAPSHOT_V1";
+  static final String ONLINE_FORMAT = "OPENLAP_PLUGIN_OBJECT_SNAPSHOT_IMMUTABLE_CUT_V1";
+  static final String ONLINE_POLICY = "IMMUTABLE_KEYS_AT_EXPORT_CUT";
   static final String CONTENT_TYPE = "application/java-archive";
   static final String INDEX_NAME = "artifact-index.json";
   static final String MANIFEST_NAME = "snapshot.json";
@@ -172,7 +174,25 @@ public final class PluginObjectSnapshotApplication {
     Files.createLink(root.resolve(name), pending); Files.delete(pending); VersityStorageApplication.sync(root);
   }
   static void exportSnapshot(Path indexPath, String indexHash, String checkpointHash, Path output) throws Exception {
+    exportSnapshot(indexPath, indexHash, checkpointHash, output, false);
+  }
+  static boolean inventoryMatches(Map<String, Long> first, Map<String, Long> observed, boolean online) {
+    return online ? observed.entrySet().containsAll(first.entrySet()) : first.equals(observed);
+  }
+  static long exportLimit(String name, long fallback, long minimum, long maximum) {
+    String value = System.getenv().getOrDefault(name, Long.toString(fallback));
+    require(value.length() <= 10 && value.matches("0|[1-9][0-9]*"));
+    long parsed = Long.parseLong(value); require(parsed >= minimum && parsed <= maximum); return parsed;
+  }
+  static void exportSnapshot(Path indexPath, String indexHash, String checkpointHash, Path output, boolean online) throws Exception {
     phase = "trusted index validation"; Index index = new Index(indexPath, indexHash, checkpointHash);
+    if (online) {
+      phase = "explicit physical deletion protection";
+      require("false".equals(System.getenv("PLUGIN_DELETION_ENABLED")));
+    }
+    phase = "export budget validation";
+    long maximumBytes = exportLimit("PLUGIN_SNAPSHOT_MAX_TOTAL_BYTES", MAX_TOTAL, 1, MAX_TOTAL);
+    long maximumObjects = exportLimit("PLUGIN_SNAPSHOT_MAX_OBJECTS", MAX_OBJECTS, 0, MAX_OBJECTS);
     require(output.isAbsolute() && output.normalize().equals(output)); physical(output.getParent());
     phase = "application export configuration"; VersityStorageApplication.Settings settings = new VersityStorageApplication.Settings(false);
     URI endpoint = URI.create(System.getenv().getOrDefault("PLUGIN_STORAGE_S3_ENDPOINT", "")); properties(settings, endpoint).validateS3();
@@ -182,18 +202,23 @@ public final class PluginObjectSnapshotApplication {
     publish(output, INDEX_NAME, index.bytes);
     List<Object> rows = new ArrayList<>(); long total = 0;
     try (S3Client client = VersityStorageApplication.client(settings, endpoint, false)) {
-      phase = "frozen object inventory"; Map<String, Long> first = inventory(client, settings.bucket); index.inventory(first);
+      phase = online ? "immutable object inventory cut" : "frozen object inventory";
+      Map<String, Long> first = inventory(client, settings.bucket); index.inventory(first);
+      phase = "export cut budget validation";
+      require(first.size() <= maximumObjects && first.values().stream().mapToLong(Long::longValue).sum() <= maximumBytes);
       for (Map.Entry<String, Long> object : first.entrySet()) {
         Map<String, Object> row = row(object.getKey(), object.getValue(), rows.size(), index);
         phase = "object byte export"; download(client, settings.bucket, artifact(object.getKey(), object.getValue()), output.resolve((String) row.get("bodyPath")));
         rows.add(row); total += object.getValue();
       }
-      phase = "repeated frozen inventory verification"; require(first.equals(inventory(client, settings.bucket)));
+      phase = online ? "immutable inventory cut verification" : "repeated frozen inventory verification";
+      Map<String, Long> observed = inventory(client, settings.bucket); index.inventory(observed); require(inventoryMatches(first, observed, online));
       for (Map.Entry<String, Long> object : first.entrySet()) download(client, settings.bucket, artifact(object.getKey(), object.getValue()), null);
-      require(first.equals(inventory(client, settings.bucket)));
+      observed = inventory(client, settings.bucket); index.inventory(observed); require(inventoryMatches(first, observed, online));
     }
     VersityStorageApplication.sync(bodies);
-    Map<String, Object> manifest = new LinkedHashMap<>(); manifest.put("schemaVersion", 1); manifest.put("format", FORMAT);
+    Map<String, Object> manifest = new LinkedHashMap<>(); manifest.put("schemaVersion", online ? 2 : 1); manifest.put("format", online ? ONLINE_FORMAT : FORMAT);
+    if (online) { manifest.put("objectSelectionPolicy", ONLINE_POLICY); manifest.put("physicalDeletionDisabled", true); }
     manifest.put("artifactIndexSha256", index.hash); manifest.put("originalCheckpointReportSha256", index.checkpoint); manifest.put("archiveSha256", index.archive);
     manifest.put("objects", rows); manifest.put("objectCount", rows.size()); manifest.put("totalBytes", total);
     manifest.put("databaseAssociationScope", "verified-index-only"); manifest.put("recoveryVerified", false);
@@ -214,13 +239,17 @@ public final class PluginObjectSnapshotApplication {
       Index restored = new Index(rehearsalIndex, indexHash, checkpointHash); require(Arrays.equals(index.bytes, restored.bytes));
       byte[] bytes = metadata(root.resolve(MANIFEST_NAME)); hash = VersityStorageApplication.hash(bytes); require(hash.equals(sha(manifestHash)));
       JsonNode manifest = VersityStorageApplication.JSON.readTree(bytes);
-      fields(manifest, "schemaVersion format artifactIndexSha256 originalCheckpointReportSha256 archiveSha256 objects objectCount totalBytes databaseAssociationScope recoveryVerified");
-      require(Arrays.equals(bytes, encoded(manifest)) && manifest.path("schemaVersion").isInt() && manifest.path("schemaVersion").intValue() == 1
-          && string(manifest.path("format")).equals(FORMAT) && sha(manifest.path("artifactIndexSha256")).equals(index.hash)
+      boolean online = manifest.path("schemaVersion").isInt() && manifest.path("schemaVersion").intValue() == 2;
+      fields(manifest, "schemaVersion format artifactIndexSha256 originalCheckpointReportSha256 archiveSha256 objects objectCount totalBytes databaseAssociationScope recoveryVerified"
+          + (online ? " objectSelectionPolicy physicalDeletionDisabled" : ""));
+      require(Arrays.equals(bytes, encoded(manifest)) && manifest.path("schemaVersion").isInt() && (online || manifest.path("schemaVersion").intValue() == 1)
+          && string(manifest.path("format")).equals(online ? ONLINE_FORMAT : FORMAT) && sha(manifest.path("artifactIndexSha256")).equals(index.hash)
           && sha(manifest.path("originalCheckpointReportSha256")).equals(index.checkpoint) && sha(manifest.path("archiveSha256")).equals(index.archive)
           && string(manifest.path("databaseAssociationScope")).equals("verified-index-only")
           && manifest.path("recoveryVerified").isBoolean() && !manifest.path("recoveryVerified").booleanValue()
           && manifest.path("objects").isArray() && manifest.path("objects").size() <= MAX_OBJECTS);
+      if (online) require(string(manifest.path("objectSelectionPolicy")).equals(ONLINE_POLICY)
+          && manifest.path("physicalDeletionDisabled").isBoolean() && manifest.path("physicalDeletionDisabled").booleanValue());
       // The regular-file transporter omits empty directories. Authenticated empty
       // snapshots need no body directory, and validation never recreates inputs.
       Set<String> expected = new HashSet<>(Arrays.asList(INDEX_NAME, MANIFEST_NAME));
@@ -292,6 +321,7 @@ public final class PluginObjectSnapshotApplication {
     try {
       require("Linux".equals(System.getProperty("os.name")));
       if (args.length == 5 && args[0].equals("--export")) exportSnapshot(Path.of(args[1]), args[2], args[3], Path.of(args[4]));
+      else if (args.length == 5 && args[0].equals("--export-online")) exportSnapshot(Path.of(args[1]), args[2], args[3], Path.of(args[4]), true);
       else if (args.length == 6 && args[0].equals("--restore-fresh")) restoreFresh(Path.of(args[1]), args[2], args[3], args[4], Path.of(args[5]));
       else require(false);
       exit = 0;

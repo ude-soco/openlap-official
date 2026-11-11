@@ -33,7 +33,7 @@ class RunnerTests(unittest.TestCase):
                              "checkpoint_image": "ghcr.io/ude-soco/openlap-official-plugin-checkpoint@sha256:" + "1" * 64,
                              "snapshot_image": "ghcr.io/ude-soco/openlap-official-plugin-storage-versity@sha256:" + "2" * 64,
                              "receipt_sha256": "3" * 64, "state_directory": str(self.root)})
-        self.checkpoint = encoded({"archiveSha256": "4" * 64})
+        self.checkpoint = encoded({"archiveSha256": "4" * 64, "schemaVersion": 1, "status": "DUMP_AND_ISOLATED_RESTORE_VERIFIED"})
         self.options["checkpoint_report_sha256"] = hashlib.sha256(self.checkpoint).hexdigest()
         self.index = b"{}\n"; self.options["artifact_index_sha256"] = hashlib.sha256(self.index).hexdigest()
         self.snapshot = encoded({"artifactIndexSha256": self.options["artifact_index_sha256"],
@@ -54,7 +54,7 @@ class RunnerTests(unittest.TestCase):
                 if "initialize" in args: return encoded({"status": "FRESH_RECOVERY_VOLUME_INITIALIZED"})
                 if "copy" in args: return encoded({"status": "FRESH_UID1000_COPY_VERIFIED", "sourceMetadataUnchanged": True, "sourceProjectionUid": 0})
                 if "credentials" in args: return encoded({"status": "DISPOSABLE_LOCAL_RECOVERY_IDENTITIES_CREATED"})
-                if args[0] == "--index-plugin-artifacts":
+                if args[0] in ("--index-plugin-artifacts", "--index-online-plugin-artifacts"):
                     result = {"readyForS3Export": True, "associationsResolved": True,
                               "artifactIndexSha256": "0" * 64 if owner.bad_index else owner.options["artifact_index_sha256"],
                               "originalCheckpointReportSha256": owner.options["checkpoint_report_sha256"]}
@@ -130,6 +130,36 @@ class RunnerTests(unittest.TestCase):
         self.assertIn(self.options["checkpoint_image"], references)
         self.assertIn(self.options["snapshot_image"], references)
         self.assertNotIn("sha256:" + "a" * 64, references)
+
+    def online_fixture(self):
+        self.checkpoint = encoded({"archiveSha256": "4" * 64, "schemaVersion": 2, "status": "INSTANCE_WIDE_OPLOG_REPLAY_VERIFIED",
+                                  "captureMode": "INSTANCE_WIDE_OPLOG", "captureStartedAt": datetime.now(timezone.utc).isoformat()})
+        self.options["checkpoint_report_sha256"] = hashlib.sha256(self.checkpoint).hexdigest()
+        self.snapshot = encoded({"artifactIndexSha256": self.options["artifact_index_sha256"], "originalCheckpointReportSha256": self.options["checkpoint_report_sha256"],
+                                 "archiveSha256": "4" * 64, "schemaVersion": 2, "format": "OPENLAP_PLUGIN_OBJECT_SNAPSHOT_IMMUTABLE_CUT_V1",
+                                 "objectSelectionPolicy": "IMMUTABLE_KEYS_AT_EXPORT_CUT", "physicalDeletionDisabled": True})
+        self.options["snapshot_manifest_sha256"] = hashlib.sha256(self.snapshot).hexdigest()
+
+    def test_online_checkpoint_uses_explicit_full_instance_replay_index(self):
+        self.online_fixture()
+        report, code = self.run_recovery()
+        self.assertEqual(code, 0)
+        self.assertEqual(report["checkpointCaptureMode"], "INSTANCE_WIDE_OPLOG")
+        self.assertTrue(any(row[0] == "run" and row[1][0] == "--index-online-plugin-artifacts" for row in self.calls))
+        self.assertFalse(any(row[0] == "run" and row[1][0] == "--index-plugin-artifacts" for row in self.calls))
+
+    def test_online_checkpoint_rejects_weaker_object_snapshot_before_fresh_volumes(self):
+        self.online_fixture()
+        snapshot = json.loads(self.snapshot); snapshot["physicalDeletionDisabled"] = False
+        self.snapshot = encoded(snapshot); self.options["snapshot_manifest_sha256"] = hashlib.sha256(self.snapshot).hexdigest()
+        with self.assertRaises(CHECK.RecoveryError): self.run_recovery()
+        self.assertFalse(any(row[0] == "volume" for row in self.calls))
+
+    def test_online_recovery_point_cannot_be_later_than_trusted_capture_start(self):
+        self.online_fixture()
+        self.options["recovery_point_at"] = (datetime.now(timezone.utc) + timedelta(minutes=1)).isoformat()
+        with self.assertRaises(CHECK.RecoveryError): self.run_recovery()
+        self.assertFalse(any(row[0] == "volume" for row in self.calls))
 
     def test_index_mismatch_never_starts_object_restore_or_publishes_success(self):
         self.bad_index = True

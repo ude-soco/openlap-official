@@ -55,9 +55,12 @@ public final class CombinedPluginRecoveryFixture {
     VersityStorageApplication.result("GENERATED_RECOVERY_SOURCE_PREPARED", Collections.singletonMap("objectCount", empty ? 0 : 6));
   }
   static void verify(boolean empty) throws Exception {
+    verify(empty, Collections.emptyMap());
+  }
+  static void verify(boolean empty, Map<String, Long> additionalOrphans) throws Exception {
     VersityStorageApplication.Settings settings = new VersityStorageApplication.Settings(false);
     URI endpoint = URI.create(System.getenv("PLUGIN_STORAGE_S3_ENDPOINT"));
-    Map<String, Long> expected = new TreeMap<>(); int registryCount = 0;
+    Map<String, Long> expected = new TreeMap<>(additionalOrphans); int registryCount = 0;
     try (MongoClient mongo = new MongoClient(new MongoClientURI("mongodb://recovered-mongo:27017/" + DATABASE
              + "?serverSelectionTimeoutMS=3000&connectTimeoutMS=3000&socketTimeoutMS=5000"));
          S3ArtifactObjectStore store = S3ArtifactObjectStore.connect(PluginObjectSnapshotApplication.properties(settings, endpoint));
@@ -93,6 +96,11 @@ public final class CombinedPluginRecoveryFixture {
         Document removed = db.getCollection("visualization-library").find(eq("_id", "removed-library")).first();
         require(removed != null && removed.getString("removalState").equals("REMOVED") && removed.getString("artifactId").equals(artifact(VERSIONS[2]).getId()));
         require(db.getCollection("plugin-installation").find(eq("_id", "discarded-installation")).first().getString("state").equals("DISCARDED"));
+        require(db.getCollection("plugin-installation").find(eq("_id", "pending-upload")).first().getString("state").equals("UPLOADED")
+            && db.getCollection("plugin-installation").find(eq("_id", "pending-upload")).first().getString("artifactId").equals(artifact(VERSIONS[1]).getId()));
+        require(db.getCollection("plugin-installation").find(eq("_id", "pending-inspection-review")).first().getString("state").equals("INSPECTED")
+            && db.getCollection("plugin-installation").find(eq("_id", "pending-inspection-review")).first().getString("artifactId").equals(artifact(VERSIONS[0]).getId()));
+        require(db.getCollection("plugin-installation").countDocuments() == 3);
         require(db.getCollection("plugin-removal").countDocuments() == 2 && db.getCollection("plugin-version-family").countDocuments() == 1);
       }
       require(db.getCollection("plugin-artifact").countDocuments() == registryCount);
