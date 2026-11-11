@@ -134,12 +134,34 @@ public final class OnlinePluginBackupFixture {
     require(java.util.Arrays.equals(originalBytes, Files.readAllBytes(original.resolve("snapshot.json"))));
     VersityStorageApplication.result("GENERATED_ONLINE_MANIFEST_PREWRITE_REJECTIONS_VERIFIED", Collections.singletonMap("cases", 7));
   }
+  static void modernClient(boolean source) throws Exception {
+    // Match PrimaryMongoConfig's modern client and existing one-host/db-path
+    // URI shape: no replicaSet/directConnection option is added for this check.
+    String uri = "mongodb://" + (source ? "source-mongo" : "recovered-mongo") + ":27017/plugin_recovery_fixture";
+    try (com.mongodb.client.MongoClient client = com.mongodb.client.MongoClients.create(uri)) {
+      var database = client.getDatabase("plugin_recovery_fixture");
+      require(database.runCommand(new org.bson.Document("ping", 1)).getDouble("ok") == 1.0);
+      var collection = database.getCollection("online-driver-compatibility");
+      if (source) {
+        collection.insertOne(new org.bson.Document("_id", "plain-modern-client").append("value", 1).append("mode", "plain-uri"));
+        var result = collection.updateOne(com.mongodb.client.model.Filters.eq("_id", "plain-modern-client"),
+            new org.bson.Document("$set", new org.bson.Document("value", 2)));
+        require(result.getMatchedCount() == 1 && result.getModifiedCount() == 1);
+      }
+      var marker = collection.find(com.mongodb.client.model.Filters.eq("_id", "plain-modern-client")).first();
+      require(marker != null && marker.getInteger("value") == 2 && marker.getString("mode").equals("plain-uri") && collection.countDocuments() == 1);
+    }
+    VersityStorageApplication.result(source ? "GENERATED_MODERN_PLAIN_SOURCE_URI_VERIFIED" : "GENERATED_MODERN_PLAIN_RESTORED_URI_VERIFIED",
+        Collections.singletonMap("plainUriModernClientVerified", true));
+  }
   public static void main(String[] args) throws Exception {
     require(args.length > 0);
     if (args[0].equals("--export-concurrent")) export(args, false);
     else if (args[0].equals("--frozen-reject-concurrent")) export(args, true);
     else if (args[0].equals("--verify-cold")) cold();
     else if (args[0].equals("--validate-manifest-negatives")) manifestNegatives(args);
+    else if (args[0].equals("--verify-modern-source-uri")) modernClient(true);
+    else if (args[0].equals("--verify-modern-restored-uri")) modernClient(false);
     else require(false);
   }
 }

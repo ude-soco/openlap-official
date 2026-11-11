@@ -364,7 +364,10 @@ def main():
                     run(["run", "--rm", "--network=" + source_net, "--entrypoint=mongo", checkpoint_image, "--norc", "--quiet", "--host=source-mongo", "--eval",
                         "db.getSiblingDB('plugin_recovery_fixture')['plugin-management-lock'].deleteOne({_id:'generated-active-operation'});"], "complete generated operation before whole recapture")
                 generated_freeze_time = datetime.now(timezone.utc).isoformat()
-                if options.online: writes_before = transaction_client("state")["committedTransactions"]
+                if options.online:
+                    modern = java("OnlinePluginBackupFixture", ["--verify-modern-source-uri"], [], source_net)
+                    require(json.loads(modern.stdout)["plainUriModernClientVerified"])
+                    writes_before = transaction_client("state")["committedTransactions"]
                 captured = capture("source-capture")
                 lines = captured.stdout.decode().splitlines()
                 require(len(lines) == 3 and lines[0] == ("OPENLAP-CHECKPOINT-ONLINE-REPORT-V2" if options.online else "OPENLAP-CHECKPOINT-REPORT-V1"))
@@ -489,6 +492,8 @@ def main():
                 if options.online:
                     restored_transactions = transaction_client("state", "recovered-mongo", recovery_net)
                     require(writes_before <= restored_transactions["committedTransactions"] <= writes_after)
+                    modern = java("OnlinePluginBackupFixture", ["--verify-modern-restored-uri"], [], recovery_net)
+                    require(json.loads(modern.stdout)["plainUriModernClientVerified"])
                 cold = java("OnlinePluginBackupFixture" if options.online and not empty else "CombinedPluginRecoveryFixture",
                     ["--verify-cold"] if options.online and not empty else ["--verify-cold", case], [], recovery_net)
                 cold_result = json.loads(cold.stdout); require(cold_result["coldDatabaseAssociationsVerified"] and cold_result["coldObjectBytesAndMetadataVerified"])
@@ -502,6 +507,7 @@ def main():
                         "standaloneDataPreservedDuringReplicaSetConversion": True, "writesBeforeCapture": writes_before, "writesAfterCapture": writes_after,
                         "recoveredCommittedTransactions": restored_transactions["committedTransactions"], "crossDatabaseTransactionInvariantVerified": True,
                         "sourceOplogAdvancedDuringCapture": True, "writesBeforeSampleImmediatelyPrecedesCapture": True,
+                        "modernPlainSourceUriReadWriteVerified": True, "modernPlainRestoredUriMarkerVerified": True,
                         "immutableObjectCutVerified": True, "laterNewKeysExcluded": not empty, "invalidOnlineInputsRejected": not empty, "activeFencePreservedAndWholeCaptureRetried": not empty})
                 if operator_proof: evidence[-1]["operatorRecoveryCheck"] = operator_proof
                 print("PASS: " + case + " actual checkpoint/index, encrypted retrieval, fresh storage and cold associations", flush=True)

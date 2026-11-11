@@ -163,6 +163,10 @@ volumes, independent retrieved reindexing, and separate cold MongoDB/object
 association readback. Generated class-free JARs are never executed. This proves
 the tested synthetic recovery path; it is not production application or chart
 execution, external custody or a zero-downtime database conversion claim.
+The same packaged modern MongoDB client also inserts, updates and reads a
+generated marker through the application's plain one-host/database-path URI
+shape after replica-set initialization; a fresh modern client verifies that
+marker after cold restoration, without adding a `replicaSet` URI option.
 
 The native MongoDB behavior is pinned to the
 [100.10.0 dump source](https://github.com/mongodb/mongo-tools/blob/100.10.0/mongodump/mongodump.go),
