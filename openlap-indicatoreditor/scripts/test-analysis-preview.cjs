@@ -1,7 +1,7 @@
-// Start Vite with VITE_BACKEND_URL=/api/ and Playwright on Node's module path:
+// Start Vite with VITE_BACKEND_URL=/api/ and Playwright/WebKit on Node's module path:
 // OPENLAP_TEST_BASE_URL=http://127.0.0.1:5181 npm run test:analysis-preview
 // All API responses and identities below are synthetic; off-origin requests fail.
-const { chromium } = require("playwright");
+const { webkit } = require("playwright");
 const assert = require("node:assert/strict");
 const inertAssets = new Set([
   "https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.18/c3.min.css",
@@ -217,7 +217,7 @@ async function chartInvalidation(browser) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ headless: true,
+  const browser = await webkit.launch({ headless: true,
     ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}) });
   try { await recovery(browser); await emptyVisualization(browser); await chartInvalidation(browser); }
   finally { await browser.close(); }
