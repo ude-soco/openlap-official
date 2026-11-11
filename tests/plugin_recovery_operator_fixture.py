@@ -78,7 +78,23 @@ def prepare(case, count, staging, tools, run, copy_code, mount, capture, snapsho
     return {"root": root, "payload": payload, "config": config, "state": state, "objectCount": count}
 
 
-def verify(prepared):
+def cleanup_failed_fixture(prepared, run):
+    """Only generated fixture resources, authorized by their private run journal."""
+    for path in prepared["state"].glob("check-*/docker-resources.json"):
+        journal = json.loads(path.read_bytes()); token = journal["runId"]
+        require(token.startswith("openlap-recovery-check-"))
+        for kind in ("containers", "volumes"):
+            for name in journal[kind]:
+                require(name.startswith(token + "-"))
+                arguments = ["volume", "inspect", name, "--format={{json .Labels}}"] if kind == "volumes" else ["inspect", name, "--format={{json .Config.Labels}}"]
+                result = run(arguments, "generated operator fixture cleanup identity", success=False)
+                if result.returncode: continue
+                require(json.loads(result.stdout).get("org.openlap.recovery-run") == token)
+                arguments = ["volume", "rm", name] if kind == "volumes" else ["rm", "--force", name]
+                run(arguments, "generated operator fixture resource removal")
+
+
+def verify(prepared, run):
     # The caller has already removed the original source containers/volumes and
     # network. Remove these host plaintext source copies before independent pull.
     shutil.rmtree(prepared["payload"])
@@ -88,6 +104,7 @@ def verify(prepared):
         failures = list(prepared["state"].glob("check-*/recovery-failure.json"))
         detail = json.loads(failures[0].read_bytes()) if len(failures) == 1 else {"stage": "runner-preflight"}
         docker_failures = [json.loads(path.read_bytes()) for path in prepared["state"].glob("check-*/docker-failure-*.json")]
+        cleanup_failed_fixture(prepared, run)
         raise AssertionError("Generated operator recovery failed: " + json.dumps({"detail": detail, "dockerFailures": docker_failures}))
     receipts = list(prepared["state"].glob("check-*/recovery-receipt.json")); require(len(receipts) == 1)
     result = json.loads(receipts[0].read_bytes())

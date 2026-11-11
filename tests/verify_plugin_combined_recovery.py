@@ -317,7 +317,7 @@ def main():
                 for source in [db_data, gateway_data, control, captures, frozen, snapshots, operator]: remove_volume(source)
                 run(["network", "rm", source_net], "source network removal"); networks.remove(source_net)
                 print("PASS: " + case + " native encrypted push and source data removal", flush=True)
-                operator_proof = operator_fixture.verify(operator_case) if operator_case else None
+                operator_proof = operator_fixture.verify(operator_case, run) if operator_case else None
                 if operator_proof: print("PASS: " + case + " independent host-native operator runner", flush=True)
                 retrieved = volume(case + "-retrieved", 501)
                 run(["run", "--rm", "--network=none", *transport_common, mount(retrieved, "/operator"), transport_image, "pull", *args,
