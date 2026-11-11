@@ -104,6 +104,17 @@ def main():
     for name in ["snapshot", "checkpoint", "transport"]:
         parser.add_argument("--" + name + "-image", help="Optional exact local sha256 image ID; otherwise build public sources")
     options = parser.parse_args()
+    source_revision = subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip()
+    require(not subprocess.check_output(["git", "-C", str(ROOT), "status", "--porcelain"], text=True), "Commit the public fixture inputs before qualification.")
+    public_inputs = [Path(__file__), ROOT / "tests/test_plugin_checkpoint_containers.py", ROOT / "tests/verify_plugin_versity_containers.py",
+        ROOT / "tests/fixtures/CombinedPluginRecoveryFixture.java", ROOT / "tests/fixtures/PluginObjectSnapshotQualification.java",
+        ROOT / "tests/fixtures/plugin_combined_seed.js", ROOT / "tests/fixtures/Dockerfile.plugin-recovery-transport",
+        MODULE / "pom.xml", MODULE / "Dockerfile.plugin-storage-versity", MODULE / "Dockerfile.plugin-checkpoint", MODULE / "scripts/plugin-release-backup.py"]
+    public_inputs += sorted((MODULE / "src/main/java").rglob("*.java")) + sorted((MODULE / "scripts/plugin-checkpoint").glob("*"))
+    def source_inventory():
+        return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in public_inputs}
+    original_inputs = source_inventory()
+    source_input_sha = hashlib.sha256(json.dumps(original_inputs, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     token = "openlap-combined-recovery-" + uuid.uuid4().hex[:10]
     volumes, networks, containers, images = [], [], [], []
     evidence = []
@@ -114,17 +125,27 @@ def main():
         require(endpoint.startswith("unix:///") and not any(ord(c) < 33 or ord(c) == 127 for c in endpoint))
         docker = [shutil.which("docker"), "--config", str(config), "--host", endpoint]
         require(docker[0])
+        # A fresh Docker config keeps operator registry configuration absent.
+        # Expose only the already installed public buildx executable to it.
+        candidates = [Path(docker[0]).resolve().parent.parent / "cli-plugins/docker-buildx",
+                      Path("/usr/libexec/docker/cli-plugins/docker-buildx"), Path("/usr/lib/docker/cli-plugins/docker-buildx"),
+                      Path("/usr/local/lib/docker/cli-plugins/docker-buildx"), Path.home() / ".docker/cli-plugins/docker-buildx"]
+        selected_buildx = next((path.resolve() for path in candidates if path.is_file() and os.access(path, os.X_OK)), None)
+        if selected_buildx:
+            plugins = config / "cli-plugins"; plugins.mkdir(); (plugins / "docker-buildx").symlink_to(selected_buildx)
+        environment = {"PATH": os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin"), "DOCKER_BUILDKIT": "1", "TMPDIR": str(staging), "LANG": "C"}
 
         def run(arguments, stage, timeout=180, success=True):
             owned = None; arguments = list(arguments)
             if arguments[0] == "run" and "--rm" in arguments and "--name" not in arguments:
                 owned = token + "-client-" + uuid.uuid4().hex[:8]; arguments[1:1] = ["--name", owned]
             try:
-                result = subprocess.run(docker + arguments, capture_output=True, timeout=timeout)
+                result = subprocess.run(docker + arguments, capture_output=True, timeout=timeout, env=environment)
             except subprocess.TimeoutExpired:
-                if owned: subprocess.run(docker + ["rm", "--force", owned], capture_output=True, timeout=20)
+                if owned: subprocess.run(docker + ["rm", "--force", owned], capture_output=True, timeout=20, env=environment)
                 raise AssertionError("Combined fixture timeout during " + stage)
-            require(not success or result.returncode == 0, "Combined fixture failed during " + stage)
+            diagnostic = result.stderr.decode("utf-8", errors="replace")[-3000:] if stage.endswith("public image build") else ""
+            require(not success or result.returncode == 0, "Combined fixture failed during " + stage + ("\n" + diagnostic if diagnostic else ""))
             return result
 
         def build(kind):
@@ -313,9 +334,10 @@ def main():
                                  "regeneratedDatabaseIndexMatched": True, "coldDatabaseAndObjectReadbackVerified": True})
                 print("PASS: " + case + " actual checkpoint/index, encrypted retrieval, fresh storage and cold associations", flush=True)
                 remove_container(recovered_gateway); remove_container(recovered_db)
+            require(source_inventory() == original_inputs, "Public source inputs changed during qualification.")
             print(json.dumps({"schemaVersion": 1, "status": "SYNTHETIC_ENCRYPTED_PLUGIN_RECOVERY_VERIFIED", "images": {
                 "snapshot": snapshot_image, "checkpoint": checkpoint_image, "transport": transport_image}, "cases": evidence,
-                "sourceRevision": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
+                "sourceRevision": source_revision, "sourceInputSha256": source_input_sha, "sourceInputFileCount": len(original_inputs),
                 "scope": "Generated local recovery only; no external custody, production acceptance or availability verified."}, indent=2))
         finally:
             for name in reversed(containers): run(["rm", "--force", name], "fixture cleanup", success=False)
