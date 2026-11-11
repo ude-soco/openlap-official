@@ -175,7 +175,9 @@
                 // recognized server bookkeeping may be omitted; arbitrary data
                 // stored there must not silently disappear from a backup.
                 if (name === "config") require(["chunks", "collections", "databases", "settings", "shards", "tags", "version",
-                    "system.sessions", "transactions"].indexOf(info.name) !== -1);
+                    "system.sessions", "transactions", "system.indexBuilds", "image_collection"].indexOf(info.name) !== -1);
+                if (name === "config" && info.name === "system.indexBuilds")
+                    require(db.getCollection(info.name).find({}).limit(1).maxTimeMS(5000).hasNext() === false);
                 var indexes = commandRows(db, {listIndexes: info.name, includeBuildUUIDs: true, cursor: {batchSize: 64}, maxTimeMS: 30000}, 64);
                 indexes.forEach(function(index) { require(!index.buildUUID && !index.spec); });
                 indexes.sort(function(a,b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
