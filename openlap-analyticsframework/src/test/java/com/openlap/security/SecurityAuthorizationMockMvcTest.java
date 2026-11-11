@@ -1,6 +1,7 @@
 package com.openlap.security;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -49,6 +50,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
+import jakarta.servlet.http.Cookie;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.TestPropertySource;
@@ -78,11 +85,13 @@ import org.springframework.web.cors.CorsConfiguration;
       com.openlap.admin.controller.AdminAuditController.class,
       com.openlap.admin.controller.AdminContentController.class,
       com.openlap.admin.controller.AdminPluginController.class,
-      com.openlap.content.PublicContentController.class
+      com.openlap.content.PublicContentController.class,
+      SecurityAuthorizationMockMvcTest.CsrfProtectedController.class
     })
 @ImportAutoConfiguration(Jackson2AutoConfiguration.class)
 @Import({
   SecurityConfig.class,
+  SecurityAuthorizationMockMvcTest.CsrfProtectedController.class,
   AuthTokenProperties.class,
   ApiErrorResponseFactory.class,
   ErrorResponseWriter.class,
@@ -172,6 +181,62 @@ public class SecurityAuthorizationMockMvcTest {
         .andExpect(status().isOk())
         .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"));
     org.mockito.Mockito.verifyNoInteractions(tokenService);
+  }
+
+  @Test
+  public void bearerCookiesCannotAuthenticateAnUnsafeApiRequest() throws Exception {
+    mockMvc.perform(post("/v1/admin/content/news")
+            .cookie(new Cookie("access_token", "valid-token"),
+                new Cookie("Authorization", "Bearer valid-token"), new Cookie("JSESSIONID", "old-session"))
+            .contentType(MediaType.APPLICATION_JSON).content("{\"draft\":{\"title\":\"Untrusted\"}}"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("AUTH_REQUIRED"));
+    org.mockito.Mockito.verifyNoInteractions(tokenService, contentService);
+  }
+
+  @Test
+  public void sessionAuthenticationCannotAuthorizeAnUnsafeApiRequestEvenWithValidCsrf() throws Exception {
+    MockHttpSession session = new MockHttpSession();
+    session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+        new SecurityContextImpl(new UsernamePasswordAuthenticationToken("old-admin", null,
+            Collections.singletonList(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN")))));
+    mockMvc.perform(post("/v1/admin/content/news").session(session).with(csrf())
+            .cookie(new Cookie("JSESSIONID", session.getId()))
+            .contentType(MediaType.APPLICATION_JSON).content("{\"draft\":{\"title\":\"Untrusted\"}}"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("AUTH_REQUIRED"));
+    org.mockito.Mockito.verifyNoInteractions(tokenService, contentService);
+  }
+
+  @Test
+  public void bearerApiWritesNeedNoCsrfTokenOrAuthenticationSession() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    com.openlap.content.ContentEntry entry = new com.openlap.content.ContentEntry();
+    entry.setId("csrf-fixture"); entry.setVersion(1); entry.setStatus("DRAFT");
+    entry.setDraft(Collections.singletonMap("title", "Header-authenticated draft"));
+    given(contentService.create(any(), any())).willReturn(entry);
+    org.springframework.test.web.servlet.MvcResult result = mockMvc.perform(post("/v1/admin/content/news")
+            .header(AUTHORIZATION, "Bearer valid-token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"draft\":{\"title\":\"Header-authenticated draft\"}}"))
+        .andExpect(status().isCreated()).andExpect(jsonPath("$.data.id").value("csrf-fixture"))
+        .andReturn();
+    org.assertj.core.api.Assertions.assertThat(result.getRequest().getSession(false)).isNull();
+    org.assertj.core.api.Assertions.assertThat(result.getResponse().getCookie("JSESSIONID")).isNull();
+    org.mockito.Mockito.verify(contentService).create(any(), any());
+  }
+
+  @Test
+  public void unsafeRequestsOutsideTheBearerApiStillRequireCsrfProtection() throws Exception {
+    given(tokenService.verifyToken(any()))
+        .willReturn(new TokenRequest("admin@mail.com", new String[] {"ROLE_SUPER_ADMIN"}, "tok", null));
+    mockMvc.perform(post("/test/csrf-protected").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("AUTH_REQUIRED"));
+    org.mockito.Mockito.verifyNoInteractions(tokenService);
+    mockMvc.perform(post("/test/csrf-protected").header(AUTHORIZATION, "Bearer valid-token").with(csrf()))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.protected").value(true));
   }
 
   @Test
@@ -803,5 +868,13 @@ public class SecurityAuthorizationMockMvcTest {
                 .content("{\"enabled\":false}"))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+  }
+
+  @org.springframework.web.bind.annotation.RestController
+  static class CsrfProtectedController {
+    @org.springframework.web.bind.annotation.PostMapping("/test/csrf-protected")
+    public java.util.Map<String, Boolean> protectedWrite() {
+      return Collections.singletonMap("protected", true);
+    }
   }
 }

@@ -14,15 +14,21 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.NullSecurityContextRepository;
+import org.springframework.security.web.csrf.CsrfException;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
@@ -53,7 +59,23 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(
       HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
     http.authenticationManager(authenticationManager);
-    http.csrf(AbstractHttpConfigurer::disable);
+    // Authentication is exclusively an explicitly supplied Bearer header. Never restore an
+    // authentication from an ambient JSESSIONID cookie or a previously saved session context.
+    http.securityContext(context -> context.securityContextRepository(new NullSecurityContextRepository()));
+    PathPatternRequestMatcher.Builder paths = PathPatternRequestMatcher.withDefaults();
+    RequestMatcher bearerApi = new AndRequestMatcher(paths.matcher("/v1/**"), request -> {
+      String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+      // This exemption does not authenticate the request: CustomAuthorizationFilter still
+      // verifies the JWT and rejects invalid/expired headers before controller execution.
+      return authorization != null && authorization.startsWith("Bearer ");
+    });
+    // Keep CSRF protection for other unsafe requests. These public POSTs accept explicit
+    // credentials/input and issue no authentication cookie; the SPA consumes JSON tokens.
+    http.csrf(csrf -> csrf.ignoringRequestMatchers(
+            bearerApi,
+            paths.matcher(HttpMethod.POST, "/login"),
+            paths.matcher(HttpMethod.POST, "/v1/register"),
+            paths.matcher(HttpMethod.POST, "/v1/register/validate")));
     http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
     http.sessionManagement(session -> session.sessionCreationPolicy(STATELESS));
     http.cors(cors -> cors.configurationSource(corsConfigurationSource));
@@ -106,7 +128,14 @@ public class SecurityConfig {
     // (Rendering only — the authorization rules above are unchanged.)
     http.exceptionHandling(exceptions -> exceptions
         .authenticationEntryPoint(authenticationEntryPoint)
-        .accessDeniedHandler(accessDeniedHandler));
+        .accessDeniedHandler((request, response, denied) -> {
+          if (denied instanceof CsrfException) {
+            authenticationEntryPoint.commence(request, response,
+                new InsufficientAuthenticationException("Authentication is required."));
+          } else {
+            accessDeniedHandler.handle(request, response, denied);
+          }
+        }));
 
     http.addFilter(
         new CustomAuthenticationFilter(
