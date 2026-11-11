@@ -1,0 +1,83 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openlap-plugin-versity-bootstrap
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: plugin-versity-bootstrap
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        # FIRST USE ONLY: select a fresh dedicated claim. Never mount an old application/backup volume.
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: initialize
+        image: ghcr.io/ude-soco/openlap-official-plugin-storage-versity:configure-reviewed-digest
+        args: [--bootstrap-fresh]
+        env:
+        - name: PLUGIN_STORAGE_S3_BUCKET
+          value: ""
+        - name: PLUGIN_STORAGE_S3_REGION
+          value: ""
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: "2"
+            memory: 1Gi
+        volumeMounts:
+        - name: data
+          mountPath: /storage
+        - name: root-credentials
+          mountPath: /run/openlap-root
+          readOnly: true
+        - name: client-credentials
+          mountPath: /run/openlap-client
+          readOnly: true
+        - name: work
+          mountPath: /tmp
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: configure-fresh-dedicated-storage-claim
+      - name: root-credentials
+        secret:
+          secretName: openlap-plugin-storage-root
+          defaultMode: 292
+          items:
+          - key: ROOT_ACCESS_KEY_ID
+            path: ROOT_ACCESS_KEY_ID
+          - key: ROOT_SECRET_ACCESS_KEY
+            path: ROOT_SECRET_ACCESS_KEY
+      - name: client-credentials
+        secret:
+          secretName: openlap-plugin-storage-client
+          defaultMode: 292
+          items:
+          - key: PLUGIN_STORAGE_S3_ACCESS_KEY
+            path: PLUGIN_STORAGE_S3_ACCESS_KEY
+          - key: PLUGIN_STORAGE_S3_SECRET_KEY
+            path: PLUGIN_STORAGE_S3_SECRET_KEY
+      - name: work
+        emptyDir:
+          sizeLimit: 64Mi
