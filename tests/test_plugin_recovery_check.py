@@ -179,6 +179,16 @@ class RunnerTests(unittest.TestCase):
 
 
 class DockerContainmentTests(unittest.TestCase):
+    def test_verified_multicall_executable_keeps_invocation_name(self):
+        with tempfile.TemporaryDirectory(prefix="openlap-public-multicall-") as temporary:
+            root = Path(temporary).resolve(); binary = root / "docker-tools"
+            binary.write_text("#!/bin/sh\nexit 0\n"); binary.chmod(0o700)
+            alias = root / "docker"; alias.symlink_to(binary)
+            output = root / "run"; output.mkdir(mode=0o700)
+            docker = CHECK.Docker({"docker": str(alias), "docker_host": "unix:///synthetic/docker.sock"}, output)
+            self.assertEqual(docker.command[0], str(alias))
+            self.assertNotEqual(docker.command[0], str(binary))
+
     def test_run_is_offline_unprivileged_and_tracks_unique_identity(self):
         docker = CHECK.Docker.__new__(CHECK.Docker)
         docker.token = "openlap-recovery-check-" + "a" * 32; docker.containers = []; docker.journal = lambda: None

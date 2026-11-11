@@ -70,7 +70,7 @@ def prepare(case, count, staging, tools, run, copy_code, mount, capture, snapsho
                "identity_file": str(identity), "receipt": str(receipt), "receipt_sha256": receipt_hash,
                "checkpoint_report_sha256": checkpoint_hash, "artifact_index_sha256": index_hash,
                "snapshot_manifest_sha256": snapshot_hash, "snapshot_label": "objects", "state_directory": str(state),
-               "docker": str(Path(docker[0]).resolve()), "docker_host": endpoint,
+               "docker": str(Path(docker[0]).absolute()), "docker_host": endpoint,
                "checkpoint_image": checkpoint_image, "snapshot_image": snapshot_image,
                "max_bytes": 8388608, "max_files": 1000, "timeout_seconds": 120,
                "max_archive_mib": 8, "max_expanded_mib": 16, "max_restore_mib": 512}

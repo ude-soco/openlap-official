@@ -216,7 +216,14 @@ class Docker:
         self.token = "openlap-recovery-check-" + uuid.uuid4().hex
         self.volumes = []; self.containers = []
         docker_config = output / "docker-config"; docker_config.mkdir(mode=0o700)
-        self.command = [str(physical(Path(options["docker"]).resolve())), "--config", str(docker_config), "--host", options["docker_host"]]
+        executable = Path(options["docker"])
+        require(executable.is_absolute() and str(executable) == os.path.normpath(str(executable))
+                and not any(ord(c) < 32 or ord(c) == 127 for c in str(executable)))
+        physical(executable.resolve())
+        require(os.access(executable, os.X_OK))
+        # Verify the target, but retain the requested argv0: Docker/OrbStack
+        # distributions can dispatch commands through a multicall symlink.
+        self.command = [str(executable), "--config", str(docker_config), "--host", options["docker_host"]]
         self.env = {"PATH": os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin"), "LANG": "C"}
         self.journal()
 
