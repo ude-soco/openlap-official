@@ -7,6 +7,8 @@ import io
 import json
 import os
 from pathlib import Path
+import stat
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -89,6 +91,49 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(path.read_bytes(), original)
         self.assertEqual(path.stat().st_mode & 0o777, 0o400)
         self.assertEqual(self.checkpoint.stat().st_mode & 0o777, 0o500)
+
+    @unittest.skipUnless(sys.platform.startswith("linux"), "Linux preserves the tested special permission bits")
+    def test_only_directory_setgid_is_allowed_in_addition_to_private_modes(self):
+        path = self.publish()
+        for mode in [0o700, 0o500, 0o2700, 0o2500]:
+            with self.subTest(allowed_directory=oct(mode)):
+                self.checkpoint.chmod(mode)
+                self.assertEqual(stat.S_IMODE(self.checkpoint.stat().st_mode), mode)
+                self.assertEqual(self.read()["captureStatus"], "CAPTURED")
+        for mode in [0o4700, 0o1700, 0o6700, 0o3700, 0o2710, 0o2701, 0o2750, 0o2777]:
+            with self.subTest(unsafe_directory=oct(mode)):
+                self.checkpoint.chmod(mode)
+                self.assertEqual(stat.S_IMODE(self.checkpoint.stat().st_mode), mode)
+                with self.assertRaises(report.ReportError): self.read()
+        self.checkpoint.chmod(0o2700)
+        for mode in [0o2600, 0o4600, 0o1600, 0o640, 0o604, 0o700]:
+            with self.subTest(unsafe_file=oct(mode)):
+                path.chmod(mode)
+                self.assertEqual(stat.S_IMODE(path.stat().st_mode), mode)
+                with self.assertRaises(report.ReportError): self.read()
+
+    @unittest.skipUnless(sys.platform.startswith("linux"), "Linux models Kubernetes SGID directory inheritance")
+    def test_actual_producer_private_sgid_directory_is_read_without_repair(self):
+        from test_plugin_preservation import SourceFixture, capture, DIGEST
+        self.root.chmod(0o2700)
+        for empty in [False, True]:
+            with self.subTest(empty=empty):
+                identifier = "producer-empty" if empty else "producer-captured"
+                output = self.root / identifier
+                source = SourceFixture()
+                if empty: source.data = {}
+                with contextlib.redirect_stdout(io.StringIO()):
+                    capture.capture(source, "fixture", [("replica-a", "web"), ("replica-b", "web")],
+                        ("database", "mongo"), "/plugins", "fixture", DIGEST, output)
+                manifest = output / ("capture-review.json" if empty else "preservation.json")
+                self.assertEqual(stat.S_IMODE(output.stat().st_mode), 0o2700)
+                self.assertEqual(stat.S_IMODE(manifest.stat().st_mode), 0o600)
+                before = manifest.read_bytes()
+                result = report.read_report(self.root, identifier)
+                self.assertEqual(result["captureStatus"], "SOURCE_REVIEW_REQUIRED" if empty else "CAPTURED")
+                self.assertEqual(stat.S_IMODE(output.stat().st_mode), 0o2700)
+                self.assertEqual(stat.S_IMODE(manifest.stat().st_mode), 0o600)
+                self.assertEqual(manifest.read_bytes(), before)
 
     def test_strict_schema_and_cross_references(self):
         mutations = [lambda x: x.update(extra="untrusted"),

@@ -52,6 +52,10 @@ def main():
             shutil.copyfile(ROOT / ".k8s/maintenance/plugin-preservation-report" / name, component / name)
         tests = staged / "tests"; tests.mkdir()
         shutil.copyfile(ROOT / "tests/test_plugin_preservation_report.py", tests / "test_plugin_preservation_report.py")
+        shutil.copyfile(ROOT / "tests/test_plugin_preservation.py", tests / "test_plugin_preservation.py")
+        producer = staged / ".k8s/maintenance/plugin-preservation-code"; producer.mkdir()
+        for name in ["capture.py", "client.py"]:
+            shutil.copyfile(ROOT / ".k8s/maintenance/plugin-preservation-code" / name, producer / name)
         for path in [staged, *staged.rglob("*")]:
             path.chmod(0o755 if path.is_dir() else 0o644)
         rendered = manifests(component)
@@ -74,10 +78,14 @@ def main():
                 "--cap-drop=ALL", "--cap-add=CHOWN", "--security-opt=no-new-privileges", "--mount",
                 "type=volume,source=" + volume + ",target=/backup", IMAGE, "python3", "-B", "-c",
                 "import os; os.chmod('/backup',0o700); os.chown('/backup',1000,1000)"], check=True, timeout=60)
-            prepare = ("import sys;from pathlib import Path;sys.path.insert(0,'/verification/tests');"
-                "from test_plugin_preservation_report import ReportTests;fixture=ReportTests();"
-                "fixture.root=Path('/backup');fixture.checkpoint=Path('/backup/sample');"
-                "fixture.checkpoint.mkdir(mode=0o700);fixture.publish(empty=True)")
+            prepare = ("import contextlib,io,os,stat,sys;from pathlib import Path;sys.path.insert(0,'/verification/tests');"
+                "from test_plugin_preservation import SourceFixture,capture,DIGEST;"
+                "os.chmod('/backup',0o2700);fixture=SourceFixture();fixture.data={};"
+                "silence=io.StringIO();"
+                "\nwith contextlib.redirect_stdout(silence):"
+                " capture.capture(fixture,'fixture',[('replica-a','web'),('replica-b','web')],"
+                "('database','mongo'),'/plugins','fixture',DIGEST,Path('/backup/sample'))"
+                "\nassert stat.S_IMODE(Path('/backup/sample').stat().st_mode)==0o2700")
             subprocess.run(command + ["--mount", "type=volume,source=" + volume + ",target=/backup",
                 IMAGE, "python3", "-B", "-c", prepare], check=True, timeout=60)
             result = subprocess.run(command + ["--mount", "type=volume,source=" + volume + ",target=/backup,readonly",
@@ -90,7 +98,7 @@ def main():
             assert summary["emptySourceRootCount"] == 2 and summary["backupBytesVerified"] is False
         finally:
             subprocess.run(["docker", "volume", "rm", volume], check=True, capture_output=True, timeout=20)
-        print("PASS: exact pinned image; UID1000 reader on a genuinely read-only retained-volume fixture, no network/capabilities/backup bytes.")
+        print("PASS: real producer SGID-directory inheritance; UID1000 reader on its genuinely read-only volume, no ownership repair/network/capabilities.")
 
 
 if __name__ == "__main__":
