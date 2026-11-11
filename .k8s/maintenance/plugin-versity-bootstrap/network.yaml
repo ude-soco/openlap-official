@@ -1,0 +1,11 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: openlap-plugin-versity-bootstrap
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: plugin-versity-bootstrap
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress: []

@@ -1,0 +1,32 @@
+name: Preservation metadata reader regressions
+
+on:
+  pull_request:
+    paths:
+    - '.k8s/maintenance/plugin-preservation-report/**'
+    - '.k8s/maintenance/plugin-preservation-code/**'
+    - 'tests/test_plugin_preservation.py'
+    - 'tests/*plugin_preservation_report*.py'
+    - '.github/workflows/plugin-preservation-report.yml'
+  push:
+    branches: [main]
+    paths:
+    - '.k8s/maintenance/plugin-preservation-report/**'
+    - '.k8s/maintenance/plugin-preservation-code/**'
+    - 'tests/test_plugin_preservation.py'
+    - 'tests/*plugin_preservation_report*.py'
+    - '.github/workflows/plugin-preservation-report.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        persist-credentials: false
+    - name: Verify the exact isolated reader image and default-loader manifests
+      run: python3 -B tests/verify_plugin_preservation_report_containers.py

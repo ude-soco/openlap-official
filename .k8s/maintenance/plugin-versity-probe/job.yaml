@@ -1,0 +1,65 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openlap-plugin-versity-probe
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 180
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: plugin-versity-probe
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: probe
+        image: ghcr.io/ude-soco/openlap-official-plugin-storage-versity:configure-reviewed-digest
+        args: [--probe]
+        env:
+        - name: PLUGIN_STORAGE_S3_BUCKET
+          value: ""
+        - name: PLUGIN_STORAGE_S3_REGION
+          value: ""
+        - name: PLUGIN_STORAGE_S3_ENDPOINT
+          value: ""
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: "1"
+            memory: 512Mi
+        volumeMounts:
+        - name: client-credentials
+          mountPath: /run/openlap-client
+          readOnly: true
+        - name: work
+          mountPath: /tmp
+      volumes:
+      - name: client-credentials
+        secret:
+          secretName: openlap-plugin-storage-client
+          defaultMode: 292
+          items:
+          - key: PLUGIN_STORAGE_S3_ACCESS_KEY
+            path: PLUGIN_STORAGE_S3_ACCESS_KEY
+          - key: PLUGIN_STORAGE_S3_SECRET_KEY
+            path: PLUGIN_STORAGE_S3_SECRET_KEY
+      - name: work
+        emptyDir:
+          sizeLimit: 64Mi

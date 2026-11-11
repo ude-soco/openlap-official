@@ -1,0 +1,54 @@
+name: Encrypted plugin release backup regressions
+
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/plugin-release-backup.yml'
+    - 'openlap-analyticsframework/scripts/plugin-release-backup.py'
+    - 'tests/test_plugin_release_backup.py'
+    - 'docs/plugin-release-backup.md'
+  push:
+    branches: [main]
+    paths:
+    - '.github/workflows/plugin-release-backup.yml'
+    - 'openlap-analyticsframework/scripts/plugin-release-backup.py'
+    - 'tests/test_plugin_release_backup.py'
+    - 'docs/plugin-release-backup.md'
+
+permissions:
+  contents: read
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        persist-credentials: false
+    - name: Install checksum-pinned official clients
+      shell: bash
+      run: |
+        set -euo pipefail
+        umask 077
+        tool_dir="$RUNNER_TEMP/plugin-release-backup-tools"
+        mkdir -m 700 "$tool_dir" "$tool_dir/bin"
+        curl --fail --silent --show-error --location --retry 2 --connect-timeout 10 --max-time 120 \
+          https://github.com/FiloSottile/age/releases/download/v1.3.2/age-v1.3.2-linux-amd64.tar.gz \
+          --output "$tool_dir/age.tar.gz"
+        curl --fail --silent --show-error --location --retry 2 --connect-timeout 10 --max-time 120 \
+          https://github.com/rclone/rclone/releases/download/v1.76.0/rclone-v1.76.0-linux-amd64.zip \
+          --output "$tool_dir/rclone.zip"
+        # Official GitHub release asset SHA-256 digests; check before extraction.
+        printf '%s  %s\n' \
+          cbe24006683f8eb669266162894b9a522a1af52f2665fbc63a4bb032ed26ac10 "$tool_dir/age.tar.gz" \
+          b00f00b3266c3764413afe599d3ec316f6f43b3e0ea8a0bc1d186d2133e46df7 "$tool_dir/rclone.zip" \
+          | sha256sum --check --status
+        tar -xzf "$tool_dir/age.tar.gz" -C "$tool_dir" --no-same-owner
+        unzip -q "$tool_dir/rclone.zip" -d "$tool_dir"
+        install -m 700 "$tool_dir/age/age" "$tool_dir/age/age-keygen" "$tool_dir/bin/"
+        install -m 700 "$tool_dir/rclone-v1.76.0-linux-amd64/rclone" "$tool_dir/bin/rclone"
+        printf 'PLUGIN_BACKUP_AGE_BIN=%s\nPLUGIN_BACKUP_RCLONE_BIN=%s\n' \
+          "$tool_dir/bin/age" "$tool_dir/bin/rclone" >> "$GITHUB_ENV"
+    - name: Verify encrypted roundtrip and fail-closed recovery
+      run: python3 -B -m unittest discover -s tests -p test_plugin_release_backup.py -v

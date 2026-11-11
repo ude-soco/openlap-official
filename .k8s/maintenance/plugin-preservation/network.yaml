@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: openlap-plugin-preservation
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: plugin-preservation
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress:
+  # Operator review is required: HTTPS/API ports are allowed, not individual hosts.
+  - ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 6443
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53

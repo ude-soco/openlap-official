@@ -5,6 +5,12 @@ set -euo pipefail
 ulimit -c 0
 umask 077
 export LC_ALL=C
+if [[ $# == 1 && $1 == --rehearse-archive ]]; then
+    exec /bin/bash --noprofile --norc /opt/openlap-checkpoint/rehearse.sh
+fi
+if [[ $# == 1 && $1 == --index-plugin-artifacts ]]; then
+    exec /bin/bash --noprofile --norc /opt/openlap-checkpoint/rehearse.sh --plugin-index
+fi
 fail() { printf '%s\n' "Checkpoint incomplete: $1. Raw client output withheld; any partial checkpoint is retained." >&2; exit 1; }
 [[ $# == 1 && $1 == --checkpoint ]] || fail 'configure the explicit --checkpoint action'
 [[ ${OPENLAP_MONGODB_DB-} =~ ^[A-Za-z][A-Za-z0-9_-]{0,62}$ ]] || fail 'set the explicit primary database name'
