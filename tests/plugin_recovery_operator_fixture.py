@@ -83,7 +83,11 @@ def verify(prepared):
     # network. Remove these host plaintext source copies before independent pull.
     shutil.rmtree(prepared["payload"])
     runner = load("operator_recovery_runner", SCRIPTS / "check-plugin-backup-recovery.py")
-    require(runner.main(["--config", str(prepared["config"])]) == 0)
+    result_code = runner.main(["--config", str(prepared["config"])])
+    if result_code:
+        failures = list(prepared["state"].glob("check-*/recovery-failure.json"))
+        stage = json.loads(failures[0].read_bytes()).get("stage", "unavailable") if len(failures) == 1 else "runner-preflight"
+        raise AssertionError("Generated operator recovery failed during " + stage)
     receipts = list(prepared["state"].glob("check-*/recovery-receipt.json")); require(len(receipts) == 1)
     result = json.loads(receipts[0].read_bytes())
     require(result["status"] == "INDEPENDENT_PLUGIN_RECOVERY_VERIFIED" and result["objectCount"] == prepared["objectCount"])

@@ -293,11 +293,12 @@ class Docker:
 
 def recover(options, output, transport):
     docker = Docker(options, output)
-    completed = False
+    completed = False; stage = "qualified-image-preflight"
     try:
         images = {"checkpoint": docker.image(options["checkpoint_image"]), "snapshot": docker.image(options["snapshot_image"]),
                   "helper": docker.image(HELPER_IMAGE)}
         download = output / "download"
+        stage = "independent-native-retrieval"
         pull = ["pull", "--age", options["age"], "--rclone", options["rclone"], "--rclone-config", options["rclone_config"],
                 "--remote", options["remote"], "--identity-file", options["identity_file"], "--receipt", options["receipt"],
                 "--receipt-sha256", options["receipt_sha256"], "--checkpoint-report-sha256", options["checkpoint_report_sha256"],
@@ -309,6 +310,7 @@ def recover(options, output, transport):
                 and receipt.get("uploadReceiptSha256") == options["receipt_sha256"]
                 and receipt.get("checkpointReportSha256") == options["checkpoint_report_sha256"])
         source = physical(download / "recovered", directory=True, private=True)
+        stage = "retrieved-source-validation"
         before = source_inventory(source, options["max_bytes"] + MIB, options["max_files"])
         snapshot_path = source / "sources" / options["snapshot_label"]
         for filename, expected in (("artifact-index.json", options["artifact_index_sha256"]), ("snapshot.json", options["snapshot_manifest_sha256"])):
@@ -318,16 +320,20 @@ def recover(options, output, transport):
         require(snapshot.get("artifactIndexSha256") == options["artifact_index_sha256"]
                 and snapshot.get("originalCheckpointReportSha256") == options["checkpoint_report_sha256"]
                 and snapshot.get("archiveSha256") == checkpoint.get("archiveSha256"))
+        stage = "fresh-volume-preparation"
         staged, index, storage, identities = [docker.volume(name, images["helper"]) for name in ("staging", "index", "storage", "identities")]
+        stage = "fresh-uid1000-staging"
         copy = docker.run(images["helper"], ["-B", "-c", STAGE, "copy", before[0], str(os.getuid()), str(options["max_bytes"] + MIB), str(options["max_files"])],
                           ["--mount=type=bind,source=" + str(source) + ",target=/source,readonly", docker.mount(staged, "/destination")],
                           user="0:0", capabilities=["DAC_OVERRIDE", "CHOWN"], entrypoint="python3")
         copy_report = json_result(copy, "FRESH_UID1000_COPY_VERIFIED"); require(copy_report.get("sourceMetadataUnchanged") is True)
+        stage = "disposable-local-identity-generation"
         json_result(docker.run(images["helper"], ["-B", "-c", STAGE, "credentials"], [docker.mount(identities, "/control")], entrypoint="python3"),
                     "DISPOSABLE_LOCAL_RECOVERY_IDENTITIES_CREATED")
         env = ["CHECKPOINT_ID=regenerated", "CHECKPOINT_EXPECTED_REPORT_SHA256=" + options["checkpoint_report_sha256"],
                "CHECKPOINT_REPORT_PATH=/inputs/retrieved/checkpoint/checkpoint.json", "CHECKPOINT_ARCHIVE_PATH=/inputs/retrieved/checkpoint/database.archive.gz"]
         for name in ("archive", "expanded", "restore"): env += ["CHECKPOINT_MAX_" + name.upper() + "_MIB=" + str(options["max_" + name + "_mib"])]
+        stage = "isolated-database-rehearsal"
         checked = docker.run(images["checkpoint"], ["--index-plugin-artifacts"], [docker.mount(staged, "/inputs", True), docker.mount(index, "/outputs")],
                              env=env, timeout=600, scratch=str(options["max_restore_mib"] + 256) + "m")
         lines = checked.decode().splitlines()
@@ -336,6 +342,7 @@ def recover(options, output, transport):
         db = json.loads(lines[1]); require(db.get("readyForS3Export") is True and db.get("associationsResolved") is True
                                          and db.get("artifactIndexSha256") == options["artifact_index_sha256"]
                                          and db.get("originalCheckpointReportSha256") == options["checkpoint_report_sha256"])
+        stage = "fresh-object-store-rehearsal"
         restored = docker.run(images["snapshot"], ["--restore-fresh", "/backup/retrieved/sources/" + options["snapshot_label"],
                               options["snapshot_manifest_sha256"], options["artifact_index_sha256"], options["checkpoint_report_sha256"],
                               "/index/regenerated/artifact-index.json"],
@@ -349,11 +356,14 @@ def recover(options, output, transport):
                 and objects.get("artifactIndexSha256") == options["artifact_index_sha256"]
                 and objects.get("originalCheckpointReportSha256") == options["checkpoint_report_sha256"]
                 and objects.get("archiveSha256") == checkpoint.get("archiveSha256"))
+        stage = "unchanged-source-verification"
         require(source_inventory(source, options["max_bytes"] + MIB, options["max_files"]) == before)
+        stage = "backup-freshness-verification"
         release_time = datetime.strptime(receipt["releaseId"].split("-")[0], "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc)
         age_hours = (datetime.now(timezone.utc) - release_time).total_seconds() / 3600
         fresh = 0 <= age_hours <= options["max_backup_age_hours"]
         completed = True
+        stage = "scratch-cleanup-and-receipt"
         cleanup = docker.cleanup(volumes=True)
         report = {"schemaVersion": 1, "status": "INDEPENDENT_PLUGIN_RECOVERY_VERIFIED", "finishedAt": datetime.now(timezone.utc).isoformat(),
                   "uploadReceiptSha256": options["receipt_sha256"], "checkpointReportSha256": options["checkpoint_report_sha256"],
@@ -367,6 +377,12 @@ def recover(options, output, transport):
                   "scope": "Retrieved primary-database/plugin-object recovery only; no fresh live checkpoint, application execution, secondary database or availability verified"}
         publish(output / "recovery-receipt.json", report)
         return report, 0 if fresh and cleanup else 2
+    except (Exception, KeyboardInterrupt):
+        try:
+            publish(output / "recovery-failure.json", {"schemaVersion": 1, "status": "PLUGIN_RECOVERY_CHECK_INCOMPLETE", "stage": stage})
+        except Exception:
+            pass
+        raise
     finally:
         if not completed:
             docker.cleanup(volumes=False)  # Retain failed scratch for a scoped review; never prune other Docker data.
