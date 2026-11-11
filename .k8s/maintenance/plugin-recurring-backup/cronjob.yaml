@@ -1,0 +1,340 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: openlap-plugin-recurring-backup
+spec:
+  schedule: 0 2 * * *
+  timeZone: Etc/UTC
+  suspend: true
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/component: plugin-recurring-backup
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          nodeSelector:
+            kubernetes.io/os: linux
+            kubernetes.io/arch: amd64
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          initContainers:
+          - name: capture
+            image: ghcr.io/ude-soco/openlap-official-plugin-checkpoint:configure-reviewed-digest
+            imagePullPolicy: Always
+            command:
+            - /bin/bash
+            - --noprofile
+            - --norc
+            - /opt/openlap-checkpoint/recurring.sh
+            args:
+            - --capture-online
+            env:
+            - name: BACKUP_POD_UID
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.uid
+            - name: BACKUP_DESTINATION_APPROVED
+              value: 'false'
+            - name: BACKUP_DESTINATION_VALID_UNTIL
+              value: ''
+            - name: BACKUP_MINIMUM_DESTINATION_VALIDITY_SECONDS
+              value: '604800'
+            - name: BACKUP_MAX_BYTES
+              value: '268435456'
+            - name: BACKUP_MAX_FILES
+              value: '2048'
+            - name: BACKUP_TIMEOUT_SECONDS
+              value: '600'
+            - name: BACKUP_WORKSPACE_MAX_BYTES
+              value: '1342177280'
+            - name: BACKUP_SCRATCH_MAX_BYTES
+              value: '805306368'
+            - &id001
+              name: CHECKPOINT_MAX_ARCHIVE_MIB
+              value: '16'
+            - &id002
+              name: CHECKPOINT_MAX_EXPANDED_MIB
+              value: '64'
+            - &id003
+              name: CHECKPOINT_MAX_RESTORE_MIB
+              value: '512'
+            - name: MONGODB_PRIMARY_URI
+              value: ''
+            - name: OPENLAP_MONGODB_DB
+              value: ''
+            - name: CHECKPOINT_SOURCE_HOST
+              value: ''
+            - name: CHECKPOINT_SOURCE_PORT
+              value: '27017'
+            - name: PLUGIN_DELETION_ENABLED
+              value: 'false'
+            - name: CHECKPOINT_REPLICA_SET
+              value: ''
+            securityContext:
+              readOnlyRootFilesystem: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+                ephemeral-storage: 1024Mi
+              limits:
+                cpu: '1'
+                memory: 1Gi
+                ephemeral-storage: 2304Mi
+            volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: scratch
+              mountPath: /tmp
+          - name: index
+            image: ghcr.io/ude-soco/openlap-official-plugin-checkpoint:configure-reviewed-digest
+            imagePullPolicy: Always
+            command:
+            - /bin/bash
+            - --noprofile
+            - --norc
+            - /opt/openlap-checkpoint/recurring.sh
+            args:
+            - --index-online
+            env:
+            - name: BACKUP_POD_UID
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.uid
+            - name: BACKUP_DESTINATION_APPROVED
+              value: 'false'
+            - name: BACKUP_DESTINATION_VALID_UNTIL
+              value: ''
+            - name: BACKUP_MINIMUM_DESTINATION_VALIDITY_SECONDS
+              value: '604800'
+            - name: BACKUP_MAX_BYTES
+              value: '268435456'
+            - name: BACKUP_MAX_FILES
+              value: '2048'
+            - name: BACKUP_TIMEOUT_SECONDS
+              value: '600'
+            - name: BACKUP_WORKSPACE_MAX_BYTES
+              value: '1342177280'
+            - name: BACKUP_SCRATCH_MAX_BYTES
+              value: '805306368'
+            - *id001
+            - *id002
+            - *id003
+            securityContext:
+              readOnlyRootFilesystem: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+                ephemeral-storage: 1024Mi
+              limits:
+                cpu: '1'
+                memory: 1Gi
+                ephemeral-storage: 2304Mi
+            volumeMounts:
+            - name: workspace
+              mountPath: /inputs
+              readOnly: true
+              subPathExpr: run-$(BACKUP_POD_UID)/checkpoints
+            - name: workspace
+              mountPath: /outputs
+              subPathExpr: run-$(BACKUP_POD_UID)/indexes
+            - name: workspace
+              mountPath: /control
+              readOnly: true
+              subPathExpr: run-$(BACKUP_POD_UID)/control
+            - name: scratch
+              mountPath: /tmp
+          - name: export
+            image: ghcr.io/ude-soco/openlap-official-plugin-storage-versity:configure-reviewed-digest
+            imagePullPolicy: Always
+            command:
+            - python3
+            - -B
+            - /opt/openlap-storage/plugin-recurring-export.py
+            args:
+            - --export-recurring-online
+            env:
+            - name: BACKUP_POD_UID
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.uid
+            - name: BACKUP_DESTINATION_APPROVED
+              value: 'false'
+            - name: BACKUP_DESTINATION_VALID_UNTIL
+              value: ''
+            - name: BACKUP_MINIMUM_DESTINATION_VALIDITY_SECONDS
+              value: '604800'
+            - name: BACKUP_MAX_BYTES
+              value: '268435456'
+            - name: BACKUP_MAX_FILES
+              value: '2048'
+            - name: BACKUP_TIMEOUT_SECONDS
+              value: '600'
+            - name: BACKUP_WORKSPACE_MAX_BYTES
+              value: '1342177280'
+            - name: BACKUP_SCRATCH_MAX_BYTES
+              value: '805306368'
+            - name: PLUGIN_STORAGE_S3_ENDPOINT
+              value: ''
+            - name: PLUGIN_STORAGE_S3_BUCKET
+              value: ''
+            - name: PLUGIN_STORAGE_S3_REGION
+              value: ''
+            - name: PLUGIN_DELETION_ENABLED
+              value: 'false'
+            securityContext:
+              readOnlyRootFilesystem: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+                ephemeral-storage: 1024Mi
+              limits:
+                cpu: '1'
+                memory: 1Gi
+                ephemeral-storage: 2304Mi
+            volumeMounts:
+            - name: workspace
+              mountPath: /inputs
+              readOnly: true
+              subPathExpr: run-$(BACKUP_POD_UID)/indexes
+            - name: workspace
+              mountPath: /outputs
+              subPathExpr: run-$(BACKUP_POD_UID)/objects
+            - name: workspace
+              mountPath: /control
+              readOnly: true
+              subPathExpr: run-$(BACKUP_POD_UID)/control
+            - name: client-credentials
+              mountPath: /run/openlap-client
+              readOnly: true
+            - name: scratch
+              mountPath: /tmp
+          containers:
+          - name: uploader
+            image: ghcr.io/ude-soco/openlap-official-plugin-backup-upload:configure-reviewed-digest
+            imagePullPolicy: Always
+            command:
+            - /opt/plugin-backup/entrypoint.sh
+            args:
+            - --upload-recurring-online
+            env:
+            - name: BACKUP_POD_UID
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.uid
+            - name: BACKUP_DESTINATION_APPROVED
+              value: 'false'
+            - name: BACKUP_DESTINATION_VALID_UNTIL
+              value: ''
+            - name: BACKUP_MINIMUM_DESTINATION_VALIDITY_SECONDS
+              value: '604800'
+            - name: BACKUP_MAX_BYTES
+              value: '268435456'
+            - name: BACKUP_MAX_FILES
+              value: '2048'
+            - name: BACKUP_TIMEOUT_SECONDS
+              value: '600'
+            - name: BACKUP_WORKSPACE_MAX_BYTES
+              value: '1342177280'
+            - name: BACKUP_SCRATCH_MAX_BYTES
+              value: '805306368'
+            - name: BACKUP_REMOTE
+              value: ''
+            - name: BACKUP_RECIPIENT
+              value: ''
+            - name: PLUGIN_DELETION_ENABLED
+              value: 'false'
+            securityContext:
+              readOnlyRootFilesystem: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+                ephemeral-storage: 1024Mi
+              limits:
+                cpu: '1'
+                memory: 512Mi
+                ephemeral-storage: 2304Mi
+            volumeMounts:
+            - name: workspace
+              mountPath: /checkpoint
+              readOnly: true
+              subPathExpr: run-$(BACKUP_POD_UID)/checkpoints
+            - name: workspace
+              mountPath: /indexes
+              readOnly: true
+              subPathExpr: run-$(BACKUP_POD_UID)/indexes
+            - name: workspace
+              mountPath: /sources
+              readOnly: true
+              subPathExpr: run-$(BACKUP_POD_UID)/objects
+            - name: workspace
+              mountPath: /outputs
+              subPathExpr: run-$(BACKUP_POD_UID)/encrypted
+            - name: workspace
+              mountPath: /control
+              readOnly: true
+              subPathExpr: run-$(BACKUP_POD_UID)/control
+            - name: upload-credentials
+              mountPath: /run/plugin-backup-config
+              readOnly: true
+            - name: scratch
+              mountPath: /tmp
+          volumes:
+          - name: workspace
+            emptyDir:
+              sizeLimit: 1280Mi
+          - name: scratch
+            emptyDir:
+              sizeLimit: 768Mi
+          - name: client-credentials
+            secret:
+              secretName: openlap-plugin-storage-client
+              defaultMode: 292
+              items:
+              - key: PLUGIN_STORAGE_S3_ACCESS_KEY
+                path: PLUGIN_STORAGE_S3_ACCESS_KEY
+              - key: PLUGIN_STORAGE_S3_SECRET_KEY
+                path: PLUGIN_STORAGE_S3_SECRET_KEY
+          - name: upload-credentials
+            secret:
+              secretName: openlap-plugin-backup-upload
+              defaultMode: 292
+              items:
+              - key: RCLONE_CONFIG_BASE64
+                path: rclone.conf.b64
