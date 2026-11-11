@@ -52,11 +52,13 @@ IAM and bucket metadata before publishing its installation marker. The actual
 filesystem must support owner access, user xattrs, atomic publication, locks and
 directory fsync.
 
-Keep `PLUGIN_DELETION_ENABLED=false` for this option until durable deletion has
-been separately established. The current application uses this flag to gate
-logical removal and restore as well as physical deletion, so those operations
-are unavailable in this initial release. Uploads and version management remain
-available, and existing versions are retained. Deleting the probe's unregistered
+Keep `PLUGIN_DELETION_ENABLED=false` for this option until durable physical
+deletion has been separately established. After every writer runs the guarded
+S3 implementation and recovery acceptance passes, explicitly set
+`PLUGIN_REMOVAL_ENABLED=true` to enable reversible catalog removal and restore
+while retaining all stored JARs. Uploads and version management remain available.
+Logical removal, resume and restore keep their reference fences, recovery windows
+and artifact-tombstone checks. Deleting the probe's unregistered
 synthetic object tests API cleanup; it does not prove durable physical purge
 after a node or filesystem failure.
 

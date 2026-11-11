@@ -45,7 +45,8 @@ const PluginRecoveryControl = ({ kind, onChanged }) => {
       <DialogContent dividers><Stack gap={2}>
         {busy && <LinearProgress aria-label="Loading recovery records" />}
         {error && <Alert severity="error" role="alert">{error}</Alert>}
-        {data?.available === false && <Alert severity="info">Recovery and cleanup are disabled until the deployment maintainer completes the guarded rollout.</Alert>}
+        {data?.available === false && <Alert severity="info">Logical removal and recovery are disabled until the deployment maintainer completes the guarded rollout.</Alert>}
+        {data?.cleanupAvailable === false && <Alert severity="info">Physical artifact deletion is disabled. Removed entries can still be recovered when recovery is enabled; their stored JARs are retained.</Alert>}
         {data?.entries?.length === 0 && <Typography color="text.secondary">No removed entries found.</Typography>}
         <List disablePadding>{(data?.entries || []).map((entry) => <ListItem key={entry.id} divider disableGutters sx={{ display: "block" }}>
           <Typography fontWeight={600}>{entry.name}</Typography>
@@ -58,6 +59,7 @@ const PluginRecoveryControl = ({ kind, onChanged }) => {
         <Divider />
         <Box><Button disabled={busy} onClick={reviewCleanup}>Review artifact retention cleanup</Button></Box>
         {cleanup && <>
+          {cleanup.available === false && data?.cleanupAvailable !== false && <Alert severity="info">Physical artifact deletion is disabled for this deployment.</Alert>}
           <Alert severity="info">Only artifacts older than {cleanup.retentionDays} days with no protected catalog entries, saves or pending installations can be cleaned. Removed catalog records and version history are retained.</Alert>
           <Typography>{eligible.length} {eligible.length === 1 ? "artifact is" : "artifacts are"} currently eligible.</Typography>
           <List dense disablePadding sx={{ maxHeight: 250, overflow: "auto" }}>{cleanup.artifacts.map((item) => <ListItem key={item.id} disableGutters sx={{ display: "block" }}>
@@ -65,7 +67,7 @@ const PluginRecoveryControl = ({ kind, onChanged }) => {
             <Typography variant="caption" color="text.secondary">{item.eligible ? "Eligible for cleanup" : item.reason} · {(item.sizeBytes / 1024 / 1024).toFixed(2)} MiB</Typography>
           </ListItem>)}</List>
           {eligible.length > 0 && <>
-            <FormControlLabel control={<Checkbox checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} disabled={busy} />} label="Permanently delete eligible stored JARs. This cannot be undone." />
+            <FormControlLabel control={<Checkbox checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} disabled={busy || !cleanup.available} />} label="Permanently delete eligible stored JARs. This cannot be undone." />
             <Box><Button variant="contained" color="error" disabled={busy || !confirmed || !cleanup.available} onClick={purge}>Clean expired artifacts</Button></Box>
           </>}
         </>}

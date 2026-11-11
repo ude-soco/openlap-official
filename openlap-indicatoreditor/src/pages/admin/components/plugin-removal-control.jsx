@@ -50,7 +50,7 @@ const PluginRemovalControl = ({ kind, id, disabled, removed, onChanged }) => {
         {busy && <LinearProgress aria-label="Checking plugin references and updating catalog" />}
         {error && <Alert severity="error" role="alert">{error}</Alert>}
         {preview && <>
-          {!preview.available && <Alert severity="info">Removal is disabled for this deployment until the deployment maintainer completes the guarded rollout.</Alert>}
+          {!preview.available && <Alert severity="info">Logical removal and recovery are disabled for this deployment until the deployment maintainer completes the guarded rollout.</Alert>}
           <Typography variant="subtitle1" fontWeight={600}>{preview.name}</Typography>
           <Typography variant="body2">The following entries are affected:</Typography>
           <List dense disablePadding>{((preview.removed || restoring || pending) ? preview.operation.affected : preview.affected).map((entry) => <ListItem key={entry.key} disableGutters><ListItemText primary={entry.name} secondary={entry.kind.replaceAll("_", " ").toLowerCase()} /></ListItem>)}</List>
@@ -58,7 +58,7 @@ const PluginRemovalControl = ({ kind, id, disabled, removed, onChanged }) => {
           {preview.inFlightWrites > 0 && <Alert severity="warning">{preview.inFlightWrites} save reservations are unfinished. Removal stays blocked until they are resolved.</Alert>}
           {!preview.removed && !pending && !restoring && !preview.canRemove && <Typography variant="body2" color="text.secondary">Use Disable to retire an entry while preserving saved work. Drafts and pending operations are checked separately from dashboard usage counts.</Typography>}
           {preview.sharedArtifactEntries > 0 && <Alert severity="info">{preview.sharedArtifactEntries} other catalog entries share this JAR. Removing these entries never deletes their shared binary.</Alert>}
-          {preview.removed || restoring ? <Alert severity="info">Recovery is available until {new Date(preview.operation.recoverableUntil).toLocaleString()}. Restored entries start disabled.</Alert> : <Typography variant="body2" color="text.secondary">Recovery records and JARs are retained for at least {preview.retentionDays} days. Expired bytes are cleaned only after another reference check.</Typography>}
+          {preview.removed || restoring ? <Alert severity="info">The recovery window ends {new Date(preview.operation.recoverableUntil).toLocaleString()}. Restored entries start disabled.</Alert> : <Typography variant="body2" color="text.secondary">Recovery records and JARs are retained for at least {preview.retentionDays} days. Physical artifact cleanup requires separate approval and another reference check.</Typography>}
           {preview.canRemove && <FormControlLabel control={<Checkbox checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} disabled={busy} />} label="Remove the listed entries from the catalog." />}
         </>}
       </Stack></DialogContent>

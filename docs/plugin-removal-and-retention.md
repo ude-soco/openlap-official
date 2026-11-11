@@ -37,11 +37,32 @@ history exists after a configuration change back to local mode.
 
 ## Deployment gate
 
-Keep `PLUGIN_DELETION_ENABLED=false` (the default) during the application rollout.
+Keep `PLUGIN_REMOVAL_ENABLED=false` during the application rollout.
 Enable it only after **every backend that writes indicators, drafts, cards or
 installation reviews runs the new reference guards in S3 mode**. The guards run
 in S3 mode even while removal is disabled. An older writer can bypass them, so
 rollback to an older image requires disabling removal and draining writers first.
+
+`PLUGIN_REMOVAL_ENABLED=true` permits reversible catalog removal, resume and
+restore. It does not permit remote object deletion. Keep the separate
+`PLUGIN_DELETION_ENABLED=false` unless the provider's durable physical deletion
+has been qualified and cleanup is separately approved. Cleanup requires both
+gates, S3 storage and the existing reference/retention review. The API reports
+logical recovery and physical cleanup availability separately, and the admin
+controls show the distinction.
+
+`GET /v1/admin/plugins/removed` reports logical recovery as `available` and
+physical cleanup as `cleanupAvailable`. The cleanup review's own `available`
+field also reflects the physical gate; candidate eligibility alone never permits
+deletion.
+
+Both gates are false by default. For compatibility, when `PLUGIN_REMOVAL_ENABLED`
+is absent it inherits the effective `PLUGIN_DELETION_ENABLED` setting; existing
+deployments that enabled the old combined gate keep their behavior. Explicitly
+set both flags on every replica to select independent behavior. For example,
+`PLUGIN_REMOVAL_ENABLED=true` with `PLUGIN_DELETION_ENABLED=false` enables logical
+recovery while retaining every stored artifact. Do not enable either gate until
+its rollout and recovery requirements are met.
 
 `PLUGIN_RETENTION_DAYS` defaults to `30` and must be positive. Keep it consistent
 across replicas and stable during recovery. A changed setting changes the recovery
