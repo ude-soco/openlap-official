@@ -40,7 +40,7 @@ jobs:
             openlap-analyticsframework/scripts/plugin-backup-upload-entrypoint.sh \
             openlap-analyticsframework/scripts/plugin-recurring-backup.py \
             openlap-analyticsframework/scripts/plugin-recurring-export.py \
-            openlap-analyticsframework/scripts/plugin-recurring-record.py \
+            scripts/plugin-recurring-record.py \
             "$RUNNER_TEMP/backup-upload-context/"
 
       - name: Set up Docker Buildx

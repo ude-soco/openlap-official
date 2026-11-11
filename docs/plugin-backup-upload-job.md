@@ -191,7 +191,7 @@ python3 -B tests/verify_plugin_backup_upload_image.py --image LOCAL_SHA256_IMAGE
 The exact-image verifier uses allowlisted synthetic read-only mounts, a projected
 base64 key, a disposable local rclone alias, UID 1000, a read-only root and no
 network. No provider account, operator config/identity or browser profile is used.
-# Fresh capture compositions
+## Fresh capture compositions
 
 Two optional public compositions reuse the checkpoint, snapshot and native
 uploader runtimes. Neither is selected by the application base.
