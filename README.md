@@ -31,7 +31,7 @@ Download and install the following software:
   - Preferred to install Node Version Manager (NVM) for [Ubuntu](https://tecadmin.net/how-to-install-nvm-on-ubuntu-22-04/)/[Windows](https://github.com/coreybutler/nvm-windows/releases).
   - Open a terminal and then type `nvm install 20.17.0` to install Node.js v20.17.0
   - Then type `nvm use 20.17.0` to use the Node.js v20.17.0 to install node packages
-- [Java 11](https://www.oracle.com/java/technologies/javase/jdk11-archive-downloads.html)
+- Java 17 or newer; [Amazon Corretto 25 LTS](https://docs.aws.amazon.com/corretto/latest/corretto-25-ug/downloads-list.html) is recommended for the backend.
 - Preferred IDE IntelliJ Ultimate [Ubuntu](https://www.golinuxcloud.com/install-maven-ubuntu/)/[Windows](https://www.jetbrains.com/de-de/idea/download/#section=windows)
 - Maven (latest) on [Ubuntu](https://www.golinuxcloud.com/install-maven-ubuntu/)/[Windows](https://phoenixnap.com/kb/install-maven-windows)
 - MongoDB Community Server (latest) [Ubuntu](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/#install-mongodb-community-edition)/[Windows](https://www.mongodb.com/try/download/community). Additionally, install MongoDB Compass [Ubuntu](https://www.mongodb.com/try/download/shell)/[Windows](https://www.mongodb.com/try/download/compass)

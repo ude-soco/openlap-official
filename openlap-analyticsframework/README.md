@@ -1,12 +1,30 @@
 # OpenLAP Analytics Framework (Backend)
 
-Spring Boot 2.1 backend for the Open Learning Analytics Platform (OpenLAP).
+Spring Boot 4.0 backend for the Open Learning Analytics Platform (OpenLAP).
 It exposes a REST API (served under `/api`) backed by two MongoDB databases.
 
 - **Build tool:** Maven (wrapper included — no global Maven needed)
-- **Java:** 11
+- **Java:** 17 minimum; Corretto 25 LTS is used for the runtime and qualification
 - **Main class:** `com.openlap.AnalyticsFramework`
 - **Default port:** `8090` (context path `/api`)
+
+
+The backend uses Spring Boot 4.0's supported maintenance line and compiles to Java 17
+bytecode. Container builds use a pinned JDK 25 builder and retain Corretto 25 LTS at
+runtime. This avoids moving production onto a short-lived Java feature release.
+
+Existing API and plugin JSON contracts use Boot's Jackson 2 compatibility module.
+HTTP and WebSocket converters explicitly prefer Jackson 2, and both Jackson families
+use aligned, patched BOMs. The bridge is deprecated upstream; a future Jackson 3
+migration must preserve the persisted data and external plugin contracts before it
+can replace this configuration.
+
+Legacy C3 plugins still require `javafx.util.Pair`. The backend includes stable
+`javafx-base` for that binary API, without the unused GUI controls and graphics
+modules. Both Mongo templates explicitly retain legacy string storage for decimal
+and large-integer values and annotation-based index creation; this upgrade does not
+convert existing records. Plugin qualification runs the historical generators against the packaged
+application, in addition to the unit and authorization tests.
 
 ---
 
@@ -14,7 +32,7 @@ It exposes a REST API (served under `/api`) backed by two MongoDB databases.
 
 ## Requirements
 
-- **Java 11** (e.g. Amazon Corretto 11) — must be the active JDK
+- **Java 17 or newer** — Java 25 LTS is recommended and used by the container build
 - **Docker Desktop** (for MongoDB)
 - **Visual Studio Code**
 - **Extension Pack for Java** (the workspace also recommends the Spring Boot and Docker extensions — VS Code will prompt you)
@@ -445,9 +463,10 @@ Run the file, real-JAR version isolation, deletion and authorization regressions
 - **MongoDB not running / connection refused** — ensure `docker compose up -d mongo` is running and
   `localhost:27017` is reachable (`docker ps` should show `...-mongo-1` as healthy). The app needs Mongo
   up before it starts.
-- **Wrong Java version** — the build/run requires **Java 11**. Check with `java -version` and
-  `./mvnw -version`. If a newer JDK is the default, point `JAVA_HOME` at a JDK 11
-  (macOS: `export JAVA_HOME=$(/usr/libexec/java_home -v 11)`).
+- **Wrong Java version** — the build/run requires **Java 17 or newer**. Check with
+  `java -version` and `./mvnw -version`. Java 11 is no longer supported. Point
+  `JAVA_HOME` at a supported JDK; Java 25 LTS matches the qualified container runtime
+  (macOS: `export JAVA_HOME=$(/usr/libexec/java_home -v 25)`).
 - **Port already in use** — if `8090` (app) or `27017` (Mongo) is taken, free the port or override it
   (`PORT` for the app; edit the Mongo `ports` mapping in `compose.yaml`).
 - **Missing Maven** — not an issue anymore: use the bundled wrapper `./mvnw` (Windows: `mvnw.cmd`).
