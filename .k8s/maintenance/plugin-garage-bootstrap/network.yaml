@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: openlap-plugin-storage-bootstrap
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: openlap-official
+      app.kubernetes.io/component: openlap-plugin-storage-bootstrap
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: openlap-official
+          app.kubernetes.io/component: openlap-plugin-storage
+    ports:
+    - {protocol: TCP, port: 3903}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}

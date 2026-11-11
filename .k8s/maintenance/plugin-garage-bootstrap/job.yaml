@@ -1,0 +1,76 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openlap-plugin-storage-bootstrap
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 180
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: openlap-official
+        app.kubernetes.io/component: openlap-plugin-storage-bootstrap
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: bootstrap
+        image: python@sha256:e064671ca452259bab50e8e2c7bd896e39e9a343bb06ca25234adf6fe18d0fc7
+        command: [python3, -B, /bootstrap/bootstrap.py]
+        env:
+        - name: GARAGE_ADMIN_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: openlap-plugin-storage
+              key: GARAGE_ADMIN_ENDPOINT
+        - name: PLUGIN_STORAGE_S3_BUCKET
+          valueFrom:
+            configMapKeyRef:
+              name: openlap-plugin-storage
+              key: PLUGIN_STORAGE_S3_BUCKET
+        - name: PLUGIN_STORAGE_MAX_BYTES
+          valueFrom:
+            configMapKeyRef:
+              name: openlap-plugin-storage
+              key: PLUGIN_STORAGE_MAX_BYTES
+              optional: true
+        - name: PLUGIN_STORAGE_MAX_OBJECTS
+          valueFrom:
+            configMapKeyRef:
+              name: openlap-plugin-storage
+              key: PLUGIN_STORAGE_MAX_OBJECTS
+              optional: true
+        - name: GARAGE_ADMIN_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: openlap-plugin-storage-server
+              key: GARAGE_ADMIN_TOKEN
+        - name: PLUGIN_STORAGE_S3_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openlap-plugin-storage-client
+              key: PLUGIN_STORAGE_S3_ACCESS_KEY
+        - name: PLUGIN_STORAGE_S3_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openlap-plugin-storage-client
+              key: PLUGIN_STORAGE_S3_SECRET_KEY
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests: {cpu: 25m, memory: 32Mi}
+          limits: {cpu: 200m, memory: 64Mi}
+        volumeMounts:
+        - {name: bootstrap, mountPath: /bootstrap, readOnly: true}
+      volumes:
+      - name: bootstrap
+        configMap: {name: openlap-plugin-storage-bootstrap}
