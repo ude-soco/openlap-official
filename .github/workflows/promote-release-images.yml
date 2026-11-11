@@ -1,0 +1,56 @@
+name: Promote reviewed release images
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation_version:
+        description: 'Type 0.0.6 to publish the reviewed image digests as stable tags'
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stable-image-promotion
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: github.ref == 'refs/heads/main' && github.repository == 'ude-soco/openlap-official'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout reviewed release plan
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Check promotion guards without registry access
+        run: python3 -B tests/test_release_image_promotion.py
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Promote and verify exact reviewed manifests
+        env:
+          CONFIRMATION_VERSION: ${{ inputs.confirmation_version }}
+        run: python3 -B scripts/promote-release-images.py
+
+      - name: Retain immutable promotion evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-image-promotion-0.0.6
+          path: release-image-promotion.json
+          if-no-files-found: error
+          retention-days: 30
