@@ -26,7 +26,7 @@ SCRIPT = Path(__file__).resolve()
 HELPER_IMAGE = "python@sha256:e064671ca452259bab50e8e2c7bd896e39e9a343bb06ca25234adf6fe18d0fc7"
 REQUIRED = {"age", "rclone", "rclone_config", "remote", "identity_file", "receipt", "receipt_sha256",
             "checkpoint_report_sha256", "artifact_index_sha256", "snapshot_manifest_sha256", "snapshot_label",
-            "state_directory", "docker", "docker_host", "checkpoint_image", "snapshot_image"}
+            "state_directory", "docker", "docker_host", "checkpoint_image", "snapshot_image", "recovery_point_at"}
 DEFAULTS = {"max_bytes": 2 * 1024 * MIB, "max_files": 10000, "timeout_seconds": 900,
             "max_backup_age_hours": 26, "max_archive_mib": 256, "max_expanded_mib": 1024,
             "max_restore_mib": 1024}
@@ -115,6 +115,11 @@ def digest(value):
     return value
 
 
+def utc_time(value):
+    require(isinstance(value, str) and re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,6})?(?:Z|\+00:00)", value))
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
 def physical(value, directory=False, private=False):
     path = Path(value)
     require(path.is_absolute() and str(path) == os.path.normpath(str(path))
@@ -155,6 +160,7 @@ def config(path):
         require(isinstance(result[key], str) and len(result[key]) <= 4096)
     for key in ("receipt_sha256", "checkpoint_report_sha256", "artifact_index_sha256", "snapshot_manifest_sha256"):
         digest(result[key])
+    utc_time(result["recovery_point_at"])
     require(re.fullmatch(r"[a-z][a-z0-9_-]{0,31}", result["snapshot_label"]))
     require(isinstance(result["docker_host"], str) and result["docker_host"].startswith("unix:///")
             and not any(ord(c) < 33 or ord(c) == 127 for c in result["docker_host"]))
@@ -378,8 +384,13 @@ def recover(options, output, transport):
         require(source_inventory(source, options["max_bytes"] + MIB, options["max_files"]) == before)
         stage = "backup-freshness-verification"
         release_time = datetime.strptime(receipt["releaseId"].split("-")[0], "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc)
-        age_hours = (datetime.now(timezone.utc) - release_time).total_seconds() / 3600
-        fresh = 0 <= age_hours <= options["max_backup_age_hours"]
+        recovery_time = utc_time(options["recovery_point_at"]); now = datetime.now(timezone.utc)
+        # Native release IDs have whole-second resolution; tolerate only that
+        # truncation when comparing a trusted microsecond recovery timestamp.
+        chronology = recovery_time.timestamp() < release_time.timestamp() + 1 and release_time <= now
+        data_age = (now - recovery_time).total_seconds() / 3600
+        upload_age = (now - release_time).total_seconds() / 3600
+        fresh = chronology and 0 <= data_age <= options["max_backup_age_hours"] and 0 <= upload_age <= options["max_backup_age_hours"]
         completed = True
         stage = "scratch-cleanup-and-receipt"
         cleanup = docker.cleanup(volumes=True)
@@ -392,6 +403,7 @@ def recover(options, output, transport):
                   "objectCount": objects.get("objectCount"), "sourceMetadataUnchanged": True,
                   "dockerSourceProjectionUid": copy_report.get("sourceProjectionUid"), "dockerScratchCleanupComplete": cleanup,
                   "backupFreshnessWithinPolicy": fresh, "maximumBackupAgeHours": options["max_backup_age_hours"],
+                  "trustedRecoveryPointAt": options["recovery_point_at"],
                   "scope": "Retrieved primary-database/plugin-object recovery only; no fresh live checkpoint, application execution, secondary database or availability verified"}
         publish(output / "recovery-receipt.json", report)
         return report, 0 if fresh and cleanup else 2

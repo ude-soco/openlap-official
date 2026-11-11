@@ -39,7 +39,7 @@ def clients(directory, run, image, staging, token, containers):
 
 
 def prepare(case, count, staging, tools, run, copy_code, mount, capture, snapshot, transport_image,
-            checkpoint_image, snapshot_image, checkpoint_hash, index_hash, snapshot_hash, docker, endpoint):
+            checkpoint_image, snapshot_image, checkpoint_hash, index_hash, snapshot_hash, docker, endpoint, recovery_point):
     transport = load("operator_fixture_transport", SCRIPTS / "plugin-release-backup.py")
     root = staging.resolve() / ("operator-native-" + case); root.mkdir(mode=0o700)
     payload = root / "payload"; payload.mkdir(mode=0o700)
@@ -69,6 +69,7 @@ def prepare(case, count, staging, tools, run, copy_code, mount, capture, snapsho
     options = {"age": str(tools / "age"), "rclone": str(tools / "rclone"), "rclone_config": str(profile), "remote": "fixture:releases",
                "identity_file": str(identity), "receipt": str(receipt), "receipt_sha256": receipt_hash,
                "checkpoint_report_sha256": checkpoint_hash, "artifact_index_sha256": index_hash,
+               "recovery_point_at": recovery_point,
                "snapshot_manifest_sha256": snapshot_hash, "snapshot_label": "objects", "state_directory": str(state),
                "docker": str(Path(docker[0]).absolute()), "docker_host": endpoint,
                "checkpoint_image": checkpoint_image, "snapshot_image": snapshot_image,

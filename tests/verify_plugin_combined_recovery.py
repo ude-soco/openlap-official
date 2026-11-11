@@ -4,6 +4,7 @@ Only public sources, generated identities and task-owned Docker volumes enter
 this fixture. No operator configuration, account endpoint or browser is read.
 """
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import importlib.util
 import json
@@ -281,6 +282,7 @@ def main():
                 java("CombinedPluginRecoveryFixture", ["--prepare-source", case], [mount(control, "/control")], source_net)
                 run(["run", "--rm", "--network=" + source_net, "--user=1000:1000", mount(control, "/control", True), *sources,
                      "--entrypoint=mongo", checkpoint_image, "--norc", "--quiet", "--host=source-mongo", "/fixture/plugin_combined_seed.js"], "generated database records")
+                generated_freeze_time = datetime.now(timezone.utc).isoformat()
                 captured = run(["run", "--rm", "--network=" + source_net, *checkpoint_common, mount(captures, "/outputs"),
                                 "--env=MONGODB_PRIMARY_URI=mongodb://source-mongo:27017/plugin_recovery_fixture", "--env=OPENLAP_MONGODB_DB=plugin_recovery_fixture",
                                 "--env=CHECKPOINT_SOURCE_HOST=source-mongo", "--env=CHECKPOINT_SOURCE_PORT=27017", "--env=CHECKPOINT_FREEZE_EVIDENCE=generated-writers-stopped",
@@ -296,7 +298,7 @@ def main():
                 if operator_fixture:
                     operator_case = operator_fixture.prepare(case, snapshot["objectCount"], staging, operator_tools, run, COPY, mount,
                         captures, snapshots, transport_image, checkpoint_image, snapshot_image, report_sha,
-                        original["artifactIndexSha256"], snapshot["manifestSha256"], docker, endpoint)
+                        original["artifactIndexSha256"], snapshot["manifestSha256"], docker, endpoint, generated_freeze_time)
                 print("PASS: " + case + " actual checkpoint, verified index and object export", flush=True)
                 operator, custody, remote = [volume(case + "-" + suffix, 501) for suffix in ["operator", "custody", "remote"]]
                 copied = run(["run", "--rm", "--network=none", "--user=0:0", "--cap-drop=ALL", "--cap-add=DAC_OVERRIDE", "--cap-add=CHOWN", "--read-only",

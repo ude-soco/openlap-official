@@ -29,6 +29,7 @@ class RunnerTests(unittest.TestCase):
         self.options = {key: "/synthetic/" + key for key in CHECK.REQUIRED}
         self.options.update(CHECK.DEFAULTS)
         self.options.update({"snapshot_label": "objects", "remote": "fixture:releases", "docker_host": "unix:///synthetic/docker.sock",
+                             "recovery_point_at": (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat(),
                              "checkpoint_image": "ghcr.io/ude-soco/openlap-official-plugin-checkpoint@sha256:" + "1" * 64,
                              "snapshot_image": "ghcr.io/ude-soco/openlap-official-plugin-storage-versity@sha256:" + "2" * 64,
                              "receipt_sha256": "3" * 64, "state_directory": str(self.root)})
@@ -149,6 +150,16 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertTrue(report["isolatedDatabaseRestoreVerified"])
         self.assertFalse(report["backupFreshnessWithinPolicy"])
+
+    def test_fresh_upload_of_old_checkpoint_is_not_fresh_backup(self):
+        self.options["recovery_point_at"] = (datetime.now(timezone.utc) - timedelta(days=3)).isoformat()
+        report, code = self.run_recovery()
+        self.assertEqual(code, 2)
+        self.assertFalse(report["backupFreshnessWithinPolicy"])
+
+    def test_recovery_time_requires_explicit_utc(self):
+        self.options["recovery_point_at"] = "2026-11-11T01:00:00"
+        with self.assertRaises(CHECK.RecoveryError): CHECK.config(self.config_file())
 
     def test_source_inventory_rejects_links_and_group_access(self):
         source = self.root / "source"; source.mkdir(mode=0o700)

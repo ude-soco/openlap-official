@@ -183,6 +183,15 @@ the encryption identity and its recovery copy outside the application cluster.
 The rclone profile must still be valid for the approved off-node destination.
 A successful check today does not extend a share's expiry.
 
+Set `recovery_point_at` to the original trusted recovery-point time in UTC
+(`2026-01-01T02:00:00Z` or an explicit `+00:00` offset). Bind that time to the
+same checkpoint report hash in the independently retained operational record.
+For frozen V1 checkpoints use the verified writer-freeze time; an upload date
+does not establish when the captured state was current. The tool checks the age
+of both this recovery point and the upload, including their chronology. Uploading
+an old checkpoint again cannot satisfy the freshness policy. This external
+timestamp is a trust input, not proof manufactured from a retrieved file.
+
 Use already qualified checkpoint and snapshot images. Preload their exact
 Linux amd64 references before the check; the runner never pulls or builds an
 image. A full local `sha256:IMAGE_ID` is supported when a verified image archive
