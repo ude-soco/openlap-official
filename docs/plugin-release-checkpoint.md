@@ -161,3 +161,103 @@ roundtrip in the tested runtime. It does not prove where the copy was held,
 ongoing off-node custody/retention, a current source freeze, required S3 object
 recovery, replacement infrastructure, application acceptance or availability.
 Those remain separate release gates; this action never restores a live database.
+
+## Project a trusted checkpoint's plugin artifact index
+
+The explicit `--index-plugin-artifacts` action uses the same inputs and isolated
+restore as `--rehearse-archive`, then produces a private `artifact-index.json`
+sidecar. Default capture/rehearsal actions and their report schemas are unchanged.
+No source database connection, S3 client, credential, API identity or external
+network access is accepted by this action. Select the reviewed checkpoint image
+and change only the optional rehearsal Job's action to `--index-plugin-artifacts`.
+Keep the same independently trusted original report SHA and read-only input files.
+
+The projection starts only after the strict original report/archive checks and
+the complete isolated restore/fingerprint comparison pass. It reads the restored
+database, never an unbound live catalog. A second full database snapshot must
+match the pre-projection snapshot before publication, including all collection
+content, ordered IDs, indexes and options. The operation never changes database
+records, attaches artifact references, imports factory entries or repairs state.
+
+Success retains the existing `rehearsal.json` plus `artifact-index.json`, both
+mode 0600. The fresh result directory has private 0700 permissions, with optional
+inherited SGID (02700) below an fsGroup-prepared claim. No retained permissions or
+ownership are changed. The sidecar is published last; failure or late report
+output failure removes this run's completed reports and leaves no completed index
+to accept. Existing results and input bytes are never overwritten.
+
+The sidecar is deterministic UTF-8 JSON plus a newline:
+
+| Field | Contract |
+| --- | --- |
+| `schemaVersion` / `projectionPolicy` | `1` / `OPENLAP_PLUGIN_ARTIFACT_INDEX_V1` |
+| `status` | `CHECKPOINT_PLUGIN_ARTIFACT_INDEX_VERIFIED` |
+| `binding` | Original checkpoint report SHA-256, archive SHA-256, checkpoint/database/runtime identity and original source identity fingerprint |
+| `collections` | Fixed code-owned collection list, with absent-versus-present/empty evidence and original verified fingerprints |
+| `artifacts` | Sorted immutable identities, kinds, SHA-256, declared sizes, object keys, lifecycle states and later object-presence requirements |
+| `associations` | Sorted code-owned catalog/installation/removal/version and known executable-reference relationships, with typed/resolved/required flags |
+| `legacyCatalogEntries` / `associationIssues` | Concrete unmigrated records or inconsistent/dangling typed relationships; no repairs are performed |
+| `summary` | Bounded counts only |
+| `associationsResolved` / `readyForS3Export` | False for unresolved/inconsistent associations; export readiness also requires no unmigrated legacy catalog entries |
+| `emptyRegisteredPluginSnapshot` | No registry/catalog/installation/removal/version rows and no known associations under this versioned policy |
+| `objectBytesVerified` / `s3RestoreVerified` | Always false; no object storage was accessed |
+
+Binding fields include `originalCheckpointReportSha256`, `archiveSha256`,
+`checkpointId`, `database`, `sourceIdentityMd5`, `sourceServerVersion`,
+`restoreServerVersion`, `fcv` and `databaseToolsVersion`. No verification timestamp,
+new restore UUID, rehearsal identifier, random value or machine-specific path is
+included in index bytes. Repeating the verified restore of the same checkpoint
+must reproduce the exact index SHA-256. A later object-recovery operation must
+compare an independently regenerated index with the frozen original; an adjacent
+self-declared hash is not independent authority.
+
+All registry versions are retained in the projection, including disabled, older,
+removed and discarded-upload versions. `READY` means `REQUIRED` object bytes;
+`STAGED` means `OPTIONAL_STAGED` because metadata is inserted before object PUT;
+`PURGED` means `MUST_BE_ABSENT`, preserving the retirement tombstone. `PURGING`
+fails as an unfinished destructive operation. The index does not decide presence
+or discard old `READY` objects using current time or retention settings.
+Unfinished activation/inspection/removal states, management locks and current
+reference reservations also fail without a completed index. Historical
+`_pluginReferenceWrite` markers alone are not current reservations.
+
+Coverage follows the application's code-owned collections and conservative
+known-catalog-ID reference policy. It includes raw BSON DBRefs and supported
+serialized snapshot JSON from indicators, drafts, cards and installations;
+matching chart references include their parent library. Direct typed dangling
+references are retained explicitly. Unrelated freeform text or unknown ObjectId
+strings are not classified as plugin references. This does not prove universal
+absence of every possible ID, validate future snapshot schemas, or verify object
+bytes. Malformed/duplicate required snapshot JSON, unsupported record shapes and
+cross-database plugin DBRefs fail the optional projection rather than guessing.
+The full database remains preserved by the original checkpoint regardless of
+whether this optional projection succeeds.
+
+Zero visible catalog counts alone do not establish the empty flag. The restored
+registry and retained management/catalog state must also be empty, with no known
+associations or dangling typed references. Even then, a separate S3 inventory
+must establish whether the object namespace is empty. An empty registered state
+does not import plugins or claim that an object-store backup exists.
+
+The bounds are 1,000 artifacts, the existing 100 MiB per-artifact declared-size
+limit, 10,000 rows per selected collection/20,000 total, 32 MiB selected BSON,
+10,000 associations, depth 48, one million visited nodes and a 1 MiB index. Limits
+fail without truncation. The sidecar contains typed metadata only; log output is
+limited to a separate 4 KiB counts/hash summary framed by
+`OPENLAP-CHECKPOINT-PLUGIN-INDEX-REPORT-V1` and
+`OPENLAP-CHECKPOINT-PLUGIN-INDEX-REPORT-END-V1`. The summary binds the original
+report/archive, sidecar SHA/size and retained rehearsal report SHA. Accept it only
+with terminal success for the reviewed operation and complete validated framing.
+Retain the protected sidecar; do not copy full sidecar or database content into
+logs as a retrieval mechanism.
+
+The same disposable checkpoint fixture command tests this mode:
+
+```sh
+python3 -B tests/test_plugin_checkpoint_containers.py
+```
+
+It uses synthetic BSON/snapshot records, actual dumps and isolated restores,
+retained-version and empty cases, deterministic repeated-index comparisons,
+SGID output roots and publication-failure cases. It proves no S3 export, encrypted
+transfer or combined application recovery; those remain separate operations.

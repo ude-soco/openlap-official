@@ -6,6 +6,9 @@ ulimit -c 0
 umask 077
 export LC_ALL=C
 fail() { printf '%s\n' "Checkpoint rehearsal incomplete: $1. Raw client output withheld; inputs were not changed." >&2; exit 1; }
+index_plugins=false
+if [[ $# == 1 && $1 == --plugin-index ]]; then index_plugins=true
+elif [[ $# != 0 ]]; then fail 'configure an explicit supported rehearsal action'; fi
 [[ ${CHECKPOINT_ID-} =~ ^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$ ]] || fail 'set a fresh rehearsal identifier'
 [[ ${CHECKPOINT_EXPECTED_REPORT_SHA256-} =~ ^[a-f0-9]{64}$ ]] || fail 'supply the independently trusted original report SHA-256'
 for name in MONGODB_PRIMARY_URI MONGODB_SECONDARY_URI OPENLAP_MONGODB_DB \
@@ -69,7 +72,7 @@ output=$output_root/$CHECKPOINT_ID
 [[ ! -e $output && ! -L $output ]] || fail 'rehearsal already exists; choose a fresh identifier'
 work=$(mktemp -d /tmp/openlap-checkpoint.XXXXXXXX) || fail 'private scratch allocation failed'
 export CHECKPOINT_WORK=$work
-mongod_pid= monitor_pid= report_publication_started=false
+mongod_pid= monitor_pid= report_publication_started=false index_publication_started=false
 cleanup() {
     local exit_status=$?
     trap - EXIT TERM INT
@@ -81,6 +84,7 @@ cleanup() {
         wait "$mongod_pid" 2>/dev/null || true
     fi
     if [[ $exit_status != 0 && $report_publication_started == true ]]; then rm -f -- "$output/rehearsal.json"; fi
+    if [[ $exit_status != 0 && $index_publication_started == true ]]; then rm -f -- "$output/artifact-index.json"; fi
     rm -rf -- "$work"
 }
 trap cleanup EXIT
@@ -147,6 +151,23 @@ verify_sha=$(sha256sum -- "$work/archive.gz"); verify_sha=${verify_sha%% *}
 run_private 'rehearsal report verification' 2048 "$work/result.json" env CHECKPOINT_PHASE=rehearsal-finish \
     CHECKPOINT_ARCHIVE_SHA256="$archive_sha" CHECKPOINT_ARCHIVE_SIZE="$snapshot_size" CHECKPOINT_EXPANDED_SIZE="$expanded_size" \
     mongo --nodb --norc --quiet /opt/openlap-checkpoint/report.js
+if [[ $index_plugins == true ]]; then
+    run_private 'plugin artifact index projection' 1024 "$work/artifact-index.json" env CHECKPOINT_PHASE=rehearsal-plugin-index \
+        CHECKPOINT_ARCHIVE_SHA256="$archive_sha" CHECKPOINT_ARCHIVE_SIZE="$snapshot_size" CHECKPOINT_EXPANDED_SIZE="$expanded_size" \
+        mongo --nodb --norc --quiet /opt/openlap-checkpoint/report.js
+    run_private 'post-index restored database verification' 2048 "$work/index-after.json" env CHECKPOINT_PHASE=rehearsal-restored \
+        mongo --nodb --norc --quiet /opt/openlap-checkpoint/report.js
+    cmp -s -- "$work/restored.json" "$work/index-after.json" || fail 'isolated database changed during index projection'
+    index_size=$(stat -c %s -- "$work/artifact-index.json")
+    [[ $index_size -gt 0 && $index_size -le 1048576 ]] || fail 'plugin artifact index exceeds its format budget'
+    index_sha=$(sha256sum -- "$work/artifact-index.json"); index_sha=${index_sha%% *}
+    rehearsal_sha=$(sha256sum -- "$work/result.json"); rehearsal_sha=${rehearsal_sha%% *}
+    run_private 'plugin artifact index summary' 256 "$work/index-summary.json" env CHECKPOINT_PHASE=rehearsal-plugin-index-summary \
+        CHECKPOINT_INDEX_SHA256="$index_sha" CHECKPOINT_INDEX_SIZE="$index_size" CHECKPOINT_REHEARSAL_REPORT_SHA256="$rehearsal_sha" \
+        mongo --nodb --norc --quiet /opt/openlap-checkpoint/report.js
+    summary_size=$(stat -c %s -- "$work/index-summary.json")
+    [[ $summary_size -gt 0 && $summary_size -le 4096 ]] || fail 'plugin artifact index summary exceeds its format budget'
+fi
 kill "$monitor_pid" 2>/dev/null || true; wait "$monitor_pid" 2>/dev/null || true; monitor_pid=
 kill "$mongod_pid" 2>/dev/null || true; wait "$mongod_pid" 2>/dev/null || true; mongod_pid=
 set -C
@@ -155,6 +176,19 @@ sync -f "$output/rehearsal.json.partial"
 report_publication_started=true
 ln -- "$output/rehearsal.json.partial" "$output/rehearsal.json"; rm -- "$output/rehearsal.json.partial"
 sync -f "$output"
-printf '%s\n' 'OPENLAP-CHECKPOINT-REHEARSAL-REPORT-V1'
-cat -- "$output/rehearsal.json"
-printf '%s\n' 'OPENLAP-CHECKPOINT-REHEARSAL-REPORT-END-V1'
+if [[ $index_plugins == true ]]; then
+    cat -- "$work/artifact-index.json" > "$output/artifact-index.json.partial"
+    published_sha=$(sha256sum -- "$output/artifact-index.json.partial"); published_sha=${published_sha%% *}
+    [[ $published_sha == "$index_sha" ]] || fail 'plugin artifact index copy differs from its verified snapshot'
+    sync -f "$output/artifact-index.json.partial"
+    index_publication_started=true
+    ln -- "$output/artifact-index.json.partial" "$output/artifact-index.json"; rm -- "$output/artifact-index.json.partial"
+    sync -f "$output"
+    printf '%s\n' 'OPENLAP-CHECKPOINT-PLUGIN-INDEX-REPORT-V1'
+    cat -- "$work/index-summary.json"
+    printf '%s\n' 'OPENLAP-CHECKPOINT-PLUGIN-INDEX-REPORT-END-V1'
+else
+    printf '%s\n' 'OPENLAP-CHECKPOINT-REHEARSAL-REPORT-V1'
+    cat -- "$output/rehearsal.json"
+    printf '%s\n' 'OPENLAP-CHECKPOINT-REHEARSAL-REPORT-END-V1'
+fi

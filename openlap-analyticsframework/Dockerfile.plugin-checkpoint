@@ -8,7 +8,7 @@ RUN for tool in bash mongo mongod mongodump mongorestore gzip sha256sum timeout 
     && mongod --version | grep -q 'v4.4.30' \
     && mongodump --version | grep -q '100.10.0' \
     && mongorestore --version | grep -q '100.10.0' \
-    && chmod 0555 checkpoint.sh && chmod 0444 report.js rehearse.sh
+    && chmod 0555 checkpoint.sh && chmod 0444 report.js rehearse.sh artifact-index.js
 USER 1000:1000
 ENTRYPOINT ["/usr/bin/timeout", "--kill-after=10s", "540s", "/bin/bash", "--noprofile", "--norc", "/opt/openlap-checkpoint/checkpoint.sh"]
 CMD ["--configure-checkpoint"]
