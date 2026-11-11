@@ -48,6 +48,16 @@ An operator supplies an external Secret with exactly the selected
 encryption**. Never put the encoded value, underlying INI, share token/password or
 Secret contents in public Git, images, commands, chat or logs.
 
+Installations that merge an operator-populated env file can explicitly select
+`.k8s/maintenance/plugin-backup-upload-credentials` as a separate input option.
+It declares only an empty `openlap-plugin-backup-upload` Secret, with no default
+values or workloads. Merge the private `openlap-plugin-backup-upload.env` through
+a same-name Secret generator, then point the Job's config volume at that logical
+Secret name. Verify generated name references with synthetic inputs. The uploader
+does not select this option automatically; installations using an existing
+external Secret can keep that workflow. Remove the temporary input resource and
+generator with the uploader cleanup, retaining the protected backup outputs.
+
 Prepare the single-line value privately using the installation's secure Secret
 handoff. For deployments that use an operator-populated env file, its single key
 is `RCLONE_CONFIG_BASE64`; the file name follows the installation's Secret-name
