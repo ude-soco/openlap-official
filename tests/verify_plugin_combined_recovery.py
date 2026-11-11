@@ -103,6 +103,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ["snapshot", "checkpoint", "transport"]:
         parser.add_argument("--" + name + "-image", help="Optional exact local sha256 image ID; otherwise build public sources")
+    parser.add_argument("--online", action="store_true", help="Qualify full-instance online oplog capture and immutable object export cut")
     parser.add_argument("--report", type=Path, help="Optional new absolute file for the bounded non-sensitive typed proof")
     options = parser.parse_args()
     source_revision = subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip()
@@ -111,6 +112,7 @@ def main():
         ROOT / "tests/fixtures/CombinedPluginRecoveryFixture.java", ROOT / "tests/fixtures/PluginObjectSnapshotQualification.java",
         ROOT / "tests/fixtures/plugin_combined_seed.js", ROOT / "tests/fixtures/Dockerfile.plugin-recovery-transport",
         MODULE / "pom.xml", MODULE / "Dockerfile.plugin-storage-versity", MODULE / "Dockerfile.plugin-checkpoint", MODULE / "scripts/plugin-release-backup.py"]
+    if options.online: public_inputs += [ROOT / "tests/fixtures/OnlinePluginBackupFixture.java", ROOT / "tests/fixtures/plugin_online_transactions.js"]
     def source_inventory():
         paths = public_inputs + sorted(path for path in (MODULE / "src/main/java").rglob("*") if path.is_file()) \
             + sorted(path for path in (MODULE / "scripts/plugin-checkpoint").rglob("*") if path.is_file())
@@ -196,11 +198,12 @@ def main():
         def network(label):
             name = token + "-" + label; run(["network", "create", "--internal", name], "internal fixture network"); networks.append(name); return name
 
-        def start_mongo(name, net, alias, data):
+        def start_mongo(name, net, alias, data, replica=False):
             run(["run", "--detach", "--name", name, "--network=" + net, "--network-alias=" + alias, "--read-only", "--user=1000:1000",
                  "--cap-drop=ALL", "--security-opt=no-new-privileges", "--memory=768m", "--tmpfs=/tmp:rw,size=32m,mode=1777",
                  mount(data, "/data/db"), "--entrypoint=mongod", CHECKPOINT.MONGO, "--bind_ip_all", "--nounixsocket", "--wiredTigerCacheSizeGB=0.25",
-                 "--setParameter=ttlMonitorEnabled=false", "--setParameter=diagnosticDataCollectionEnabled=false", "--quiet"], "fresh MongoDB start")
+                 "--setParameter=ttlMonitorEnabled=false", "--setParameter=diagnosticDataCollectionEnabled=false", "--quiet",
+                 *(["--replSet=online-fixture-rs", "--oplogSize=64"] if replica else [])], "fresh MongoDB start")
             containers.append(name)
             wait_mongo(net, alias)
 
@@ -236,7 +239,8 @@ def main():
             result = run(["run", "--rm", "--network=none", *checkpoint_common, mount(inputs, "/inputs", True), mount(output, "/outputs"),
                           "--env=CHECKPOINT_ID=" + identifier, "--env=CHECKPOINT_EXPECTED_REPORT_SHA256=" + report_sha,
                           "--env=CHECKPOINT_ARCHIVE_PATH=/inputs/" + input_path + "/database.archive.gz",
-                          "--env=CHECKPOINT_REPORT_PATH=/inputs/" + input_path + "/checkpoint.json", checkpoint_image, "--index-plugin-artifacts"], "verified restored index", timeout=240)
+                          "--env=CHECKPOINT_REPORT_PATH=/inputs/" + input_path + "/checkpoint.json", checkpoint_image,
+                          "--index-online-plugin-artifacts" if options.online else "--index-plugin-artifacts"], "verified restored index", timeout=240)
             lines = result.stdout.decode().splitlines()
             require(len(lines) == 3 and lines[0] == "OPENLAP-CHECKPOINT-PLUGIN-INDEX-REPORT-V1" and lines[2] == "OPENLAP-CHECKPOINT-PLUGIN-INDEX-REPORT-END-V1")
             summary = json.loads(lines[1]); require(summary["readyForS3Export"] and summary["associationsResolved"])
@@ -245,21 +249,24 @@ def main():
         try:
             snapshot_image, checkpoint_image, transport_image = build("snapshot"), build("checkpoint"), build("transport")
             public = staging / "fixtures"; public.mkdir(mode=0o755)
-            for name in ["PluginObjectSnapshotQualification.java", "CombinedPluginRecoveryFixture.java", "plugin_combined_seed.js"]:
+            fixture_names = ["PluginObjectSnapshotQualification.java", "CombinedPluginRecoveryFixture.java", "plugin_combined_seed.js"]
+            if options.online: fixture_names += ["OnlinePluginBackupFixture.java", "plugin_online_transactions.js"]
+            for name in fixture_names:
                 shutil.copyfile(ROOT / "tests/fixtures" / name, public / name); (public / name).chmod(0o444)
             for role, keys in {"client": ["PLUGIN_STORAGE_S3_ACCESS_KEY", "PLUGIN_STORAGE_S3_SECRET_KEY"], "root": ["ROOT_ACCESS_KEY_ID", "ROOT_SECRET_ACCESS_KEY"]}.items():
                 folder = public / role; folder.mkdir(mode=0o755)
                 for key in keys: (folder / key).write_text(GATEWAY.SYNTHETIC[key]); (folder / key).chmod(0o444)
             common = ["--platform=linux/amd64", "--user=1000:1000", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges",
                       "--memory=1g", "--tmpfs=/tmp:rw,size=64m,mode=1777", "--env=PLUGIN_STORAGE_S3_BUCKET=openlap-qualification",
-                      "--env=PLUGIN_STORAGE_S3_REGION=us-east-1", "--mount=type=bind,source=" + str(public / "client") + ",target=/run/openlap-client,readonly"]
+                      "--env=PLUGIN_STORAGE_S3_REGION=us-east-1", *( ["--env=PLUGIN_DELETION_ENABLED=false"] if options.online else []), "--mount=type=bind,source=" + str(public / "client") + ",target=/run/openlap-client,readonly"]
             root_secret = ["--mount=type=bind,source=" + str(public / "root") + ",target=/run/openlap-root,readonly"]
             sources = ["--mount=type=bind,source=" + str(public) + ",target=/fixture,readonly"]
-            java_script = ("umask 077\njavac -cp '/opt/openlap-storage/classes:/opt/openlap-storage/lib/*' -d /tmp /fixture/PluginObjectSnapshotQualification.java /fixture/CombinedPluginRecoveryFixture.java\n"
+            extra_java = " /fixture/OnlinePluginBackupFixture.java" if options.online else ""
+            java_script = ("umask 077\njavac -cp '/opt/openlap-storage/classes:/opt/openlap-storage/lib/*' -d /tmp /fixture/PluginObjectSnapshotQualification.java /fixture/CombinedPluginRecoveryFixture.java" + extra_java + "\n"
                            "exec java -Dlogback.configurationFile=/opt/openlap-storage/logback.xml -cp '/tmp:/opt/openlap-storage/classes:/opt/openlap-storage/lib/*' \"$@\"")
             checkpoint_common = ["--platform=linux/amd64", "--user=1000:1000", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges", "--memory=1g",
                                  "--pids-limit=100", "--tmpfs=/tmp:rw,nosuid,noexec,size=768m,mode=1777", "--env=CHECKPOINT_MAX_ARCHIVE_MIB=8",
-                                 "--env=CHECKPOINT_MAX_EXPANDED_MIB=16", "--env=CHECKPOINT_MAX_RESTORE_MIB=512"]
+                                 "--env=CHECKPOINT_MAX_EXPANDED_MIB=" + ("64" if options.online else "16"), "--env=CHECKPOINT_MAX_RESTORE_MIB=512"]
             for empty in [False, True]:
                 case = "empty" if empty else "versions"; source_net = network(case + "-source")
                 db_data, gateway_data, control, captures, frozen, snapshots = [volume(case + "-" + suffix) for suffix in ["db", "gateway", "seed", "capture", "index", "snapshot"]]
@@ -270,17 +277,91 @@ def main():
                 java("CombinedPluginRecoveryFixture", ["--prepare-source", case], [mount(control, "/control")], source_net)
                 run(["run", "--rm", "--network=" + source_net, "--user=1000:1000", mount(control, "/control", True), *sources,
                      "--entrypoint=mongo", checkpoint_image, "--norc", "--quiet", "--host=source-mongo", "/fixture/plugin_combined_seed.js"], "generated database records")
-                captured = run(["run", "--rm", "--network=" + source_net, *checkpoint_common, mount(captures, "/outputs"),
-                                "--env=MONGODB_PRIMARY_URI=mongodb://source-mongo:27017/plugin_recovery_fixture", "--env=OPENLAP_MONGODB_DB=plugin_recovery_fixture",
-                                "--env=CHECKPOINT_SOURCE_HOST=source-mongo", "--env=CHECKPOINT_SOURCE_PORT=27017", "--env=CHECKPOINT_FREEZE_EVIDENCE=generated-writers-stopped",
-                                "--env=CHECKPOINT_ID=source-capture", checkpoint_image, "--checkpoint"], "actual checkpoint and isolated restore", timeout=240)
-                lines = captured.stdout.decode().splitlines(); require(len(lines) == 3 and lines[0] == "OPENLAP-CHECKPOINT-REPORT-V1")
+                writer = None; writes_before = writes_after = 0
+                def transaction_client(phase, host="source-mongo", net=source_net):
+                    result = run(["run", "--rm", "--network=" + net, "--user=1000:1000", *sources,
+                        "--env=FIXTURE_PHASE=" + phase, "--env=FIXTURE_HOST=" + host, "--entrypoint=mongo", checkpoint_image,
+                        "--nodb", "--norc", "--quiet", "/fixture/plugin_online_transactions.js"], "generated transaction " + phase)
+                    return json.loads(result.stdout) if phase == "state" else None
+                if options.online:
+                    transaction_client("seed")
+                    baseline = transaction_client("state")
+                    run(["stop", "--time=20", source_db], "preserved standalone clean shutdown"); remove_container(source_db)
+                    start_mongo(source_db, source_net, "source-mongo", db_data, replica=True)
+                    run(["run", "--rm", "--network=" + source_net, "--entrypoint=mongo", checkpoint_image, "--norc", "--quiet", "--host=source-mongo", "--eval",
+                        "assert.commandWorked(rs.initiate({_id:'online-fixture-rs',members:[{_id:0,host:'source-mongo:27017'}]}));"], "fresh fixture replica initialization")
+                    for _ in range(40):
+                        primary = run(["run", "--rm", "--network=" + source_net, "--entrypoint=mongo", checkpoint_image, "--norc", "--quiet", "--host=source-mongo", "--eval",
+                            "quit(db.isMaster().ismaster?0:1)"], "fixture primary election", success=False)
+                        if primary.returncode == 0: break
+                        time.sleep(0.2)
+                    require(primary.returncode == 0 and transaction_client("state") == baseline)
+                    writer = token + "-" + case + "-writer"
+                    run(["run", "--detach", "--name", writer, "--network=" + source_net, "--user=1000:1000", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges",
+                        mount(control, "/control"), *sources, "--env=FIXTURE_PHASE=write", "--entrypoint=mongo", checkpoint_image,
+                        "--nodb", "--norc", "--quiet", "/fixture/plugin_online_transactions.js"], "concurrent generated transactions")
+                    containers.append(writer)
+                    writes_before = transaction_client("state")["committedTransactions"]
+                def capture(identifier, replacements=(), success=True):
+                    # Later explicit fixture overrides are intentional negative inputs.
+                    return run(["run", "--rm", "--network=" + source_net, *checkpoint_common, mount(captures, "/outputs"),
+                        "--env=MONGODB_PRIMARY_URI=mongodb://source-mongo:27017/" + ("" if options.online else "plugin_recovery_fixture"), "--env=OPENLAP_MONGODB_DB=plugin_recovery_fixture",
+                        "--env=CHECKPOINT_SOURCE_HOST=source-mongo", "--env=CHECKPOINT_SOURCE_PORT=27017",
+                        *(["--env=CHECKPOINT_REPLICA_SET=online-fixture-rs", "--env=PLUGIN_DELETION_ENABLED=false"] if options.online else ["--env=CHECKPOINT_FREEZE_EVIDENCE=generated-writers-stopped"]),
+                        "--env=CHECKPOINT_ID=" + identifier, *replacements, checkpoint_image, "--checkpoint-online" if options.online else "--checkpoint"],
+                        "actual checkpoint and isolated restore", timeout=240, success=success)
+                if options.online and not empty:
+                    for label, replacement in [("database-path", "MONGODB_PRIMARY_URI=mongodb://source-mongo:27017/plugin_recovery_fixture"),
+                        ("wrong-replica", "CHECKPOINT_REPLICA_SET=wrong-set"), ("physical-deletion", "PLUGIN_DELETION_ENABLED=true")]:
+                        require(capture("rejected-" + label, ["--env=" + replacement], False).returncode != 0)
+                        run(["run", "--rm", "--network=none", "--user=1000:1000", mount(captures, "/outputs", True), "--entrypoint=/bin/bash", checkpoint_image,
+                            "-ceu", "test ! -e /outputs/rejected-" + label], "invalid online configuration rejected before writes")
+                    run(["run", "--rm", "--network=" + source_net, "--entrypoint=mongo", checkpoint_image, "--norc", "--quiet", "--host=source-mongo", "--eval",
+                        "db.getSiblingDB('plugin_recovery_fixture')['plugin-management-lock'].insertOne({_id:'generated-active-operation',owner:'fixture'});"], "generated active management fence")
+                    fenced = capture("fenced-capture"); fenced_lines = fenced.stdout.decode().splitlines()
+                    fenced_sha = hashlib.sha256((fenced_lines[1] + "\n").encode()).hexdigest()
+                    fenced_report = json.loads(fenced_lines[1])
+                    require(any(row["name"] == "plugin-management-lock" and row["count"] == 1 for row in fenced_report["collections"]))
+                    fenced_result = run(["run", "--rm", "--network=none", *checkpoint_common, mount(captures, "/inputs", True), mount(frozen, "/outputs"),
+                        "--env=CHECKPOINT_ID=rejected-fenced-index", "--env=CHECKPOINT_EXPECTED_REPORT_SHA256=" + fenced_sha,
+                        "--env=CHECKPOINT_ARCHIVE_PATH=/inputs/fenced-capture/database.archive.gz", "--env=CHECKPOINT_REPORT_PATH=/inputs/fenced-capture/checkpoint.json",
+                        checkpoint_image, "--index-online-plugin-artifacts"], "retained active fence rejects index", timeout=240, success=False)
+                    require(fenced_result.returncode != 0 and b"plugin artifact index projection failed" in fenced_result.stderr)
+                    run(["run", "--rm", "--network=" + source_net, "--entrypoint=mongo", checkpoint_image, "--norc", "--quiet", "--host=source-mongo", "--eval",
+                        "db.getSiblingDB('plugin_recovery_fixture')['plugin-management-lock'].deleteOne({_id:'generated-active-operation'});"], "complete generated operation before whole recapture")
+                captured = capture("source-capture")
+                lines = captured.stdout.decode().splitlines()
+                require(len(lines) == 3 and lines[0] == ("OPENLAP-CHECKPOINT-ONLINE-REPORT-V2" if options.online else "OPENLAP-CHECKPOINT-REPORT-V1"))
+                if options.online:
+                    writes_after = transaction_client("state")["committedTransactions"]
+                    require(writes_after > writes_before, "No concurrent transactions overlapped actual online capture.")
                 report_sha = hashlib.sha256((lines[1] + "\n").encode()).hexdigest(); report = json.loads(lines[1])
+                if options.online and not empty:
+                    require(report["captureMode"] == "INSTANCE_WIDE_OPLOG" and report["oplogReplayVerified"] and "freezeEvidence" not in report and "sourceBeforeAfterMatched" not in report)
+                    invalid_inputs, invalid_outputs = volume(case + "-invalid-inputs"), volume(case + "-invalid-outputs")
+                    for mutation in ["schema", "false-flag", "archive-size", "logical-data", "corrupt-gzip", "old-mode"]:
+                        staged_input = run(["run", "--rm", "--network=none", "--user=1000:1000", mount(captures, "/captures", True), mount(invalid_inputs, "/inputs"),
+                            "--entrypoint=/bin/bash", checkpoint_image, "-ceu", CHECKPOINT.INPUT_HELPER, "fixture", "stage", mutation,
+                            "original" if mutation == "old-mode" else mutation, "source-capture"], "stage generated invalid online report")
+                        invalid_sha = json.loads(staged_input.stdout)["reportSha256"]
+                        rejected = run(["run", "--rm", "--network=none", *checkpoint_common, mount(invalid_inputs, "/inputs", True), mount(invalid_outputs, "/outputs"),
+                            "--env=CHECKPOINT_ID=rejected-" + mutation, "--env=CHECKPOINT_EXPECTED_REPORT_SHA256=" + invalid_sha,
+                            "--env=CHECKPOINT_ARCHIVE_PATH=/inputs/" + mutation + "/database.archive.gz", "--env=CHECKPOINT_REPORT_PATH=/inputs/" + mutation + "/checkpoint.json",
+                            checkpoint_image, "--index-plugin-artifacts" if mutation == "old-mode" else "--index-online-plugin-artifacts"], "invalid online report/archive rejection", timeout=240, success=False)
+                        require(rejected.returncode != 0)
+                        run(["run", "--rm", "--network=none", "--user=1000:1000", mount(invalid_outputs, "/outputs", True), "--entrypoint=/bin/bash", checkpoint_image,
+                            "-ceu", CHECKPOINT.OUTPUT_HELPER, "fixture", "no-report", "rejected-" + mutation], "invalid replay publishes no report or index")
                 original = index(captures, "source-capture", frozen, "frozen-index", report_sha)
                 require(original["emptyRegisteredPluginSnapshot"] == empty)
-                exported = java("PluginObjectSnapshotApplication", ["--export", "/index/frozen-index/artifact-index.json", original["artifactIndexSha256"], report_sha, "/snapshot/export"],
+                export_class = "OnlinePluginBackupFixture" if options.online and not empty else "PluginObjectSnapshotApplication"
+                export_action = "--export-concurrent" if options.online and not empty else "--export-online" if options.online else "--export"
+                exported = java(export_class, [export_action, "/index/frozen-index/artifact-index.json", original["artifactIndexSha256"], report_sha, "/snapshot/export"],
                                 [mount(frozen, "/index", True), mount(snapshots, "/snapshot")], source_net)
-                snapshot = json.loads(exported.stdout); require(snapshot["objectCount"] == (0 if empty else 6))
+                snapshot = json.loads(exported.stdout.splitlines()[-1]); require(snapshot["objectCount"] == (0 if empty else 8 if options.online else 6))
+                if options.online and not empty:
+                    require(snapshot["concurrentNewKeyExcluded"] and snapshot["cutOrphansPreserved"])
+                    java("OnlinePluginBackupFixture", ["--frozen-reject-concurrent", "/index/frozen-index/artifact-index.json", original["artifactIndexSha256"], report_sha, "/snapshot/frozen-negative"],
+                        [mount(frozen, "/index", True), mount(snapshots, "/snapshot")], source_net)
                 print("PASS: " + case + " actual checkpoint, verified index and object export", flush=True)
                 operator, custody, remote = [volume(case + "-" + suffix, 501) for suffix in ["operator", "custody", "remote"]]
                 copied = run(["run", "--rm", "--network=none", "--user=0:0", "--cap-drop=ALL", "--cap-add=DAC_OVERRIDE", "--cap-add=CHOWN", "--read-only",
@@ -297,6 +378,11 @@ def main():
                      "--checkpoint", "/operator/checkpoint", "--source", "objects=/operator/snapshot", "--recipient", recipient, "--output", "/operator/upload"], "native encrypted push/readback")
                 receipt = json.loads(run(["run", "--rm", "--network=none", *transport_common, mount(operator, "/operator", True), "--entrypoint=python3", transport_image,
                                           "-B", "-c", CONTROL, "retain-receipt"], "independent receipt retention").stdout)
+                if writer:
+                    run(["run", "--rm", "--network=none", "--user=1000:1000", mount(control, "/control"), "--entrypoint=/bin/bash", checkpoint_image,
+                        "-ceu", "umask 077; printf done > /control/stop"], "stop generated transaction writer")
+                    require(run(["wait", writer], "transaction writer completion").stdout.strip() == b"0"); remove_container(writer)
+                    require(transaction_client("state")["committedTransactions"] > writes_after)
                 remove_container(source_gateway); remove_container(source_db)
                 for source in [db_data, gateway_data, control, captures, frozen, snapshots, operator]: remove_volume(source)
                 run(["network", "rm", source_net], "source network removal"); networks.remove(source_net)
@@ -324,22 +410,32 @@ def main():
                 recovery_net = network(case + "-recovery"); recovered_db = token + "-" + case + "-recovered-db"; recovered_gateway = token + "-" + case + "-recovered-gateway"
                 fresh_db = volume(case + "-fresh-db"); start_mongo(recovered_db, recovery_net, "recovered-mongo", fresh_db)
                 run(["run", "--rm", "--network=" + recovery_net, "--user=1000:1000", mount(staged, "/inputs", True), "--entrypoint=mongorestore", checkpoint_image,
-                     "--host=recovered-mongo", "--archive=/inputs/retrieved/checkpoint/database.archive.gz", "--gzip", "--stopOnError", "--numParallelCollections=1"], "fresh retrieved database restore")
+                     "--host=recovered-mongo", "--archive=/inputs/retrieved/checkpoint/database.archive.gz", "--gzip", *(["--oplogReplay"] if options.online else []), "--stopOnError", "--numParallelCollections=1"], "fresh retrieved database restore")
                 run(["kill", "--signal=KILL", recovered_db], "recovered database cold shutdown"); run(["start", recovered_db], "recovered database cold restart"); wait_mongo(recovery_net, "recovered-mongo")
                 start_gateway(recovered_gateway, recovery_net, fresh_objects)
                 run(["kill", "--signal=KILL", recovered_gateway], "recovered gateway cold shutdown"); run(["start", recovered_gateway], "recovered gateway cold restart")
                 wait_gateway(recovered_gateway)
-                cold = java("CombinedPluginRecoveryFixture", ["--verify-cold", case], [], recovery_net)
+                restored_transactions = None
+                if options.online:
+                    restored_transactions = transaction_client("state", "recovered-mongo", recovery_net)
+                    require(writes_before <= restored_transactions["committedTransactions"] <= writes_after)
+                cold = java("OnlinePluginBackupFixture" if options.online and not empty else "CombinedPluginRecoveryFixture",
+                    ["--verify-cold"] if options.online and not empty else ["--verify-cold", case], [], recovery_net)
                 cold_result = json.loads(cold.stdout); require(cold_result["coldDatabaseAssociationsVerified"] and cold_result["coldObjectBytesAndMetadataVerified"])
                 evidence.append({"case": case, "originalCheckpointReportSha256": report_sha, "archiveSha256": report["archiveSha256"],
                                  "artifactIndexSha256": original["artifactIndexSha256"], "manifestSha256": snapshot["manifestSha256"],
                                  "receiptSha256": receipt["receiptSha256"], "cipherSha256": receipt["cipherSha256"], "objectCount": snapshot["objectCount"],
                                  "sourceDataRemovedBeforeRetrieval": True, "uid501InputUnchanged": True, "uid1000FreshStagingVerified": True,
                                  "regeneratedDatabaseIndexMatched": True, "coldDatabaseAndObjectReadbackVerified": True})
+                if options.online:
+                    evidence[-1].update({"captureMode": "INSTANCE_WIDE_OPLOG", "fullInstanceOplogReplayVerified": True,
+                        "standaloneDataPreservedDuringReplicaSetConversion": True, "writesBeforeCapture": writes_before, "writesAfterCapture": writes_after,
+                        "recoveredCommittedTransactions": restored_transactions["committedTransactions"], "crossDatabaseTransactionInvariantVerified": True,
+                        "immutableObjectCutVerified": True, "laterNewKeysExcluded": not empty, "invalidOnlineInputsRejected": not empty, "activeFencePreservedAndWholeCaptureRetried": not empty})
                 print("PASS: " + case + " actual checkpoint/index, encrypted retrieval, fresh storage and cold associations", flush=True)
                 remove_container(recovered_gateway); remove_container(recovered_db)
             require(source_inventory() == original_inputs, "Public source inputs changed during qualification.")
-            proof = {"schemaVersion": 1, "status": "SYNTHETIC_ENCRYPTED_PLUGIN_RECOVERY_VERIFIED", "images": {
+            proof = {"schemaVersion": 1, "status": "SYNTHETIC_ONLINE_PLUGIN_RECOVERY_VERIFIED" if options.online else "SYNTHETIC_ENCRYPTED_PLUGIN_RECOVERY_VERIFIED", "images": {
                 "snapshot": snapshot_image, "checkpoint": checkpoint_image, "transport": transport_image}, "cases": evidence,
                 "sourceRevision": source_revision, "sourceInputSha256": source_input_sha, "sourceInputFileCount": len(original_inputs),
                 "scope": "Generated local recovery only; no external custody, production acceptance or availability verified."}

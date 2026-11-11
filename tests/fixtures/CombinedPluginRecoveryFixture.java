@@ -55,9 +55,12 @@ public final class CombinedPluginRecoveryFixture {
     VersityStorageApplication.result("GENERATED_RECOVERY_SOURCE_PREPARED", Collections.singletonMap("objectCount", empty ? 0 : 6));
   }
   static void verify(boolean empty) throws Exception {
+    verify(empty, Collections.emptyMap());
+  }
+  static void verify(boolean empty, Map<String, Long> additionalOrphans) throws Exception {
     VersityStorageApplication.Settings settings = new VersityStorageApplication.Settings(false);
     URI endpoint = URI.create(System.getenv("PLUGIN_STORAGE_S3_ENDPOINT"));
-    Map<String, Long> expected = new TreeMap<>(); int registryCount = 0;
+    Map<String, Long> expected = new TreeMap<>(additionalOrphans); int registryCount = 0;
     try (MongoClient mongo = new MongoClient(new MongoClientURI("mongodb://recovered-mongo:27017/" + DATABASE
              + "?serverSelectionTimeoutMS=3000&connectTimeoutMS=3000&socketTimeoutMS=5000"));
          S3ArtifactObjectStore store = S3ArtifactObjectStore.connect(PluginObjectSnapshotApplication.properties(settings, endpoint));
