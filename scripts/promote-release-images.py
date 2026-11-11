@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Promote the reviewed 0.0.6 registry manifests without building images."""
+"""Promote a committed, reviewed release plan without building images."""
 import json
 import os
 from pathlib import Path
@@ -7,7 +7,8 @@ import re
 import subprocess
 import tempfile
 
-PLAN = Path(__file__).resolve().parents[1] / "docs/releases/0.0.6-images.json"
+RELEASES = Path(__file__).resolve().parents[1] / "docs/releases"
+PLAN = RELEASES / "0.0.6-images.json"
 REPOSITORY = "ude-soco/openlap-official"
 SERVICES = ("openlap-analyticsframework", "openlap-indicatoreditor")
 MEDIA_TYPES = {
@@ -20,6 +21,21 @@ MEDIA_TYPES = {
 
 class PromotionError(Exception):
     pass
+
+
+def confirmed_version(environment):
+    value = environment.get("CONFIRMATION_VERSION", "")
+    if not isinstance(value, str) or len(value) > 32 or not re.fullmatch(
+            r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", value):
+        raise PromotionError("Confirm a reviewed stable release version.")
+    return value
+
+
+def load_plan(environment):
+    path = RELEASES / (confirmed_version(environment) + "-images.json")
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 16384:
+        raise PromotionError("A bounded committed release plan is required.")
+    return json.loads(path.read_text())
 
 
 def command(args):
@@ -87,9 +103,8 @@ def checked_plan(plan, environment):
         raise PromotionError("Promotion requires the official repository.")
     if environment.get("GITHUB_REF") != "refs/heads/main" or environment.get("GITHUB_EVENT_NAME") != "workflow_dispatch":
         raise PromotionError("Promotion requires a manual main-branch workflow run.")
-    if environment.get("CONFIRMATION_VERSION") != "0.0.6":
-        raise PromotionError("Confirm the reviewed release version 0.0.6.")
-    if set(plan) != {"version", "repository", "sourceRevision", "images"} or plan["version"] != "0.0.6" or plan["repository"] != REPOSITORY:
+    version = confirmed_version(environment)
+    if not isinstance(plan, dict) or set(plan) != {"version", "repository", "sourceRevision", "images"} or plan["version"] != version or plan["repository"] != REPOSITORY:
         raise PromotionError("Unexpected release plan.")
     if not re.fullmatch(r"[a-f0-9]{40}", plan["sourceRevision"]):
         raise PromotionError("Invalid reviewed source revision.")
@@ -133,7 +148,7 @@ def promote(plan, environment, registry):
 
 def main():
     try:
-        report = promote(json.loads(PLAN.read_text()), os.environ, Registry())
+        report = promote(load_plan(os.environ), os.environ, Registry())
         Path("release-image-promotion.json").write_text(json.dumps(report, indent=2) + "\n")
         print(json.dumps(report, separators=(",", ":")))
     except (PromotionError, OSError, ValueError) as exc:

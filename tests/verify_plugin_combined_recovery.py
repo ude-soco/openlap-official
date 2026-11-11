@@ -4,6 +4,7 @@ Only public sources, generated identities and task-owned Docker volumes enter
 this fixture. No operator configuration, account endpoint or browser is read.
 """
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import importlib.util
 import json
@@ -34,7 +35,8 @@ GATEWAY = module("gateway_fixture", ROOT / "tests/verify_plugin_versity_containe
 # apply only to newly created destination entries, never retained input files.
 COPY = r'''
 import hashlib,json,os,pathlib,shutil,stat,sys
-mode,uid=sys.argv[1],int(sys.argv[2]); destination=pathlib.Path('/destination')
+mode=sys.argv[1]; destination=pathlib.Path('/destination')
+uid=destination.stat().st_uid if sys.argv[2]=='host-projection' else int(sys.argv[2])
 assert not list(destination.iterdir())
 def inventory(root):
     records=[]
@@ -105,13 +107,16 @@ def main():
         parser.add_argument("--" + name + "-image", help="Optional exact local sha256 image ID; otherwise build public sources")
     parser.add_argument("--online", action="store_true", help="Qualify full-instance online oplog capture and immutable object export cut")
     parser.add_argument("--report", type=Path, help="Optional new absolute file for the bounded non-sensitive typed proof")
+    parser.add_argument("--verify-operator-runner", action="store_true", help="Also qualify the host-native operator recovery runner for both generated release sets")
+    parser.add_argument("--operator-native-tools", type=Path, help="Verified host-native age/age-keygen/rclone directory; Linux fixtures otherwise extract the pinned clients from the transport image")
     options = parser.parse_args()
     source_revision = subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip()
     require(not subprocess.check_output(["git", "-C", str(ROOT), "status", "--porcelain"], text=True), "Commit the public fixture inputs before qualification.")
     public_inputs = [Path(__file__), ROOT / "tests/test_plugin_checkpoint_containers.py", ROOT / "tests/verify_plugin_versity_containers.py",
         ROOT / "tests/fixtures/CombinedPluginRecoveryFixture.java", ROOT / "tests/fixtures/PluginObjectSnapshotQualification.java",
         ROOT / "tests/fixtures/plugin_combined_seed.js", ROOT / "tests/fixtures/Dockerfile.plugin-recovery-transport",
-        MODULE / "pom.xml", MODULE / "Dockerfile.plugin-storage-versity", MODULE / "Dockerfile.plugin-checkpoint", MODULE / "scripts/plugin-release-backup.py"]
+        MODULE / "pom.xml", MODULE / "Dockerfile.plugin-storage-versity", MODULE / "Dockerfile.plugin-checkpoint", MODULE / "scripts/plugin-release-backup.py",
+        MODULE / "scripts/check-plugin-backup-recovery.py", ROOT / "tests/plugin_recovery_operator_fixture.py"]
     if options.online: public_inputs += [ROOT / "tests/fixtures/OnlinePluginBackupFixture.java", ROOT / "tests/fixtures/plugin_online_transactions.js"]
     def source_inventory():
         paths = public_inputs + sorted(path for path in (MODULE / "src/main/java").rglob("*") if path.is_file()) \
@@ -248,6 +253,13 @@ def main():
 
         try:
             snapshot_image, checkpoint_image, transport_image = build("snapshot"), build("checkpoint"), build("transport")
+            operator_fixture = operator_tools = None
+            if options.verify_operator_runner:
+                operator_fixture = module("operator_fixture", ROOT / "tests/plugin_recovery_operator_fixture.py")
+                operator_tools = operator_fixture.clients(options.operator_native_tools, run, transport_image, staging, token, containers)
+                helper = "python@sha256:e064671ca452259bab50e8e2c7bd896e39e9a343bb06ca25234adf6fe18d0fc7"
+                if run(["image", "inspect", "--platform=linux/amd64", helper], "public helper cache check", success=False).returncode != 0:
+                    run(["pull", "--platform=linux/amd64", helper], "public helper preparation", timeout=180)
             public = staging / "fixtures"; public.mkdir(mode=0o755)
             fixture_names = ["PluginObjectSnapshotQualification.java", "CombinedPluginRecoveryFixture.java", "plugin_combined_seed.js"]
             if options.online: fixture_names += ["OnlinePluginBackupFixture.java", "plugin_online_transactions.js"]
@@ -329,6 +341,7 @@ def main():
                     require(fenced_result.returncode != 0 and b"plugin artifact index projection failed" in fenced_result.stderr)
                     run(["run", "--rm", "--network=" + source_net, "--entrypoint=mongo", checkpoint_image, "--norc", "--quiet", "--host=source-mongo", "--eval",
                         "db.getSiblingDB('plugin_recovery_fixture')['plugin-management-lock'].deleteOne({_id:'generated-active-operation'});"], "complete generated operation before whole recapture")
+                generated_freeze_time = datetime.now(timezone.utc).isoformat()
                 captured = capture("source-capture")
                 lines = captured.stdout.decode().splitlines()
                 require(len(lines) == 3 and lines[0] == ("OPENLAP-CHECKPOINT-ONLINE-REPORT-V2" if options.online else "OPENLAP-CHECKPOINT-REPORT-V1"))
@@ -362,6 +375,11 @@ def main():
                     require(snapshot["concurrentNewKeyExcluded"] and snapshot["cutOrphansPreserved"])
                     java("OnlinePluginBackupFixture", ["--frozen-reject-concurrent", "/index/frozen-index/artifact-index.json", original["artifactIndexSha256"], report_sha, "/snapshot/frozen-negative"],
                         [mount(frozen, "/index", True), mount(snapshots, "/snapshot")], source_net)
+                operator_case = None
+                if operator_fixture:
+                    operator_case = operator_fixture.prepare(case, snapshot["objectCount"], staging, operator_tools, run, COPY, mount,
+                        captures, snapshots, transport_image, checkpoint_image, snapshot_image, report_sha,
+                        original["artifactIndexSha256"], snapshot["manifestSha256"], docker, endpoint, generated_freeze_time)
                 print("PASS: " + case + " actual checkpoint, verified index and object export", flush=True)
                 operator, custody, remote = [volume(case + "-" + suffix, 501) for suffix in ["operator", "custody", "remote"]]
                 copied = run(["run", "--rm", "--network=none", "--user=0:0", "--cap-drop=ALL", "--cap-add=DAC_OVERRIDE", "--cap-add=CHOWN", "--read-only",
@@ -387,6 +405,8 @@ def main():
                 for source in [db_data, gateway_data, control, captures, frozen, snapshots, operator]: remove_volume(source)
                 run(["network", "rm", source_net], "source network removal"); networks.remove(source_net)
                 print("PASS: " + case + " native encrypted push and source data removal", flush=True)
+                operator_proof = operator_fixture.verify(operator_case, run) if operator_case else None
+                if operator_proof: print("PASS: " + case + " independent host-native operator runner", flush=True)
                 retrieved = volume(case + "-retrieved", 501)
                 run(["run", "--rm", "--network=none", *transport_common, mount(retrieved, "/operator"), transport_image, "pull", *args,
                      "--receipt", "/control/receipt.json", "--receipt-sha256", receipt["receiptSha256"], "--identity-file", "/control/identity.txt",
@@ -432,6 +452,7 @@ def main():
                         "standaloneDataPreservedDuringReplicaSetConversion": True, "writesBeforeCapture": writes_before, "writesAfterCapture": writes_after,
                         "recoveredCommittedTransactions": restored_transactions["committedTransactions"], "crossDatabaseTransactionInvariantVerified": True,
                         "immutableObjectCutVerified": True, "laterNewKeysExcluded": not empty, "invalidOnlineInputsRejected": not empty, "activeFencePreservedAndWholeCaptureRetried": not empty})
+                if operator_proof: evidence[-1]["operatorRecoveryCheck"] = operator_proof
                 print("PASS: " + case + " actual checkpoint/index, encrypted retrieval, fresh storage and cold associations", flush=True)
                 remove_container(recovered_gateway); remove_container(recovered_db)
             require(source_inventory() == original_inputs, "Public source inputs changed during qualification.")
