@@ -316,12 +316,18 @@ def main():
                     writes_before = transaction_client("state")["committedTransactions"]
                 def capture(identifier, replacements=(), success=True):
                     # Later explicit fixture overrides are intentional negative inputs.
-                    return run(["run", "--rm", "--network=" + source_net, *checkpoint_common, mount(captures, "/outputs"),
+                    result = run(["run", "--rm", "--network=" + source_net, *checkpoint_common, mount(captures, "/outputs"),
                         "--env=MONGODB_PRIMARY_URI=mongodb://source-mongo:27017/" + ("" if options.online else "plugin_recovery_fixture"), "--env=OPENLAP_MONGODB_DB=plugin_recovery_fixture",
                         "--env=CHECKPOINT_SOURCE_HOST=source-mongo", "--env=CHECKPOINT_SOURCE_PORT=27017",
                         *(["--env=CHECKPOINT_REPLICA_SET=online-fixture-rs", "--env=PLUGIN_DELETION_ENABLED=false"] if options.online else ["--env=CHECKPOINT_FREEZE_EVIDENCE=generated-writers-stopped"]),
                         "--env=CHECKPOINT_ID=" + identifier, *replacements, checkpoint_image, "--checkpoint-online" if options.online else "--checkpoint"],
-                        "actual checkpoint and isolated restore", timeout=240, success=success)
+                        "actual checkpoint and isolated restore", timeout=240, success=False)
+                    if success and result.returncode:
+                        # Only the shell's fixed, bounded phase is diagnostic;
+                        # native client output is withheld by the actual tool.
+                        fixed = re.fullmatch(rb"Checkpoint incomplete: ([A-Za-z0-9 ,'-]{1,160})\. Raw client output withheld; any partial checkpoint is retained\.\n", result.stderr)
+                        require(False, "Actual checkpoint failed: " + (fixed.group(1).decode() if fixed else "unclassified bounded failure"))
+                    return result
                 if options.online and not empty:
                     for label, replacement in [("database-path", "MONGODB_PRIMARY_URI=mongodb://source-mongo:27017/plugin_recovery_fixture"),
                         ("wrong-replica", "CHECKPOINT_REPLICA_SET=wrong-set"), ("physical-deletion", "PLUGIN_DELETION_ENABLED=true")]:
