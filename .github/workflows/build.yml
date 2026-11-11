@@ -151,6 +151,14 @@ jobs:
         python3 -B openlap-analyticsframework/scripts/verify-legacy-c3.py
         --image "$TESTED_IMAGE_ID" --runtime-layout spring-boot
 
+    - name: Verify packaged backend startup and HTTP contracts
+      if: inputs.verify_plugin_runtime && matrix.service == 'openlap-analyticsframework'
+      env:
+        TESTED_IMAGE_ID: ${{ steps.build.outputs.imageid }}
+      run: >-
+        python3 -B openlap-analyticsframework/scripts/verify-packaged-backend.py
+        --image "$TESTED_IMAGE_ID"
+
     - name: Publish the verified image without rebuilding
       if: inputs.push && inputs.verify_plugin_runtime
       env:
