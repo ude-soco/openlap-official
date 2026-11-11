@@ -35,7 +35,13 @@ public final class VersityStorageQualification {
   }
   private static void blockedRead(Runnable operation) {
     try { operation.run(); throw new IllegalStateException("Forbidden read succeeded."); }
-    catch (S3Exception denied) { require(denied.statusCode() == 403 || denied.statusCode() == 404); }
+    catch (S3Exception denied) {
+      int status = denied.statusCode();
+      if (status != 400 && status != 403 && status != 404) {
+        step = "unexpected invalid-object response HTTP " + status;
+        require(false);
+      }
+    }
   }
   @FunctionalInterface private interface Operation { void run() throws Exception; }
   private static void rejected(Operation operation) throws Exception {
@@ -152,6 +158,7 @@ public final class VersityStorageQualification {
           denied(() -> client.putObject(b -> b.bucket(settings.bucket).key("outside/forbidden"), RequestBody.fromString("synthetic")));
           denied(() -> client.getObjectAsBytes(b -> b.bucket(settings.bucket).key("outside/forbidden")));
           denied(() -> client.deleteObject(b -> b.bucket(settings.bucket).key("outside/forbidden")));
+          step = "noncanonical object names rejected";
           blockedRead(() -> client.getObjectAsBytes(b -> b.bucket(settings.bucket).key("plugins/analytics/../../../../storage/iam/users.json")));
           blockedRead(() -> client.getObjectAsBytes(b -> b.bucket(settings.bucket).key("plugins/analytics/%2e%2e/%2e%2e/%2e%2e/%2e%2e/storage/iam/users.json")));
           step = "anonymous reads denied";

@@ -52,6 +52,42 @@ IAM and bucket metadata before publishing its installation marker. The actual
 filesystem must support owner access, user xattrs, atomic publication, locks and
 directory fsync.
 
+Keep `PLUGIN_DELETION_ENABLED=false` for this option until durable deletion has
+been separately established. Logical removal and retained versions remain
+available. Deleting the probe's unregistered synthetic object tests API cleanup;
+it does not prove durable physical purge after a node or filesystem failure.
+
+The optional resource sets are separate:
+
+- `.k8s/storage/plugin-versity-credentials` declares only the two empty logical
+  Secrets. An operator supplies their values through a secure mechanism, such as
+  env-file generators with `behavior: merge`. No default credential values exist.
+- `.k8s/storage/plugin-versity/volume.yaml` requests a dedicated fresh claim.
+  Review storage class, capacity, ownership and retention in the installation.
+- `.k8s/maintenance/plugin-versity-bootstrap` initializes only an explicitly
+  selected **fresh** claim. Its first-use fsGroup is not permission repair for an
+  existing application, backup or previously initialized storage volume. Keep
+  the normal gateway stopped until this operation succeeds, then remove the Job.
+- `.k8s/storage/plugin-versity` runs the single gateway with its static parent/IAM
+  mount read-only and only object/lease subpaths writable. Normal serving has no
+  fsGroup or root initializer. It verifies retained state instead of reinitializing.
+- `.k8s/maintenance/plugin-versity-probe` uses only the application Secret and an
+  explicitly reviewed endpoint. Remove the temporary probe Job after its result.
+
+Kubernetes projects keys through a versioned `..data` directory. Credential
+inputs permit only resolved regular files inside their read-only projection;
+escaping links fail. Mode 0444 makes those projected inputs readable by UID1000
+without changing retained-volume ownership. Retained IAM, installation markers
+and object files retain their separate owner-only requirements. Private
+directories may inherit SGID from a provisioner; group/other access remains absent.
+
+Image placeholders, bucket/region, existing credential inputs, fresh claim and
+network selectors are deliberately unconfigured. Apply instance overrides and
+test their synthetic composition without rendering live Secret values. The
+gateway has no Kubernetes API identity. The bootstrap needs only loopback; the
+normal service should accept only reviewed backend/probe traffic. No ingress or
+public bucket is installed.
+
 Qualification must use the actual AWS Java SDK 2.57.11 `S3ArtifactObjectStore`
 path: absent-object 404, verified put/get/delete, content type and SHA metadata,
 negative permissions, cold restart, read-only IAM, unsafe retained-state rejection
