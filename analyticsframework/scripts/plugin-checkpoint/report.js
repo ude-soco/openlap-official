@@ -37,9 +37,19 @@
     function isolatedConnection() {
         var mongo = new Mongo("mongodb://127.0.0.1:37017/?directConnection=true&serverSelectionTimeoutMS=2000&connectTimeoutMS=2000&socketTimeoutMS=30000");
         var options = mongo.getDB("admin").runCommand({getCmdLineOpts: 1, maxTimeMS: 2000});
-        require(options.ok === 1 && options.parsed.storage.dbPath === env("CHECKPOINT_WORK") + "/db");
+        var persistent = env("CHECKPOINT_PHASE").indexOf("persistent-") === 0;
+        if (persistent) {
+            require(env("CHECKPOINT_PERSISTENT_MODE") === "true");
+            require(/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(env("CHECKPOINT_TARGET_TOKEN")));
+        }
+        require(options.ok === 1 && options.parsed.storage.dbPath === (persistent ? "/target" : env("CHECKPOINT_WORK") + "/db"));
         require(options.parsed.net.bindIp === "127.0.0.1" && options.parsed.net.port === 37017);
         require(options.parsed.net.unixDomainSocket.enabled === false);
+        if (persistent) {
+            var build = mongo.getDB("admin").runCommand({buildInfo: 1, maxTimeMS: 2000});
+            require(build.ok === 1 && build.version === "4.4.30");
+            require(!options.parsed.replication);
+        }
         return mongo;
     }
     function connection() {
@@ -89,10 +99,10 @@
         return {mongo: new Mongo(uri), database: database};
     }
     function snapshot() {
-        var local = ["restored", "rehearsal-restored"].indexOf(env("CHECKPOINT_PHASE")) !== -1;
+        var local = ["restored", "rehearsal-restored", "persistent-restored"].indexOf(env("CHECKPOINT_PHASE")) !== -1;
         var selected = local ? {mongo: isolatedConnection(), database: env("OPENLAP_MONGODB_DB")} : connection();
         var db = selected.mongo.getDB(selected.database);
-        if (env("CHECKPOINT_PHASE") === "rehearsal-restored") {
+        if (["rehearsal-restored", "persistent-restored"].indexOf(env("CHECKPOINT_PHASE")) !== -1) {
             var databases = selected.mongo.getDB("admin").runCommand({listDatabases: 1, nameOnly: true, maxTimeMS: 5000});
             require(databases.ok === 1 && Array.isArray(databases.databases));
             require(databases.databases.every(function(item) {
@@ -239,6 +249,30 @@
         print(JSON.stringify(OpenLAPPluginArtifactIndex.project(isolatedConnection().getDB(verified.database),
             originalReport(), env("CHECKPOINT_EXPECTED_REPORT_SHA256"))));
     }
+    function persistentResult() {
+        var verified = rehearsalResult();
+        require(env("CHECKPOINT_PERSISTENT_MODE") === "true");
+        var token = env("CHECKPOINT_TARGET_TOKEN"), freeze = env("CHECKPOINT_FREEZE_EVIDENCE");
+        require(/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(token));
+        require(/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,159}$/.test(freeze));
+        require(env("CHECKPOINT_COLD_RESTART_VERIFIED") === "true" && env("CHECKPOINT_CLEAN_SHUTDOWN_VERIFIED") === "true"
+                && env("CHECKPOINT_FSYNC_VERIFIED") === "true");
+        var indexSha = env("CHECKPOINT_INDEX_SHA256"), indexSize = env("CHECKPOINT_INDEX_SIZE");
+        require(/^[a-f0-9]{64}$/.test(indexSha) && /^[1-9][0-9]{0,6}$/.test(indexSize) && Number(indexSize) <= 1048576);
+        print(JSON.stringify({schemaVersion: 1, status: "FRESH_PERSISTENT_DATABASE_RESTORE_VERIFIED",
+            restoreId: env("CHECKPOINT_ID"), targetToken: token, targetDbPath: "/target",
+            originalCheckpointId: verified.originalCheckpointId, originalReportSha256: verified.originalReportSha256,
+            archiveSha256: verified.archiveSha256, archiveSizeBytes: verified.archiveSizeBytes,
+            expandedArchiveBytes: verified.expandedArchiveBytes, database: verified.database,
+            originalSourceServerVersion: verified.originalSourceServerVersion, restoreServerVersion: verified.restoreServerVersion,
+            fcv: verified.fcv, databaseToolsVersion: verified.databaseToolsVersion,
+            originalSourceIdentityMd5: verified.originalSourceIdentityMd5, collectionCount: verified.collections.length,
+            artifactIndexSha256: indexSha, artifactIndexSizeBytes: Number(indexSize),
+            databaseFilesRetained: true, restoredMatched: true, fsyncVerified: true,
+            cleanShutdownVerified: true, coldRestartVerified: true,
+            freezeEvidenceId: freeze, freezeVerification: "External operator prerequisite; not enforced or proven by this tool",
+            scope: "One frozen MongoDB 4.4 database restored to a fresh persistent volume; no other databases, replica-set configuration, S3 objects, application acceptance or resumed writers verified"}));
+    }
     function artifactSummary() {
         load("/opt/openlap-checkpoint/artifact-index.js");
         var index = read(env("CHECKPOINT_WORK") + "/artifact-index.json");
@@ -246,15 +280,20 @@
             Number(env("CHECKPOINT_INDEX_SIZE")), env("CHECKPOINT_REHEARSAL_REPORT_SHA256"))));
     }
     try {
-        if (env("CHECKPOINT_PHASE") === "local-ready") { isolatedConnection(); print("LOCAL_READY"); }
+        if (["local-ready", "persistent-ready"].indexOf(env("CHECKPOINT_PHASE")) !== -1) { isolatedConnection(); print("LOCAL_READY"); }
+        else if (env("CHECKPOINT_PHASE") === "persistent-fsync") {
+            require(isolatedConnection().getDB("admin").runCommand({fsync: 1, maxTimeMS: 10000}).ok === 1);
+            print("PERSISTENT_FSYNC_VERIFIED");
+        }
+        else if (env("CHECKPOINT_PHASE") === "persistent-finish") { persistentResult(); }
         else if (env("CHECKPOINT_PHASE") === "finish") { finish(); }
         else if (env("CHECKPOINT_PHASE") === "rehearsal-validate") {
             var original = originalReport();
             print(original.database + " " + original.archiveSha256 + " " + original.archiveSizeBytes + " " + original.expandedArchiveBytes);
         }
         else if (env("CHECKPOINT_PHASE") === "rehearsal-finish") { rehearsalFinish(); }
-        else if (env("CHECKPOINT_PHASE") === "rehearsal-plugin-index") { artifactIndex(); }
+        else if (["rehearsal-plugin-index", "persistent-plugin-index"].indexOf(env("CHECKPOINT_PHASE")) !== -1) { artifactIndex(); }
         else if (env("CHECKPOINT_PHASE") === "rehearsal-plugin-index-summary") { artifactSummary(); }
-        else { require(["source-before", "source-after", "restored", "rehearsal-restored"].indexOf(env("CHECKPOINT_PHASE")) !== -1); snapshot(); }
+        else { require(["source-before", "source-after", "restored", "rehearsal-restored", "persistent-restored"].indexOf(env("CHECKPOINT_PHASE")) !== -1); snapshot(); }
     } catch (_) { print("CHECKPOINT_VALIDATION_FAILED"); quit(1); }
 }());

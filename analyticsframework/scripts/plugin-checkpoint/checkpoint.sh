@@ -1,10 +1,13 @@
 #!/bin/bash
-# Direct-source reads and one isolated loopback restore. No Kubernetes client or live restore mode.
+# Scoped checkpoint and isolated recovery actions. No Kubernetes client or remote restore-target URI.
 set +x
 set -euo pipefail
 ulimit -c 0
 umask 077
 export LC_ALL=C
+if [[ $# == 1 && $1 == --restore-fresh-volume ]]; then
+    exec /bin/bash --noprofile --norc /opt/openlap-checkpoint/rehearse.sh --persistent
+fi
 if [[ $# == 1 && $1 == --checkpoint-online ]]; then
     exec /bin/bash --noprofile --norc /opt/openlap-checkpoint/online.sh --checkpoint-online
 fi
