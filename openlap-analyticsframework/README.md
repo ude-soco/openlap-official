@@ -102,6 +102,21 @@ application, in addition to the unit and authorization tests.
 
 All endpoints are served under the **`/api`** context path (e.g. `http://localhost:8090/api/login`).
 
+### Restore local plugin JARs when reusing a database
+
+The MongoDB catalog stores plugin metadata, while the executable JARs are separate
+files ignored by Git. A fresh checkout or worktree therefore needs the exact
+installed JARs restored separately. Run the backend from this
+`openlap-analyticsframework` directory and restore each recorded file under
+`jars/analytics_techniques/` or `jars/visualization_methods/`, preserving its name
+and version. Otherwise a method can appear in the catalog while selecting it fails
+with “The recorded plugin JAR is unavailable.”
+
+Legacy catalog paths such as `./jars/analytics_techniques/example.jar` are relative
+to the backend process's working directory. Changing `DATA_DIR` alone does not
+relocate those recorded paths. Restore the original files at their recorded
+locations, or use an explicit artifact migration.
+
 ### Run the whole stack in Docker (alternative)
 
 Instead of running Spring Boot on the host, you can build and run the backend
