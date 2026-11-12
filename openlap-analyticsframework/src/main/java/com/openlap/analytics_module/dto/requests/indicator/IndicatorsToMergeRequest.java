@@ -1,8 +1,8 @@
 package com.openlap.analytics_module.dto.requests.indicator;
 
 import com.openlap.dataset.OpenLAPColumnConfigData;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Data

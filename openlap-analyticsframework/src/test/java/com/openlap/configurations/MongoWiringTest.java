@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.support.ResourcePropertySource;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.test.util.AopTestUtils;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -128,12 +129,14 @@ public class MongoWiringTest {
     assertThat(context.getBeansOfType(MongoTemplate.class)).hasSize(2);
     assertThat(primaryClient).isNotSameAs(secondaryClient);
     assertThat(primary).isNotSameAs(secondary);
-    assertThat(primary.getMongoDbFactory()).isNotSameAs(secondary.getMongoDbFactory());
+    assertThat(((MongoMappingContext) primary.getConverter().getMappingContext()).isAutoIndexCreation()).isTrue();
+    assertThat(((MongoMappingContext) secondary.getConverter().getMappingContext()).isAutoIndexCreation()).isTrue();
+    assertThat(primary.getMongoDatabaseFactory()).isNotSameAs(secondary.getMongoDatabaseFactory());
     assertThat(context.getBean(MongoClient.class)).isSameAs(primaryClient);
     assertThat(context.getBean(MongoTemplate.class)).isSameAs(primary);
-    assertThat(ReflectionTestUtils.getField(primary.getMongoDbFactory(), "mongoClient"))
+    assertThat(ReflectionTestUtils.getField(primary.getMongoDatabaseFactory(), "mongoClient"))
         .isSameAs(primaryClient);
-    assertThat(ReflectionTestUtils.getField(secondary.getMongoDbFactory(), "mongoClient"))
+    assertThat(ReflectionTestUtils.getField(secondary.getMongoDatabaseFactory(), "mongoClient"))
         .isSameAs(secondaryClient);
 
     assertRepositoryTemplate(context.getBean(RoleRepository.class), primary);

@@ -13,7 +13,7 @@ import com.openlap.dataset.OpenLAPColumnConfigData;
 import com.openlap.dataset.OpenLAPColumnDataType;
 import com.openlap.dataset.OpenLAPDataSet;
 import java.util.*;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

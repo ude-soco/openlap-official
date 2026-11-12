@@ -35,6 +35,6 @@ public class SecondaryMongoConfig {
 
   @Bean(name = "secondaryMongoTemplate")
   public MongoTemplate secondaryMongoTemplate() {
-    return new MongoTemplate(secondaryMongoClient(), mongoDatabase);
+    return MongoTemplateFactory.create(secondaryMongoClient(), mongoDatabase);
   }
 }

@@ -2,7 +2,7 @@ package com.openlap.plugins;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -66,6 +66,6 @@ public class LegacyPluginDeletionTest {
           .andExpect(jsonPath("$.cause").doesNotExist());
       assertThat(Files.readAllBytes(jar)).isEqualTo(original);
     }
-    verifyZeroInteractions(methods, libraries, types);
+    verifyNoInteractions(methods, libraries, types);
   }
 }

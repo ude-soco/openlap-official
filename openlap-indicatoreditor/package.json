@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "node --test \"src/**/*.test.js\"",
     "test:analysis-preview": "node scripts/test-analysis-preview.cjs",
+    "test:saved-preview": "node scripts/test-saved-indicator-preview.cjs",
     "test:dependency-updates": "node scripts/test-dependency-updates.cjs"
   },
   "dependencies": {

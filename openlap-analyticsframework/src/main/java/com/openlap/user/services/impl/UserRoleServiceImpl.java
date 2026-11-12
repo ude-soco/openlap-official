@@ -16,7 +16,7 @@ import com.openlap.user.services.UserRoleService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import javax.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;

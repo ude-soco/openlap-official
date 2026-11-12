@@ -2,7 +2,7 @@ package com.openlap.analytics_statements.dtos.request;
 
 import lombok.*;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 @Data
 @Getter

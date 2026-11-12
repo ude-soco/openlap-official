@@ -12,7 +12,7 @@ import com.openlap.template.VisualizationCodeGenerator;
 import com.openlap.plugins.PluginJarFiles;
 import com.openlap.plugins.artifacts.PluginArtifactResolver;
 import com.openlap.plugins.artifacts.PluginKind;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import com.openlap.template.VisualizationLibraryInfo;
 import com.openlap.visualization_methods.dto.VisualizationLibraryResponse;
 import com.openlap.visualization_methods.dto.VisualizationMethodFileNameResponse;

@@ -2,8 +2,8 @@ package com.openlap.analytics_module.dto.requests.indicator;
 
 import lombok.*;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -7,7 +7,7 @@ import com.openlap.analytics_module.dto.requests.indicator.IndicatorMultiLevelRe
 import com.openlap.analytics_module.dto.response.indicator.CompatibleIndicatorsColumnsMergeForMultiLevel;
 import com.openlap.analytics_module.dto.response.indicator.IndicatorMultiLevelMergeResponse;
 import com.openlap.dataset.OpenLAPDataSet;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 public interface IndicatorMultiLevelService {

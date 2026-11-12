@@ -13,7 +13,7 @@ import com.openlap.user.entities.RoleType;
 import com.openlap.user.entities.User;
 import java.util.List;
 import java.util.Set;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

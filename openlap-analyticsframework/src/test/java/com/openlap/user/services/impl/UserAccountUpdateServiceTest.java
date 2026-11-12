@@ -24,7 +24,7 @@ import com.openlap.user.exception.user.PasswordsDoNotMatchException;
 import com.openlap.user.repositories.UserRepository;
 import com.openlap.user.services.TokenService;
 import com.openlap.user.services.UserRoleService;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;

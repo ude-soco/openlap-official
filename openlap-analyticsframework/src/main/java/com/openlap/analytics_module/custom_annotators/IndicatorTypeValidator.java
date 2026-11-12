@@ -1,8 +1,8 @@
 package com.openlap.analytics_module.custom_annotators;
 
 import com.openlap.analytics_module.entities.utility_entities.IndicatorType;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 public class IndicatorTypeValidator
     implements ConstraintValidator<ValidIndicatorType, IndicatorType> {

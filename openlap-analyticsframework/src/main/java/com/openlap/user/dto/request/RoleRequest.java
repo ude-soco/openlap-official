@@ -1,7 +1,7 @@
 package com.openlap.user.dto.request;
 
 import com.openlap.user.entities.RoleType;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

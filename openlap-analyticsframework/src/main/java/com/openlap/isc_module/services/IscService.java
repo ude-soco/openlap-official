@@ -5,8 +5,8 @@ import com.openlap.isc_module.dto.request.IscRequest;
 import com.openlap.isc_module.dto.response.ISCResponse;
 import com.openlap.isc_module.dto.response.IndicatorSpecificationCardResponse;
 import com.openlap.isc_module.dto.response.IscMutationResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 
 public interface IscService {

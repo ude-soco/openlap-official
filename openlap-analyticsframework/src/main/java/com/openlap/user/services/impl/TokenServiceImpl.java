@@ -11,7 +11,7 @@ import com.openlap.user.dto.request.TokenRequest;
 import com.openlap.user.entities.User;
 import com.openlap.user.repositories.UserRepository;
 import com.openlap.user.services.TokenService;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

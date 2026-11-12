@@ -20,7 +20,7 @@
 /ObjectStore/
 /bin/
 
-# Analytics/visualization plugin JARs generated at runtime by EngineService.
-# The app repopulates these on startup; the folders are kept via .gitkeep.
+# Plugin binaries are supplied separately; startup scans them for catalog metadata
+# but cannot regenerate missing JARs. The folders are kept via .gitkeep.
 /jars/analytics_techniques/*.jar
 /jars/visualization_methods/*.jar

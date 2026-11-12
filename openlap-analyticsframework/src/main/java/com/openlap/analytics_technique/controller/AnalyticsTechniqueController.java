@@ -7,7 +7,7 @@ import com.openlap.analytics_technique.services.AnalyticsTechniqueService;
 import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.response.ApiSuccess;
 import java.util.List;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -23,7 +23,7 @@ import com.openlap.user.entities.User;
 import com.openlap.user.services.TokenService;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.data.mongodb.core.MongoTemplate;

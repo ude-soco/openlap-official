@@ -3,7 +3,7 @@ package com.openlap.plugins.artifacts;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
@@ -48,7 +48,7 @@ public class PluginArtifactRegistryTest {
     Files.write(source, new byte[(int) size]);
     assertThatThrownBy(() -> registry.ensureStored(PluginKind.ANALYTICS, source, expected, size, "migration"))
         .isInstanceOf(PluginStorageException.class).hasFieldOrPropertyWithValue("code", "PLUGIN_ARTIFACT_CORRUPT");
-    verifyZeroInteractions(repository, mongo, store);
+    verifyNoInteractions(repository, mongo, store);
   }
 
   @Test
@@ -81,6 +81,6 @@ public class PluginArtifactRegistryTest {
         .thenReturn(com.mongodb.client.result.UpdateResult.acknowledged(0L, 0L, null));
     assertThatThrownBy(() -> registry.ensureStored(PluginKind.ANALYTICS, source, ArtifactIntegrity.sha256(source), Files.size(source), "test"))
         .isInstanceOf(PluginStorageException.class).hasFieldOrPropertyWithValue("code", "PLUGIN_ARTIFACT_PURGED");
-    verifyZeroInteractions(store);
+    verifyNoInteractions(store);
   }
 }

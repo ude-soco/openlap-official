@@ -4,7 +4,7 @@ import com.openlap.analytics_module.dto.requests.analytics_goal.AnalyticsGoalReq
 import com.openlap.analytics_module.dto.requests.analytics_goal.AnalyticsGoalStatusRequest;
 import com.openlap.analytics_module.entities.AnalyticsGoal;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface AnalyticsGoalsService {
   AnalyticsGoal createAnalyticsGoal( AnalyticsGoalRequest goal);

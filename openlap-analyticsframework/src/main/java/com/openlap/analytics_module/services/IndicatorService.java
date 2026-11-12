@@ -6,7 +6,7 @@ import com.openlap.analytics_module.dto.response.indicator.*;
 import com.openlap.analytics_module.entities.Indicator;
 
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;

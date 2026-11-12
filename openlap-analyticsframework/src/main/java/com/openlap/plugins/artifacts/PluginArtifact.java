@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.Objects;
 import lombok.Getter;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /** Content-addressed identity is immutable; only STAGED -> READY is allowed by the registry. */
@@ -22,7 +22,7 @@ public class PluginArtifact {
   private final Instant createdAt;
   private final String createdBy;
 
-  @PersistenceConstructor
+  @PersistenceCreator
   public PluginArtifact(String id, PluginKind kind, String sha256, long sizeBytes,
       String objectKey, State state, Instant createdAt, String createdBy) {
     this.id = id;
