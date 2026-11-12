@@ -17,10 +17,13 @@
 // Matching only the FIRST `, width: N` (non-global) removes the fixed chart width
 // across every chart shape — Area/Bar/Line (`…height: H, width: W}`),
 // Scatter (`…width: W, zoom:`), Pie/Donut (`…toolbar:{…}, width: W}`) — and never
-// touches the responsive block. It also no-ops on C3 output (no `, width: N`).
+// touches the responsive block. Saved numeric parameters can produce decimals
+// such as `width: 500.0`. Match the whole number (or balanced quoted number) and
+// its property boundary, so stripping the width cannot leave a `.0` fragment or
+// change values such as `"100%"`. It also no-ops on C3 output (no `, width: N`).
 // Fail-safe: if the pattern is absent, the script is returned unchanged. Never
 // mutates the input (String.replace returns a new string).
-const APEX_FIXED_WIDTH_RE = /,\s*width:\s*["']?\d+["']?/;
+const APEX_FIXED_WIDTH_RE = /,\s*width:\s*(["']?)\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\1(?=\s*[,}])/;
 
 export const makeApexChartsResponsive = (scriptData) => {
   if (typeof scriptData !== "string") return scriptData;
