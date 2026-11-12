@@ -92,7 +92,7 @@ application, in addition to the unit and authorization tests.
    ```
 
 3. Open this folder in **VS Code** and press **F5**
-   (the **Run AnalyticsFramework (Spring Boot)** launch config starts the app with the debugger).
+   (the **Run analyticsframework (Spring Boot)** launch config starts the app with the debugger).
    No extra setup is needed — the launch config (and the **Spring Boot: Run** task)
    already set `ALLOW_INSECURE_DEFAULTS=true` for local development.
 

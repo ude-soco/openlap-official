@@ -5,10 +5,10 @@
   "configurations": [
     {
       "type": "java",
-      "name": "Run AnalyticsFramework (Spring Boot)",
+      "name": "Run analyticsframework (Spring Boot)",
       "request": "launch",
       "mainClass": "com.openlap.AnalyticsFramework",
-      "projectName": "AnalyticsFramework",
+      "projectName": "analyticsframework",
       "cwd": "${workspaceFolder}",
       "console": "internalConsole",
       // Local run config. The Mongo database name is taken from

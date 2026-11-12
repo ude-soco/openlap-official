@@ -5,12 +5,32 @@ import json
 from pathlib import Path
 import subprocess
 import unittest
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = "docs/framework-rename-exceptions.json"
 
 
 class FrameworkReferences(unittest.TestCase):
+    def test_module_entry_point_names_agree(self):
+        pom = ET.parse(ROOT / "analyticsframework/pom.xml").getroot()
+        ns = {"m": "http://maven.apache.org/POM/4.0.0"}
+        self.assertEqual(pom.find("m:artifactId", ns).text, "analyticsframework")
+        launch_text = (ROOT / "analyticsframework/.vscode/launch.json").read_text()
+        # This launch file uses full-line JSONC comments; keep URI strings intact.
+        launch = json.loads("\n".join(line for line in launch_text.splitlines()
+                                      if not line.lstrip().startswith("//")))
+        configuration = launch["configurations"][0]
+        self.assertEqual(configuration["projectName"], "analyticsframework")
+        self.assertEqual(configuration["mainClass"], "com.openlap.AnalyticsFramework")
+        package = json.loads((ROOT / "indicatorframework/package.json").read_text())
+        lock = json.loads((ROOT / "indicatorframework/package-lock.json").read_text())
+        self.assertEqual(package["name"], "indicatorframework")
+        self.assertEqual(lock["name"], package["name"])
+        self.assertEqual(lock["packages"][""]["name"], package["name"])
+        self.assertEqual(package["dependencies"][package["name"]], "file:")
+        self.assertTrue(lock["packages"]["node_modules/indicatorframework"]["link"])
+
     def test_active_references_are_canonical(self):
         policy = json.loads((ROOT / MANIFEST).read_text())
         allowed = set(policy["historicalFiles"]) | set(policy["allowedReferences"]) | {MANIFEST}
