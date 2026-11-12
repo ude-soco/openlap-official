@@ -3,18 +3,16 @@ kind: Kustomization
 
 labels:
 - pairs:
-    service: mongo
+    app.kubernetes.io/component: indicatorframework
   includeSelectors: true
   includeTemplates: true
 
+namePrefix: indicatorframework-
+
+configMapGenerator:
+- name: web
+  literals: []
+
 resources:
 - deployment.yaml
-- pvc.yaml
 - service.yaml
-
-vars:
-- name: OPENLAP_OFFICIAL_OPENLAP_ANALYTICSFRAMEWORK_MONGO_SERVICE
-  objref:
-    apiVersion: v1
-    kind: Service
-    name: mongo

@@ -9,8 +9,8 @@ labels:
   includeTemplates: true
 
 resources:
-- openlap-analyticsframework
-- openlap-indicatoreditor
+- analyticsframework
+- indicatorframework
 - ingress.yaml
 
 configMapGenerator:
@@ -18,17 +18,17 @@ configMapGenerator:
   literals:
   - host=example.org
 
-- name: openlap-analyticsframework-web
+- name: analyticsframework-web
   behavior: merge
   literals: []
   # - WEBAPP_URL=""  # CORS origin URL(s), incl. protocol, comma-separated
 
-- name: openlap-indicatoreditor-web
+- name: indicatorframework-web
   behavior: merge
   literals: []
 
 secretGenerator:
-- name: openlap-analyticsframework-web
+- name: analyticsframework-web
   behavior: merge
   literals: []
   # - ADMIN_NAME=""
@@ -46,11 +46,11 @@ vars:
     fieldpath: data.host
 
 images:
-- name: openlap-analyticsframework
-  newName: ghcr.io/ude-soco/openlap-official-openlap-analyticsframework
+- name: analyticsframework
+  newName: ghcr.io/ude-soco/openlap-official-analyticsframework
   newTag: edge
-- name: openlap-indicatoreditor
-  newName: ghcr.io/ude-soco/openlap-official-openlap-indicatoreditor
+- name: indicatorframework
+  newName: ghcr.io/ude-soco/openlap-official-indicatorframework
   newTag: edge
 - name: mongo
   newTag: "4.4"

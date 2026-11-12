@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    spec:
+      containers:
+      - name: web
+        image: analyticsframework
+        envFrom:
+        - configMapRef:
+            name: web
+        - secretRef:
+            name: web
+        env:
+        - name: PORT
+          value: "8090"
+        - name: MONGODB_PRIMARY_URI
+          value: "mongodb://$(OPENLAP_OFFICIAL_ANALYTICSFRAMEWORK_MONGO_SERVICE):27017"
+        - name: MONGODB_SECONDARY_URI
+          value: "mongodb://$(LEARNINGLOCKER_MONGO_SERVICE):27017"
+        - name: OPENLAP_MONGODB_DB
+          value: openlap
+        - name: LRS_MONGODB_DB
+          value: learninglocker_v2
+        ports:
+        - containerPort: 8090
+        # A renamed Deployment must serve the public database-backed API before
+        # it replaces the old application. S3 catalog verification finishes as
+        # part of application startup; a running process alone is insufficient.
+        startupProbe:
+          httpGet:
+            path: /api/v1/content/news
+            port: 8090
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 60
+        readinessProbe:
+          httpGet:
+            path: /api/v1/content/news
+            port: 8090
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3

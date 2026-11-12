@@ -64,7 +64,7 @@ spec:
     - podSelector:
         matchLabels:
           app.kubernetes.io/name: openlap-official
-          app.kubernetes.io/component: openlap-analyticsframework
+          app.kubernetes.io/component: analyticsframework
           service: web
     - podSelector:
         matchLabels:
