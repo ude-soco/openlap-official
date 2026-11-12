@@ -8,7 +8,8 @@
 # Start only MongoDB (the usual VS Code / host-run workflow runs Spring Boot
 # on the host with ./mvnw spring-boot:run):
 #
-#   docker compose -f compose.yaml -f compose.dev.yaml up -d mongo
+#   export OPENLAP_MONGO_VOLUME=YOUR_SELECTED_EXISTING_VOLUME
+#   python3 -B scripts/start-local-mongo.py
 #
 # Everything here only benefits local development and must NOT be applied to a
 # production deployment.
@@ -22,7 +23,7 @@ services:
     ports:
     - "27017:27017"
 
-  openlap-analyticsframework:
+  analyticsframework:
     environment:
       # Surface the application's own INFO logs (goal seeding, login attempts,
       # Mongo connection) while keeping the framework quiet. See

@@ -1,5 +1,5 @@
 services:
-  openlap-analyticsframework:
+  analyticsframework:
     build: .
     environment:
       ADMIN_EMAIL: admin@mail.com
@@ -29,3 +29,5 @@ services:
 
 volumes:
   mongo:
+    external: true
+    name: ${OPENLAP_MONGO_VOLUME:?Set OPENLAP_MONGO_VOLUME to an explicitly selected existing or freshly created volume}
