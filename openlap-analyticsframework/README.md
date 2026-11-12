@@ -19,9 +19,14 @@ use aligned, patched BOMs. The bridge is deprecated upstream; a future Jackson 3
 migration must preserve the persisted data and external plugin contracts before it
 can replace this configuration.
 
-Legacy C3 plugins still require `javafx.util.Pair`. The backend includes stable
+Legacy C3 and ApexCharts plugins still require `javafx.util.Pair`. The backend includes stable
 `javafx-base` for that binary API, without the unused GUI controls and graphics
-modules. Both Mongo templates explicitly retain legacy string storage for decimal
+modules. A small `Customization` compatibility class retains the constructor and
+accessors used by both reviewed historical plugins; the renderers keep ownership
+of their defaults, filtering and formatting. CI checks both pinned JARs against
+the packaged backend before publishing its image.
+
+Both Mongo templates explicitly retain legacy string storage for decimal
 and large-integer values and annotation-based index creation; this upgrade does not
 convert existing records. Plugin qualification runs the historical generators against the packaged
 application, in addition to the unit and authorization tests.

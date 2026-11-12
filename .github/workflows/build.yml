@@ -122,6 +122,7 @@ jobs:
         fetch --no-tags --depth=1 --no-recurse-submodules
         https://github.com/ude-soco/openlap-official.git
         4768ec732c667940e00dfc5a87e0300ed0a7ef75
+        acd1751d1ad256ec4b6e91d8e4321a23f33745fa
 
     - name: Build and push container image
       id: build
@@ -149,6 +150,14 @@ jobs:
         TESTED_IMAGE_ID: ${{ steps.build.outputs.imageid }}
       run: >-
         python3 -B openlap-analyticsframework/scripts/verify-legacy-c3.py
+        --image "$TESTED_IMAGE_ID" --runtime-layout spring-boot
+
+    - name: Verify historical Apex charts against the packaged backend
+      if: inputs.verify_plugin_runtime && matrix.service == 'openlap-analyticsframework'
+      env:
+        TESTED_IMAGE_ID: ${{ steps.build.outputs.imageid }}
+      run: >-
+        python3 -B openlap-analyticsframework/scripts/verify-legacy-apex.py
         --image "$TESTED_IMAGE_ID" --runtime-layout spring-boot
 
     - name: Verify packaged backend startup and HTTP contracts
