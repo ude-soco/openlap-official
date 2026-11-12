@@ -61,6 +61,8 @@ class Fixture:
         self.private_values = {self.admin_password, self.user_password, self.jwt_key}
         self.opener = request.build_opener(request.ProxyHandler({}), NoRedirect())
         self.base = None
+        self.secondary_fixture_counts = None
+        self.fixture_lrs_id = None
         self.report = {"image": image, "checks": [], "result": "FAIL"}
 
     def redact(self, value):
@@ -206,8 +208,98 @@ class Fixture:
         self.require(counts["roles"] == 4 and counts["users"] == expected_users and counts["goals"] > 0,
                      "Primary database must contain expected seed roles/users/goals")
         secondary = self.mongo(self.secondary, "mongo", self.secondary_db, "print(JSON.stringify(db.getCollectionNames()))")
-        self.require(secondary == [], "Application bootstrap must not create collections in the secondary database")
+        if self.secondary_fixture_counts is None:
+            self.require(secondary == [], "Application bootstrap must not create collections in the secondary database")
+        else:
+            self.require(sorted(secondary) == sorted(self.secondary_fixture_counts),
+                         "Secondary database must contain only the intentionally seeded xAPI collections")
+            counts_secondary = self.mongo(self.secondary, "mongo", self.secondary_db,
+                'print(JSON.stringify({lrs:db.lrs.countDocuments({}),statements:db.statements.countDocuments({})}))')
+            self.require(counts_secondary == self.secondary_fixture_counts,
+                         "Synthetic secondary xAPI records must remain unchanged")
         self.report["seed_counts"] = counts
+
+    def verify_xapi_options(self, user):
+        # All statements below belong only to this fixture's disposable Mongo 4.4.
+        # Counterexamples isolate each query filter while retaining the same activity name.
+        self.fixture_lrs_id = secrets.token_hex(12)
+        other_lrs_id = secrets.token_hex(12)
+        actor = "fixture-actor-" + self.suffix
+        activity_type = "https://example.test/activity-types/pdf"
+        other_type = "https://example.test/activity-types/course"
+        viewed = "https://example.test/verbs/viewed"
+        edited = "https://example.test/verbs/edited"
+        label = "A PDF with Mixed CASE"
+        other_label = "Another PDF"
+        activity_field = "statement.object.definition.name.en-US"
+        selected_objects = ["https://example.test/activities/selected-one",
+                            "https://example.test/activities/selected-two"]
+        cases = [
+            (self.fixture_lrs_id, activity_type, viewed, label, selected_objects[0]),
+            (self.fixture_lrs_id, activity_type, viewed, label, selected_objects[1]),
+            (self.fixture_lrs_id, activity_type, viewed, other_label, "https://example.test/activities/other-label"),
+            (self.fixture_lrs_id, activity_type, edited, label, "https://example.test/activities/other-action"),
+            (self.fixture_lrs_id, other_type, viewed, label, "https://example.test/activities/other-type"),
+            (other_lrs_id, activity_type, viewed, label, "https://example.test/activities/other-lrs"),
+        ]
+        statements = [{"lrs_id": store, "statement": {
+            "actor": {"account": {"homePage": "https://example.test", "name": actor}},
+            "verb": {"id": verb, "display": {"en-US": verb.rsplit("/", 1)[1]}},
+            "object": {"id": object_id, "definition": {"type": kind, "name": {"en-US": name}}},
+            "stored": "2026-02-03T04:05:06.000Z",
+        }} for store, kind, verb, name, object_id in cases]
+        stores = [{"_id": store_id, "title": title, "uniqueIdentifierType": "ACCOUNT_NAME",
+                   "statementCount": sum(row["lrs_id"] == store_id for row in statements)}
+                  for store_id, title in [(self.fixture_lrs_id, "Selected fixture LRS"),
+                                          (other_lrs_id, "Other fixture LRS")]]
+        fixture = json.dumps({"stores": stores, "statements": statements})
+        expression = ('var fixture=' + fixture + ';'
+            'fixture.stores.forEach(function(row){row._id=ObjectId(row._id)});'
+            'fixture.statements.forEach(function(row){row.lrs_id=ObjectId(row.lrs_id)});'
+            'db.lrs.insertMany(fixture.stores);db.statements.insertMany(fixture.statements);'
+            'print(JSON.stringify({lrs:db.lrs.countDocuments({}),statements:db.statements.countDocuments({})}))')
+        counts = self.mongo(self.secondary, "mongo", self.secondary_db, expression)
+        self.secondary_fixture_counts = {"lrs": 2, "statements": len(statements)}
+        self.require(counts == self.secondary_fixture_counts, "Synthetic xAPI fixture must be seeded completely")
+
+        available = self.api("GET", "/v1/register/lrs")[0]["data"]
+        self.require({store["lrsId"] for store in available} == {self.fixture_lrs_id, other_lrs_id},
+                     "Available LRS metadata must come from the secondary database")
+        self.api("POST", "/v1/users/my/lrs/add",
+                 {"lrsId": self.fixture_lrs_id, "uniqueIdentifier": actor}, user)
+        # The supported connection flow upgrades ROLE_USER_WITHOUT_LRS to ROLE_USER.
+        user = self.login("smoke-user@example.test", self.user_password)["access_token"]
+        linked = self.api("GET", "/v1/users/my/lrs", token=user)[0]["data"]
+        self.require(len(linked) == 1 and linked[0]["lrsId"] == self.fixture_lrs_id,
+                     "The normal user must see only its explicitly linked LRS")
+        stores_request = [{"lrsId": self.fixture_lrs_id, "uniqueIdentifier": actor}]
+        types = self.api("POST", "/v1/statements/activity-types", {"lrsStores": stores_request}, user)[0]["data"]
+        self.require({row["id"] for row in types} == {activity_type, other_type},
+                     "Activity types must be loaded through the linked secondary LRS")
+        actions = self.api("POST", "/v1/statements/actions",
+            {"lrsStores": stores_request, "activityTypes": [activity_type]}, user)[0]["data"]
+        self.require(actions == [
+            {"id": edited, "queryId": "statement.verb.display.en-US", "name": "Edited"},
+            {"id": viewed, "queryId": "statement.verb.display.en-US", "name": "Viewed"},
+        ], "Action options must retain their verb IDs and language-map labels")
+        activities = self.api("POST", "/v1/statements/activities", {
+            "lrsStores": stores_request, "activityTypes": [activity_type], "actionOnActivities": [viewed],
+        }, user)[0]["data"]
+        self.require(activities == [
+            {"id": label, "queryId": activity_field, "name": label},
+            {"id": other_label, "queryId": activity_field, "name": other_label},
+        ], "Activity options must unpack language maps, deduplicate and preserve exact labels/query paths")
+        result = self.api("POST", "/v1/statements/custom-query", {
+            "lrsStores": stores_request, "activityTypes": [activity_type], "actionOnActivities": [viewed],
+            "activities": {activities[0]["queryId"]: [activities[0]["id"]]},
+            "duration": {"from": "2026-01-01T00:00:00.000Z", "until": "2026-12-31T23:59:59.999Z"},
+            "outputs": [activity_field, "statement.object.id"], "userQueryCondition": "INCLUDE_ME",
+        }, user)[0]["data"]["columns"]
+        self.require(result[activity_field]["data"] == [label, label] and
+                     sorted(result["statement.object.id"]["data"]) == sorted(selected_objects),
+                     "A selected activity must query exactly the matching LRS/type/action/name statements")
+        self.report["secondary_fixture_counts"] = self.secondary_fixture_counts
+        self.passed("linked LRS and real xAPI type/action/activity options select exactly matching statements")
 
     def verify(self):
         tokens = self.start()
@@ -245,6 +337,7 @@ class Fixture:
         users = self.api("GET", "/v1/users", token=admin)[0]["data"]
         self.require(users["totalElements"] == 2 and all("password" not in row for row in users["content"]), "Admin pagination must retain safe user JSON")
         self.passed("registration, normal-user/admin authorization and safe paginated JSON")
+        self.verify_xapi_options(user)
         draft = {"title": "Migration fixture news", "date": "2026-11-11", "body": {
             "type": "doc", "content": [{"type": "paragraph", "content": [
                 {"type": "text", "text": "Synthetic migration news"}]}]}}
@@ -269,6 +362,10 @@ class Fixture:
         admin = self.wait_for_app()["access_token"]
         self.require(self.api("GET", "/v1/users/my", token=admin)[0]["data"]["name"] == "Updated Smoke Admin", "Profile must survive restart")
         self.require(self.api("GET", "/v1/content/news")[0]["data"]["totalElements"] == 1, "Published content must survive restart")
+        user = self.login("smoke-user@example.test", self.user_password)["access_token"]
+        linked = self.api("GET", "/v1/users/my/lrs", token=user)[0]["data"]
+        self.require(len(linked) == 1 and linked[0]["lrsId"] == self.fixture_lrs_id,
+                     "The user LRS connection must survive restart")
         self.verify_routing(2)
         self.passed("restart persistence, idempotent seeding and continued database separation")
         self.report["result"] = "PASS"
