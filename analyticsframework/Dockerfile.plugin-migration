@@ -8,7 +8,7 @@ RUN --mount=type=cache,target=/root/.m2 \
     mvn --batch-mode --no-transfer-progress compile dependency:copy-dependencies \
       -DincludeScope=runtime -DoutputDirectory=/build/target/migration-lib
 
-FROM amazoncorretto:25@sha256:019e58087ba4c114c817094f70d3d522bcd13e80ce9edbba6e1c67e5700bad63
+FROM amazoncorretto:27@sha256:95d651262e5a4dd7230cf2fbf3a18c39ebb7931593b45907a48ae33a9277d4ae
 WORKDIR /opt/plugin-migration
 
 # Deliberately omit application resources and uploaded plugin JARs.

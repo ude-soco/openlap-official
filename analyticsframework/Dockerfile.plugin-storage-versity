@@ -13,7 +13,7 @@ RUN mkdir /provider && tar -xzf /tmp/versity.tar.gz --strip-components=1 -C /pro
       versitygw_v1.11.0_Linux_x86_64/versitygw versitygw_v1.11.0_Linux_x86_64/LICENSE versitygw_v1.11.0_Linux_x86_64/NOTICE \
     && /provider/versitygw --version | grep -q '1.11.0'
 
-FROM --platform=linux/amd64 amazoncorretto:25@sha256:019e58087ba4c114c817094f70d3d522bcd13e80ce9edbba6e1c67e5700bad63
+FROM --platform=linux/amd64 amazoncorretto:27@sha256:95d651262e5a4dd7230cf2fbf3a18c39ebb7931593b45907a48ae33a9277d4ae
 WORKDIR /opt/openlap-storage
 COPY --from=build /build/target/classes ./classes
 COPY --from=build /build/target/storage-lib ./lib
