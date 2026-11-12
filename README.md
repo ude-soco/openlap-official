@@ -30,10 +30,9 @@ The Open Learning Analytics Platform (OpenLAP) lays the foundation for a Do-it-y
 
 Download and install the following software:
 
-- Node.js on [Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubuntu-22-04)/[Windows](https://nodejs.org/dist/v20.17.0/)
+- [Node.js](https://nodejs.org/en/download) compatible with the frontend toolchain: `^20.19.0` or `>=22.12.0`. The frontend Docker build uses Node 26.13.
   - Preferred to install Node Version Manager (NVM) for [Ubuntu](https://tecadmin.net/how-to-install-nvm-on-ubuntu-22-04/)/[Windows](https://github.com/coreybutler/nvm-windows/releases).
-  - Open a terminal and then type `nvm install 20.17.0` to install Node.js v20.17.0
-  - Then type `nvm use 20.17.0` to use the Node.js v20.17.0 to install node packages
+  - Run `nvm install 26.13`, then `nvm use 26.13` to match that build runtime.
 - Java 17 or newer; [Amazon Corretto 25 LTS](https://docs.aws.amazon.com/corretto/latest/corretto-25-ug/downloads-list.html) is recommended for the backend.
 - Preferred IDE IntelliJ Ultimate [Ubuntu](https://www.golinuxcloud.com/install-maven-ubuntu/)/[Windows](https://www.jetbrains.com/de-de/idea/download/#section=windows)
 - Maven (latest) on [Ubuntu](https://www.golinuxcloud.com/install-maven-ubuntu/)/[Windows](https://phoenixnap.com/kb/install-maven-windows)

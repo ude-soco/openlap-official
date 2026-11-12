@@ -46,13 +46,18 @@ Run Maven from `analyticsframework` and npm from `indicatorframework`. Move loca
 plugin JARs into the renamed module's existing `jars` subdirectories and preserve
 their recorded names and exact binaries. Git does not carry these ignored files.
 Recorded relative plugin paths still resolve from the backend's working directory.
+Move ignored local configuration, such as the frontend's `.env`, through a native
+file move without displaying its values. Reinstall dependencies in the new module
+directories when an existing checkout leaves ignored build files behind.
 
 Host-run applications can continue using existing MongoDB instances. Renaming a
 directory does not require creating a new database. Compose project names and
 volume identities need an explicit choice: `OPENLAP_MONGO_VOLUME` selects an
 existing external volume, and `analyticsframework/scripts/start-local-mongo.py`
-checks for a conflicting running writer before startup. It never creates, copies,
-stops or deletes a volume/container on the operator's behalf.
+checks for a conflicting running writer before startup. It never creates, copies
+or deletes the selected volume or stops another project's container. Compose
+starts or reconciles the selected project's Mongo service, including creating its
+container when it is absent.
 
 For existing data, stop its previous Mongo stack without `-v`, verify the selected
 volume, then use the new startup helper. For a fresh development database, create
