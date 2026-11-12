@@ -46,14 +46,24 @@ application, in addition to the unit and authorization tests.
 
 ## Startup
 
-1. Start MongoDB (publishes `localhost:27017` and creates the volumes):
+1. Select your MongoDB volume explicitly, then start MongoDB on `localhost:27017`:
 
    ```bash
-   docker compose \
-       -f compose.yaml \
-       -f compose.dev.yaml \
-       up -d mongo
+   export OPENLAP_MONGO_VOLUME=YOUR_SELECTED_VOLUME
+   python3 -B scripts/start-local-mongo.py
    ```
+
+   For existing development data, select the existing volume and stop its previous
+   MongoDB container before starting the renamed project. Keep that volume intact.
+   The preflight checks only the selected volume and refuses to attach it while a
+   different Compose project is using it. An existing MongoDB already running on
+   port 27017 can continue serving a host-run backend without restarting Compose.
+
+   For a fresh database, explicitly create a volume first, for example
+   `docker volume create analyticsframework-mongo`, then select that name above.
+   Compose uses an external volume and cannot silently create a replacement when
+   the module directory changes. `docker compose down -v` does not remove the
+   selected external volume.
 
    > **Why two compose files?** `compose.yaml` is the **secure baseline**
    > (production-style) configuration: it does **not** expose the MongoDB port to
@@ -112,7 +122,7 @@ All endpoints are served under the **`/api`** context path (e.g. `http://localho
 The MongoDB catalog stores plugin metadata, while the executable JARs are separate
 files ignored by Git. A fresh checkout or worktree therefore needs the exact
 installed JARs restored separately. Run the backend from this
-`openlap-analyticsframework` directory and restore each recorded file under
+`analyticsframework` directory and restore each recorded file under
 `jars/analytics_techniques/` or `jars/visualization_methods/`, preserving its name
 and version. Otherwise a method can appear in the catalog while selecting it fails
 with “The recorded plugin JAR is unavailable.”

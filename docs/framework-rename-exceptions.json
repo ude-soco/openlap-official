@@ -1,0 +1,34 @@
+{
+  "patterns": [
+    "openlap-analyticsframework",
+    "openlap-indicatoreditor"
+  ],
+  "historicalFiles": {
+    "docs/plugin-recovery-artifacts.json": {
+      "reason": "Immutable historical artifact or release identity; its recorded names must remain exact.",
+      "sha256": "43daea818b04738edf43f196dcc0218f0ae5dfd89b2c662c009d883f1e187373"
+    },
+    "docs/releases/0.0.6-images.json": {
+      "reason": "Immutable historical artifact or release identity; its recorded names must remain exact.",
+      "sha256": "c4b5093dd07004dbf0623458ff778d637292e7487a0f6546b601cfa68f79f1bb"
+    },
+    "docs/releases/0.0.7-images.json": {
+      "reason": "Immutable historical artifact or release identity; its recorded names must remain exact.",
+      "sha256": "cf071d9d1015f8c5bd3788a33b21060f19de34d097a22f725ecc834ea165596c"
+    }
+  },
+  "allowedReferences": {
+    ".github/workflows/build.yml": "Temporary old mutable edge-image aliases; remove when all consumers use canonical images.",
+    ".k8s/components/legacy-mongo-identity/kustomization.yaml": "Temporary existing Mongo controller, Service, claim and selector identities until a verified storage migration.",
+    ".k8s/components/backend-rename-network-compatibility/kustomization.yaml": "Temporary overlap of old and new backend labels during operational cutover.",
+    ".k8s/components/plugin-backup-replica-set/kustomization.yaml": "Select either temporary Mongo identity without changing replica-set contents.",
+    "analyticsframework/scripts/prepare-plugin-recovery.py": "Git paths bound to the immutable reviewed historical commit and blobs.",
+    "analyticsframework/scripts/verify-legacy-apex.py": "Git path bound to the immutable reviewed historical Apex commit and blob.",
+    "scripts/promote-release-images.py": "Explicit support for the two immutable historical release plans.",
+    "tests/test_prepare_plugin_recovery.py": "Assertions protect historical commit/path/blob provenance.",
+    "tests/test_release_image_promotion.py": "Negative/legacy fixtures verify old releases and new service names cannot be mixed.",
+    "tests/test_framework_image_aliases.py": "Synthetic regression fixtures for temporary legacy edge aliases.",
+    "tests/validate_framework_rename_manifests.py": "Synthetic comparison against original persistent resource identities.",
+    "docs/framework-renaming.md": "Operator migration map and cleanup criteria; old names identify the source of the migration."
+  }
+}

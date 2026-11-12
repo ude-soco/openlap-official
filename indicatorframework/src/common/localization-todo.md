@@ -49,5 +49,5 @@ public-facing strings that should be localized **first** when i18n is later adop
   hero copy/CTAs, footer. Content (news/publications/team) already lives in `data/` and would be
   localized there or via keyed lookups.
 
-> Backend-sourced strings (validation/error messages from `openlap-analyticsframework`) are
+> Backend-sourced strings (validation/error messages from `analyticsframework`) are
 > **not** frontend-localizable here and would require server-side i18n.

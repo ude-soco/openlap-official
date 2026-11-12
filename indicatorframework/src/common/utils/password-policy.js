@@ -1,7 +1,7 @@
 // Frontend mirror of the OpenLAP password policy.
 //
 // SOURCE OF TRUTH: the BACKEND
-// (openlap-analyticsframework `com.openlap.user.validation.PasswordValidator`).
+// (analyticsframework `com.openlap.user.validation.PasswordValidator`).
 // This module exists only to power the live Register checklist for user
 // guidance — it does NOT gate form submission; the backend always re-validates
 // and is authoritative.

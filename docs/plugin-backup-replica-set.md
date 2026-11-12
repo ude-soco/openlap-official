@@ -37,7 +37,7 @@ configMapGenerator:
 - name: openlap-plugin-backup-replica-set
   literals:
   - replicaSetName=openlap-backup
-  - advertisedHost=demo-openlap-official-openlap-analyticsframework-mongo.openlap-demo.svc.cluster.local:27017
+  - advertisedHost=demo-openlap-official-analyticsframework-mongo.openlap-demo.svc.cluster.local:27017
   - oplogSizeMiB=16
 ```
 

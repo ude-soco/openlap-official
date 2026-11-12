@@ -15,7 +15,10 @@ The Open Learning Analytics Platform (OpenLAP) lays the foundation for a Do-it-y
 
 #### Build and run
 
-- TBA
+- Backend: [analyticsframework](analyticsframework/README.md).
+- Frontend: run `npm ci` and `npm run dev` from `indicatorframework`.
+- Existing installations: follow the [framework naming migration](docs/framework-renaming.md)
+  before changing deployment or storage identities.
 
 ## 🖥️ Application stack
 
@@ -42,19 +45,19 @@ Download and install the following software:
 #### Step 2: Installation Guide for Analytics Framework
 
 - Clone the repository using Github Desktop.
-- Open the project `openlap-analyticsframework` using IntelliJ.
-- Under the `Project` panel, right-click on the `openlap-analyticsframework`, click `Maven` and then `Reload Project`.
-- Right click on the `openlap-analyticsframework` again, and click `Open Module Settings`, click on `Project` tab and check whether `coretto-11` is chosen as the SDK for the project.
-  - If not, click on SDK dropdown menu, click `Download SDK`, choose version 11, and then click `Download`.
+- Open the project `analyticsframework` using IntelliJ.
+- Under the `Project` panel, right-click on the `analyticsframework`, click `Maven` and then `Reload Project`.
+- Right click on `analyticsframework`, open `Open Module Settings` and select Java 17 or newer as the project SDK. Corretto 25 LTS is the qualified runtime.
+  - If needed, use `Download SDK` to install that runtime.
   - After the download is complete, click `Apply`.
 - Under `Project Settings` click on `Modules` tab. Find the directory `resources` under `src>main>resources`. Right click on `resources` and mark as `Resources`
-- Right-click on the `openlap-analyticsframework` again, and click `Build Module 'OpenLAP-AnalyticsFramework'` to build the project.
-- Click the play button in the top right corner to run the `OpenLAPAnalyticsFrameworkApplication` class to start the server.
+- Build the `analyticsframework` Maven module, or use its included `./mvnw` wrapper.
+- Run `com.openlap.AnalyticsFramework` with the local environment described in the module's [startup guide](analyticsframework/README.md).
 - Open the Postman software and import the file `ANALYTICS_FRAMEWORK.postman_collection.json` found under `docs` folder
 
 #### Step 3: Installation Guide for OpenLAP Indicator Editor
 
-- Open the project `openlap-indicatoreditor` using IntelliJ.
+- Open the project `indicatorframework` using IntelliJ.
 
 - Open the terminal and type the following command to install the node packages.
 
@@ -63,7 +66,7 @@ Download and install the following software:
   ```
 
   - If you get an error, try typing the `npm install` or `npm install --force` command.
-- Make a copy of the `.env.example` file, located inside the `openlap-indicatoreditor` folder, and rename it to `.env`.
+- Make a copy of the `.env.example` file, located inside the `indicatorframework` folder, and rename it to `.env`.
 - Run the following command in the terminal to start the server.
 
   ```bash

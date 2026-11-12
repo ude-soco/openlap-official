@@ -1,6 +1,6 @@
 # Encrypted release backup transport
 
-`openlap-analyticsframework/scripts/plugin-release-backup.py` transports a
+`analyticsframework/scripts/plugin-release-backup.py` transports a
 completed database checkpoint and explicitly reviewed source/artifact folders
 from a local POSIX operator host. It uses the official `age` and `rclone` clients;
 it implements no encryption algorithm, account login or database restoration.
@@ -62,7 +62,7 @@ directory, such as `backup:Release copies`; inline backend connection strings
 and credentials are rejected.
 
 ```sh
-python3 -B openlap-analyticsframework/scripts/plugin-release-backup.py push \
+python3 -B analyticsframework/scripts/plugin-release-backup.py push \
   --age /trusted/bin/age --rclone /trusted/bin/rclone \
   --rclone-config /private/operator/rclone.conf \
   --remote 'backup:Release copies' \
@@ -106,7 +106,7 @@ Select the recovery remote explicitly; its configured name may differ from the
 upload host as long as it contains the same verified ciphertext object.
 
 ```sh
-python3 -B openlap-analyticsframework/scripts/plugin-release-backup.py pull \
+python3 -B analyticsframework/scripts/plugin-release-backup.py pull \
   --age /trusted/bin/age --rclone /trusted/bin/rclone \
   --rclone-config /private/operator/rclone.conf \
   --remote 'backup:Release copies' \
@@ -207,7 +207,7 @@ the selected Linux amd64 IDs; execution retains the original immutable reference
 Create the configured owner-only state directory, then run:
 
 ```sh
-python3 -B openlap-analyticsframework/scripts/check-plugin-backup-recovery.py \
+python3 -B analyticsframework/scripts/check-plugin-backup-recovery.py \
   --config /PRIVATE/plugin-recovery-check.json
 ```
 

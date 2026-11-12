@@ -8,8 +8,8 @@
 > [`ISC_CREATOR_ARCHITECTURE.md`](./ISC_CREATOR_ARCHITECTURE.md),
 > [`ISC_STEP5_FINALIZE_ARCHITECTURE.md`](./ISC_STEP5_FINALIZE_ARCHITECTURE.md).
 >
-> Backend lives in `openlap-analyticsframework` (Spring Boot + MongoDB). Frontend in
-> `openlap-indicatoreditor`. Every claim below cites the actual code.
+> Backend lives in `analyticsframework` (Spring Boot + MongoDB). Frontend in
+> `indicatorframework`. Every claim below cites the actual code.
 
 ---
 

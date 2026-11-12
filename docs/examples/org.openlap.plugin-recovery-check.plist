@@ -9,7 +9,7 @@
   <array>
     <string>/CONFIGURE/VERIFIED/python3</string>
     <string>-B</string>
-    <string>/CONFIGURE/PUBLIC/CHECKOUT/openlap-analyticsframework/scripts/check-plugin-backup-recovery.py</string>
+    <string>/CONFIGURE/PUBLIC/CHECKOUT/analyticsframework/scripts/check-plugin-backup-recovery.py</string>
     <string>--config</string>
     <string>/CONFIGURE/PRIVATE/plugin-recovery-check.json</string>
   </array>

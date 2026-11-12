@@ -8,7 +8,7 @@ must remain unmerged until manual review is complete.
 Use Java 11 and the editor's supported Node version. From the repository root:
 
 ```bash
-cd openlap-analyticsframework
+cd analyticsframework
 docker compose -f compose.yaml -f compose.dev.yaml up -d mongo
 
 # Explicit, one-time import of the existing 7 news entries and 9 publications.
@@ -26,7 +26,7 @@ MONGODB_SECONDARY_URI=mongodb://127.0.0.1:27017/learninglocker_v2 \
 The migration targets `openlap_v2` by default. Set `OPENLAP_MONGODB_DB` explicitly
 to test another database. Run it before enabling content editing or deploying
 the API-driven homepage. Details and interrupted-run recovery are documented in
-the [backend README](../openlap-analyticsframework/README.md#homepage-content-management).
+the [backend README](../analyticsframework/README.md#homepage-content-management).
 
 Stop any previous backend instance in its original terminal before starting a
 replacement on the same port. Otherwise Maven reports a startup failure because
@@ -35,7 +35,7 @@ the port is occupied.
 In another terminal:
 
 ```bash
-cd openlap-indicatoreditor
+cd indicatorframework
 npm ci
 VITE_BACKEND_URL=http://localhost:8091/api/ npm run dev
 ```
@@ -90,12 +90,12 @@ The browser working copy is recovery storage for the current tab and account;
 ## Automated checks
 
 ```bash
-cd openlap-analyticsframework
+cd analyticsframework
 ./mvnw package
 ```
 
 ```bash
-cd openlap-indicatoreditor
+cd indicatorframework
 npm test
 npm run build
 ```

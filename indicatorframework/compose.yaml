@@ -1,5 +1,5 @@
 services:
-  openlap-indicatoreditor:
+  indicatorframework:
     build: .
     environment:
       VITE_BACKEND_URL: http://localhost:8090/api/

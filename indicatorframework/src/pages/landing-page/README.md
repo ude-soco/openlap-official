@@ -93,7 +93,7 @@ news text is displayed in full there. Both collections are read through
 The anonymous client never attaches access tokens or triggers login refresh.
 
 Existing entries are imported by an explicit one-time backend migration before
-switching to this frontend. See the [backend content migration instructions](../../../../openlap-analyticsframework/README.md#homepage-content-management).
+switching to this frontend. See the [backend content migration instructions](../../../../analyticsframework/README.md#homepage-content-management).
 The immutable migration fixtures are historical input, not runtime fallback
 content. The frontend JSON content files and imports have been removed.
 

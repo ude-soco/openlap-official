@@ -7,7 +7,7 @@
 >
 > Stack: **React 18.3 + Vite 7**, **MUI v7** (`@mui/material`, `@mui/icons-material`,
 > `@mui/lab`, `@mui/system`), Emotion, `react-router-dom` v7, `notistack`,
-> `@fontsource/inter`. Backend: `openlap-analyticsframework` (Java 11, Spring Boot 2.x).
+> `@fontsource/inter`. Backend: `analyticsframework` (Java 11, Spring Boot 2.x).
 
 ---
 
@@ -180,7 +180,7 @@ global component overrides — so shell styling can never leak into page interna
 ## 4. Folder Architecture
 
 ```
-openlap-indicatoreditor/
+indicatorframework/
 ├─ docs/
 │  └─ UI_ARCHITECTURE.md                 # this file
 └─ src/
