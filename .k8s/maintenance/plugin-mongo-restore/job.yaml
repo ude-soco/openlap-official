@@ -1,0 +1,88 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openlap-plugin-mongo-restore
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: plugin-mongo-restore
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: restore
+        image: ghcr.io/ude-soco/openlap-official-plugin-checkpoint:configure-reviewed-digest
+        imagePullPolicy: Always
+        args: [--configure-persistent-restore]
+        env:
+        - name: CHECKPOINT_ID
+          value: ""
+        - name: CHECKPOINT_TARGET_TOKEN
+          value: ""
+        - name: CHECKPOINT_FREEZE_EVIDENCE
+          value: ""
+        - name: CHECKPOINT_EXPECTED_REPORT_SHA256
+          value: ""
+        - name: CHECKPOINT_ARCHIVE_PATH
+          value: ""
+        - name: CHECKPOINT_REPORT_PATH
+          value: ""
+        - name: CHECKPOINT_MAX_ARCHIVE_MIB
+          value: "256"
+        - name: CHECKPOINT_MAX_EXPANDED_MIB
+          value: "1024"
+        - name: CHECKPOINT_MAX_RESTORE_MIB
+          value: "1024"
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+            ephemeral-storage: 256Mi
+          limits:
+            cpu: "1"
+            memory: 1Gi
+            ephemeral-storage: 1792Mi
+        volumeMounts:
+        - name: inputs
+          mountPath: /inputs
+          readOnly: true
+        - name: outputs
+          mountPath: /outputs
+        - name: target
+          mountPath: /target
+        - name: work
+          mountPath: /tmp
+      volumes:
+      # Three existing, separately provisioned claims. The target is fresh and
+      # must not be mounted by an application MongoDB until this Job succeeds.
+      # Preserve the old application claim independently; never mount it here.
+      - name: inputs
+        persistentVolumeClaim:
+          claimName: configure-readonly-retrieved-checkpoint-volume
+          readOnly: true
+      - name: outputs
+        persistentVolumeClaim:
+          claimName: configure-separate-protected-restore-receipt-volume
+      - name: target
+        persistentVolumeClaim:
+          claimName: configure-fresh-protected-application-mongo-volume
+      - name: work
+        emptyDir:
+          sizeLimit: 1536Mi

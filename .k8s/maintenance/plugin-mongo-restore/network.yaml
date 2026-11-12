@@ -1,0 +1,12 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: openlap-plugin-mongo-restore
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: plugin-mongo-restore
+  policyTypes: [Ingress, Egress]
+  # No source database, DNS, object store or Kubernetes API access. Restore is loopback only.
+  ingress: []
+  egress: []
