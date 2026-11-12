@@ -33,7 +33,7 @@ def load(name, path):
 
 record_codec = load('collector_record', Path(__file__).with_name('plugin-recurring-record.py'))
 backup = record_codec.backup
-recovery = load('collector_recovery', ROOT / 'openlap-analyticsframework/scripts/check-plugin-backup-recovery.py')
+recovery = load('collector_recovery', ROOT / 'analyticsframework/scripts/check-plugin-backup-recovery.py')
 ROLES = ('capture', 'index', 'export', 'uploader')
 REQUIRED = {'argocd', 'argocd_config', 'argocd_context', 'application', 'namespace', 'cronjob',
             'expected_cronjob_uid', 'images', 'accepted_runtime_image_ids', 'recovery_template',

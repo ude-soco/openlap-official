@@ -11,7 +11,7 @@ the code, but should not execute credential creation on your behalf when your
 operational policy reserves that action to you.
 
 ```sh
-python3 -B openlap-analyticsframework/scripts/plugin-storage-secret-setup.py \
+python3 -B analyticsframework/scripts/plugin-storage-secret-setup.py \
   --prepare \
   --output-directory /PRIVATE/EXISTING/DEPLOYMENT/DIRECTORY \
   --rclone-config /PRIVATE/EXISTING/FOLDER-SCOPED-rclone.conf

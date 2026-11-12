@@ -13,7 +13,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("online_release_backup", ROOT / "openlap-analyticsframework/scripts/plugin-release-backup.py")
+spec = importlib.util.spec_from_file_location("online_release_backup", ROOT / "analyticsframework/scripts/plugin-release-backup.py")
 BACKUP = importlib.util.module_from_spec(spec); spec.loader.exec_module(BACKUP)
 
 

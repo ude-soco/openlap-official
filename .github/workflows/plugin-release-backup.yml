@@ -4,8 +4,8 @@ on:
   pull_request:
     paths:
     - '.github/workflows/plugin-release-backup.yml'
-    - 'openlap-analyticsframework/scripts/plugin-release-backup.py'
-    - 'openlap-analyticsframework/scripts/check-plugin-backup-recovery.py'
+    - 'analyticsframework/scripts/plugin-release-backup.py'
+    - 'analyticsframework/scripts/check-plugin-backup-recovery.py'
     - 'tests/test_plugin_release_backup.py'
     - 'tests/test_plugin_online_release_backup.py'
     - 'tests/test_plugin_recurring_backup.py'
@@ -13,8 +13,8 @@ on:
     - 'tests/test_collect_plugin_backup_evidence.py'
     - 'scripts/plugin-recurring-record.py'
     - 'scripts/collect-plugin-backup-evidence.py'
-    - 'openlap-analyticsframework/scripts/plugin-recurring-backup.py'
-    - 'openlap-analyticsframework/scripts/plugin-recurring-export.py'
+    - 'analyticsframework/scripts/plugin-recurring-backup.py'
+    - 'analyticsframework/scripts/plugin-recurring-export.py'
     - 'tests/test_plugin_recovery_check.py'
     - 'docs/examples/plugin-recovery-check.json'
     - 'docs/examples/org.openlap.plugin-recovery-check.plist'
@@ -27,8 +27,8 @@ on:
     branches: [main]
     paths:
     - '.github/workflows/plugin-release-backup.yml'
-    - 'openlap-analyticsframework/scripts/plugin-release-backup.py'
-    - 'openlap-analyticsframework/scripts/check-plugin-backup-recovery.py'
+    - 'analyticsframework/scripts/plugin-release-backup.py'
+    - 'analyticsframework/scripts/check-plugin-backup-recovery.py'
     - 'tests/test_plugin_release_backup.py'
     - 'tests/test_plugin_online_release_backup.py'
     - 'tests/test_plugin_recurring_backup.py'
@@ -36,8 +36,8 @@ on:
     - 'tests/test_collect_plugin_backup_evidence.py'
     - 'scripts/plugin-recurring-record.py'
     - 'scripts/collect-plugin-backup-evidence.py'
-    - 'openlap-analyticsframework/scripts/plugin-recurring-backup.py'
-    - 'openlap-analyticsframework/scripts/plugin-recurring-export.py'
+    - 'analyticsframework/scripts/plugin-recurring-backup.py'
+    - 'analyticsframework/scripts/plugin-recurring-export.py'
     - 'tests/test_plugin_recovery_check.py'
     - 'docs/examples/plugin-recovery-check.json'
     - 'docs/examples/org.openlap.plugin-recovery-check.plist'

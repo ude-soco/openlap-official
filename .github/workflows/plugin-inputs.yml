@@ -49,11 +49,11 @@ jobs:
         run: |
           set -eu
           umask 077
-          python3 -B openlap-analyticsframework/scripts/prepare-plugin-recovery.py \
+          python3 -B analyticsframework/scripts/prepare-plugin-recovery.py \
             --output "$RUNNER_TEMP/plugin-input-context"
-          cp -- openlap-analyticsframework/Dockerfile.plugin-inputs \
+          cp -- analyticsframework/Dockerfile.plugin-inputs \
             "$RUNNER_TEMP/plugin-input-context/Dockerfile.plugin-inputs"
-          cp -- openlap-analyticsframework/scripts/stage-plugin-inputs.py \
+          cp -- analyticsframework/scripts/stage-plugin-inputs.py \
             "$RUNNER_TEMP/plugin-input-context/stage-plugin-inputs.py"
 
       - name: Set up Docker Buildx

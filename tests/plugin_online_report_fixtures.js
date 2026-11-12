@@ -4,7 +4,7 @@ const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
-const source = fs.readFileSync(path.join(__dirname, "../openlap-analyticsframework/scripts/plugin-checkpoint/online-report.js"), "utf8");
+const source = fs.readFileSync(path.join(__dirname, "../analyticsframework/scripts/plugin-checkpoint/online-report.js"), "utf8");
 const row = {name: "users", count: 0, identityMd5: "a".repeat(32), dataMd5: "b".repeat(32), optionsMd5: "c".repeat(32), indexesMd5: "d".repeat(32)};
 const report = {
     schemaVersion: 2, status: "INSTANCE_WIDE_OPLOG_REPLAY_VERIFIED", captureMode: "INSTANCE_WIDE_OPLOG", checkpointId: "synthetic-online", database: "fixture",

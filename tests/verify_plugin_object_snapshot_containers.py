@@ -31,7 +31,7 @@ def main():
         # Only these public sources and generated dummy identities enter containers.
         public_sources = [ROOT / "tests/fixtures/PluginObjectSnapshotQualification.java"]
         if options.compile_snapshot_source:
-            public_sources.append(ROOT / "openlap-analyticsframework/src/main/java/com/openlap/plugins/storage/PluginObjectSnapshotApplication.java")
+            public_sources.append(ROOT / "analyticsframework/src/main/java/com/openlap/plugins/storage/PluginObjectSnapshotApplication.java")
         for source in public_sources:
             shutil.copyfile(source, staging / source.name)
         for role, names in {"root": ["ROOT_ACCESS_KEY_ID", "ROOT_SECRET_ACCESS_KEY"],

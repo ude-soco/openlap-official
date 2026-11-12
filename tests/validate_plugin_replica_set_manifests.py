@@ -10,7 +10,7 @@ import tempfile
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-MONGO = 'fixture-openlap-official-openlap-analyticsframework-mongo'
+MONGO = 'fixture-openlap-official-analyticsframework-mongo'
 
 
 def fixture(root, selected):
@@ -32,12 +32,12 @@ resources: [base, synthetic-secret.yaml]
 patches:
 - target:
     kind: Deployment
-    name: openlap-official-openlap-analyticsframework-mongo
+    name: openlap-official-analyticsframework-mongo
   patch: |-
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      name: openlap-official-openlap-analyticsframework-mongo
+      name: openlap-official-analyticsframework-mongo
     spec:
       template:
         spec:
@@ -62,7 +62,7 @@ configMapGenerator:
 - name: openlap-plugin-backup-replica-set
   literals:
   - replicaSetName=synthetic-rs
-  - advertisedHost=fixture-openlap-official-openlap-analyticsframework-mongo.synthetic-rs.svc.cluster.local:27017
+  - advertisedHost=fixture-openlap-official-analyticsframework-mongo.synthetic-rs.svc.cluster.local:27017
   - oplogSizeMiB=16
 '''
     (root / 'kustomization.yaml').write_text(value)

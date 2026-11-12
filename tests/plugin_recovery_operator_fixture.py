@@ -9,7 +9,7 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = ROOT / "openlap-analyticsframework/scripts"
+SCRIPTS = ROOT / "analyticsframework/scripts"
 
 
 def load(name, path):

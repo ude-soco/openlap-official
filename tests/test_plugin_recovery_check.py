@@ -12,7 +12,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-SCRIPT = Path(__file__).resolve().parents[1] / "openlap-analyticsframework/scripts/check-plugin-backup-recovery.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "analyticsframework/scripts/check-plugin-backup-recovery.py"
 SPEC = importlib.util.spec_from_file_location("recovery_check", SCRIPT)
 CHECK = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(CHECK)
 

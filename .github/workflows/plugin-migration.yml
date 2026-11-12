@@ -47,8 +47,8 @@ jobs:
         id: build
         uses: docker/build-push-action@v7
         with:
-          context: openlap-analyticsframework
-          file: openlap-analyticsframework/Dockerfile.plugin-migration
+          context: analyticsframework
+          file: analyticsframework/Dockerfile.plugin-migration
           platforms: linux/amd64
           push: false
           load: true
@@ -93,7 +93,7 @@ jobs:
       - name: Generate all reviewed historical C3 chart types
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
-        run: python3 -B openlap-analyticsframework/scripts/verify-legacy-c3.py --image "$IMAGE_ID"
+        run: python3 -B analyticsframework/scripts/verify-legacy-c3.py --image "$IMAGE_ID"
 
       - name: Retain the exact tested image for publication
         if: github.event_name == 'push'

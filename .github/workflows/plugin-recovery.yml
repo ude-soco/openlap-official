@@ -4,14 +4,14 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - openlap-analyticsframework/scripts/prepare-plugin-recovery.py
+      - analyticsframework/scripts/prepare-plugin-recovery.py
       - docs/plugin-recovery-artifacts.json
       - tests/test_prepare_plugin_recovery.py
       - .github/workflows/plugin-recovery.yml
   push:
     branches: [main]
     paths:
-      - openlap-analyticsframework/scripts/prepare-plugin-recovery.py
+      - analyticsframework/scripts/prepare-plugin-recovery.py
       - docs/plugin-recovery-artifacts.json
       - tests/test_prepare_plugin_recovery.py
       - .github/workflows/plugin-recovery.yml

@@ -10,7 +10,11 @@ import tempfile
 RELEASES = Path(__file__).resolve().parents[1] / "docs/releases"
 PLAN = RELEASES / "0.0.6-images.json"
 REPOSITORY = "ude-soco/openlap-official"
-SERVICES = ("openlap-analyticsframework", "openlap-indicatoreditor")
+SERVICES = ("analyticsframework", "indicatorframework")
+# These committed releases retain their original package identities and digests.
+# Future release plans must use the canonical pair; never reinterpret old plans.
+LEGACY_SERVICES = ("openlap-analyticsframework", "openlap-indicatoreditor")
+LEGACY_VERSIONS = frozenset({"0.0.6", "0.0.7"})
 MEDIA_TYPES = {
     "application/vnd.docker.distribution.manifest.v2+json",
     "application/vnd.docker.distribution.manifest.list.v2+json",
@@ -104,14 +108,20 @@ def checked_plan(plan, environment):
     if environment.get("GITHUB_REF") != "refs/heads/main" or environment.get("GITHUB_EVENT_NAME") != "workflow_dispatch":
         raise PromotionError("Promotion requires a manual main-branch workflow run.")
     version = confirmed_version(environment)
+    if version in LEGACY_VERSIONS:
+        services = LEGACY_SERVICES
+    elif tuple(map(int, version.split("."))) > (0, 0, 7):
+        services = SERVICES
+    else:
+        raise PromotionError("An unsupported historical release cannot select image packages.")
     if not isinstance(plan, dict) or set(plan) != {"version", "repository", "sourceRevision", "images"} or plan["version"] != version or plan["repository"] != REPOSITORY:
         raise PromotionError("Unexpected release plan.")
     if not re.fullmatch(r"[a-f0-9]{40}", plan["sourceRevision"]):
         raise PromotionError("Invalid reviewed source revision.")
-    if not isinstance(plan["images"], list) or len(plan["images"]) != len(SERVICES):
+    if not isinstance(plan["images"], list) or len(plan["images"]) != len(services):
         raise PromotionError("Unexpected release services.")
     references = []
-    for image, service in zip(plan["images"], SERVICES):
+    for image, service in zip(plan["images"], services):
         if set(image) != {"service", "digest"} or image["service"] != service or not re.fullmatch(r"sha256:[a-f0-9]{64}", image["digest"]):
             raise PromotionError("Invalid reviewed image identity.")
         name = "ghcr.io/" + REPOSITORY + "-" + service

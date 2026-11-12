@@ -94,7 +94,7 @@ catalogs for the new staged workflow; legacy local mutations stay blocked in S3 
    caches. Verify execution and visualization of existing indicators on each
    replica and after a backend restart.
 
-The commands below run inside `openlap-analyticsframework`, using Java 11.
+The commands below run inside `analyticsframework`, using Java 11.
 The migration CLI requires explicit, nonblank `MONGODB_PRIMARY_URI` and
 `OPENLAP_MONGODB_DB`; it refuses to select a development database by default.
 Supply service credentials through the operator's secure environment, without
@@ -161,7 +161,7 @@ When local runtime binaries are missing, recover known versions from immutable
 public history rather than selecting an ignored workstation file by name:
 
 ```sh
-python3 -B openlap-analyticsframework/scripts/prepare-plugin-recovery.py \
+python3 -B analyticsframework/scripts/prepare-plugin-recovery.py \
   --output /protected/NEW-recovery-bundle
 ```
 
@@ -200,7 +200,7 @@ fails all 19 with the missing-class error. Repeat the isolated check against a
 locally built migration image (which packages the same backend classes/APIs):
 
 ```sh
-python3 -B openlap-analyticsframework/scripts/verify-legacy-c3.py \
+python3 -B analyticsframework/scripts/verify-legacy-c3.py \
   --image REVIEWED_LOCAL_IMAGE_ID
 ```
 
@@ -226,8 +226,8 @@ replacement uploads to repair missing legacy binaries.
 Build the runner independently of the web service:
 
 ```sh
-docker build -f openlap-analyticsframework/Dockerfile.plugin-migration \
-  -t openlap-plugin-migration:reviewed openlap-analyticsframework
+docker build -f analyticsframework/Dockerfile.plugin-migration \
+  -t openlap-plugin-migration:reviewed analyticsframework
 ```
 
 Its entrypoint runs only `PluginArtifactMigrationApplication`, with no web server,

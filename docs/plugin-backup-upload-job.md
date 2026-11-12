@@ -160,7 +160,7 @@ save **only the three canonical report lines** to a private local file. No binar
 or plaintext backup bytes pass through logs. Import the metadata locally:
 
 ```sh
-python3 -B openlap-analyticsframework/scripts/plugin-backup-upload.py \
+python3 -B analyticsframework/scripts/plugin-backup-upload.py \
   --import-report /protected/REVIEWED-upload-report.txt \
   --checkpoint-report-sha256 TRUSTED_ORIGINAL_REPORT_SHA256 \
   --output /protected/NEW-upload-receipt.json

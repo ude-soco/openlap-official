@@ -8,9 +8,16 @@ configMapGenerator:
   - replica-set.js
 patches:
 - path: mongo.yaml
+  target:
+    kind: Deployment
+    labelSelector: app.kubernetes.io/name=openlap-official,service=mongo,app.kubernetes.io/component in (analyticsframework,openlap-analyticsframework)
+- path: service.yaml
+  target:
+    kind: Service
+    labelSelector: app.kubernetes.io/name=openlap-official,service=mongo,app.kubernetes.io/component in (analyticsframework,openlap-analyticsframework)
 - target:
     kind: Deployment
-    name: openlap-official-openlap-analyticsframework-mongo
+    labelSelector: app.kubernetes.io/name=openlap-official,service=mongo,app.kubernetes.io/component in (analyticsframework,openlap-analyticsframework)
   patch: |-
     - op: add
       path: /spec/template/spec/containers/0/args/-

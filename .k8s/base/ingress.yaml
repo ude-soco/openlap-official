@@ -15,14 +15,14 @@ spec:
         path: /api
         backend:
           service:
-            name: openlap-analyticsframework-web
+            name: analyticsframework-web
             port:
               name: http
       - pathType: Prefix
         path: /
         backend:
           service:
-            name: openlap-indicatoreditor-web
+            name: indicatorframework-web
             port:
               name: http
   tls:

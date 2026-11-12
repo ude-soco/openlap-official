@@ -17,7 +17,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-SOURCE = Path(__file__).resolve().parents[1] / "openlap-analyticsframework/scripts/plugin-release-backup.py"
+SOURCE = Path(__file__).resolve().parents[1] / "analyticsframework/scripts/plugin-release-backup.py"
 spec = importlib.util.spec_from_file_location("release_backup", SOURCE)
 backup = importlib.util.module_from_spec(spec); spec.loader.exec_module(backup)
 

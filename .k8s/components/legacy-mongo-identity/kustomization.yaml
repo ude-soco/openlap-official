@@ -1,0 +1,53 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# Upgrade-only bridge: keep the existing database controller, selector, DNS and
+# claim identity while the stateless applications adopt their new names. Remove
+# only during a separately rehearsed storage/replica-set migration. This does not
+# create a second MongoDB controller, a new claim or a replica-set reconfiguration.
+patches:
+- target:
+    kind: Deployment
+    labelSelector: app.kubernetes.io/name=openlap-official,app.kubernetes.io/component=analyticsframework,service=mongo
+  options:
+    allowNameChange: true
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: openlap-official-openlap-analyticsframework-mongo
+    - op: replace
+      path: /metadata/labels/app.kubernetes.io~1component
+      value: openlap-analyticsframework
+    - op: replace
+      path: /spec/selector/matchLabels/app.kubernetes.io~1component
+      value: openlap-analyticsframework
+    - op: replace
+      path: /spec/template/metadata/labels/app.kubernetes.io~1component
+      value: openlap-analyticsframework
+- target:
+    kind: Service
+    labelSelector: app.kubernetes.io/name=openlap-official,app.kubernetes.io/component=analyticsframework,service=mongo
+  options:
+    allowNameChange: true
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: openlap-official-openlap-analyticsframework-mongo
+    - op: replace
+      path: /metadata/labels/app.kubernetes.io~1component
+      value: openlap-analyticsframework
+    - op: replace
+      path: /spec/selector/app.kubernetes.io~1component
+      value: openlap-analyticsframework
+- target:
+    kind: PersistentVolumeClaim
+    labelSelector: app.kubernetes.io/name=openlap-official,app.kubernetes.io/component=analyticsframework,service=mongo
+  options:
+    allowNameChange: true
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: openlap-official-openlap-analyticsframework-mongo
+    - op: replace
+      path: /metadata/labels/app.kubernetes.io~1component
+      value: openlap-analyticsframework

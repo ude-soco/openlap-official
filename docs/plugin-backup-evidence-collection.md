@@ -12,9 +12,9 @@ Install these five reviewed files from the same immutable public commit under an
 PUBLIC-TOOLS/
   scripts/collect-plugin-backup-evidence.py
   scripts/plugin-recurring-record.py
-  openlap-analyticsframework/scripts/check-plugin-backup-recovery.py
-  openlap-analyticsframework/scripts/plugin-release-backup.py
-  openlap-analyticsframework/scripts/plugin-backup-upload.py
+  analyticsframework/scripts/check-plugin-backup-recovery.py
+  analyticsframework/scripts/plugin-release-backup.py
+  analyticsframework/scripts/plugin-backup-upload.py
 ```
 
 Retain the selected commit and file SHA-256 values with installation records. The tools need Python 3 and its standard library, not a source checkout, application images, or secrets copied into the tool tree. Container image qualification and local availability are separate prerequisites of the full recovery runner. Existing native Argo, age and rclone credential files remain private operator references. Installing these public files creates or changes no credentials. For an operator-confirmed destination without expiry, use the explicit `unlimited` setting; authenticated upload/readback remains mandatory.
