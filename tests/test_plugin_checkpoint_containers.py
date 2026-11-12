@@ -16,7 +16,7 @@ import tempfile
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-MODULE = ROOT / "openlap-analyticsframework"
+MODULE = ROOT / "analyticsframework"
 MONGO = "mongo@sha256:4be76f674fc4b27859816811b8baa3c51830eb1dbf4ca81a51e26b79edd662ef"
 SENTINEL = "PRIVATE-FIXTURE-VALUE-MUST-NOT-BE-LOGGED"
 
