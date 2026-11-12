@@ -13,7 +13,7 @@ import re
 def _load_upload():
     here = Path(__file__).resolve()
     choices = (here.with_name('plugin-backup-upload.py'),
-               here.parents[1] / 'openlap-analyticsframework/scripts/plugin-backup-upload.py')
+               here.parents[1] / 'analyticsframework/scripts/plugin-backup-upload.py')
     selected = next((path for path in choices if path.is_file() and not path.is_symlink()), None)
     if selected is None:
         raise RuntimeError('The qualified upload receipt codec is required.')

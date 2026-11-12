@@ -370,9 +370,9 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual(set(example['accepted_runtime_image_ids']), set(C.ROLES))
         installed = self.root / 'installed-public-tools'; installed.mkdir(mode=0o700)
         paths = ['scripts/collect-plugin-backup-evidence.py', 'scripts/plugin-recurring-record.py',
-                 'openlap-analyticsframework/scripts/check-plugin-backup-recovery.py',
-                 'openlap-analyticsframework/scripts/plugin-release-backup.py',
-                 'openlap-analyticsframework/scripts/plugin-backup-upload.py']
+                 'analyticsframework/scripts/check-plugin-backup-recovery.py',
+                 'analyticsframework/scripts/plugin-release-backup.py',
+                 'analyticsframework/scripts/plugin-backup-upload.py']
         for relative in paths:
             target = installed / relative; target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)

@@ -18,7 +18,7 @@ import time
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-MODULE = ROOT / "openlap-analyticsframework"
+MODULE = ROOT / "analyticsframework"
 
 
 def module(name, path):

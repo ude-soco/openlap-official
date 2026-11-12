@@ -78,7 +78,7 @@ def verify(options):
             # Do not start Spring, its HTTP server, account initialization or database clients.
             command += ["--tmpfs=/runtime:rw,noexec,nosuid,size=512m,mode=1777",
                         "--entrypoint=/bin/sh", image, "-ec",
-                        'cd /runtime; jar -xf /opt/app/openlap-analyticsframework.jar; '
+                        'cd /runtime; jar -xf /opt/app/analyticsframework.jar; '
                         'exec java -Xmx256m --source 11 '
                         '--class-path "/runtime/BOOT-INF/classes:/runtime/BOOT-INF/lib/*" '
                         '/probe/LegacyC3RenderProbe.java /probe/plugin.jar']

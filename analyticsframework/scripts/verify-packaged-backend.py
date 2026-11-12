@@ -2,7 +2,7 @@
 """Verify the actual local backend image with disposable databases and HTTP.
 
 Run after building/loading an image:
-  python3 -B openlap-analyticsframework/scripts/verify-packaged-backend.py \
+  python3 -B analyticsframework/scripts/verify-packaged-backend.py \
     --image sha256:IMAGE_ID
 
 Only immutable, already-local application images are accepted. MongoDB images

@@ -17,7 +17,7 @@ import zipfile
 
 
 sys.dont_write_bytecode = True
-SCRIPT = Path(__file__).resolve().parents[1] / "openlap-analyticsframework/scripts/stage-plugin-inputs.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "analyticsframework/scripts/stage-plugin-inputs.py"
 spec = importlib.util.spec_from_file_location("stage_plugin_inputs", SCRIPT)
 stager = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = stager

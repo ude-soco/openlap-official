@@ -10,7 +10,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-SOURCE = Path(__file__).resolve().parents[1] / "openlap-analyticsframework/scripts/plugin-backup-upload.py"
+SOURCE = Path(__file__).resolve().parents[1] / "analyticsframework/scripts/plugin-backup-upload.py"
 spec = importlib.util.spec_from_file_location("upload_report", SOURCE)
 upload = importlib.util.module_from_spec(spec); spec.loader.exec_module(upload)
 REPORT_SHA = "1" * 64

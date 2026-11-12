@@ -23,7 +23,7 @@ import zipfile
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "openlap-analyticsframework/scripts/prepare-plugin-recovery.py"
+SCRIPT = ROOT / "analyticsframework/scripts/prepare-plugin-recovery.py"
 spec = importlib.util.spec_from_file_location("prepare_plugin_recovery", SCRIPT)
 recovery = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = recovery
