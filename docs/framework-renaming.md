@@ -118,7 +118,12 @@ claim identities. Schedule a separate writer-pause maintenance window; do not
 apply that removal directly to a live database.
 
 Use the application's supported checkpoint and independent recovery tools to
-capture a consistent Mongo/S3 backup and rehearse restoration. Prepare a new
+capture a consistent Mongo/S3 backup and rehearse restoration. The explicit
+[fresh-volume restore](plugin-mongo-restore.md) retains a verified frozen-v1
+MongoDB 4.4 database on the new claim; ordinary rehearsal actions retain no
+application database files. Confirm its single-database scope covers this
+installation, and keep S3 recovery and writer enforcement as separate gates.
+Prepare a new
 correctly named claim with the installation's verified storage class and adequate
 capacity, using the same qualified Mongo version. Restore into the new instance
 with writers stopped and validate document IDs, counts, indexes, DBRefs and plugin
