@@ -39,7 +39,7 @@
     "react-apexcharts": "^2.2.0",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.2",
-    "uuid": "^13.0.2"
+    "uuid": "^14.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
