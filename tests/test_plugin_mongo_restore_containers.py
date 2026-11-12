@@ -106,8 +106,9 @@ def main():
                 image_created = True
             image_id = call(['image', 'inspect', '--format={{.Id}}', image]).stdout.strip()
             assert re.fullmatch(r'sha256:[a-f0-9]{64}', image_id)
-            if call(['image', 'inspect', COMPATIBILITY_MONGO], expected=None).returncode:
-                call(['pull', '--platform=linux/amd64', COMPATIBILITY_MONGO], timeout=180)
+            for fixture_image in (MONGO, COMPATIBILITY_MONGO):
+                if call(['image', 'inspect', fixture_image], expected=None).returncode:
+                    call(['pull', '--platform=linux/amd64', fixture_image], timeout=180)
             capture, outputs = volume('capture'), volume('outputs')
             call(['network', 'create', '--internal', '--label', owned_label, token]); network_created = True
             source = token + '-source'
