@@ -75,6 +75,9 @@ class Fixture:
         name = self.token + '-' + suffix
         require(self.call(['volume', 'create', '--label', self.label, name]).stdout.strip() == name,
                 'Owned volume creation returned another identity')
+        labels = json.loads(self.call(['volume', 'inspect', '--format={{json .Labels}}', name]).stdout)
+        require(isinstance(labels, dict) and labels.get('org.openlap.mongo-rename-fixture') == self.token,
+                'New volume ownership mismatch')
         self.volumes.append(name)
         self.call(['run', '--rm', '--pull=never', '--platform=linux/amd64', '--network=none', '--read-only',
             '--user=0:0', '--cap-drop=ALL', '--cap-add=CHOWN', '--security-opt=no-new-privileges',
@@ -229,8 +232,8 @@ def run(fixture):
     require(f.call(['image', 'inspect', '--format={{.Id}}', f.image]).stdout.strip() == f.image, 'Checkpoint image identity differs')
     f.call(['image', 'inspect', MONGO_4_4_29])
     f.call(['network', 'create', '--internal', '--label', f.label, f.token]); f.network_created = True
-    source_data, captures, frozen_index, target_data, restored, online_captures, online_index = [f.volume(name) for name in
-        ['source-data', 'frozen-captures', 'frozen-index', 'target-data', 'restore-output', 'online-captures', 'online-index']]
+    source_data, captures, frozen_index, target_data, restored, adopted_captures, online_captures, online_index = [f.volume(name) for name in
+        ['source-data', 'frozen-captures', 'frozen-index', 'target-data', 'restore-output', 'adopted-captures', 'online-captures', 'online-index']]
     f.step('seed official 4.4.29 standalone with stable FCV 4.4')
     seed = f.start_mongo('source-seed', source_data, OLD_DNS); f.ready(OLD_DNS)
     f.mongo(OLD_DNS, """var d=db.getSiblingDB('%s'),h=new Array(65).join('a');
@@ -280,6 +283,23 @@ def run(fixture):
     require(durable_configuration(configuration(f, NEW_DNS)) == durable_configuration(before_restart),
             'Cold restart changed the durable replica configuration')
     readback(f, NEW_DNS, replica=True)
+    f.step('verify complete adopted database against original frozen checkpoint before writes')
+    adopted_result = f.checkpoint('--checkpoint', {'CHECKPOINT_ID': 'adopted-frozen',
+        'CHECKPOINT_FREEZE_EVIDENCE': 'synthetic-target-writers-still-paused',
+        'MONGODB_PRIMARY_URI': 'mongodb://' + NEW_DNS + ':27017/' + DATABASE, 'OPENLAP_MONGODB_DB': DATABASE,
+        'CHECKPOINT_SOURCE_HOST': NEW_DNS, 'CHECKPOINT_SOURCE_PORT': '27017'},
+        [f.mount(adopted_captures, '/outputs')], network=f.token)
+    adopted, adopted_sha = framed(adopted_result, 'OPENLAP-CHECKPOINT-REPORT-V1', 'OPENLAP-CHECKPOINT-REPORT-END-V1')
+    require(adopted['schemaVersion'] == 1 and adopted['sourceServerVersion'] == '4.4.29'
+            and adopted['restoreServerVersion'] == '4.4.30'
+            and adopted['status'] == 'DUMP_AND_ISOLATED_RESTORE_VERIFIED'
+            and adopted['sourceBeforeAfterMatched'] is True and adopted['restoredMatched'] is True
+            and adopted['gzipValidated'] is True, 'Adopted database checkpoint verification incomplete')
+    require(adopted['database'] == frozen['database'] and adopted['fcv'] == frozen['fcv']
+            and adopted['collections'] == frozen['collections'],
+            'Adopted database changed original counts, BSON IDs/content, options or indexes')
+    require(f.stored_sha(adopted_captures, 'adopted-frozen/checkpoint.json') == adopted_sha,
+            'Stored adopted-database report changed')
     f.step('resume one majority-journaled write into existing events collection')
     f.mongo(NEW_DNS, "var d=db.getSiblingDB('%s');assert.commandWorked(d.runCommand({insert:'events',documents:[{_id:'after-rename',value:'majority-journaled-after-rename'}],writeConcern:{w:'majority',j:true}}));print('MAJORITY_JOURNALED_WRITE_VERIFIED');" % DATABASE)
     readback(f, NEW_DNS, replica=True, marker=True)
@@ -310,7 +330,8 @@ def run(fixture):
         'frozenIndexSha256': frozen_index_sha, 'persistentIndexMatchedFrozenIndex': True, 'sourceStoppedBeforePersistentRestore': True,
         'replicaSetNamePreserved': True, 'sameVolumeReplicaSetColdRestartVerified': True, 'durableReplicaConfigurationUnchangedAfterRestart': True,
         'electionTermExcludedFromConfigurationIdentity': True, 'freshReplicaMetadataIdentityVerified': True,
-        'retainedCatalogIdsDbrefsIndexesAndContentVerified': True, 'majorityJournaledPostRenameWriteVerified': True,
+        'retainedCatalogIdsDbrefsIndexesAndContentVerified': True, 'fullAdoptedDatabaseMatchedOriginalBeforeWrites': True,
+        'adoptedFrozenReportSha256': adopted_sha, 'majorityJournaledPostRenameWriteVerified': True,
         'onlineCheckpointSchemaVersion': 2, 'onlineReportSha256': online_sha, 'onlineIndexSha256': online_index_sha,
         'onlineReplayMatchedPostRenameSourceCountsAndDataHashes': True, 'independentOnlineFullReplayAndIndexVerified': True,
         'pluginAssociationsUnchanged': True, 's3BytesVerified': False, 'offNodeBackupVerified': False, 'liveEnvironmentAccess': False}

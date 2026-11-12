@@ -166,9 +166,12 @@ restored to a fresh persistent volume, then initialized at a different DNS using
 the same replica-set name and the public initializer. The original local replica
 configuration is not copied.
 
-The fixture restarts that restored member from the same volume, checks that its
-durable configuration remains unchanged (the election term may advance), then
-issues a journaled majority write to an existing synthetic collection. A fresh online v2 capture and an independent
+The fixture restarts that restored member from the same volume and checks that
+its durable configuration remains unchanged (the election term may advance).
+Before any new write, a fresh frozen checkpoint of the adopted target must match
+the original database/FCV and every collection's count, ordered BSON ID/content,
+index and options fingerprints. It then issues a journaled majority write to an
+existing synthetic collection. A fresh online v2 capture and an independent
 full-oplog replay/index check cover the post-rename database, including the new
 write. Frozen and online reports have different checkpoint bindings; their index
 hashes must not be treated as interchangeable.
