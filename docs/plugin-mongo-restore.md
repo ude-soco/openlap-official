@@ -127,7 +127,8 @@ S3 coverage, application startup and scheduled backup/recovery before resuming
 writers.
 
 Failure never clears or repairs the target, and never produces a completed
-acceptance receipt. Retain partial target files and diagnostics for review.
+acceptance receipt. Partial target files and the generic stage failure remain
+available for review; private scratch and raw client diagnostics are discarded.
 Every subsequent attempt against a partial or completed target is refused, even
 with a new result identifier. Use a distinct newly provisioned target for a new
 attempt. Do not delete markers or reuse a failed target to make a retry pass.
