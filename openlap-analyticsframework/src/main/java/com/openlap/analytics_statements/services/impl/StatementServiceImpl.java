@@ -168,7 +168,7 @@ public class StatementServiceImpl implements StatementService {
                     .and("statement.verb.id")
                     .in(activitiesRequest.getActionOnActivities())),
             Aggregation.group("statement.object.definition.name"),
-            Aggregation.project().and("statement.object.definition.name").as("activityName"));
+            Aggregation.project().and("_id").as("activityName").andExclude("_id"));
 
     // Executing the aggregation
     List<Document> mappedResults = getDocuments(aggregation);
@@ -178,11 +178,18 @@ public class StatementServiceImpl implements StatementService {
     // Extracting the definition types
     List<Object> activitiesList = new ArrayList<>();
     for (Document doc : mappedResults) {
-      String activityName = null;
-      for (Map.Entry<?, ?> entryActivity : doc.entrySet()) {
-        if (entryActivity.getValue() != null) {
-          String queryId = "statement.object.definition.name." + entryActivity.getKey();
-          activityName = (String) entryActivity.getValue();
+      // xAPI activity names are language maps. The grouped value remains a document,
+      // rather than a string, and its language key is part of the subsequent query.
+      Object activityNames = doc.get("activityName");
+      if (!(activityNames instanceof Map<?, ?> names)) {
+        continue;
+      }
+      for (Map.Entry<?, ?> entryActivity : names.entrySet()) {
+        if (entryActivity.getKey() instanceof String language
+            && !language.isBlank()
+            && entryActivity.getValue() instanceof String activityName
+            && !activityName.isBlank()) {
+          String queryId = "statement.object.definition.name." + language;
           activitiesList.add(Map.of("id", activityName, "queryId", queryId, "name", activityName));
           break;
         }
