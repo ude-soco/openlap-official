@@ -321,10 +321,57 @@ def main():
                   '[[ $(stat -c %u /data/db) == 999 ]] || exit 1; while read -r key uid rest; do if [[ $key == Uid: ]]; then [[ $uid == 999 ]] && exit 0 || exit 1; fi; done < /proc/1/status; exit 1'])
             helper('[[ $(stat -c %u /target) == 999 ]]', [mount(target, '/target', True)])
             call(['stop', '--time=20', vendor]); call(['rm', '--volumes', vendor]); passed += 1
+            # A logical restore excludes local replica metadata. Initialize a fresh member
+            # on the same retained volume with a renamed DNS identity using the public
+            # component's exact initializer and retain the configured fixture set name.
+            replica = token + '-renamed-replica'
+            replica_set = 'openlap-fixture-backups'
+            replica_host = 'renamed-fixture-mongo:27017'
+            component = ROOT / '.k8s/components/plugin-backup-replica-set'
+            call(['run', '-d', '--name=' + replica, '--label=' + owned_label, '--pull=never',
+                  '--platform=linux/amd64', '--network=' + token, '--network-alias=renamed-fixture-mongo',
+                  '--read-only', '--user=0:0', '--cap-drop=ALL', '--cap-add=CHOWN', '--cap-add=DAC_OVERRIDE',
+                  '--cap-add=SETUID', '--cap-add=SETGID', '--security-opt=no-new-privileges', '--memory=768m',
+                  mount(target, '/data/db'), '--tmpfs=/data/configdb:rw,nosuid,size=16m,mode=0777',
+                  '--tmpfs=/tmp:rw,nosuid,size=16m,mode=1777',
+                  '--mount=type=bind,source=' + str(component) + ',target=/opt/openlap-replica-set,readonly',
+                  '--env=OPENLAP_MONGODB_REPLICA_SET=' + replica_set,
+                  '--env=OPENLAP_MONGODB_REPLICA_HOST=' + replica_host,
+                  '--env=OPENLAP_MONGODB_OPLOG_SIZE_MIB=16', COMPATIBILITY_MONGO,
+                  '--bind_ip_all', '--nounixsocket', '--wiredTigerCacheSizeGB=0.25',
+                  '--setParameter=ttlMonitorEnabled=false', '--quiet', '--logpath=/dev/null',
+                  '--replSet=' + replica_set, '--oplogSize=16'])
+            labels = json.loads(call(['inspect', '--format={{json .Config.Labels}}', replica]).stdout)
+            assert labels.get('org.openlap.mongo-restore-fixture') == token
+            for action in ['initialize', 'verify', 'initialize', 'verify']:
+                initialized = call(['exec', '--user=999:999', replica, '/bin/bash', '--noprofile', '--norc',
+                    '/opt/openlap-replica-set/replica-set.sh', action], timeout=170)
+                assert initialized.stdout.strip() == 'MONGODB_SINGLE_NODE_PRIMARY_VERIFIED'
+                assert SENTINEL not in initialized.stdout + initialized.stderr
+            replica_readback = readback.replace("print('COLD_PERSISTENT_DATABASE_VERIFIED');", """
+                var hello=db.getSiblingDB('admin').runCommand({isMaster:1});
+                assert.eq(true,hello.ismaster);assert.eq('%s',hello.setName);
+                assert.eq('%s',hello.primary);assert.eq('%s',hello.me);
+                assert.eq(1,hello.hosts.length);assert.eq('%s',hello.hosts[0]);
+                var config=db.getSiblingDB('admin').runCommand({replSetGetConfig:1});
+                assert.eq(1,config.ok);assert.eq('%s',config.config._id);
+                assert.eq(1,config.config.members.length);assert.eq('%s',config.config.members[0].host);
+                assert.eq(1,db.getSiblingDB('admin').runCommand({fsync:1}).ok);
+                print('RENAMED_REPLICA_PERSISTENT_DATABASE_VERIFIED');""" %
+                (replica_set, replica_host, replica_host, replica_host, replica_set, replica_host))
+            result = call(['run', '--rm', '--pull=never', '--platform=linux/amd64', '--network=' + token,
+                '--entrypoint=mongo', COMPATIBILITY_MONGO, '--norc', '--quiet', '--host=renamed-fixture-mongo',
+                '--eval', replica_readback], timeout=30)
+            assert SENTINEL not in result.stdout + result.stderr
+            assert result.stdout.strip() == 'RENAMED_REPLICA_PERSISTENT_DATABASE_VERIFIED'
+            call(['stop', '--time=20', replica])
+            assert call(['inspect', '--format={{.State.ExitCode}}', replica]).stdout.strip() == '0'
+            call(['rm', '--volumes', replica]); passed += 1
             print(json.dumps({'status': 'PERSISTENT_MONGO_RESTORE_FIXTURES_VERIFIED', 'groups': passed, 'imageId': image_id,
                               'coldRuntimeVersions': ['4.4.30', '4.4.29'],
                               'sourceRemovedBeforeRestore': True, 'retainedTargetColdReadback': True,
                               'compatibilityVendorEntrypointAndDataRootVerified': True,
+                              'freshReplicaSetWithRenamedDnsVerified': True,
                               'syntheticDataOnly': True, 'liveEnvironmentAccess': False}), flush=True)
         finally:
             incomplete = False
