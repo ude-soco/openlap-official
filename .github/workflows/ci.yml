@@ -14,9 +14,10 @@ jobs:
     with:
       project_desc:    ${{ github.event.repository.name }}
       base_image_name: ghcr.io/${{ github.repository }}-
-      services:        '[ "openlap-analyticsframework", "openlap-indicatoreditor" ]'
+      services:        '[ "analyticsframework", "indicatorframework" ]'
       push:            ${{ github.event_name != 'pull_request' }}
       verify_plugin_runtime: true
+      publish_legacy_edge_aliases: true
       registry_host:   ghcr.io
       registry_user:   ${{ github.actor }}
     secrets:

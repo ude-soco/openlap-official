@@ -6,39 +6,39 @@ updates:
     interval: "weekly"
 
 - package-ecosystem: "docker"
-  directory: "/openlap-analyticsframework"
+  directory: "/analyticsframework"
   schedule:
     interval: "weekly"
   labels:
   - "dependencies"
   - "docker"
-  - "openlap-analyticsframework"
+  - "analyticsframework"
 
 - package-ecosystem: "maven"
-  directory: "/openlap-analyticsframework"
+  directory: "/analyticsframework"
   schedule:
     interval: "daily"
   open-pull-requests-limit: 10
   labels:
   - "dependencies"
   - "java"
-  - "openlap-analyticsframework"
+  - "analyticsframework"
 
 - package-ecosystem: "docker"
-  directory: "/openlap-indicatoreditor"
+  directory: "/indicatorframework"
   schedule:
     interval: "weekly"
   labels:
   - "dependencies"
   - "docker"
-  - "openlap-indicatoreditor"
+  - "indicatorframework"
 
 - package-ecosystem: "npm"
-  directory: "/openlap-indicatoreditor"
+  directory: "/indicatorframework"
   schedule:
     interval: "daily"
   open-pull-requests-limit: 10
   labels:
   - "dependencies"
   - "javascript"
-  - "openlap-indicatoreditor"
+  - "indicatorframework"

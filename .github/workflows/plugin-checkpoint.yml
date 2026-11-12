@@ -46,8 +46,8 @@ jobs:
         id: build
         uses: docker/build-push-action@v7
         with:
-          context: openlap-analyticsframework
-          file: openlap-analyticsframework/Dockerfile.plugin-checkpoint
+          context: analyticsframework
+          file: analyticsframework/Dockerfile.plugin-checkpoint
           platforms: linux/amd64
           push: false
           load: true

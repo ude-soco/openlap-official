@@ -8,7 +8,7 @@ RUN --mount=type=cache,target=/root/.m2 \
   /usr/local/bin/mvn-entrypoint.sh mvn verify clean --fail-never
 
 ADD . .
-ARG PACKAGE_NAME=openlap-analyticsframework
+ARG PACKAGE_NAME=analyticsframework
 RUN --mount=type=cache,target=/root/.m2 \
   mvn package -DfinalName=${PACKAGE_NAME}
 
@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/root/.m2 \
 FROM amazoncorretto:25
 WORKDIR /opt/app
 
-ARG PACKAGE_NAME=openlap-analyticsframework
+ARG PACKAGE_NAME=analyticsframework
 ENV JAR=${PACKAGE_NAME}.jar
 COPY --from=build /opt/app/target/${JAR} .
 

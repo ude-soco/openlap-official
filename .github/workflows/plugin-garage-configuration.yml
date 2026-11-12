@@ -1,20 +1,42 @@
-name: Verify optional Garage configuration
+name: Verify public storage and framework configuration
 
 on:
   pull_request:
     paths:
+    - '.k8s/base/**'
+    - '.k8s/components/legacy-mongo-identity/**'
+    - '.k8s/components/plugin-backup-replica-set/**'
+    - '.k8s/components/backend-rename-network-compatibility/**'
     - '.k8s/storage/plugin-garage/**'
     - '.k8s/maintenance/plugin-garage-bootstrap/**'
     - '.k8s/maintenance/plugin-garage-smoke/**'
     - 'tests/*plugin_garage*'
+    - 'tests/validate_framework_rename_manifests.py'
+    - 'tests/test_framework_rename_references.py'
+    - 'tests/test_start_local_mongo.py'
+    - 'analyticsframework/compose*.yaml'
+    - 'analyticsframework/scripts/start-local-mongo.py'
+    - 'docs/framework-rename-exceptions.json'
+    - 'docs/framework-renaming.md'
     - '.github/workflows/plugin-garage-configuration.yml'
   push:
     branches: [main]
     paths:
+    - '.k8s/base/**'
+    - '.k8s/components/legacy-mongo-identity/**'
+    - '.k8s/components/plugin-backup-replica-set/**'
+    - '.k8s/components/backend-rename-network-compatibility/**'
     - '.k8s/storage/plugin-garage/**'
     - '.k8s/maintenance/plugin-garage-bootstrap/**'
     - '.k8s/maintenance/plugin-garage-smoke/**'
     - 'tests/*plugin_garage*'
+    - 'tests/validate_framework_rename_manifests.py'
+    - 'tests/test_framework_rename_references.py'
+    - 'tests/test_start_local_mongo.py'
+    - 'analyticsframework/compose*.yaml'
+    - 'analyticsframework/scripts/start-local-mongo.py'
+    - 'docs/framework-rename-exceptions.json'
+    - 'docs/framework-renaming.md'
     - '.github/workflows/plugin-garage-configuration.yml'
 
 permissions:
@@ -24,6 +46,8 @@ jobs:
   configuration:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      KUBECONFIG: /dev/null
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       with:
@@ -34,5 +58,11 @@ jobs:
       run: python3 -B -m unittest discover -s tests -p test_plugin_garage_configuration.py
     - name: Check synthetic manifest composition
       run: python3 -B tests/validate_plugin_garage_manifests.py
+    - name: Check maintained names and local volume startup guards
+      run: |
+        python3 -B tests/test_framework_rename_references.py
+        python3 -B -m unittest discover -s tests -p test_start_local_mongo.py
+    - name: Check synthetic framework cutover identities and application readiness
+      run: python3 -B tests/validate_framework_rename_manifests.py
     - name: Verify the pinned provider and independent clients locally
       run: python3 -B tests/verify_plugin_garage_containers.py

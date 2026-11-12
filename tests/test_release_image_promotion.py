@@ -42,6 +42,68 @@ class FakeRegistry:
 
 
 class PromotionTests(unittest.TestCase):
+    def test_historical_release_packages_and_digests_remain_exact(self):
+        expected = {
+            "0.0.6": ("1f9d995b7ca30fbad1e85f79c16a25a9bb1f0801", (
+                "sha256:bdddd92b59f9604cc30acbd1d6760b96636745a53147d1a5c3819eab9159ced9",
+                "sha256:be7491272039bfe74d6a495eff100e7ec96bf72baeff614472ed7b2c3a114613")),
+            "0.0.7": ("1bc7a3ee0d66b4b2750222702b4a098f141b2265", (
+                "sha256:4a0310f687f6d341c75bbf175067721018e13e540aad822b5034df98ec35f054",
+                "sha256:8980df9f7f7d45df13da1b25e1b1103ac798b9ef2e9754ef74c5d57894e8d750")),
+        }
+        for version, (revision, digests) in expected.items():
+            with self.subTest(version=version):
+                environment = dict(ENV, CONFIRMATION_VERSION=version)
+                plan = P.load_plan(environment)
+                self.assertEqual(plan["sourceRevision"], revision)
+                self.assertEqual(tuple(image["service"] for image in plan["images"]), P.LEGACY_SERVICES)
+                self.assertEqual(tuple(image["digest"] for image in plan["images"]), digests)
+                refs = P.checked_plan(plan, environment)
+                self.assertTrue(all("-openlap-" in target for _, target, _ in refs))
+
+    def test_future_release_uses_only_the_canonical_package_pair(self):
+        plan = copy.deepcopy(PLAN)
+        plan["version"] = "0.0.8"
+        for image, service in zip(plan["images"], P.SERVICES):
+            image["service"] = service
+        environment = dict(ENV, CONFIRMATION_VERSION="0.0.8")
+        registry = FakeRegistry(plan, environment)
+        report = P.promote(plan, environment, registry)
+        self.assertEqual([image["target"] for image in report["images"]], [
+            "ghcr.io/ude-soco/openlap-official-analyticsframework:0.0.8",
+            "ghcr.io/ude-soco/openlap-official-indicatorframework:0.0.8",
+        ])
+        self.assertEqual(len(registry.copies), 2)
+        self.assertTrue(all("-openlap-analyticsframework" not in ref and "-openlap-indicatoreditor" not in ref
+                            for operation, ref in registry.calls))
+        P.promote(plan, environment, registry)
+        self.assertEqual(len(registry.copies), 2, "Matching canonical release tags must remain idempotent")
+        registry.manifests[registry.refs[1][1]] = OTHER
+        registry.calls.clear()
+        with self.assertRaisesRegex(P.PromotionError, "refusing to overwrite"):
+            P.promote(plan, environment, registry)
+        self.assertEqual(registry.copies, [], "A conflicting canonical tag prevents every write")
+
+    def test_release_names_cannot_reinterpret_historical_or_future_versions(self):
+        for version, pair in (("0.0.6", P.SERVICES), ("0.0.7", P.SERVICES),
+                              ("0.0.8", P.LEGACY_SERVICES), ("1.0.0", P.LEGACY_SERVICES),
+                              ("0.0.5", P.LEGACY_SERVICES)):
+            with self.subTest(version=version, pair=pair):
+                plan = copy.deepcopy(PLAN)
+                plan["version"] = version
+                for image, service in zip(plan["images"], pair):
+                    image["service"] = service
+                with self.assertRaises(P.PromotionError):
+                    P.checked_plan(plan, dict(ENV, CONFIRMATION_VERSION=version))
+        for pair in ((P.SERVICES[1], P.SERVICES[0]), (P.SERVICES[0], P.LEGACY_SERVICES[1]),
+                     (P.SERVICES[0], P.SERVICES[0])):
+            plan = copy.deepcopy(PLAN)
+            plan["version"] = "0.0.8"
+            for image, service in zip(plan["images"], pair):
+                image["service"] = service
+            with self.assertRaises(P.PromotionError):
+                P.checked_plan(plan, dict(ENV, CONFIRMATION_VERSION="0.0.8"))
+
     def test_only_committed_matching_plans_select_the_release_pair(self):
         for version in ("0.0.6", "0.0.7"):
             environment = dict(ENV, CONFIRMATION_VERSION=version)

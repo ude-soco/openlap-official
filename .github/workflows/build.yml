@@ -21,6 +21,10 @@ on:
         type: boolean
         default: false
         required: false
+      publish_legacy_edge_aliases:
+        type: boolean
+        default: false
+        required: false
       timeout:
         type: number
         default: 20
@@ -43,6 +47,11 @@ jobs:
     name: Build image
     runs-on: ubuntu-latest
     timeout-minutes: ${{ inputs.timeout }}
+
+    # Serialize each image/ref through canonical and temporary alias publication.
+    concurrency:
+      group: image-${{ github.repository }}-${{ matrix.service }}-${{ github.ref }}
+      cancel-in-progress: false
 
     strategy:
       fail-fast: false
@@ -68,6 +77,10 @@ jobs:
       env:
         BUILD_PLATFORMS: ${{ inputs.platforms }}
       run: test "$BUILD_PLATFORMS" = linux/amd64
+
+    - name: Verify image compatibility publication guards without registry access
+      if: inputs.publish_legacy_edge_aliases
+      run: python3 -B tests/test_framework_image_aliases.py
 
     - name: Login to container registry
       if:   ${{ inputs.push }}
@@ -106,7 +119,7 @@ jobs:
       run: echo "TIMESTAMP=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
     - name: Obtain reviewed public chart history
-      if: inputs.verify_plugin_runtime && matrix.service == 'openlap-analyticsframework'
+      if: inputs.verify_plugin_runtime && matrix.service == 'analyticsframework'
       env:
         GIT_CONFIG_NOSYSTEM: '1'
         GIT_CONFIG_GLOBAL: /dev/null
@@ -145,27 +158,27 @@ jobs:
           VITE_EMAIL_PUBLIC_KEY=${{ vars.VITE_EMAIL_PUBLIC_KEY }}
 
     - name: Verify historical charts against the packaged backend
-      if: inputs.verify_plugin_runtime && matrix.service == 'openlap-analyticsframework'
+      if: inputs.verify_plugin_runtime && matrix.service == 'analyticsframework'
       env:
         TESTED_IMAGE_ID: ${{ steps.build.outputs.imageid }}
       run: >-
-        python3 -B openlap-analyticsframework/scripts/verify-legacy-c3.py
+        python3 -B analyticsframework/scripts/verify-legacy-c3.py
         --image "$TESTED_IMAGE_ID" --runtime-layout spring-boot
 
     - name: Verify historical Apex charts against the packaged backend
-      if: inputs.verify_plugin_runtime && matrix.service == 'openlap-analyticsframework'
+      if: inputs.verify_plugin_runtime && matrix.service == 'analyticsframework'
       env:
         TESTED_IMAGE_ID: ${{ steps.build.outputs.imageid }}
       run: >-
-        python3 -B openlap-analyticsframework/scripts/verify-legacy-apex.py
+        python3 -B analyticsframework/scripts/verify-legacy-apex.py
         --image "$TESTED_IMAGE_ID" --runtime-layout spring-boot
 
     - name: Verify packaged backend startup and HTTP contracts
-      if: inputs.verify_plugin_runtime && matrix.service == 'openlap-analyticsframework'
+      if: inputs.verify_plugin_runtime && matrix.service == 'analyticsframework'
       env:
         TESTED_IMAGE_ID: ${{ steps.build.outputs.imageid }}
       run: >-
-        python3 -B openlap-analyticsframework/scripts/verify-packaged-backend.py
+        python3 -B analyticsframework/scripts/verify-packaged-backend.py
         --image "$TESTED_IMAGE_ID"
 
     - name: Publish the verified image without rebuilding
@@ -189,6 +202,39 @@ jobs:
         done <<EOF
         $TESTED_IMAGE_TAGS
         EOF
+
+    # Temporary bridge for existing edge consumers. Remove after their image
+    # references migrate; historical semver tags and latest are never aliased.
+    - name: Publish temporary legacy edge aliases
+      if: inputs.push && inputs.verify_plugin_runtime && inputs.publish_legacy_edge_aliases && github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'ude-soco/openlap-official'
+      env:
+        SERVICE: ${{ matrix.service }}
+        TESTED_IMAGE_ID: ${{ steps.build.outputs.imageid }}
+        CANONICAL_IMAGE_NAME: ${{ steps.image_name.outputs.full }}
+      run: |
+        set -eu
+        case "$SERVICE" in
+          analyticsframework) legacy_service=openlap-analyticsframework ;;
+          indicatorframework) legacy_service=openlap-indicatoreditor ;;
+          *) exit 1 ;;
+        esac
+        test "$CANONICAL_IMAGE_NAME" = "ghcr.io/ude-soco/openlap-official-$SERVICE"
+        canonical_edge="$CANONICAL_IMAGE_NAME:edge"
+        legacy_edge="ghcr.io/ude-soco/openlap-official-$legacy_service:edge"
+        case "$TESTED_IMAGE_ID" in sha256:*) ;; *) exit 1 ;; esac
+        test "${#TESTED_IMAGE_ID}" -eq 71
+        case "${TESTED_IMAGE_ID#sha256:}" in *[!0-9a-f]*) exit 1 ;; esac
+        test "$(docker image inspect "$TESTED_IMAGE_ID" --format '{{.Id}}')" = "$TESTED_IMAGE_ID"
+        test "$(docker image inspect "$canonical_edge" --format '{{.Id}}')" = "$TESTED_IMAGE_ID"
+        docker image tag "$TESTED_IMAGE_ID" "$legacy_edge"
+        test "$(docker image inspect "$legacy_edge" --format '{{.Id}}')" = "$TESTED_IMAGE_ID"
+        docker image push "$legacy_edge"
+        canonical_digest="$(docker buildx imagetools inspect "$canonical_edge" --format '{{.Manifest.Digest}}')"
+        legacy_digest="$(docker buildx imagetools inspect "$legacy_edge" --format '{{.Manifest.Digest}}')"
+        case "$canonical_digest" in sha256:*) ;; *) exit 1 ;; esac
+        test "${#canonical_digest}" -eq 71
+        case "${canonical_digest#sha256:}" in *[!0-9a-f]*) exit 1 ;; esac
+        test "$canonical_digest" = "$legacy_digest"
 
     - name: Output tags
       if: inputs.push

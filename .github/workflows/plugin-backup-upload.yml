@@ -33,13 +33,13 @@ jobs:
           set -eu
           umask 077
           mkdir "$RUNNER_TEMP/backup-upload-context"
-          cp -- openlap-analyticsframework/Dockerfile.plugin-backup-upload \
+          cp -- analyticsframework/Dockerfile.plugin-backup-upload \
             "$RUNNER_TEMP/backup-upload-context/"
-          cp -- openlap-analyticsframework/scripts/plugin-release-backup.py \
-            openlap-analyticsframework/scripts/plugin-backup-upload.py \
-            openlap-analyticsframework/scripts/plugin-backup-upload-entrypoint.sh \
-            openlap-analyticsframework/scripts/plugin-recurring-backup.py \
-            openlap-analyticsframework/scripts/plugin-recurring-export.py \
+          cp -- analyticsframework/scripts/plugin-release-backup.py \
+            analyticsframework/scripts/plugin-backup-upload.py \
+            analyticsframework/scripts/plugin-backup-upload-entrypoint.sh \
+            analyticsframework/scripts/plugin-recurring-backup.py \
+            analyticsframework/scripts/plugin-recurring-export.py \
             scripts/plugin-recurring-record.py \
             "$RUNNER_TEMP/backup-upload-context/"
 
