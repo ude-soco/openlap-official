@@ -22,7 +22,7 @@
     "@mui/lab": "^7.0.1-beta.25",
     "@mui/material": "^7.3.11",
     "@mui/x-data-grid": "^9.17.0",
-    "@mui/x-date-pickers": "^8.29.0",
+    "@mui/x-date-pickers": "^9.17.0",
     "@tiptap/pm": "^3.33.0",
     "@tiptap/react": "^3.33.0",
     "@tiptap/starter-kit": "^3.33.0",
