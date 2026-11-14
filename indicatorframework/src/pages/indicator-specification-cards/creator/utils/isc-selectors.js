@@ -1,11 +1,8 @@
 // Pure, derived helpers for the ISC Creator workflow.
 //
-// Phase A foundation (see docs/ISC_CREATOR_ARCHITECTURE.md §9–§11). These are
-// PURE functions over the domain-state envelope produced by isc-serialization.
-// They are prepared for the future stepper/reducer and are intentionally NOT yet
-// wired into the existing UI, so they cannot change current behavior. Their
-// completeness predicates deliberately mirror the existing inline disabled-button
-// checks so the eventual wiring is behavior-preserving.
+// See docs/ISC_ARCHITECTURE.md, "Workflow and source map". These pure functions
+// derive the creator's stepper/completion view from the existing domain slices.
+// Individual steps still own their transition and validation rules.
 
 import { ISC_STEPS, ISC_STEP_ORDER, ISC_STEP_LABELS } from "./isc-constants.js";
 

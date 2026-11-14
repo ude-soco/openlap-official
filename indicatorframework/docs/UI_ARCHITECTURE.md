@@ -209,7 +209,6 @@ indicatorframework/
    │  │  ├─ api-errors.js                  # mapFieldErrors / getErrorMessage
    │  │  ├─ password-policy.js             # frontend mirror of backend policy
    │  │  └─ scroll-to-section.js           # landing smooth-scroll helper
-   │  └─ localization-todo.md
    ├─ pages/
    │  ├─ landing-page/
    │  │  ├─ landing-page.jsx
@@ -737,17 +736,21 @@ Intentionally deferred:
   valid until expiry; would require a token blocklist/version.
 - **Email case‑sensitivity** — `findByEmail`/`existsByEmail` are exact‑match; a
   normalization decision is open.
-- **Internationalization (i18n)** — all copy is inline English; see
-  [`common/localization-todo.md`](../src/common/localization-todo.md).
-- **Editor full‑bleed layout** — the content sheet adds ~16–24px inset to every route;
-  editor/DataGrid pages (ISC Creator, Indicator Editor, GQI) would benefit from a
-  full‑bleed layout variant (an `AppShell`/wrapper prop that drops sheet padding).
+- **Internationalization (i18n)** — the frontend has no translation framework or
+  locale catalogs; interface copy is inline English. Start a future translation
+  effort with shared authentication controls and password-rule labels, then the
+  public pages. News/publications are database content and need a content-language
+  strategy; API validation/error messages need separate backend support.
 - **DataGrid / chart styling** — not yet themed; the authenticated theme deliberately
   avoids DataGrid/chart overrides.
-- **Feature‑page redesign** — ISC/Indicator/GQI/CSV‑xAPI still use legacy patterns.
-- **Tests** — no frontend page/E2E tests yet (account flows are covered by backend
-  unit/MockMvc tests; ~86 backend tests green). Pre‑existing `exhaustive-deps` warnings
-  remain on the `loadLRSData` effects in `manage-lrs` and `register`.
+- **UI test coverage** — frontend unit tests cover authentication refresh, content
+  editing models, ISC change summaries and chart-option compatibility. Broader
+  browser interaction coverage remains useful alongside those focused checks.
+
+ISC Creator and the basic Indicator Editor already use full-bleed routes; see
+`isFullBleedPath` in `setup/routes-manager/app-routes.jsx`. The
+[ISC architecture guide](ISC_ARCHITECTURE.md) describes the current workspace,
+database-backed drafts and saved-card compatibility boundaries.
 
 ---
 

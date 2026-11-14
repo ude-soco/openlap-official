@@ -1,5 +1,5 @@
-// Single source of truth for Step 3 chart compatibility (see
-// docs/ISC_STEP3_VISUALIZATION_ARCHITECTURE.md, Phase 3A).
+// Single source of truth for chart compatibility (see docs/ISC_ARCHITECTURE.md,
+// "Workflow and source map").
 //
 // Previously the "recommended" badge used the COARSE column type
 // (`col.type` = "string"/"number", which merges Categorical and Categorical

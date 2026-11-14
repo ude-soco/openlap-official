@@ -1,5 +1,5 @@
-// Pure data builder for the Step 3 live preview (see
-// docs/ISC_STEP3_VISUALIZATION_ARCHITECTURE.md, Phase 3E / "live preview").
+// Pure data builder for the visualization preview (see docs/ISC_ARCHITECTURE.md,
+// "Workflow and source map").
 //
 // The Finalize chart renderers are coupled to Finalize (they mutate visRef,
 // render axis selectors + customization). To preview safely in Step 3 we build a

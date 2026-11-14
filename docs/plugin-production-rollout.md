@@ -313,7 +313,7 @@ rollback alone is sufficient.
 Keep `PLUGIN_REMOVAL_ENABLED=false` until every writer of indicators, drafts,
 cards and installation reviews runs the guarded S3 implementation. Removal is a
 separate approval after runtime/recovery acceptance. Review
-[removal and retention](./plugin-removal-and-retention.md#deployment-gate), keep
+[the removal deployment gate](./plugin-administration.md#deployment-gate), keep
 retention configuration consistent across replicas, and use its authoritative
 reference review rather than dashboard usage counts. Application recovery-window
 settings do not define backup retention.

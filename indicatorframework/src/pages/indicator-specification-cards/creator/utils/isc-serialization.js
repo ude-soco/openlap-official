@@ -1,8 +1,8 @@
 // Serialization adapter for ISC Creator state.
 //
-// Phase A foundation (see docs/ISC_CREATOR_ARCHITECTURE.md §9). This is the seam
-// that decouples the in-memory model from how ISCs are persisted, so the future
-// reducer/workspace can evolve the internal shape WITHOUT breaking saved ISCs.
+// See docs/ISC_ARCHITECTURE.md, "Persistence contract". These helpers decouple
+// the in-memory model from persisted slices so internal changes can preserve
+// saved-card compatibility.
 //
 // Two persistence contexts exist today and BOTH must keep working:
 //   1. Server payload (POST /v1/isc/create, PUT /v1/isc/{id}; GET /v1/isc/{id}):
