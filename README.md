@@ -10,16 +10,16 @@
   <a href="https://openlap.de/"><strong>Production</strong></a> ·
   <a href="https://edge.openlap.de/"><strong>Edge preview</strong></a> ·
   <a href="#local-installation">Install locally</a> ·
-  <a href="#documentation">Documentation</a>
+  <a href="#documentation">Documentation</a> ·
+  <a href="#cite-openlap">Cite OpenLAP</a>
 </p>
 
 <p align="center">
   <a href="https://github.com/ude-soco/openlap-official/actions/workflows/ci.yml"><img src="https://github.com/ude-soco/openlap-official/actions/workflows/ci.yml/badge.svg?branch=main" alt="Build and backend checks"></a>
   <a href="https://github.com/ude-soco/openlap-official/actions/workflows/javascript.yml"><img src="https://github.com/ude-soco/openlap-official/actions/workflows/javascript.yml/badge.svg?branch=main" alt="Frontend regression checks"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT"></a>
 </p>
 
-OpenLAP is an open-source platform for **human-centered learning analytics**. It helps
+OpenLAP is a research platform for **human-centered learning analytics**. It helps
 learners, educators, and researchers design indicators around their questions, connect
 learning activity data, apply analytics methods, and explore the results through visualizations.
 The project is developed by the [Social Computing Group at the University of Duisburg-Essen](https://www.uni-due.de/soco/).
@@ -284,5 +284,29 @@ the change and its validation. Keep credentials and local environment files out 
 Explore the [research project](https://www.uni-due.de/soco/research/projects/openlap.php)
 and [publications](https://openlap.de/publications).
 
-OpenLAP uses the [MIT license](LICENSE). Dependencies and separately installed plugins
-retain their own license terms.
+## Cite OpenLAP
+
+If you use OpenLAP in your research, please cite our journal paper:
+
+> Joarder, S., & Chatti, M. A. (2026). Human-Centred Development of Indicators for
+> Self-Service Learning Analytics: A Transparency through Exploration Approach.
+> *Journal of Learning Analytics, 13*(1), 163–189.
+> https://doi.org/10.18608/jla.2026.8921
+
+```bibtex
+@article{joarder2026openlap,
+  author  = {Joarder, Shoeb and Chatti, Mohamed Amine},
+  title   = {Human-Centred Development of Indicators for Self-Service Learning Analytics: A Transparency through Exploration Approach},
+  journal = {Journal of Learning Analytics},
+  year    = {2026},
+  volume  = {13},
+  number  = {1},
+  pages   = {163--189},
+  doi     = {10.18608/jla.2026.8921},
+  url     = {https://doi.org/10.18608/jla.2026.8921}
+}
+```
+
+Machine-readable citation metadata is available in [CITATION.cff](CITATION.cff).
+Citation guidance is separate from software licensing. Dependencies and separately
+installed plugins retain their own license terms.
