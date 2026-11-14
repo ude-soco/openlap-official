@@ -21,6 +21,8 @@ public interface IndicatorService {
 
   IndicatorFullDetailResponse getIndicatorById(String indicatorId);
 
+  IndicatorFullDetailResponse getIndicatorById(String indicatorId, boolean includeCode);
+
   String getInteractiveIndicatorTemplate(String indicatorId, Model model);
 
   List<IndicatorWithCodeResponse> getIndicatorDetailResponseList(List<Indicator> indicators);

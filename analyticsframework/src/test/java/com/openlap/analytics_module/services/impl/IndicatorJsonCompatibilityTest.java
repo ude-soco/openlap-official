@@ -140,7 +140,7 @@ public class IndicatorJsonCompatibilityTest {
     IndicatorBasicService analysis = mock(IndicatorBasicService.class);
     when(analysis.analyzeIndicatorByIndicatorId("indicator")).thenReturn(data);
     IndicatorServiceImpl service = new IndicatorServiceImpl(
-        indicators, null, caches, null, null, null, analysis, utility, null, null, null, null);
+        indicators, null, caches, null, null, null, analysis, utility, null, null, null, null, null);
 
     assertThat(service.generateIndicatorCode("indicator", false)).isEqualTo("<div>Chart</div>");
 

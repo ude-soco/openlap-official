@@ -21,4 +21,10 @@ public class IndicatorCache {
   private String analyzedDataset;
   private LocalDateTime indicatorCreatedOn;
   private LocalDateTime generatedOn;
+  private String requestFingerprint;
+
+  public IndicatorCache(String id, String code, String data, LocalDateTime createdOn,
+      LocalDateTime generatedOn) {
+    this(id, code, data, createdOn, generatedOn, null);
+  }
 }
