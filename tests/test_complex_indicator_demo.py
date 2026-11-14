@@ -123,6 +123,14 @@ class SavedDemoApiContractTests(unittest.TestCase):
         with self.assertRaises(demo.DemoError):
             demo.assert_scatter_series(good, expected, 3, ["#008ffb"])
 
+    def test_scatter_groups_must_match_the_analysis_assignments(self):
+        series = [{"name": "Cluster 1", "x": [1], "y": [11]}, {"name": "Cluster 2", "x": [2], "y": [22]}]
+        desired = {"Cluster 1": [(1, 11)], "Cluster 2": [(2, 22)]}
+        demo.assert_scatter_series(series, [(1, 11), (2, 22)], 2, demo.PALETTE, desired)
+        swapped = {"Cluster 2": [(1, 11)], "Cluster 1": [(2, 22)]}
+        with self.assertRaises(demo.DemoError):
+            demo.assert_scatter_series(series, [(1, 11), (2, 22)], 2, demo.PALETTE, swapped)
+
     def test_duplicate_method_names_use_declared_contract_and_stable_id(self):
         class Api:
             def data(self, method, path):

@@ -417,7 +417,7 @@ assert.equal(chart.title.text,p.title);
         raise DemoError("C3 text labels did not roundtrip to their original values in the renderer configuration.")
 
 
-def assert_scatter_series(series, expected_pairs, clusters, colors):
+def assert_scatter_series(series, expected_pairs, clusters, colors, expected_groups=None):
     points = []
     for item in series:
         if len(item["x"]) != len(item["y"]):
@@ -426,9 +426,14 @@ def assert_scatter_series(series, expected_pairs, clusters, colors):
     if (len(series) != clusters or sorted(points) != sorted((float(x), float(y)) for x, y in expected_pairs)
             or len(set(colors)) < clusters):
         raise DemoError("The rendered scatter chart must preserve every analyzed point and distinguish its clusters.")
+    if expected_groups is not None:
+        actual_groups = {item["name"]: sorted((float(x), float(y)) for x, y in zip(item["x"], item["y"])) for item in series}
+        desired = {name: sorted((float(x), float(y)) for x, y in pairs) for name, pairs in expected_groups.items()}
+        if actual_groups != desired:
+            raise DemoError("The rendered scatter chart groups differ from the real analysis assignments.")
 
 
-def check_c3_scatter_points(code, expected_pairs, clusters):
+def check_c3_scatter_points(code, expected_pairs, clusters, assignments):
     """Verify actual C3 coordinates, not just the preceding analysis row count."""
     scripts = re.findall(r"<script[^>]*>(.*?)</script>", unquote(code), flags=re.I | re.S)
     if len(scripts) != 1:
@@ -437,7 +442,7 @@ def check_c3_scatter_points(code, expected_pairs, clusters):
 new vm.Script(JSON.parse(require('node:fs').readFileSync(0,'utf8'))).runInNewContext({c3:{generate(options){seen.push(options);return {};}}},{timeout:1000});
 if(seen.length!==1)throw Error('Expected one chart'); const chart=seen[0];
 const columns=new Map(chart.data.columns.map(column=>[column[0],Array.from(column).slice(1)]));
-const series=Object.entries(chart.data.xs).map(([name,x])=>({name,x:columns.get(x),y:columns.get(name)}));
+const series=Object.entries(chart.data.xs).map(([name,x])=>({name:chart.data.names?.[name]||name,x:columns.get(x),y:columns.get(name)}));
 console.log(JSON.stringify({series,colors:chart.color.pattern}));
 """
     result = subprocess.run(["node", "-e", probe], input=json.dumps(scripts[0]),
@@ -445,7 +450,10 @@ console.log(JSON.stringify({series,colors:chart.color.pattern}));
     if result.returncode:
         raise DemoError("Could not inspect the generated C3 scatter coordinates.")
     captured = json.loads(result.stdout)
-    assert_scatter_series(captured["series"], expected_pairs, clusters, captured["colors"])
+    expected_groups = {}
+    for pair, name in zip(expected_pairs, assignments):
+        expected_groups.setdefault(name, []).append(pair)
+    assert_scatter_series(captured["series"], expected_pairs, clusters, captured["colors"], expected_groups)
 
 
 def basic_payload(api, method, library, chart, title, names, verb, unique=False):
@@ -651,7 +659,7 @@ def create_complex_examples(api, source_ids, methods, library, types, record, re
     payload = request(multilevel)
     multilevel_preview = api.data("POST", "/v1/indicators/multilevel/preview", payload)
     check_chart_syntax(multilevel_preview)
-    check_c3_scatter_points(multilevel_preview, expected_pairs, 3)
+    check_c3_scatter_points(multilevel_preview, actual_pairs, 3, assignments)
     multilevel_id = ensure_indicator(api, "/v1/indicators/multilevel", payload, record, receipt)
 
     for identifier in (composite_id, multilevel_id):
@@ -660,7 +668,7 @@ def create_complex_examples(api, source_ids, methods, library, types, record, re
             raise DemoError("A saved complex indicator did not generate visualization code.")
         check_chart_syntax(details["indicatorCode"])
         if identifier == multilevel_id:
-            check_c3_scatter_points(details["indicatorCode"], expected_pairs, 3)
+            check_c3_scatter_points(details["indicatorCode"], actual_pairs, 3, assignments)
         if not json.loads(details.get("configuration") or "{}").get("sources"):
             raise DemoError("A saved complex indicator did not retain its editable configuration.")
     record["verification"] = {"unionRows": len(expected_union), "intersectionRows": len(expected_shared),
