@@ -191,11 +191,17 @@ chart code still supplies defaults, color formatting and title placement. The
 unrecovered original model's other behavior is not claimed. Template dependency
 upgrades must check for a competing class with that binary name.
 
-The unchanged historical C3 archive and this bridge pass 19 real generator cases
-with 306 output assertions across all nine charts, defaults/customization,
-grouped/scatter data and Bar sorting/filtering. The baseline without the bridge
-fails all 19 with the missing-class error. Repeat the isolated check against a
-locally built migration image (which packages the same backend classes/APIs):
+The unchanged historical C3 archive, this bridge and an archive-specific string
+adapter pass 28 real generator cases with 462 output assertions across all nine
+charts, defaults/customization, grouped/scatter data, Bar sorting/filtering and
+text containing quotes, backslashes, line separators and HTML script delimiters.
+The adapter escapes private copies of text/customization values before those
+legacy generators insert them into JavaScript; original data and visible labels
+are preserved. It applies only to the known archive checksum and chart classes;
+other providers retain their existing escaping contracts. The original 19-case
+baseline without the compatibility bridge fails with the missing-class error.
+Repeat the isolated check against a locally built migration image (which packages
+the same backend classes/APIs):
 
 ```sh
 python3 -B analyticsframework/scripts/verify-legacy-c3.py \

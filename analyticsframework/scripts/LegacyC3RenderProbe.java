@@ -7,6 +7,7 @@ import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.dataset.OpenLAPPortMapping;
 import com.openlap.template.VisualizationCodeGenerator;
 import com.openlap.visualization_methods.utilities.VisualizerClassPathLoader;
+import com.openlap.visualization_methods.compatibility.LegacyC3Strings;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -118,13 +119,71 @@ public final class LegacyC3RenderProbe {
     return checks.count;
   }
 
+  private static final String UNSAFE_TEXT = "Learner's \"access\" \\ workshop\nnext\rline\u2028separator\u2029</script><script>bad()</script>";
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private static OpenLAPDataSet snapshotInput(VisualizationCodeGenerator chart, boolean escaped) throws Exception {
+    OpenLAPDataSet result = new OpenLAPDataSet();
+    for (OpenLAPColumnConfigData config : chart.getInput().getColumnsConfigurationData()) {
+      OpenLAPDataColumn original = chart.getInput().getColumns().get(config.getId());
+      OpenLAPDataColumn copy = new OpenLAPDataColumn(config.getId(), config.getType(), config.isRequired(), config.getTitle(), config.getDescription());
+      ArrayList values = new ArrayList();
+      for (Object value : original.getData()) {
+        values.add(escaped && config.getType() == OpenLAPColumnDataType.Text ? value.toString() + " " + UNSAFE_TEXT : value);
+      }
+      copy.setData(values);
+      result.addOpenLAPDataColumn(copy);
+    }
+    return result;
+  }
+
+  private static String encoded(String value) {
+    String json = new com.google.gson.Gson().toJson(value);
+    return json.substring(1, json.length() - 1);
+  }
+
+  private static int occurrences(String value, String needle) {
+    int count = 0;
+    for (int offset = 0; (offset = value.indexOf(needle, offset)) >= 0; offset += needle.length()) count++;
+    return count;
+  }
+
+  private static int assertEscapedOutput(String code, OpenLAPDataSet source,
+      Map<String, Object> settings, LegacyC3Strings.Inputs prepared) {
+    Checks checks = new Checks();
+    checks.verify(prepared.data() != source, "Known historical archive did not receive the compatibility adapter");
+    checks.verify(prepared.parameters() != settings, "Adapter reused mutable customization settings");
+    checks.verify(code.contains("c3.generate({"), "Missing real C3 generator call");
+    checks.verify(occurrences(code, "<script") == 1, "Text opened an extra script element");
+    checks.verify(occurrences(code, "</script>") == 1, "Text closed the script element");
+    checks.verify(!code.contains(UNSAFE_TEXT), "Unescaped original text reached generated HTML");
+    checks.verify(code.contains(encoded("probe-title " + UNSAFE_TEXT)), "Custom title was lost or double escaped");
+    checks.verify(code.contains("\\u0027"), "Apostrophe was not encoded");
+    checks.verify(code.contains("\\\"access\\\""), "Double quotes were lost or double escaped");
+    checks.verify(code.contains("\\\\ workshop"), "Backslash was lost or double escaped");
+    checks.verify(code.contains("\\nnext"), "Newline was not encoded");
+    checks.verify(code.contains("\\rline"), "Carriage return was not encoded");
+    checks.verify(code.contains("\\u2028separator"), "Unicode line separator was not encoded");
+    checks.verify(code.contains("\\u2029\\u003c/script\\u003e"), "Unicode paragraph separator or HTML delimiter was not encoded");
+    boolean dataTextRetained = false;
+    for (OpenLAPColumnConfigData config : source.getColumnsConfigurationData()) {
+      if (config.getType() != OpenLAPColumnDataType.Text) continue;
+      String original = source.getColumns().get(config.getId()).getData().get(0).toString();
+      checks.verify(original.endsWith(UNSAFE_TEXT), "Source labels were mutated by rendering");
+      if (code.contains(encoded(original))) dataTextRetained = true;
+    }
+    checks.verify(dataTextRetained, "Data labels were lost or double escaped");
+    checks.verify(settings.get("chartTitle").equals("probe-title " + UNSAFE_TEXT), "Source customization was mutated");
+    return checks.count;
+  }
+
   public static void main(String[] args) throws Exception {
     String jar = args[0];
     require(SHA256.equals(sha256(Files.readAllBytes(Path.of(jar)))), "Historical C3 digest mismatch");
     List<Map<String, Object>> results = new ArrayList<>();
     int passed = 0;
     for (String name : CHARTS) {
-      for (String scenario : name.equals("Bar") ? new String[]{"defaults", "customized", "filtered"} : new String[]{"defaults", "customized"}) {
+      for (String scenario : name.equals("Bar") ? new String[]{"defaults", "customized", "filtered", "escaped"} : new String[]{"defaults", "customized", "escaped"}) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("chart", name);
         result.put("scenario", scenario);
@@ -135,8 +194,12 @@ public final class LegacyC3RenderProbe {
           OpenLAPPortConfig mapping = populate(chart);
           Map<String, Object> settings = parameters(!scenario.equals("defaults"));
           if (scenario.equals("filtered")) settings.put("hiddenCategoriesIndexes", "[1]");
-          String code = chart.generateVisualizationCode(chart.getInput(), mapping, settings);
-          result.put("assertions", assertOutput(name, scenario, code));
+          boolean escaped = scenario.equals("escaped");
+          OpenLAPDataSet input = snapshotInput(chart, escaped);
+          if (escaped) settings.put("chartTitle", "probe-title " + UNSAFE_TEXT);
+          LegacyC3Strings.Inputs prepared = LegacyC3Strings.prepare(chart, input, settings);
+          String code = chart.generateVisualizationCode(prepared.data(), mapping, prepared.parameters());
+          result.put("assertions", escaped ? assertEscapedOutput(code, input, settings, prepared) : assertOutput(name, scenario, code));
           result.put("status", "PASS");
           result.put("characters", code.length());
           result.put("sha256", sha256(code.getBytes(java.nio.charset.StandardCharsets.UTF_8)));

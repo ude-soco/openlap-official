@@ -382,9 +382,11 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
             visType.getId(), visualizationMappings);
     if (validationResult.isValid()) {
       try {
+        var inputs = com.openlap.visualization_methods.compatibility.LegacyC3Strings.prepare(
+            visualizationCodeGenerator, analyzedDataSet, (Map<String, Object>) visualizationParams);
         indicatorCode =
             visualizationCodeGenerator.generateVisualizationCode(
-                analyzedDataSet, visualizationMappings, (Map<String, Object>) visualizationParams);
+                inputs.data(), visualizationMappings, inputs.parameters());
       } catch (IllegalAccessException | InstantiationException e) {
         throw new ServiceException("Error when generating indicator code", e);
       }
