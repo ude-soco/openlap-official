@@ -135,6 +135,12 @@ async function routerChecks(page, base) {
   await page.getByTestId("draft-id").waitFor();
   assert.equal(await page.getByTestId("draft-id").textContent(), "Draft: draft one");
   assert.equal(await page.getByTestId("location").textContent(), deepPath);
+  // WebKit 2215 also crashes on static HTML (no React/Router, including real
+  // HTTP responses) when reloading after back/forward and another pushState.
+  // Exercise the deep-link reload before history traversal; both remain tested.
+  await page.reload();
+  await page.getByTestId("draft-id").waitFor();
+  assert.equal(await page.getByTestId("location").textContent(), deepPath);
   await page.getByRole("link", { name: "Home", exact: true }).click();
   await page.getByRole("heading", { name: "Home fixture", exact: true }).waitFor();
   await page.goBack();
@@ -143,8 +149,6 @@ async function routerChecks(page, base) {
   await page.goForward();
   await page.getByRole("heading", { name: "Home fixture", exact: true }).waitFor();
   await page.getByRole("link", { name: "Draft link", exact: true }).click();
-  await page.getByTestId("draft-id").waitFor();
-  await page.reload();
   await page.getByTestId("draft-id").waitFor();
   assert.equal(await page.getByTestId("location").textContent(), deepPath);
   await page.getByRole("link", { name: "Member page", exact: true }).click();
