@@ -4,11 +4,15 @@ import com.openlap.analytics_module.dto.requests.indicator.IndicatorCompositeMer
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorCompositePreviewRequest;
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorCompositeRequest;
 import com.openlap.dataset.OpenLAPDataSet;
+import com.openlap.dataset.OpenLAPPortConfig;
 import jakarta.servlet.http.HttpServletRequest;
 
 public interface IndicatorCompositeService {
   OpenLAPDataSet mergeIndicatorsForCompositeIndicator(
       IndicatorCompositeMergeRequest indicatorCompositeRequest);
+
+  OpenLAPDataSet visualizationData(
+      IndicatorCompositeMergeRequest indicatorCompositeRequest, OpenLAPPortConfig mapping);
 
   String previewIndicatorComposite(IndicatorCompositePreviewRequest indicatorCompositeRequest);
 

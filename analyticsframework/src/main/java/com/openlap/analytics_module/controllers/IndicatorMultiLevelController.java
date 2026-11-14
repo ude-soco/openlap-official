@@ -3,6 +3,7 @@ package com.openlap.analytics_module.controllers;
 import com.openlap.analytics_module.dto.requests.indicator.*;
 import com.openlap.analytics_module.services.IndicatorMultiLevelService;
 import com.openlap.response.ApiSuccess;
+import com.openlap.analytics_module.services.ComplexIndicatorSourceGuard;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,10 +18,12 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class IndicatorMultiLevelController {
   private final IndicatorMultiLevelService indicatorMultiLevelService;
+  private final ComplexIndicatorSourceGuard sourceGuard;
 
   @PostMapping("/compatible")
   public ResponseEntity<?> findCompatibleIndicatorsColumnToMerge(
-      @RequestBody @Valid IndicatorMultiLevelMergeRequest indicatorMultiLevelMergeRequest) {
+      HttpServletRequest request, @RequestBody @Valid IndicatorMultiLevelMergeRequest indicatorMultiLevelMergeRequest) {
+    sourceGuard.validate(request, indicatorMultiLevelMergeRequest.getIndicators(), false);
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
         .body(
@@ -33,7 +36,8 @@ public class IndicatorMultiLevelController {
 
   @PostMapping("/merge")
   public ResponseEntity<?> mergeBasicIndicatorsBeforeSaving(
-      @RequestBody @Valid IndicatorMultiLevelMergeRequest indicatorMultiLevelMergeRequest) {
+      HttpServletRequest request, @RequestBody @Valid IndicatorMultiLevelMergeRequest indicatorMultiLevelMergeRequest) {
+    sourceGuard.validate(request, indicatorMultiLevelMergeRequest.getIndicators(), false);
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
         .body(
@@ -46,7 +50,8 @@ public class IndicatorMultiLevelController {
 
   @PostMapping("/analyze")
   public ResponseEntity<?> analyzeMultiLevelIndicatorBeforeSaving(
-      @RequestBody @Valid IndicatorMultiLevelAnalysisRequest indicatorMultiLevelAnalysisRequest) {
+      HttpServletRequest request, @RequestBody @Valid IndicatorMultiLevelAnalysisRequest indicatorMultiLevelAnalysisRequest) {
+    sourceGuard.validate(request, indicatorMultiLevelAnalysisRequest.getIndicators(), false);
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
         .body(
@@ -59,7 +64,8 @@ public class IndicatorMultiLevelController {
 
   @PostMapping("/preview")
   public ResponseEntity<?> previewMultiLevelIndicatorBeforeSaving(
-      @RequestBody @Valid IndicatorMultiLevelPreviewRequest indicatorMultiLevelPreviewRequest) {
+      HttpServletRequest request, @RequestBody @Valid IndicatorMultiLevelPreviewRequest indicatorMultiLevelPreviewRequest) {
+    sourceGuard.validate(request, indicatorMultiLevelPreviewRequest.getIndicators(), false);
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
         .body(
@@ -74,6 +80,7 @@ public class IndicatorMultiLevelController {
   public ResponseEntity<?> createMultiLevelIndicator(
       HttpServletRequest request,
       @RequestBody @Valid IndicatorMultiLevelRequest indicatorMultiLevelCreateRequest) {
+    sourceGuard.validate(request, indicatorMultiLevelCreateRequest.getIndicators(), false);
     indicatorMultiLevelService.createMultiLevelIndicator(request, indicatorMultiLevelCreateRequest);
     HttpStatus status = HttpStatus.CREATED;
     return ResponseEntity.status(status)
@@ -85,6 +92,7 @@ public class IndicatorMultiLevelController {
       HttpServletRequest request,
       @RequestBody @Valid IndicatorMultiLevelRequest indicatorMultiLevelCreateRequest,
       @PathVariable String indicatorId) {
+    sourceGuard.validate(request, indicatorMultiLevelCreateRequest.getIndicators(), false);
     indicatorMultiLevelService.updateMultiLevelIndicator(
         request, indicatorMultiLevelCreateRequest, indicatorId);
     HttpStatus status = HttpStatus.OK;
