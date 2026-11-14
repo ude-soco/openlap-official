@@ -3,15 +3,18 @@
 Spring Boot 4.0 backend for the Open Learning Analytics Platform (OpenLAP).
 It exposes a REST API (served under `/api`) backed by two MongoDB databases.
 
-- **Build tool:** Maven (wrapper included — no global Maven needed)
+- **Build tool:** Maven 3.10.0 (checksum-verified wrapper included — no global Maven needed)
 - **Java:** 17 minimum; Corretto 25 LTS is used for the runtime and qualification
 - **Main class:** `com.openlap.AnalyticsFramework`
 - **Default port:** `8090` (context path `/api`)
 
 
 The backend uses Spring Boot 4.0's supported maintenance line and compiles to Java 17
-bytecode. Container builds use a pinned JDK 25 builder and retain Corretto 25 LTS at
-runtime. This avoids moving production onto a short-lived Java feature release.
+bytecode. Application, migration and storage containers use the same digest-pinned
+Maven 3.10.0 / Temurin 25 builder and Corretto 25.0.5 LTS runtime. Temurin 26 has
+[reached the end of support](https://adoptium.net/support/); Corretto 25 LTS receives
+[updates through 2032](https://aws.amazon.com/corretto/faqs/), while Corretto 27's
+feature-release support ends in April 2027.
 
 Existing API and plugin JSON contracts use Boot's Jackson 2 compatibility module.
 HTTP and WebSocket converters explicitly prefer Jackson 2, and both Jackson families
@@ -19,9 +22,11 @@ use aligned, patched BOMs. The bridge is deprecated upstream; a future Jackson 3
 migration must preserve the persisted data and external plugin contracts before it
 can replace this configuration.
 
-Legacy C3 and ApexCharts plugins still require `javafx.util.Pair`. The backend includes stable
-`javafx-base` for that binary API, without the unused GUI controls and graphics
-modules. A small `Customization` compatibility class retains the constructor and
+Legacy C3 and ApexCharts plugins still require `javafx.util.Pair`. The backend retains
+`javafx-base` 21.0.13 for that binary API and Java 17 compatibility, without the unused
+GUI controls and graphics modules. [JavaFX 27 requires Java 25](https://openjfx.io/highlights/27/)
+and would raise the application's Java baseline. A small `Customization` compatibility
+class retains the constructor and
 accessors used by both reviewed historical plugins; the renderers keep ownership
 of their defaults, filtering and formatting. CI checks both pinned JARs against
 the packaged backend before publishing its image.
