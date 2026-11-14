@@ -13,7 +13,8 @@
     "test:saved-preview": "node scripts/test-saved-indicator-preview.cjs",
     "test:dependency-updates": "node scripts/test-dependency-updates.cjs",
     "test:mui-updates": "node scripts/test-mui-updates.cjs",
-    "test:runtime-updates": "node scripts/test-runtime-updates.cjs"
+    "test:runtime-updates": "node scripts/test-runtime-updates.cjs",
+    "test:complex-indicators": "node scripts/test-complex-indicators.cjs"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

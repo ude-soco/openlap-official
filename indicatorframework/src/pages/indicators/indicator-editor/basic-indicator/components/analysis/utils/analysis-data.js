@@ -35,12 +35,11 @@ export const analyticsInputMenuList = [
     description:
       'Selected list of sources specified in Dataset such as "Moodle" etc.',
   },
-  // users: {
-  //   id: "statement.actor.account.name",
-  //   type: "Text",
-  //   required: true,
-  //   name: "Users",
-  //   description:
-  //     "Selected list of the User(s) specified in User Filter",
-  // },
+  {
+    id: "statement.actor.account.name",
+    type: "Text",
+    required: true,
+    name: "Users (account name)",
+    description: "Account names of the users included by the User Filter. Use this optional input for methods that count distinct users per activity.",
+  },
 ];

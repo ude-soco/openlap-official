@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { Chip, IconButton, Stack, Typography } from "@mui/material";
+import { Box, Chip, Stack, Typography } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 
 /**
@@ -29,9 +29,9 @@ const WorkflowStepHeader = ({
   >
     <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
       {locked ? (
-        <IconButton size="small">
+        <Box component="span" aria-hidden="true" sx={{ display: "inline-flex", p: 0.625 }}>
           <LockIcon />
-        </IconButton>
+        </Box>
       ) : (
         <Chip label={stepNumber} color="primary" />
       )}

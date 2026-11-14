@@ -1,6 +1,7 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import {
+  Alert,
   Box,
   Breadcrumbs,
   Button,
@@ -159,16 +160,29 @@ const IndicatorPreview = () => {
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [resultData, setResultData] = useState(null);
+  const [resultError, setResultError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const { enqueueSnackbar } = useSnackbar();
 
   const loadIndicatorDetail = async () => {
-    setState((p) => ({ ...p, loading: true }));
+    setLoadError(""); setResultError(""); setResultData(null);
+    setState((p) => ({ ...p, loading: true, previewData: { displayCode: [], scriptData: "" } }));
     try {
       const indicatorData = await requestIndicatorFullDetail(api, params.id);
       setState((p) => ({ ...p, ...indicatorData, loading: false }));
+      if (indicatorData.type === "COMPOSITE" || indicatorData.type === "MULTI_LEVEL") {
+        try {
+          const response = await api.get(`v1/indicators/${encodeURIComponent(params.id)}/result`);
+          setResultData(response.data.data);
+        } catch (error) {
+          setResultError(error?.response?.data?.message || "Could not refresh the current result table. Review the sources and retry.");
+        }
+      }
     } catch (error) {
       console.error("Error requesting indicator detail", error);
       setState((p) => ({ ...p, loading: false }));
+      setLoadError(error?.response?.data?.message || "Could not load this indicator. A source or plugin may be unavailable.");
     }
   };
 
@@ -182,7 +196,7 @@ const IndicatorPreview = () => {
       ...p,
       isLoading: { ...p.isLoading, status: true },
     }));
-    sessionStorage.setItem(SESSION_INDICATOR, state.configuration);
+    if (state.type === "BASIC") sessionStorage.setItem(SESSION_INDICATOR, state.configuration);
     if (state.type) {
       switch (state.type) {
         case "BASIC":
@@ -280,7 +294,9 @@ const IndicatorPreview = () => {
     : "";
 
   const columns = useMemo(() => {
-    const analyzedData = config?.analysis?.analyzedData || {};
+    const analyzedData = state.type === "COMPOSITE" || state.type === "MULTI_LEVEL"
+      ? resultData?.columns || {}
+      : config?.analysis?.analyzedData || {};
     return Object.keys(analyzedData)
       .map((key) => ({
         title: analyzedData[key]?.configurationData?.title,
@@ -288,7 +304,7 @@ const IndicatorPreview = () => {
         data: analyzedData[key]?.data || [],
       }))
       .filter((col) => col.title);
-  }, [config]);
+  }, [config, resultData, state.type]);
 
   const colCount = columns.length;
   const rowCount = columns[0]?.data?.length ?? 0;
@@ -335,6 +351,9 @@ const IndicatorPreview = () => {
           </Stack>
         ) : (
           <Stack sx={{ gap: { xs: 2, sm: 3 } }}>
+            {loadError && <Alert severity="error" action={<Button onClick={loadIndicatorDetail} color="inherit">Retry</Button>}>{loadError}</Alert>}
+            {resultError && <Alert severity="error" action={<Button onClick={loadIndicatorDetail} color="inherit">Retry</Button>}>{resultError}</Alert>}
+            {Array.isArray(config.sources) && config.sources.length > 0 && <SectionPaper label="Source indicators"><Stack sx={{ gap: 1 }}><Typography variant="subtitle1" component="h2">Source indicators</Typography><Typography variant="body2" color="text.secondary">{state.type === "COMPOSITE" ? "All matching values are included; absent measures are filled with zero." : "Only shared matching values proceed to the additional analysis."} Results use current source definitions.</Typography>{config.sources.map((source) => <Link key={source.id} component={RouterLink} to={`/indicator/${source.id}`}>{source.label || source.name}</Link>)}</Stack></SectionPaper>}
             {state.isLoading.status && <LinearProgress />}
 
             {/* 1. Header — identity, metadata, primary action + overflow */}

@@ -148,6 +148,10 @@ const MyIndicatorsTable = ({ onStats }) => {
   const handlePreview = (id) => navigate(`/indicator/${id}`);
 
   const handleEditIndicator = async (item) => {
+    if (item.type === "COMPOSITE" || item.type === "MULTI_LEVEL") {
+      navigate(`${EDIT_ROUTES[item.type]}/${item.id}`);
+      return;
+    }
     setBusyId(item.id);
     try {
       const indicator = await requestIndicatorFullDetail(api, item.id);
