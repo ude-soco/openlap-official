@@ -9,6 +9,7 @@ import parse from "html-react-parser";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import {
+  Alert,
   Button,
   Collapse,
   LinearProgress,
@@ -84,6 +85,8 @@ export default function ComplexIndicator({ type }) {
   const [loaded, setLoaded] = useState(!id);
   const [loadError, setLoadError] = useState("");
   const [recoveryStatus, setRecoveryStatus] = useState("");
+  const [recoveryCandidate, setRecoveryCandidate] = useState(null);
+  const [resetOpen, setResetOpen] = useState(false);
   const [current, setCurrent] = useState("sources");
   const [sourcesConfirmed, setSourcesConfirmed] = useState(false);
   const [catalog, setCatalog] = useState({ content: [], totalPages: 0 });
@@ -188,6 +191,13 @@ export default function ComplexIndicator({ type }) {
         if (!cancelled) {
           setConfiguration(restored);
           baseline.current = JSON.stringify(restored);
+          const local = readComplexConfiguration(
+            sessionStorage.getItem(key),
+            type,
+          );
+          setRecoveryCandidate(
+            local && JSON.stringify(local) !== baseline.current ? local : null,
+          );
           setLoaded(true);
           setSourcesConfirmed(restored.sources.length >= 2);
           setCurrent("combine");
@@ -202,10 +212,10 @@ export default function ComplexIndicator({ type }) {
       cancelled = true;
       generation.current += 1;
     };
-  }, [api, id, type]);
+  }, [api, id, type, key]);
 
   useEffect(() => {
-    if (!loaded) return undefined;
+    if (!loaded || recoveryCandidate) return undefined;
     setRecoveryStatus("Saving in this tab…");
     const timer = setTimeout(() => {
       try {
@@ -218,7 +228,7 @@ export default function ComplexIndicator({ type }) {
       }
     }, 600);
     return () => clearTimeout(timer);
-  }, [configuration, key, loaded]);
+  }, [configuration, key, loaded, recoveryCandidate]);
 
   useEffect(() => {
     const beforeUnload = (event) => {
@@ -559,6 +569,15 @@ export default function ComplexIndicator({ type }) {
     sessionStorage.setItem(key, JSON.stringify(configurationRef.current));
     navigate(leaveTarget);
   };
+  const resetCurrent = () => {
+    const fresh = newComplexConfiguration(type);
+    baseline.current = JSON.stringify(fresh);
+    sessionStorage.removeItem(key);
+    change(fresh, "sources");
+    setCurrent("sources");
+    setRemovedSource(null);
+    setResetOpen(false);
+  };
 
   const steps = [
     {
@@ -665,10 +684,55 @@ export default function ComplexIndicator({ type }) {
       </Stack>
     );
 
+  if (recoveryCandidate)
+    return (
+      <Stack sx={{ gap: 2 }}>
+        <PageHeader title={`Edit ${title.toLowerCase()}`} />
+        <Alert severity="info">
+          Unsaved changes from this browser tab are available. Restore those
+          selections, or continue with the server-saved indicator. Computed
+          previews will be refreshed either way.
+        </Alert>
+        <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 1 }}>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setConfiguration(recoveryCandidate);
+              setRecoveryCandidate(null);
+              setSourcesConfirmed(recoveryCandidate.sources.length >= 2);
+              setCurrent("combine");
+            }}
+          >
+            Restore tab changes
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              sessionStorage.removeItem(key);
+              setRecoveryCandidate(null);
+            }}
+          >
+            Use saved indicator
+          </Button>
+        </Stack>
+      </Stack>
+    );
+
   return (
     <Stack sx={{ gap: 3, width: "100%", minWidth: 0 }}>
       <PageHeader
         title={`${id ? "Edit " : "Create "}${title.toLowerCase()}`}
+        actions={
+          !id && configuration.sources.length > 0 ? (
+            <Button
+              variant="outlined"
+              disabled={Boolean(busy)}
+              onClick={() => setResetOpen(true)}
+            >
+              Start over
+            </Button>
+          ) : null
+        }
         breadcrumbs={[
           {
             label: "My Indicators",
@@ -789,6 +853,9 @@ export default function ComplexIndicator({ type }) {
         />,
       )}
       <ComplexDialogs
+        resetOpen={resetOpen}
+        setResetOpen={setResetOpen}
+        resetCurrent={resetCurrent}
         sourcePreview={sourcePreview}
         setSourcePreview={setSourcePreview}
         removeSource={removeSource}

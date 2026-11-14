@@ -14,6 +14,9 @@ import {
 import { Failure, ResultTable } from "./complex-controls";
 
 export default function ComplexDialogs({
+  resetOpen,
+  setResetOpen,
+  resetCurrent,
   sourcePreview,
   setSourcePreview,
   removeSource,
@@ -41,6 +44,25 @@ export default function ComplexDialogs({
 }) {
   return (
     <>
+      <Dialog
+        open={resetOpen}
+        onClose={() => setResetOpen(false)}
+        aria-labelledby="complex-reset-title"
+      >
+        <DialogTitle id="complex-reset-title">
+          Start a new indicator?
+        </DialogTitle>
+        <DialogContent>
+          This clears the source selections, mappings and previews in this tab.
+          Previously saved indicators are retained.
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetOpen(false)}>Keep working</Button>
+          <Button color="error" onClick={resetCurrent}>
+            Start over
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Dialog
         open={Boolean(sourcePreview)}
         onClose={() => setSourcePreview(null)}
@@ -180,6 +202,9 @@ export default function ComplexDialogs({
   );
 }
 ComplexDialogs.propTypes = {
+  resetOpen: PropTypes.bool,
+  setResetOpen: PropTypes.func,
+  resetCurrent: PropTypes.func,
   sourcePreview: PropTypes.object,
   setSourcePreview: PropTypes.func,
   removeSource: PropTypes.object,

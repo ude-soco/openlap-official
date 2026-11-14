@@ -467,6 +467,43 @@ let failMerge = true;
       new URL("/indicator/editor/composite/edit/saved-0", base).href,
     );
     await button("Generate combined data").waitFor();
+    await page
+      .getByRole("textbox", {
+        name: "Series label for Access count",
+        exact: true,
+      })
+      .fill("Recovered access label");
+    await page.waitForFunction(() =>
+      Object.keys(sessionStorage)
+        .filter(
+          (key) =>
+            key.startsWith("openlap:complex:") && key.endsWith(":saved-0"),
+        )
+        .some(
+          (key) =>
+            JSON.parse(sessionStorage.getItem(key)).sources[0].label ===
+            "Recovered access label",
+        ),
+    );
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.reload();
+    await button("Restore tab changes").click();
+    assert.equal(
+      await page
+        .getByRole("textbox", {
+          name: "Series label for Access count",
+          exact: true,
+        })
+        .inputValue(),
+      "Recovered access label",
+      "Unsaved edits survive refresh after explicit recovery",
+    );
+    await page
+      .getByRole("textbox", {
+        name: "Series label for Access count",
+        exact: true,
+      })
+      .fill("Access count");
     await button("Generate combined data").click();
     await button("Continue to visualization").click();
     await button("Generate chart preview").click();
@@ -535,6 +572,18 @@ let failMerge = true;
         () => document.documentElement.scrollWidth <= window.innerWidth + 2,
       ),
       "Mobile tables scroll within the editor, not the page",
+    );
+    await button("Start over").click();
+    await page
+      .getByRole("dialog", { name: "Start a new indicator?", exact: true })
+      .getByRole("button", { name: "Start over", exact: true })
+      .click();
+    assert.equal(
+      await page
+        .getByRole("region", { name: "Selected indicators", exact: true })
+        .count(),
+      0,
+      "Confirmed reset clears this tab's configuration",
     );
     assert.deepEqual(pageErrors, []);
     assert.deepEqual(failures, []);

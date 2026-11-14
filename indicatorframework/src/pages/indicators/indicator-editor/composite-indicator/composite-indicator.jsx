@@ -1,5 +1,7 @@
 import ComplexIndicator from "../complex-indicator/complex-indicator";
+import { useParams } from "react-router-dom";
 
 export default function CompositeIndicator() {
-  return <ComplexIndicator type="COMPOSITE" />;
+  const { id } = useParams();
+  return <ComplexIndicator key={id || "new"} type="COMPOSITE" />;
 }
