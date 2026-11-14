@@ -119,6 +119,8 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
     try {
       indicatorRepository.save(indicator);
       log.info("Successfully created an indicator");
+    } catch (com.openlap.infrastructure.exception.OpenLapException e) {
+      throw e;
     } catch (Exception e) {
       throw new DatabaseOperationException("Could not access database to update the indicator", e);
     }

@@ -63,11 +63,13 @@ public class ComplexIndicatorReadController {
       var method = source.getAnalyticsTechniqueReference().getAnalyticsTechnique();
       row.put("analyticsMethod", Map.of("id", method.getId(), "name", method.getName()));
       row.put("outputs", analytics.getAnalyticsTechniqueOutputs(method.getId()));
-      row.put("available", true);
       // Saved query is the owner's existing configuration, never evaluated while browsing.
-      row.put("indicatorQuery", new Gson().fromJson(source.getIndicatorQuery(), Object.class));
+      Object query = new Gson().fromJson(source.getIndicatorQuery(), Object.class);
+      if (!(query instanceof Map)) throw new IllegalArgumentException("Missing source query");
+      row.put("indicatorQuery", query);
+      row.put("available", true);
     } catch (RuntimeException error) {
-      row.put("unavailableReason", "The source method's outputs could not be loaded. Check its plugin and retry.");
+      row.put("unavailableReason", "The source configuration or method could not be loaded. Check the Basic indicator and retry.");
     }
     return row;
   }

@@ -903,29 +903,58 @@ public class IndicatorServiceImpl implements IndicatorService {
   }
 
   /** Source definitions and URI mode are part of a saved chart's identity. */
-  private static String indicatorFingerprint(Indicator indicator, Boolean uriCode) {
-    StringBuilder value = new StringBuilder("complex-v1|").append(uriCode).append('|')
-        .append(indicator.getId()).append('|').append(indicator.getCreatedOn());
+  static String indicatorFingerprint(Indicator indicator, Boolean uriCode) {
+    Map<String, Object> identity = new LinkedHashMap<>();
+    identity.put("format", "complex-v1");
+    identity.put("encoded", uriCode);
+    identity.put("indicator", definitionFingerprint(indicator));
     if (indicator.getIndicators() != null) {
       List<Indicator> sources = new ArrayList<>();
+      List<Map<String, Object>> inputs = new ArrayList<>();
       for (IndicatorsToMerge entry : indicator.getIndicators()) {
         Indicator source = entry == null ? null : entry.getIndicator();
         if (source == null) throw com.openlap.analytics_module.exceptions.indicator.ComplexIndicatorException
             .invalid("A saved source is unavailable. Edit the indicator to repair it.");
         sources.add(source);
-        value.append('|').append(source.getId()).append('@').append(source.getCreatedOn())
-            .append(':').append(entry.getColumnToMerge()).append(':')
-            .append(entry.getMeasureColumnIds()).append(':').append(entry.getLabel());
+        Map<String, Object> input = new LinkedHashMap<>();
+        input.put("definition", definitionFingerprint(source));
+        input.put("key", entry.getColumnToMerge());
+        input.put("measures", entry.getMeasureColumnIds());
+        input.put("label", entry.getLabel());
+        inputs.add(input);
       }
       ComplexIndicatorSourceGuard.validateResolved(indicator.getCreatedBy().getId(), sources,
           indicator.getIndicatorType() == IndicatorType.COMPOSITE);
+      identity.put("sources", inputs);
     }
     try {
       byte[] digest = java.security.MessageDigest.getInstance("SHA-256")
-          .digest(value.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+          .digest(new Gson().toJson(identity).getBytes(java.nio.charset.StandardCharsets.UTF_8));
       return java.util.HexFormat.of().formatHex(digest);
     } catch (java.security.NoSuchAlgorithmException impossible) {
       throw new IllegalStateException(impossible);
     }
+  }
+
+  private static Map<String, Object> definitionFingerprint(Indicator indicator) {
+    Map<String, Object> definition = new LinkedHashMap<>();
+    definition.put("id", indicator.getId());
+    definition.put("type", indicator.getIndicatorType());
+    definition.put("createdOn", String.valueOf(indicator.getCreatedOn()));
+    definition.put("query", indicator.getIndicatorQuery());
+    if (indicator.getAnalyticsTechniqueReference() != null) {
+      var method = indicator.getAnalyticsTechniqueReference();
+      definition.put("method", method.getAnalyticsTechnique() == null ? null : method.getAnalyticsTechnique().getId());
+      definition.put("analysisMapping", method.getQueryToAnalyticsTechniqueMapping());
+      definition.put("analysisParams", method.getAdditionalParams());
+    }
+    if (indicator.getVisualizationTechniqueReference() != null) {
+      var chart = indicator.getVisualizationTechniqueReference();
+      definition.put("library", chart.getVisLibrary() == null ? null : chart.getVisLibrary().getId());
+      definition.put("chart", chart.getVisType() == null ? null : chart.getVisType().getId());
+      definition.put("chartMapping", chart.getAnalyticsTechniqueToVisualizationMapping());
+      definition.put("chartParams", chart.getAdditionalParams());
+    }
+    return definition;
   }
 }
