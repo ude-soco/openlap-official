@@ -23,7 +23,7 @@
         <!-- Keep both Jackson families aligned and above the October 2026 fix. -->
         <jackson-2-bom.version>2.21.8</jackson-2-bom.version>
         <jackson-bom.version>3.1.8</jackson-bom.version>
-        <aws.sdk.version>2.57.11</aws.sdk.version>
+        <aws.sdk.version>2.57.13</aws.sdk.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <finalName>${project.artifactId}-${project.version}</finalName>
     </properties>
