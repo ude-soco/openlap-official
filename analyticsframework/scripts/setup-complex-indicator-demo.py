@@ -301,6 +301,28 @@ def parameters(api, method_id, values):
     return result
 
 
+def select_cluster_method(api, methods):
+    """Names can legitimately repeat across installed plugin implementations."""
+    eligible = []
+    for method in sorted((row for row in methods if row.get("name") == CLUSTER_METHOD), key=lambda row: row["id"]):
+        identifier = method["id"]
+        inputs = api.data("GET", "/v1/analytics/methods/inputs/" + identifier)
+        outputs = api.data("GET", "/v1/analytics/methods/outputs/" + identifier)
+        params = api.data("GET", "/v1/analytics/methods/params/" + identifier)
+        input_types = {item["id"]: item["type"] for item in inputs}
+        output_types = {item["id"]: item["type"] for item in outputs}
+        param_types = {item["id"]: item.get("dataType") for item in params}
+        if (input_types == {"attribute_1": "Numeric", "attribute_2": "Numeric"}
+                and all(output_types.get(key) == value for key, value in {
+                    "attribute_1": "Numeric", "attribute_2": "Numeric", "cluster_name": "Text"}.items())
+                and all(param_types.get(key) == "INTEGER" for key in
+                        ("cluster_count", "kmean_seed", "kmean_iterations"))):
+            eligible.append(method)
+    if not eligible:
+        raise DemoError("No installed K-means method declares the demo's two-numeric-feature contract.")
+    return eligible[0], len(eligible)
+
+
 def indicator_list(api):
     result = []
     for page in range(20):
@@ -370,6 +392,27 @@ def check_chart_syntax(code):
                                   input=script, text=True, capture_output=True, timeout=15)
         if compiled.returncode:
             raise DemoError("The generated chart contains invalid JavaScript; labels must survive plugin rendering.")
+
+
+def check_c3_text_roundtrip(code, expected_series, expected_title):
+    """Capture the generated C3 configuration in a bounded VM without DOM/network."""
+    import re
+    scripts = re.findall(r"<script[^>]*>(.*?)</script>", unquote(code), flags=re.I | re.S)
+    if len(scripts) != 1:
+        raise DemoError("Expected one inline C3 renderer for text roundtrip verification.")
+    probe = """const vm=require('node:vm'), assert=require('node:assert/strict');
+const p=JSON.parse(require('node:fs').readFileSync(0,'utf8')); const seen=[];
+new vm.Script(p.script).runInNewContext({c3:{generate(options){seen.push(options);return {};}}},{timeout:1000});
+assert.equal(seen.length,1); const chart=seen[0];
+const names = chart.data.rows ? Array.from(chart.data.rows[0]) : Array.from(chart.data.columns || [], column => column[0]);
+assert.deepEqual(names.sort(),p.series.slice().sort());
+assert.equal(chart.title.text,p.title);
+"""
+    result = subprocess.run(["node", "-e", probe], input=json.dumps({
+        "script": scripts[0], "series": expected_series, "title": expected_title}),
+        capture_output=True, text=True, timeout=15)
+    if result.returncode:
+        raise DemoError("C3 text labels did not roundtrip to their original values in the renderer configuration.")
 
 
 def basic_payload(api, method, library, chart, title, names, verb, unique=False):
@@ -528,8 +571,14 @@ def create_complex_examples(api, source_ids, methods, library, types, record, re
     payload = request(composite)
     check_chart_syntax(api.data("POST", "/v1/indicators/composite/preview", payload))
     escaped_labels = copy.deepcopy(composite)
-    escaped_labels["sources"][0]["label"] = "Learner's accesses \\ workshop"
-    check_chart_syntax(api.data("POST", "/v1/indicators/composite/preview", request(escaped_labels)))
+    special_text = "Learner's \"accesses\" \\ workshop\n</script> \u2028\u2029"
+    escaped_labels["sources"][0]["label"] = special_text
+    escaped_labels["visualization"]["params"]["chartTitle"] = special_text
+    escaped_preview = api.data("POST", "/v1/indicators/composite/preview", request(escaped_labels))
+    check_chart_syntax(escaped_preview)
+    series_labels = [item["label"] + " · " + next(port["title"] for port in item["outputs"] if port["id"] == "item_count")
+                     for item in escaped_labels["sources"]]
+    check_c3_text_roundtrip(escaped_preview, series_labels, special_text)
     composite_id = ensure_indicator(api, "/v1/indicators/composite", payload, record, receipt)
 
     multilevel = state("MULTI_LEVEL", "[Complex demo] Access and annotation clusters", [
@@ -539,7 +588,9 @@ def create_complex_examples(api, source_ids, methods, library, types, record, re
     expected_shared = sorted(set(CLUSTER_ACCESS) & set(ANNOTATIONS))
     assert_combination(intersection, expected_shared, [
         (source_ids[2], {name: ACCESS[name] for name in CLUSTER_ACCESS}), (source_ids[3], ANNOTATIONS)])
-    cluster = one_named(methods, CLUSTER_METHOD, "analytics method")
+    cluster, equivalent_methods = select_cluster_method(api, methods)
+    record["clusterMethod"] = {"id": cluster["id"], "name": cluster["name"],
+                               "compatibleInstalledCandidates": equivalent_methods}
     inputs = api.data("GET", "/v1/analytics/methods/inputs/" + cluster["id"])
     merged_columns = data_columns(intersection)
     multilevel["analysis"] = {
@@ -578,7 +629,8 @@ def create_complex_examples(api, source_ids, methods, library, types, record, re
     record["verification"] = {"unionRows": len(expected_union), "intersectionRows": len(expected_shared),
                               "clusterAssignments": len(assignments), "clusters": len(set(assignments)),
                               "sourceValuesPreserved": True, "savedCodeGenerated": True,
-                              "generatedJavascriptSyntax": True, "quotedSeriesLabel": True}
+                              "generatedJavascriptSyntax": True, "quotedSeriesLabel": True,
+                              "rendererTextRoundtrip": True}
     record["status"] = "COMPLETE"
     save_receipt(receipt, record)
 

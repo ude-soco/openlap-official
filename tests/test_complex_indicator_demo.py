@@ -113,6 +113,19 @@ class SyntheticIndicatorExampleTests(unittest.TestCase):
 
 
 class SavedDemoApiContractTests(unittest.TestCase):
+    def test_duplicate_method_names_use_declared_contract_and_stable_id(self):
+        class Api:
+            def data(self, method, path):
+                if "/inputs/" in path:
+                    return [{"id": key, "type": "Numeric"} for key in ("attribute_1", "attribute_2")]
+                if "/outputs/" in path:
+                    return [{"id": "attribute_1", "type": "Numeric"}, {"id": "attribute_2", "type": "Numeric"}, {"id": "cluster_name", "type": "Text"}]
+                return [{"id": key, "dataType": "INTEGER"} for key in ("cluster_count", "kmean_seed", "kmean_iterations")]
+        chosen, count = demo.select_cluster_method(Api(), [
+            {"id": "method-b", "name": demo.CLUSTER_METHOD}, {"id": "method-a", "name": demo.CLUSTER_METHOD}])
+        self.assertEqual(chosen["id"], "method-a")
+        self.assertEqual(count, 2)
+
     def test_existing_standard_indicator_name_response_is_reused_without_mutation(self):
         saved = {"demoFixtureId": demo.FIXTURE, "name": "Example"}
         class Api:

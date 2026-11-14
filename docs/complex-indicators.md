@@ -172,7 +172,13 @@ Four Basic sources and two complex examples are created:
 
 The fixture contains 3,352 synthetic xAPI statements. The setup checks real
 analysis counts, union/intersection values, clustering output, saved configuration
-and generated visualization code. It does not replace browser rendering checks.
+and generated visualization code. It also checks JavaScript syntax and captures
+the C3 configuration in a bounded JavaScript context to verify quotes, backslashes,
+line separators and closing-script text survive as labels. This does not replace
+browser rendering checks.
+If several installed K-means methods share a display name, it checks their
+declared inputs, outputs and parameters, selects the first compatible ID in
+sorted order, and records that choice in the private receipt.
 It can resume using its existing private receipt; it does not reset credentials
 or overwrite an indicator that has lost its demo marker through later editing.
 
