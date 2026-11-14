@@ -23,7 +23,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
  * @param {(stepKey: string) => void} [onStepSelect]  when provided, unlocked
  *   steps become clickable (open that section). Locked steps stay disabled.
  */
-const WorkflowStepper = ({ steps, current, onStepSelect }) => {
+const WorkflowStepper = ({ steps, current, onStepSelect, ariaLabel = "ISC creation progress" }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const currentIndex = Math.max(
@@ -37,7 +37,7 @@ const WorkflowStepper = ({ steps, current, onStepSelect }) => {
       activeStep={currentIndex}
       alternativeLabel={!isMobile}
       orientation={isMobile ? "vertical" : "horizontal"}
-      aria-label="ISC creation progress"
+      aria-label={ariaLabel}
       sx={{ width: "100%" }}
     >
       {steps.map((step) => {
@@ -105,6 +105,7 @@ WorkflowStepper.propTypes = {
   ).isRequired,
   current: PropTypes.string,
   onStepSelect: PropTypes.func,
+  ariaLabel: PropTypes.string,
 };
 
 export default WorkflowStepper;

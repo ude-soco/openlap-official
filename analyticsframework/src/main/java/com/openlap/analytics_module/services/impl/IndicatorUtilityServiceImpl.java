@@ -8,6 +8,7 @@ import com.openlap.analytics_module.exceptions.indicator.IndicatorManipulationNo
 import com.openlap.analytics_module.exceptions.indicator.IndicatorNotFoundException;
 import com.openlap.analytics_module.repositories.IndicatorRepository;
 import com.openlap.analytics_module.services.IndicatorUtilityService;
+import com.openlap.analytics_module.services.ComplexIndicatorSourceGuard;
 import com.openlap.analytics_statements.dtos.request.StatementsRequest;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueResponse;
 import com.openlap.analytics_technique.entities.AnalyticsTechnique;
@@ -118,6 +119,8 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
     try {
       indicatorRepository.save(indicator);
       log.info("Successfully created an indicator");
+    } catch (com.openlap.infrastructure.exception.OpenLapException e) {
+      throw e;
     } catch (Exception e) {
       throw new DatabaseOperationException("Could not access database to update the indicator", e);
     }
@@ -140,6 +143,8 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       indicatorRepository.save(indicator);
       log.info("Successfully updated an indicator");
     } catch (IndicatorManipulationNotAllowed e) {
+      throw e;
+    } catch (com.openlap.infrastructure.exception.OpenLapException e) {
       throw e;
     } catch (Exception e) {
       throw new DatabaseOperationException("Could not access database to update the indicator", e);
@@ -195,6 +200,9 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
         if (validationResultAnalyticsTechniqueMapping.isValid()) {
           analyticsTechniqueReference.setQueryToAnalyticsTechniqueMapping(
               gson.toJson(indicatorReference.getAnalyticsTechniqueMapping()));
+        } else {
+          throw com.openlap.analytics_module.exceptions.indicator.ComplexIndicatorException.invalid(
+              "The analysis input mapping is invalid. Review the selected dataset columns.");
         }
         indicator.setAnalyticsTechniqueReference(analyticsTechniqueReference);
       }
@@ -224,6 +232,9 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       if (validationResultVisualization.isValid()) {
         visualizationTechniqueReference.setAnalyticsTechniqueToVisualizationMapping(
             gson.toJson(indicatorReference.getVisualizationMapping()));
+      } else {
+        throw com.openlap.analytics_module.exceptions.indicator.ComplexIndicatorException.invalid(
+            "The chart input mapping is invalid. Review the selected dataset columns.");
       }
       indicator.setVisualizationTechniqueReference(visualizationTechniqueReference);
 
@@ -234,6 +245,17 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       if (indicatorReference.getIndicatorType() == IndicatorType.COMPOSITE
           || indicatorReference.getIndicatorType() == IndicatorType.MULTI_LEVEL) {
         List<IndicatorsToMergeRequest> indicatorsList = indicatorReference.getIndicators();
+        if (indicatorsList == null || indicatorsList.size() < 2
+            || indicatorsList.size() > ComplexIndicatorSourceGuard.MAX_SOURCES
+            || indicatorsList.stream().map(IndicatorsToMergeRequest::getIndicatorId).distinct().count()
+                != indicatorsList.size()) {
+          throw com.openlap.analytics_module.exceptions.indicator.ComplexIndicatorException.invalid(
+              "Choose 2–10 distinct saved Basic indicators.");
+        }
+        List<Indicator> sourceIndicators = indicatorsList.stream()
+            .map(s -> fetchIndicatorMethod(s.getIndicatorId())).toList();
+        ComplexIndicatorSourceGuard.validateResolved(indicator.getCreatedBy().getId(), sourceIndicators,
+            indicatorReference.getIndicatorType() == IndicatorType.COMPOSITE);
         for (IndicatorsToMergeRequest indicatorsToMergeRequest : indicatorsList) {
           indicatorsToMergeRequest.getIndicatorId();
           Indicator foundIndicator =
@@ -247,21 +269,17 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
           // TODO: Extract the platform information and add it to the platform attribute
           IndicatorsToMergeRequest existingIndicator = indicatorsList.get(i);
           Indicator foundIndicator = fetchIndicatorMethod(existingIndicator.getIndicatorId());
-          if (indicatorReference.getIndicatorType() == IndicatorType.MULTI_LEVEL) {
-            indicator
-                .getIndicators()
-                .add(
-                    new IndicatorsToMerge(
-                        foundIndicator,
-                        gson.toJson(indicatorReference.getIndicators().get(i).getColumnToMerge())));
-          } else {
-            indicator.getIndicators().add(new IndicatorsToMerge(foundIndicator, null));
-          }
+          OpenLAPColumnConfigData key = existingIndicator.getColumnToMerge() != null
+              ? existingIndicator.getColumnToMerge() : indicatorReference.getColumnToMerge();
+          indicator.getIndicators().add(new IndicatorsToMerge(foundIndicator, gson.toJson(key),
+              existingIndicator.getMeasureColumnIds(), existingIndicator.getLabel()));
         }
       }
       //      indicator.setPlatforms(uniquePlatforms);
       indicator.setConfigurationRequest(indicatorReference.getConfigurationRequest());
       log.info("An indicator with name '{}' was prepared.", indicator.getName());
+    } catch (com.openlap.infrastructure.exception.OpenLapException e) {
+      throw e;
     } catch (Exception e) {
       throw new DatabaseOperationException(
           "Could not access database to save/update the indicator");
@@ -283,12 +301,17 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
 
     // // Params
     Map<String, String> transformedParams = new HashMap<>();
-    for (OpenLAPDynamicParam param : indicatorAnalysisTechnique.getAnalyticsTechniqueParams()) {
+    List<OpenLAPDynamicParam> parameters = indicatorAnalysisTechnique.getAnalyticsTechniqueParams();
+    for (OpenLAPDynamicParam param : parameters == null ? List.<OpenLAPDynamicParam>of() : parameters) {
       Object value = param.getValue();
+      if (value == null) continue;
       String stringValue;
-      if (value instanceof Double) {
-        // Convert Double to Integer and then to String
-        stringValue = Integer.toString(((Double) value).intValue());
+      if (value instanceof Number number) {
+        if (!Double.isFinite(number.doubleValue())) {
+          throw com.openlap.analytics_module.exceptions.indicator.ComplexIndicatorException.invalid(
+              "Analysis parameters must contain finite numbers.");
+        }
+        stringValue = new java.math.BigDecimal(number.toString()).stripTrailingZeros().toPlainString();
       } else {
         // Directly convert to String for non-Double values
         stringValue = value.toString();
@@ -309,6 +332,9 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       } catch (AnalyticsMethodInitializationException e) {
         throw new ServiceException("Could not initialize analytics method");
       }
+    } else {
+      throw com.openlap.analytics_module.exceptions.indicator.ComplexIndicatorException.invalid(
+          "The analysis input mapping is invalid. Review the selected dataset columns.");
     }
     log.info("Data analysis completed.");
     return analyzedDataSet;
@@ -358,9 +384,19 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
             visType.getId(), visualizationMappings);
     if (validationResult.isValid()) {
       try {
+        var inputs = com.openlap.visualization_methods.compatibility.LegacyC3Strings.prepare(
+            visualizationCodeGenerator, analyzedDataSet, (Map<String, Object>) visualizationParams);
+        inputs = com.openlap.visualization_methods.compatibility.LegacyApexScatter.prepare(
+            visualizationCodeGenerator, inputs.data(), inputs.parameters());
         indicatorCode =
             visualizationCodeGenerator.generateVisualizationCode(
-                analyzedDataSet, visualizationMappings, (Map<String, Object>) visualizationParams);
+                inputs.data(), visualizationMappings, inputs.parameters());
+        indicatorCode = com.openlap.visualization_methods.compatibility.LegacyC3Scatter.repair(
+            visualizationCodeGenerator, indicatorCode, analyzedDataSet, visualizationMappings,
+            (Map<String, Object>) visualizationParams);
+        indicatorCode = com.openlap.visualization_methods.compatibility.LegacyApexScatter.repair(
+            visualizationCodeGenerator, indicatorCode, analyzedDataSet, visualizationMappings,
+            (Map<String, Object>) visualizationParams);
       } catch (IllegalAccessException | InstantiationException e) {
         throw new ServiceException("Error when generating indicator code", e);
       }

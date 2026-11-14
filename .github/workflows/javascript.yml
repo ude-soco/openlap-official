@@ -77,7 +77,9 @@ jobs:
             sleep 1
           done
           curl --silent --fail "$OPENLAP_TEST_BASE_URL" > /dev/null
+          npm run test:public-routes
           npm run test:analysis-preview
+          npm run test:complex-indicators
           npm run test:saved-preview
           npm run test:saved-preview -- --expect-blank-baseline
           npm run test:dependency-updates

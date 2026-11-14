@@ -4,6 +4,8 @@ import lombok.*;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,5 +17,6 @@ import java.util.List;
 public class IndicatorsToAnalyzeRequest {
 	@Valid
 	@NotEmpty(message = "List of indicators is mandatory")
-	private List<IndicatorToAnalyze> indicators = new ArrayList<>();
+	@Size(max = 10, message = "Choose at most ten indicators")
+	private List<@NotNull @Valid IndicatorToAnalyze> indicators = new ArrayList<>();
 }
