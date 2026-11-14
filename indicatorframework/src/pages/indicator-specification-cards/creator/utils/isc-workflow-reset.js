@@ -1,4 +1,5 @@
-// Workflow-path change consistency (see docs/ISC_CREATOR_ARCHITECTURE.md).
+// Workflow-path change consistency (see docs/ISC_ARCHITECTURE.md,
+// "Workflow and source map").
 //
 // Changing the workflow path (Choose Path) must reset the downstream,
 // path-specific visualization/finalize state while preserving the

@@ -4,8 +4,8 @@ import { alpha } from "@mui/material/styles";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
 /**
- * Consistent card frame for one ISC Creator workflow phase (Phase D — see
- * docs/ISC_CREATOR_ARCHITECTURE.md §5–§6).
+ * Consistent card frame for one ISC Creator workflow phase. See
+ * docs/ISC_ARCHITECTURE.md, "Workflow and source map".
  *
  * Presentational only. It replaces each step's ad-hoc outer `Paper` (and the
  * old `opacity + grey + pointer-events:none` "broken" locked styling) with a
@@ -20,8 +20,8 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
  *
  * It does NOT own the step's header/summary/Open-Close — those still live in
  * each step's existing summary component (which renders as `children`). Owning
- * open/close + one-section-at-a-time is deferred to the step-transition reducer
- * (Phase E+), because `lockedStep` + the per-step toggles still own panel state.
+ * open/close + one-section-at-a-time belongs to the creator's workflow helpers;
+ * `lockedStep` + the per-step toggles still own panel state.
  */
 const STATUSES = ["active", "completed", "available", "locked"];
 

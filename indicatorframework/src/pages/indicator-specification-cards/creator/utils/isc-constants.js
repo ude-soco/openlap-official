@@ -1,8 +1,7 @@
 // Stable constants for the ISC Creator workflow.
 //
-// Phase A foundation (see docs/ISC_CREATOR_ARCHITECTURE.md). These names replace
-// scattered magic strings and give the future reducer/workspace a single source
-// of truth. Introducing them does NOT change any visible behavior.
+// See docs/ISC_ARCHITECTURE.md, "Persistence contract". Keep these values stable
+// because saved cards and workflow helpers depend on them.
 
 // Bumped only when the *internal* domain-state shape changes in a way the
 // serialization adapter must migrate. NOTE: this version is currently stamped

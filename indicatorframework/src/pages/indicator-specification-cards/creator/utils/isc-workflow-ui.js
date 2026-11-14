@@ -1,5 +1,5 @@
-// Thin workflow-UI layer for the ISC Creator (Phase E — see
-// docs/ISC_CREATOR_ARCHITECTURE.md §5, §9).
+// Thin workflow-UI layer for the ISC Creator. See docs/ISC_ARCHITECTURE.md,
+// "Workflow and source map".
 //
 // These helpers operate ONLY on the existing `lockedStep.openPanel` booleans to
 // coordinate which section is expanded. They intentionally do NOT change the

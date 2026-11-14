@@ -1,5 +1,5 @@
-// Short educational copy for Step 3 (see docs/ISC_STEP3_VISUALIZATION_ARCHITECTURE.md,
-// Phase 3B). Kept separate from the chart data config so wording lives in one
+// Short educational copy for visualization selection (see docs/ISC_ARCHITECTURE.md,
+// "Workflow and source map"). Kept separate from chart data so wording lives in one
 // place and can be localized later. Keyed by the existing ChartTypes /
 // VisualizationTypes values so no data shapes change.
 

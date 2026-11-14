@@ -11,15 +11,12 @@ import {
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
 /**
- * Visible, accessible progress indicator for the five ISC Creator phases
- * (Phase C — see docs/ISC_CREATOR_ARCHITECTURE.md §5–§6).
+ * Visible, accessible progress indicator for the five ISC Creator phases.
+ * See docs/ISC_ARCHITECTURE.md, "Workflow and source map".
  *
- * INFORMATIONAL ONLY in this phase: it reflects the real workflow state
- * (completed / current / locked) but does not navigate on click. Panel
- * visibility is still governed by the legacy `lockedStep` step-codes + each
- * step's own buttons; safe click-to-navigate needs the step-transition reducer
- * planned for Phase D/E. There are therefore no interactive controls here (no
- * clickable divs).
+ * Reflects the real workflow state (completed / current / locked). When the
+ * creator provides onStepSelect, unlocked steps can be reopened. Panel
+ * visibility remains governed by `lockedStep` and the creator's helpers.
  *
  * @param {{key,label,locked,completed,summary}[]} steps  view-model from getWorkflowSteps
  * @param {string} current  key of the step to mark as current

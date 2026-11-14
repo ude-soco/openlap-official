@@ -1,10 +1,8 @@
 // Local draft persistence utilities for the ISC Creator.
 //
-// Phase A foundation (see docs/ISC_CREATOR_ARCHITECTURE.md §12). These wrap the
-// raw storage I/O behind the serialization adapter. They are NOT yet wired into
-// the orchestrator's autosave loop — extracting the I/O now keeps the eventual
-// autosave-UX change (debounced status, recovery) a small, isolated step and
-// leaves current behavior untouched.
+// See docs/ISC_ARCHITECTURE.md, "Routes, autosave and recovery". These wrap
+// storage I/O behind the serialization adapter. The creator's autosave loop
+// currently writes its recovery envelope directly rather than using these helpers.
 //
 // The storage object and key are passed in (the key is `SESSION_ISC` from
 // AuthContext today) so these stay pure and testable, and so a future phase can

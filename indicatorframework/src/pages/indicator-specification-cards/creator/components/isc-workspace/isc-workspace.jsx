@@ -3,15 +3,12 @@ import { Box, Stack } from "@mui/material";
 import PageHeader from "../../../../../common/components/page-header/page-header";
 
 /**
- * Layout frame for the ISC Creator workspace (Phase B — see
- * docs/ISC_CREATOR_ARCHITECTURE.md §6).
+ * Layout frame for the ISC Creator workspace. See docs/ISC_ARCHITECTURE.md,
+ * "Workflow and source map".
  *
  * Provides the modern editor shell — a PageHeader (h1 + breadcrumbs + optional
  * actions), an optional stepper slot, a main editor column, an optional live
- * preview column, and an optional bottom status/actions slot. This phase only
- * uses the header + main column; the `stepper`, `preview`, and `status` slots
- * exist so later phases (C: stepper, I: live preview, J: autosave status) can
- * fill them without restructuring the page. It is purely presentational and
+ * preview column, and an optional bottom status/actions slot. It is presentational and
  * does not touch step behavior, state, or persistence.
  */
 const ISCWorkspace = ({

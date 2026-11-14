@@ -285,6 +285,7 @@ building, releasing and recovering installations; they are not additional local 
 | Backend configuration, errors, content API and migration | [Backend reference](docs/backend-reference.md) |
 | Homepage components, themes and editorial guidance | [Landing-page guide](docs/landing-page.md) |
 | Frontend architecture | [UI architecture](indicatorframework/docs/UI_ARCHITECTURE.md) |
+| Specification cards, drafts and saved-card compatibility | [ISC architecture](indicatorframework/docs/ISC_ARCHITECTURE.md) |
 | Content editing and review | [Content management](docs/content-management-testing.md) |
 | Authentication | [Token policy](analyticsframework/docs/AUTH_TOKEN_POLICY.md) |
 | Plugin storage | [Artifact migration](docs/plugin-artifact-migration.md) · [S3-compatible storage](docs/plugin-storage-versity.md) |
