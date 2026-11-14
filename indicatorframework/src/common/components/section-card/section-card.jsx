@@ -25,18 +25,16 @@ const SectionCard = ({
       borderRadius: `${theme.custom.radii.card}px`,
     })}
   >
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="flex-start"
-        gap={1}
+        sx={{ justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}
       >
         <Box>
           <Typography
             variant="subtitle1"
             component={headingComponent}
-            fontWeight={600}
+            sx={{ fontWeight: 600 }}
           >
             {title}
           </Typography>

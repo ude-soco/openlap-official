@@ -81,15 +81,15 @@ export default function Footer() {
                   </Typography>
                 </Box>
                 <Stack spacing={1}>
-                  <Stack direction="row" gap={1} alignItems="center">
+                  <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
                     <CallIcon color="primary" fontSize="small" />
                     <Typography variant="body2">+49 (0) 203 379-3707</Typography>
                   </Stack>
-                  <Stack direction="row" gap={1} alignItems="center">
+                  <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
                     <EmailIcon color="primary" fontSize="small" />
                     <Typography variant="body2">socogroup.ude@gmail.com</Typography>
                   </Stack>
-                  <Stack direction="row" gap={1} alignItems="flex-start">
+                  <Stack direction="row" sx={{ gap: 1, alignItems: "flex-start" }}>
                     <LocationOnIcon color="primary" fontSize="small" />
                     <Typography variant="body2">
                       Forsthausweg 2, 47057 Duisburg
@@ -142,9 +142,7 @@ export default function Footer() {
       <Container maxWidth="lg" sx={{ py: 3 }}>
         <Stack
           direction={{ xs: "column", sm: "row" }}
-          justifyContent="space-between"
-          alignItems="center"
-          gap={2}
+          sx={{ justifyContent: "space-between", alignItems: "center", gap: 2 }}
         >
           <Copyright />
           <Stack

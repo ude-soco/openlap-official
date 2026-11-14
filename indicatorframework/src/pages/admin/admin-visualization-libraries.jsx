@@ -126,7 +126,7 @@ const AdminVisualizationLibraries = () => {
   const showSkeleton = loading && libraries.length === 0;
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       <PageHeader
         title="Visualization Libraries"
         breadcrumbs={[
@@ -135,7 +135,7 @@ const AdminVisualizationLibraries = () => {
         ]}
         subtitle="Installed visualization libraries and their source plugins."
         actions={
-          <Stack direction="row" gap={1} alignItems="center">
+          <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
           {status === "ready" ? (
             <Chip
               label={`${libraries.length} ${
@@ -212,7 +212,7 @@ const AdminVisualizationLibraries = () => {
                   : libraries.map((library) => (
                       <TableRow key={library.id || library.name} hover>
                         <TableCell>
-                          <Typography variant="body2" fontWeight={600}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
                             {library.name || "—"}
                           </Typography>
                             {library.artifactId && <Chip size="small" variant="outlined" label={`Version ${library.artifactId.slice(-64, -56)}`} title={library.artifactId} sx={{ mt: 0.5 }} />}

@@ -49,11 +49,9 @@ export default function VisualizationSummary() {
     <>
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ pb: 2 }}
+        sx={{ justifyContent: "space-between", alignItems: "center", pb: 2 }}
       >
-        <Stack direction="row" alignItems="center" gap={1}>
+        <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
           {!lockedStep.visualization.locked ? (
             <Chip label={lockedStep.visualization.step} color="primary" />
           ) : (

@@ -130,15 +130,18 @@ export const FiltersBar = ({
                     {option.name}
                   </li>
                 )}
-                renderTags={(tagValue, getTagProps) =>
-                  tagValue.map((option, index) => (
-                    <Chip
-                      key={option.name}
-                      label={option.name}
-                      {...getTagProps({ index })}
-                      disabled={count === 1}
-                    />
-                  ))
+                renderValue={(tagValue, getItemProps) =>
+                  tagValue.map((option, index) => {
+                    const { key, ...itemProps } = getItemProps({ index });
+                    return (
+                      <Chip
+                        key={key}
+                        label={option.name}
+                        {...itemProps}
+                        disabled={count === 1}
+                      />
+                    );
+                  })
                 }
                 renderInput={(params) => (
                   <TextField {...params} label="Categories Filter" />
@@ -149,7 +152,7 @@ export const FiltersBar = ({
         </Grid>
 
         {chartConfiguration.sortingOrderChangeable && (
-          <Grid size={{ xs: 12 }} mt={2}>
+          <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
             <FormControl>
               <FormLabel id="role-label">Data Sorting</FormLabel>
               <FormControl>

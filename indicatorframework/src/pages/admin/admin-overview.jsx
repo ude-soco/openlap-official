@@ -101,7 +101,7 @@ const StatValue = ({ state, unit, onRetry }) => {
   }
   if (state.status === "error") {
     return (
-      <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+      <Stack direction="row" sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}>
         <ErrorOutlineRoundedIcon fontSize="small" color="warning" />
         <Typography variant="body2" color="text.secondary">
           Couldn&rsquo;t load
@@ -113,8 +113,8 @@ const StatValue = ({ state, unit, onRetry }) => {
     );
   }
   return (
-    <Stack direction="row" alignItems="baseline" gap={1}>
-      <Typography variant="h3" component="p" fontWeight={600} lineHeight={1}>
+    <Stack direction="row" sx={{ alignItems: "baseline", gap: 1 }}>
+      <Typography variant="h3" component="p" sx={{ fontWeight: 600, lineHeight: 1 }}>
         {state.count}
       </Typography>
       <Typography variant="body2" color="text.secondary">
@@ -183,7 +183,7 @@ const AdminOverview = () => {
   );
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       <PageHeader
         title="Admin Dashboard"
         breadcrumbs={[{ label: "Home", to: "/" }]}
@@ -199,7 +199,7 @@ const AdminOverview = () => {
         }
       />
 
-      <Grid container spacing={3} alignItems="stretch">
+      <Grid container spacing={3} sx={{ alignItems: "stretch" }}>
         {SECTIONS.map((section) => (
           <Grid
             key={section.key}
@@ -211,7 +211,7 @@ const AdminOverview = () => {
               helper={section.helper}
               action={<IconBadge icon={section.icon} />}
             >
-              <Stack gap={1.5} alignItems="flex-start">
+              <Stack sx={{ gap: 1.5, alignItems: "flex-start" }}>
                 <StatValue
                   state={stats[section.key]}
                   unit={section.unit}

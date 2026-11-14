@@ -97,8 +97,7 @@ const ChartPreview = ({ previewData, responsive = false }) => {
   return (
     <Grid
       container
-      justifyContent="center"
-      sx={{ backgroundColor: "white", p: 3 }}
+      sx={{ justifyContent: "center", backgroundColor: "white", p: 3 }}
     >
       {chart}
     </Grid>

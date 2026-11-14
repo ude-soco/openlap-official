@@ -29,7 +29,7 @@ export default function Summary({
     <Grid container spacing={1}>
       {handleCheckGoal() && (
         <Grid size={{ xs: 12 }}>
-          <Grid container alignItems="center" spacing={1}>
+          <Grid container sx={{ alignItems: "center" }} spacing={1}>
             <Typography>I want to</Typography>
             <Tooltip title={<Typography>{verb}</Typography>} arrow>
               <Chip
@@ -48,7 +48,7 @@ export default function Summary({
       )}
       {handleCheckQuestion() && (
         <Grid size={{ xs: 12 }}>
-          <Grid container alignItems="center" spacing={1}>
+          <Grid container sx={{ alignItems: "center" }} spacing={1}>
             <Typography>I am interested in knowing</Typography>
             <Tooltip title={<Typography>{question}</Typography>} arrow>
               <Chip
@@ -62,7 +62,7 @@ export default function Summary({
       {handleCheckIndicatorName() && (
         <>
           <Grid size={{ xs: 12 }}>
-            <Grid container alignItems="center" spacing={1}>
+            <Grid container sx={{ alignItems: "center" }} spacing={1}>
               <Typography>I need an indicator that shows</Typography>
               <Tooltip title={<Typography>{indicatorName}</Typography>} arrow>
                 <Chip
@@ -73,7 +73,7 @@ export default function Summary({
             </Grid>
           </Grid>
           <Grid size={{ xs: 12 }}>
-            <Grid container spacing={1} alignItems="center">
+            <Grid container spacing={1} sx={{ alignItems: "center" }}>
               <Typography>I need the following data</Typography>
               {indicatorData.map((item, index) => {
                 if (item.value !== "") {

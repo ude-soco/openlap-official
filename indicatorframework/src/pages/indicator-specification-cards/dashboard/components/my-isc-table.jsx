@@ -39,7 +39,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import ViewListRoundedIcon from "@mui/icons-material/ViewListRounded";
 import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
@@ -268,7 +268,7 @@ export default function MyIscTable({ onStats }) {
     const name = item.indicatorName;
 
     return (
-      <Stack direction="row" gap={0.5} alignItems="center">
+      <Stack direction="row" sx={{ gap: 0.5, alignItems: "center" }}>
         <Button
           variant="text"
           size="small"
@@ -365,7 +365,7 @@ export default function MyIscTable({ onStats }) {
     const date = item.updatedOn || item.createdOn;
     const dateLabel = item.updatedOn ? "Updated" : "Created";
     return (
-      <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+      <Stack direction="row" sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}>
         <Chip size="small" color={life.color} variant="outlined" label={life.label} />
         {item.visualizationType && (
           <Chip
@@ -391,10 +391,10 @@ export default function MyIscTable({ onStats }) {
   };
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       {/* Control bar */}
       <Paper variant="outlined" sx={(t) => ({ p: 2, borderRadius: `${t.custom?.radii?.card ?? 8}px` })}>
-        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+        <Grid container spacing={2} sx={{ alignItems: "center", justifyContent: "space-between" }}>
           <Grid size={{ xs: 12, md: "auto" }}>
             <Button
               startIcon={<AddIcon />}
@@ -408,8 +408,7 @@ export default function MyIscTable({ onStats }) {
           <Grid size={{ xs: 12, md: "auto" }}>
             <Stack
               direction={{ xs: "column", sm: "row" }}
-              gap={1.5}
-              alignItems={{ xs: "stretch", sm: "center" }}
+              sx={{ gap: 1.5, alignItems: { xs: "stretch", sm: "center" } }}
             >
               <TextField
                 size="small"
@@ -417,12 +416,14 @@ export default function MyIscTable({ onStats }) {
                 placeholder="Search by name"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
               <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -482,12 +483,12 @@ export default function MyIscTable({ onStats }) {
           sx={(t) => ({ p: 6, textAlign: "center", borderRadius: `${t.custom?.radii?.card ?? 8}px` })}
         >
           {searching ? (
-            <Stack gap={1} alignItems="center">
+            <Stack sx={{ gap: 1, alignItems: "center" }}>
               <SearchOffRoundedIcon color="disabled" fontSize="large" />
               <Typography color="text.secondary">No ISCs match this search.</Typography>
             </Stack>
           ) : (
-            <Stack gap={1.5} alignItems="center">
+            <Stack sx={{ gap: 1.5, alignItems: "center" }}>
               <InsightsOutlinedIcon color="disabled" fontSize="large" />
               <Typography variant="h6">No ISCs yet.</Typography>
               <Typography color="text.secondary" sx={{ maxWidth: 460 }}>
@@ -504,7 +505,7 @@ export default function MyIscTable({ onStats }) {
 
       {/* List view */}
       {!isEmpty && view === "list" && (
-        <Stack gap={1}>
+        <Stack sx={{ gap: 1 }}>
           {indicatorList.map((item) => (
             <Paper
               key={item.id}
@@ -514,10 +515,10 @@ export default function MyIscTable({ onStats }) {
                 overflow: "hidden",
               })}
             >
-              <Grid container alignItems="center">
+              <Grid container sx={{ alignItems: "center" }}>
                 <Grid size="grow">
                   <Box sx={{ p: 1.5 }}>
-                    <Typography fontWeight={600}>
+                    <Typography sx={{ fontWeight: 600 }}>
                       {toSentenceCase(item.indicatorName)}
                     </Typography>
                     <Box sx={{ mt: 0.5 }}>{metaChips(item)}</Box>
@@ -564,10 +565,10 @@ export default function MyIscTable({ onStats }) {
                       <InsightsOutlinedIcon color="primary" sx={{ fontSize: 36 }} />
                     </Box>
                     <CardContent>
-                      <Typography fontWeight={600} noWrap gutterBottom>
+                      <Typography sx={{ fontWeight: 600 }} noWrap gutterBottom>
                         {toSentenceCase(item.indicatorName)}
                       </Typography>
-                      <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+                      <Stack direction="row" sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}>
                         <Chip size="small" color={life.color} variant="outlined" label={life.label} />
                         {item.visualizationType && (
                           <Chip size="small" variant="outlined" label={item.visualizationType} />

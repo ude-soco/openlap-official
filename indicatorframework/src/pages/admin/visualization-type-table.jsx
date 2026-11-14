@@ -80,9 +80,9 @@ const VisualizationTypeTable = ({ typeList, handleDeleteType }) => {
                   }}
                 >
                   <TableCell>
-                    <Grid container justifyContent="space-between">
+                    <Grid container sx={{ justifyContent: "space-between" }}>
                       <Grid size="grow">
-                        <Typography component="span" fontWeight="bold">
+                        <Typography component="span" sx={{ fontWeight: "bold" }}>
                           {toSentenceCase(item.name)}
                         </Typography>
                       </Grid>

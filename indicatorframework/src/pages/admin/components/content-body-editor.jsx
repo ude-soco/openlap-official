@@ -298,8 +298,8 @@ export default function ContentBodyEditor({
   );
 
   return (
-    <Stack gap={0.75}>
-      <Typography id="content-body-label" variant="body2" fontWeight={600}>
+    <Stack sx={{ gap: 0.75 }}>
+      <Typography id="content-body-label" variant="body2" sx={{ fontWeight: 600 }}>
         News content{" "}
         <Box component="span" aria-hidden="true">
           *
@@ -325,11 +325,8 @@ export default function ContentBodyEditor({
           aria-label="News content formatting"
           aria-controls="content-body"
           direction="row"
-          gap={0.25}
-          alignItems="center"
-          flexWrap="wrap"
           onKeyDown={moveToolbarFocus}
-          sx={{
+          sx={{ gap: 0.25, alignItems: "center", flexWrap: "wrap",
             p: 0.75,
             borderBottom: "1px solid",
             borderColor: "divider",
@@ -468,9 +465,7 @@ export default function ContentBodyEditor({
         {state?.href && !editing && (
           <Stack
             direction={{ xs: "column", sm: "row" }}
-            gap={1}
-            alignItems={{ sm: "center" }}
-            sx={{
+            sx={{ gap: 1, alignItems: { sm: "center" },
               p: 1,
               borderTop: "1px solid",
               borderColor: "divider",
@@ -487,7 +482,7 @@ export default function ContentBodyEditor({
             >
               {state.href}
             </Link>
-            <Stack direction="row" gap={0.5}>
+            <Stack direction="row" sx={{ gap: 0.5 }}>
               <Button
                 type="button"
                 size="small"
@@ -512,9 +507,7 @@ export default function ContentBodyEditor({
       </Box>
       <Stack
         direction="row"
-        gap={1}
-        justifyContent="space-between"
-        alignItems="flex-start"
+        sx={{ gap: 1, justifyContent: "space-between", alignItems: "flex-start" }}
       >
         <Typography
           id="content-body-help"
@@ -546,7 +539,7 @@ export default function ContentBodyEditor({
             {editing?.existing ? "Edit link" : "Insert link"}
           </DialogTitle>
           <DialogContent>
-            <Stack gap={2} sx={{ pt: 1 }}>
+            <Stack sx={{ gap: 2, pt: 1 }}>
               <TextField
                 autoFocus={!editing?.selectedText}
                 fullWidth

@@ -22,18 +22,14 @@ export default function LogoCollection() {
         <Stack
           direction="row"
           useFlexGap
-          flexWrap="wrap"
-          justifyContent="center"
-          alignItems="center"
-          sx={{ mt: 3, gap: { xs: 3, md: 6 } }}
+          sx={{ flexWrap: "wrap", justifyContent: "center", alignItems: "center", mt: 3, gap: { xs: 3, md: 6 } }}
         >
           {sorted.map((logo) => (
             <Stack
               key={logo.id}
               direction="row"
-              alignItems="center"
               spacing={1}
-              sx={{
+              sx={{ alignItems: "center",
                 opacity: 0.6,
                 filter: "grayscale(0.4)",
                 transition: "opacity 200ms ease, filter 200ms ease",

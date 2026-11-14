@@ -52,7 +52,7 @@ const Architecture = () => {
           direction={{ xs: "column", md: "row" }}
           spacing={{ xs: 4, md: 6 }}
           useFlexGap
-          alignItems="center"
+          sx={{ alignItems: "center" }}
         >
           <Box sx={{ width: { xs: "100%", md: "56%" } }}>
             <ZoomableImageCard
@@ -74,7 +74,7 @@ const Architecture = () => {
                   key={item.title}
                   direction="row"
                   spacing={2}
-                  alignItems="flex-start"
+                  sx={{ alignItems: "flex-start" }}
                 >
                   <Box
                     aria-hidden

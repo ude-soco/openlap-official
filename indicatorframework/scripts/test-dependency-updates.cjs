@@ -83,6 +83,52 @@ function WrapperCharts() {
   </section>;
 }
 
+// These are the chart families the ISC creator actually offers. In Apex 8 the
+// default bundle drops several newer types/features; none of these should need
+// an add-on, and the creator's "dot" chart remains an ordinary scatter chart.
+const bundleCharts = [
+  { id: "bar", type: "bar" },
+  { id: "grouped-bar", type: "bar", multiple: true },
+  { id: "stacked-bar", type: "bar", multiple: true, stacked: true },
+  { id: "line", type: "line" },
+  { id: "scatter", type: "scatter" },
+  { id: "dot", type: "scatter" },
+  { id: "pie", type: "pie", radial: true },
+  { id: "polar-area", type: "polarArea", radial: true },
+  { id: "radar", type: "radar" },
+  { id: "treemap", type: "treemap" },
+];
+const unsafeName = '<img data-apex-injected="true" src="/injected-chart-data" onerror="window.__chartInjected=true">';
+function BundleCharts() {
+  return <section data-testid="bundle-charts">
+    {bundleCharts.map((item) => {
+      const series = item.radial ? [10, 2, 6]
+        : item.type === "treemap" ? [{ data: [{ x: unsafeName, y: 10 }, { x: "Beta", y: 2 }, { x: "Gamma", y: 6 }] }]
+        : item.type === "scatter" ? [{ name: "Values", data: [[1, 10], [2, 2], [3, 6]] }]
+        : [{ name: item.id === "bar" ? unsafeName : "Values", data: [10, 2, 6] },
+          ...(item.multiple ? [{ name: "Other values", data: [4, 8, 3] }] : [])];
+      return <article key={item.id} data-testid={"bundle-" + item.id}>
+        <h3>{item.id}</h3>
+        <Chart type={item.type} height={260} width={500} series={series} options={{
+          chart: { id: "bundle-" + item.id, stacked: Boolean(item.stacked), animations: { enabled: false }, toolbar: { show: false } },
+          xaxis: { categories: ["Alpha", "Beta", "Gamma"] },
+          labels: ["Alpha", "Beta", "Gamma"],
+          legend: { show: true, showForSingleSeries: true },
+          dataLabels: { enabled: false },
+          markers: { size: 5 },
+          tooltip: { shared: false, intersect: true },
+        }} />
+      </article>;
+    })}
+    <article data-testid="percentage-height-chart" style={{ width: 600 }}>
+      <h3>Content-sized parent</h3>
+      <Chart type="bar" height="100%" series={[{ name: "Values", data: [10, 2, 6] }]}
+        options={{ chart: { id: "percentage-height", animations: { enabled: false }, toolbar: { show: false } },
+          xaxis: { categories: ["Alpha", "Beta", "Gamma"] } }} />
+    </article>
+  </section>;
+}
+
 function Fixture() {
   const [dataset, setDataset] = useState(freshDataset);
   const [requirements, setRequirements] = useState(freshRequirements);
@@ -110,6 +156,7 @@ function Fixture() {
             ({ id: "page-" + (i + 1), category: "Category " + (i + 1), value: i + 1 })) })}>Load pagination fixture</button>
           <button onClick={showAppChart}>Show app chart fixture</button>
           <button onClick={() => setView("wrapper")}>Show wrapper fixture</button>
+          <button onClick={() => setView("bundle")}>Show chart bundle fixture</button>
           <button onClick={() => setDarkMode((v) => !v)}>Toggle dark mode</button>
         </nav>
         {view === "grid" && <section data-testid="dataset-grid"><DataTableManager /></section>}
@@ -117,6 +164,7 @@ function Fixture() {
           <BarChart customize={customize} handleToggleCustomizePanel={() => setCustomize((v) => !v)} />
         </section>}
         {view === "wrapper" && <StrictMode><WrapperCharts /></StrictMode>}
+        {view === "bundle" && <BundleCharts />}
       </ISCContext.Provider>
     </CustomThemeContext.Provider>
   </ThemeProvider>;
@@ -241,6 +289,45 @@ async function chartChecks(page) {
   await page.getByRole("button", { name: "Show grid fixture", exact: true }).click();
   await page.waitForFunction(() => window.__dependencyChartRefs.every((ref) => ref.current === null));
   console.log("PASS: app chart theme/customization/remount/resize and React 19 wrapper refs, StrictMode, data/formatter updates and unmount");
+
+  await page.getByRole("button", { name: "Show chart bundle fixture", exact: true }).click();
+  for (const id of ["bar", "grouped-bar", "stacked-bar", "line", "scatter", "dot", "pie", "polar-area", "radar", "treemap"]) {
+    const chart = page.getByTestId("bundle-" + id);
+    await chart.locator(".apexcharts-svg").waitFor();
+    const painted = await chart.locator(".apexcharts-series path, .apexcharts-series polygon, .apexcharts-series rect, .apexcharts-series circle")
+      .evaluateAll((nodes) => nodes.filter((node) => {
+        const bounds = node.getBBox();
+        return bounds.width > 0 && bounds.height > 0;
+      }).length);
+    assert.ok(painted > 0, id + " must paint visible data marks from the default Apex bundle");
+  }
+  // 8.8.1 fixes an unbounded redraw/ResizeObserver growth regression for the
+  // percentage height used throughout the app, with a content-sized parent.
+  const heights = await page.evaluate(async () => {
+    const chart = window.__dependencyFixture.chart("percentage-height");
+    const height = () => Number(document.querySelector('[data-testid="percentage-height-chart"] .apexcharts-svg').getAttribute("height"));
+    const values = [height()];
+    for (let index = 0; index < 5; index++) {
+      await chart.updateOptions({ chart: { foreColor: index % 2 ? "#000000" : "#ffffff" } }, false, false);
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      values.push(height());
+    }
+    return values;
+  });
+  assert.ok(heights.every((height) => Number.isFinite(height) && height > 100), "Percentage height must stay visible");
+  assert.ok(Math.max(...heights) - Math.min(...heights) <= 2, "Content-sized percentage height must not grow on redraw: " + heights.join(", "));
+
+  // 8.3.1/8.4 escape data labels in treemap tooltips and ordinary legends.
+  // Formatter-returned HTML remains supported, so use raw data here.
+  const unsafe = '<img data-apex-injected="true" src="/injected-chart-data" onerror="window.__chartInjected=true">';
+  assert.equal(await page.getByTestId("bundle-bar").locator(".apexcharts-legend-text").textContent(), unsafe);
+  await page.getByTestId("bundle-treemap").locator(".apexcharts-treemap-rect").first().hover();
+  await page.waitForFunction((unsafe) => document.querySelector('[data-testid="bundle-treemap"] .apexcharts-tooltip')?.textContent.includes(unsafe), unsafe);
+  assert.equal(await page.getByTestId("bundle-charts").locator("[data-apex-injected]").count(), 0, "User data must not become HTML elements");
+  assert.equal(await page.evaluate(() => Boolean(window.__chartInjected)), false, "User data must not execute script");
+  await page.getByRole("button", { name: "Show grid fixture", exact: true }).click();
+  await page.waitForFunction(() => !window.__dependencyFixture.chart("bundle-bar") && !window.__dependencyFixture.chart("percentage-height"));
+  console.log("PASS: all ten ISC chart variants render without add-ons; percentage height stays stable; user labels stay text in legend/treemap tooltip");
 }
 
 async function csvChecks(page) {
@@ -312,8 +399,8 @@ async function csvChecks(page) {
     page.setDefaultTimeout(15000);
     page.on("pageerror", (error) => failures.push(error.message));
     await page.goto(new URL(production ? `/${htmlName}` : "/__dependency_updates__", base).href);
-    await gridChecks(page);
     await chartChecks(page);
+    await gridChecks(page);
     await csvChecks(page);
     if (production) {
       assert.ok(requestedPaths.some((pathname) => /^\/assets\/.+\.js$/.test(pathname)), "Production fixture must load bundled JavaScript");

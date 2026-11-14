@@ -34,7 +34,7 @@ const ExampleDatasetTable = ({ columns }) => {
       component="section"
       aria-label="Example dataset (illustrative, read-only)"
     >
-      <Stack direction="row" gap={1} alignItems="center" sx={{ mb: 1 }}>
+      <Stack direction="row" sx={{ gap: 1, alignItems: "center", mb: 1 }}>
         <Chip
           size="small"
           color="info"

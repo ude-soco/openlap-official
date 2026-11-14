@@ -107,9 +107,9 @@ const VisualizationFilter = () => {
             aria-label={ariaLabel}
             sx={{ width: "100%", height: "100%", p: 2 }}
           >
-            <Stack gap={1} alignItems="center" justifyContent="flex-start" sx={{ height: "100%" }}>
-              <Box component="img" src={chart.image} height="56px" alt="" />
-              <Typography variant="body2" align="center" fontWeight={600}>
+            <Stack sx={{ gap: 1, alignItems: "center", justifyContent: "flex-start", height: "100%" }}>
+              <Box component="img" src={chart.image} sx={{ height: "56px" }} alt="" />
+              <Typography variant="body2" align="center" sx={{ fontWeight: 600 }}>
                 {chart.type}
               </Typography>
               {statusChip}
@@ -127,7 +127,7 @@ const VisualizationFilter = () => {
 
   const renderGroup = (title, charts, status) =>
     charts.length > 0 ? (
-      <Stack gap={1.5} key={title}>
+      <Stack sx={{ gap: 1.5 }} key={title}>
         <Typography variant="subtitle2" component="h4">
           {title}
         </Typography>
@@ -139,9 +139,9 @@ const VisualizationFilter = () => {
 
   return (
     <>
-      <Stack gap={2}>
+      <Stack sx={{ gap: 2 }}>
         <Box>
-          <Typography variant="subtitle1" component="h3" fontWeight={600}>
+          <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
             Choose a visualization
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -150,12 +150,12 @@ const VisualizationFilter = () => {
           </Typography>
         </Box>
 
-        <Stack gap={4}>
+        <Stack sx={{ gap: 4 }}>
           {renderGroup("Recommended for your data", recommended, "recommended")}
           {renderGroup("Alternative visualizations", otherCompatible, "compatible")}
 
           {notCompatible.length > 0 && (
-            <Stack gap={1.5}>
+            <Stack sx={{ gap: 1.5 }}>
               <Button
                 variant="text"
                 color="inherit"
@@ -183,7 +183,7 @@ const VisualizationFilter = () => {
             timeout={{ enter: 500, exit: 0 }}
             unmountOnExit
           >
-            <Stack gap={4}>
+            <Stack sx={{ gap: 4 }}>
               <Divider />
               <VisualizationDescription />
             </Stack>

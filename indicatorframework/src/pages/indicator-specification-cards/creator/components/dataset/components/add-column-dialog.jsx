@@ -87,7 +87,7 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
   return (
     <>
       <Dialog open={Boolean(open)} fullWidth maxWidth="xs">
-        <DialogTitle id="alert-dialog-title">Add column</DialogTitle>
+        <DialogTitle>Add column</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Add another data requirement to your dataset.
@@ -105,8 +105,10 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
               label="Column name"
               value={state.columnName.value}
               placeholder="e.g., Name of materials"
-              InputLabelProps={{
-                shrink: true,
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
               }}
               onChange={handleAddColumn}
               variant="outlined"
@@ -144,7 +146,7 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
                   {...params}
                   label="Data type"
                   placeholder="Select a data column type"
-                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ ...params.slotProps, inputLabel: { ...params.slotProps.inputLabel, shrink: true } }}
                 />
               )}
               onChange={(event, value) => {
@@ -157,8 +159,10 @@ const AddColumnDialog = ({ open, toggleOpen }) => {
                 label="Number of rows"
                 value={state.numberOfRows}
                 type="number"
-                InputLabelProps={{
-                  shrink: true,
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
                 }}
                 onChange={handleRowNumber}
                 variant="outlined"

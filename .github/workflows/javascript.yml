@@ -1,0 +1,83 @@
+name: JavaScript regression checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - indicatorframework/**
+      - analyticsframework/src/main/resources/templates/indicator.html
+      - analyticsframework/src/main/resources/templates/question.html
+      - .github/workflows/javascript.yml
+  push:
+    branches: [main]
+    paths:
+      - indicatorframework/**
+      - analyticsframework/src/main/resources/templates/indicator.html
+      - analyticsframework/src/main/resources/templates/question.html
+      - .github/workflows/javascript.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: javascript-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Unit and WebKit regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: indicatorframework
+    env:
+      CI: true
+      VITE_BACKEND_URL: /api/
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: indicatorframework/.nvmrc
+          cache: npm
+          cache-dependency-path: indicatorframework/package-lock.json
+      - name: Install locked application dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install isolated browser test tools
+        run: |
+          echo "NODE_PATH=$RUNNER_TEMP/openlap-browser-tests/node_modules" >> "$GITHUB_ENV"
+          echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/openlap-browser-cache" >> "$GITHUB_ENV"
+          npm install --prefix "$RUNNER_TEMP/openlap-browser-tests" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          PLAYWRIGHT_BROWSERS_PATH="$RUNNER_TEMP/openlap-browser-cache" "$RUNNER_TEMP/openlap-browser-tests/node_modules/.bin/playwright" install --with-deps webkit
+      - name: Verify dependency tree and unit tests
+        run: |
+          npm ls --all > "$RUNNER_TEMP/openlap-dependency-tree.txt"
+          npm test
+      - name: Build application
+        run: npm run build
+      - name: Verify authentication routing datasets and fonts
+        run: npm run test:runtime-updates
+      - name: Verify MUI controls in development and production
+        run: |
+          OPENLAP_MUI_TEST_PORT=15285 npm run test:mui-updates
+          OPENLAP_TEST_PRODUCTION=1 OPENLAP_MUI_TEST_PORT=15286 npm run test:mui-updates
+      - name: Verify bundled chart and grid dependencies
+        run: OPENLAP_TEST_PRODUCTION=1 OPENLAP_TEST_BASE_URL=http://127.0.0.1:15283 npm run test:dependency-updates
+      - name: Verify real application previews and dependency interactions
+        env:
+          OPENLAP_TEST_BASE_URL: http://127.0.0.1:15281
+        run: |
+          node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 15281 --strictPort > "$RUNNER_TEMP/openlap-vite.log" 2>&1 &
+          vite_pid=$!
+          trap 'kill "$vite_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail "$OPENLAP_TEST_BASE_URL" > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --silent --fail "$OPENLAP_TEST_BASE_URL" > /dev/null
+          npm run test:analysis-preview
+          npm run test:saved-preview
+          npm run test:saved-preview -- --expect-blank-baseline
+          npm run test:dependency-updates

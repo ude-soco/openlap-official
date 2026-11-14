@@ -74,9 +74,7 @@ const DashboardCard = ({
       <CardContent sx={{ flexGrow: 1, p: 3 }}>
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="flex-start"
-          sx={{ mb: 2 }}
+          sx={{ justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}
         >
           <Box
             aria-hidden

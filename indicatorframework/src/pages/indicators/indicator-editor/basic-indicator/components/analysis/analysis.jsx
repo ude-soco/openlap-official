@@ -110,7 +110,7 @@ export default function Analysis() {
           timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
-          <Stack gap={2} sx={{ py: 2 }}>
+          <Stack sx={{ gap: 2, py: 2 }}>
             <AnalysisSelection />
 
             {methodSelected && analysis.inputs.length === 0 && (
@@ -124,7 +124,7 @@ export default function Analysis() {
 
             {analysis.inputs.length !== 0 && (
               <>
-                <Grid container spacing={2} alignItems="stretch">
+                <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
                   <Grid
                     size={{
                       xs: 12,
@@ -146,7 +146,7 @@ export default function Analysis() {
                   helper="Run the analysis to preview the data that will feed your visualization."
                 >
                   {state.loadingPreview ? (
-                    <Stack gap={1.5} alignItems="center" sx={{ py: 3 }}>
+                    <Stack sx={{ gap: 1.5, alignItems: "center", py: 3 }}>
                       <CircularProgress />
                       <Typography variant="body2" color="text.secondary">
                         Running analysis…
@@ -160,14 +160,14 @@ export default function Analysis() {
                   ) : hasAnalyzedData || state.previewComplete ? (
                     <AnalyzedDataTable />
                   ) : (
-                    <Stack alignItems="center" sx={{ py: 3, textAlign: "center" }}>
+                    <Stack sx={{ alignItems: "center", py: 3, textAlign: "center" }}>
                       <Typography variant="body2" color="text.secondary">
                         Choose your inputs and parameters, then run a preview of
                         the analysed data.
                       </Typography>
                     </Stack>
                   )}
-                  <Stack direction="row" gap={1} alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
+                  <Stack direction="row" sx={{ gap: 1, alignItems: "center", justifyContent: "center", mt: 2 }}>
                     <Button
                       variant="contained"
                       disabled={previewDisabled || state.loadingPreview}
@@ -197,7 +197,7 @@ export default function Analysis() {
             )}
 
             <Divider />
-            <Grid container justifyContent="center">
+            <Grid container sx={{ justifyContent: "center" }}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Button
                   fullWidth

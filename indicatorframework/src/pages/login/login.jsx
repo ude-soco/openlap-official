@@ -89,7 +89,7 @@ const Login = () => {
       subtitle="Sign in to your OpenLAP account"
       crossLink={{ label: "Sign up", to: "/register" }}
     >
-      <Stack gap={2.5} component="form" onSubmit={handleSubmit}>
+      <Stack sx={{ gap: 2.5 }} component="form" onSubmit={handleSubmit}>
         <TextField
           fullWidth
           label="Email Address"
@@ -107,9 +107,7 @@ const Login = () => {
           type={showPassword ? "text" : "password"}
           autoComplete="current-password"
           onChange={handleFormFields}
-          slotProps={visibilityAdornment(showPassword, () =>
-            setShowPassword((s) => !s)
-          )}
+          slotProps={visibilityAdornment(showPassword, () => setShowPassword(s => !s))}
         />
         <Button
           type="submit"

@@ -96,13 +96,25 @@ const IndicatorSelection = () => {
           placeholder="Search for indicators"
           value={state.searchText}
           onChange={handleSearchText}
-          InputProps={{
-            startAdornment:
-              state.isLoadingMyIndicators && state.searchText.length !== 0 ? (
-                <CircularProgress size={24} sx={{ mr: 1 }} />
-              ) : (
-                <SearchIcon sx={{ mr: 1, color: "action.active" }} />
-              ),
+          slotProps={{
+            input: {
+              startAdornment:
+                state.isLoadingMyIndicators && state.searchText.length !== 0 ? (
+                  <CircularProgress
+                    size={24}
+                    sx={{
+                      mr: 1,
+                    }}
+                  />
+                ) : (
+                  <SearchIcon
+                    sx={{
+                      mr: 1,
+                      color: "action.active",
+                    }}
+                  />
+                ),
+            },
           }}
         />
       </Grid>
@@ -122,9 +134,7 @@ const IndicatorSelection = () => {
           <Grid size={{ xs: 12 }}>
             <Grid
               container
-              direction="column"
-              alignItems="center"
-              sx={{ py: 14 }}
+              sx={{ alignItems: "center", flexDirection: "column", py: 14 }}
             >
               <Typography
                 variant="body1"
@@ -158,7 +168,7 @@ const IndicatorSelection = () => {
         </Grid>
       </Grid>
       <Grid size={{ xs: 12 }}>
-        <Grid container justifyContent="center">
+        <Grid container sx={{ justifyContent: "center" }}>
           <Pagination
             count={indicator.myIndicators.list.totalPages}
             color="primary"

@@ -430,7 +430,7 @@ export default function AdminContentEditor() {
     );
   if (status === "loading")
     return (
-      <Stack alignItems="center" gap={2} sx={{ py: 8 }}>
+      <Stack sx={{ alignItems: "center", gap: 2, py: 8 }}>
         <CircularProgress />
         <Typography color="text.secondary">Loading {noun}…</Typography>
       </Stack>
@@ -443,7 +443,7 @@ export default function AdminContentEditor() {
         title={`Couldn’t load ${noun}`}
         description={error}
         action={
-          <Stack direction="row" gap={1}>
+          <Stack direction="row" sx={{ gap: 1 }}>
             <Button onClick={() => navigate(listPath)}>Back to content</Button>
             <Button onClick={load} variant="outlined">
               Retry
@@ -487,7 +487,7 @@ export default function AdminContentEditor() {
             : "Discard and reload";
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       <PageHeader
         title={id ? `Edit ${noun}` : `Add ${noun}`}
         breadcrumbs={[
@@ -514,11 +514,9 @@ export default function AdminContentEditor() {
       />
       <Stack
         direction={{ xs: "column", sm: "row" }}
-        gap={1}
-        justifyContent="space-between"
-        alignItems={{ sm: "center" }}
+        sx={{ gap: 1, justifyContent: "space-between", alignItems: { sm: "center" } }}
       >
-        <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+        <Stack direction="row" sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}>
           <Chip
             size="small"
             color={
@@ -574,8 +572,7 @@ export default function AdminContentEditor() {
           {conflict && (
             <Stack
               direction={{ xs: "column", sm: "row" }}
-              gap={1}
-              sx={{ mt: 1 }}
+              sx={{ gap: 1, mt: 1 }}
             >
               <Button
                 size="small"
@@ -600,7 +597,7 @@ export default function AdminContentEditor() {
       )}
       {Object.keys(errors).length > 0 && (
         <Alert severity="error" role="alert">
-          <Typography variant="body2" fontWeight={600}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
             Review these fields before continuing:
           </Typography>
           <Box component="ul" sx={{ m: 0, pl: 2 }}>
@@ -624,12 +621,12 @@ export default function AdminContentEditor() {
           aria-label={busy === "save" ? "Saving draft" : "Updating content"}
         />
       )}
-      <Grid container spacing={3} alignItems="flex-start">
+      <Grid container spacing={3} sx={{ alignItems: "flex-start" }}>
         <Grid size={{ xs: 12, lg: 7 }}>
           <Stack
             component="form"
             noValidate
-            gap={2.5}
+            sx={{ gap: 2.5 }}
             onSubmit={(event) => {
               event.preventDefault();
               save();
@@ -749,14 +746,12 @@ export default function AdminContentEditor() {
               >
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
-                  gap={1}
-                  justifyContent="space-between"
-                  alignItems={{ sm: "center" }}
+                  sx={{ gap: 1, justifyContent: "space-between", alignItems: { sm: "center" } }}
                 >
                   <Typography variant="caption" color="text.secondary">
                     Saving a draft does not publish it.
                   </Typography>
-                  <Stack direction="row" gap={1} flexWrap="wrap">
+                  <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>
                     <Button
                       type="submit"
                       variant="outlined"
@@ -785,9 +780,7 @@ export default function AdminContentEditor() {
             {entry && !trashed && (
               <Stack
                 direction="row"
-                gap={1}
-                flexWrap="wrap"
-                justifyContent="space-between"
+                sx={{ gap: 1, flexWrap: "wrap", justifyContent: "space-between" }}
               >
                 {entry.published && (
                   <Button

@@ -42,14 +42,14 @@ const PluginRecoveryControl = ({ kind, onChanged }) => {
     <Button variant="outlined" onClick={() => { setOpen(true); load(); }}>Removed entries</Button>
     <Dialog open={open} onClose={() => { if (!busy) setOpen(false); }} disableEscapeKeyDown={busy} fullScreen={fullScreen} fullWidth maxWidth="md" aria-labelledby="removed-plugins-title">
       <DialogTitle id="removed-plugins-title">Removed entries & recovery</DialogTitle>
-      <DialogContent dividers><Stack gap={2}>
+      <DialogContent dividers><Stack sx={{ gap: 2 }}>
         {busy && <LinearProgress aria-label="Loading recovery records" />}
         {error && <Alert severity="error" role="alert">{error}</Alert>}
         {data?.available === false && <Alert severity="info">Logical removal and recovery are disabled until the deployment maintainer completes the guarded rollout.</Alert>}
         {data?.cleanupAvailable === false && <Alert severity="info">Physical artifact deletion is disabled. Removed entries can still be recovered when recovery is enabled; their stored JARs are retained.</Alert>}
         {data?.entries?.length === 0 && <Typography color="text.secondary">No removed entries found.</Typography>}
         <List disablePadding>{(data?.entries || []).map((entry) => <ListItem key={entry.id} divider disableGutters sx={{ display: "block" }}>
-          <Typography fontWeight={600}>{entry.name}</Typography>
+          <Typography sx={{ fontWeight: 600 }}>{entry.name}</Typography>
           <Typography variant="body2">{entry.affected.map((row) => row.name).join(", ")}</Typography>
           <Typography variant="body2" color="text.secondary">{entry.affected.length} entries · {entry.state.toLowerCase()} · Recoverable until {new Date(entry.recoverableUntil).toLocaleString()}</Typography>
           <Button disabled={busy || !data.available || (entry.state === "REMOVED" && new Date(entry.recoverableUntil).getTime() < Date.now())} onClick={() => recover(entry)}>

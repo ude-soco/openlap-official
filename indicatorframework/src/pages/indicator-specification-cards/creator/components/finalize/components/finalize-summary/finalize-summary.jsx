@@ -37,8 +37,8 @@ export default function FinalizeSummary() {
 
   return (
     <>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Stack direction="row" alignItems="center" gap={1}>
+      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+        <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
           {!lockedStep.finalize.locked ? (
             <Chip label={lockedStep.finalize.step} color="primary" />
           ) : (

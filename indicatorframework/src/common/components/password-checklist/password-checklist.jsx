@@ -50,7 +50,7 @@ const PasswordChecklist = ({ password }) => {
             role="listitem"
             direction="row"
             spacing={1}
-            alignItems="center"
+            sx={{ alignItems: "center" }}
           >
             {c.met ? (
               <CheckCircleRounded sx={{ fontSize: 18, color: "success.main" }} />

@@ -10,7 +10,7 @@ import { getChartCompatibility } from "../utils/chart-compatibility";
 // One reason line: an icon (not colour-only) + readable text. Matches the ISC
 // Creator's "Why this chart?" rows.
 const ReasonRow = ({ ok, children }) => (
-  <Stack direction="row" gap={1} alignItems="flex-start">
+  <Stack direction="row" sx={{ gap: 1, alignItems: "flex-start" }}>
     {ok ? (
       <CheckCircleRoundedIcon
         fontSize="small"
@@ -73,13 +73,13 @@ const ChartWhy = ({ chartType, analyzedData }) => {
 
   return (
     <Box component="section" aria-label="Why this chart" sx={tintedCardSx(callout.tone)}>
-      <Stack direction="row" gap={1} alignItems="center" sx={{ mb: 1.5 }}>
+      <Stack direction="row" sx={{ gap: 1, alignItems: "center", mb: 1.5 }}>
         <Icon color={callout.iconColor} />
-        <Typography variant="subtitle2" component="h4" fontWeight={600}>
+        <Typography variant="subtitle2" component="h4" sx={{ fontWeight: 600 }}>
           Why this chart?
         </Typography>
       </Stack>
-      <Stack gap={0.75}>
+      <Stack sx={{ gap: 0.75 }}>
         {!hasRequired && (
           <ReasonRow ok>
             This chart has no strict data requirements and works with your

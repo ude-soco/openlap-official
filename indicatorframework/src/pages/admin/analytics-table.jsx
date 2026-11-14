@@ -86,13 +86,13 @@ const AnalyticsTable = ({ analyticsList, handleDeleteAnalytics }) => {
                     }}
                   >
                     <TableCell>
-                      <Grid container justifyContent="space-between">
+                      <Grid container sx={{ justifyContent: "space-between" }}>
                         <Tooltip
                           title={<Typography>{item.description}</Typography>}
                           placement="bottom-start"
                         >
                           <Grid size="grow">
-                            <Typography component="span" fontWeight="bold">
+                            <Typography component="span" sx={{ fontWeight: "bold" }}>
                               {toSentenceCase(item.name)}
                             </Typography>
                           </Grid>

@@ -21,11 +21,9 @@ const ResourceCard = ({
     <CardContent sx={{ p: { xs: 2, md: 2.5 }, "&:last-child": { pb: { xs: 2, md: 2.5 } } }}>
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        gap={1}
+        sx={{ alignItems: "center", justifyContent: "space-between", gap: 1 }}
       >
-        <Stack direction="row" alignItems="center" gap={1.5} sx={{ minWidth: 0 }}>
+        <Stack direction="row" sx={{ alignItems: "center", gap: 1.5, minWidth: 0 }}>
           {Icon && (
             <Box
               aria-hidden
@@ -54,7 +52,7 @@ const ResourceCard = ({
               sx={{ flexShrink: 0, fontVariantNumeric: "tabular-nums" }}
             />
           )}
-          <Typography variant="subtitle1" fontWeight={600} noWrap title={title}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }} noWrap title={title}>
             {title}
           </Typography>
         </Stack>

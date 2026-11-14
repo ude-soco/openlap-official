@@ -7,7 +7,7 @@ const inertAssets = new Set([
   "https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.18/c3.min.css",
   "https://d3js.org/d3.v5.min.js",
   "https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.18/c3.min.js",
-  "https://cdn.jsdelivr.net/npm/apexcharts",
+  "https://cdn.jsdelivr.net/npm/apexcharts@8.8.1/dist/apexcharts.min.js",
 ]);
 
 const base = new URL(process.env.OPENLAP_TEST_BASE_URL || "http://127.0.0.1:5181");
@@ -79,6 +79,8 @@ async function until(predicate, description) {
 
 async function fixture(browser, saved) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
+  // Development HMR must not replace modules during a synthetic scenario.
+  await context.routeWebSocket(/.*/, (socket) => socket.close());
   const failures = [], analysisRequests = [], chartRequests = [];
   const token = "e30." + Buffer.from(JSON.stringify({ sub: "fixture@localhost", roles: ["ROLE_USER"],
     exp: Math.floor(Date.now() / 1000) + 3600 })).toString("base64url") + ".fixture";
@@ -114,7 +116,10 @@ async function fixture(browser, saved) {
     await send({ data: responses[path] ?? {}, message: "Synthetic fixture" });
   });
   const page = await context.newPage();
-  page.on("pageerror", (error) => failures.push(error.message));
+  page.on("pageerror", (error) => {
+    failures.push(error.message);
+    console.error("Browser error:", error.stack);
+  });
   await page.goto(new URL("/indicator/editor/basic", base).href);
   const analysis = page.getByRole("region", { name: "Analysis step", exact: true });
   await analysis.getByRole("button", { name: "Next", exact: true }).waitFor();

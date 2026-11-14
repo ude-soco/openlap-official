@@ -88,7 +88,7 @@ export default function ContactUs() {
   return (
     <Section id={navigationIds.CONTACT}>
       <Reveal sx={{ width: "100%" }}>
-        <Grid container spacing={{ xs: 4, md: 6 }} alignItems="flex-start">
+        <Grid container spacing={{ xs: 4, md: 6 }} sx={{ alignItems: "flex-start" }}>
           {/* Left: invitation + research context */}
           <Grid size={{ xs: 12, md: 5 }}>
             <Stack spacing={2}>

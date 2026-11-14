@@ -25,7 +25,7 @@ export default function DateFilter() {
       helper="Choose the start and end dates that define the period of data to analyse."
     >
       <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <Stack gap={2} direction={{ xs: "column", sm: "row" }}>
+        <Stack sx={{ gap: 2 }} direction={{ xs: "column", sm: "row" }}>
           <DatePicker
             format="DD MMM YYYY"
             label="Start date"

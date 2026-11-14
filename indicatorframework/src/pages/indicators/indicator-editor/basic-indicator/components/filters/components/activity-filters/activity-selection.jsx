@@ -34,10 +34,10 @@ export default function ActivitySelection({ activity }) {
   };
 
   return (
-    <Stack gap={0.75}>
+    <Stack sx={{ gap: 0.75 }}>
       <Typography
         variant="body2"
-        fontWeight={500}
+        sx={{ fontWeight: 500 }}
         color={isDisabled ? "text.disabled" : undefined}
       >
         Activities
@@ -100,7 +100,7 @@ export default function ActivitySelection({ activity }) {
           <TextField
             {...params}
             placeholder="Search for activities"
-            inputProps={{ ...params.inputProps, "aria-label": "Activities" }}
+            slotProps={{ ...params.slotProps, htmlInput: { ...params.slotProps.htmlInput, "aria-label": "Activities" } }}
           />
         )}
         value={activity.selectedActivityList || []}

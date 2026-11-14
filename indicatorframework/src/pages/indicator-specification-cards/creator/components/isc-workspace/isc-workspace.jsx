@@ -24,7 +24,7 @@ const ISCWorkspace = ({
   status = null,
   children,
 }) => (
-  <Stack gap={3}>
+  <Stack sx={{ gap: 3 }}>
     <PageHeader
       title={title}
       breadcrumbs={breadcrumbs}
@@ -36,8 +36,7 @@ const ISCWorkspace = ({
 
     <Stack
       direction={{ xs: "column", lg: preview ? "row" : "column" }}
-      gap={3}
-      alignItems="flex-start"
+      sx={{ gap: 3, alignItems: "flex-start" }}
     >
       {/* Main editor column. minWidth:0 prevents flex children (tables/charts)
           from forcing horizontal overflow. */}

@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import PropTypes from "prop-types";
 import { IconButton, Stack, Tooltip } from "@mui/material";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import StorageIcon from "@mui/icons-material/Storage";
 import DeleteDialog from "../../../common/components/delete-dialog/delete-dialog.jsx";
 import ResourceCard from "../../../common/components/resource-card/resource-card.jsx";

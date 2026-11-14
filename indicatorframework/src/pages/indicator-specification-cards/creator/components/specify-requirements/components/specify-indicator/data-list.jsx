@@ -94,8 +94,8 @@ const DataList = () => {
 
   return (
     <>
-      <Stack gap={2} sx={{ width: "100%" }}>
-        <Grid container spacing={1} alignItems="center">
+      <Stack sx={{ gap: 2, width: "100%" }}>
+        <Grid container spacing={1} sx={{ alignItems: "center" }}>
           <Typography component="h4" variant="subtitle2">
             I need the following data
           </Typography>
@@ -115,18 +115,16 @@ const DataList = () => {
             <Stack
               component={Paper}
               variant="outlined"
-              gap={3}
               key={requirement.id ?? index}
-              sx={{ p: 2 }}
+              sx={{ gap: 3, p: 2 }}
             >
               <Grid
                 container
-                justifyContent="space-between"
-                alignItems="center"
+                sx={{ justifyContent: "space-between", alignItems: "center" }}
               >
                 <Grid size="grow">
-                  <Stack direction="row" alignItems="center">
-                    <Typography fontWeight="500">
+                  <Stack direction="row" sx={{ alignItems: "center" }}>
+                    <Typography sx={{ fontWeight: "500" }}>
                       {requirement.value
                         ? `${requirement.value} ` +
                           (requirement.type?.value
@@ -168,8 +166,7 @@ const DataList = () => {
               </Grid>
               <Stack
                 direction={{ xs: "column", lg: "row" }}
-                alignItems="center"
-                gap={2}
+                sx={{ alignItems: "center", gap: 2 }}
               >
                 <TextField
                   fullWidth

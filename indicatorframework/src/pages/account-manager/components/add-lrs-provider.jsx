@@ -48,7 +48,7 @@ const AddLrsProvider = ({ addLrsProvider, toggleOpen }) => {
       >
         <DialogTitle id="alert-dialog-title">Create new LRS</DialogTitle>
         <DialogContent>
-          <Grid container direction="column" spacing={2} sx={{ pt: 1 }}>
+          <Grid container spacing={2} sx={{ flexDirection: "column", pt: 1 }}>
             <TextField
               fullWidth
               name="title"

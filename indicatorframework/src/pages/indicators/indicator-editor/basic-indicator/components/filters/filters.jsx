@@ -36,8 +36,8 @@ export default function Filters() {
             timeout={{ enter: 500, exit: 250 }}
             unmountOnExit
           >
-            <Stack gap={2} sx={{ py: 2 }}>
-              <Grid container spacing={2} alignItems="stretch">
+            <Stack sx={{ gap: 2, py: 2 }}>
+              <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
                 <Grid size={{ xs: 12, lg: 6 }} sx={{ display: "flex" }}>
                   <DateFilter />
                 </Grid>
@@ -47,7 +47,7 @@ export default function Filters() {
               </Grid>
               <ActivityFilters />
               <Divider />
-              <Grid container justifyContent="center">
+              <Grid container sx={{ justifyContent: "center" }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Button
                     fullWidth

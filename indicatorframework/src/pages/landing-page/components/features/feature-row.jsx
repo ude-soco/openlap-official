@@ -79,7 +79,7 @@ const FeatureRow = ({ feature }) => {
         }}
         spacing={{ xs: 4, md: 6 }}
         useFlexGap
-        alignItems="center"
+        sx={{ alignItems: "center" }}
       >
         <Box sx={{ width: { xs: "100%", md: feature.imageWidth } }}>
           <ZoomableImageCard

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Divider, Stack } from "@mui/material";
+import { Divider } from "@mui/material";
+import { GridColumnMenuContainer } from "@mui/x-data-grid";
 import RenameMenuAndDialog from "./components/rename-menu-and-dialog.jsx";
 import DeleteMenuAndDialog from "./components/delete-menu-and-dialog.jsx";
 import ChangeTypeMenuAndDialog from "./components/change-type-menu-and-dialog.jsx";
@@ -13,7 +14,7 @@ const ColumnMenu = ({ props }) => {
 
   return (
     <>
-      <Stack py={0.5}>
+      <GridColumnMenuContainer {...props} sx={{ py: 0.5 }}>
         <ChangeTypeMenuAndDialog
           props={props}
           columnMenu={columnMenu}
@@ -31,7 +32,7 @@ const ColumnMenu = ({ props }) => {
           columnMenu={columnMenu}
           setColumnMenu={setColumnMenu}
         />
-      </Stack>
+      </GridColumnMenuContainer>
     </>
   );
 };

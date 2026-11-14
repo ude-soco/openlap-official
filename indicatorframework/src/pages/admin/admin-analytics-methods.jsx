@@ -174,7 +174,7 @@ const AdminAnalyticsMethods = () => {
         {label}
       </Typography>
       {Array.isArray(items) && items.length > 0 ? (
-        <Stack direction="row" gap={0.5} flexWrap="wrap" sx={{ mt: 0.5 }}>
+        <Stack direction="row" sx={{ gap: 0.5, flexWrap: "wrap", mt: 0.5 }}>
           {renderChips(items)}
         </Stack>
       ) : (
@@ -189,7 +189,7 @@ const AdminAnalyticsMethods = () => {
     const detail = detailsById[id];
     if (!detail || detail.status === "loading") {
       return (
-        <Stack direction="row" gap={1} alignItems="center" sx={{ py: 1 }}>
+        <Stack direction="row" sx={{ gap: 1, alignItems: "center", py: 1 }}>
           <CircularProgress size={16} />
           <Typography variant="body2" color="text.secondary">
             Loading inputs and parameters…
@@ -199,7 +199,7 @@ const AdminAnalyticsMethods = () => {
     }
     if (detail.status === "error") {
       return (
-        <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap" sx={{ py: 1 }}>
+        <Stack direction="row" sx={{ gap: 1, alignItems: "center", flexWrap: "wrap", py: 1 }}>
           <ErrorOutlineRoundedIcon fontSize="small" color="warning" />
           <Typography variant="body2" color="text.secondary">
             Couldn&rsquo;t load inputs and parameters.
@@ -211,7 +211,7 @@ const AdminAnalyticsMethods = () => {
       );
     }
     return (
-      <Stack gap={1.5} sx={{ py: 1 }}>
+      <Stack sx={{ gap: 1.5, py: 1 }}>
         {renderGroup("Inputs", detail.inputs, "No inputs")}
         {renderGroup("Parameters", detail.params, "No parameters")}
       </Stack>
@@ -219,7 +219,7 @@ const AdminAnalyticsMethods = () => {
   };
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       <PageHeader
         title="Analytics Methods"
         breadcrumbs={[
@@ -228,7 +228,7 @@ const AdminAnalyticsMethods = () => {
         ]}
         subtitle="Available analytics methods and, on expand, their inputs and parameters."
         actions={
-          <Stack direction="row" gap={1} alignItems="center">
+          <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
           {status === "ready" ? (
             <Chip
               label={`${methods.length} ${
@@ -321,7 +321,7 @@ const AdminAnalyticsMethods = () => {
                                 </IconButton>
                               </TableCell>
                               <TableCell>
-                                <Typography variant="body2" fontWeight={600}>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
                                   {method.name || "—"}
                                 </Typography>
                             {method.artifactId && <Chip size="small" variant="outlined" label={`Version ${method.artifactId.slice(-64, -56)}`} title={method.artifactId} sx={{ mt: 0.5 }} />}

@@ -481,8 +481,7 @@ const BarChart = ({ customize = false, handleToggleCustomizePanel }) => {
           <Grid size={{ xs: 12 }}>
             <Grid
               container
-              justifyContent="space-between"
-              alignItems="center"
+              sx={{ justifyContent: "space-between", alignItems: "center" }}
             >
               <Typography variant="subtitle2" component="h4">
                 Chart preview
@@ -530,8 +529,7 @@ const BarChart = ({ customize = false, handleToggleCustomizePanel }) => {
             <Grid
               container
               spacing={2}
-              justifyContent="space-between"
-              alignItems="flex-start"
+              sx={{ justifyContent: "space-between", alignItems: "flex-start" }}
             >
               <Grid>
                 <Typography component="h4">Chart appearance</Typography>

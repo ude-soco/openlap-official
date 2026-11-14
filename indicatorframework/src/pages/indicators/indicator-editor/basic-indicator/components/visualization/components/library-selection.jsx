@@ -64,8 +64,8 @@ export default function LibrarySelection() {
       title="Visualization library"
       helper="The library that renders your chart. The default works for most indicators."
     >
-      <Stack gap={0.75}>
-        <Typography variant="body2" fontWeight={500}>
+      <Stack sx={{ gap: 0.75 }}>
+        <Typography variant="body2" sx={{ fontWeight: 500 }}>
           Library
         </Typography>
         <Autocomplete
@@ -80,9 +80,12 @@ export default function LibrarySelection() {
             <TextField
               {...params}
               placeholder="Search for a visualization library"
-              inputProps={{
-                ...params.inputProps,
-                "aria-label": "Visualization library",
+              slotProps={{
+                ...params.slotProps,
+                htmlInput: {
+                  ...params.slotProps.htmlInput,
+                  "aria-label": "Visualization library",
+                },
               }}
             />
           )}

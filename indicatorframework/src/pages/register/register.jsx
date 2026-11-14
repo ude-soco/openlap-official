@@ -191,9 +191,9 @@ const Register = () => {
       crossLink={{ label: "Sign in", to: "/login" }}
       maxWidth={560}
     >
-      <Stack gap={3} component="form" onSubmit={handleSubmit}>
+      <Stack sx={{ gap: 3 }} component="form" onSubmit={handleSubmit}>
         {/* Account details */}
-        <Stack gap={2}>
+        <Stack sx={{ gap: 2 }}>
           <Typography
             variant="overline"
             color="text.secondary"
@@ -222,7 +222,7 @@ const Register = () => {
             helperText={errors?.email}
             onChange={handleFormFields}
           />
-          <Stack gap={1}>
+          <Stack sx={{ gap: 1 }}>
             <TextField
               fullWidth
               name="password"
@@ -233,13 +233,11 @@ const Register = () => {
               error={Boolean(errors?.password)}
               helperText={errors?.password}
               onChange={handleFormFields}
-              slotProps={visibilityAdornment(showPassword, () =>
-                setShowPassword((s) => !s)
-              )}
+              slotProps={visibilityAdornment(showPassword, () => setShowPassword(s => !s))}
             />
             <PasswordChecklist password={formFields.password} />
           </Stack>
-          <Stack gap={0.75}>
+          <Stack sx={{ gap: 0.75 }}>
             <TextField
               fullWidth
               name="confirmPassword"
@@ -250,13 +248,11 @@ const Register = () => {
               error={Boolean(errors?.confirmPassword)}
               helperText={errors?.confirmPassword}
               onChange={handleFormFields}
-              slotProps={visibilityAdornment(showConfirmPassword, () =>
-                setShowConfirmPassword((s) => !s)
-              )}
+              slotProps={visibilityAdornment(showConfirmPassword, () => setShowConfirmPassword(s => !s))}
             />
             {formFields.confirmPassword.length > 0 &&
               !errors?.confirmPassword && (
-                <Stack direction="row" spacing={1} alignItems="center">
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                   {formFields.password === formFields.confirmPassword ? (
                     <>
                       <CheckCircleRounded
@@ -282,7 +278,7 @@ const Register = () => {
         <Divider />
 
         {/* Learning Record Store connection */}
-        <Stack gap={2}>
+        <Stack sx={{ gap: 2 }}>
           <Typography
             variant="overline"
             color="text.secondary"
@@ -325,8 +321,7 @@ const Register = () => {
                       <Grid
                         container
                         spacing={1}
-                        alignItems="center"
-                        sx={{ pr: 3 }}
+                        sx={{ alignItems: "center", pr: 3 }}
                       >
                         <Typography>User</Typography>
                         <Tooltip
@@ -354,7 +349,7 @@ const Register = () => {
                     value={RoleTypes["data provider"]}
                     control={<Radio />}
                     label={
-                      <Grid container spacing={1} alignItems="center">
+                      <Grid container spacing={1} sx={{ alignItems: "center" }}>
                         <Typography>Data Provider</Typography>
                         <Tooltip
                           title={

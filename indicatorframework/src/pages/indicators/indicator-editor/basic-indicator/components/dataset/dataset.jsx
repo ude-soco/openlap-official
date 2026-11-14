@@ -126,11 +126,11 @@ export default function Dataset() {
             timeout={{ enter: 500, exit: 250 }}
             unmountOnExit
           >
-            <Stack gap={2}>
+            <Stack sx={{ gap: 2 }}>
               <Container maxWidth="lg">
-                <Stack gap={2}>
+                <Stack sx={{ gap: 2 }}>
                   <Typography>Source of data</Typography>
-                  <Stack gap={2} direction="row" alignItems="center">
+                  <Stack sx={{ gap: 2, alignItems: "center" }} direction="row">
                     <Autocomplete
                       autoFocus
                       disablePortal

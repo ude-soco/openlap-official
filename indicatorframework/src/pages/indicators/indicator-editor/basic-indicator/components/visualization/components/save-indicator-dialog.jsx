@@ -35,14 +35,12 @@ const userScopeLabel = (selected) => {
 const SummaryLine = ({ label, value }) => (
   <Stack
     direction="row"
-    justifyContent="space-between"
-    alignItems="baseline"
-    gap={2}
+    sx={{ justifyContent: "space-between", alignItems: "baseline", gap: 2 }}
   >
     <Typography variant="caption" color="text.secondary">
       {label}
     </Typography>
-    <Typography variant="body2" fontWeight={600} sx={{ textAlign: "right" }}>
+    <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "right" }}>
       {value}
     </Typography>
   </Stack>
@@ -50,7 +48,7 @@ const SummaryLine = ({ label, value }) => (
 SummaryLine.propTypes = { label: PropTypes.node, value: PropTypes.node };
 
 const SummaryGroup = ({ title, children }) => (
-  <Stack gap={0.75}>
+  <Stack sx={{ gap: 0.75 }}>
     <Typography variant="overline" color="text.secondary" component="h4">
       {title}
     </Typography>
@@ -102,7 +100,7 @@ const SaveIndicatorDialog = ({
     >
       <DialogTitle id="save-indicator-title">Save Indicator</DialogTitle>
       <DialogContent>
-        <Stack gap={2.5} sx={{ pt: 0.5 }}>
+        <Stack sx={{ gap: 2.5, pt: 0.5 }}>
           <Typography
             id="save-indicator-description"
             variant="body2"
@@ -120,7 +118,7 @@ const SaveIndicatorDialog = ({
               backgroundColor: alpha(theme.palette.text.primary, 0.02),
             })}
           >
-            <Stack gap={2}>
+            <Stack sx={{ gap: 2 }}>
               <SummaryGroup title="Dataset">
                 <SummaryLine label="Source of data" value={datasetSource} />
               </SummaryGroup>
@@ -147,9 +145,9 @@ const SaveIndicatorDialog = ({
             </Stack>
           </Box>
 
-          <Stack direction="row" gap={1} alignItems="center">
+          <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
             <CheckCircleRoundedIcon fontSize="small" color="success" />
-            <Typography variant="body2" fontWeight={600}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
               Ready to save
             </Typography>
           </Stack>

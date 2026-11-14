@@ -23,7 +23,7 @@ export const decorateColumns = (columns = []) =>
       ...col,
       renderHeader: () => (
         <Stack sx={{ lineHeight: 1.25, py: 0.5 }}>
-          <Typography variant="body2" fontWeight={600} noWrap>
+          <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
             {col.headerName}
           </Typography>
           {typeLabel && (

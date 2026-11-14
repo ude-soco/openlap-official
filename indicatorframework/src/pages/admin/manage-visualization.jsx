@@ -160,7 +160,7 @@ const ManageVisualization = () => {
 
   return (
     <>
-      <Stack gap={2}>
+      <Stack sx={{ gap: 2 }}>
         <Breadcrumbs>
           <Link component={RouterLink} underline="hover" color="inherit" to="/">
             Home
@@ -171,7 +171,7 @@ const ManageVisualization = () => {
       </Stack>
 
       <Container maxWidth="lg" sx={{ pt: 2 }}>
-        <Stack gap={2}>
+        <Stack sx={{ gap: 2 }}>
           <Box
             sx={{
               mt: 2,
@@ -227,7 +227,7 @@ const ManageVisualization = () => {
           )}
           {Object.keys(state.selectedLibrary).length !== 0 && (
             <>
-              <Stack direction="row" gap={1} alignItems="center">
+              <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
                 <Typography>
                   Selected Visualization Library:{" "}
                   <b>{state.selectedLibrary.name}</b>

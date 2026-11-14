@@ -53,11 +53,10 @@ const SelectionCard = ({ cardItem }) => {
           container
           component={Paper}
           variant="outlined"
-          direction="column"
           spacing={2}
-          sx={{ p: 3 }}
+          sx={{ flexDirection: "column", p: 3 }}
         >
-          <Grid container direction="column" spacing={0}>
+          <Grid container sx={{ flexDirection: "column" }} spacing={0}>
             <Typography variant="h6">{cardItem.name}</Typography>
             <Typography variant="body2" gutterBottom>
               {handleDisplayType(cardItem.type)} ● Created on:{" "}

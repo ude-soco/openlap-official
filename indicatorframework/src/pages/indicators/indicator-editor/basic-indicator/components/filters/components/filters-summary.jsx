@@ -114,11 +114,11 @@ export default function FilterSummary() {
         timeout={{ enter: 500, exit: 250 }}
         unmountOnExit
       >
-        <Stack gap={1}>
+        <Stack sx={{ gap: 1 }}>
           <Typography variant="body2" gutterBottom>
             Selection summary
           </Typography>
-          <Grid container spacing={1} alignItems="center">
+          <Grid container spacing={1} sx={{ alignItems: "center" }}>
             <Typography>Timeframe:</Typography>
             <Chip
               size="small"
@@ -133,13 +133,13 @@ export default function FilterSummary() {
               )})`}
             />
           </Grid>
-          <Grid container spacing={1} alignItems="center">
+          <Grid container spacing={1} sx={{ alignItems: "center" }}>
             <Typography>User(s):</Typography>
             <Chip size="small" label={getUserFilterLabel()} />
           </Grid>
           {handleCheckFiltersSelected() && (
             <>
-              <Grid container spacing={1} alignItems="center">
+              <Grid container spacing={1} sx={{ alignItems: "center" }}>
                 <Typography>Activity Types:</Typography>
                 {filters.selectedActivities.map((activity) => (
                   <Chip
@@ -150,7 +150,7 @@ export default function FilterSummary() {
                 ))}
               </Grid>
 
-              <Grid container spacing={1} alignItems="center">
+              <Grid container spacing={1} sx={{ alignItems: "center" }}>
                 <Typography>Actions:</Typography>
                 {filters.selectedActivities.map((activity) => (
                   <ChipsWithMore
@@ -159,7 +159,7 @@ export default function FilterSummary() {
                   />
                 ))}
               </Grid>
-              <Grid container spacing={1} alignItems="center">
+              <Grid container spacing={1} sx={{ alignItems: "center" }}>
                 <Typography>Activities:</Typography>
                 {filters.selectedActivities.map((activity) => (
                   <ChipsWithMore

@@ -235,7 +235,7 @@ const MyIndicatorsTable = ({ onStats }) => {
     const busy = busyId === item.id;
     const name = item.indicatorName;
     return (
-      <Stack direction="row" gap={0.5} alignItems="center">
+      <Stack direction="row" sx={{ gap: 0.5, alignItems: "center" }}>
         <Button
           variant="text"
           size="small"
@@ -308,7 +308,7 @@ const MyIndicatorsTable = ({ onStats }) => {
   };
 
   const metaChips = (item) => (
-    <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+    <Stack direction="row" sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}>
       <Chip
         size="small"
         variant="outlined"
@@ -322,7 +322,7 @@ const MyIndicatorsTable = ({ onStats }) => {
   );
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       {/* Control bar */}
       <Paper
         variant="outlined"
@@ -331,8 +331,7 @@ const MyIndicatorsTable = ({ onStats }) => {
         <Grid
           container
           spacing={2}
-          alignItems="center"
-          justifyContent="space-between"
+          sx={{ alignItems: "center", justifyContent: "space-between" }}
         >
           <Grid size={{ xs: 12, md: "auto" }}>
             <Button
@@ -347,8 +346,7 @@ const MyIndicatorsTable = ({ onStats }) => {
           <Grid size={{ xs: 12, md: "auto" }}>
             <Stack
               direction={{ xs: "column", sm: "row" }}
-              gap={1.5}
-              alignItems={{ xs: "stretch", sm: "center" }}
+              sx={{ gap: 1.5, alignItems: { xs: "stretch", sm: "center" } }}
             >
               <TextField
                 size="small"
@@ -356,12 +354,14 @@ const MyIndicatorsTable = ({ onStats }) => {
                 placeholder="Search by name"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
               <ToggleButtonGroup
@@ -411,7 +411,7 @@ const MyIndicatorsTable = ({ onStats }) => {
 
       {/* List view */}
       {!isEmpty && view === "list" && (
-        <Stack gap={1}>
+        <Stack sx={{ gap: 1 }}>
           {filtered.map((item) => (
             <Paper
               key={item.id}
@@ -421,10 +421,10 @@ const MyIndicatorsTable = ({ onStats }) => {
                 overflow: "hidden",
               })}
             >
-              <Grid container alignItems="center">
+              <Grid container sx={{ alignItems: "center" }}>
                 <Grid size="grow">
                   <Box sx={{ p: 1.5 }}>
-                    <Typography fontWeight={600}>
+                    <Typography sx={{ fontWeight: 600 }}>
                       {toSentenceCase(item.indicatorName)}
                     </Typography>
                     <Box sx={{ mt: 0.5 }}>{metaChips(item)}</Box>
@@ -477,14 +477,12 @@ const MyIndicatorsTable = ({ onStats }) => {
                     />
                   </Box>
                   <CardContent>
-                    <Typography fontWeight={600} noWrap gutterBottom>
+                    <Typography sx={{ fontWeight: 600 }} noWrap gutterBottom>
                       {toSentenceCase(item.indicatorName)}
                     </Typography>
                     <Stack
                       direction="row"
-                      gap={1}
-                      alignItems="center"
-                      flexWrap="wrap"
+                      sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}
                     >
                       <Chip
                         size="small"

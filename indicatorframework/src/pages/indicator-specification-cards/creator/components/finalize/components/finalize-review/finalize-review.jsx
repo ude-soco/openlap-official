@@ -18,7 +18,7 @@ import { getFinalizeReadiness } from "../../utils/finalize-readiness.js";
 // One labelled field. Long values wrap and are clamped to a few lines so the
 // review never becomes huge.
 const Field = ({ label, value, clamp }) => (
-  <Stack gap={0.25}>
+  <Stack sx={{ gap: 0.25 }}>
     <Typography variant="caption" color="text.secondary">
       {label}
     </Typography>
@@ -54,7 +54,7 @@ const GroupHeading = ({ children }) => (
 GroupHeading.propTypes = { children: PropTypes.node };
 
 const CheckRow = ({ ok, children }) => (
-  <Stack direction="row" gap={1} alignItems="flex-start">
+  <Stack direction="row" sx={{ gap: 1, alignItems: "flex-start" }}>
     {ok ? (
       <CheckCircleRoundedIcon
         fontSize="small"
@@ -94,7 +94,7 @@ const FinalizeReview = () => {
   });
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       {/* Indicator summary — grouped and scannable */}
       <Paper
         variant="outlined"
@@ -105,14 +105,14 @@ const FinalizeReview = () => {
         <Typography
           variant="subtitle1"
           component="h3"
-          fontWeight={600}
+          sx={{ fontWeight: 600 }}
           gutterBottom
         >
           Indicator summary
         </Typography>
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 6 }}>
-            <Stack gap={1.5}>
+            <Stack sx={{ gap: 1.5 }}>
               <GroupHeading>What this indicator measures</GroupHeading>
               <Field label="Indicator name" value={indicatorName} />
               <Field label="Goal" value={goal} clamp />
@@ -120,7 +120,7 @@ const FinalizeReview = () => {
             </Stack>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <Stack gap={1.5}>
+            <Stack sx={{ gap: 1.5 }}>
               <GroupHeading>Prototype setup</GroupHeading>
               <Field label="Starting point" value={selectedPath} />
               <Field label="Visualization" value={chartType} />
@@ -145,7 +145,7 @@ const FinalizeReview = () => {
         <Typography
           variant="subtitle1"
           component="h3"
-          fontWeight={600}
+          sx={{ fontWeight: 600 }}
           gutterBottom
         >
           Readiness check
@@ -161,9 +161,9 @@ const FinalizeReview = () => {
               backgroundColor: alpha(t.palette.success.main, 0.08),
             })}
           >
-            <Stack direction="row" gap={1} alignItems="center">
+            <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
               <CheckCircleRoundedIcon fontSize="small" color="success" />
-              <Typography variant="body2" fontWeight={600}>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
                 You&apos;re ready to save this indicator.
               </Typography>
             </Stack>
@@ -173,7 +173,7 @@ const FinalizeReview = () => {
         <Grid container spacing={2}>
           {groups.map((group) => (
             <Grid key={group.key} size={{ xs: 12, sm: 4 }}>
-              <Stack gap={0.75}>
+              <Stack sx={{ gap: 0.75 }}>
                 <GroupHeading>{group.title}</GroupHeading>
                 {group.checks.map((check, i) => (
                   <CheckRow key={i} ok={check.ok}>

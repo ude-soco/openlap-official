@@ -59,7 +59,7 @@ const Finalize = () => {
             >
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12 }}>
-                  <Stack gap={0.5} sx={{ mb: 1 }}>
+                  <Stack sx={{ gap: 0.5, mb: 1 }}>
                     <Typography variant="h6" component="h3">
                       Finalize your indicator
                     </Typography>
@@ -80,7 +80,7 @@ const Finalize = () => {
                   <Typography
                     variant="subtitle1"
                     component="h3"
-                    fontWeight={600}
+                    sx={{ fontWeight: 600 }}
                     gutterBottom
                   >
                     Preview and customize
@@ -95,7 +95,7 @@ const Finalize = () => {
                   <Divider />
                 </Grid>
                 <Grid size={{ xs: 12 }}>
-                  <Grid container justifyContent="center">
+                  <Grid container sx={{ justifyContent: "center" }}>
                     <Grid size={{ xs: 12, sm: 6 }}>
                       <Button
                         fullWidth

@@ -49,7 +49,7 @@ export default function Teams() {
 
       {/* Lead researchers — prominent profile cards */}
       <Reveal sx={{ width: "100%" }}>
-        <Grid container spacing={3} justifyContent="center">
+        <Grid container spacing={3} sx={{ justifyContent: "center" }}>
           {memberItems.map((item) => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
               <Card sx={{ height: "100%" }}>
@@ -114,10 +114,10 @@ export default function Teams() {
 
       {/* Wider team — refined avatar grid */}
       <Reveal sx={{ width: "100%" }} delay={80}>
-        <Grid container spacing={{ xs: 3, md: 4 }} justifyContent="center">
+        <Grid container spacing={{ xs: 3, md: 4 }} sx={{ justifyContent: "center" }}>
           {sortedPeople.map((item) => (
             <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={item.id}>
-              <Stack alignItems="center" spacing={1} sx={{ textAlign: "center" }}>
+              <Stack spacing={1} sx={{ alignItems: "center", textAlign: "center" }}>
                 <ProfileAvatar
                   image={item.image}
                   name={item.name}

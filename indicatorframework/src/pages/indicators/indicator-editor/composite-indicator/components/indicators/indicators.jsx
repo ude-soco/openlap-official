@@ -38,7 +38,7 @@ const Indicators = () => {
               timeout={{ enter: 500, exit: 250 }}
               unmountOnExit
             >
-              <Grid container spacing={2} justifyContent="center">
+              <Grid container spacing={2} sx={{ justifyContent: "center" }}>
                 <Grid size={{ xs: 12, xl: 10 }}>
                   <IndicatorSelection />
                 </Grid>
@@ -50,7 +50,7 @@ const Indicators = () => {
                   <Divider />
                 </Grid>
                 <Grid size={{ xs: 12, xl: 10 }}>
-                  <Grid container justifyContent="center">
+                  <Grid container sx={{ justifyContent: "center" }}>
                     <Grid size={{ xs: 12, sm: 6 }}>
                       <Button
                         fullWidth

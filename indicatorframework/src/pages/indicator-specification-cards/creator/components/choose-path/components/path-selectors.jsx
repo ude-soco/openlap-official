@@ -133,9 +133,9 @@ export default function PathSelectors() {
   const selectedMeta = PATH_META[requirements.selectedPath];
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       <Box>
-        <Typography variant="subtitle1" component="h3" fontWeight={600}>
+        <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
           How would you like to start?
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -170,11 +170,10 @@ export default function PathSelectors() {
                   aria-label={`${option.title}. ${meta.explanation} Recommended when ${meta.recommendedWhen}`}
                   sx={{ p: 2, height: "100%", alignItems: "stretch" }}
                 >
-                  <Stack gap={1} sx={{ height: "100%" }}>
+                  <Stack sx={{ gap: 1, height: "100%" }}>
                     <Stack
                       direction="row"
-                      justifyContent="space-between"
-                      alignItems="flex-start"
+                      sx={{ justifyContent: "space-between", alignItems: "flex-start" }}
                     >
                       <Box
                         aria-hidden
@@ -196,7 +195,7 @@ export default function PathSelectors() {
                       </Box>
                       {selected && <CheckCircleIcon color="primary" />}
                     </Stack>
-                    <Typography variant="subtitle1" fontWeight={600}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                       {option.title}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">

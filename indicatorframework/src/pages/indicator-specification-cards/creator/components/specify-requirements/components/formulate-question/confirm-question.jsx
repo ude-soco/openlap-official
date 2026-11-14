@@ -19,10 +19,8 @@ export default function ConfirmQuestion() {
     <Grid container spacing={2}>
       <Grid size="auto">
         <Grid
-          direction="column"
           container
-          alignItems="center"
-          sx={{ height: "100%" }}
+          sx={{ alignItems: "center", flexDirection: "column", height: "100%" }}
           spacing={1}
         >
           <Avatar sx={{ bgcolor: "primary.main" }}>
@@ -36,8 +34,8 @@ export default function ConfirmQuestion() {
         </Grid>
       </Grid>
       <Grid size="grow" sx={{ pb: 2 }}>
-        <Grid container direction="column" spacing={1}>
-          <Grid container justifyContent="space-between" alignItems="center">
+        <Grid container sx={{ flexDirection: "column" }} spacing={1}>
+          <Grid container sx={{ justifyContent: "space-between", alignItems: "center" }}>
             <Typography>Your Question</Typography>
             <IconButton color="primary" onClick={handleToggleQuestionEdit}>
               <EditIcon />

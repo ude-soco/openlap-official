@@ -17,7 +17,7 @@ assert.equal(base.protocol, "http:");
 assert.ok(["127.0.0.1", "localhost", "[::1]"].includes(base.hostname));
 assert.equal(base.username + base.password + base.search + base.hash, "");
 const apexPath = process.env.OPENLAP_TEST_APEX_JS || path.resolve(__dirname, "../node_modules/apexcharts/dist/apexcharts.min.js");
-const apexUrl = "https://cdn.jsdelivr.net/npm/apexcharts";
+const apexUrl = "https://cdn.jsdelivr.net/npm/apexcharts@8.8.1/dist/apexcharts.min.js";
 const inertAssets = new Set([
   "https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.18/c3.min.css",
   "https://d3js.org/d3.v5.min.js",
@@ -104,11 +104,26 @@ async function openFromDashboard(page, name) {
 }
 
 (async () => {
+  // Saved charts use the global CDN build, while the ISC creator uses npm.
+  // Keep every HTML entry point on the version that this regression exercises.
+  for (const relative of ["../index.html", "../../analyticsframework/src/main/resources/templates/indicator.html",
+    "../../analyticsframework/src/main/resources/templates/question.html"]) {
+    const html = await fs.readFile(path.resolve(__dirname, relative), "utf8");
+    const sources = [...html.matchAll(/<script\b[^>]*\bsrc=["']([^"']*apexcharts[^"']*)["']/g)].map((match) => match[1]);
+    assert.deepEqual(sources, [apexUrl], relative + " must pin the qualified Apex CDN version");
+  }
+  if (!process.env.OPENLAP_TEST_APEX_JS) {
+    const pkg = JSON.parse(await fs.readFile(path.resolve(__dirname, "../node_modules/apexcharts/package.json"), "utf8"));
+    assert.equal(apexUrl, "https://cdn.jsdelivr.net/npm/apexcharts@" + pkg.version + "/dist/apexcharts.min.js",
+      "Global saved previews and npm-rendered ISC charts must use the same qualified version");
+  }
   const apex = await fs.readFile(apexPath);
   assert.ok(apex.length > 100000 && apex.includes(Buffer.from("ApexCharts")), "A real local ApexCharts distribution is required");
   const browser = await webkit.launch({ headless: true,
     ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}) });
   const context = await browser.newContext({ viewport: { width: 1280, height: 1100 } });
+  // Development HMR must not replace modules during saved-chart navigation.
+  await context.routeWebSocket(/.*/, (socket) => socket.close());
   const failures = [], pageErrors = [], requests = [];
   let apexLoads = 0, helperOverrides = 0;
   try {
@@ -165,6 +180,12 @@ async function openFromDashboard(page, name) {
       console.log("PASS: old helper reproduces blank decimal saved Bar with SyntaxError; integer control renders 10/2 and both labels");
     } else {
       await assertVisibleChart(page, "bar");
+      const originalWidth = await page.locator("#chart svg.apexcharts-svg").evaluate((svg) => Number(svg.getAttribute("width")));
+      await page.setViewportSize({ width: 1000, height: 1100 });
+      await page.waitForFunction((originalWidth) => Number(document.querySelector("#chart svg.apexcharts-svg")?.getAttribute("width")) < originalWidth - 100, originalWidth);
+      await assertVisibleChart(page, "bar");
+      await page.setViewportSize({ width: 1280, height: 1100 });
+      await page.waitForFunction((originalWidth) => Math.abs(Number(document.querySelector("#chart svg.apexcharts-svg")?.getAttribute("width")) - originalWidth) <= 2, originalWidth);
       await openFromDashboard(page, "Saved integer bar");
       await assertVisibleChart(page, "bar");
       await openFromDashboard(page, "Saved decimal pie");
@@ -173,11 +194,15 @@ async function openFromDashboard(page, name) {
         breakpoint: options.responsive[0].options.chart.width }));
       assert.equal(widths.fixed, undefined, "Remove only fixed chart width");
       assert.equal(widths.breakpoint, 200, "Preserve Pie responsive breakpoint width");
+      await page.setViewportSize({ width: 450, height: 1100 });
+      await page.waitForFunction(() => Number(document.querySelector("#chart svg.apexcharts-svg")?.getAttribute("width")) === 200);
+      await assertVisibleChart(page, "pie");
+      await page.setViewportSize({ width: 1280, height: 1100 });
       await openFromDashboard(page, "Saved decimal bar");
       await assertVisibleChart(page, "bar");
       assert.deepEqual(pageErrors.map((error) => error.message), [], "Saved chart navigation must not throw browser errors");
       assert.equal(helperOverrides, 0);
-      console.log("PASS: saved decimal and integer Bar render synthetic10/2 with both labels; Pie renders, preserves breakpoint width200; saved Bar remount renders again");
+      console.log("PASS: saved decimal/integer Bar render 10/2 and resize without blanking; Pie renders and applies its 200px breakpoint; saved Bar remount renders again");
     }
     assert.equal(apexLoads, 1, "Apex dependency is supplied from local npm exactly once");
     assert.ok(requests.includes("v1/indicators/fixture-id"), "The real saved-indicator API path is exercised");

@@ -123,7 +123,7 @@ export const SelectedIndicatorsTable = () => {
                     }}
                   >
                     <TableCell>
-                      <Grid container justifyContent="space-between">
+                      <Grid container sx={{ justifyContent: "space-between" }}>
                         <Grid size="grow">
                           <Typography component="span">
                             <b>{toSentenceCase(indicator.name)}</b>
@@ -209,7 +209,7 @@ export const SelectedIndicatorsTable = () => {
                 <Skeleton variant="rectangular" height={200} width="100%" />
               ) : (
                 <>
-                  <Grid container direction="column" spacing={0}>
+                  <Grid container sx={{ flexDirection: "column" }} spacing={0}>
                     <Typography variant="h6">
                       {
                         indicator.myIndicators.previewModal.previewIndicator

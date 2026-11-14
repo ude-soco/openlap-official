@@ -153,8 +153,7 @@ const AuthenticatedContent = () => {
         <Stack
           component={Paper}
           elevation={0}
-          gap={1}
-          sx={{
+          sx={{ gap: 1,
             p: { xs: 2, md: 3 },
             borderRadius: (t) => `${t.custom.radii.card}px`,
             border: (t) => `1px solid ${t.palette.divider}`,
@@ -218,7 +217,7 @@ const AppRoutes = () => {
                   <NavigationGuardProvider>
                     <AppShell>
                       <AuthenticatedContent />
-                      <Stack gap={2} sx={{ pt: 4 }}>
+                      <Stack sx={{ gap: 2, pt: 4 }}>
                         <Divider />
                         <Footer />
                       </Stack>

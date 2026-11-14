@@ -36,19 +36,21 @@ export default function TipPopover({
           vertical: "bottom",
           horizontal: "left",
         }}
-        PaperProps={{
-          sx: {
-            backgroundColor: "primary.main",
-            color: "primary.contrastText",
-            position: "absolute",
-            p: 1,
+        slotProps={{
+          paper: {
+            sx: {
+              backgroundColor: "primary.main",
+              color: "primary.contrastText",
+              position: "absolute",
+              p: 1,
+            },
           },
         }}
       >
         <Box sx={{ p: 2, maxWidth: 380 }}>
           <Typography dangerouslySetInnerHTML={{ __html: description }} />
         </Box>
-        <Grid container justifyContent="flex-end">
+        <Grid container sx={{ justifyContent: "flex-end" }}>
           <Button
             size="small"
             onClick={() => toggleTipAnchor(null)}

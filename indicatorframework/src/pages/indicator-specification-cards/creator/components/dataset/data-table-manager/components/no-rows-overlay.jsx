@@ -5,9 +5,7 @@ const NoRowsOverlay = () => {
     <>
       <Grid
         container
-        justifyContent="center"
-        alignItems="center"
-        sx={{ height: "100%" }}
+        sx={{ justifyContent: "center", alignItems: "center", height: "100%" }}
       >
         <Grid size="auto">
           <Typography align="center">

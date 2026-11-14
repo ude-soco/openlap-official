@@ -46,14 +46,12 @@ const OptionCard = ({ title, badge, description, bestFor, action }) => (
         }),
       })}
     >
-      <Stack gap={1} sx={{ flexGrow: 1 }}>
+      <Stack sx={{ gap: 1, flexGrow: 1 }}>
         <Stack
           direction="row"
-          gap={1}
-          alignItems="center"
-          justifyContent="space-between"
+          sx={{ gap: 1, alignItems: "center", justifyContent: "space-between" }}
         >
-          <Typography variant="subtitle1" component="h4" fontWeight={600}>
+          <Typography variant="subtitle1" component="h4" sx={{ fontWeight: 600 }}>
             {title}
           </Typography>
           {badge && (
@@ -87,7 +85,7 @@ const ExampleDatasetOnboarding = ({ columns, onGenerate, onStartEmpty }) => {
 
   return (
     <Box component="section" aria-label="Build your first dataset">
-      <Stack gap={0.5} sx={{ mb: 2 }}>
+      <Stack sx={{ gap: 0.5, mb: 2 }}>
         <Typography variant="h6" component="h3">
           Build your first dataset
         </Typography>
@@ -96,7 +94,7 @@ const ExampleDatasetOnboarding = ({ columns, onGenerate, onStartEmpty }) => {
         </Typography>
       </Stack>
 
-      <Grid container spacing={2} alignItems="stretch">
+      <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
         <OptionCard
           title="Generate an example dataset"
           badge="Recommended"

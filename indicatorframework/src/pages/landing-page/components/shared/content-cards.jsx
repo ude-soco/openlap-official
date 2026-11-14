@@ -28,7 +28,7 @@ export function NewsCard({ item, featured = false, expanded = false }) {
     <Card sx={{ height: "100%" }}>
       <CardContent sx={{ p: featured ? { xs: 3, md: 4 } : 3 }}>
         <Stack spacing={featured ? 1.5 : 1}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             {featured && (
               <Chip
                 label="Latest"
@@ -102,7 +102,7 @@ export function PublicationCard({ item }) {
     >
       <CardContent sx={{ p: { xs: 3, md: 3.5 }, flexGrow: 1 }}>
         <Stack spacing={2}>
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             <Chip
               label={item.type || "Publication type"}
               size="small"

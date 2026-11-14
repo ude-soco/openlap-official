@@ -15,7 +15,7 @@ import {
 import { alpha } from "@mui/material/styles";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 
 // A single decision presented as a calm, bordered card. It is a real <button>
 // (ButtonBase) so keyboard nav, focus trap and screen-reader semantics are
@@ -93,11 +93,11 @@ const DecisionCard = ({
     >
       {icon}
     </Box>
-    <Stack gap={0.25} sx={{ flexGrow: 1, minWidth: 0 }}>
-      <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
+    <Stack sx={{ gap: 0.25, flexGrow: 1, minWidth: 0 }}>
+      <Stack direction="row" sx={{ alignItems: "center", gap: 1, flexWrap: "wrap" }}>
         <Typography
           variant="subtitle2"
-          fontWeight={600}
+          sx={{ fontWeight: 600 }}
           color={tone === "destructive" ? "error.main" : "text.primary"}
         >
           {title}
@@ -151,7 +151,7 @@ const LeaveEditDialog = ({
         You have unpublished changes for this ISC. Choose what should happen
         before leaving.
       </DialogContentText>
-      <Stack gap={2}>
+      <Stack sx={{ gap: 2 }}>
         <DecisionCard
           tone="neutral"
           icon={<SaveOutlinedIcon />}

@@ -158,17 +158,26 @@ const GoalList = () => {
                 state.goalList.length > 0 ? "Find or create a goal" : undefined
               }
               label={state.message}
-              InputProps={{
-                ...params.InputProps,
-                startAdornment:
-                  requirements.goalType || params.inputProps.value ? (
-                    <>
-                      <SearchIcon sx={{ mr: 1, color: "action.active" }} />
-                      {params.InputProps.startAdornment}
-                    </>
-                  ) : (
-                    params.InputProps.startAdornment
-                  ),
+              slotProps={{
+                ...params.slotProps,
+                input: {
+                  ...params.slotProps.input,
+                  startAdornment:
+                    requirements.goalType ||
+                    params.slotProps.htmlInput.value ? (
+                      <>
+                        <SearchIcon
+                          sx={{
+                            mr: 1,
+                            color: "action.active",
+                          }}
+                        />
+                        {params.slotProps.input.startAdornment}
+                      </>
+                    ) : (
+                      params.slotProps.input.startAdornment
+                    ),
+                },
               }}
             />
           )}
@@ -180,7 +189,7 @@ const GoalList = () => {
             const { key, ...restProps } = props;
             return (
               <li key={key} {...restProps}>
-                <Grid container alignItems="center">
+                <Grid container sx={{ alignItems: "center" }}>
                   <Tooltip
                     arrow
                     title={

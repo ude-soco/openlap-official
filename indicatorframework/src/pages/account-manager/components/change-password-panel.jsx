@@ -118,12 +118,10 @@ const ChangePasswordPanel = () => {
             error={Boolean(errors.currentPassword)}
             helperText={errors.currentPassword || " "}
             disabled={saving}
-            slotProps={visibilityAdornment(showCurrent, () =>
-              setShowCurrent((s) => !s)
-            )}
+            slotProps={visibilityAdornment(showCurrent, () => setShowCurrent(s => !s))}
           />
 
-          <Stack gap={1}>
+          <Stack sx={{ gap: 1 }}>
             <TextField
               fullWidth
               name="newPassword"
@@ -140,7 +138,7 @@ const ChangePasswordPanel = () => {
             <PasswordChecklist password={form.newPassword} />
           </Stack>
 
-          <Stack gap={0.75}>
+          <Stack sx={{ gap: 0.75 }}>
             <TextField
               fullWidth
               name="confirmNewPassword"
@@ -152,12 +150,10 @@ const ChangePasswordPanel = () => {
               error={Boolean(errors.confirmNewPassword)}
               helperText={errors.confirmNewPassword || " "}
               disabled={saving}
-              slotProps={visibilityAdornment(showConfirm, () =>
-                setShowConfirm((s) => !s)
-              )}
+              slotProps={visibilityAdornment(showConfirm, () => setShowConfirm(s => !s))}
             />
             {showMatchFeedback && (
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 {passwordsMatch ? (
                   <>
                     <CheckCircleRounded sx={{ fontSize: 18, color: "success.main" }} />

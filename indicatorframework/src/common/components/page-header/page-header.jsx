@@ -37,9 +37,7 @@ const PageHeader = ({ title, breadcrumbs = [], subtitle = null, actions = null }
     )}
     <Stack
       direction={{ xs: "column", sm: "row" }}
-      justifyContent="space-between"
-      alignItems={{ xs: "flex-start", sm: "center" }}
-      gap={2}
+      sx={{ justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, gap: 2 }}
     >
       <Box>
         <Typography variant="h5" component="h1">

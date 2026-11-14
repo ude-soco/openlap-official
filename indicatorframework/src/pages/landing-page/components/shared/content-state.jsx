@@ -5,8 +5,7 @@ export default function ContentState({ status, kind, onRetry, dark = false }) {
   if (status === "loading")
     return (
       <Stack
-        gap={2}
-        sx={{ width: "100%" }}
+        sx={{ gap: 2, width: "100%" }}
         role="status"
         aria-label={`Loading ${kind}`}
       >

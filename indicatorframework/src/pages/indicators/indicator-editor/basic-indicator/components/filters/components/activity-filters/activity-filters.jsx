@@ -8,7 +8,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import { BasicContext } from "../../../../basic-indicator";
@@ -136,14 +136,12 @@ export default function ActivityFilters() {
                   borderRadius: `${theme.custom.radii.card}px`,
                 })}
               >
-                <Stack gap={2}>
+                <Stack sx={{ gap: 2 }}>
                   <Stack
                     direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    gap={1}
+                    sx={{ justifyContent: "space-between", alignItems: "center", gap: 1 }}
                   >
-                    <Typography fontWeight={600}>
+                    <Typography sx={{ fontWeight: 600 }}>
                       Activity filter {index + 1}
                     </Typography>
                     <Tooltip arrow title="Remove this filter">
@@ -157,7 +155,7 @@ export default function ActivityFilters() {
                       </IconButton>
                     </Tooltip>
                   </Stack>
-                  <Stack gap={3}>
+                  <Stack sx={{ gap: 3 }}>
                     <ActivityTypeSelection activity={activity} />
                     <ActionSelection activity={activity} index={index} />
                     <ActivitySelection activity={activity} />

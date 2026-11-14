@@ -88,7 +88,7 @@ const IscDashboard = () => {
       : "You have a local recovery draft";
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       <Breadcrumbs>
         <Link component={RouterLink} underline="hover" color="inherit" to="/">
           Home
@@ -96,8 +96,8 @@ const IscDashboard = () => {
         <Typography sx={{ color: "text.primary" }}>My ISCs</Typography>
       </Breadcrumbs>
 
-      <Stack gap={0.5}>
-        <Typography variant="h5" component="h1" fontWeight={600}>
+      <Stack sx={{ gap: 0.5 }}>
+        <Typography variant="h5" component="h1" sx={{ fontWeight: 600 }}>
           My ISCs
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -106,7 +106,7 @@ const IscDashboard = () => {
       </Stack>
 
       {/* Compact summary row — real data only */}
-      <Stack direction="row" gap={1} flexWrap="wrap" alignItems="center">
+      <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap", alignItems: "center" }}>
         <Chip
           icon={<InsightsOutlinedIcon />}
           variant="outlined"
@@ -144,20 +144,18 @@ const IscDashboard = () => {
         >
           <Stack
             direction={{ xs: "column", sm: "row" }}
-            gap={2}
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            justifyContent="space-between"
+            sx={{ gap: 2, alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between" }}
           >
-            <Stack direction="row" gap={1.5} alignItems="center">
+            <Stack direction="row" sx={{ gap: 1.5, alignItems: "center" }}>
               <HistoryEduOutlinedIcon color="info" />
               <Box>
-                <Typography fontWeight={600}>{draftTitle}</Typography>
+                <Typography sx={{ fontWeight: 600 }}>{draftTitle}</Typography>
                 <Typography variant="body2" color="text.secondary">
                   Continue where you left off, or discard it to start fresh.
                 </Typography>
               </Box>
             </Stack>
-            <Stack direction="row" gap={1} sx={{ flexShrink: 0 }}>
+            <Stack direction="row" sx={{ gap: 1, flexShrink: 0 }}>
               <Button variant="outlined" onClick={handleDiscard}>
                 Discard
               </Button>

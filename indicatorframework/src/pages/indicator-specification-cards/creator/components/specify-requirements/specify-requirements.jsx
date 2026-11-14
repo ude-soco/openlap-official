@@ -60,7 +60,7 @@ const SpecifyRequirements = () => {
   return (
     <>
       <WorkflowSection status={status} ariaLabel="Step 1: Specify requirements">
-        <Stack gap={1}>
+        <Stack sx={{ gap: 1 }}>
           <RequirementSummary />
           <Collapse
             in={lockedStep.requirements.openPanel}
@@ -69,10 +69,8 @@ const SpecifyRequirements = () => {
           >
             <Grid
               container
-              direction="column"
               spacing={1}
-              alignItems="center"
-              sx={{ pt: 2 }}
+              sx={{ alignItems: "center", flexDirection: "column", pt: 2 }}
             >
               <Grid size={{ xs: 12, md: 8 }}>
                 <Typography variant="body2" color="text.secondary">
@@ -100,10 +98,10 @@ const SpecifyRequirements = () => {
               )}
             </Grid>
             {requirements.show.indicatorName && lockedStep.path.locked && (
-              <Grid container spacing={2} direction="column">
+              <Grid container spacing={2} sx={{ flexDirection: "column" }}>
                 <Divider />
                 {missingRequirements.length > 0 && (
-                  <Grid container justifyContent="center">
+                  <Grid container sx={{ justifyContent: "center" }}>
                     <Grid size={{ xs: 12, md: 6 }}>
                       <Alert severity="info" variant="outlined">
                         To continue, please provide:{" "}
@@ -112,7 +110,7 @@ const SpecifyRequirements = () => {
                     </Grid>
                   </Grid>
                 )}
-                <Grid container justifyContent="center">
+                <Grid container sx={{ justifyContent: "center" }}>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Button
                       fullWidth
