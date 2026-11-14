@@ -367,14 +367,36 @@ let failMethodContract = true;
       }
       if (path === "v1/indicators/my")
         return send({
-          content: saved.map((item, index) => ({
-            id: "saved-" + index,
-            name: item.name,
-            indicatorName: item.name,
-            type: item.indicatorType,
-          })),
-          totalElements: saved.length,
+          content: [
+            ...saved.map((item, index) => ({
+              id: "saved-" + index,
+              name: item.name,
+              indicatorName: item.name,
+              type: item.indicatorType,
+            })),
+            { id: "access", indicatorName: "Access count", type: "BASIC" },
+          ],
+          totalElements: saved.length + 1,
           pageable: { pageSize: 10, pageNumber: 0 },
+        });
+      if (path === "v1/indicators/access/delete")
+        return route.fulfill({
+          status: 409,
+          contentType: "application/json",
+          body: JSON.stringify({
+            code: "INDICATOR_IN_USE",
+            message:
+              "This indicator is used by a complex indicator. Remove or replace that source first.",
+            details: {
+              count: 1,
+              usedBy: [
+                {
+                  id: "saved-0",
+                  name: "Composite fixture <strong>literal</strong>",
+                },
+              ],
+            },
+          }),
         });
       if (path === "v1/indicators/saved-0")
         return send({
@@ -610,11 +632,57 @@ let failMethodContract = true;
       0,
       "Confirmed reset clears this tab's configuration",
     );
+    await page.goto(new URL("/indicator", base).href);
+    const openBlockedDeletion = async () => {
+      await button("More actions for Access count").click();
+      await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
+      await page
+        .getByRole("dialog", { name: "Are you sure?", exact: true })
+        .getByRole("button", { name: "Confirm delete", exact: true })
+        .click();
+      await page
+        .getByRole("dialog", { name: "Cannot delete indicator", exact: true })
+        .waitFor();
+    };
+    await openBlockedDeletion();
+    let blocked = page.getByRole("dialog", {
+      name: "Cannot delete indicator",
+      exact: true,
+    });
+    await blocked
+      .getByText("Composite fixture <strong>literal</strong>", { exact: true })
+      .waitFor();
+    assert.equal(
+      await blocked.locator("strong").count(),
+      0,
+      "Dependency names render as safe text",
+    );
+    await blocked.getByRole("button", { name: "Close", exact: true }).click();
+    await blocked.waitFor({ state: "hidden" });
+    await button("More actions for Access count").waitFor();
+    assert.equal(
+      await button("More actions for Access count").count(),
+      1,
+      "Blocked source remains available",
+    );
+    await openBlockedDeletion();
+    blocked = page.getByRole("dialog", {
+      name: "Cannot delete indicator",
+      exact: true,
+    });
+    await blocked
+      .getByRole("button", {
+        name: "Preview dependent indicator Composite fixture <strong>literal</strong>",
+        exact: true,
+      })
+      .click();
+    await page.waitForURL("**/indicator/saved-0");
+    await page.getByRole("region", { name: "Dataset", exact: true }).waitFor();
     assert.deepEqual(pageErrors, []);
     assert.deepEqual(failures, []);
     assert.ok(requests.includes("v1/indicators/saved-0/result"));
     console.log(
-      "PASS: Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; new/edit tab recovery, confirmed reset, metadata retry, undo, mobile containment; no browser errors.",
+      "PASS: Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; new/edit tab recovery, confirmed reset, metadata retry, undo, mobile containment; blocked source deletion retains source and safely links its dependents; no browser errors.",
     );
   } finally {
     await context.close();

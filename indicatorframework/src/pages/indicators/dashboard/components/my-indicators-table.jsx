@@ -7,6 +7,11 @@ import {
   CardActionArea,
   CardContent,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   Grid,
   IconButton,
@@ -103,6 +108,7 @@ const MyIndicatorsTable = ({ onStats }) => {
   const [view, setView] = useState("list");
   const [menu, setMenu] = useState({ anchorEl: null, item: null });
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [blockedDeletion, setBlockedDeletion] = useState(null);
 
   const loadMyIndicatorList = async () => {
     setLoading(true);
@@ -133,8 +139,8 @@ const MyIndicatorsTable = ({ onStats }) => {
     const term = searchTerm.toLowerCase();
     setFiltered(
       indicatorList.filter((i) =>
-        (i.indicatorName || "").toLowerCase().includes(term)
-      )
+        (i.indicatorName || "").toLowerCase().includes(term),
+      ),
     );
   }, [searchTerm, indicatorList]);
 
@@ -161,7 +167,7 @@ const MyIndicatorsTable = ({ onStats }) => {
         JSON.stringify({
           ...configuration,
           indicator: { ...configuration.indicator, id: item.id },
-        })
+        }),
       );
       const baseRoute = EDIT_ROUTES[indicator.type];
       navigate(`${baseRoute}/${item.id}`);
@@ -184,7 +190,7 @@ const MyIndicatorsTable = ({ onStats }) => {
     } catch (error) {
       enqueueSnackbar(
         error?.response?.data?.message || "Could not copy the embed code.",
-        { variant: "error" }
+        { variant: "error" },
       );
     } finally {
       setBusyId(undefined);
@@ -216,9 +222,24 @@ const MyIndicatorsTable = ({ onStats }) => {
       setIndicatorList((prev) => prev.filter((i) => i.id !== item.id));
       enqueueSnackbar(response.message, { variant: "success" });
     } catch (error) {
-      enqueueSnackbar(error?.message || "Could not delete this indicator.", {
-        variant: "error",
-      });
+      if (error?.code === "INDICATOR_IN_USE") {
+        setBlockedDeletion({
+          sourceName: item.indicatorName,
+          message: error.message,
+          count: error.details?.count,
+          usedBy: Array.isArray(error.details?.usedBy)
+            ? error.details.usedBy.filter(
+                (parent) =>
+                  typeof parent?.id === "string" &&
+                  typeof parent?.name === "string",
+              )
+            : [],
+        });
+      } else {
+        enqueueSnackbar(error?.message || "Could not delete this indicator.", {
+          variant: "error",
+        });
+      }
     } finally {
       setBusyId(undefined);
       setDeleteTarget(null);
@@ -229,7 +250,11 @@ const MyIndicatorsTable = ({ onStats }) => {
     setParams((p) => ({ ...p, page: newPage }));
 
   const handleRowsPerPageChange = (event) =>
-    setParams((p) => ({ ...p, size: parseInt(event.target.value, 10), page: 0 }));
+    setParams((p) => ({
+      ...p,
+      size: parseInt(event.target.value, 10),
+      page: 0,
+    }));
 
   const isSearching = searchTerm.trim().length > 0;
   const isEmpty = !loading && filtered.length === 0;
@@ -312,7 +337,10 @@ const MyIndicatorsTable = ({ onStats }) => {
   };
 
   const metaChips = (item) => (
-    <Stack direction="row" sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+    <Stack
+      direction="row"
+      sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}
+    >
       <Chip
         size="small"
         variant="outlined"
@@ -507,7 +535,9 @@ const MyIndicatorsTable = ({ onStats }) => {
                 <Box sx={{ mt: "auto" }}>
                   {busyId === item.id && <LinearProgress />}
                   <Divider />
-                  <Box sx={{ p: 1, display: "flex", justifyContent: "flex-end" }}>
+                  <Box
+                    sx={{ p: 1, display: "flex", justifyContent: "flex-end" }}
+                  >
                     {renderActions(item)}
                   </Box>
                 </Box>
@@ -559,6 +589,63 @@ const MyIndicatorsTable = ({ onStats }) => {
         toggleOpen={() => setDeleteTarget(null)}
         handler={handleDeleteIndicator}
       />
+      <Dialog
+        open={Boolean(blockedDeletion)}
+        onClose={() => setBlockedDeletion(null)}
+        aria-labelledby="indicator-in-use-title"
+        aria-describedby="indicator-in-use-description"
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle id="indicator-in-use-title">
+          Cannot delete indicator
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="indicator-in-use-description">
+            {blockedDeletion?.message ||
+              "This indicator is used by a complex indicator. Remove or replace that source first."}
+          </DialogContentText>
+          <Typography variant="body2" sx={{ mt: 2 }}>
+            {blockedDeletion?.sourceName} is still available in your dashboard.
+          </Typography>
+          {blockedDeletion?.usedBy.length > 0 && (
+            <Stack
+              component="ul"
+              sx={{ pl: 0, mt: 2, mb: 0, listStyle: "none", gap: 1 }}
+            >
+              {blockedDeletion.usedBy.map((parent) => (
+                <Box component="li" key={parent.id}>
+                  <Button
+                    startIcon={<VisibilityIcon />}
+                    aria-label={`Preview dependent indicator ${parent.name}`}
+                    sx={{
+                      justifyContent: "flex-start",
+                      textAlign: "left",
+                      textTransform: "none",
+                    }}
+                    onClick={() => {
+                      setBlockedDeletion(null);
+                      handlePreview(parent.id);
+                    }}
+                  >
+                    {parent.name}
+                  </Button>
+                </Box>
+              ))}
+            </Stack>
+          )}
+          {blockedDeletion?.count > blockedDeletion?.usedBy.length && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              Additional indicators also depend on this source.
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBlockedDeletion(null)} autoFocus>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 };
