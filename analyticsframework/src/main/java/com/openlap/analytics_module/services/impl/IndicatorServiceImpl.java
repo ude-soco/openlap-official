@@ -309,6 +309,10 @@ public class IndicatorServiceImpl implements IndicatorService {
     Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
     Indicator indicator = new Indicator();
     User createdBy = tokenService.getUserFromToken(request);
+    if (foundIndicator.getCreatedBy() == null
+        || !createdBy.getId().equals(foundIndicator.getCreatedBy().getId())) {
+      throw new IndicatorManipulationNotAllowed("You can copy only your own indicators. Use the pool duplication workflow for shared indicators.");
+    }
     String indicatorName =
         indicatorUtilityService.fetchUserIndicatorForCopyMethod(
             createdBy.getId(), foundIndicator.getName());
@@ -320,7 +324,7 @@ public class IndicatorServiceImpl implements IndicatorService {
     indicator.setCreatedOn(LocalDateTime.now());
     indicator.setTimesExecuted(0);
     indicator.setIndicatorQuery(foundIndicator.getIndicatorQuery());
-    indicator.setConfigurationRequest(foundIndicator.getConfigurationRequest());
+    indicator.setConfigurationRequest(copyConfiguration(foundIndicator, indicatorName));
     try {
       switch (foundIndicator.getIndicatorType()) {
         case BASIC:
@@ -342,8 +346,23 @@ public class IndicatorServiceImpl implements IndicatorService {
       }
       indicatorRepository.save(indicator);
       log.info("Copied a new indicator with name '{}'", indicator.getName());
+    } catch (com.openlap.infrastructure.exception.OpenLapException e) {
+      throw e;
     } catch (Exception e) {
       throw new DatabaseOperationException("Could not access database to copy indicator", e);
+    }
+  }
+
+  static String copyConfiguration(Indicator source, String name) {
+    String configuration = source.getConfigurationRequest();
+    if (source.getIndicatorType() == IndicatorType.BASIC || configuration == null) return configuration;
+    try {
+      var object = com.google.gson.JsonParser.parseString(configuration).getAsJsonObject();
+      object.addProperty("name", name);
+      return object.toString();
+    } catch (RuntimeException legacy) {
+      // The editor can reconstruct legacy configurations from authoritative saved details.
+      return configuration;
     }
   }
 
@@ -905,7 +924,8 @@ public class IndicatorServiceImpl implements IndicatorService {
   /** Source definitions and URI mode are part of a saved chart's identity. */
   static String indicatorFingerprint(Indicator indicator, Boolean uriCode) {
     Map<String, Object> identity = new LinkedHashMap<>();
-    identity.put("format", "complex-v1");
+    // Bump this when a renderer adapter changes the generated HTML contract.
+    identity.put("format", "indicator-render-v2");
     identity.put("encoded", uriCode);
     identity.put("indicator", definitionFingerprint(indicator));
     if (indicator.getIndicators() != null) {

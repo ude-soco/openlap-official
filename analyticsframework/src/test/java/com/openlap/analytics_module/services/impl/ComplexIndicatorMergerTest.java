@@ -87,6 +87,14 @@ class ComplexIndicatorMergerTest {
   }
 
   @Test
+  void duplicateSeriesLabelsCannotSilentlyCollapseTwoSourcesInTheChart() throws Exception {
+    var one = source("one", "Count", "items", List.of("a"), "count", List.of(1));
+    var two = source("two", "Count", "items", List.of("a"), "count", List.of(2));
+    assertThatThrownBy(() -> merger.merge(List.of(one, two), false))
+        .isInstanceOf(ValidationException.class).hasMessageContaining("different series labels");
+  }
+
+  @Test
   void numericKeysMatchWithoutTruncatingTheirValues() throws Exception {
     var first = numericKeySource("a", List.of(1, 2.5), List.of(3.5, 4.5));
     var second = numericKeySource("b", List.of(1.0, 3.25), List.of(5.5, 6.5));
