@@ -113,6 +113,16 @@ class SyntheticIndicatorExampleTests(unittest.TestCase):
 
 
 class SavedDemoApiContractTests(unittest.TestCase):
+    def test_scatter_qualification_rejects_the_last_point_per_cluster_bug(self):
+        expected = [(1, 11), (2, 12), (3, 21), (4, 22), (5, 31), (6, 32)]
+        good = [{"x": [1, 2], "y": [11, 12]}, {"x": [3, 4], "y": [21, 22]}, {"x": [5, 6], "y": [31, 32]}]
+        demo.assert_scatter_series(good, expected, 3, demo.PALETTE)
+        truncated = [{"x": [2], "y": [12]}, {"x": [4], "y": [22]}, {"x": [6], "y": [32]}]
+        with self.assertRaises(demo.DemoError):
+            demo.assert_scatter_series(truncated, expected, 3, demo.PALETTE)
+        with self.assertRaises(demo.DemoError):
+            demo.assert_scatter_series(good, expected, 3, ["#008ffb"])
+
     def test_duplicate_method_names_use_declared_contract_and_stable_id(self):
         class Api:
             def data(self, method, path):

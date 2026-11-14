@@ -176,6 +176,8 @@ and generated visualization code. It also checks JavaScript syntax and captures
 the C3 configuration in a bounded JavaScript context to verify quotes, backslashes,
 line separators and closing-script text survive as labels. This does not replace
 browser rendering checks.
+The scatter check also inspects the generated coordinates: all six analyzed
+points must remain plotted across three groups with distinct palette colors.
 If several installed K-means methods share a display name, it checks their
 declared inputs, outputs and parameters, selects the first compatible ID in
 sorted order, and records that choice in the private receipt.
