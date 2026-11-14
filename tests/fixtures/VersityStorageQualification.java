@@ -17,6 +17,8 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.ByteBuffer;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.time.Duration;
+import java.util.Properties;
+import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -47,9 +49,26 @@ public final class VersityStorageQualification {
   private static void rejected(Operation operation) throws Exception {
     boolean failed = false; try { operation.run(); } catch (Exception expected) { failed = true; } require(failed);
   }
+  private static void verifyPackagedSdk() throws Exception {
+    String expectedVersion = System.getProperty("openlap.fixture.expectedAwsSdkVersion");
+    require(expectedVersion != null && expectedVersion.matches("[0-9]+\\.[0-9]+\\.[0-9]+"));
+    Path expectedJar = Path.of("/opt/openlap-storage/lib/s3-" + expectedVersion + ".jar").toRealPath();
+    require(Files.isRegularFile(expectedJar));
+    Path loadedJar = Path.of(S3Client.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toRealPath();
+    require(loadedJar.equals(expectedJar));
+    try (JarFile archive = new JarFile(loadedJar.toFile())) {
+      var entry = archive.getJarEntry("META-INF/maven/software.amazon.awssdk/s3/pom.properties");
+      require(entry != null);
+      Properties metadata = new Properties();
+      try (InputStream input = archive.getInputStream(entry)) { metadata.load(input); }
+      require("software.amazon.awssdk".equals(metadata.getProperty("groupId"))
+          && "s3".equals(metadata.getProperty("artifactId"))
+          && expectedVersion.equals(metadata.getProperty("version")));
+    }
+  }
   public static void main(String[] args) {
     try {
-      require(Files.isRegularFile(Path.of("/opt/openlap-storage/lib/s3-2.57.11.jar")));
+      step = "packaged AWS SDK identity"; verifyPackagedSdk();
       if (args.length == 1 && args[0].equals("--fsync-error")) {
         step = "filesystem sync error propagation"; rejected(() -> VersityStorageApplication.sync(Path.of("/proc/self/status")));
         System.out.println("Filesystem failure fixture passed."); return;

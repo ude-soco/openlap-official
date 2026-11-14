@@ -1,6 +1,6 @@
 # OpenLAP Analytics Framework (Backend)
 
-Spring Boot 4.0 backend for the Open Learning Analytics Platform (OpenLAP).
+Spring Boot 4.1 backend for the Open Learning Analytics Platform (OpenLAP).
 It exposes a REST API (served under `/api`) backed by two MongoDB databases.
 
 - **Build tool:** Maven 3.10.0 (checksum-verified wrapper included — no global Maven needed)
@@ -9,12 +9,16 @@ It exposes a REST API (served under `/api`) backed by two MongoDB databases.
 - **Default port:** `8090` (context path `/api`)
 
 
-The backend uses Spring Boot 4.0's supported maintenance line and compiles to Java 17
+The backend uses Spring Boot 4.1's supported maintenance line and compiles to Java 17
 bytecode. Application, migration and storage containers use the same digest-pinned
 Maven 3.10.0 / Temurin 25 builder and Corretto 25.0.5 LTS runtime. Temurin 26 has
 [reached the end of support](https://adoptium.net/support/); Corretto 25 LTS receives
 [updates through 2032](https://aws.amazon.com/corretto/faqs/), while Corretto 27's
 feature-release support ends in April 2027.
+
+CI keeps the three backend image toolchains aligned with the Maven wrapper and
+the qualified Java 25 LTS line. Maven and Java 25 patch or digest updates remain
+eligible for review; a Java release change requires a deliberate policy update.
 
 Existing API and plugin JSON contracts use Boot's Jackson 2 compatibility module.
 HTTP and WebSocket converters explicitly prefer Jackson 2, and both Jackson families
@@ -329,7 +333,7 @@ service if needed, then run the explicit migration from this backend directory:
 docker compose -f compose.yaml -f compose.dev.yaml up -d mongo
 
 ./mvnw -q -DskipTests compile \
-  org.codehaus.mojo:exec-maven-plugin:3.5.0:java \
+  exec:java \
   -Dexec.mainClass=com.openlap.content.migration.ContentMigrationApplication
 ```
 
@@ -352,7 +356,7 @@ content editing disabled. Then recover its abandoned lock explicitly:
 
 ```bash
 ./mvnw -q -DskipTests compile \
-  org.codehaus.mojo:exec-maven-plugin:3.5.0:java \
+  exec:java \
   -Dexec.mainClass=com.openlap.content.migration.ContentMigrationApplication \
   -Dexec.args=--resume-abandoned
 ```

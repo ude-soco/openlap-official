@@ -5,7 +5,8 @@ must remain unmerged until manual review is complete.
 
 ## Setup
 
-Use Java 11 and the editor's supported Node version. From the repository root:
+Use Java 17 or newer (Java 25 LTS is qualified) and the editor's supported Node version.
+From the repository root:
 
 ```bash
 cd analyticsframework
@@ -14,7 +15,7 @@ docker compose -f compose.yaml -f compose.dev.yaml up -d mongo
 # Explicit, one-time import of the existing 7 news entries and 9 publications.
 # Safe to repeat after completion; it will not overwrite subsequent edits.
 ./mvnw -q -DskipTests compile \
-  org.codehaus.mojo:exec-maven-plugin:3.5.0:java \
+  exec:java \
   -Dexec.mainClass=com.openlap.content.migration.ContentMigrationApplication
 
 ALLOW_INSECURE_DEFAULTS=true \

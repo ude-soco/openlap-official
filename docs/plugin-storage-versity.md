@@ -93,8 +93,10 @@ gateway has no Kubernetes API identity. The bootstrap needs only loopback; the
 normal service should accept only reviewed backend/probe traffic. No ingress or
 public bucket is installed.
 
-Qualification must use the actual AWS Java SDK 2.57.11 `S3ArtifactObjectStore`
-path: absent-object 404, verified put/get/delete, content type and SHA metadata,
+Qualification exercises `S3ArtifactObjectStore` with the AWS SDK version pinned by
+`aws.sdk.version` in the public backend POM. The fixture verifies that the loaded
+S3 client comes from that exact packaged JAR and checks its embedded Maven version.
+Its application checks cover absent-object 404, verified put/get/delete, content type and SHA metadata,
 negative permissions, cold restart, read-only IAM, unsafe retained-state rejection
 and fixed diagnostics. A readiness probe may use one uniquely content-addressed,
 class-free synthetic JAR without registering or executing a plugin.
