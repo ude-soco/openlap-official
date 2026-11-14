@@ -4,6 +4,11 @@ The public marketing/landing page served at `/` for anonymous visitors. It is
 scoped with its own MUI theme. News and publications load from the backend;
 other sections use bundled data modules.
 
+For local installation, see the [project setup guide](../README.md). The landing
+page lives under `indicatorframework/src/pages/landing-page/`. Short module paths
+below are relative to that directory; full source paths start with
+`indicatorframework/`.
+
 > Manage news and publications through **Administration → Content Management**.
 > Database content changes appear without rebuilding the frontend.
 
@@ -12,7 +17,7 @@ other sections use bundled data modules.
 ## Folder structure
 
 ```
-src/pages/landing-page/
+indicatorframework/src/pages/landing-page/
 ├─ landing-page.jsx          # Composition: wraps sections in the scoped ThemeProvider
 ├─ content-archive.jsx       # Public paginated /news and /publications pages
 ├─ utils/                    # Anonymous API client, loading hook, link/date helpers
@@ -46,16 +51,17 @@ src/pages/landing-page/
    └─ navigation-data.js
 ```
 
-**Cross-app shared utilities live in `src/common/`, not here:**
-- `src/common/utils/scroll-to-section.js` — smooth in-page scrolling (reduced-motion aware; optional arrival highlight).
-- `src/common/components/toggle-color-mode/` — the light/dark toggle (also used by login/register/privacy).
+**Cross-app shared utilities live in `indicatorframework/src/common/`:**
+
+- `indicatorframework/src/common/utils/scroll-to-section.js` — smooth in-page scrolling (reduced-motion aware; optional arrival highlight).
+- `indicatorframework/src/common/components/toggle-color-mode/` — the light/dark toggle (also used by login/register/privacy).
 
 ---
 
 ## Architecture overview
 
 - **`landing-page.jsx`** composes the sections top-to-bottom and wraps them in a
-  nested `ThemeProvider` using `createScopedTheme(baseTheme)` (shared design system in `src/common/theme/scoped-theme.js`).
+  nested `ThemeProvider` using `createScopedTheme(baseTheme)` (shared design system in `indicatorframework/src/common/theme/scoped-theme.js`).
 - **Sections** (`components/*.jsx`) render shared building blocks. News and
   publications load independent public API requests so one failed section does
   not hide the other or trigger authentication redirects.
@@ -92,13 +98,16 @@ news text is displayed in full there. Both collections are read through
 `GET /api/v1/content/{news|publications}` and contain only published snapshots.
 The anonymous client never attaches access tokens or triggers login refresh.
 
-Existing entries are imported by an explicit one-time backend migration before
-switching to this frontend. See the [backend content migration instructions](../../../../analyticsframework/README.md#homepage-content-management).
+Existing installations can import the original entries with an explicit one-time
+backend migration. See the [backend content migration instructions](backend-reference.md#homepage-content-management).
 The immutable migration fixtures are historical input, not runtime fallback
 content. The frontend JSON content files and imports have been removed.
 
 ### Add a Team member — `data/team-data.js`
-1. Drop the photo in `src/assets/team/` (square, ~256px is plenty — see "Images").
+
+Edit `indicatorframework/src/pages/landing-page/data/team-data.js`:
+
+1. Drop the photo in `indicatorframework/src/assets/team/` (square, ~256px is plenty — see [image conventions](#conventions)).
 2. `import Photo from "../../../assets/team/photo.jpg";` at the top.
 3. Add an entry to `memberItems` (3 prominent leads) **or** `peopleItems` (the wider team):
 ```js
@@ -116,8 +125,10 @@ content. The frontend JSON content files and imports have been removed.
 `social.type` ∈ `linkedin` | `scholar` | `github` (mapped to an icon in `teams.jsx`).
 
 ### Add a Feature — `data/features-data.js`
-The section shows two complementary tools (Design → Implement). To add/edit one,
-import its image + button icon at the top and add an entry to `featureItems`:
+
+The section shows two complementary tools (Design → Implement). In
+`indicatorframework/src/pages/landing-page/data/features-data.js`, import its image
+and button icon at the top and add an entry to `featureItems`:
 ```js
 {
   id: "isc-creator",            // also the in-page anchor (#isc-creator)
@@ -138,9 +149,12 @@ import its image + button icon at the top and add an entry to `featureItems`:
 Content fields are first; the last few are layout hints consumed by `feature-row.jsx`.
 
 ### Edit navigation / logos
-- **Navigation** — `data/navigation-data.js`: `navigationIds` (section ids/anchors),
+
+Both modules are under `indicatorframework/src/pages/landing-page/data/`:
+
+- **Navigation** — `navigation-data.js`: `navigationIds` (section ids/anchors),
   `navigationItems` (nav menu), `socialItems` (footer social icons).
-- **Logos** — `data/logo-data.js`: `{ id, name, imageLight, imageDark }` (import the SVGs).
+- **Logos** — `logo-data.js`: `{ id, name, imageLight, imageDark }` (import the SVGs).
 
 ---
 
@@ -156,7 +170,7 @@ CSS/MUI only — **no animation library**, and everything respects
   the viewport (one-shot). Reduced-motion users see the final state immediately.
 - **Arrival highlight**: clicking a Hero link / feature overview card calls
   `scrollToSection(id, { highlight: true })`, which briefly applies the
-  `.section-arrival-highlight` class (keyframes in `src/styles.css`).
+  `.section-arrival-highlight` class (keyframes in `indicatorframework/src/styles.css`).
 
 Motion timings/easings live in the theme at `theme.custom.motion`.
 
@@ -170,7 +184,7 @@ const { theme } = useContext(CustomThemeContext);          // app base (light/da
 const landingTheme = useMemo(() => createScopedTheme(theme), [theme]);
 return <ThemeProvider theme={landingTheme}>…</ThemeProvider>;
 ```
-`createScopedTheme(baseTheme)` (in `src/common/theme/scoped-theme.js`, shared
+`createScopedTheme(baseTheme)` (in `indicatorframework/src/common/theme/scoped-theme.js`, shared
 with the login/register/privacy pages) **layers** the
 design system on top of the app's base theme: Inter typography scale,
 border radii, soft shadows, motion tokens, the accent color, AppBar tokens, and
@@ -204,8 +218,16 @@ Prefer these tokens over hard-coded values when editing components.
 
 ## Verify changes
 
+After completing the [local setup](../README.md), run from the repository root:
+
 ```bash
-npm run lint     # eslint
+cd indicatorframework
+npm test         # frontend unit tests
 npm run build    # production build
-npm run dev      # local preview at http://localhost:5173
 ```
+
+For an interactive preview, start the frontend with the backend URL described in
+the project setup guide.
+
+`npm run lint` is also available for diagnostics. The repository has existing
+lint violations, so a clean lint run is not currently the baseline.
