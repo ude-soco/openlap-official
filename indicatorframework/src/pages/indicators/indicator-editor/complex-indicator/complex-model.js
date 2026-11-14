@@ -61,7 +61,7 @@ export function readComplexConfiguration(value, type) {
           (column) =>
             !column ||
             typeof column.id !== "string" ||
-            !["Text", "Numeric"].includes(column.type),
+            typeof column.type !== "string",
         ),
       )
     )
