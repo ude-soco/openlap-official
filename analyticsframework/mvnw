@@ -175,10 +175,24 @@ verbose "Couldn't find MAVEN_HOME, downloading and installing it ..."
 verbose "Downloading from: $distributionUrl"
 verbose "Downloading to: $TMP_DOWNLOAD_DIR/$distributionUrlName"
 
-# select .zip or .tar.gz
+# Keep the configured checksum bound to the ZIP it verifies. Without unzip, a
+# JDK's jar can extract that same archive; only unverified downloads may switch
+# to the historical tar.gz fallback.
+__MVNW_EXTRACTOR=unzip
 if ! command -v unzip >/dev/null; then
-  distributionUrl="${distributionUrl%.zip}.tar.gz"
-  distributionUrlName="${distributionUrl##*/}"
+  if [ -n "${distributionSha256Sum-}" ]; then
+    __MVNW_EXTRACTOR=jar
+    if [ -n "${JAVA_HOME-}" ]; then
+      JARCMD="$JAVA_HOME/bin/jar"
+    else
+      JARCMD="$(command -v jar)" || JARCMD=''
+    fi
+    [ -x "$JARCMD" ] || die "Cannot extract checksum-verified Maven ZIP: install unzip or provide a JDK jar command through JAVA_HOME or PATH."
+  else
+    __MVNW_EXTRACTOR=tar
+    distributionUrl="${distributionUrl%.zip}.tar.gz"
+    distributionUrlName="${distributionUrl##*/}"
+  fi
 fi
 
 # verbose opt
@@ -249,12 +263,18 @@ if [ -n "${distributionSha256Sum-}" ]; then
   fi
 fi
 
-# unzip and move
-if command -v unzip >/dev/null; then
+# Verify above before invoking either ZIP extractor.
+case "$__MVNW_EXTRACTOR" in
+unzip)
   unzip ${__MVNW_QUIET_UNZIP:+"$__MVNW_QUIET_UNZIP"} "$TMP_DOWNLOAD_DIR/$distributionUrlName" -d "$TMP_DOWNLOAD_DIR" || die "failed to unzip"
-else
+  ;;
+jar)
+  (cd "$TMP_DOWNLOAD_DIR" && "$(native_path "$JARCMD")" xf "$(native_path "$TMP_DOWNLOAD_DIR/$distributionUrlName")") || die "failed to extract checksum-verified Maven ZIP with JDK jar"
+  ;;
+tar)
   tar xzf${__MVNW_QUIET_TAR:+"$__MVNW_QUIET_TAR"} "$TMP_DOWNLOAD_DIR/$distributionUrlName" -C "$TMP_DOWNLOAD_DIR" || die "failed to untar"
-fi
+  ;;
+esac
 
 # Find the actual extracted directory name (handles snapshots where filename != directory name)
 actualDistributionDir=""
@@ -288,6 +308,11 @@ if [ -z "$actualDistributionDir" ]; then
 fi
 
 verbose "Found extracted Maven distribution directory: $actualDistributionDir"
+# JDK jar does not preserve ZIP Unix modes. Maven and its selected launcher must
+# be executable before installation (mvnDebug also delegates to bin/mvn).
+if [ "$__MVNW_EXTRACTOR" = jar ]; then
+  chmod +x "$TMP_DOWNLOAD_DIR/$actualDistributionDir/bin/mvn" "$TMP_DOWNLOAD_DIR/$actualDistributionDir/bin/$MVN_CMD"
+fi
 printf %s\\n "$distributionUrl" >"$TMP_DOWNLOAD_DIR/$actualDistributionDir/mvnw.url"
 mv -- "$TMP_DOWNLOAD_DIR/$actualDistributionDir" "$MAVEN_HOME" || [ -d "$MAVEN_HOME" ] || die "fail to move MAVEN_HOME"
 

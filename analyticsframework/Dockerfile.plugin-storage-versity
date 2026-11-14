@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM --platform=linux/amd64 maven:3.9-eclipse-temurin-25@sha256:93b8a14ea2f412782e4e842651273b4d903e35cc496284f178fbbe2d67d00976 AS build
+FROM --platform=linux/amd64 maven:3.10.0-eclipse-temurin-25@sha256:a4734fd7909a9c2beddcacfa1229bd308a349f000bea1ec8db3287c8a16ca2a3 AS build
 WORKDIR /build
 COPY pom.xml ./
 COPY src/main/java ./src/main/java
@@ -13,7 +13,7 @@ RUN mkdir /provider && tar -xzf /tmp/versity.tar.gz --strip-components=1 -C /pro
       versitygw_v1.11.0_Linux_x86_64/versitygw versitygw_v1.11.0_Linux_x86_64/LICENSE versitygw_v1.11.0_Linux_x86_64/NOTICE \
     && /provider/versitygw --version | grep -q '1.11.0'
 
-FROM --platform=linux/amd64 amazoncorretto:25@sha256:019e58087ba4c114c817094f70d3d522bcd13e80ce9edbba6e1c67e5700bad63
+FROM --platform=linux/amd64 amazoncorretto:25.0.5@sha256:019e58087ba4c114c817094f70d3d522bcd13e80ce9edbba6e1c67e5700bad63
 WORKDIR /opt/openlap-storage
 COPY --from=build /build/target/classes ./classes
 COPY --from=build /build/target/storage-lib ./lib

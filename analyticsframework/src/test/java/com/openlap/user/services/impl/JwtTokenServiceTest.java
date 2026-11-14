@@ -9,6 +9,8 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.openlap.security.AuthTokenProperties;
 import com.openlap.user.dto.request.TokenRequest;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Date;
 import org.junit.Before;
 import org.junit.Test;
@@ -88,5 +90,27 @@ public class JwtTokenServiceTest {
     TokenRequest result = tokenService.verifyToken(bearer(justExpired));
 
     assertThat(result.getUserEmail()).isEqualTo("admin@mail.com");
+  }
+
+  @Test
+  public void rejectsOutOfRangeTimestampClaimsThroughTheVerificationExceptionContract() {
+    // External tokens are parsed before signature verification. CVE-2026-85473 allowed these
+    // values to escape as DateTimeException rather than a JWT validation failure.
+    for (String claim : new String[] {"exp", "nbf", "iat"}) {
+      for (long value : new long[] {Long.MIN_VALUE, Long.MAX_VALUE}) {
+        String token = base64Url("{\"alg\":\"HS256\",\"typ\":\"JWT\"}") + "."
+            + base64Url("{\"sub\":\"admin@mail.com\",\"" + claim + "\":" + value + "}")
+            + ".AA";
+
+        assertThatThrownBy(() -> tokenService.verifyToken(bearer(token)))
+            .as("Out-of-range %s=%s", claim, value)
+            .isInstanceOf(JWTVerificationException.class);
+      }
+    }
+  }
+
+  private static String base64Url(String value) {
+    return Base64.getUrlEncoder().withoutPadding()
+        .encodeToString(value.getBytes(StandardCharsets.UTF_8));
   }
 }

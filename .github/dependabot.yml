@@ -9,6 +9,10 @@ updates:
   directory: "/analyticsframework"
   schedule:
     interval: "weekly"
+  # Preserve the qualified Java 25 LTS runtime; patches and digests still update.
+  ignore:
+  - dependency-name: "amazoncorretto"
+    update-types: ["version-update:semver-major"]
   labels:
   - "dependencies"
   - "docker"
@@ -18,6 +22,10 @@ updates:
   directory: "/analyticsframework"
   schedule:
     interval: "daily"
+  # Legacy plugin Pair support must remain usable on the Java 17 baseline.
+  ignore:
+  - dependency-name: "org.openjfx:javafx-base"
+    update-types: ["version-update:semver-major"]
   open-pull-requests-limit: 10
   labels:
   - "dependencies"

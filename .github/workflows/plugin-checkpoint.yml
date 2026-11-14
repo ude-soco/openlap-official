@@ -67,6 +67,11 @@ jobs:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
         run: python3 -B tests/test_plugin_mongo_restore_containers.py --image "$IMAGE_ID"
 
+      - name: Verify recovered replica-set DNS rename and fresh online backup
+        env:
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+        run: python3 -B tests/verify_plugin_mongo_rename_roundtrip.py --image "$IMAGE_ID"
+
       - name: Check strict online report metadata
         run: node tests/plugin_online_report_fixtures.js
 

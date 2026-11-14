@@ -123,7 +123,8 @@ class Fixture:
         except error.HTTPError as response:
             status, raw, incoming = response.code, response.read(MAX_RESPONSE_BYTES + 1), response.headers
         self.require(len(raw) <= MAX_RESPONSE_BYTES, "HTTP fixture response exceeded 1 MiB")
-        self.require(status == expect, method + " " + path + " returned " + str(status) + "; expected " + str(expect))
+        expected_statuses = (expect,) if isinstance(expect, int) else expect
+        self.require(status in expected_statuses, method + " " + path + " returned " + str(status) + "; expected " + str(expect))
         if raw:
             self.require("application/json" in incoming.get("Content-Type", ""), "Response must retain JSON content type")
             payload = json.loads(raw)
@@ -140,14 +141,33 @@ class Fixture:
 
     def wait_for_app(self):
         deadline = time.monotonic() + 150
+        initial_tokens = None
         while time.monotonic() < deadline:
             running = self.docker("inspect", self.app, "--format", "{{.State.Running}}", timeout=15).stdout.strip()
             self.require(running == "true", "Packaged backend exited during startup; inspect protected container log")
+            if initial_tokens is None:
+                try:
+                    initial_tokens = self.login(self.admin_email, self.admin_password)
+                except (SmokeFailure, error.URLError, TimeoutError, ConnectionError):
+                    time.sleep(.5)
+                    continue
+            # Tomcat accepts requests before CommandLineRunner finishes seeding the admin's roles
+            # and analytics goals. A successful login alone can therefore issue a role-empty token.
+            # Boot readiness turns UP after the runners finish; any authenticated token can query
+            # this endpoint. Unexpected endpoint/auth responses fail rather than retrying bad claims.
             try:
-                return self.login(self.admin_email, self.admin_password)
-            except (SmokeFailure, error.URLError, TimeoutError, ConnectionError):
+                readiness, _ = self.api("GET", "/actuator/health/readiness",
+                    token=initial_tokens["access_token"], expect=(200, 503))
+            except (error.URLError, TimeoutError, ConnectionError):
                 time.sleep(.5)
-        raise SmokeFailure("Packaged backend startup/form login timed out")
+                continue
+            self.require(isinstance(readiness, dict) and readiness.get("status") in {"UP", "OUT_OF_SERVICE"},
+                         "Packaged backend readiness returned an unexpected health status")
+            if readiness["status"] == "UP":
+                # Re-authenticate after readiness so the assertions inspect post-bootstrap claims.
+                return self.login(self.admin_email, self.admin_password)
+            time.sleep(.5)
+        raise SmokeFailure("Packaged backend startup/form login/readiness timed out")
 
     def start(self):
         image_id = self.docker("image", "inspect", self.image, "--format", "{{.Id}}", timeout=20).stdout.strip()
@@ -176,6 +196,7 @@ class Fixture:
             "WEBAPP_URL": "http://127.0.0.1:5173", "LOG_LEVEL": "INFO",
             "OPENLAP_LOG_LEVEL": "INFO", "LOGGING_FILE_PATH": "/tmp/openlap-smoke-logs",
             "ALLOW_INSECURE_DEFAULTS": "false",
+            "MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED": "true",
         }
         self.env_file = self.directory / "synthetic-environment"
         descriptor = os.open(self.env_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -308,7 +329,7 @@ class Fixture:
         claims = json.loads(base64.urlsafe_b64decode(segment + "=" * (-len(segment) % 4)))
         self.require(claims["sub"] == self.admin_email and "ROLE_SUPER_ADMIN" in claims["roles"], "Login must issue admin subject/role")
         self.require(claims["exp"] - claims["iat"] == 900, "Access token lifetime must remain 15 minutes")
-        self.passed("actual packaged image startup, form login and JWT policy")
+        self.passed("actual packaged image startup, authenticated readiness, form login and JWT policy")
         self.verify_routing(1)
         self.passed("primary Mongo 7 bootstrap and isolated empty secondary Mongo 4.4")
         body, headers = self.api("GET", "/v1/admin/usage", expect=403)

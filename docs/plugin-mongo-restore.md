@@ -147,3 +147,37 @@ publication. It exercises actual frozen capture, trusted-input and mount fences,
 partial-target/retry refusal, publication/shutdown failures, catalog/DBRef and
 index preservation, and cold starts from retained files. These disposable tests
 use no live system, operator configuration, cloud credentials or published ports.
+
+## Replica-set DNS rename qualification
+
+The focused positive fixture also covers recovery from an existing single-member
+replica set, rather than only a standalone source:
+
+```sh
+python3 -B tests/verify_plugin_mongo_rename_roundtrip.py --image SHA256_OF_LOADED_CHECKPOINT_IMAGE
+```
+
+It uses the pinned official MongoDB 4.4.29 image with FCV 4.4 for the source and
+application-compatible target, and an explicitly selected immutable checkpoint
+image. Both images must already be loaded locally; this fixture never pulls or
+rebuilds them. Synthetic catalog entries, BSON IDs/DBRefs, collection options and
+indexes are frozen at the original advertised DNS. The authenticated v1 archive is
+restored to a fresh persistent volume, then initialized at a different DNS using
+the same replica-set name and the public initializer. The original local replica
+configuration is not copied.
+
+The fixture restarts that restored member from the same volume and checks that
+its durable configuration remains unchanged (the election term may advance).
+Before any new write, a fresh frozen checkpoint of the adopted target must match
+the original database/FCV and every collection's count, ordered BSON ID/content,
+index and options fingerprints. It then issues a journaled majority write to an
+existing synthetic collection. A fresh online v2 capture and an independent
+full-oplog replay/index check cover the post-rename database, including the new
+write. Frozen and online reports have different checkpoint bindings; their index
+hashes must not be treated as interchangeable.
+
+All containers, DNS aliases and volumes are disposable and owned by the fixture;
+no ports are published. This establishes the MongoDB lifecycle composition only.
+It does not test a deployed Kubernetes endpoint controller, operational network
+policies, encryption/off-node custody, S3 storage, application execution or a live
+maintenance window. Those remain separate acceptance gates.
