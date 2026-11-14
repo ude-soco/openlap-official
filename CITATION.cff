@@ -1,5 +1,5 @@
 cff-version: "1.2.0"
-message: "If you use OpenLAP in your research, please cite the journal article below."
+message: "If you use OpenLAP in your research, please cite the preferred journal article and the relevant related papers listed in the README."
 title: "OpenLAP: Open Learning Analytics Platform"
 authors:
   - name: "OpenLAP contributors"
@@ -21,3 +21,35 @@ preferred-citation:
   end: "189"
   doi: "10.18608/jla.2026.8921"
   url: "https://learning-analytics.info/index.php/JLA/article/view/8921"
+references:
+  - type: conference-paper
+    authors:
+      - family-names: "Joarder"
+        given-names: "Shoeb"
+      - family-names: "Chatti"
+        given-names: "Mohamed Amine"
+    title: "The ISC Creator: Human-Centered Design of Learning Analytics Interactive Indicator Specification Cards"
+    collection-title: "2025 International Conference on Education Technology and Computers (ICETC)"
+    year: 2025
+    start: "464"
+    end: "473"
+    publisher:
+      name: "IEEE"
+    doi: "10.1109/ICETC66579.2025.11387280"
+    url: "https://ieeexplore.ieee.org/document/11387280"
+  - type: unpublished
+    status: preprint
+    authors:
+      - family-names: "Joarder"
+        given-names: "Shoeb"
+      - family-names: "Chatti"
+        given-names: "Mohamed Amine"
+      - family-names: "Born"
+        given-names: "Louis"
+    title: "Usability Evaluation and Improvement of a Tool for Self-Service Learning Analytics"
+    year: 2026
+    identifiers:
+      - type: other
+        value: "arXiv:2603.24321"
+    doi: "10.48550/arXiv.2603.24321"
+    url: "https://arxiv.org/abs/2603.24321"

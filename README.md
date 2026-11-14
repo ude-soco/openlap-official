@@ -286,12 +286,19 @@ and [publications](https://openlap.de/publications).
 
 ## Cite OpenLAP
 
-If you use OpenLAP in your research, please cite our journal paper:
+If you use OpenLAP in your research, please cite our journal paper and the relevant
+related papers below. The JLA article remains the preferred general citation;
+the additional papers cover the ISC Creator and Indicator Editor usability.
+
+### Indicator Editor and self-service analytics — preferred citation
 
 > Joarder, S., & Chatti, M. A. (2026). Human-Centred Development of Indicators for
 > Self-Service Learning Analytics: A Transparency through Exploration Approach.
 > *Journal of Learning Analytics, 13*(1), 163–189.
 > https://doi.org/10.18608/jla.2026.8921
+
+<details>
+<summary>BibTeX</summary>
 
 ```bibtex
 @article{joarder2026openlap,
@@ -306,6 +313,61 @@ If you use OpenLAP in your research, please cite our journal paper:
   url     = {https://doi.org/10.18608/jla.2026.8921}
 }
 ```
+
+</details>
+
+### ISC Creator and indicator design
+
+> Joarder, S., & Chatti, M. A. (2025). The ISC Creator: Human-Centered Design of
+> Learning Analytics Interactive Indicator Specification Cards. In *2025 International
+> Conference on Education Technology and Computers (ICETC)* (pp. 464–473). IEEE.
+> https://doi.org/10.1109/ICETC66579.2025.11387280
+
+[IEEE publication](https://ieeexplore.ieee.org/document/11387280)
+
+<details>
+<summary>BibTeX</summary>
+
+```bibtex
+@inproceedings{joarder2025isccreator,
+  author    = {Joarder, Shoeb and Chatti, Mohamed Amine},
+  title     = {The {ISC} Creator: Human-Centered Design of Learning Analytics Interactive Indicator Specification Cards},
+  booktitle = {2025 International Conference on Education Technology and Computers (ICETC)},
+  year      = {2025},
+  pages     = {464--473},
+  publisher = {IEEE},
+  doi       = {10.1109/ICETC66579.2025.11387280},
+  url       = {https://ieeexplore.ieee.org/document/11387280}
+}
+```
+
+</details>
+
+### Indicator Editor usability evaluation
+
+> Joarder, S., Chatti, M. A., & Born, L. (2026). Usability Evaluation and Improvement
+> of a Tool for Self-Service Learning Analytics. *arXiv preprint*, arXiv:2603.24321.
+> https://doi.org/10.48550/arXiv.2603.24321
+
+[arXiv record](https://arxiv.org/abs/2603.24321) · [Read the PDF](https://arxiv.org/pdf/2603.24321)
+
+<details>
+<summary>BibTeX</summary>
+
+```bibtex
+@misc{joarder2026usability,
+  author        = {Joarder, Shoeb and Chatti, Mohamed Amine and Born, Louis},
+  title         = {Usability Evaluation and Improvement of a Tool for Self-Service Learning Analytics},
+  year          = {2026},
+  eprint        = {2603.24321},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CY},
+  doi           = {10.48550/arXiv.2603.24321},
+  url           = {https://arxiv.org/abs/2603.24321}
+}
+```
+
+</details>
 
 Machine-readable citation metadata is available in [CITATION.cff](CITATION.cff).
 Citation guidance is separate from software licensing. Dependencies and separately
