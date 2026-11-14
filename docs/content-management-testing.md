@@ -1,51 +1,38 @@
 # Content management: local setup and review
 
-The feature branch is `feat/shoeb-homepage-content-management`. The pull request
-must remain unmerged until manual review is complete.
+This guide checks the admin editor, public homepage and content API together.
+Use a local development database for these checks.
 
 ## Setup
 
-Use Java 17 or newer (Java 25 LTS is qualified) and the editor's supported Node version.
-From the repository root:
+Follow the [local installation guide](../README.md#local-installation) to select
+and start MongoDB and prepare both frameworks. Keep the backend stopped while
+running the optional import below. The startup guide selects an external Docker
+volume explicitly; a bare `docker compose up` is not a replacement for that setup.
+
+To review the original homepage content, run its explicit one-time import from
+`analyticsframework`:
 
 ```bash
-cd analyticsframework
-docker compose -f compose.yaml -f compose.dev.yaml up -d mongo
-
-# Explicit, one-time import of the existing 7 news entries and 9 publications.
-# Safe to repeat after completion; it will not overwrite subsequent edits.
 ./mvnw -q -DskipTests compile \
   exec:java \
   -Dexec.mainClass=com.openlap.content.migration.ContentMigrationApplication
-
-ALLOW_INSECURE_DEFAULTS=true \
-PORT=8091 \
-MONGODB_SECONDARY_URI=mongodb://127.0.0.1:27017/learninglocker_v2 \
-./mvnw spring-boot:run
 ```
 
-The migration targets `openlap_v2` by default. Set `OPENLAP_MONGODB_DB` explicitly
-to test another database. Run it before enabling content editing or deploying
-the API-driven homepage. Details and interrupted-run recovery are documented in
-the [backend README](../analyticsframework/README.md#homepage-content-management).
+The migration targets `openlap_v2` by default. Set `MONGODB_PRIMARY_URI` and
+`OPENLAP_MONGODB_DB` explicitly for another local database. Its completion marker
+makes successful reruns idempotent; existing content is not overwritten. See the
+[backend reference](backend-reference.md#homepage-content-management) for the
+content schema, API, collision behavior and interrupted-import recovery.
 
-Stop any previous backend instance in its original terminal before starting a
-replacement on the same port. Otherwise Maven reports a startup failure because
-the port is occupied.
+Start the backend and frontend using the installation guide's matching ports and
+API URL. For the examples' API port `8090`, the frontend uses
+`VITE_BACKEND_URL=http://localhost:8090/api/`. Stop any previous backend in its
+original terminal before starting a replacement on the same port.
 
-In another terminal:
-
-```bash
-cd indicatorframework
-npm ci
-VITE_BACKEND_URL=http://localhost:8091/api/ npm run dev
-```
-
-Open the displayed frontend URL, sign in as an administrator, and choose the
-**Content Management** card on Home, or **Administration → Content Management**
-in the sidebar. After switching feature branches, hard-refresh the browser if
-it still displays the previous navigation. For a fresh local database, the seed
-administrator is `admin@mail.com` / `1234qweR` when local defaults are enabled.
+Open the frontend, sign in as an administrator, and choose **Administration →
+Content Management**. For a fresh local database with the development defaults,
+the seed administrator is `admin@mail.com` / `1234qweR`.
 
 ## Manual review
 

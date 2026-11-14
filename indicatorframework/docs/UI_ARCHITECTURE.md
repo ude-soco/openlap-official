@@ -5,9 +5,10 @@
 > exists, **how** it fits together, and **why** the decisions were made, so new
 > work stays consistent with the established conventions.
 >
-> Stack: **React 18.3 + Vite 7**, **MUI v7** (`@mui/material`, `@mui/icons-material`,
+> Stack: **React 19 + Vite 8**, **MUI v9** (`@mui/material`, `@mui/icons-material`,
 > `@mui/lab`, `@mui/system`), Emotion, `react-router-dom` v7, `notistack`,
-> `@fontsource/inter`. Backend: `analyticsframework` (Java 11, Spring Boot 2.x).
+> `@fontsource/inter`. Backend: `analyticsframework` (Java 17 minimum, Java 25 LTS
+> runtime, Spring Boot 4.1). See the [project setup guide](../../README.md) to run it locally.
 
 ---
 
@@ -212,10 +213,11 @@ indicatorframework/
    ├─ pages/
    │  ├─ landing-page/
    │  │  ├─ landing-page.jsx
+   │  │  ├─ content-archive.jsx
    │  │  ├─ components/ (hero, architecture, features/, news, publications, teams, contact-us, footer, app-appbar, logo-collection)
-   │  │  ├─ components/shared/ (section, section-heading, zoomable-image-card, reveal, motion, more-link, profile-avatar)
-   │  │  ├─ data/ (features-data.js, logo-data.js, navigation-data.js, news-data.json, publication-data.json, team-data.js)
-   │  │  └─ README.md
+   │  │  ├─ components/shared/ (section, section-heading, zoomable-image-card, reveal, motion, more-link, profile-avatar, content-cards, content-state)
+   │  │  ├─ utils/ (public-content-api, use-public-content, content-links)
+   │  │  └─ data/ (features-data.js, logo-data.js, navigation-data.js, team-data.js)
    │  ├─ login/  register/  privacy-policy/
    │  ├─ home/ (home.jsx, utils/home-data.js)
    │  ├─ account-manager/
@@ -406,28 +408,33 @@ sections, each a self‑contained component built on `Section`/`SectionHeading`:
 ```mermaid
 flowchart TD
   LP["landing-page.jsx"] --> AppBar["app-appbar (nav, scroll-to-section)"]
-  LP --> Hero --> Arch["architecture"] --> Feat["features (feature-row)"]
-  Feat --> News --> Pubs["publications"] --> Teams --> Contact["contact-us"] --> Foot["footer"]
+  LP --> Hero --> Arch["architecture"] --> Logos["logo-collection"] --> Feat["features (feature-row)"]
+  Feat --> Teams --> News --> Pubs["publications"] --> Contact["contact-us"] --> Foot["footer"]
 ```
 
-| Section | Content source (`pages/landing-page/data/`) |
+| Section | Content source |
 |---|---|
-| Navigation / AppBar | `navigation-data.js` |
-| Features | `features-data.js` |
-| Logo collection | `logo-data.js` |
-| News | `news-data.json` |
-| Publications | `publication-data.json` |
-| Team | `team-data.js` |
+| Navigation / AppBar | `pages/landing-page/data/navigation-data.js` |
+| Features | `pages/landing-page/data/features-data.js` |
+| Logo collection | `pages/landing-page/data/logo-data.js` |
+| News | Published MongoDB content via `GET /api/v1/content/news` |
+| Publications | Published MongoDB content via `GET /api/v1/content/publications` |
+| Team | `pages/landing-page/data/team-data.js` |
 | Hero / Architecture / Contact / Footer | mostly inline copy + `assets/` |
 
 ### How content is data‑driven & where researchers edit
-- Sections map over arrays from `data/` — **adding news, a publication, a feature, or a
-  team member is a data edit, not a code change**.
-- **Researchers edit `pages/landing-page/data/`**: `news-data.json` and
-  `publication-data.json` (JSON), `team-data.js`, `features-data.js`,
-  `logo-data.js`, `navigation-data.js`. See
-  [`pages/landing-page/README.md`](../src/pages/landing-page/README.md) for the
-  per‑file content guide.
+
+- Administrators manage news and publications through **Administration → Content
+  Management**. Drafts stay private; publishing updates the public homepage
+  without rebuilding the frontend. The homepage shows five news entries and six
+  publications; `/news` and `/publications` provide paginated archives.
+- The anonymous content client and loading hook in `pages/landing-page/utils/`
+  fetch published snapshots without access tokens or login-refresh behavior.
+  Loading, empty and retry states are handled separately for each section.
+- Team members, features, logos and navigation remain bundled modules under
+  `pages/landing-page/data/`. Editing these modules requires a frontend rebuild.
+  See the [landing-page content and architecture guide](../../docs/landing-page.md)
+  for editorial steps, file conventions and theme details.
 - Smooth in‑page navigation uses the shared `scroll-to-section.js` helper (fixed‑AppBar
   offset, reduced‑motion aware, transform‑safe).
 
