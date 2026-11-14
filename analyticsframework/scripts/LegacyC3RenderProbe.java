@@ -8,6 +8,7 @@ import com.openlap.dataset.OpenLAPPortMapping;
 import com.openlap.template.VisualizationCodeGenerator;
 import com.openlap.visualization_methods.utilities.VisualizerClassPathLoader;
 import com.openlap.visualization_methods.compatibility.LegacyC3Strings;
+import com.openlap.visualization_methods.compatibility.LegacyC3Scatter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -86,7 +87,7 @@ public final class LegacyC3RenderProbe {
     String type = name.equals("Area") || name.equals("GroupedArea") || name.equals("StackedArea") ? "area-spline"
         : name.equals("Line") || name.equals("MultiLine") ? "spline"
         : name.equals("ScatterPlot") ? "scatter" : name.toLowerCase(java.util.Locale.ROOT);
-    checks.verify(compact.contains("type:'" + type + "'"), "Wrong C3 chart type");
+    checks.verify(compact.contains("type:'" + type + "'") || compact.contains("\"type\":\"" + type + "\""), "Wrong C3 chart type");
     boolean custom = !scenario.equals("defaults");
     checks.verify(java.util.regex.Pattern.compile("varwidth_[0-9]+=" + (custom ? "640" : "500") + ";").matcher(compact).find(), "Wrong width");
     checks.verify(java.util.regex.Pattern.compile("varheight_[0-9]+=" + (custom ? "360" : "500") + ";").matcher(compact).find(), "Wrong height");
@@ -94,15 +95,21 @@ public final class LegacyC3RenderProbe {
     checks.verify(compact.contains("legend:{show:" + !custom + ",position:'" + (custom ? "right" : "bottom") + "'}"), "Wrong legend options");
     checks.verify(compact.contains(custom ? "pattern:['#102030','#405060']" : "pattern:['#008ffb'"), "Wrong color normalization");
     boolean circular = name.equals("Pie") || name.equals("Donut");
-    checks.verify(compact.contains((circular ? "label:{show:" : "labels:") + !custom), "Wrong data-label visibility");
+    checks.verify(compact.contains((circular ? "label:{show:" : "labels:") + !custom)
+        || name.equals("ScatterPlot") && compact.contains("\"labels\":" + !custom), "Wrong data-label visibility");
     if (!circular) {
       checks.verify(compact.contains("x:{show:" + !custom), "Wrong X-axis visibility");
       checks.verify(compact.contains("y:{show:" + !custom), "Wrong Y-axis visibility");
     }
     if (name.equals("ScatterPlot")) {
-      checks.verify(compact.contains("'point-a':'point-a_x'") && compact.contains("'point-d':'point-d_x'"), "Missing scatter X/series mappings");
-      checks.verify(compact.contains("['point-a_x',1.0]") && compact.contains("['point-d_x',2.0]"), "Wrong scatter X values");
-      checks.verify(compact.contains("['point-a',11.0]") && compact.contains("['point-d',5.0]"), "Wrong scatter Y values");
+      com.google.gson.JsonObject data = scatterData(code);
+      checks.verify(data.getAsJsonObject("xs").size() == 4, "Wrong number of scatter series");
+      checks.verify(data.getAsJsonObject("names").get("series_0").getAsString().equals("point-a")
+          && data.getAsJsonObject("names").get("series_3").getAsString().equals("point-d"), "Scatter display names changed");
+      checks.verify(data.getAsJsonArray("columns").get(0).getAsJsonArray().get(1).getAsDouble() == 1
+          && data.getAsJsonArray("columns").get(6).getAsJsonArray().get(1).getAsDouble() == 2, "Wrong scatter X values");
+      checks.verify(data.getAsJsonArray("columns").get(1).getAsJsonArray().get(1).getAsDouble() == 11
+          && data.getAsJsonArray("columns").get(7).getAsJsonArray().get(1).getAsDouble() == 5, "Wrong scatter Y values");
     } else if (name.equals("GroupedArea") || name.equals("MultiLine") || name.equals("StackedArea")) {
       checks.verify(compact.contains("['group-a','group-b']"), "Missing grouped series");
       checks.verify(compact.contains("[11.0,7.0]") && compact.contains("[3.0,5.0]"), "Wrong grouped series data");
@@ -148,6 +155,62 @@ public final class LegacyC3RenderProbe {
     return count;
   }
 
+  private static com.google.gson.JsonObject scatterData(String code) {
+    int start = code.indexOf("data:") + "data:".length();
+    while (Character.isWhitespace(code.charAt(start))) start++;
+    int depth = 0;
+    boolean quoted = false;
+    for (int index = start; index < code.length(); index++) {
+      char c = code.charAt(index);
+      if (quoted) {
+        if (c == '\\') index++;
+        else if (c == '"') quoted = false;
+      } else if (c == '"') quoted = true;
+      else if (c == '{') depth++;
+      else if (c == '}' && --depth == 0) {
+        return com.google.gson.JsonParser.parseString(code.substring(start, index + 1)).getAsJsonObject();
+      }
+    }
+    throw new AssertionError("Missing scatter data JSON");
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private static void populateClusters(VisualizationCodeGenerator chart) {
+    chart.getInput().getColumns().get("xAxisStrings").setData(new ArrayList(Arrays.asList(10.25,20.5,30.75,40.0,50.125,60.875)));
+    chart.getInput().getColumns().get("yAxisValues").setData(new ArrayList(Arrays.asList(1,2,3,4,5,6)));
+    chart.getInput().getColumns().get("GroupBy").setData(new ArrayList(Arrays.asList("Cluster A","Cluster A","Cluster B","Cluster C","Cluster B","Cluster C")));
+  }
+
+  private static int assertClusters(String code) {
+    Checks checks = new Checks();
+    com.google.gson.JsonObject data = scatterData(code);
+    checks.verify(data.get("type").getAsString().equals("scatter"), "Wrong clustered chart type");
+    checks.verify(data.getAsJsonObject("xs").size() == 3, "Clusters were split or lost");
+    checks.verify(data.getAsJsonObject("names").size() == 3, "Wrong number of cluster display names");
+    com.google.gson.JsonArray columns = data.getAsJsonArray("columns");
+    checks.verify(columns.size() == 6, "Each cluster needs paired X and Y columns");
+    double[][] x = {{10.25,20.5},{30.75,50.125},{40.0,60.875}};
+    double[][] y = {{1,2},{3,5},{4,6}};
+    int observations = 0;
+    for (int group = 0; group < 3; group++) {
+      com.google.gson.JsonArray xs = columns.get(group * 2).getAsJsonArray();
+      com.google.gson.JsonArray ys = columns.get(group * 2 + 1).getAsJsonArray();
+      checks.verify(xs.size() == 3 && ys.size() == 3, "A cluster lost observations");
+      for (int row = 0; row < 2; row++) {
+        checks.verify(xs.get(row + 1).getAsDouble() == x[group][row], "Scatter X coordinate was changed");
+        checks.verify(ys.get(row + 1).getAsDouble() == y[group][row], "Scatter Y coordinate was changed");
+        observations++;
+      }
+    }
+    checks.verify(observations == 6, "Not all observations reached the chart");
+    java.util.Set<String> colors = new java.util.HashSet<>();
+    for (var entry : data.getAsJsonObject("colors").entrySet()) colors.add(entry.getValue().getAsString());
+    checks.verify(colors.size() == 3, "Default cluster colors are not distinct");
+    checks.verify(data.getAsJsonObject("names").get("series_0").getAsString().equals("Cluster A"), "Cluster name was changed");
+    checks.verify(data.get("labels").getAsBoolean(), "Default point labels were lost");
+    return checks.count;
+  }
+
   private static int assertEscapedOutput(String code, OpenLAPDataSet source,
       Map<String, Object> settings, LegacyC3Strings.Inputs prepared) {
     Checks checks = new Checks();
@@ -183,7 +246,9 @@ public final class LegacyC3RenderProbe {
     List<Map<String, Object>> results = new ArrayList<>();
     int passed = 0;
     for (String name : CHARTS) {
-      for (String scenario : name.equals("Bar") ? new String[]{"defaults", "customized", "filtered", "escaped"} : new String[]{"defaults", "customized", "escaped"}) {
+      for (String scenario : name.equals("Bar") ? new String[]{"defaults", "customized", "filtered", "escaped"}
+          : name.equals("ScatterPlot") ? new String[]{"defaults", "customized", "escaped", "clustered"}
+          : new String[]{"defaults", "customized", "escaped"}) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("chart", name);
         result.put("scenario", scenario);
@@ -192,14 +257,17 @@ public final class LegacyC3RenderProbe {
           require(chart.getClass().getProtectionDomain().getCodeSource().getLocation().toURI().equals(Path.of(jar).toUri()),
               "Plugin came from an unexpected classpath entry");
           OpenLAPPortConfig mapping = populate(chart);
-          Map<String, Object> settings = parameters(!scenario.equals("defaults"));
+          Map<String, Object> settings = parameters(!scenario.equals("defaults") && !scenario.equals("clustered"));
           if (scenario.equals("filtered")) settings.put("hiddenCategoriesIndexes", "[1]");
+          if (scenario.equals("clustered")) populateClusters(chart);
           boolean escaped = scenario.equals("escaped");
           OpenLAPDataSet input = snapshotInput(chart, escaped);
           if (escaped) settings.put("chartTitle", "probe-title " + UNSAFE_TEXT);
           LegacyC3Strings.Inputs prepared = LegacyC3Strings.prepare(chart, input, settings);
           String code = chart.generateVisualizationCode(prepared.data(), mapping, prepared.parameters());
-          result.put("assertions", escaped ? assertEscapedOutput(code, input, settings, prepared) : assertOutput(name, scenario, code));
+          code = LegacyC3Scatter.repair(chart, code, input, mapping, settings);
+          result.put("assertions", scenario.equals("clustered") ? assertClusters(code)
+              : escaped ? assertEscapedOutput(code, input, settings, prepared) : assertOutput(name, scenario, code));
           result.put("status", "PASS");
           result.put("characters", code.length());
           result.put("sha256", sha256(code.getBytes(java.nio.charset.StandardCharsets.UTF_8)));

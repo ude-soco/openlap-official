@@ -192,9 +192,12 @@ unrecovered original model's other behavior is not claimed. Template dependency
 upgrades must check for a competing class with that binary name.
 
 The unchanged historical C3 archive, this bridge and an archive-specific string
-adapter pass 28 real generator cases with 462 output assertions across all nine
+adapter pass 29 real generator cases with 487 output assertions across all nine
 charts, defaults/customization, grouped/scatter data, Bar sorting/filtering and
 text containing quotes, backslashes, line separators and HTML script delimiters.
+A clustered scatter fixture verifies all six paired observations across three
+groups, including distinct default group colors; the pinned scatter transform's
+last-point-per-group behavior is repaired without inventing extra groups.
 The adapter escapes private copies of text/customization values before those
 legacy generators insert them into JavaScript; original data and visible labels
 are preserved. It applies only to the known archive checksum and chart classes;
