@@ -1,7 +1,6 @@
 # Authentication Token Policy
 
-This note documents the JWT token policy after the Phase 1 cleanup. It is the
-authoritative description of token lifetimes and where they are configured.
+This guide describes JWT token lifetimes, configuration and refresh behavior.
 
 ## Current policy
 
@@ -12,8 +11,7 @@ authoritative description of token lifetimes and where they are configured.
 | JWT verification leeway (clock skew) | **30 seconds** | token verification |
 
 Both `/api/login` and `/api/v1/token/refresh` mint access tokens with the **same**
-configured lifetime. (Previously login issued a 24-hour access token while
-refresh issued a 10-minute one — that mismatch is removed.)
+configured lifetime.
 
 ## Configuration
 
@@ -28,7 +26,7 @@ openlap.auth.jwt-leeway-seconds=${JWT_LEEWAY_SECONDS:30}
 
 There are no more hard-coded expiry magic numbers in the token-minting code.
 
-## Refresh behaviour (unchanged this phase)
+## Refresh behaviour
 
 - `/api/v1/token/refresh` accepts a valid **refresh token** in the
   `Authorization: Bearer <refresh_token>` header.
@@ -36,14 +34,26 @@ There are no more hard-coded expiry magic numbers in the token-minting code.
   authorization filter and permitted in the security config).
 - It returns a new short-lived access token and the **same** refresh token
   (no rotation).
+- Disabled accounts cannot refresh tokens. Already-issued access tokens remain
+  valid until expiry; account deactivation does not immediately revoke them.
 
 ## Error status
 
-All authentication/authorization failures (missing, invalid, or expired access
-token; refresh failure; access denied) currently return **HTTP 403** with the
-unified error envelope (`{ code, message, ... }`). The frontend tolerates both
-401 and 403. Normalizing some of these to 401 is a deliberate later cleanup and
-was **not** changed here.
+The status depends on the failing operation; rendered authentication errors use
+the unified error envelope (`{ code, message, ... }`):
+
+| Operation | Current response |
+| --- | --- |
+| Login rejected by `CustomAuthenticationFilter` | HTTP 401; HTTP 404 when the failure wraps `UserNotFoundException` |
+| Missing authentication on a protected endpoint | HTTP 403 / `AUTH_REQUIRED` |
+| Invalid or expired access token | HTTP 403 from `CustomAuthorizationFilter` |
+| Authenticated user lacks permission | HTTP 403 / `ACCESS_DENIED` |
+| Refresh-token verification or account check fails | HTTP 403 / `REFRESH_FAILED` |
+
+See the [authentication filter](../src/main/java/com/openlap/security/filter/CustomAuthenticationFilter.java)
+and [refresh controller](../src/main/java/com/openlap/user/controller/TokenController.java)
+for the exact request/error paths. Consistent 401 versus 403 handling remains a
+separate behavior change.
 
 ## Frontend expectation
 
@@ -52,7 +62,7 @@ The frontend refresh flow handles access-token expiry transparently: on a
 request, and only ends the session if the refresh token itself is rejected.
 Short access-token lifetimes are therefore invisible to active users.
 
-## Not implemented yet (future backend auth phase)
+## Current limitations
 
 - Refresh-token **rotation**
 - Server-side refresh-token **persistence / revocation**

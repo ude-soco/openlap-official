@@ -184,7 +184,7 @@ you also need:
    After copying trusted JARs into these folders, restart the backend so startup
    discovers and loads the plugins.
    For S3 mode, follow [artifact setup and migration](docs/plugin-artifact-migration.md)
-   and the [admin upload workflow](docs/plugin-upload-workflow.md).
+   and the [plugin administration guide](docs/plugin-administration.md).
 3. Register a separate user account and link its LRS and actor identifier through **Settings → Manage LRS**.
    The seed administrator has the admin role; indicator creation requires the separate `USER` role.
 
@@ -231,8 +231,8 @@ documents supported settings.
   not data-format compatibility; database upgrades require a separate migration.
 - Restore plugin binaries as well as database metadata. Run the backend from
   `analyticsframework/` so recorded relative JAR paths resolve; see [artifact migration](docs/plugin-artifact-migration.md).
-- Before replacing the former `openlap-analyticsframework` / `openlap-indicatoreditor`
-  deployment names, follow the [framework naming migration](docs/framework-renaming.md).
+- Before replacing previous framework deployment names, follow the
+  [framework naming migration](docs/framework-renaming.md).
 
 ## Development checks
 
@@ -264,6 +264,22 @@ object storage, and backup/recovery helpers.
 
 ## Documentation
 
+### Repository folders
+
+| Folder | Used for |
+| --- | --- |
+| `analyticsframework/` and `indicatorframework/` | Backend and frontend source, configuration and framework-specific checks. |
+| `tests/` | Cross-project CI, packaged runtime qualification, storage and recovery checks. |
+| `scripts/` | Release image promotion and recurring backup evidence tools. Framework-specific helpers live in each framework's `scripts/` folder. |
+| `docs/` | Maintained guides, tested operator examples and release/recovery manifests consumed by tooling. |
+| `.k8s/` | Public deployment bases, optional components and maintenance Jobs. Environment-specific deployment overlays live in the separate continuous-delivery repository. |
+
+The quickstart uses the backend's MongoDB helper. Most other tests and scripts
+support CI or operator workflows rather than everyday startup. Keep them for
+building, releasing and recovering installations; they are not additional local services.
+
+### Development and administration
+
 | Topic | Guide |
 | --- | --- |
 | Backend configuration, errors, content API and migration | [Backend reference](docs/backend-reference.md) |
@@ -272,8 +288,38 @@ object storage, and backup/recovery helpers.
 | Content editing and review | [Content management](docs/content-management-testing.md) |
 | Authentication | [Token policy](analyticsframework/docs/AUTH_TOKEN_POLICY.md) |
 | Plugin storage | [Artifact migration](docs/plugin-artifact-migration.md) · [S3-compatible storage](docs/plugin-storage-versity.md) |
-| Plugin administration | [Upload](docs/plugin-upload-workflow.md) · [Versions](docs/plugin-version-management.md) · [Removal and recovery](docs/plugin-removal-and-retention.md) |
+| Plugin administration | [Uploads, versions, removal and recovery](docs/plugin-administration.md) |
 | Deployment naming and storage identities | [Framework migration](docs/framework-renaming.md) |
+
+<details>
+<summary>Deployment, storage and recovery guides</summary>
+
+These guides cover optional installation and maintenance procedures. A guide's
+presence does not mean its component is enabled in every environment. Keep the
+recovery procedures and pinned manifests when upgrading an existing installation.
+
+| Task | Guide |
+| --- | --- |
+| Plan a plugin storage rollout | [Production release runbook](docs/plugin-production-rollout.md) |
+| Preserve database metadata and plugin JARs | [Preservation](docs/plugin-preservation.md) |
+| Inventory and migrate catalog artifacts | [Artifact migration](docs/plugin-artifact-migration.md) |
+| Choose an object storage provider | [Versity](docs/plugin-storage-versity.md) · [Garage](docs/plugin-storage-garage.md) |
+| Prepare private deployment configuration | [Secret setup](docs/plugin-storage-secret-setup.md) |
+| Take a frozen database checkpoint | [Release checkpoint](docs/plugin-release-checkpoint.md) |
+| Restore a frozen checkpoint to a fresh volume | [MongoDB restore and identity cutover](docs/plugin-mongo-restore.md) |
+| Prepare consistent online capture | [Replica-set prerequisite](docs/plugin-backup-replica-set.md) |
+| Capture online database and plugin state | [Online backups](docs/plugin-online-backup.md) |
+| Export and restore associated object bytes | [Logical object snapshots](docs/plugin-object-snapshot.md) |
+| Encrypt, transfer and independently recover backups | [Release backup transport](docs/plugin-release-backup.md) |
+| Configure scheduled capture and upload | [Backup uploader and CronJob](docs/plugin-backup-upload-job.md) |
+| Retain receipts and run recovery checks | [Backup evidence collection](docs/plugin-backup-evidence-collection.md) · [Tested configuration examples](docs/examples/) |
+| Qualify the combined recovery pipeline locally | [Synthetic recovery proof](docs/plugin-combined-recovery.md) |
+| Promote reviewed release images | [0.0.6](docs/releases/0.0.6.md) · [0.0.7](docs/releases/0.0.7.md) |
+
+The JSON release plans and artifact recovery policy are pinned inputs to tools
+and CI, rather than disposable planning notes.
+
+</details>
 
 ## Contribute and learn more
 

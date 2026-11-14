@@ -1,11 +1,8 @@
 # Plugin artifacts: migration and operation
 
-This is the phase 3 backend implementation for [issue #1](https://github.com/ude-soco/openlap-official/issues/1).
-It adds explicit artifact migration and S3 execution. The subsequent
-[upload/review/activation workflow](./plugin-upload-workflow.md) is also implemented
-on this branch, together with [metadata/version management](./plugin-version-management.md).
-Guarded removal/recovery and the usage overview are also implemented on the
-feature branch; see [removal and retention](./plugin-removal-and-retention.md).
+This guide covers explicit artifact migration and S3 execution for existing
+plugin catalogs. For uploads, version management, guarded removal/recovery and
+usage reporting, see [plugin administration](./plugin-administration.md).
 The application defaults to **local** mode; deployment never imports JARs automatically.
 For production preparation, follow the [production release runbook](./plugin-production-rollout.md),
 including its separate off-node retrieval/restore and availability gates.
@@ -94,7 +91,8 @@ catalogs for the new staged workflow; legacy local mutations stay blocked in S3 
    caches. Verify execution and visualization of existing indicators on each
    replica and after a backend restart.
 
-The commands below run inside `analyticsframework`, using Java 11.
+The commands below run inside `analyticsframework`, using Java 17 or newer
+(Java 25 LTS is qualified; see the [local installation guide](../README.md#local-installation)).
 The migration CLI requires explicit, nonblank `MONGODB_PRIMARY_URI` and
 `OPENLAP_MONGODB_DB`; it refuses to select a development database by default.
 Supply service credentials through the operator's secure environment, without

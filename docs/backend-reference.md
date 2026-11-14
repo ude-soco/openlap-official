@@ -159,9 +159,7 @@ cleanup use the dedicated management workflow and their deployment gates.
 | Guide | Details |
 | --- | --- |
 | [Artifact migration](plugin-artifact-migration.md) | Storage settings, inventory/check/apply and recovery |
-| [Upload workflow](plugin-upload-workflow.md) | Supported contracts, inspection, activation and resumable reviews |
-| [Version management](plugin-version-management.md) | Metadata, version mappings and concurrency |
-| [Removal and retention](plugin-removal-and-retention.md) | Reference checks, recovery windows and explicit cleanup gates |
+| [Plugin administration](plugin-administration.md) | Upload/activation, version mappings, reference checks, recovery and cleanup gates |
 | [Versity storage](plugin-storage-versity.md) | S3 provider configuration and qualification |
 
 ## Error responses and request tracing
