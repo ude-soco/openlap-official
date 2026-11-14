@@ -80,7 +80,7 @@ const FiltersTab = ({ state, setState }) => {
 
   return (
     <>
-      <Stack gap={1}>
+      <Stack sx={{ gap: 1 }}>
         {state.configuration.isCategoriesFilteringAvailable && (
           <FormControl>
             <Autocomplete
@@ -147,15 +147,18 @@ const FiltersTab = ({ state, setState }) => {
                   {option.name}
                 </li>
               )}
-              renderTags={(tagValue, getTagProps) =>
-                tagValue.map((option, index) => (
-                  <Chip
-                    key={option.name}
-                    label={option.name}
-                    {...getTagProps({ index })}
-                    disabled={count === 1}
-                  />
-                ))
+              renderValue={(tagValue, getItemProps) =>
+                tagValue.map((option, index) => {
+                  const { key, ...itemProps } = getItemProps({ index });
+                  return (
+                    <Chip
+                      key={key}
+                      label={option.name}
+                      {...itemProps}
+                      disabled={count === 1}
+                    />
+                  );
+                })
               }
               renderInput={(params) => (
                 <TextField {...params} label="Categories Filter" />

@@ -25,9 +25,9 @@ const ChartTypeFilter = () => {
 
   return (
     <>
-      <Stack gap={2}>
+      <Stack sx={{ gap: 2 }}>
         <Box>
-          <Typography variant="subtitle1" component="h3" fontWeight={600}>
+          <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
             Choose the analytical task
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -35,7 +35,7 @@ const ChartTypeFilter = () => {
             inspect. It guides which charts are recommended.
           </Typography>
         </Box>
-        <Grid container spacing={2} justifyContent="center">
+        <Grid container spacing={2} sx={{ justifyContent: "center" }}>
           {chartFilters
             .sort((a, b) => a.type.localeCompare(b.type))
             .map((filter, index) => {
@@ -73,21 +73,18 @@ const ChartTypeFilter = () => {
                         sx={{ width: "100%", height: "100%", p: 1 }}
                       >
                         <Stack
-                          gap={1}
-                          alignItems="center"
-                          justifyContent="flex-start"
-                          sx={{ height: "100%" }}
+                          sx={{ gap: 1, alignItems: "center", justifyContent: "flex-start", height: "100%" }}
                         >
                           <Box
                             component="img"
                             src={filter.image}
-                            height="56px"
+                            sx={{ height: "56px" }}
                             alt=""
                           />
                           <Typography
                             align="center"
                             variant="body2"
-                            fontWeight={600}
+                            sx={{ fontWeight: 600 }}
                           >
                             {filter.type}
                           </Typography>

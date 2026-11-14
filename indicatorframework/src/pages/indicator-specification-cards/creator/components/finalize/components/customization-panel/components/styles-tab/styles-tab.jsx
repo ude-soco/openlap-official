@@ -127,7 +127,7 @@ const StylesTab = ({ state, setState }) => {
   };
   return (
     <>
-      <Stack gap={2}>
+      <Stack sx={{ gap: 2 }}>
         {state.configuration.isSeriesColorChangeable && (
           <FormControl>
             <FormLabel sx={{ mb: 1 }} id="role-label">
@@ -150,7 +150,7 @@ const StylesTab = ({ state, setState }) => {
 
             {state.configuration.isSeriesMultipleColor &&
               tempColLabels.map((label, index) => (
-                <Stack direction="row" key={index} container gap={1}>
+                <Stack direction="row" key={index} container sx={{ gap: 1 }}>
                   <Box sx={{ mb: 0, height: 30, width: 30 }}>
                     <input
                       type="color"
@@ -199,9 +199,9 @@ const StylesTab = ({ state, setState }) => {
             <FormLabel sx={{ mb: 1 }} id="role-label">
               Data Labels
             </FormLabel>
-            <Stack gap={1}>
+            <Stack sx={{ gap: 1 }}>
               {state.configuration.isDataLabelsColorAvailable && (
-                <Stack direction="row" gap={1}>
+                <Stack direction="row" sx={{ gap: 1 }}>
                   <Box className="color-box">
                     <input
                       type="color"
@@ -216,7 +216,7 @@ const StylesTab = ({ state, setState }) => {
               )}
 
               {state.configuration.isDataLabelsWithBackgroundColorAvailable && (
-                <Stack direction="row" gap={1}>
+                <Stack direction="row" sx={{ gap: 1 }}>
                   <Box className="color-box">
                     <input
                       type="color"

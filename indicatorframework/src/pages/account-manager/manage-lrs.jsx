@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { Button, Skeleton, Container, Stack } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import { AuthContext } from "../../setup/auth-context-manager/auth-context-manager";
 import AddLrsConsumer from "./components/add-lrs-consumer";
 import { useSnackbar } from "notistack";
@@ -203,7 +203,7 @@ const ManageLrs = () => {
         />
       )}
       <Container maxWidth="lg" sx={{ pt: 2 }} disableGutters>
-        <Stack gap={2}>{renderContent()}</Stack>
+        <Stack sx={{ gap: 2 }}>{renderContent()}</Stack>
       </Container>
     </>
   );

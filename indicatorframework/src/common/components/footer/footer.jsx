@@ -10,10 +10,7 @@ const Footer = () => {
     <>
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        gap={1}
-        sx={{ p: 2 }}
+        sx={{ justifyContent: "space-between", alignItems: "center", gap: 1, p: 2 }}
       >
         <Typography variant="body2">
           {"Copyright @ "}
@@ -27,7 +24,7 @@ const Footer = () => {
           {new Date().getFullYear()}
           {"."}
         </Typography>
-        <Stack direction="row" gap={1} alignItems="center">
+        <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
           <Tooltip title="Visit our YouTube channel">
             <IconButton
               color="primary"

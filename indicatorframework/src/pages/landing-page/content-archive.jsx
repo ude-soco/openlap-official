@@ -34,7 +34,7 @@ export default function ContentArchive({ kind }) {
         maxWidth="lg"
         sx={{ py: { xs: 3, md: 6 }, minHeight: "100vh" }}
       >
-        <Stack gap={4}>
+        <Stack sx={{ gap: 4 }}>
           <Box>
             <Button
               component={RouterLink}

@@ -24,11 +24,11 @@ import { useSnackbar } from "notistack";
 import { useNavigate, useParams } from "react-router-dom";
 
 const SummaryLine = ({ label, value }) => (
-  <Stack direction="row" justifyContent="space-between" gap={2}>
+  <Stack direction="row" sx={{ justifyContent: "space-between", gap: 2 }}>
     <Typography variant="body2" color="text.secondary">
       {label}
     </Typography>
-    <Typography variant="body2" fontWeight={600} sx={{ textAlign: "right" }}>
+    <Typography variant="body2" sx={{ fontWeight: 600, textAlign: "right" }}>
       {value}
     </Typography>
   </Stack>
@@ -194,7 +194,7 @@ const NameDialog = ({ open, toggleOpen }) => {
                   Review the changes before updating the saved indicator.
                 </Typography>
                 {compare.loading && (
-                  <Stack direction="row" gap={1} alignItems="center" sx={{ my: 1 }}>
+                  <Stack direction="row" sx={{ gap: 1, alignItems: "center", my: 1 }}>
                     <CircularProgress size={16} />
                     <Typography variant="body2">
                       Comparing with the saved version…
@@ -208,8 +208,8 @@ const NameDialog = ({ open, toggleOpen }) => {
                   </Typography>
                 )}
                 {!compare.loading && !compare.error && noChanges && (
-                  <Stack gap={0.5} sx={{ my: 1 }}>
-                    <Typography variant="body2" fontWeight={600}>
+                  <Stack sx={{ gap: 0.5, my: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
                       No changes detected.
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -221,12 +221,12 @@ const NameDialog = ({ open, toggleOpen }) => {
                   !compare.error &&
                   compare.summary &&
                   compare.summary.hasChanges && (
-                    <Stack gap={1.5} sx={{ mt: 1 }}>
+                    <Stack sx={{ gap: 1.5, mt: 1 }}>
                       <Typography variant="subtitle2" component="h4">
                         Changes since the saved version
                       </Typography>
                       {compare.summary.groups.map((group) => (
-                        <Stack key={group.title} gap={0.25}>
+                        <Stack key={group.title} sx={{ gap: 0.25 }}>
                           <Typography
                             variant="overline"
                             color="text.secondary"
@@ -249,7 +249,7 @@ const NameDialog = ({ open, toggleOpen }) => {
                 <Typography gutterBottom>
                   You&apos;re about to {isUpdate ? "update" : "save"}:
                 </Typography>
-                <Stack gap={0.75} sx={{ mb: 1 }}>
+                <Stack sx={{ gap: 0.75, mb: 1 }}>
                   <SummaryLine
                     label="Indicator name"
                     value={summary.indicatorName}
@@ -265,16 +265,14 @@ const NameDialog = ({ open, toggleOpen }) => {
                   />
                   <Stack
                     direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    gap={2}
+                    sx={{ justifyContent: "space-between", alignItems: "center", gap: 2 }}
                   >
                     <Typography variant="body2" color="text.secondary">
                       Status
                     </Typography>
-                    <Stack direction="row" gap={0.5} alignItems="center">
+                    <Stack direction="row" sx={{ gap: 0.5, alignItems: "center" }}>
                       <CheckCircleRoundedIcon fontSize="small" color="success" />
-                      <Typography variant="body2" fontWeight={600}>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
                         Ready
                       </Typography>
                     </Stack>
@@ -290,13 +288,12 @@ const NameDialog = ({ open, toggleOpen }) => {
               <Typography gutterBottom>
                 This indicator isn&apos;t ready to save yet:
               </Typography>
-              <Stack gap={0.75} sx={{ mb: 1 }}>
+              <Stack sx={{ gap: 0.75, mb: 1 }}>
                 {issues.map((issue, i) => (
                   <Stack
                     key={i}
                     direction="row"
-                    gap={1}
-                    alignItems="flex-start"
+                    sx={{ gap: 1, alignItems: "flex-start" }}
                   >
                     <ReportProblemOutlinedIcon
                       fontSize="small"

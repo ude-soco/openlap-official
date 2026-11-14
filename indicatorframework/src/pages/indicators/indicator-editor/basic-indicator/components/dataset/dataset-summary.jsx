@@ -68,11 +68,11 @@ export default function DatasetSummary() {
         timeout={{ enter: 500, exit: 250 }}
         unmountOnExit
       >
-        <Stack gap={1}>
+        <Stack sx={{ gap: 1 }}>
           <Typography variant="body2" gutterBottom>
             Selection summary
           </Typography>
-          <Grid container spacing={1} alignItems="center">
+          <Grid container spacing={1} sx={{ alignItems: "center" }}>
             {handleCheckDatasetSelected() ? (
               <>
                 <Typography>Source of data:</Typography>

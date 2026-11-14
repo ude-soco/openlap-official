@@ -42,7 +42,7 @@ const AddRowDialog = ({ open, toggleOpen }) => {
   return (
     <>
       <Dialog open={Boolean(open)} fullWidth maxWidth="xs">
-        <DialogTitle id="alert-dialog-title">Add rows</DialogTitle>
+        <DialogTitle>Add rows</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Add blank rows to continue entering dataset values.
@@ -53,7 +53,7 @@ const AddRowDialog = ({ open, toggleOpen }) => {
               label="Number of rows"
               value={state.numberOfRows}
               type="number"
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
               onChange={handleRowNumber}
               variant="outlined"
             />

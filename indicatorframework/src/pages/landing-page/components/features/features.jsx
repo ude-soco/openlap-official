@@ -52,8 +52,7 @@ const ToolsOverview = () => {
       direction={{ xs: "column", md: "row" }}
       spacing={3}
       useFlexGap
-      alignItems="stretch"
-      sx={{ mt: { xs: 5, md: 6 } }}
+      sx={{ alignItems: "stretch", mt: { xs: 5, md: 6 } }}
     >
       {TOOLS.map((tool, i) => {
         const Icon = tool.icon;
@@ -114,9 +113,7 @@ const ToolsOverview = () => {
             {i < TOOLS.length - 1 && (
               <Stack
                 aria-hidden
-                alignItems="center"
-                justifyContent="center"
-                sx={{ color: "text.disabled" }}
+                sx={{ alignItems: "center", justifyContent: "center", color: "text.disabled" }}
               >
                 <ArrowForwardIcon
                   sx={{ transform: { xs: "rotate(90deg)", md: "none" } }}

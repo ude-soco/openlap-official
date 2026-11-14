@@ -19,11 +19,11 @@ const PrivacyPolicy = () => {
       <Box sx={{ minHeight: "100dvh", bgcolor: "background.default" }}>
         <AuthHeader crossLink={{ label: "Sign in", to: "/login" }} />
         <Box sx={{ p: 4 }}>
-          <Grid container justifyContent="center">
+          <Grid container sx={{ justifyContent: "center" }}>
             <Grid size={{ xs: 12, md: 8, xl: 6 }}>
               <Stack spacing={2}>
               <Grid size={{ xs: 12 }} sx={{ py: 3 }}>
-                <Grid container justifyContent="center">
+                <Grid container sx={{ justifyContent: "center" }}>
                   <Box
                     component="img"
                     style={fullLogoStyle}

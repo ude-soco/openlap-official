@@ -76,10 +76,10 @@ export default function ActionSelection({ activity, index }) {
   };
 
   return (
-    <Stack gap={0.75}>
+    <Stack sx={{ gap: 0.75 }}>
       <Typography
         variant="body2"
-        fontWeight={500}
+        sx={{ fontWeight: 500 }}
         color={isDisabled ? "text.disabled" : undefined}
       >
         Action
@@ -100,15 +100,23 @@ export default function ActionSelection({ activity, index }) {
           <TextField
             {...params}
             placeholder="Search for an action"
-            inputProps={{ ...params.inputProps, "aria-label": "Action" }}
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {loading ? <CircularProgress color="inherit" size={18} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
+            slotProps={{
+              ...params.slotProps,
+              htmlInput: {
+                ...params.slotProps.htmlInput,
+                "aria-label": "Action",
+              },
+              input: {
+                ...params.slotProps.input,
+                endAdornment: (
+                  <>
+                    {loading ? (
+                      <CircularProgress color="inherit" size={18} />
+                    ) : null}
+                    {params.slotProps.input.endAdornment}
+                  </>
+                ),
+              },
             }}
           />
         )}

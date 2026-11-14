@@ -67,8 +67,8 @@ export default function AnalysisSelection() {
       title="Analytics method"
       helper="Choose the analysis to apply to your filtered data."
     >
-      <Stack gap={0.75}>
-        <Typography variant="body2" fontWeight={500}>
+      <Stack sx={{ gap: 0.75 }}>
+        <Typography variant="body2" sx={{ fontWeight: 500 }}>
           Analytics method
         </Typography>
         <Autocomplete
@@ -83,9 +83,12 @@ export default function AnalysisSelection() {
             <TextField
               {...params}
               placeholder="Search for an analytics method"
-              inputProps={{
-                ...params.inputProps,
-                "aria-label": "Analytics method",
+              slotProps={{
+                ...params.slotProps,
+                htmlInput: {
+                  ...params.slotProps.htmlInput,
+                  "aria-label": "Analytics method",
+                },
               }}
             />
           )}

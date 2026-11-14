@@ -31,7 +31,7 @@ export default function ParamsSelection() {
       title="Method parameters"
       helper="Parameters come with sensible defaults — adjust them only if needed."
     >
-      <Stack gap={2}>
+      <Stack sx={{ gap: 2 }}>
         {analysis.params.map((param, index) => {
           if (param.type === PARAM_TYPE.choice) {
             return (

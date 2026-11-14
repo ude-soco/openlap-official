@@ -87,7 +87,7 @@ const Visualization = () => {
               timeout={{ enter: 500, exit: 250 }}
               unmountOnExit
             >
-              <Stack gap={4}>
+              <Stack sx={{ gap: 4 }}>
                 {requirements.selectedPath === pathChoices.task && (
                   <>
                     <ChartTypeFilter />
@@ -111,7 +111,7 @@ const Visualization = () => {
                 )}
 
                 <Divider />
-                <Grid container justifyContent="center">
+                <Grid container sx={{ justifyContent: "center" }}>
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Button
                       fullWidth

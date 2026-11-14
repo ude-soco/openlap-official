@@ -43,7 +43,7 @@ const CatalogStatusControl = ({ enabled, name, usage, disabled = false, onChange
   };
 
   return (
-    <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+    <Stack direction="row" sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}>
       <Chip
         size="small"
         color={enabled ? "success" : "default"}
@@ -54,8 +54,10 @@ const CatalogStatusControl = ({ enabled, name, usage, disabled = false, onChange
         checked={enabled}
         disabled={disabled}
         onChange={(event) => openConfirm(event.target.checked)}
-        inputProps={{
-          "aria-label": `${enabled ? "Disable" : "Enable"} ${name || "item"}`,
+        slotProps={{
+          input: {
+            "aria-label": `${enabled ? "Disable" : "Enable"} ${name || "item"}`,
+          },
         }}
       />
       <Typography variant="caption" color="text.secondary">

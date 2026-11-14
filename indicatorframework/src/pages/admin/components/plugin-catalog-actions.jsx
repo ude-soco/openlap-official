@@ -73,7 +73,7 @@ const PluginCatalogActions = ({ kind, entry, onSaved }) => {
     <Dialog open={open} onClose={close} disableEscapeKeyDown={busy} fullWidth fullScreen={fullScreen} maxWidth="md" aria-labelledby="plugin-details-title">
       <DialogTitle id="plugin-details-title">Plugin details & versions</DialogTitle>
       <DialogContent dividers>
-        <Stack gap={2}>
+        <Stack sx={{ gap: 2 }}>
           {busy && <LinearProgress aria-label="Loading or saving plugin details" />}
           {error && <Alert severity="error" role="alert" action={<Button color="inherit" disabled={busy} onClick={reload}>Reload latest</Button>}>{error}{dirty ? " Your unsaved edits are preserved." : ""}</Alert>}
           {details && <>
@@ -87,7 +87,7 @@ const PluginCatalogActions = ({ kind, entry, onSaved }) => {
             {details.library && <Typography variant="body2">Library: {details.library}{details.creator ? ` · ${details.creator}` : ""}</Typography>}
             {details.implementingClass && <Typography variant="caption" color="text.secondary" sx={{ overflowWrap: "anywhere" }}>Implementation: {details.implementingClass}</Typography>}
             <Divider />
-            <Stack direction={{ xs: "column", sm: "row" }} gap={1} justifyContent="space-between" alignItems={{ sm: "center" }}>
+            <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 1, justifyContent: "space-between", alignItems: { sm: "center" } }}>
               <Typography variant="h6" component="h2">Version history</Typography>
               {kind !== "VISUALIZATION_TYPE" && <PluginUploadControl kind={kind === "ANALYTICS_METHOD" ? "ANALYTICS" : "VISUALIZATION"}
                 replacementTarget={{ kind, id: selectedId, name: details.name }} disabled={dirty || busy || history?.latest === false} onActivated={activated} />}
@@ -97,13 +97,13 @@ const PluginCatalogActions = ({ kind, entry, onSaved }) => {
             {kind === "VISUALIZATION_TYPE" && <Typography variant="body2" color="text.secondary">Chart versions are managed together through their visualization library.</Typography>}
             <List disablePadding aria-label="Plugin version history">
               {(history?.versions || []).map((version, index) => <ListItem key={version.artifactId || version.entries[0]?.id} divider disableGutters sx={{ display: "block" }}>
-                <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+                <Stack direction="row" sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}>
                   <Chip size="small" label={`Version ${version.ordinal || index + 1}`} title={version.artifactId || "Local version"} />
                   {version.artifactId && <Typography variant="caption" color="text.secondary">{version.artifactId.slice(-64, -52)}</Typography>}
                   {version.selected && <Chip size="small" variant="outlined" label="Viewing this version" />}
                   <Typography variant="caption" color="text.secondary">{version.activatedAt ? new Date(version.activatedAt).toLocaleString() : "Existing installation"}</Typography>
                 </Stack>
-                {version.entries.map((item) => <Stack key={item.id} direction="row" gap={1} justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
+                {version.entries.map((item) => <Stack key={item.id} direction="row" sx={{ gap: 1, justifyContent: "space-between", alignItems: "center", mt: 1 }}>
                   <Typography variant="body2">{item.name} · {item.removed ? "Removed" : item.enabled ? "Enabled" : "Disabled"}</Typography>
                   {(kind !== "VISUALIZATION_TYPE") && item.id !== selectedId && <Button size="small" disabled={busy} onClick={() => view(item.id)}>View details</Button>}
                 </Stack>)}

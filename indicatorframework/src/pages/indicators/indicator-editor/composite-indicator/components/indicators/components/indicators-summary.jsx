@@ -35,9 +35,9 @@ const IndicatorsSummary = () => {
     <>
       <Grid container spacing={1}>
         <Grid size={{ xs: 12 }}>
-          <Grid container justifyContent="space-between" spacing={1}>
+          <Grid container sx={{ justifyContent: "space-between" }} spacing={1}>
             <Grid size="grow">
-              <Grid container alignItems="center" spacing={1}>
+              <Grid container sx={{ alignItems: "center" }} spacing={1}>
                 <Chip label={lockedStep.indicators.step} color="primary" />
                 <Typography>Indicators</Typography>
                 <TipPopover
@@ -65,7 +65,7 @@ const IndicatorsSummary = () => {
           unmountOnExit
         >
           <Grid size={{ xs: 12 }}>
-            <Grid container spacing={1} alignItems="center">
+            <Grid container spacing={1} sx={{ alignItems: "center" }}>
               {/* TODO: Complete Indicators Summary */}
               <Typography>Indicators Summary</Typography>
             </Grid>

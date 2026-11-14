@@ -87,24 +87,24 @@ export default function VisualizationSummary() {
         timeout={{ enter: 500, exit: 250 }}
         unmountOnExit
       >
-        <Stack gap={1}>
+        <Stack sx={{ gap: 1 }}>
           <Typography variant="body2" gutterBottom>
             Selection summary
           </Typography>
           {handleCheckVisualizationSelected("library") && (
-            <Grid container spacing={1} alignItems="center">
+            <Grid container spacing={1} sx={{ alignItems: "center" }}>
               <Typography>Selected Visualization Library</Typography>
               <Chip label={visualization.selectedLibrary.name} />
             </Grid>
           )}
           {handleCheckVisualizationSelected("chart") && (
-            <Grid container spacing={1} alignItems="center">
+            <Grid container spacing={1} sx={{ alignItems: "center" }}>
               <Typography>Selected Chart</Typography>
               <Chip label={visualization.selectedType.name} />
             </Grid>
           )}
           {handleCheckVisualizationSelected("inputs") && (
-            <Grid container spacing={1} alignItems="center">
+            <Grid container spacing={1} sx={{ alignItems: "center" }}>
               <Typography>Selected Inputs</Typography>
               {visualization.inputs.map((input) => {
                 if (input.selectedInput) {

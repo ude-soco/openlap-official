@@ -16,7 +16,7 @@ const lowerFirst = (text = "") =>
 
 // One line: an icon (not color-only) + readable text.
 const ReasonRow = ({ ok, children }) => (
-  <Stack direction="row" gap={1} alignItems="flex-start">
+  <Stack direction="row" sx={{ gap: 1, alignItems: "flex-start" }}>
     {ok ? (
       <CheckCircleRoundedIcon fontSize="small" color="success" sx={{ mt: "2px" }} />
     ) : (
@@ -103,14 +103,11 @@ const VisualizationDescription = () => {
     : chart.description;
 
   return (
-    <Stack gap={3}>
+    <Stack sx={{ gap: 3 }}>
       {/* 1. Title + recommendation status */}
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        flexWrap="wrap"
-        gap={1}
+        sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}
       >
         <Typography variant="h6" component="h3">
           {chart.type}
@@ -126,13 +123,13 @@ const VisualizationDescription = () => {
       {/* 2. Why this chart? (recommendation reasoning only) */}
       {showWhy && whyReasons.length > 0 && (
         <Box component="section" aria-label="Why this chart" sx={tintedCardSx(whyCallout.tone)}>
-          <Stack direction="row" gap={1} alignItems="center" sx={{ mb: 1.5 }}>
+          <Stack direction="row" sx={{ gap: 1, alignItems: "center", mb: 1.5 }}>
             <WhyIcon color={whyCallout.iconColor} />
-            <Typography variant="subtitle1" component="h4" fontWeight={600}>
+            <Typography variant="subtitle1" component="h4" sx={{ fontWeight: 600 }}>
               Why this chart?
             </Typography>
           </Stack>
-          <Stack gap={0.75}>
+          <Stack sx={{ gap: 0.75 }}>
             {whyReasons.map((node, index) => (
               <ReasonRow key={index} ok>
                 {node}
@@ -152,13 +149,13 @@ const VisualizationDescription = () => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <Stack gap={3}>
+          <Stack sx={{ gap: 3 }}>
             {/* 4. About this visualization (one educational block) */}
             <Box>
               <Typography variant="subtitle2" component="h4" gutterBottom>
                 About this visualization
               </Typography>
-              <Stack gap={1}>
+              <Stack sx={{ gap: 1 }}>
                 <Typography variant="body2">{aboutLead}</Typography>
                 {guidance?.question && (
                   <Typography variant="body2" color="text.secondary">
@@ -199,7 +196,7 @@ const VisualizationDescription = () => {
                     {showReqDetails ? "Hide details" : "Show details"}
                   </Button>
                   <Collapse in={showReqDetails} unmountOnExit>
-                    <Stack gap={0.75} sx={{ pt: 0.5 }}>
+                    <Stack sx={{ gap: 0.75, pt: 0.5 }}>
                       {compatibility.requirements.map((r) => (
                         <ReasonRow key={r.type} ok={r.satisfied}>
                           {r.required} {r.type.toLowerCase()} variable
@@ -211,10 +208,10 @@ const VisualizationDescription = () => {
                 </Box>
               ) : (
                 <Box sx={tintedCardSx("warning")}>
-                  <Typography variant="body2" fontWeight={600} gutterBottom>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }} gutterBottom>
                     To use this chart, add:
                   </Typography>
-                  <Stack gap={0.75}>
+                  <Stack sx={{ gap: 0.75 }}>
                     {compatibility.missing.map((m) => (
                       <ReasonRow key={m.type} ok={false}>
                         {m.required} {m.type.toLowerCase()} variable

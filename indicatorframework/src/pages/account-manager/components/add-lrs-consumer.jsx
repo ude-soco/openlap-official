@@ -103,7 +103,7 @@ const AddLrsConsumer = ({ addLrsConsumer, toggleOpen }) => {
       <Dialog open={addLrsConsumer.open} maxWidth="sm" fullWidth>
         <DialogTitle>Add new LRS</DialogTitle>
         <DialogContent>
-          <Grid container direction="column" spacing={2} sx={{ pt: 1 }}>
+          <Grid container spacing={2} sx={{ flexDirection: "column", pt: 1 }}>
             {state.loadingConsumerLrs ? (
               <Skeleton variant="rectangular" height={200} width="100%" />
             ) : state.allAvailableLrs.length > 0 ? (

@@ -56,11 +56,11 @@ const tonedCardSx = (tone) => (theme) => ({
 });
 
 const MetricRow = ({ label, value }) => (
-  <Stack direction="row" justifyContent="space-between" alignItems="baseline">
+  <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "baseline" }}>
     <Typography variant="body2" color="text.secondary">
       {label}
     </Typography>
-    <Typography variant="body2" fontWeight={600}>
+    <Typography variant="body2" sx={{ fontWeight: 600 }}>
       {value}
     </Typography>
   </Stack>
@@ -212,17 +212,14 @@ const DatasetRequirementsRail = () => {
         top: { md: 16 },
       })}
     >
-      <Stack gap={2}>
+      <Stack sx={{ gap: 2 }}>
         {/* 1. Dataset status + progress metrics */}
         <Box>
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            gap={1}
-            sx={{ mb: 1 }}
+            sx={{ justifyContent: "space-between", alignItems: "center", gap: 1, mb: 1 }}
           >
-            <Typography variant="subtitle1" component="h3" fontWeight={600}>
+            <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
               Dataset status
             </Typography>
             <Chip
@@ -233,7 +230,7 @@ const DatasetRequirementsRail = () => {
               label={statusMeta.label}
             />
           </Stack>
-          <Stack gap={0.5}>
+          <Stack sx={{ gap: 0.5 }}>
             {hasChart && requirements.length > 0 && (
               <MetricRow
                 label="Required columns"
@@ -254,13 +251,11 @@ const DatasetRequirementsRail = () => {
         {exampleActive && (
           <Stack
             direction="row"
-            gap={1}
-            alignItems="flex-start"
-            sx={(t) => ({
+            sx={[{ gap: 1, alignItems: "flex-start" }, (t) => ({
               p: 1,
               borderRadius: `${t.custom.radii.card}px`,
               backgroundColor: alpha(t.palette.info.main, 0.08),
-            })}
+            })]}
           >
             <ScienceOutlinedIcon fontSize="small" color="info" sx={{ mt: "2px" }} />
             <Box>
@@ -280,13 +275,12 @@ const DatasetRequirementsRail = () => {
           <SectionHeading>Required data</SectionHeading>
           {hasChart ? (
             requirements.length > 0 ? (
-              <Stack gap={0.75} sx={{ mt: 0.5 }}>
+              <Stack sx={{ gap: 0.75, mt: 0.5 }}>
                 {requirements.map((r) => (
                   <Stack
                     key={r.type}
                     direction="row"
-                    gap={1}
-                    alignItems="flex-start"
+                    sx={{ gap: 1, alignItems: "flex-start" }}
                   >
                     {r.satisfied ? (
                       <CheckCircleRoundedIcon
@@ -340,7 +334,7 @@ const DatasetRequirementsRail = () => {
         <Box>
           <SectionHeading>Your columns ({columns.length})</SectionHeading>
           {hasColumns ? (
-            <Stack gap={1} sx={{ mt: 0.5 }}>
+            <Stack sx={{ gap: 1, mt: 0.5 }}>
               {Object.entries(columnsByType).map(([typeValue, cols]) => {
                 const contributes = requiredTypes.has(typeValue);
                 return (
@@ -348,17 +342,16 @@ const DatasetRequirementsRail = () => {
                     <Typography
                       variant="caption"
                       color="text.secondary"
-                      fontWeight={600}
+                      sx={{ fontWeight: 600 }}
                     >
                       {typeValue}
                     </Typography>
-                    <Stack gap={0.25} sx={{ mt: 0.25 }}>
+                    <Stack sx={{ gap: 0.25, mt: 0.25 }}>
                       {cols.map((col) => (
                         <Stack
                           key={col.field}
                           direction="row"
-                          gap={1}
-                          alignItems="center"
+                          sx={{ gap: 1, alignItems: "center" }}
                         >
                           {contributes ? (
                             <CheckCircleRoundedIcon
@@ -400,8 +393,8 @@ const DatasetRequirementsRail = () => {
         {showQuality && (
           <Box>
             <SectionHeading>Data quality</SectionHeading>
-            <Stack gap={0.5} sx={{ mt: 0.5 }}>
-              <Stack direction="row" gap={1} alignItems="center">
+            <Stack sx={{ gap: 0.5, mt: 0.5 }}>
+              <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
                 {meaningfulRowCount > 0 ? (
                   <CheckCircleRoundedIcon fontSize="small" color="success" />
                 ) : (
@@ -417,7 +410,7 @@ const DatasetRequirementsRail = () => {
               </Stack>
 
               {invalidCellCount > 0 && (
-                <Stack direction="row" gap={1} alignItems="center">
+                <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
                   <ReportProblemOutlinedIcon fontSize="small" color="warning" />
                   <Typography variant="body2">
                     {invalidCellCount} invalid number
@@ -427,7 +420,7 @@ const DatasetRequirementsRail = () => {
               )}
 
               {emptyCellCount > 0 && (
-                <Stack direction="row" gap={1} alignItems="center">
+                <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
                   <EditOutlinedIcon fontSize="small" color="action" />
                   <Typography variant="body2">
                     {emptyCellCount} empty cell
@@ -439,7 +432,7 @@ const DatasetRequirementsRail = () => {
               {meaningfulRowCount > 0 &&
                 invalidCellCount === 0 &&
                 emptyCellCount === 0 && (
-                  <Stack direction="row" gap={1} alignItems="center">
+                  <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
                     <CheckCircleRoundedIcon fontSize="small" color="success" />
                     <Typography variant="body2">All cells valid</Typography>
                   </Stack>
@@ -450,7 +443,7 @@ const DatasetRequirementsRail = () => {
 
         {/* 4. Next best action — one clear recommendation */}
         <Box sx={tonedCardSx(statusMeta.tone)}>
-          <Stack direction="row" gap={1} alignItems="flex-start">
+          <Stack direction="row" sx={{ gap: 1, alignItems: "flex-start" }}>
             <ArrowForwardRoundedIcon
               fontSize="small"
               color={statusMeta.tone === "neutral" ? "action" : statusMeta.tone}

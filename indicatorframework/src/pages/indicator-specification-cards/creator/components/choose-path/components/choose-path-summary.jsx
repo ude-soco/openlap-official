@@ -50,11 +50,9 @@ export default function ChoosePathSummary() {
     <>
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ pb: 2 }}
+        sx={{ justifyContent: "space-between", alignItems: "center", pb: 2 }}
       >
-        <Stack direction="row" alignItems="center" gap={1}>
+        <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
           {!lockedStep.path.locked ? (
             <Chip label={lockedStep.path.step} color="primary" />
           ) : (
@@ -88,8 +86,8 @@ export default function ChoosePathSummary() {
         unmountOnExit
       >
         {requirements.selectedPath !== "" ? (
-          <Stack gap={0.5}>
-            <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
+          <Stack sx={{ gap: 0.5 }}>
+            <Stack direction="row" sx={{ alignItems: "center", gap: 1, flexWrap: "wrap" }}>
               <Typography>Selected path:</Typography>
               <Chip label={requirements.selectedPath} />
             </Stack>

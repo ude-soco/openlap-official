@@ -91,7 +91,7 @@ SectionPaper.propTypes = {
 };
 
 const SectionHeading = ({ children }) => (
-  <Typography variant="subtitle1" component="h2" fontWeight={600}>
+  <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 600 }}>
     {children}
   </Typography>
 );
@@ -105,7 +105,7 @@ const GroupHeading = ({ children }) => (
 GroupHeading.propTypes = { children: PropTypes.node };
 
 const Field = ({ label, value, clamp }) => (
-  <Stack gap={0.25}>
+  <Stack sx={{ gap: 0.25 }}>
     <Typography variant="caption" color="text.secondary">
       {label}
     </Typography>
@@ -307,7 +307,7 @@ const IndicatorPreview = () => {
   );
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       <Breadcrumbs>
         <Link component={RouterLink} underline="hover" color="inherit" to="/">
           Home
@@ -328,37 +328,32 @@ const IndicatorPreview = () => {
 
       <Container maxWidth="lg" disableGutters>
         {state.loading ? (
-          <Stack gap={2}>
+          <Stack sx={{ gap: 2 }}>
             <Skeleton variant="rounded" height={140} />
             <Skeleton variant="rounded" height={220} />
             <Skeleton variant="rounded" height={420} />
           </Stack>
         ) : (
-          <Stack gap={{ xs: 2, sm: 3 }}>
+          <Stack sx={{ gap: { xs: 2, sm: 3 } }}>
             {state.isLoading.status && <LinearProgress />}
 
             {/* 1. Header — identity, metadata, primary action + overflow */}
             <SectionPaper label="Indicator overview">
               <Stack
                 direction={{ xs: "column", sm: "row" }}
-                gap={2}
-                alignItems="flex-start"
-                justifyContent="space-between"
+                sx={{ gap: 2, alignItems: "flex-start", justifyContent: "space-between" }}
               >
-                <Stack gap={1.25} sx={{ minWidth: 0 }}>
+                <Stack sx={{ gap: 1.25, minWidth: 0 }}>
                   <Typography
                     variant="h5"
                     component="h1"
-                    fontWeight={700}
-                    sx={{ overflowWrap: "anywhere" }}
+                    sx={{ fontWeight: 700, overflowWrap: "anywhere" }}
                   >
                     {indicatorName || "Untitled indicator"}
                   </Typography>
                   <Stack
                     direction="row"
-                    gap={1}
-                    alignItems="center"
-                    flexWrap="wrap"
+                    sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}
                   >
                     <Chip
                       size="small"
@@ -398,9 +393,7 @@ const IndicatorPreview = () => {
 
                 <Stack
                   direction="row"
-                  gap={1}
-                  alignItems="center"
-                  sx={{ flexShrink: 0 }}
+                  sx={{ gap: 1, alignItems: "center", flexShrink: 0 }}
                 >
                   <Button
                     variant="contained"
@@ -475,7 +468,7 @@ const IndicatorPreview = () => {
             <Grid container spacing={{ xs: 2, sm: 3 }}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <SectionPaper label="Indicator overview" sx={{ height: "100%" }}>
-                  <Stack gap={1.5}>
+                  <Stack sx={{ gap: 1.5 }}>
                     <GroupHeading>Indicator overview</GroupHeading>
                     <Field label="Indicator name" value={state.indicatorName} />
                     <Field
@@ -492,7 +485,7 @@ const IndicatorPreview = () => {
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <SectionPaper label="Indicator setup" sx={{ height: "100%" }}>
-                  <Stack gap={1.5}>
+                  <Stack sx={{ gap: 1.5 }}>
                     <GroupHeading>Indicator setup</GroupHeading>
                     <Field label="Visualization" value={state.chart} />
                     <Field label="Visualization library" value={state.library} />
@@ -507,12 +500,10 @@ const IndicatorPreview = () => {
 
             {/* 3. Dataset preview */}
             <SectionPaper label="Dataset">
-              <Stack gap={2}>
+              <Stack sx={{ gap: 2 }}>
                 <Stack
                   direction="row"
-                  gap={1.5}
-                  alignItems="center"
-                  flexWrap="wrap"
+                  sx={{ gap: 1.5, alignItems: "center", flexWrap: "wrap" }}
                 >
                   <SectionHeading>Dataset</SectionHeading>
                   {hasDataset && (
@@ -588,12 +579,10 @@ const IndicatorPreview = () => {
 
             {/* 4. Visualization preview */}
             <SectionPaper label="Visualization">
-              <Stack gap={2}>
+              <Stack sx={{ gap: 2 }}>
                 <Stack
                   direction="row"
-                  gap={1.5}
-                  alignItems="center"
-                  flexWrap="wrap"
+                  sx={{ gap: 1.5, alignItems: "center", flexWrap: "wrap" }}
                 >
                   <SectionHeading>Visualization</SectionHeading>
                   {state.chart && (

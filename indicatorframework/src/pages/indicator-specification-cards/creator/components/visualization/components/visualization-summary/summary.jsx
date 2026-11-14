@@ -19,13 +19,13 @@ export default function Summary({ filterType, chartType }) {
     <>
       <Stack spacing={1}>
         {handleCheckFilterType() && (
-          <Stack direction="row" gap={1} alignItems="center">
+          <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
             <Typography>Filters applied</Typography>
             <Chip label={filterType} />
           </Stack>
         )}
         {handleCheckChartType() && (
-          <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+          <Stack direction="row" sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}>
             <Typography>Chart selected</Typography>
             <Chip label={chartType} />
             <Chip
@@ -39,7 +39,7 @@ export default function Summary({ filterType, chartType }) {
         {!handleCheckChartType() &&
           !handleCheckChartType() &&
           !lockedStep.visualization.step && (
-            <Stack direction="row" gap={1} alignItems="center">
+            <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
               <Typography>
                 <em>No visualization selected yet!</em>
               </Typography>

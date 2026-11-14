@@ -19,15 +19,13 @@ const FilterSection = ({ title, helper = null, action = null, children }) => (
       borderRadius: `${theme.custom.radii.card}px`,
     })}
   >
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="flex-start"
-        gap={1}
+        sx={{ justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}
       >
         <Box>
-          <Typography variant="subtitle1" fontWeight={600}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
             {title}
           </Typography>
           {helper && (

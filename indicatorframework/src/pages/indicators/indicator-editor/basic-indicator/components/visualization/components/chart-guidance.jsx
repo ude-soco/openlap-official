@@ -22,7 +22,7 @@ const ChartGuidance = ({ chartType, analyzedData }) => {
       title="Chart guidance"
       helper="Why this chart fits your analysed data — and when to use it."
     >
-      <Stack gap={2.5}>
+      <Stack sx={{ gap: 2.5 }}>
         <ChartWhy chartType={chartType} analyzedData={analyzedData} />
         <ChartAbout chartType={chartType} />
       </Stack>

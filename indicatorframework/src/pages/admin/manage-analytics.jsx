@@ -95,7 +95,7 @@ const ManageAnalytics = () => {
 
   return (
     <>
-      <Stack gap={2}>
+      <Stack sx={{ gap: 2 }}>
         <Breadcrumbs>
           <Link component={RouterLink} underline="hover" color="inherit" to="/">
             Home
@@ -105,7 +105,7 @@ const ManageAnalytics = () => {
         <Divider />
       </Stack>
       <Container maxWidth="lg" sx={{ pt: 2 }}>
-        <Stack gap={2}>
+        <Stack sx={{ gap: 2 }}>
           <Box
             sx={{
               mt: 2,

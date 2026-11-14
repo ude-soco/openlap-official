@@ -65,8 +65,7 @@ export default function Hero() {
         {/* Headline / content */}
         <Stack
           spacing={{ xs: 3.5, md: 4.5 }}
-          alignItems="center"
-          sx={{
+          sx={{ alignItems: "center",
             width: "100%",
             maxWidth: 840,
             textAlign: "center",
@@ -74,7 +73,7 @@ export default function Hero() {
           }}
         >
           {/* eyebrow + headline kept tight together */}
-          <Stack spacing={2} alignItems="center">
+          <Stack spacing={2} sx={{ alignItems: "center" }}>
             <Typography
               variant="overline"
               sx={{ color: accent, fontWeight: 600, letterSpacing: "0.1em" }}
@@ -141,7 +140,7 @@ export default function Hero() {
           </Stack>
 
           {/* Trust strip */}
-          <Stack alignItems="center" spacing={2.5} sx={{ pt: { xs: 1, md: 2 } }}>
+          <Stack spacing={2.5} sx={{ alignItems: "center", pt: { xs: 1, md: 2 } }}>
             <Typography
               variant="body2"
               sx={{ color: "text.secondary", letterSpacing: "0.01em" }}
@@ -152,8 +151,7 @@ export default function Hero() {
             <Stack
               direction="row"
               spacing={4}
-              alignItems="center"
-              sx={{ opacity: 0.65, display: { xs: "none", sm: "flex" } }}
+              sx={{ alignItems: "center", opacity: 0.65, display: { xs: "none", sm: "flex" } }}
             >
               <Box
                 component="img"

@@ -17,7 +17,7 @@ const ProfileAvatar = ({ image, name, link, size, iconFontSize }) => (
     <Avatar
       src={image}
       alt={name}
-      imgProps={{ loading: "lazy" }}
+      slotProps={{ img: { loading: "lazy" } }}
       sx={{ width: "100%", height: "100%" }}
     />
     <Tooltip arrow title={`View ${name}'s profile`}>

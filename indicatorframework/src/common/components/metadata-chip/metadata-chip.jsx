@@ -7,7 +7,7 @@ import { Chip, Stack, Typography } from "@mui/material";
  * or copy icon button). Wraps gracefully on narrow screens.
  */
 const MetadataChip = ({ label, value, action = null }) => (
-  <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
+  <Stack direction="row" sx={{ alignItems: "center", gap: 1, flexWrap: "wrap" }}>
     <Typography
       variant="body2"
       color="text.secondary"

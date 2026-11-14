@@ -67,7 +67,7 @@ OutcomeChip.propTypes = {
 };
 
 const MetadataDetails = ({ metadata }) => (
-  <Stack gap={1} sx={{ py: 1.5 }}>
+  <Stack sx={{ gap: 1, py: 1.5 }}>
     {Object.entries(metadata).map(([key, value]) => (
       <Box
         key={key}
@@ -80,7 +80,7 @@ const MetadataDetails = ({ metadata }) => (
           backgroundColor: "action.hover",
         })}
       >
-        <Typography variant="caption" color="text.secondary" fontWeight={600}>
+        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
           {key}
         </Typography>
         <Box
@@ -151,7 +151,7 @@ const AdminAuditLogs = () => {
   const showSkeleton = loading && rows.length === 0;
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       <PageHeader
         title="Audit Logs"
         breadcrumbs={[
@@ -267,7 +267,7 @@ const AdminAuditLogs = () => {
                               </TableCell>
                               <TableCell>{entry.resourceType || "—"}</TableCell>
                               <TableCell>
-                                <Typography variant="body2" fontWeight={600}>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
                                   {entry.resourceLabel || "—"}
                                 </Typography>
                               </TableCell>

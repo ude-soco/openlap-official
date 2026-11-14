@@ -38,7 +38,7 @@ const panelSx = (theme) => ({
 });
 
 const SectionHeading = ({ children }) => (
-  <Typography variant="subtitle1" component="h2" fontWeight={600} gutterBottom>
+  <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 600 }} gutterBottom>
     {children}
   </Typography>
 );
@@ -146,7 +146,7 @@ const AccountProfilePanel = ({ loading, error, user, roles, reload }) => {
         <Box component="form" onSubmit={handleSaveName} noValidate>
           <SectionHeading>Profile</SectionHeading>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            <Stack direction="row" alignItems="flex-start" spacing={2}>
+            <Stack direction="row" sx={{ alignItems: "flex-start" }} spacing={2}>
               {loading ? (
                 <Skeleton variant="circular" width={56} height={56} />
               ) : (
@@ -218,7 +218,9 @@ const AccountProfilePanel = ({ loading, error, user, roles, reload }) => {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
                         onClick={() => setShowPassword((show) => !show)}
                         onMouseDown={(event) => event.preventDefault()}
                         edge="end"
@@ -253,7 +255,7 @@ const AccountProfilePanel = ({ loading, error, user, roles, reload }) => {
           {loading ? (
             <Skeleton width={120} height={32} />
           ) : (
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
+            <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap", mt: 1 }}>
               {roles?.length ? (
                 roles.map((role) => (
                   <Chip key={role} size="small" label={ROLE_LABELS[role] || role} />

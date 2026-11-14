@@ -134,10 +134,14 @@ const SidebarNav = ({ onItemClick }) => {
             <ListItemIcon>{disabled ? <LockIcon /> : menu.icon}</ListItemIcon>
             <ListItemText
               primary={menu.title}
-              primaryTypographyProps={{
-                variant: "body2",
-                fontWeight: 600,
-                noWrap: true,
+              slotProps={{
+                primary: {
+                  variant: "body2",
+                  sx: {
+                    fontWeight: 600,
+                  },
+                  noWrap: true,
+                },
               }}
             />
             {openMenus[menu.key] ? (
@@ -164,9 +168,11 @@ const SidebarNav = ({ onItemClick }) => {
                     </ListItemIcon>
                     <ListItemText
                       primary={item.primary}
-                      primaryTypographyProps={{
-                        variant: "body2",
-                        noWrap: true,
+                      slotProps={{
+                        primary: {
+                          variant: "body2",
+                          noWrap: true,
+                        },
                       }}
                     />
                   </ListItemButton>
@@ -207,7 +213,7 @@ const SidebarNav = ({ onItemClick }) => {
             </ListItemIcon>
             <ListItemText
               primary="Home"
-              primaryTypographyProps={{ variant: "body2", fontWeight: 600 }}
+              slotProps={{ primary: { variant: "body2", sx: { fontWeight: 600 } } }}
             />
           </ListItemButton>
         </List>

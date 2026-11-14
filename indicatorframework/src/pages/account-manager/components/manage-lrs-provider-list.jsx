@@ -20,7 +20,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import EditIcon from "@mui/icons-material/Edit";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import StorageIcon from "@mui/icons-material/Storage";
@@ -255,9 +255,7 @@ const ManageLrsProviderList = ({ state, setState }) => {
                 <Stack spacing={0.5}>
                   <Stack
                     direction="row"
-                    alignItems="center"
-                    gap={1}
-                    flexWrap="wrap"
+                    sx={{ alignItems: "center", gap: 1, flexWrap: "wrap" }}
                   >
                     <Typography
                       variant="body2"
@@ -329,7 +327,7 @@ const ManageLrsProviderList = ({ state, setState }) => {
         <Dialog open={editLRS.open} fullWidth maxWidth="sm">
           <DialogTitle>Edit LRS name</DialogTitle>
           <DialogContent>
-            <Stack gap={2}>
+            <Stack sx={{ gap: 2 }}>
               <Typography color="textSecondary" sx={{ fontStyle: "italic" }}>
                 Current LRS name: {editLRS.lrs.lrsTitle}
               </Typography>
@@ -361,7 +359,7 @@ const ManageLrsProviderList = ({ state, setState }) => {
         <Dialog open={editLRS.openType} fullWidth maxWidth="sm">
           <DialogTitle>Change Unique Identifier</DialogTitle>
           <DialogContent>
-            <Stack gap={1}>
+            <Stack sx={{ gap: 1 }}>
               <Typography color="textSecondary" sx={{ fontStyle: "italic" }}>
                 <b>Important:</b> Changing the unique identifier now can cause
                 the following issues:

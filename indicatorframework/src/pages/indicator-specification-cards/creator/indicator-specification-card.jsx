@@ -491,7 +491,7 @@ const IndicatorSpecificationCard = () => {
             />
           }
         >
-          <Stack gap={2}>
+          <Stack sx={{ gap: 2 }}>
             <SpecifyRequirements />
             <ChoosePath />
             {lockedStep.visualization.step === LEGACY_STEP_CODE.FIRST_MIDDLE && (

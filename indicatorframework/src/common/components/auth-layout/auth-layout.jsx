@@ -82,8 +82,7 @@ const AuthLayout = ({
               {(icon || title || subtitle) && (
                 <Stack
                   spacing={1.5}
-                  alignItems="center"
-                  sx={{ mb: 3, textAlign: "center" }}
+                  sx={{ alignItems: "center", mb: 3, textAlign: "center" }}
                 >
                   {icon}
                   {title && (

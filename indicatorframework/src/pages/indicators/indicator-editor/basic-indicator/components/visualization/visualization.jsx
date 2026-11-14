@@ -255,7 +255,7 @@ export default function Visualization() {
           timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
-          <Stack gap={2} sx={{ py: 2 }}>
+          <Stack sx={{ gap: 2, py: 2 }}>
             <LibrarySelection />
 
             {visualization.selectedLibrary.id ? (
@@ -278,7 +278,7 @@ export default function Visualization() {
             {configReady ? (
               <>
                 <TypeInputSelection />
-                <Grid container spacing={3} alignItems="flex-start">
+                <Grid container spacing={3} sx={{ alignItems: "flex-start" }}>
                   <Grid
                     size={{ xs: 12, lg: customize ? "grow" : 12 }}
                     sx={{ minWidth: 0 }}
@@ -310,10 +310,7 @@ export default function Visualization() {
                         />
                       ) : (
                         <Stack
-                          gap={1.5}
-                          alignItems="center"
-                          justifyContent="center"
-                          sx={{ minHeight: 360 }}
+                          sx={{ gap: 1.5, alignItems: "center", justifyContent: "center", minHeight: 360 }}
                         >
                           <CircularProgress />
                           <Typography variant="body2" color="text.secondary">
@@ -340,10 +337,8 @@ export default function Visualization() {
             <Divider sx={{ mt: 1 }} />
             <Grid
               container
-              justifyContent="center"
-              alignItems="center"
               spacing={1}
-              sx={{ pt: 2 }}
+              sx={{ justifyContent: "center", alignItems: "center", pt: 2 }}
             >
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Button

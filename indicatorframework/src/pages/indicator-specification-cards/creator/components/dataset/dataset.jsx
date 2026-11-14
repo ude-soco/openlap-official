@@ -84,7 +84,7 @@ const Dataset = () => {
           timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
-          <Stack gap={2} sx={{ py: 2 }}>
+          <Stack sx={{ gap: 2, py: 2 }}>
             <DatasetIntro />
             <Divider />
             {/*
@@ -109,7 +109,7 @@ const Dataset = () => {
               </Grid>
             </Grid>
             <Divider />
-            <Grid container justifyContent="center">
+            <Grid container sx={{ justifyContent: "center" }}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Button
                   fullWidth

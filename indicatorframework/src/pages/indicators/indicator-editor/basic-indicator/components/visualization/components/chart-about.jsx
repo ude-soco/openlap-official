@@ -30,12 +30,12 @@ const ChartAbout = ({ chartType }) => {
       <Typography
         variant="subtitle2"
         component="h4"
-        fontWeight={600}
+        sx={{ fontWeight: 600 }}
         gutterBottom
       >
         About {chartType.name}
       </Typography>
-      <Stack gap={2}>
+      <Stack sx={{ gap: 2 }}>
         <Typography variant="body2">{meta.summary}</Typography>
 
         {meta.bestFor && (
@@ -50,7 +50,7 @@ const ChartAbout = ({ chartType }) => {
         {meta.caution && (
           <Box>
             <FieldLabel>Use with care</FieldLabel>
-            <Stack direction="row" gap={1} alignItems="flex-start">
+            <Stack direction="row" sx={{ gap: 1, alignItems: "flex-start" }}>
               <InfoOutlinedIcon
                 fontSize="small"
                 color="action"

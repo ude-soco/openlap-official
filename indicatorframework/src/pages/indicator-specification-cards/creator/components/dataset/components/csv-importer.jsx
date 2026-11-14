@@ -40,24 +40,21 @@ const CsvImporter = () => {
         {dataset.file.name ? (
           <Grid
             container
-            sx={{ minHeight: 55 }}
+            sx={{ alignItems: "center", minHeight: 55 }}
             spacing={2}
-            alignItems="center"
           >
             <Grid
               container
               spacing={2}
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ width: "100%" }}
+              sx={{ justifyContent: "space-between", alignItems: "center", width: "100%" }}
             >
-              <Grid container spacing={1} alignItems="center">
+              <Grid container spacing={1} sx={{ alignItems: "center" }}>
                 <InsertDriveFileIcon color="primary" />
                 <Typography sx={{ fontWeight: "bold", ml: 1 }}>
                   {dataset.file.name}
                 </Typography>
               </Grid>
-              <Grid container spacing={2} alignItems="center">
+              <Grid container spacing={2} sx={{ alignItems: "center" }}>
                 <Typography>{dataset.file.size} KB</Typography>
                 <Tooltip title={<Typography>Remove file</Typography>} arrow>
                   <IconButton
@@ -80,9 +77,7 @@ const CsvImporter = () => {
         ) : (
           <Grid
             container
-            justifyContent="center"
-            alignItems="center"
-            sx={{
+            sx={{ justifyContent: "center", alignItems: "center",
               border: "2px dotted #C4C4C4",
               height: 150,
               borderRadius: 2,

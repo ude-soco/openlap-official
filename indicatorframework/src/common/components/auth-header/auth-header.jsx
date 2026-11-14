@@ -37,7 +37,7 @@ const AuthHeader = ({ crossLink }) => {
             }
           }}
         />
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <ToggleColorMode />
           {crossLink && (
             <Button

@@ -46,12 +46,12 @@ const PluginRemovalControl = ({ kind, id, disabled, removed, onChanged }) => {
     <Button color="error" disabled={disabled} onClick={() => { setOpen(true); load(); }}>{removed ? "Review recovery" : "Review removal"}</Button>
     <Dialog open={open} onClose={() => { if (!busy) setOpen(false); }} disableEscapeKeyDown={busy} fullWidth fullScreen={fullScreen} maxWidth="sm" aria-labelledby="plugin-removal-title">
       <DialogTitle id="plugin-removal-title">{preview?.removed || restoring ? "Recover removed entries" : "Review plugin removal"}</DialogTitle>
-      <DialogContent dividers><Stack gap={2}>
+      <DialogContent dividers><Stack sx={{ gap: 2 }}>
         {busy && <LinearProgress aria-label="Checking plugin references and updating catalog" />}
         {error && <Alert severity="error" role="alert">{error}</Alert>}
         {preview && <>
           {!preview.available && <Alert severity="info">Logical removal and recovery are disabled for this deployment until the deployment maintainer completes the guarded rollout.</Alert>}
-          <Typography variant="subtitle1" fontWeight={600}>{preview.name}</Typography>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{preview.name}</Typography>
           <Typography variant="body2">The following entries are affected:</Typography>
           <List dense disablePadding>{((preview.removed || restoring || pending) ? preview.operation.affected : preview.affected).map((entry) => <ListItem key={entry.key} disableGutters><ListItemText primary={entry.name} secondary={entry.kind.replaceAll("_", " ").toLowerCase()} /></ListItem>)}</List>
           {Object.entries(preview.dependencies || {}).filter(([, count]) => count > 0).map(([key, count]) => <Alert severity="warning" key={key}>{dependencyLabels[key] || key}: {count}</Alert>)}

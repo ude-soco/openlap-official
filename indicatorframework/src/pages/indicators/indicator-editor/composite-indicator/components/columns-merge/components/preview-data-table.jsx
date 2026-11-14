@@ -58,7 +58,7 @@ const PreviewDataTable = ({ analyzedData }) => {
   return (
     <Grid container>
       <Grid size={{ xs: 12 }}>
-        <Grid container alignItems="center">
+        <Grid container sx={{ alignItems: "center" }}>
           <Typography>Preview data</Typography>
           <Grid size="auto">
             <CustomTooltip
@@ -77,7 +77,7 @@ const PreviewDataTable = ({ analyzedData }) => {
               <TableRow>
                 {columns.map((column, index) => (
                   <TableCell key={index}>
-                    <Grid container alignItems="center">
+                    <Grid container sx={{ alignItems: "center" }}>
                       <b>{column.title}</b>
                       <CustomTooltip
                         type="description"

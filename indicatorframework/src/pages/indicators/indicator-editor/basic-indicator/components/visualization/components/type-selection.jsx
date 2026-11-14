@@ -107,9 +107,7 @@ const TypeSelection = () => {
           sx={{ width: "100%", height: "100%", p: 2 }}
         >
           <Stack
-            gap={1}
-            alignItems="center"
-            sx={{ height: "100%", width: "100%" }}
+            sx={{ gap: 1, alignItems: "center", height: "100%", width: "100%" }}
           >
             <Box
               aria-hidden
@@ -120,8 +118,7 @@ const TypeSelection = () => {
             <Typography
               variant="body2"
               align="center"
-              fontWeight={600}
-              sx={{
+              sx={{ fontWeight: 600,
                 minHeight: 40,
                 display: "flex",
                 alignItems: "center",
@@ -132,9 +129,7 @@ const TypeSelection = () => {
             </Typography>
             {/* mt:auto pins the badge to the same vertical position on every card. */}
             <Stack
-              alignItems="center"
-              gap={0.5}
-              sx={{ mt: "auto", width: "100%" }}
+              sx={{ alignItems: "center", gap: 0.5, mt: "auto", width: "100%" }}
             >
               <StatusChip status={compat.status} />
               {incompatible && requirementText && (
@@ -155,7 +150,7 @@ const TypeSelection = () => {
 
   const renderGroup = (title, entries) =>
     entries.length > 0 ? (
-      <Stack gap={1.5} key={title}>
+      <Stack sx={{ gap: 1.5 }} key={title}>
         <Typography variant="subtitle2" component="h4">
           {title}
         </Typography>
@@ -170,12 +165,12 @@ const TypeSelection = () => {
       title="Recommended visualizations"
       helper="Charts are grouped by how well they fit your analysed data."
     >
-      <Stack gap={4}>
+      <Stack sx={{ gap: 4 }}>
         {renderGroup("Recommended for your data", groups.recommended)}
         {renderGroup("Alternative visualizations", groups.compatible)}
 
         {groups.needsData.length > 0 && (
-          <Stack gap={1}>
+          <Stack sx={{ gap: 1 }}>
             <ButtonBase
               onClick={() => setShowNeedsData((s) => !s)}
               aria-expanded={showNeedsData}

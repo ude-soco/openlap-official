@@ -60,9 +60,7 @@ const WorkflowSection = ({
       {locked && (
         <Stack
           direction="row"
-          alignItems="center"
-          gap={1}
-          sx={{ mt: 1.5, color: "text.secondary" }}
+          sx={{ alignItems: "center", gap: 1, mt: 1.5, color: "text.secondary" }}
         >
           <LockOutlinedIcon fontSize="small" />
           <Typography variant="caption">{lockedHint}</Typography>

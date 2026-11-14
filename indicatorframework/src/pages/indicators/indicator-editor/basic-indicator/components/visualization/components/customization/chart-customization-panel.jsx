@@ -56,9 +56,7 @@ const ChartCustomizationPanel = ({ onClose }) => {
     <>
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ mb: 1 }}
+        sx={{ alignItems: "center", justifyContent: "space-between", mb: 1 }}
       >
         <Typography variant="subtitle2" color="text.secondary">
           Customization panel
@@ -97,7 +95,7 @@ const ChartCustomizationPanel = ({ onClose }) => {
               </TabList>
             </Box>
             <TabPanel value="1">
-              <Box height={HEIGHT} sx={{ overflowY: "scroll", px: 1 }}>
+              <Box sx={{ height: HEIGHT, overflowY: "scroll", px: 1 }}>
                 <ElementsBar
                   state={state}
                   setState={setState}
@@ -108,7 +106,7 @@ const ChartCustomizationPanel = ({ onClose }) => {
               </Box>
             </TabPanel>
             <TabPanel value="2">
-              <Box height={HEIGHT} sx={{ overflowY: "scroll", px: 1 }}>
+              <Box sx={{ height: HEIGHT, overflowY: "scroll", px: 1 }}>
                 <StylesBar
                   categories={analysis.analyzedData?.item_name?.data}
                   state={state}
@@ -120,7 +118,7 @@ const ChartCustomizationPanel = ({ onClose }) => {
               </Box>
             </TabPanel>
             <TabPanel value="3">
-              <Box height={HEIGHT} sx={{ overflowY: "scroll", px: 1 }}>
+              <Box sx={{ height: HEIGHT, overflowY: "scroll", px: 1 }}>
                 <FiltersBar
                   categories={analysis.analyzedData?.item_name?.data}
                   state={state}

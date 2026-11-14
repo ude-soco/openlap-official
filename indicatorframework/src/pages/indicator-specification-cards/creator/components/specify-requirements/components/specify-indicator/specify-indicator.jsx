@@ -32,10 +32,8 @@ export default function SpecifyIndicator() {
     <Grid container spacing={2}>
       <Grid size="auto">
         <Grid
-          direction="column"
           container
-          alignItems="center"
-          sx={{ height: "100%" }}
+          sx={{ alignItems: "center", flexDirection: "column", height: "100%" }}
           spacing={1}
         >
           <Avatar sx={{ bgcolor: "primary.main" }}>
@@ -44,8 +42,8 @@ export default function SpecifyIndicator() {
         </Grid>
       </Grid>
       <Grid size="grow" sx={{ pb: 2 }}>
-        <Stack gap={2}>
-          <Grid container spacing={1} alignItems="center">
+        <Stack sx={{ gap: 2 }}>
+          <Grid container spacing={1} sx={{ alignItems: "center" }}>
             <Typography component="h3" variant="subtitle2">
               Define your indicator
             </Typography>

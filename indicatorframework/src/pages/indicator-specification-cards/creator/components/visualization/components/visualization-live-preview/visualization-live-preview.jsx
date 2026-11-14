@@ -19,7 +19,7 @@ import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
 // Reads only its props — never mutates visRef/dataset/localStorage.
 
 const PreviewShell = ({ label, children }) => (
-  <Stack gap={1}>
+  <Stack sx={{ gap: 1 }}>
     <Typography variant="caption" color="text.secondary">
       {label}
     </Typography>
@@ -30,17 +30,14 @@ PreviewShell.propTypes = { label: PropTypes.string, children: PropTypes.node };
 
 const MessageBox = ({ children }) => (
   <Stack
-    alignItems="center"
-    justifyContent="center"
-    gap={1}
-    sx={(t) => ({
+    sx={[{ alignItems: "center", justifyContent: "center", gap: 1 }, (t) => ({
       p: 4,
       minHeight: 160,
       textAlign: "center",
       borderRadius: `${t.custom.radii.card}px`,
       border: `1px dashed ${t.palette.divider}`,
       backgroundColor: alpha(t.palette.text.primary, 0.02),
-    })}
+    })]}
   >
     <InsightsOutlinedIcon color="disabled" />
     <Typography variant="body2" color="text.secondary">

@@ -104,7 +104,7 @@ const IndicatorEditor = () => {
   });
 
   return (
-    <Stack gap={3}>
+    <Stack sx={{ gap: 3 }}>
       <PageHeader
         title="Create an indicator"
         breadcrumbs={[
@@ -127,14 +127,12 @@ const IndicatorEditor = () => {
         >
           <Stack
             direction={{ xs: "column", sm: "row" }}
-            gap={2}
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            justifyContent="space-between"
+            sx={{ gap: 2, alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between" }}
           >
-            <Stack direction="row" gap={1.5} alignItems="center">
+            <Stack direction="row" sx={{ gap: 1.5, alignItems: "center" }}>
               <HistoryEduOutlinedIcon color="info" />
               <Box>
-                <Typography fontWeight={600}>
+                <Typography sx={{ fontWeight: 600 }}>
                   You have an indicator in progress
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -142,7 +140,7 @@ const IndicatorEditor = () => {
                 </Typography>
               </Box>
             </Stack>
-            <Stack direction="row" gap={1} sx={{ flexShrink: 0 }}>
+            <Stack direction="row" sx={{ gap: 1, flexShrink: 0 }}>
               <Button variant="outlined" onClick={handleClearSession}>
                 Discard
               </Button>
@@ -158,7 +156,7 @@ const IndicatorEditor = () => {
         </Box>
       )}
 
-      <Grid container spacing={3} alignItems="stretch">
+      <Grid container spacing={3} sx={{ alignItems: "stretch" }}>
         {indicatorData.map((type) => (
           <Grid key={type.imageCode} size={{ xs: 12, sm: 6, md: 4 }} sx={{ display: "flex" }}>
             {type.available ? (
@@ -184,9 +182,7 @@ const IndicatorEditor = () => {
                     {type.steps && (
                       <Stack
                         direction="row"
-                        gap={1}
-                        flexWrap="wrap"
-                        sx={{ mt: 2 }}
+                        sx={{ gap: 1, flexWrap: "wrap", mt: 2 }}
                       >
                         {type.steps.map((step, i) => (
                           <Chip
@@ -203,11 +199,9 @@ const IndicatorEditor = () => {
                     <Divider />
                     <Stack
                       direction="row"
-                      gap={0.5}
-                      alignItems="center"
-                      sx={{ p: 2, color: "primary.main", fontWeight: 600 }}
+                      sx={{ gap: 0.5, alignItems: "center", p: 2, color: "primary.main", fontWeight: 600 }}
                     >
-                      <Typography fontWeight={600}>Start building</Typography>
+                      <Typography sx={{ fontWeight: 600 }}>Start building</Typography>
                       <ArrowForwardRoundedIcon fontSize="small" />
                     </Stack>
                   </Box>
@@ -223,10 +217,7 @@ const IndicatorEditor = () => {
                 <CardContent sx={{ p: 3 }}>
                   <Stack
                     direction="row"
-                    justifyContent="space-between"
-                    alignItems="flex-start"
-                    gap={1}
-                    sx={{ mb: 0.5 }}
+                    sx={{ justifyContent: "space-between", alignItems: "flex-start", gap: 1, mb: 0.5 }}
                   >
                     <Typography variant="h6" component="h2">
                       {type.name}

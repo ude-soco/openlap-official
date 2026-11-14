@@ -287,9 +287,7 @@ const UserDetailDrawer = ({ open, userId, onClose, onUpdated }) => {
       >
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ mb: 2 }}
+          sx={{ justifyContent: "space-between", alignItems: "center", mb: 2 }}
         >
           <Typography variant="h6" component="h2">
             User details
@@ -300,7 +298,7 @@ const UserDetailDrawer = ({ open, userId, onClose, onUpdated }) => {
         </Stack>
 
         {status === "loading" ? (
-          <Stack alignItems="center" sx={{ py: 6 }}>
+          <Stack sx={{ alignItems: "center", py: 6 }}>
             <CircularProgress />
           </Stack>
         ) : status === "error" ? (
@@ -316,7 +314,7 @@ const UserDetailDrawer = ({ open, userId, onClose, onUpdated }) => {
             }
           />
         ) : detail ? (
-          <Stack gap={2.5}>
+          <Stack sx={{ gap: 2.5 }}>
             <SectionCard
               title="Profile"
               action={
@@ -332,7 +330,7 @@ const UserDetailDrawer = ({ open, userId, onClose, onUpdated }) => {
               }
             >
               {editingProfile ? (
-                <Stack gap={2}>
+                <Stack sx={{ gap: 2 }}>
                   <TextField
                     label="Name"
                     size="small"
@@ -350,7 +348,7 @@ const UserDetailDrawer = ({ open, userId, onClose, onUpdated }) => {
                     value={emailDraft}
                     onChange={(event) => setEmailDraft(event.target.value)}
                   />
-                  <Stack direction="row" gap={1} justifyContent="flex-end">
+                  <Stack direction="row" sx={{ gap: 1, justifyContent: "flex-end" }}>
                     <Button onClick={handleCancelProfile} disabled={savingProfile}>
                       Cancel
                     </Button>
@@ -366,11 +364,11 @@ const UserDetailDrawer = ({ open, userId, onClose, onUpdated }) => {
                   </Stack>
                 </Stack>
               ) : (
-                <Stack gap={0.75}>
+                <Stack sx={{ gap: 0.75 }}>
                   <Typography variant="h6">{detail.name || "—"}</Typography>
                   <MetadataChip label="Email" value={detail.email || "—"} />
                   {detail.id && <MetadataChip label="User ID" value={detail.id} />}
-                  <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+                  <Stack direction="row" sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -394,12 +392,10 @@ const UserDetailDrawer = ({ open, userId, onClose, onUpdated }) => {
             >
               <Stack
                 direction={{ xs: "column", sm: "row" }}
-                justifyContent="space-between"
-                alignItems={{ xs: "flex-start", sm: "center" }}
-                gap={1.5}
+                sx={{ justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, gap: 1.5 }}
               >
-                <Stack gap={0.5}>
-                  <Typography variant="body2" fontWeight={600}>
+                <Stack sx={{ gap: 0.5 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {isEnabled ? "This user is enabled." : "This user is disabled."}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -432,7 +428,7 @@ const UserDetailDrawer = ({ open, userId, onClose, onUpdated }) => {
                     }
                     label={
                       <Box>
-                        <Typography variant="body2" fontWeight={600}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
                           {roleLabel(option.value)}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -449,7 +445,7 @@ const UserDetailDrawer = ({ open, userId, onClose, onUpdated }) => {
                   Select at least one role.
                 </Typography>
               )}
-              <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1 }}>
+              <Stack direction="row" sx={{ justifyContent: "flex-end", mt: 1 }}>
                 <Button
                   variant="contained"
                   disabled={!rolesChanged || !rolesValid}

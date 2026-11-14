@@ -45,13 +45,9 @@ const DatasetToolbar = () => {
     <>
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        flexWrap="wrap"
-        gap={1}
-        sx={{ mb: 2 }}
+        sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 2 }}
       >
-        <Stack direction="row" flexWrap="wrap" gap={1}>
+        <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
           <Button
             variant="contained"
             startIcon={<TableRowsRoundedIcon />}

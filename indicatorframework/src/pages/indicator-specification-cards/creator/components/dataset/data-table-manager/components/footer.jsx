@@ -50,14 +50,11 @@ const Footer = ({ state, setState }) => {
       </Grid>
       <Grid
         container
-        alignItems="center"
-        justifyContent="space-between"
+        sx={{ alignItems: "center", justifyContent: "space-between", px: 2, py: 2 }}
         spacing={2}
-        px={2}
-        py={2}
       >
         <Grid size="grow">
-          <Grid container spacing={1} alignItems="center">
+          <Grid container spacing={1} sx={{ alignItems: "center" }}>
             {state.selectionModel.ids.size !== 0 && (
               <>
                 <Typography variant="body2">

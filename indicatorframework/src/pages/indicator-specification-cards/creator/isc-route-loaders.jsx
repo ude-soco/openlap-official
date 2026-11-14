@@ -31,7 +31,7 @@ const LoadError = ({ message }) => {
   const navigate = useNavigate();
   return (
     <Centered>
-      <Stack gap={2} alignItems="center">
+      <Stack sx={{ gap: 2, alignItems: "center" }}>
         <Typography color="text.secondary">{message}</Typography>
         <Button variant="contained" onClick={() => navigate("/isc")}>
           Back to My ISCs

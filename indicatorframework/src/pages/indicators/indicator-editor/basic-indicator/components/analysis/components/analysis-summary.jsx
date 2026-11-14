@@ -82,18 +82,18 @@ export default function AnalysisSummary() {
         timeout={{ enter: 500, exit: 250 }}
         unmountOnExit
       >
-        <Stack gap={1}>
+        <Stack sx={{ gap: 1 }}>
           <Typography variant="body2" gutterBottom>
             Selection summary
           </Typography>
           {handleCheckAnalyticsMethodSelected("method") && (
-            <Grid container spacing={1} alignItems="center">
+            <Grid container spacing={1} sx={{ alignItems: "center" }}>
               <Typography>Analytics Method:</Typography>
               <Chip label={analysis.selectedAnalyticsMethod.method.name} />
             </Grid>
           )}
           {handleCheckAnalyticsMethodSelected("inputs") && (
-            <Grid container spacing={1} alignItems="center">
+            <Grid container spacing={1} sx={{ alignItems: "center" }}>
               <Typography>Inputs:</Typography>
               {analysis.inputs.map((input) => {
                 if (input.selectedInput) {
@@ -108,7 +108,7 @@ export default function AnalysisSummary() {
             </Grid>
           )}
           {handleCheckAnalyticsMethodSelected("method") && (
-            <Grid container spacing={1} alignItems="center">
+            <Grid container spacing={1} sx={{ alignItems: "center" }}>
               <Typography>Parameters:</Typography>
               {analysis.params.map((param) => (
                 <Chip

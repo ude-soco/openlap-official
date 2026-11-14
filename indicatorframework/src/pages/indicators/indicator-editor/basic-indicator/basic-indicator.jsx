@@ -209,7 +209,7 @@ export default function BasicIndicator() {
           handleResetIfDatasetEmpty,
         }}
       >
-        <Stack gap={3}>
+        <Stack sx={{ gap: 3 }}>
           <PageHeader
             title="Basic Indicator"
             breadcrumbs={[
@@ -219,7 +219,7 @@ export default function BasicIndicator() {
             ]}
           />
           <WorkflowStepper steps={workflowSteps} current={currentStep} />
-          <Stack gap={2}>
+          <Stack sx={{ gap: 2 }}>
             {isStepRevealed(lockedStep, "dataset") && <Dataset />}
             {isStepRevealed(lockedStep, "filters") && <Filters />}
             {isStepRevealed(lockedStep, "analysis") && <Analysis />}

@@ -109,7 +109,7 @@ const RenameMenuAndDialog = ({ props, columnMenu, setColumnMenu }) => {
             fullWidth
             label="Column name"
             value={column.value}
-            InputLabelProps={{ shrink: true }}
+            slotProps={{ inputLabel: { shrink: true } }}
             onChange={(event) => handleRenameHeader(event)}
             variant="outlined"
           />

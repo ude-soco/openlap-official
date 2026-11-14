@@ -9,8 +9,7 @@ const MoreLink = ({ label, href }) => (
     <Link
       component="button"
       color="primary"
-      fontWeight="bold"
-      sx={{
+      sx={{ fontWeight: "bold",
         display: "inline-flex",
         alignItems: "center",
         "& > svg": { transition: "0.2s" },

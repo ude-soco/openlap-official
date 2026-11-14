@@ -25,8 +25,7 @@ export function ToggleEditIconButton({ openPanel, togglePanel }) {
       <Grid
         container
         spacing={0.5}
-        direction="column"
-        alignItems="center"
+        sx={{ alignItems: "center", flexDirection: "column" }}
         onClick={togglePanel}
       >
         <IconButton

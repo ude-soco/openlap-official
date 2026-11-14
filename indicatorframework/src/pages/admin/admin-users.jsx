@@ -102,7 +102,7 @@ const AdminUsers = () => {
   const showSkeleton = loading && rows.length === 0;
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       <PageHeader
         title="Users"
         breadcrumbs={[
@@ -182,7 +182,7 @@ const AdminUsers = () => {
                                 —
                               </Typography>
                             ) : (
-                              <Stack direction="row" gap={0.5} flexWrap="wrap">
+                              <Stack direction="row" sx={{ gap: 0.5, flexWrap: "wrap" }}>
                                 {user.roles.map((role) => (
                                   <Chip
                                     key={role}

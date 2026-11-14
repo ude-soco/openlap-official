@@ -57,10 +57,8 @@ export default function FormulateQuestion() {
       <Grid container spacing={2}>
         <Grid size="auto">
           <Grid
-            direction="column"
             container
-            alignItems="center"
-            sx={{ height: "100%" }}
+            sx={{ alignItems: "center", flexDirection: "column", height: "100%" }}
             spacing={1}
           >
             <Avatar sx={{ bgcolor: "primary.main" }}>
@@ -75,7 +73,7 @@ export default function FormulateQuestion() {
         </Grid>
         <Grid size="grow" sx={{ pb: 2 }}>
           <Grid container spacing={2}>
-            <Grid container spacing={1} alignItems="center">
+            <Grid container spacing={1} sx={{ alignItems: "center" }}>
               <Typography component="h3" variant="subtitle2">
                 Formulate your question
               </Typography>

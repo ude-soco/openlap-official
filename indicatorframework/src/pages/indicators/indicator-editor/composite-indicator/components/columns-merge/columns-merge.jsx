@@ -99,7 +99,7 @@ const ColumnsMerge = () => {
             timeout={{ enter: 500, exit: 250 }}
             unmountOnExit
           >
-            <Grid container spacing={2} justifyContent="center">
+            <Grid container spacing={2} sx={{ justifyContent: "center" }}>
               <Grid size={{ xs: 12 }}>
                 <Button onClick={loadIndicatorsToAnalyze}>Click</Button>
               </Grid>
@@ -141,7 +141,7 @@ const ColumnsMerge = () => {
                             value={output.id}
                             control={<Radio />}
                             label={
-                              <Grid container alignItems="center" spacing={0.5}>
+                              <Grid container sx={{ alignItems: "center" }} spacing={0.5}>
                                 <Typography>{output.title}</Typography>
                                 {columnsMerge.indicatorsToAnalyze
                                   .analyticsOutputs.length === 1 && (
@@ -187,7 +187,7 @@ const ColumnsMerge = () => {
                       Click "Preview" to run the analysis and view of the
                       analyzed data.
                     </Typography>
-                    <Grid container justifyContent="center">
+                    <Grid container sx={{ justifyContent: "center" }}>
                       <Button
                         loading={state.isPreviewLoading}
                         loadingPosition="start"

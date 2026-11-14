@@ -12,9 +12,9 @@ const ReadinessSummary = ({ items }) => {
   const allDone = items.every((item) => item.done);
   return (
     <SectionCard title={allDone ? "Everything looks good" : "Almost there"}>
-    <Stack gap={1}>
+    <Stack sx={{ gap: 1 }}>
       {items.map((item) => (
-        <Stack key={item.label} direction="row" gap={1} alignItems="center">
+        <Stack key={item.label} direction="row" sx={{ gap: 1, alignItems: "center" }}>
           {item.done ? (
             <CheckCircleRoundedIcon color="success" fontSize="small" />
           ) : (

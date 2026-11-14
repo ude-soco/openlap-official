@@ -62,7 +62,7 @@ export default function InputsSelection() {
       title="Method inputs"
       helper="Map each input the method needs to a column from your data."
     >
-      <Stack gap={2}>
+      <Stack sx={{ gap: 2 }}>
         {analysis.inputs.map((input, index) => {
           const requiredMissing =
             Boolean(input.required) && input.selectedInput === undefined;

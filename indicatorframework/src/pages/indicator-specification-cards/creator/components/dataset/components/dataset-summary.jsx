@@ -49,8 +49,8 @@ export default function DatasetSummary() {
 
   return (
     <>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{pb: 2}}>
-        <Stack direction="row" alignItems="center" gap={1}>
+      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", pb: 2}}>
+        <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
           {!lockedStep.dataset.locked ? (
             <Chip label={lockedStep.dataset.step} color="primary" />
           ) : (
@@ -84,7 +84,7 @@ export default function DatasetSummary() {
           timeout={{ enter: 500, exit: 250 }}
           unmountOnExit
         >
-          <Stack gap={1}>
+          <Stack sx={{ gap: 1 }}>
             <Typography variant="body2" gutterBottom>
               Preview
             </Typography>

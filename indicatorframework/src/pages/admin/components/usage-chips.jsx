@@ -18,7 +18,7 @@ const UsageChips = ({ status, usage }) => {
   const indicators = usage?.indicatorCount ?? 0;
   const users = usage?.uniqueUserCount ?? 0;
   return (
-    <Stack direction="row" gap={0.5} flexWrap="wrap">
+    <Stack direction="row" sx={{ gap: 0.5, flexWrap: "wrap" }}>
       <Chip
         size="small"
         variant="outlined"

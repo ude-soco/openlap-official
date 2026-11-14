@@ -7,7 +7,7 @@ import { Stack } from "@mui/material";
 const ElementsTab = ({ state, setState }) => {
   return (
     <>
-      <Stack gap={2}>
+      <Stack sx={{ gap: 2 }}>
         <Legends state={state} setState={setState} />
         <Axis state={state} setState={setState} />
         <Title state={state} setState={setState} />

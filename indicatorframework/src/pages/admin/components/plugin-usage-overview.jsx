@@ -45,15 +45,15 @@ const PluginUsageOverview = ({ refreshKey }) => {
   const toggleSort = (field) => { setDirection(sort === field && direction === "desc" ? "asc" : "desc"); setSort(field); setPage(0); };
   const changeFilter = (value) => { setFilter(value); setPage(0); };
 
-  return <Stack gap={2}>
-    <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" gap={1}>
+  return <Stack sx={{ gap: 2 }}>
+    <Stack direction={{ xs: "column", sm: "row" }} sx={{ justifyContent: "space-between", gap: 1 }}>
       <Box><Typography variant="h5" component="h2">Plugin usage</Typography>
         <Typography variant="body2" color="text.secondary">Catalog entries include each installed version. Usage counts saved-indicator references and distinct creators.</Typography></Box>
       <Button disabled={loading} onClick={load}>Refresh plugin usage</Button>
     </Stack>
     {loading && <LinearProgress aria-label="Loading plugin usage" />}
     {!loading && data.errors.length > 0 && <Alert severity="warning" action={<Button color="inherit" onClick={load}>Retry</Button>}>Could not load: {data.errors.join(", ")}. Unavailable counts are shown as a dash.</Alert>}
-    <Stack direction="row" gap={1} flexWrap="wrap">
+    <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>
       <Chip variant="outlined" label={`${data.usage?.savedIndicatorCount ?? "—"} saved indicators`} />
       <Chip variant="outlined" label={`${data.usage?.uniqueCreatorCount ?? "—"} distinct indicator creators`} />
     </Stack>
@@ -62,13 +62,13 @@ const PluginUsageOverview = ({ refreshKey }) => {
         const summary = model.summaries[item.key];
         return <Grid size={{ xs: 12, md: 4 }} key={item.key} sx={{ display: "flex" }}>
           <SectionCard title={item.label} helper="Installed catalog entries, including retained versions">
-            <Stack gap={1.5}>
+            <Stack sx={{ gap: 1.5 }}>
               <Typography variant="h3" component="p">{summary?.installed ?? "—"}<Typography component="span" variant="body2" color="text.secondary"> installed</Typography></Typography>
-              <Stack direction="row" gap={1} flexWrap="wrap">
+              <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>
                 <Chip size="small" variant="outlined" label={`${summary?.enabled ?? "—"} enabled`} />
                 <Chip size="small" variant="outlined" label={`${summary?.disabled ?? "—"} disabled`} />
               </Stack>
-              <Stack direction="row" gap={1} flexWrap="wrap">
+              <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>
                 <Button size="small" disabled={!summary || !data.usage} onClick={() => { setCategory(item.key); changeFilter("inUse"); }}>{summary?.inUse ?? "—"} in use</Button>
                 <Button size="small" disabled={!summary || !data.usage} onClick={() => { setCategory(item.key); changeFilter("unused"); }}>{summary?.unused ?? "—"} without saved references</Button>
               </Stack>
@@ -80,11 +80,11 @@ const PluginUsageOverview = ({ refreshKey }) => {
     </Grid>
     {model.unresolvedReferences > 0 && <Alert severity="warning">Saved references outside the loaded catalogs: {model.unresolvedReferences}. These are reference counts across plugin kinds, rather than distinct indicators.</Alert>}
     <SectionCard title="Usage by entry" helper="Most used entries appear first. Zero saved references does not establish that an entry can be removed: drafts, cards and pending operations are checked during removal.">
-      <Stack gap={2}>
+      <Stack sx={{ gap: 2 }}>
         <Tabs value={category} onChange={(_, value) => { setCategory(value); setPage(0); }} variant="scrollable" scrollButtons="auto" aria-label="Plugin usage category">
           {PLUGIN_CATEGORIES.map((item) => <Tab key={item.key} value={item.key} label={item.label} />)}
         </Tabs>
-        <Stack direction={{ xs: "column", sm: "row" }} gap={2}>
+        <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 2 }}>
           <TextField size="small" label="Search plugin entries" value={search} onChange={(event) => { setSearch(event.target.value); setPage(0); }} sx={{ flex: 1 }} />
           <TextField select size="small" label="Show entries" value={filter} onChange={(event) => changeFilter(event.target.value)} sx={{ minWidth: 240 }}>
             <MenuItem value="all">All entries</MenuItem><MenuItem value="inUse" disabled={!data.usage}>With saved references</MenuItem>
@@ -100,7 +100,7 @@ const PluginUsageOverview = ({ refreshKey }) => {
             <TableCell>Status</TableCell><TableCell align="right">Actions</TableCell>
           </TableRow></TableHead>
           <TableBody>{filtered.slice(currentPage * size, (currentPage + 1) * size).map((row) => <TableRow key={row.id}>
-            <TableCell><Typography variant="body2" fontWeight={600}>{row.name}</Typography>
+            <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>{row.name}</Typography>
               <Typography variant="caption" color="text.secondary">{row.library ? `${row.library} · ` : ""}{row.artifactId ? `Version ${row.artifactId.slice(-64, -56)}` : "Existing version"}</Typography></TableCell>
             <TableCell>{row.indicatorCount ?? "—"}</TableCell><TableCell>{row.creatorCount ?? "—"}</TableCell>
             <TableCell><Chip size="small" label={row.enabled ? "Enabled" : "Disabled"} variant="outlined" color={row.enabled ? "success" : "default"} />

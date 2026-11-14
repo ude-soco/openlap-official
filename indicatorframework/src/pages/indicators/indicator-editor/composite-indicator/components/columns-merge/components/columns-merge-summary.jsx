@@ -35,9 +35,9 @@ const ColumnsMergeSummary = () => {
     <>
       <Grid container spacing={1}>
         <Grid size={{ xs: 12 }}>
-          <Grid container justifyContent="space-between" spacing={1}>
+          <Grid container sx={{ justifyContent: "space-between" }} spacing={1}>
             <Grid size="grow">
-              <Grid container alignItems="center" spacing={1}>
+              <Grid container sx={{ alignItems: "center" }} spacing={1}>
                 <Chip label={lockedStep.columnsMerge.step} color="primary" />
                 <Typography>Columns to Merge</Typography>
                 <TipPopover
@@ -65,7 +65,7 @@ const ColumnsMergeSummary = () => {
           unmountOnExit
         >
           <Grid size={{ xs: 12 }}>
-            <Grid container spacing={1} alignItems="center">
+            <Grid container spacing={1} sx={{ alignItems: "center" }}>
               {/* TODO: Complete Columns Merge Summary */}
               <Typography>Columns Merge Summary</Typography>
             </Grid>

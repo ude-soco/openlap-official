@@ -186,9 +186,7 @@ export default function AdminContent() {
   const renderActions = (entry) => (
     <Stack
       direction="row"
-      gap={0.5}
-      alignItems="center"
-      justifyContent="flex-end"
+      sx={{ gap: 0.5, alignItems: "center", justifyContent: "flex-end" }}
     >
       <Button
         size="small"
@@ -223,7 +221,7 @@ export default function AdminContent() {
   const newLink = `/admin/content/${kind}/new`;
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       <PageHeader
         title="Content Management"
         breadcrumbs={[
@@ -232,7 +230,7 @@ export default function AdminContent() {
         ]}
         subtitle="Create and maintain the news and publications on the OpenLAP homepage."
         actions={
-          <Stack direction="row" gap={1} flexWrap="wrap">
+          <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>
             <Button
               component="a"
               href="/"
@@ -275,8 +273,7 @@ export default function AdminContent() {
             changeFilters({ search: searchInput.trim(), page: "0" });
           }}
           direction={{ xs: "column", sm: "row" }}
-          gap={1.5}
-          alignItems={{ sm: "flex-start" }}
+          sx={{ gap: 1.5, alignItems: { sm: "flex-start" } }}
         >
           <TextField
             label={kind === "news" ? "Search news" : "Search publications"}
@@ -293,7 +290,9 @@ export default function AdminContent() {
                   </InputAdornment>
                 ),
               },
-              htmlInput: { maxLength: 200 },
+              htmlInput: {
+                maxLength: 200,
+              },
             }}
             sx={{ flex: 1 }}
           />
@@ -327,9 +326,7 @@ export default function AdminContent() {
         </Stack>
         <Stack
           direction="row"
-          alignItems="center"
-          gap={1}
-          sx={{ display: { xs: "flex", sm: "none" } }}
+          sx={{ alignItems: "center", gap: 1, display: { xs: "flex", sm: "none" } }}
         >
           <TextField
             select
@@ -489,7 +486,7 @@ export default function AdminContent() {
                           <TableCell
                             sx={{ width: "42%", overflowWrap: "anywhere" }}
                           >
-                            <Typography variant="body2" fontWeight={600}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
                               {entry.draft?.title || "Untitled"}
                             </Typography>
                           </TableCell>
@@ -510,7 +507,7 @@ export default function AdminContent() {
                 </TableBody>
               </Table>
             </TableContainer>
-            <Stack gap={1.5} sx={{ display: { xs: "flex", sm: "none" } }}>
+            <Stack sx={{ gap: 1.5, display: { xs: "flex", sm: "none" } }}>
               {loading && rows.length === 0
                 ? Array.from({ length: 3 }, (_, index) => (
                     <Skeleton key={index} variant="rounded" height={130} />
@@ -534,9 +531,7 @@ export default function AdminContent() {
                       </Typography>
                       <Stack
                         direction="row"
-                        gap={1}
-                        alignItems="center"
-                        flexWrap="wrap"
+                        sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}
                       >
                         {renderStatus(entry)}
                         <Typography variant="caption" color="text.secondary">
@@ -547,10 +542,7 @@ export default function AdminContent() {
                       </Stack>
                       <Stack
                         direction="row"
-                        alignItems="center"
-                        justifyContent="space-between"
-                        gap={1}
-                        sx={{ mt: 1 }}
+                        sx={{ alignItems: "center", justifyContent: "space-between", gap: 1, mt: 1 }}
                       >
                         <Typography variant="caption" color="text.secondary">
                           Updated {displayUpdated(entry.updatedAt)}

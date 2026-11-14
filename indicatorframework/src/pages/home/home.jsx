@@ -20,7 +20,7 @@ export default function Home() {
   const cards = homeData.filter((card) => canViewHomeCard(card, roles));
 
   return (
-    <Stack gap={3}>
+    <Stack sx={{ gap: 3 }}>
       <PageHeader title={greeting} subtitle="Choose a workspace to continue." />
 
       <Grid container spacing={3}>

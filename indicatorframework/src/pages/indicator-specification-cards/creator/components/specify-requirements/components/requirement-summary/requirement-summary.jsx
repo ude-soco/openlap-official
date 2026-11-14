@@ -43,11 +43,9 @@ export default function RequirementSummary() {
     <>
       <Stack
         direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ pb: 2 }}
+        sx={{ justifyContent: "space-between", alignItems: "center", pb: 2 }}
       >
-        <Stack direction="row" gap={1} alignItems="center">
+        <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
           <Chip label={lockedStep.requirements.step} color="primary" />
           <Typography>Specify requirements</Typography>
           <TipPopover

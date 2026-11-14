@@ -55,7 +55,7 @@ const IndicatorEditorDashboard = () => {
   };
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       <PageHeader
         title="My Indicators"
         breadcrumbs={[{ label: "Home", to: "/" }]}
@@ -83,14 +83,12 @@ const IndicatorEditorDashboard = () => {
         >
           <Stack
             direction={{ xs: "column", sm: "row" }}
-            gap={2}
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            justifyContent="space-between"
+            sx={{ gap: 2, alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between" }}
           >
-            <Stack direction="row" gap={1.5} alignItems="center">
+            <Stack direction="row" sx={{ gap: 1.5, alignItems: "center" }}>
               <HistoryEduOutlinedIcon color="info" />
               <Box>
-                <Typography fontWeight={600}>
+                <Typography sx={{ fontWeight: 600 }}>
                   You have an indicator in progress
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -98,7 +96,7 @@ const IndicatorEditorDashboard = () => {
                 </Typography>
               </Box>
             </Stack>
-            <Stack direction="row" gap={1} sx={{ flexShrink: 0 }}>
+            <Stack direction="row" sx={{ gap: 1, flexShrink: 0 }}>
               <Button variant="outlined" onClick={handleClearSession}>
                 Discard
               </Button>

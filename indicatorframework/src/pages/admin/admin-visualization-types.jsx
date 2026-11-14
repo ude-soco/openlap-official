@@ -102,7 +102,7 @@ const AdminVisualizationTypes = () => {
   );
 
   return (
-    <Stack gap={2}>
+    <Stack sx={{ gap: 2 }}>
       <PageHeader
         title="Visualization Types"
         breadcrumbs={[
@@ -111,7 +111,7 @@ const AdminVisualizationTypes = () => {
         ]}
         subtitle="Available chart types, their parent libraries, and selection status."
         actions={
-          <Stack direction="row" gap={1} alignItems="center">
+          <Stack direction="row" sx={{ gap: 1, alignItems: "center" }}>
           {status === "ready" ? (
             <Chip
               label={`${types.length} ${
@@ -180,7 +180,7 @@ const AdminVisualizationTypes = () => {
                     : pagedTypes.map((type) => (
                         <TableRow key={type.id || `${type.library}-${type.name}`} hover>
                           <TableCell>
-                            <Typography variant="body2" fontWeight={600}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
                               {type.name || "—"}
                             </Typography>
                             {type.artifactId && <Chip size="small" variant="outlined" label={`Version ${type.artifactId.slice(-64, -56)}`} title={type.artifactId} sx={{ mt: 0.5 }} />}

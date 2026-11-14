@@ -167,7 +167,7 @@ const PluginUploadControl = ({ kind, onActivated, replacementTarget, disabled = 
     <Dialog open={open} onClose={() => { if (!busy) setOpen(false); }} disableEscapeKeyDown={Boolean(busy)} fullWidth fullScreen={fullScreen} maxWidth="md" aria-labelledby="plugin-upload-title">
       <DialogTitle id="plugin-upload-title">{replacing ? "New version of" : "Add"} {entryLabel}</DialogTitle>
       <DialogContent dividers>
-        <Stack gap={2.5}>
+        <Stack sx={{ gap: 2.5 }}>
           <Stepper activeStep={step(review)} alternativeLabel>
             {["Upload", "Inspect", "Review & activate"].map((label) => <Step key={label}><StepLabel>{label}</StepLabel></Step>)}
           </Stepper>
@@ -181,15 +181,15 @@ const PluginUploadControl = ({ kind, onActivated, replacementTarget, disabled = 
             <Typography variant="body2" sx={{ mb: 1 }}>{busy}{progress === 100 ? " Transfer complete; validating on the server…" : ""}</Typography>
             <LinearProgress variant={progress !== null && progress < 100 ? "determinate" : "indeterminate"} value={progress || 0} aria-label={busy} />
           </Box>}
-          {!review ? <Stack gap={1.5}>
+          {!review ? <Stack sx={{ gap: 1.5 }}>
             <Typography ref={heading} tabIndex={-1} variant="h6" component="h2">Choose a plugin JAR</Typography>
             <Typography variant="body2" color="text.secondary">Maximum 100 MiB. {analytics ? "The archive must contain public AnalyticsMethod implementations." : "The archive must contain one VisualizationLibraryInfo implementation and at least one chart type."} Upload validation does not execute plugin code.</Typography>
             <Box><Button component="label" variant="outlined" startIcon={<UploadFileRoundedIcon />} disabled={!available || Boolean(busy)}>
               {file ? "Change file" : "Choose JAR"}<input type="file" accept=".jar" hidden onChange={choose} />
             </Button></Box>
             {file && <Typography variant="body2">{file.name} · {(file.size / 1024 / 1024).toFixed(2)} MiB</Typography>}
-          </Stack> : <Stack gap={2}>
-            <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+          </Stack> : <Stack sx={{ gap: 2 }}>
+            <Stack direction="row" sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}>
               <Typography ref={heading} tabIndex={-1} variant="h6" component="h2" sx={{ overflowWrap: "anywhere" }}>{review.filename}</Typography>
               <Chip label={labels[review.state] || review.state} color={review.state === "ACTIVE" ? "success" : "default"} size="small" />
             </Stack>
@@ -198,7 +198,7 @@ const PluginUploadControl = ({ kind, onActivated, replacementTarget, disabled = 
             {review.state === "ACTIVE" && <Alert severity="success">Installation complete. All entries are available in the catalog. Re-uploading these bytes reopens this installation.</Alert>}
             {review.state === "DISCARDED" && <Alert severity="info">This upload review is discarded and no longer blocks removal of its previous version. Restore the review within its recovery period to inspect and configure it again.</Alert>}
             {review.state === "REMOVED" && <Alert severity="info">This installation was removed from the catalog. Use Removed entries to recover it within its retention period. Re-uploading the same JAR does not restore removed entries.</Alert>}
-            {review.state === "ACTIVE" && previousEnabled.length > 0 && <Stack gap={1}>
+            {review.state === "ACTIVE" && previousEnabled.length > 0 && <Stack sx={{ gap: 1 }}>
               <Alert severity="info">The new version is installed. You can now disable the previous version for new selections. Saved indicators keep their original versions.</Alert>
               <Typography variant="body2">Previous entries: {previousEnabled.map((row) => row.name).join(", ")}</Typography>
               <FormControlLabel control={<Checkbox checked={retireConfirmed} onChange={(event) => setRetireConfirmed(event.target.checked)} disabled={Boolean(busy)} />} label="Disable the listed previous entries for new selections." />
@@ -211,8 +211,8 @@ const PluginUploadControl = ({ kind, onActivated, replacementTarget, disabled = 
               <FormControlLabel control={<Checkbox checked={trusted} onChange={(event) => setTrusted(event.target.checked)} disabled={Boolean(busy)} />} label="I trust the source of this JAR and want to inspect its contracts." />
             </>}
             {conflicts.map((conflict) => <Alert severity="warning" key={conflict}>{conflict}</Alert>)}
-            {replacing && review.state === "INSPECTED" && <Stack gap={1.5}>
-              <Typography variant="subtitle1" component="h2" fontWeight={600}>Map the previous entries</Typography>
+            {replacing && review.state === "INSPECTED" && <Stack sx={{ gap: 1.5 }}>
+              <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 600 }}>Map the previous entries</Typography>
               <Typography variant="body2" color="text.secondary">Mapped entries keep their edited details and enabled or disabled state. New contracts come from this JAR. Unmapped new entries start enabled; an old entry with no replacement remains usable through its original ID.</Typography>
               {(review.replacementSource?.entries || []).map((row) => <TextField select key={row.id} label={row.name || row.implementingClass}
                 value={mappings[row.id] || ""} disabled={Boolean(busy)} onChange={(event) => setMappings((current) => ({ ...current, [row.id]: event.target.value || null }))}
@@ -224,7 +224,7 @@ const PluginUploadControl = ({ kind, onActivated, replacementTarget, disabled = 
               {review.replacement && mappingSaved && <Alert severity="success">Replacement mapping saved. Review the resulting entries below before activation.</Alert>}
             </Stack>}
             {reviewedLibrary && <Box>
-              <Typography variant="subtitle1" fontWeight={600}>{reviewedLibrary.name}</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{reviewedLibrary.name}</Typography>
               <Typography variant="body2" color="text.secondary">{reviewedLibrary.creator} · {reviewedLibrary.description}</Typography>
               {reviewedLibrary.enabled === false && <Alert severity="info">This library starts disabled, preserving its previous status.</Alert>}
             </Box>}

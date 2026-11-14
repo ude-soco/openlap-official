@@ -61,8 +61,8 @@ export default function ActivityTypeSelection({ activity }) {
   const isSelected = activity.selectedActivityType.name !== "";
 
   return (
-    <Stack gap={0.75}>
-      <Typography variant="body2" fontWeight={500}>
+    <Stack sx={{ gap: 0.75 }}>
+      <Typography variant="body2" sx={{ fontWeight: 500 }}>
         Activity type{" "}
         <Box component="span" sx={{ color: "error.main" }} aria-hidden>
           *
@@ -83,15 +83,23 @@ export default function ActivityTypeSelection({ activity }) {
           <TextField
             {...params}
             placeholder="Search for an activity type"
-            inputProps={{ ...params.inputProps, "aria-label": "Activity type" }}
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {loading ? <CircularProgress color="inherit" size={18} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
+            slotProps={{
+              ...params.slotProps,
+              htmlInput: {
+                ...params.slotProps.htmlInput,
+                "aria-label": "Activity type",
+              },
+              input: {
+                ...params.slotProps.input,
+                endAdornment: (
+                  <>
+                    {loading ? (
+                      <CircularProgress color="inherit" size={18} />
+                    ) : null}
+                    {params.slotProps.input.endAdornment}
+                  </>
+                ),
+              },
             }}
           />
         )}
