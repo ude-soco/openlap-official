@@ -34,8 +34,6 @@ jobs:
     env:
       CI: true
       VITE_BACKEND_URL: /api/
-      NODE_PATH: ${{ runner.temp }}/openlap-browser-tests/node_modules
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/openlap-browser-cache
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7.1.0
@@ -47,8 +45,10 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Install isolated browser test tools
         run: |
+          echo "NODE_PATH=$RUNNER_TEMP/openlap-browser-tests/node_modules" >> "$GITHUB_ENV"
+          echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/openlap-browser-cache" >> "$GITHUB_ENV"
           npm install --prefix "$RUNNER_TEMP/openlap-browser-tests" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.56.1
-          "$RUNNER_TEMP/openlap-browser-tests/node_modules/.bin/playwright" install --with-deps webkit
+          PLAYWRIGHT_BROWSERS_PATH="$RUNNER_TEMP/openlap-browser-cache" "$RUNNER_TEMP/openlap-browser-tests/node_modules/.bin/playwright" install --with-deps webkit
       - name: Verify dependency tree and unit tests
         run: |
           npm ls --all > "$RUNNER_TEMP/openlap-dependency-tree.txt"
