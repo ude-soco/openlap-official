@@ -20,6 +20,8 @@ jobs:
           persist-credentials: false
       - name: Check verified downloads and extraction fallbacks
         run: python3 -B tests/test_maven_wrapper.py
+      - name: Enforce the supported backend toolchain
+        run: python3 -B tests/check_backend_toolchain.py
 
   images:
     name: Build container images
