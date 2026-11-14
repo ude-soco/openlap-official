@@ -368,16 +368,16 @@ def assert_counts(dataset, expected, key_id="item_name", value_id="item_count"):
         raise DemoError("A real source analysis did not match the synthetic fixture counts.")
 
 
-def check_chart_syntax(code):
-    """Compile inline scripts without running them or fetching external assets."""
+def inline_scripts(code):
+    """Extract inline script bodies using HTML tag parsing, including valid spaced end tags."""
     class Scripts(HTMLParser):
         def __init__(self):
             super().__init__(convert_charrefs=False)
             self.current = None
             self.values = []
         def handle_starttag(self, tag, attrs):
-            if tag.lower() == "script" and not dict(attrs).get("src"):
-                self.current = []
+            if tag.lower() == "script":
+                self.current = [] if "src" not in dict(attrs) else None
         def handle_data(self, value):
             if self.current is not None:
                 self.current.append(value)
@@ -387,9 +387,16 @@ def check_chart_syntax(code):
                 self.current = None
     parsed = Scripts()
     parsed.feed(unquote(code))
-    if not parsed.values:
+    parsed.close()
+    return parsed.values
+
+
+def check_chart_syntax(code):
+    """Compile inline scripts without running them or fetching external assets."""
+    scripts = inline_scripts(code)
+    if not scripts:
         raise DemoError("The generated chart has no inline renderer.")
-    for script in parsed.values:
+    for script in scripts:
         compiled = subprocess.run(["node", "-e", "new (require('node:vm').Script)(require('node:fs').readFileSync(0,'utf8'));"],
                                   input=script, text=True, capture_output=True, timeout=15)
         if compiled.returncode:
@@ -398,8 +405,7 @@ def check_chart_syntax(code):
 
 def check_c3_text_roundtrip(code, expected_series, expected_title):
     """Capture the generated C3 configuration in a bounded VM without DOM/network."""
-    import re
-    scripts = re.findall(r"<script[^>]*>(.*?)</script>", unquote(code), flags=re.I | re.S)
+    scripts = inline_scripts(code)
     if len(scripts) != 1:
         raise DemoError("Expected one inline C3 renderer for text roundtrip verification.")
     probe = """const vm=require('node:vm'), assert=require('node:assert/strict');
@@ -435,7 +441,7 @@ def assert_scatter_series(series, expected_pairs, clusters, colors, expected_gro
 
 def check_c3_scatter_points(code, expected_pairs, clusters, assignments):
     """Verify actual C3 coordinates, not just the preceding analysis row count."""
-    scripts = re.findall(r"<script[^>]*>(.*?)</script>", unquote(code), flags=re.I | re.S)
+    scripts = inline_scripts(code)
     if len(scripts) != 1:
         raise DemoError("Expected one C3 scatter renderer.")
     probe = """const vm=require('node:vm'); const seen=[];

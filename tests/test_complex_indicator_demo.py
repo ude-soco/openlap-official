@@ -7,6 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
+from urllib.parse import quote
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -110,6 +111,50 @@ class SyntheticIndicatorExampleTests(unittest.TestCase):
         self.assertTrue(all(row["_demoFixtureId"] == demo.FIXTURE and row["lrs_id"] == demo.LRS_ID for row in rows))
         self.assertRegex(demo.LRS_ID, r"^[0-9a-f]{24}$")
         self.assertTrue(all(len(row["_id"]) == 24 for row in rows))
+
+
+class GeneratedScriptParsingTests(unittest.TestCase):
+    def test_html_parser_accepts_spaced_mixed_case_end_tags_and_quoted_angles(self):
+        script = "const label = 'original \\u003c/script\\u003e text';"
+        markup = '<SCRIPT data-note="a>b">' + script + '</ScRiPt \t>'
+        self.assertEqual(demo.inline_scripts(quote(markup)), [script])
+
+    def test_external_scripts_comments_and_similarly_named_elements_are_excluded(self):
+        markup = ('<!-- <script>comment()</script> --><scripture>text</scripture>'
+                  '<script src="https://example.test/chart.js">external()</script>'
+                  '<script src="">emptySource()</script><script>inline()</script >')
+        self.assertEqual(demo.inline_scripts(markup), ['inline()'])
+
+    def test_syntax_probe_compiles_each_parsed_inline_script_only(self):
+        class Result:
+            returncode = 0
+        markup = '<script src="external.js"></script><script>first()</script ><script>second()</script>'
+        with patch.object(demo.subprocess, 'run', return_value=Result()) as run:
+            demo.check_chart_syntax(markup)
+            self.assertEqual([call.kwargs['input'] for call in run.call_args_list], ['first()', 'second()'])
+        with self.assertRaisesRegex(demo.DemoError, 'no inline renderer'):
+            demo.check_chart_syntax('<script src="external.js"></script>')
+
+    def test_text_and_scatter_probes_share_the_parsed_script_body(self):
+        script = 'c3.generate({});'
+        markup = '<script data-note="a>b">' + script + '</SCRIPT >'
+        class Result:
+            returncode = 0
+            stdout = json.dumps({'series': [{'name': 'Cluster 1', 'x': [1], 'y': [11]}], 'colors': demo.PALETTE})
+        with patch.object(demo.subprocess, 'run', return_value=Result()) as run:
+            demo.check_c3_text_roundtrip(markup, ['Original label'], 'Original title')
+            self.assertEqual(json.loads(run.call_args.kwargs['input'])['script'], script)
+            demo.check_c3_scatter_points(markup, [(1, 11)], 1, ['Cluster 1'])
+            self.assertEqual(json.loads(run.call_args.kwargs['input']), script)
+
+    def test_configuration_probes_reject_multiple_inline_renderers_before_execution(self):
+        markup = '<script>first()</script ><script>second()</script>'
+        with patch.object(demo.subprocess, 'run') as run:
+            with self.assertRaisesRegex(demo.DemoError, 'one inline C3 renderer'):
+                demo.check_c3_text_roundtrip(markup, [], '')
+            with self.assertRaisesRegex(demo.DemoError, 'one C3 scatter renderer'):
+                demo.check_c3_scatter_points(markup, [], 0, [])
+            run.assert_not_called()
 
 
 class SavedDemoApiContractTests(unittest.TestCase):
