@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import time
 import uuid
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 PYTHON_IMAGE = "python@sha256:e064671ca452259bab50e8e2c7bd896e39e9a343bb06ca25234adf6fe18d0fc7"
@@ -23,6 +24,15 @@ SYNTHETIC = {
 def require(value, message="Container qualification failed."):
     if not value:
         raise RuntimeError(message)
+
+
+def expected_aws_sdk_version():
+    pom = ET.parse(ROOT / "analyticsframework" / "pom.xml")
+    version = pom.findtext("m:properties/m:aws.sdk.version",
+                           namespaces={"m": "http://maven.apache.org/POM/4.0.0"})
+    require(version is not None and re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version) is not None,
+            "The public POM must pin an exact AWS SDK release for qualification.")
+    return version
 
 
 def run(arguments, success=True, timeout=60):
@@ -50,6 +60,7 @@ def main():
     parser.add_argument("--image", required=True)
     options = parser.parse_args()
     require(re.fullmatch(r"sha256:[a-f0-9]{64}", options.image) is not None)
+    sdk_version = expected_aws_sdk_version()
     token = "openlap-versity-qualification-" + uuid.uuid4().hex[:12]
     volume, network, server = token + "-data", token + "-network", token + "-server"
     credential_volume = token + "-credentials"
@@ -83,6 +94,7 @@ def main():
         fixture_script = ("umask 077\n"
                           "javac -cp '/opt/openlap-storage/classes:/opt/openlap-storage/lib/*' -d /tmp /fixture/VersityStorageQualification.java\n"
                           "exec java -Dlogback.configurationFile=/opt/openlap-storage/logback.xml "
+                          "-Dopenlap.fixture.expectedAwsSdkVersion=" + sdk_version + " "
                           "-cp '/tmp:/opt/openlap-storage/classes:/opt/openlap-storage/lib/*' "
                           "com.openlap.plugins.storage.VersityStorageQualification \"$@\"")
         def java_fixture(mode=None, data=(), root=False, net="none"):
@@ -125,6 +137,7 @@ def main():
                 require(negative.returncode != 0 and expected_phase in negative.stderr)
             checks.append("root-owned0444 projected-secret layout works; escaping links and credential drift rejected")
             java_fixture("--fsync-error")
+            checks.append("loaded S3Client JAR and embedded Maven version match the exact public POM SDK version")
             checks.append("unsupported filesystem sync propagates as failure")
             java_fixture("--state-negatives", data=["--mount=type=volume,source=" + volume + ",target=/storage"], root=True)
             checks.append("missing/corrupt IAM, partial marker, policy/owner drift and forged admin state rejected")
@@ -186,7 +199,8 @@ def main():
             else:
                 raise RuntimeError("Cold restart did not retain the application artifact.")
             checks.append("abrupt gateway kill and cold Java process retain acknowledged bytes/metadata and static IAM")
-            print(json.dumps({"schemaVersion": 1, "image": options.image, "checksPassed": checks}, indent=2))
+            print(json.dumps({"schemaVersion": 1, "image": options.image, "awsSdkVersion": sdk_version,
+                              "checksPassed": checks}, indent=2))
         finally:
             if created_proxy: run(["rm", "--force", proxy], success=False)
             if created_server: run(["rm", "--force", server], success=False)
