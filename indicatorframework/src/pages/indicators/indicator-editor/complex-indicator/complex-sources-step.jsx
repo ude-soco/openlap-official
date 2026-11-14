@@ -177,6 +177,13 @@ export default function ComplexSourcesStep({
           action={
             <Button
               color="inherit"
+              disabled={
+                !canSelectSource(
+                  type,
+                  configuration.sources,
+                  removedSource.source,
+                ).allowed
+              }
               onClick={() => {
                 change(
                   (previous) => ({
@@ -197,7 +204,10 @@ export default function ComplexSourcesStep({
           }
         >
           Removed {removedSource.source.name}. Combined results need to be
-          generated again.
+          generated again.{" "}
+          {!canSelectSource(type, configuration.sources, removedSource.source)
+            .allowed &&
+            `Restore unavailable: ${canSelectSource(type, configuration.sources, removedSource.source).reason}`}
         </Alert>
       )}
       <Button

@@ -271,29 +271,39 @@ export default function ComplexIndicator({ type }) {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      api.get("v1/analytics/methods"),
+    Promise.allSettled([
+      isMulti
+        ? api.get("v1/analytics/methods")
+        : Promise.resolve({ data: { data: [] } }),
       api.get("v1/visualizations/libraries"),
-    ])
-      .then(([methodResponse, libraryResponse]) => {
-        if (cancelled) return;
-        setMethods(apiData(methodResponse) || []);
-        setLibraries(apiData(libraryResponse) || []);
-        setCatalogError("");
-      })
-      .catch((error) => {
-        if (!cancelled)
-          setCatalogError(
-            messageOf(
-              error,
-              "Could not load analytics and visualization catalogs.",
-            ),
-          );
-      });
+    ]).then(([methodResult, libraryResult]) => {
+      if (cancelled) return;
+      const errors = [];
+      if (methodResult.status === "fulfilled")
+        setMethods(apiData(methodResult.value) || []);
+      else {
+        setMethods([]);
+        errors.push(
+          messageOf(methodResult.reason, "Could not load analytics methods."),
+        );
+      }
+      if (libraryResult.status === "fulfilled")
+        setLibraries(apiData(libraryResult.value) || []);
+      else {
+        setLibraries([]);
+        errors.push(
+          messageOf(
+            libraryResult.reason,
+            "Could not load visualization libraries.",
+          ),
+        );
+      }
+      setCatalogError(errors.join(" "));
+    });
     return () => {
       cancelled = true;
     };
-  }, [api, catalogRetry]);
+  }, [api, catalogRetry, isMulti]);
 
   useEffect(() => {
     let cancelled = false;
