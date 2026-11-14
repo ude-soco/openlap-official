@@ -48,6 +48,22 @@ in use cannot be deleted until the dependent indicators are removed or updated.
 Errors identify the affected source and allow retry rather than presenting an
 empty table as a successful calculation.
 
+An interrupted dependency write can deliberately keep deletion blocked. A
+maintainer must establish the write's outcome before repairing its reservation;
+elapsed time alone is not grounds for clearing it.
+
+## Deploying the workflows
+
+Source-deletion and dependency guarantees require **every backend writer** to run
+this implementation. An older replica can bypass the reference guards. Coordinate
+a backend write pause, upgrade all backend replicas, verify their readiness, then
+make the complex editor available in the frontend and resume writes. Do not treat
+a mixed-version rolling deployment as providing these guarantees. A rollback to
+older writers requires another coordinated pause and dependency review.
+
+The feature MR supplies application code; it does not perform an environment
+deployment or authorize a maintenance window.
+
 ## Local synthetic examples
 
 The optional setup helper creates a **new local demo account**, synthetic Learning
@@ -70,8 +86,18 @@ python3 -B analyticsframework/scripts/prepare-plugin-recovery.py \
 The recovery tool verifies the two historical analytics/C3 JAR identities from
 local Git history; it neither downloads nor executes plugins. Review
 [artifact preparation](plugin-artifact-migration.md#recover-reviewed-historical-source-artifacts)
-before installing those trusted binaries. Use private demo plugin directories
-and configure the backend's local JAR roots for them. The analytics JAR includes
+before installing those trusted binaries. Prepare private demo plugin directories:
+
+```bash
+mkdir -p "$DEMO_DIR/runtime/jars/analytics_techniques" \
+  "$DEMO_DIR/runtime/jars/visualization_methods"
+cp "$DEMO_DIR/reviewed-plugins/jars/analytics/AnalyticsMethods-Prototypes-1.0-SNAPSHOT.jar" \
+  "$DEMO_DIR/runtime/jars/analytics_techniques/"
+cp "$DEMO_DIR/reviewed-plugins/jars/visualizations/Visualizer-C3-1.0-SNAPSHOT.jar" \
+  "$DEMO_DIR/runtime/jars/visualization_methods/"
+```
+
+The analytics JAR includes
 the counting and two-numeric-attribute K-means methods used by these examples.
 
 For a **fresh** dedicated MongoDB container, choose unused names and ports:
@@ -79,7 +105,7 @@ For a **fresh** dedicated MongoDB container, choose unused names and ports:
 ```bash
 docker volume create openlap-complex-demo-data
 docker run -d --name openlap-complex-indicators-demo-mongo \
-  --label org.openlap.demo=openlap-complex-indicators-v1 \
+  --label org.openlap.demo=complex-indicators-v1 \
   -p 127.0.0.1:27119:27017 \
   -v openlap-complex-demo-data:/data/db mongo:7
 ```
@@ -90,9 +116,34 @@ Both MongoDB URIs should point to `mongodb://127.0.0.1:27119`. Start this branch
 frontend on port 5174 with `VITE_BACKEND_URL=http://127.0.0.1:8092/api/`, and set the
 backend's `WEBAPP_URL` to `http://localhost:5174`.
 
+From the checkout root, with the intended JDK selected:
+
+```bash
+cd analyticsframework
+ALLOW_INSECURE_DEFAULTS=true \
+PLUGIN_STORAGE_MODE=local \
+DATA_DIR="$DEMO_DIR/runtime" \
+PORT=8092 \
+MONGODB_PRIMARY_URI=mongodb://127.0.0.1:27119 \
+OPENLAP_MONGODB_DB=openlap_complex_demo \
+MONGODB_SECONDARY_URI=mongodb://127.0.0.1:27119 \
+LRS_MONGODB_DB=learninglocker_complex_demo \
+WEBAPP_URL=http://localhost:5174 \
+./mvnw spring-boot:run
+```
+
+In another terminal, from the checkout root:
+
+```bash
+cd indicatorframework
+npm ci
+VITE_BACKEND_URL=http://127.0.0.1:8092/api/ npm run dev -- --port 5174 --strictPort
+```
+
 With those dedicated services running, execute from the repository root:
 
 ```bash
+DEMO_DIR="$HOME/.local/share/openlap-complex-demo"
 python3 -B analyticsframework/scripts/setup-complex-indicator-demo.py \
   --api-url http://127.0.0.1:8092/api \
   --mongo-container openlap-complex-indicators-demo-mongo \

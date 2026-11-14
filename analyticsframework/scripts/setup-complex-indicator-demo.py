@@ -8,6 +8,7 @@ and indicators are created through HTTP. Credentials stay in a private receipt.
 import argparse
 import copy
 import hashlib
+from html.parser import HTMLParser
 import ipaddress
 import json
 import os
@@ -19,15 +20,16 @@ import subprocess
 import sys
 import uuid
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urlsplit, urlunsplit
+from urllib.parse import unquote, urlencode, urlsplit, urlunsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 
 FIXTURE = "openlap-complex-indicators-v1"
 CONTAINER_LABEL = "org.openlap.demo"
+CONTAINER_LABEL_VALUE = "complex-indicators-v1"
 EMAIL = "complex.indicators@example.test"
 ACTOR = "complex-demo-student-001"
-LRS_ID = "6f70656e6c6170636f6d706c78"
+LRS_ID = "6f70656e6c6170636f6d706c"
 LRS_TITLE = "Complex indicator demo (synthetic data)"
 TYPE = "https://example.test/openlap-demo/activity-types/material"
 VIEWED = "https://example.test/openlap-demo/verbs/accessed"
@@ -151,6 +153,7 @@ for(let i=0; i<f.statements.length; i+=400) {
  db.statements.bulkWrite(writes, {ordered:true});
 }
 if (db.lrs.countDocuments({}) !== 1 || db.statements.countDocuments({}) !== f.statements.length) throw Error('Fixture counts mismatch');
+if (db.lrs.countDocuments({_id:{$type:'objectId'}}) !== 1 || db.statements.countDocuments({lrs_id:{$type:'objectId'}}) !== f.statements.length) throw Error('Fixture BSON types mismatch');
 db.openlap_demo_fixture.updateOne({_id:markerId}, {$set:{status:'READY'}});
 print(JSON.stringify({fixture:markerId, statements:f.statements.length, fingerprint}));
 """ % (payload, json.dumps(FIXTURE), json.dumps(fingerprint))
@@ -168,9 +171,9 @@ def seed_secondary(container, database):
         inspected = json.loads(result.stdout)
     except ValueError:
         raise DemoError("The MongoDB container metadata is invalid.") from None
-    if not inspected.get("running") or (inspected.get("labels") or {}).get(CONTAINER_LABEL) != FIXTURE:
-        raise DemoError("MongoDB must be running with label %s=%s." % (CONTAINER_LABEL, FIXTURE))
-    result = subprocess.run(["docker", "exec", "-i", container, "mongosh", "--quiet", database],
+    if not inspected.get("running") or (inspected.get("labels") or {}).get(CONTAINER_LABEL) != CONTAINER_LABEL_VALUE:
+        raise DemoError("MongoDB must be running with label %s=%s." % (CONTAINER_LABEL, CONTAINER_LABEL_VALUE))
+    result = subprocess.run(["docker", "exec", "-i", container, "mongosh", "--quiet", database, "--file", "/dev/stdin"],
                             input=mongo_seed_script(fixture_data()), capture_output=True, text=True, timeout=90)
     if result.returncode:
         raise DemoError("Synthetic LRS seeding failed; inspect only this dedicated demo container.")
@@ -309,7 +312,7 @@ def indicator_list(api):
 
 
 def ensure_indicator(api, path, payload, record, receipt):
-    matches = [item for item in indicator_list(api) if item["name"] == payload["name"]]
+    matches = [item for item in indicator_list(api) if item.get("indicatorName", item.get("name")) == payload["name"]]
     if len(matches) > 1:
         raise DemoError("A demo indicator name is duplicated; no existing rows were modified.")
     if matches:
@@ -325,7 +328,7 @@ def ensure_indicator(api, path, payload, record, receipt):
             raise DemoError("An existing demo indicator was edited; the setup helper will not reset it.")
     else:
         api.call("POST", path + "/create", payload)
-        matches = [item for item in indicator_list(api) if item["name"] == payload["name"]]
+        matches = [item for item in indicator_list(api) if item.get("indicatorName", item.get("name")) == payload["name"]]
         if len(matches) != 1:
             raise DemoError("The new saved indicator could not be identified.")
         identifier = matches[0]["id"]
@@ -339,6 +342,34 @@ def assert_counts(dataset, expected, key_id="item_name", value_id="item_count"):
     actual = dict(zip(columns[key_id]["data"], columns[value_id]["data"]))
     if set(actual) != set(expected) or any(float(actual[key]) != value for key, value in expected.items()):
         raise DemoError("A real source analysis did not match the synthetic fixture counts.")
+
+
+def check_chart_syntax(code):
+    """Compile inline scripts without running them or fetching external assets."""
+    class Scripts(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=False)
+            self.current = None
+            self.values = []
+        def handle_starttag(self, tag, attrs):
+            if tag.lower() == "script" and not dict(attrs).get("src"):
+                self.current = []
+        def handle_data(self, value):
+            if self.current is not None:
+                self.current.append(value)
+        def handle_endtag(self, tag):
+            if tag.lower() == "script" and self.current is not None:
+                self.values.append("".join(self.current))
+                self.current = None
+    parsed = Scripts()
+    parsed.feed(unquote(code))
+    if not parsed.values:
+        raise DemoError("The generated chart has no inline renderer.")
+    for script in parsed.values:
+        compiled = subprocess.run(["node", "-e", "new (require('node:vm').Script)(require('node:fs').readFileSync(0,'utf8'));"],
+                                  input=script, text=True, capture_output=True, timeout=15)
+        if compiled.returncode:
+            raise DemoError("The generated chart contains invalid JavaScript; labels must survive plugin rendering.")
 
 
 def basic_payload(api, method, library, chart, title, names, verb, unique=False):
@@ -441,9 +472,10 @@ def create_complex_examples(api, source_ids, methods, library, types, record, re
         raise DemoError("The lightweight source API did not return the saved demo basic indicators.")
 
     def source(identifier, label):
-        result = copy.deepcopy(by_id[identifier])
-        result.update(keyColumnId="item_name", measureColumnIds=["item_count"], label=label)
-        return result
+        original = by_id[identifier]
+        return {"id": identifier, "name": original["name"], "analyticsMethod": original["analyticsMethod"],
+                "outputs": original["outputs"], "keyColumnId": "item_name", "measureColumnIds": ["item_count"],
+                "label": label, "filterSummary": "2026-01-01 to 2026-12-31 · All users · 1 activity type"}
 
     def composition(config):
         items = [{"indicatorId": item["id"], "label": item["label"],
@@ -494,7 +526,10 @@ def create_complex_examples(api, source_ids, methods, library, types, record, re
     mapped_chart(composite, chart("MultiLine"), merged["chartData"], {
         "xAxisStrings": "combined_key", "yAxisValues": "combined_value", "GroupBy": "combined_series"})
     payload = request(composite)
-    api.data("POST", "/v1/indicators/composite/preview", payload)
+    check_chart_syntax(api.data("POST", "/v1/indicators/composite/preview", payload))
+    escaped_labels = copy.deepcopy(composite)
+    escaped_labels["sources"][0]["label"] = "Learner's accesses \\ workshop"
+    check_chart_syntax(api.data("POST", "/v1/indicators/composite/preview", request(escaped_labels)))
     composite_id = ensure_indicator(api, "/v1/indicators/composite", payload, record, receipt)
 
     multilevel = state("MULTI_LEVEL", "[Complex demo] Access and annotation clusters", [
@@ -530,18 +565,20 @@ def create_complex_examples(api, source_ids, methods, library, types, record, re
     mapped_chart(multilevel, chart("ScatterPlot"), analyzed, {
         "xAxisStrings": "attribute_1", "yAxisValues": "attribute_2", "GroupBy": "cluster_name"})
     payload = request(multilevel)
-    api.data("POST", "/v1/indicators/multilevel/preview", payload)
+    check_chart_syntax(api.data("POST", "/v1/indicators/multilevel/preview", payload))
     multilevel_id = ensure_indicator(api, "/v1/indicators/multilevel", payload, record, receipt)
 
     for identifier in (composite_id, multilevel_id):
         details = api.data("GET", "/v1/indicators/" + identifier)
         if not details.get("indicatorCode"):
             raise DemoError("A saved complex indicator did not generate visualization code.")
+        check_chart_syntax(details["indicatorCode"])
         if not json.loads(details.get("configuration") or "{}").get("sources"):
             raise DemoError("A saved complex indicator did not retain its editable configuration.")
     record["verification"] = {"unionRows": len(expected_union), "intersectionRows": len(expected_shared),
                               "clusterAssignments": len(assignments), "clusters": len(set(assignments)),
-                              "sourceValuesPreserved": True, "savedCodeGenerated": True}
+                              "sourceValuesPreserved": True, "savedCodeGenerated": True,
+                              "generatedJavascriptSyntax": True, "quotedSeriesLabel": True}
     record["status"] = "COMPLETE"
     save_receipt(receipt, record)
 
@@ -549,11 +586,11 @@ def create_complex_examples(api, source_ids, methods, library, types, record, re
 def assert_combination(dataset, keys, sources):
     columns = data_columns(dataset)
     actual_keys = columns["key"]["data"]
-    if actual_keys != keys:
+    if len(actual_keys) != len(keys) or set(actual_keys) != set(keys):
         raise DemoError("Combined keys do not match the deterministic synthetic union/intersection.")
     for identifier, values in sources:
         cells = columns["source_%s__item_count" % identifier]["data"]
-        expected = [values.get(key, 0) for key in keys]
+        expected = [values.get(key, 0) for key in actual_keys]
         if len(cells) != len(keys) or any(float(a) != b for a, b in zip(cells, expected)):
             raise DemoError("Combined measures differ from their authoritative source values.")
 

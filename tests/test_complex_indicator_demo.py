@@ -2,6 +2,7 @@
 
 import collections
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -42,6 +43,18 @@ class LocalDemoBoundaryTests(unittest.TestCase):
                 demo.seed_secondary("other-project-mongo", "learninglocker_complex_demo")
             self.assertEqual(run.call_count, 1)
             self.assertEqual(run.call_args.args[0][1], "inspect")
+
+    def test_owned_container_uses_only_the_selected_demo_database(self):
+        class Result:
+            returncode = 0
+            def __init__(self, stdout):
+                self.stdout = stdout
+        metadata = Result('{"running":true,"labels":{"org.openlap.demo":"complex-indicators-v1"}}')
+        acknowledgement = Result('{"fixture":"openlap-complex-indicators-v1","statements":3352}')
+        with patch.object(demo.subprocess, "run", side_effect=[metadata, acknowledgement]) as run:
+            result = demo.seed_secondary("owned-demo-mongo", "learninglocker_complex_demo")
+            self.assertEqual(result["statements"], 3352)
+            self.assertEqual(run.call_args.args[0], ["docker", "exec", "-i", "owned-demo-mongo", "mongosh", "--quiet", "learninglocker_complex_demo", "--file", "/dev/stdin"])
 
     def test_new_credentials_are_private_and_reused_without_reset(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -95,6 +108,38 @@ class SyntheticIndicatorExampleTests(unittest.TestCase):
         self.assertEqual(len({row["statement"]["id"] for row in rows}), len(rows))
         self.assertEqual(self.fixture, demo.fixture_data())
         self.assertTrue(all(row["_demoFixtureId"] == demo.FIXTURE and row["lrs_id"] == demo.LRS_ID for row in rows))
+        self.assertRegex(demo.LRS_ID, r"^[0-9a-f]{24}$")
+        self.assertTrue(all(len(row["_id"]) == 24 for row in rows))
+
+
+class SavedDemoApiContractTests(unittest.TestCase):
+    def test_existing_standard_indicator_name_response_is_reused_without_mutation(self):
+        saved = {"demoFixtureId": demo.FIXTURE, "name": "Example"}
+        class Api:
+            def data(self, method, path):
+                if path.startswith("/v1/indicators/my?"):
+                    return {"content": [{"id": "existing", "indicatorName": "Example"}], "last": True}
+                return {"configuration": json.dumps(saved)}
+            def call(self, *args):
+                raise AssertionError("An existing demo must not be recreated or updated")
+        with tempfile.TemporaryDirectory() as directory:
+            receipt = Path(directory) / "receipt.json"
+            record = {"indicators": {}}
+            self.assertEqual(demo.ensure_indicator(Api(), "/v1/indicators/basic",
+                {"name": "Example", "configuration": json.dumps(saved)}, record, receipt), "existing")
+
+    def test_edited_demo_configuration_is_never_overwritten(self):
+        class Api:
+            def data(self, method, path):
+                if path.startswith("/v1/indicators/my?"):
+                    return {"content": [{"id": "existing", "indicatorName": "Example"}], "last": True}
+                return {"configuration": json.dumps({"demoFixtureId": demo.FIXTURE, "name": "changed"})}
+            def call(self, *args):
+                raise AssertionError("An edited demo must not be mutated")
+        with tempfile.TemporaryDirectory() as directory, self.assertRaisesRegex(demo.DemoError, "edited"):
+            demo.ensure_indicator(Api(), "/v1/indicators/basic",
+                {"name": "Example", "configuration": json.dumps({"demoFixtureId": demo.FIXTURE, "name": "original"})},
+                {"indicators": {}}, Path(directory) / "receipt.json")
 
 
 if __name__ == "__main__":
