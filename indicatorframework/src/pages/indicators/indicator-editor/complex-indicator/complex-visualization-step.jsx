@@ -137,8 +137,9 @@ export default function ComplexVisualizationStep({
           {unavailableCount > 0 && (
             <Typography variant="body2" color="text.secondary">
               {unavailableCount} charts need other columns or mappings.
-              Comparing all measures requires a chart with separate category and
-              series inputs.
+              {!isMulti &&
+                configuration.visualization.dataMode === "combined" &&
+                " Comparing all measures requires a chart with separate category and series inputs."}
             </Typography>
           )}
           <Grid container spacing={2}>
@@ -222,7 +223,12 @@ export default function ComplexVisualizationStep({
             types.length > 0 && (
               <Alert severity="info">
                 No chart has the required inputs for this data view. Choose
-                another library or use individual measure columns.
+                another library
+                {isMulti
+                  ? " or review the analysis output columns."
+                  : configuration.visualization.dataMode === "combined"
+                    ? " or use individual measure columns."
+                    : " or compare all measures by source."}
               </Alert>
             )}
           {!types.length && (
