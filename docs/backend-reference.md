@@ -300,7 +300,11 @@ Drafts require a title and validate all supplied fields. Publishing also require
 and nonempty body, or publication authors/year/type/venue. URLs remain optional, and the UI
 should hide absent actions.
 
-Field errors use `details.fieldErrors` as a map from field name to an actionable message. Limits:
+Content endpoints return `details.fieldErrors` as a map from field names to actionable
+messages. Global request validation, including the registration example above, returns
+an array of `{ "field", "message" }` objects instead.
+
+Content validation limits:
 title 300 characters; news body 30000 text characters (a hard break counts as one character),
 2000 rich-text nodes, and depth 12 (legacy arrays allow 500 parts); news venue 1000;
 publication authors/venue 2000 each; URLs 2048; publication year 1000–2999. All validation is

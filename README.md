@@ -181,6 +181,8 @@ you also need:
    This Compose setup starts MongoDB; it does not install Learning Locker.
 2. Trusted analytics and visualization plugins. Local mode reads
    `analyticsframework/jars/analytics_techniques/` and `analyticsframework/jars/visualization_methods/`.
+   After copying trusted JARs into these folders, restart the backend so startup
+   discovers and loads the plugins.
    For S3 mode, follow [artifact setup and migration](docs/plugin-artifact-migration.md)
    and the [admin upload workflow](docs/plugin-upload-workflow.md).
 3. Register a separate user account and link its LRS and actor identifier through **Settings → Manage LRS**.
