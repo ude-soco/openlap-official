@@ -204,6 +204,7 @@ const failures = [],
   saved = [],
   requests = [];
 let failMerge = true;
+let failMethodContract = true;
 
 (async () => {
   const browser = await webkit.launch({
@@ -285,7 +286,18 @@ let failMerge = true;
             description: "Two numeric features",
           },
         ]);
-      if (path === "v1/analytics/methods/input-params/kmeans")
+      if (path === "v1/analytics/methods/input-params/kmeans") {
+        if (failMethodContract) {
+          failMethodContract = false;
+          return route.fulfill({
+            status: 503,
+            contentType: "application/json",
+            body: JSON.stringify({
+              message:
+                "Method inputs temporarily unavailable. Retry with your selection preserved.",
+            }),
+          });
+        }
         return send({
           inputs: [
             port("attribute_1", "Numeric", "First feature"),
@@ -302,6 +314,7 @@ let failMerge = true;
             },
           ],
         });
+      }
       if (path === "v1/visualizations/libraries")
         return send([{ id: "library", name: "Synthetic charts" }]);
       if (path === "v1/visualizations/libraries/library/types")
@@ -536,6 +549,18 @@ let failMerge = true;
     await page
       .getByRole("option", { name: "K-Means clusters", exact: true })
       .click();
+    await page
+      .getByRole("alert")
+      .filter({ hasText: "Method inputs temporarily unavailable" })
+      .waitFor();
+    await button("Retry").click();
+    assert.equal(
+      await page
+        .getByRole("combobox", { name: "Analytics method", exact: true })
+        .inputValue(),
+      "K-Means clusters",
+      "Retry preserves the selected method",
+    );
     await button("Generate analysis preview").click();
     await page
       .getByRole("region", { name: "Analysis data preview", exact: true })
@@ -589,7 +614,7 @@ let failMerge = true;
     assert.deepEqual(failures, []);
     assert.ok(requests.includes("v1/indicators/saved-0/result"));
     console.log(
-      "PASS: Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; tab recovery, undo, mobile containment; no browser errors.",
+      "PASS: Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; new/edit tab recovery, confirmed reset, metadata retry, undo, mobile containment; no browser errors.",
     );
   } finally {
     await context.close();

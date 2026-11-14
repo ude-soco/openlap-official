@@ -106,7 +106,7 @@ export default function ComplexAnalysisStep({
           operationError.step === "analysis" ? operationError.message : ""
         }
         retry={
-          operationError.message && methodLoading
+          operationError.step === "analysis" && methodContractId !== methodId
             ? () => setCatalogRetry((value) => value + 1)
             : undefined
         }
