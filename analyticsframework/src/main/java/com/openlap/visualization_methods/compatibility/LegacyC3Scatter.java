@@ -1,6 +1,5 @@
 package com.openlap.visualization_methods.compatibility;
 
-import com.google.gson.Gson;
 import com.openlap.dataset.OpenLAPDataSet;
 import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.infrastructure.exception.ValidationException;
@@ -18,7 +17,6 @@ public final class LegacyC3Scatter {
   private static final List<String> DEFAULT_COLORS = List.of(
       "#008ffb", "#ff5733", "#3498db", "#2ecc71", "#9b59b6", "#f1c40f",
       "#e74c3c", "#1abc9c", "#34495e", "#d35400", "#95a5a6");
-  private static final Gson JSON = new Gson();
 
   private LegacyC3Scatter() {}
 
@@ -26,7 +24,8 @@ public final class LegacyC3Scatter {
       OpenLAPDataSet originalData, OpenLAPPortConfig mappings, Map<String, Object> parameters) {
     if (generator == null || !CLASS.equals(generator.getClass().getName())
         || !LegacyC3Strings.supports(generator)) return code;
-    return replaceData(code, data(originalData, mappings, parameters));
+    String fixed = replaceData(code, data(originalData, mappings, parameters));
+    return LegacyChartOptions.append(fixed, "c3.generate(", List.of("axis", "x"), "type", "indexed");
   }
 
   private static final class Points {
@@ -136,50 +135,9 @@ public final class LegacyC3Scatter {
     return colors;
   }
 
-  /** Locate the known generator's top-level data object while respecting JS string literals. */
+  /** Replace only the reviewed template's data option; labels remain JSON-escaped. */
   static String replaceData(String code, Map<String, Object> data) {
-    int call = code.indexOf("c3.generate({");
-    if (call < 0) throw invalid("The historical scatter generator returned an unsupported structure.");
-    int depth = 0;
-    char quote = 0;
-    for (int index = code.indexOf('{', call); index < code.length(); index++) {
-      char c = code.charAt(index);
-      if (quote != 0) {
-        if (c == '\\') index++;
-        else if (c == quote) quote = 0;
-        continue;
-      }
-      if (c == '\'' || c == '"') { quote = c; continue; }
-      if (c == '{') depth++;
-      else if (c == '}') depth--;
-      else if (depth == 1 && code.startsWith("data", index)
-          && (index == 0 || !Character.isJavaIdentifierPart(code.charAt(index - 1)))) {
-        int colon = index + 4;
-        while (colon < code.length() && Character.isWhitespace(code.charAt(colon))) colon++;
-        if (colon >= code.length() || code.charAt(colon) != ':') continue;
-        int start = colon + 1;
-        while (start < code.length() && Character.isWhitespace(code.charAt(start))) start++;
-        if (start >= code.length() || code.charAt(start) != '{') throw invalid("Invalid legacy scatter data structure.");
-        int end = matchingBrace(code, start);
-        return code.substring(0, start) + JSON.toJson(data) + code.substring(end + 1);
-      }
-    }
-    throw invalid("The historical scatter generator returned no data configuration.");
-  }
-
-  private static int matchingBrace(String code, int start) {
-    int depth = 0;
-    char quote = 0;
-    for (int index = start; index < code.length(); index++) {
-      char c = code.charAt(index);
-      if (quote != 0) {
-        if (c == '\\') index++;
-        else if (c == quote) quote = 0;
-      } else if (c == '\'' || c == '"') quote = c;
-      else if (c == '{') depth++;
-      else if (c == '}' && --depth == 0) return index;
-    }
-    throw invalid("The historical scatter generator returned incomplete data.");
+    return LegacyChartOptions.replace(code, "c3.generate(", "data", data);
   }
 
   private static ValidationException invalid(String message) {

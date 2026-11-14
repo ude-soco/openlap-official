@@ -192,12 +192,13 @@ unrecovered original model's other behavior is not claimed. Template dependency
 upgrades must check for a competing class with that binary name.
 
 The unchanged historical C3 archive, this bridge and an archive-specific string
-adapter pass 29 real generator cases with 487 output assertions across all nine
+adapter pass 29 real generator cases with 488 output assertions across all nine
 charts, defaults/customization, grouped/scatter data, Bar sorting/filtering and
 text containing quotes, backslashes, line separators and HTML script delimiters.
 A clustered scatter fixture verifies all six paired observations across three
 groups, including distinct default group colors; the pinned scatter transform's
 last-point-per-group behavior is repaired without inventing extra groups.
+Its numeric X-axis setting is explicit; custom axis bounds and labels remain intact.
 The adapter escapes private copies of text/customization values before those
 legacy generators insert them into JavaScript; original data and visible labels
 are preserved. It applies only to the known archive checksum and chart classes;
@@ -210,6 +211,15 @@ the same backend classes/APIs):
 python3 -B analyticsframework/scripts/verify-legacy-c3.py \
   --image REVIEWED_LOCAL_IMAGE_ID
 ```
+
+The pinned historical Apex scatter has the same last-point-per-group limitation.
+An exact-archive/class adapter preserves all paired observations, group labels,
+configured colors and a numeric X axis while retaining the other chart options.
+Only that Apex class receives copied string-literal escaping; other Apex classes
+and archive versions are unchanged. The six-chart Apex qualification retains its
+original 13 cases and adds clustered/repeated-X cases: 15 fixtures and 292 output
+assertions, including original quoted labels/titles and two distinct observations
+with the same X coordinate.
 
 Application CI also runs these fixtures against the actual packaged backend JAR
 using `--runtime-layout spring-boot`. It extracts the built JAR only inside a

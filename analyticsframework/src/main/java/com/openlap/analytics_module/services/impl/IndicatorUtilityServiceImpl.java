@@ -386,10 +386,15 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       try {
         var inputs = com.openlap.visualization_methods.compatibility.LegacyC3Strings.prepare(
             visualizationCodeGenerator, analyzedDataSet, (Map<String, Object>) visualizationParams);
+        inputs = com.openlap.visualization_methods.compatibility.LegacyApexScatter.prepare(
+            visualizationCodeGenerator, inputs.data(), inputs.parameters());
         indicatorCode =
             visualizationCodeGenerator.generateVisualizationCode(
                 inputs.data(), visualizationMappings, inputs.parameters());
         indicatorCode = com.openlap.visualization_methods.compatibility.LegacyC3Scatter.repair(
+            visualizationCodeGenerator, indicatorCode, analyzedDataSet, visualizationMappings,
+            (Map<String, Object>) visualizationParams);
+        indicatorCode = com.openlap.visualization_methods.compatibility.LegacyApexScatter.repair(
             visualizationCodeGenerator, indicatorCode, analyzedDataSet, visualizationMappings,
             (Map<String, Object>) visualizationParams);
       } catch (IllegalAccessException | InstantiationException e) {

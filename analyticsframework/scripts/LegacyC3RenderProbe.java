@@ -208,6 +208,7 @@ public final class LegacyC3RenderProbe {
     checks.verify(colors.size() == 3, "Default cluster colors are not distinct");
     checks.verify(data.getAsJsonObject("names").get("series_0").getAsString().equals("Cluster A"), "Cluster name was changed");
     checks.verify(data.get("labels").getAsBoolean(), "Default point labels were lost");
+    checks.verify(code.contains("\"type\":\"indexed\""), "Scatter X axis is not explicitly numeric");
     return checks.count;
   }
 
