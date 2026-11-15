@@ -195,7 +195,7 @@ const charts = [
   },
 ];
 const chartMarkup =
-  '<svg width="600" height="350" role="img" aria-label="Synthetic result chart"><title>Synthetic result chart</title><rect width="300" height="200" fill="blue" /></svg>';
+  '<svg width="100%" height="350" viewBox="0 0 600 350" role="img" aria-label="Synthetic result chart"><title>Synthetic result chart</title><rect width="300" height="200" fill="blue" /></svg>';
 const code = encodeURIComponent(
   `<div id="complex-test-chart"></div><script>document.getElementById("complex-test-chart").innerHTML=${JSON.stringify(chartMarkup)};</script>`,
 );
@@ -427,8 +427,70 @@ let failMethodContract = true;
         .getByRole("option", { name: "Synthetic charts", exact: true })
         .click();
     };
+    const previewResults = () => page.getByRole("region", {
+      name: "Preview results", exact: true,
+    });
+    const dataPreviewAction = () => previewResults().getByRole("button", {
+      name: /^(Preview|Try again|Run preview again)$/,
+    });
+    const chartChoice = (name) => page.getByRole("button", {
+      name: new RegExp("^" + name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\. "),
+    });
+    const assertContained = async (control, message) => {
+      assert.match(await control.getAttribute("class"), /MuiButton-contained/, message);
+      assert.doesNotMatch(await control.getAttribute("class"), /MuiButton-sizeSmall/,
+        "Workflow actions keep the Basic editor's medium or large size");
+    };
+    const checkPreviewAction = async () => {
+      const control = dataPreviewAction();
+      await assertContained(control, "Preview actions use the Basic editor's primary contained button");
+      const [action, card] = await Promise.all([control.boundingBox(), previewResults().boundingBox()]);
+      assert.ok(Math.abs(action.x + action.width / 2 - card.x - card.width / 2) < 3,
+        "Data-preview actions are centered in their results card");
+    };
+    const checkVisualizationDesign = async (name) => {
+      const choice = chartChoice(name);
+      const card = await choice.evaluate((element) => {
+        const paper = element.closest(".MuiPaper-root");
+        const icon = element.querySelector("svg");
+        return {border: getComputedStyle(paper).borderTopColor, iconWidth: icon?.getBoundingClientRect().width};
+      });
+      assert.equal(card.border, "rgb(245, 124, 0)", "Chart selection uses the shared orange Basic border");
+      assert.equal(card.iconWidth, 56, "Chart cards use the shared Basic icon size");
+      const live = page.getByRole("region", {name: "Live preview", exact: true});
+      const customize = live.getByRole("button", {name: "Customize chart", exact: true});
+      await assertContained(customize, "Customize action uses the Basic primary button");
+      await assertContained(live.getByRole("button", {name: "Generate chart preview", exact: true}),
+        "Chart-preview action is contained within Live preview");
+      await customize.click();
+      const panel = page.getByRole("region", {name: "Chart customization", exact: true});
+      await panel.getByRole("tab", {name: "ELEMENTS", exact: true}).waitFor();
+      let [plotBox, panelBox] = await Promise.all([live.boundingBox(), panel.boundingBox()]);
+      assert.ok(panelBox.x >= plotBox.x + plotBox.width - 1, "Desktop customization sits beside the preview");
+      assert.ok(Math.abs(panelBox.width - 340) < 2, "Customization uses the Basic side-panel width");
+      await panel.getByRole("tab", {name: "STYLES", exact: true}).click();
+      await page.setViewportSize({width: 390, height: 844});
+      [plotBox, panelBox] = await Promise.all([live.boundingBox(), panel.boundingBox()]);
+      assert.ok(panelBox.y >= plotBox.y + plotBox.height - 1, "Mobile customization stacks after the preview");
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2),
+        "Customization and chart controls stay within mobile viewport");
+      const close = panel.getByRole("button", {name: "Close customization", exact: true});
+      await close.focus();
+      await page.keyboard.press("Enter");
+      await panel.waitFor({state: "detached"});
+      await page.waitForFunction(() => /Customize chart/.test(document.activeElement?.textContent || ""));
+      await page.setViewportSize({width: 1280, height: 1000});
+      const save = button("Save indicator");
+      await assertContained(save, "Save uses the same primary contained footer as Basic");
+      const saveBox = await save.boundingBox();
+      const sectionBox = await page.getByRole("region", {name:"Visualization step", exact:true}).boundingBox();
+      assert.ok(saveBox.width < sectionBox.width * 0.6 && saveBox.width > sectionBox.width * 0.35,
+        "Desktop Save footer stays centered at half width");
+      assert.ok(Math.abs(saveBox.x + saveBox.width / 2 - sectionBox.x - sectionBox.width / 2) < 3,
+        "Save footer is centered within the workflow frame");
+    };
     const generateChart = async (name) => {
-      await button("Select " + name).click();
+      await chartChoice(name).click();
       await button("Generate chart preview").click();
       await page
         .getByRole("img", { name: "Synthetic result chart", exact: true })
@@ -453,6 +515,10 @@ let failMethodContract = true;
     };
 
     await page.goto(new URL("/indicator/editor/composite", base).href);
+    const sourceSection = page.getByRole("region", {name:"Select indicators step", exact:true});
+    await sourceSection.getByRole("button", {name:"Close", exact:true}).click();
+    await button("Select Access count").waitFor({state:"detached"});
+    await sourceSection.getByRole("button", {name:"Open", exact:true}).click();
     await select("Access count");
     assert.equal(
       await button("Select Different method").isDisabled(),
@@ -466,14 +532,15 @@ let failMethodContract = true;
     );
     await select("Student count");
     await button("Continue to combine data").click();
-    await button("Generate combined data").click();
+    await checkPreviewAction();
+    await dataPreviewAction().click();
     await page
       .getByRole("alert")
       .filter({ hasText: "Source data temporarily unavailable" })
       .waitFor();
-    await button("Generate combined data").click();
+    await dataPreviewAction().click();
     const combined = page.getByRole("region", {
-      name: "Combined data preview",
+      name: "Preview results",
       exact: true,
     });
     await combined.getByText("8 rows · 3 columns", { exact: true }).waitFor();
@@ -481,6 +548,7 @@ let failMethodContract = true;
     await button("Continue to visualization").click();
     await chooseLibrary();
     await generateChart("Grouped bar");
+    await checkVisualizationDesign("Grouped bar");
     await saveIndicator("Composite fixture");
     assert.equal(saved[0].indicatorType, "COMPOSITE");
     assert.ok(
@@ -501,7 +569,7 @@ let failMethodContract = true;
     await page.goto(
       new URL("/indicator/editor/composite/edit/saved-0", base).href,
     );
-    await button("Generate combined data").waitFor();
+    await dataPreviewAction().waitFor();
     await page
       .getByRole("textbox", {
         name: "Series label for Access count",
@@ -539,7 +607,7 @@ let failMethodContract = true;
         exact: true,
       })
       .fill("Access count");
-    await button("Generate combined data").click();
+    await dataPreviewAction().click();
     await button("Continue to visualization").click();
     await button("Generate chart preview").click();
     await page
@@ -559,9 +627,9 @@ let failMethodContract = true;
     );
     await select("Annotation count");
     await button("Continue to combine data").click();
-    await button("Generate combined data").click();
+    await dataPreviewAction().click();
     await page
-      .getByRole("region", { name: "Combined data preview", exact: true })
+      .getByRole("region", { name: "Preview results", exact: true })
       .getByText("6 rows · 3 columns", { exact: true })
       .waitFor();
     await button("Continue to analysis").click();
@@ -569,7 +637,7 @@ let failMethodContract = true;
       .getByRole("combobox", { name: "Analytics method", exact: true })
       .click();
     await page
-      .getByRole("option", { name: "K-Means clusters", exact: true })
+      .getByRole("option", { name: /^K-Means clusters(?:\s|$)/ })
       .click();
     await page
       .getByRole("alert")
@@ -583,15 +651,17 @@ let failMethodContract = true;
       "K-Means clusters",
       "Retry preserves the selected method",
     );
-    await button("Generate analysis preview").click();
+    await checkPreviewAction();
+    await dataPreviewAction().click();
     await page
-      .getByRole("region", { name: "Analysis data preview", exact: true })
+      .getByRole("region", { name: "Preview results", exact: true })
       .getByRole("cell", { name: "Cluster 1", exact: true })
       .first()
       .waitFor();
     await button("Continue to visualization").click();
     await chooseLibrary();
     await generateChart("Scatter plot");
+    await checkVisualizationDesign("Scatter plot");
     await saveIndicator("Multilevel fixture");
     assert.equal(saved[2].indicatorType, "MULTI_LEVEL");
     await page.goto(new URL("/indicator/editor/composite", base).href);
@@ -610,9 +680,9 @@ let failMethodContract = true;
     await button("Undo").click();
     await page.setViewportSize({ width: 390, height: 844 });
     await button("Continue to combine data").click();
-    await button("Generate combined data").click();
+    await dataPreviewAction().click();
     await page
-      .getByRole("region", { name: "Combined data preview", exact: true })
+      .getByRole("region", { name: "Preview results", exact: true })
       .waitFor();
     assert.ok(
       await page.evaluate(
