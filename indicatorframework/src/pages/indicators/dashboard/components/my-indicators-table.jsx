@@ -1,39 +1,30 @@
 import { useContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Alert, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogContentText,
-  DialogTitle, FormControlLabel, IconButton, InputAdornment, LinearProgress, Menu, MenuItem,
-  Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination,
+  Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogContentText,
+  DialogTitle, FormControlLabel, IconButton, InputAdornment, Menu, MenuItem,
+  Stack, TableCell,
   TableRow, TableSortLabel, TextField, Tooltip, Typography,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { createIndicatorDraftApi, draftErrorMessage } from "../../indicator-editor/drafts/indicator-draft-api.js";
 import { requestIndicatorCode, requestIndicatorDeletion, requestMyIndicatorDuplication,
   requestMyIndicatorWorkspace } from "../utils/indicator-dashboard-api.js";
+import { WorkspaceDashboard, WorkspaceStatusChip, WorkspaceTable, WorkspaceToolbar }
+  from "../../../../common/components/workspace-dashboard/workspace-dashboard.jsx";
+import { MEDIUM, WIDE, statusColumn, detailColumn, dateColumn, actionColumn, dashboardDateTime }
+  from "../../../../common/components/workspace-dashboard/workspace-dashboard-styles.js";
 
 const TYPES = { BASIC: "Basic", COMPOSITE: "Composite", MULTI_LEVEL: "Multilevel analysis" };
 const SORT_FIELDS = { name: "Indicator", status: "Status", indicatorType: "Type", updatedAt: "Last updated" };
-// The permanent sidebar reduces the table's space independently of viewport width.
-const MEDIUM = "@container indicator-dashboard (min-width: 640px)";
-const WIDE = "@container indicator-dashboard (min-width: 820px)";
-const statusColumn = { width: 110, display: "none", [MEDIUM]: { display: "table-cell" } };
-const typeColumn = { width: "18%", display: "none", [WIDE]: { display: "table-cell" } };
-const dateColumn = { width: 150, display: "none", [MEDIUM]: { display: "table-cell" } };
-const actionColumn = { width: 120, px: 1, [MEDIUM]: { width: 155, px: 2 } };
 const EDIT_ROUTES = { BASIC: "/indicator/editor/basic/edit", COMPOSITE: "/indicator/editor/composite/edit",
   MULTI_LEVEL: "/indicator/editor/multi-level-analysis/edit" };
 const keyOf = (item) => `${item.kind}:${item.id}`;
-const dateTime = (value) => value && Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString(undefined,
-  { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
 
 export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraftsOnlyChange }) {
   const { api } = useContext(AuthContext);
@@ -124,17 +115,14 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
   };
   const header = (field, label) => <TableSortLabel active={query.sortBy === field} direction={query.sortBy === field ? query.sortDirection : "asc"}
     onClick={() => sort(field)}>{label}</TableSortLabel>;
-  const status = (item) => <Chip size="small" variant="outlined" color={item.kind === "DRAFT" ? "warning" : "success"}
-    label={item.kind === "DRAFT" ? "Draft" : "Saved"} sx={item.kind === "DRAFT" ? (theme) => ({
-      color: theme.palette.text.primary, bgcolor: alpha(theme.palette.warning.main, 0.12), fontWeight: 600,
-    }) : undefined} />;
+  const status = (item) => <WorkspaceStatusChip draft={item.kind === "DRAFT"} />;
   const filtered = Boolean(search || query.indicatorType);
 
-  return <Stack sx={{ gap: 2, minWidth: 0, containerType: "inline-size", containerName: "indicator-dashboard" }}>
-    <Paper variant="outlined" sx={{ p: 2 }}><Stack sx={{ gap: 2 }}>
-      <Box component="section" aria-label="Indicator controls" sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center" }}>
-        <Button variant="contained" startIcon={<AddIcon />} sx={{ flexShrink: 0, whiteSpace: "nowrap", minHeight: 40 }}
-          onClick={() => navigate("/indicator/editor")}>Create new</Button>
+  return <WorkspaceDashboard>
+    <WorkspaceToolbar label="Indicator controls" onCreate={() => navigate("/indicator/editor")}
+      sortFields={SORT_FIELDS} sortBy={query.sortBy} sortDirection={query.sortDirection}
+      onSortField={(sortBy) => setQuery((previous) => ({ ...previous, page: 0, sortBy, sortDirection: "asc" }))}
+      onSortDirection={(sortDirection) => setQuery((previous) => ({ ...previous, page: 0, sortDirection }))}>
         <TextField size="small" label="Search indicators" placeholder="Search by name" value={search} sx={{ flex: "1 1 220px", minWidth: 180 }} onChange={(event) => setSearch(event.target.value)}
           slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }} />
         <TextField select size="small" label="Indicator type" value={query.indicatorType} sx={{ flex: "1 1 180px", minWidth: 160, [WIDE]: { maxWidth: 180 } }}
@@ -144,33 +132,19 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
         <FormControlLabel sx={{ m: 0, flexShrink: 0, whiteSpace: "nowrap" }} label="Drafts only" control={<Checkbox checked={draftsOnly} onChange={(event) => {
           setQuery((previous) => ({ ...previous, page: 0 })); onDraftsOnlyChange(event.target.checked);
         }} />} />
-      </Box>
-      <Stack direction="row" sx={{ display: "flex", [WIDE]: { display: "none" }, gap: 1, alignItems: "center" }}>
-        <TextField select fullWidth size="small" label="Sort by" value={query.sortBy}
-          onChange={(event) => setQuery((previous) => ({ ...previous, page: 0, sortBy: event.target.value, sortDirection: "asc" }))}>
-          {Object.entries(SORT_FIELDS).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
-        </TextField>
-        <Tooltip title={query.sortDirection === "asc" ? "Sort descending" : "Sort ascending"}>
-          <IconButton color="primary" aria-label={query.sortDirection === "asc" ? "Sort descending" : "Sort ascending"}
-            onClick={() => setQuery((previous) => ({ ...previous, page: 0, sortDirection: previous.sortDirection === "asc" ? "desc" : "asc" }))}>
-            {query.sortDirection === "asc" ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
-          </IconButton>
-        </Tooltip>
-      </Stack>
-    </Stack></Paper>
+    </WorkspaceToolbar>
     {error && <Alert severity="error" action={<Button color="inherit" onClick={() => setRefresh((value) => value + 1)}>Retry</Button>}>{error}</Alert>}
-    <Paper variant="outlined" sx={{ minWidth: 0, overflow: "hidden" }}>
-      {loading && <LinearProgress aria-label="Loading indicators" />}
-      <TableContainer sx={{ overflowX: "hidden" }}>
-        <Table aria-label="Indicators" aria-busy={loading} sx={{ tableLayout: "fixed", width: "100%", "& td, & th": { overflowWrap: "anywhere" } }}>
-          <TableHead><TableRow>
+    <WorkspaceTable label="Indicators" loading={loading} total={total} page={query.page} size={query.size}
+      onPageChange={(page) => setQuery((previous) => ({ ...previous, page }))}
+      onSizeChange={(size) => setQuery((previous) => ({ ...previous, page: 0, size }))}
+      header={<TableRow>
             <TableCell sortDirection={query.sortBy === "name" ? query.sortDirection : false}>{header("name", "Indicator")}</TableCell>
             <TableCell sx={statusColumn} sortDirection={query.sortBy === "status" ? query.sortDirection : false}>{header("status", "Status")}</TableCell>
-            <TableCell sx={typeColumn} sortDirection={query.sortBy === "indicatorType" ? query.sortDirection : false}>{header("indicatorType", "Type")}</TableCell>
+            <TableCell sx={detailColumn} sortDirection={query.sortBy === "indicatorType" ? query.sortDirection : false}>{header("indicatorType", "Type")}</TableCell>
             <TableCell sx={dateColumn} sortDirection={query.sortBy === "updatedAt" ? query.sortDirection : false}>{header("updatedAt", "Last updated")}</TableCell>
             <TableCell align="right" sx={actionColumn}>Actions</TableCell>
-          </TableRow></TableHead>
-          <TableBody>{!error && rows.map((item) => <TableRow key={keyOf(item)} hover>
+          </TableRow>}>
+          {!error && rows.map((item) => <TableRow key={keyOf(item)} hover>
             <TableCell><Stack sx={{ gap: 0.75 }}>
               <Typography sx={{ fontWeight: 600 }}>{item.name}</Typography>
               <Box sx={{ display: "block", [MEDIUM]: { display: "none" } }}>{status(item)}</Box>
@@ -178,11 +152,11 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
               {item.recoverable === false && <Typography variant="caption" color="text.secondary">Older draft needs review</Typography>}
               {item.completionPending && <Typography variant="caption" color="text.secondary">Continue to confirm the previous save</Typography>}
               <Typography variant="caption" sx={{ display: "block", [WIDE]: { display: "none" } }}>{TYPES[item.indicatorType] || item.indicatorType}</Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block", [MEDIUM]: { display: "none" } }}>{dateTime(item.updatedAt)}</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", [MEDIUM]: { display: "none" } }}>{dashboardDateTime(item.updatedAt)}</Typography>
             </Stack></TableCell>
             <TableCell sx={statusColumn}>{status(item)}</TableCell>
-            <TableCell sx={typeColumn}>{TYPES[item.indicatorType] || item.indicatorType}</TableCell>
-            <TableCell sx={dateColumn}>{dateTime(item.updatedAt)}</TableCell>
+            <TableCell sx={detailColumn}>{TYPES[item.indicatorType] || item.indicatorType}</TableCell>
+            <TableCell sx={dateColumn}>{dashboardDateTime(item.updatedAt)}</TableCell>
             <TableCell align="right" sx={{ px: 1, [MEDIUM]: { px: 2 } }}><Stack sx={{ flexDirection: "column", [MEDIUM]: { flexDirection: "row" }, alignItems: "flex-end", justifyContent: "flex-end", gap: 0.5 }}>
               <Button sx={{ whiteSpace: "nowrap", minWidth: "auto", px: 0.5 }} disabled={loading || Boolean(busyKey) || item.recoverable === false}
                 startIcon={item.kind === "SAVED" ? <VisibilityIcon fontSize="small" /> : undefined} aria-label={`${item.kind === "SAVED" ? "Preview" : "Continue"} ${item.name}`}
@@ -196,14 +170,8 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
             <Typography sx={{ fontWeight: 600 }}>{filtered ? "No matching indicators" : draftsOnly ? "No drafts yet" : "No indicators yet"}</Typography>
             <Typography variant="body2" color="text.secondary">{filtered ? "Try another name or indicator type." : "Start an indicator and your unfinished work will appear here after its first save."}</Typography>
             <Button sx={{ mt: 2 }} variant="contained" onClick={() => navigate("/indicator/editor")}>Create an indicator</Button>
-          </Box></TableCell></TableRow>}</TableBody>
-        </Table>
-      </TableContainer>
-      <TablePagination component="div" count={total} page={query.page} rowsPerPage={query.size} rowsPerPageOptions={[10, 25, 50]}
-        sx={{ "& .MuiTablePagination-toolbar": { flexWrap: "wrap", justifyContent: "flex-end", px: 1 }, "& .MuiTablePagination-spacer": { display: "none" } }}
-        onPageChange={(_event, page) => setQuery((previous) => ({ ...previous, page }))}
-        onRowsPerPageChange={(event) => setQuery((previous) => ({ ...previous, page: 0, size: Number(event.target.value) }))} />
-    </Paper>
+          </Box></TableCell></TableRow>}
+    </WorkspaceTable>
     <Menu open={Boolean(menu)} anchorEl={menu?.anchor} onClose={() => setMenu(null)}>
       {menu?.item.kind === "DRAFT" ? [
         <MenuItem key="rename" disabled={menu.item.recoverable === false || menu.item.completionPending} onClick={() => beginAction("rename", menu.item)}>Rename draft</MenuItem>,
@@ -242,6 +210,6 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
       </DialogContent>
       <DialogActions><Button onClick={() => setBlockedDeletion(null)} autoFocus>Close</Button></DialogActions>
     </Dialog>
-  </Stack>;
+  </WorkspaceDashboard>;
 }
 MyIndicatorsTable.propTypes = { onStats: PropTypes.func, draftsOnly: PropTypes.bool, onDraftsOnlyChange: PropTypes.func.isRequired };
