@@ -156,7 +156,7 @@ export default function SourceCatalogTable({
                     <IconButton color="primary" aria-label={`Preview ${source.name}`}
                       aria-describedby={reason ? reasonId : undefined}
                       data-source-preview-id={source.id}
-                      onClick={() => previewIndicator(source)}>
+                      onClick={(event) => previewIndicator(source, event.currentTarget)}>
                       <VisibilityOutlinedIcon />
                     </IconButton>
                   </Tooltip>

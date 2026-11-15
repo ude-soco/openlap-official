@@ -184,7 +184,7 @@ export default function ComplexSourcesStep({
                   <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block" }}>{source.analyticsMethod?.name}</Typography>
                 </Box>
                 <Tooltip title="Preview indicator">
-                  <IconButton color="primary" aria-label={`Preview ${source.name}`} data-source-preview-id={source.id} onClick={() => previewIndicator(source)}>
+                  <IconButton color="primary" aria-label={`Preview ${source.name}`} data-source-preview-id={source.id} onClick={(event) => previewIndicator(source, event.currentTarget)}>
                     <VisibilityOutlinedIcon />
                   </IconButton>
                 </Tooltip>

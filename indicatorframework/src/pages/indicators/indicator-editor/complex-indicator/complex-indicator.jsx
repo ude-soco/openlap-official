@@ -522,8 +522,8 @@ export default function ComplexIndicator({ type }) {
       "sources",
     );
   };
-  const previewIndicator = (source) => {
-    previewOrigin.current = { element: document.activeElement, id: source.id };
+  const previewIndicator = (source, trigger) => {
+    previewOrigin.current = { element: trigger || document.activeElement, id: source.id };
     setCatalogPreview(source);
   };
   const restorePreviewFocus = () => {
