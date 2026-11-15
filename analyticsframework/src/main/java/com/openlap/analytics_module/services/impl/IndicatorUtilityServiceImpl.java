@@ -151,6 +151,28 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
     }
   }
 
+  /** Validate the complete definition without writing it; draft completion owns the atomic write. */
+  Indicator prepareDraftCompletion(HttpServletRequest request, IndicatorReference reference) {
+    Indicator result = new Indicator();
+    prepareIndicator(request, reference, result);
+    VisType chart = result.getVisualizationTechniqueReference().getVisType();
+    if (chart.getVisualizationLib() == null
+        || !reference.getVisualizationLibraryId().equals(chart.getVisualizationLib().getId())) {
+      throw new com.openlap.infrastructure.exception.ValidationException(
+          "INVALID_CHART_LIBRARY", "Choose a chart belonging to the selected visualization library.");
+    }
+    if (chart.getVisualizationDescriptor() != null) {
+      if (reference.getVisualizationParams() != null && !(reference.getVisualizationParams() instanceof Map)) {
+        throw new com.openlap.infrastructure.exception.ValidationException("Chart customizations must be an object.");
+      }
+      @SuppressWarnings("unchecked") Map<String,Object> supplied = (Map<String,Object>) reference.getVisualizationParams();
+      Map<String,Object> checked = com.openlap.plugins.visualization.VisualizationCustomization.validate(
+          new org.bson.Document(chart.getVisualizationDescriptor()), supplied);
+      result.getVisualizationTechniqueReference().setAdditionalParams(new Gson().toJson(checked));
+    }
+    return result;
+  }
+
   private void prepareIndicator(
       HttpServletRequest request, IndicatorReference indicatorReference, Indicator indicator) {
     log.info("Preparing indicator '{}'.", indicatorReference.getName());

@@ -49,12 +49,12 @@ public class IndicatorCompositeServiceImpl implements IndicatorCompositeService 
     indicatorUtilityService.updateIndicator(request, reference(body), indicatorId);
   }
 
-  private void validateSavedDefinition(IndicatorCompositeRequest body) {
+  void validateSavedDefinition(IndicatorCompositeRequest body) {
     ComplexIndicatorConfiguration.validate(body.getConfiguration(), body.getIndicatorType());
     visualizationData(new IndicatorCompositeMergeRequest(body.getColumnToMerge(), body.getIndicators()), body.getVisualizationMapping());
   }
 
-  private static IndicatorReference reference(IndicatorCompositeRequest body) {
+  static IndicatorReference reference(IndicatorCompositeRequest body) {
     IndicatorReference reference = new IndicatorReference();
     reference.setName(body.getName());
     reference.setIndicatorType(body.getIndicatorType());

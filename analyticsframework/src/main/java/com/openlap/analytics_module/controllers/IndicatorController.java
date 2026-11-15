@@ -1,6 +1,5 @@
 package com.openlap.analytics_module.controllers;
 
-import com.openlap.analytics_module.dto.requests.indicator.IndicatorDraftRequest;
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorsToAnalyzeRequest;
 import com.openlap.analytics_module.dto.response.indicator.*;
 import com.openlap.analytics_module.services.IndicatorService;
@@ -228,16 +227,4 @@ public class IndicatorController {
         .body(new ApiSuccess(status, "Indicator duplicated successfully."));
   }
 
-  /**
-   * This API is to create a draft of an indicator
-   *
-   * @param indicatorDraftRequest Consist of the session and the indicator type of the indicator
-   */
-  @PostMapping("/drafts")
-  public ResponseEntity<?> saveIndicatorDraft(
-      HttpServletRequest request, @RequestBody @Valid IndicatorDraftRequest indicatorDraftRequest) {
-    indicatorService.saveIndicatorDraft(request, indicatorDraftRequest);
-    HttpStatus status = HttpStatus.OK;
-    return ResponseEntity.status(status).body(new ApiSuccess(status, "Draft saved successfully."));
-  }
 }

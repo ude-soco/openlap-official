@@ -215,7 +215,7 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
     indicatorUtilityService.updateIndicator(request, indicatorReference, indicatorId);
   }
 
-  private static IndicatorReference getIndicatorReferenceForBasicIndicator(
+  static IndicatorReference getIndicatorReferenceForBasicIndicator(
       IndicatorBasicRequest indicatorBasicRequest) {
     IndicatorReference indicatorReference = new IndicatorReference();
     indicatorReference.setName(indicatorBasicRequest.getName());
