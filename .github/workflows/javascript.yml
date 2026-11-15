@@ -7,6 +7,8 @@ on:
       - indicatorframework/**
       - analyticsframework/src/main/resources/templates/indicator.html
       - analyticsframework/src/main/resources/templates/question.html
+      - analyticsframework/src/main/resources/templates/chart-renderer.html
+      - analyticsframework/src/main/resources/openlap-chart-runtime/**
       - .github/workflows/javascript.yml
   push:
     branches: [main]
@@ -14,6 +16,8 @@ on:
       - indicatorframework/**
       - analyticsframework/src/main/resources/templates/indicator.html
       - analyticsframework/src/main/resources/templates/question.html
+      - analyticsframework/src/main/resources/templates/chart-renderer.html
+      - analyticsframework/src/main/resources/openlap-chart-runtime/**
       - .github/workflows/javascript.yml
 
 permissions:
@@ -63,6 +67,10 @@ jobs:
           OPENLAP_TEST_PRODUCTION=1 OPENLAP_MUI_TEST_PORT=15286 npm run test:mui-updates
       - name: Verify bundled chart and grid dependencies
         run: OPENLAP_TEST_PRODUCTION=1 OPENLAP_TEST_BASE_URL=http://127.0.0.1:15283 npm run test:dependency-updates
+      - name: Verify plugin controls and isolated chart runtimes
+        run: |
+          npm run test:visualization-descriptor
+          npm run test:chart-runtime
       - name: Verify real application previews and dependency interactions
         env:
           OPENLAP_TEST_BASE_URL: http://127.0.0.1:15281
