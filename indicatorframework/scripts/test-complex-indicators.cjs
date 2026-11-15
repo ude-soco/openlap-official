@@ -231,13 +231,19 @@ const failures = [],
   previews = [],
   previewPlans = [];
 const mergeRequests = [], mergePlans = [], analysisRequests = [], analysisPlans = [];
-const drafts = new Map(), draftWrites = [], draftWritePlans = [];
+const drafts = new Map(), draftReceipts = new Map(), draftWrites = [], draftWritePlans = [];
 let nextDraftId = 1;
 const draftResponse = (body, sourceIndicatorId = null) => ({
   id: `draft-${nextDraftId++}`, indicatorType: body.indicatorType,
   schemaVersion: 1, name: body.name || "", configuration: structuredClone(body.configuration),
   sourceIndicatorId, revision: 1, status: "DRAFT",
   createdAt: "2026-11-15T12:00:00Z", updatedAt: "2026-11-15T12:00:00Z",
+});
+const terminalDraftReceipt = (item, status, savedIndicatorId) => ({
+  id: item.id, indicatorType: item.indicatorType, schemaVersion: item.schemaVersion,
+  name: item.name, revision: item.revision + 1, status, configuration: null,
+  createdAt: item.createdAt, updatedAt: new Date().toISOString(),
+  ...(savedIndicatorId ? { savedIndicatorId } : {}),
 });
 const codeForPreview = (token) => encodeURIComponent(
   `${chartMarkup.replace('<svg ', '<svg data-preview-token="' + token + '" ')}<script>/* Static workflow fixture. */</script>`,
@@ -480,7 +486,7 @@ let chartCatalogFailures = 0;
           call.completed = true;
         }
       }
-      const draftMatch = path.match(/^v1\/indicators\/drafts\/([^/]+)(?:\/(complete))?$/);
+      const draftMatch = path.match(/^v1\/indicators\/drafts\/([^/]+)(?:\/(complete|resume))?$/);
       if (path === "v1/indicators/drafts" && request.method() === "POST") {
         const existing = [...drafts.values()].find((item) => item.clientRequestId === body.clientRequestId);
         if (existing) return send(existing);
@@ -503,14 +509,19 @@ let chartCatalogFailures = 0;
         return send(draft);
       }
       if (draftMatch) {
-        const item = drafts.get(decodeURIComponent(draftMatch[1]));
+        const draftId = decodeURIComponent(draftMatch[1]);
+        const item = drafts.get(draftId) || draftReceipts.get(draftId);
         assert.ok(item, `Only an existing private draft can be accessed: ${request.method()} ${path}; available ${[...drafts.keys()].join(", ")}`);
-        if (request.method() === "GET") return send(item);
+        if (request.method() === "GET" || draftMatch[2] === "resume") return send(item);
+        if ((request.method() === "DELETE" && item.status === "DISCARDED") ||
+            (draftMatch[2] === "complete" && item.status === "COMPLETED")) return send(item);
         const revision = request.method() === "DELETE" ? Number(url.searchParams.get("revision")) : body.revision;
         assert.equal(revision, item.revision, "Every draft mutation uses the current acknowledged revision");
         if (request.method() === "DELETE") {
+          const receipt = terminalDraftReceipt(item, "DISCARDED");
+          draftReceipts.set(item.id, receipt);
           drafts.delete(item.id);
-          return send(null);
+          return send(receipt);
         }
         if (draftMatch[2] === "complete") {
           assert.equal(item.status, "DRAFT", "A completed draft cannot be completed again");
@@ -527,10 +538,10 @@ let chartCatalogFailures = 0;
           assert.equal(indicator.indicators.length, 2);
           const indicatorId = item.sourceIndicatorId || `saved-${saved.length}`;
           saved.push({ path, sourceIndicatorId: item.sourceIndicatorId, indicatorId, ...indicator });
-          item.status = "COMPLETED";
-          item.revision++;
-          item.savedIndicatorId = indicatorId;
-          return send(item);
+          const receipt = terminalDraftReceipt(item, "COMPLETED", indicatorId);
+          draftReceipts.set(item.id, receipt);
+          drafts.delete(item.id);
+          return send(receipt);
         }
         assert.equal(item.status, "DRAFT", "Autosave must stop after completion");
         const plan = draftWritePlans.shift() || {};
@@ -1439,6 +1450,8 @@ let chartCatalogFailures = 0;
     await discardDialog.getByRole("button", { name: "Discard draft", exact: true }).click();
     await page.waitForURL("**/indicator");
     assert.equal(drafts.has(durableDraft.id), false, "Confirmed discard deletes only the selected private draft");
+    assert.equal(draftReceipts.get(durableDraft.id).status, "DISCARDED", "Discard is acknowledged by a terminal server receipt");
+    assert.equal(draftReceipts.get(durableDraft.id).configuration, null, "The terminal receipt retains no authoring configuration");
     assert.equal(saved.length, completedBeforeExit, "Discarding an incomplete draft preserves saved indicators");
     const openBlockedDeletion = async () => {
       await button("More actions for Access count").click();
