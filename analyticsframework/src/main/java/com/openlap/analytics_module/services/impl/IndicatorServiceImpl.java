@@ -313,6 +313,8 @@ public class IndicatorServiceImpl implements IndicatorService {
         indicatorUtilityService.fetchUserIndicatorForCopyMethod(
             createdBy.getId(), foundIndicator.getName());
     indicator.setName(indicatorName);
+    indicator.setCommunitySourceId(foundIndicator.getCommunitySourceId());
+    indicator.setCommunitySourceVersion(foundIndicator.getCommunitySourceVersion());
     indicator.setIndicatorType(foundIndicator.getIndicatorType());
     indicator.setCreatedBy(createdBy);
     indicator.setVisualizationTechniqueReference(

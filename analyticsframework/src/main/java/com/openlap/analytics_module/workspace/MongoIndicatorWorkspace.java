@@ -48,6 +48,9 @@ public class MongoIndicatorWorkspace {
             ? new Document("ownerId", owner)
                 .append("status", new Document("$in", List.of("DRAFT", "COMPLETING")))
             : new Document("createdBy.$id", ObjectId.isValid(owner) ? new ObjectId(owner) : owner);
+    if (!draft) {
+      filter.append("communityCopyPending", null).append("communityDependency", new Document("$ne", true));
+    }
     if (query.indicatorType() != null) filter.put("indicatorType", query.indicatorType());
     Document projection =
         new Document("_id", 0)
@@ -56,6 +59,9 @@ public class MongoIndicatorWorkspace {
             .append("status", literal(draft ? "DRAFT" : "SAVED"))
             .append("name", fallback("$name", literal("Untitled indicator")))
             .append("indicatorType", 1)
+            .append("communityCopy", new Document("$ne", Arrays.asList(
+                fallback(draft ? "$sourceSnapshot.communitySourceId" : "$communitySourceId", literal("")), literal(""))))
+            .append("communityDependency", draft ? literal(false) : fallback("$communityDependency", false))
             .append("createdAt", draft ? fallback("$createdAt", "$lastUpdated") : "$createdOn")
             .append(
                 "updatedAt",
@@ -80,6 +86,8 @@ public class MongoIndicatorWorkspace {
               "$unionWith",
               new Document("coll", IndicatorDraftStore.COLLECTION)
                   .append("pipeline", branch(owner, query, true))));
+    if (!query.origin().isEmpty()) stages.add(new Document("$match",
+        new Document("communityCopy", "COMMUNITY".equals(query.origin()))));
     if (!query.search().isEmpty())
       stages.add(
           new Document(
@@ -136,7 +144,9 @@ public class MongoIndicatorWorkspace {
         revision == null ? null : revision.longValue(),
         row.getString("sourceIndicatorId"),
         row.getBoolean("recoverable"),
-        Boolean.TRUE.equals(row.getBoolean("completionPending")));
+        Boolean.TRUE.equals(row.getBoolean("completionPending")),
+        Boolean.TRUE.equals(row.getBoolean("communityCopy")),
+        Boolean.TRUE.equals(row.getBoolean("communityDependency")));
   }
 
   private static Instant instant(Object value) {

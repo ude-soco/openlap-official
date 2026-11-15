@@ -28,6 +28,7 @@ public class IscController {
     IscMutationResponse created = iscService.createIsc(request, isc);
     HttpStatus status = HttpStatus.CREATED;
     return ResponseEntity.status(status)
+        .cacheControl(org.springframework.http.CacheControl.noStore())
         .body(new ApiSuccess(status, "ISC created successfully.", created));
   }
 
@@ -36,7 +37,7 @@ public class IscController {
       HttpServletRequest request, @PathVariable String iscId, @RequestBody @Valid IscRequest isc) {
     iscService.updateIsc(request, iscId, isc);
     HttpStatus status = HttpStatus.CREATED;
-    return ResponseEntity.status(status).body(new ApiSuccess(status, "ISC updated successfully."));
+    return ResponseEntity.status(status).cacheControl(org.springframework.http.CacheControl.noStore()).body(new ApiSuccess(status, "ISC updated successfully."));
   }
 
   @GetMapping("/my")
@@ -47,7 +48,8 @@ public class IscController {
       @RequestParam(defaultValue = "createdOn") String sortBy,
       @RequestParam(defaultValue = "asc") String sortDirection,
       @RequestParam(defaultValue = "") String status,
-      @RequestParam(defaultValue = "") String search) {
+      @RequestParam(defaultValue = "") String search,
+      @RequestParam(defaultValue = "") String origin) {
     int minSize = 1;
     int maxSize = 100;
 
@@ -59,16 +61,17 @@ public class IscController {
     }
 
     Page<IndicatorSpecificationCardResponse> allMyISCs =
-        iscService.getAllMyISCs(request, page, size, sortBy, sortDirection, status, search);
+        iscService.getAllMyISCs(request, page, size, sortBy, sortDirection, status, search, origin);
     String message = allMyISCs.getContent().isEmpty() ? "No ISCs found." : "ISCs found.";
     HttpStatus okStatus = HttpStatus.OK;
-    return ResponseEntity.status(okStatus).body(new ApiSuccess(okStatus, message, allMyISCs));
+    return ResponseEntity.status(okStatus).cacheControl(org.springframework.http.CacheControl.noStore()).body(new ApiSuccess(okStatus, message, allMyISCs));
   }
 
   @GetMapping("/{iscId}")
   public ResponseEntity<?> getISCById(HttpServletRequest request, @PathVariable String iscId) {
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
+        .cacheControl(org.springframework.http.CacheControl.noStore())
         .body(new ApiSuccess(status, "ISC found.", iscService.getISCById(request, iscId)));
   }
 
@@ -76,7 +79,7 @@ public class IscController {
   public ResponseEntity<?> deleteISCById(HttpServletRequest request, @PathVariable String iscId) {
     HttpStatus status = HttpStatus.OK;
     iscService.deleteISCbyId(request, iscId);
-    return ResponseEntity.status(status).body(new ApiSuccess(status, "ISC deleted successfully."));
+    return ResponseEntity.status(status).cacheControl(org.springframework.http.CacheControl.noStore()).body(new ApiSuccess(status, "ISC deleted successfully."));
   }
 
   // ---- Draft lifecycle (Phase 0) ----
@@ -86,7 +89,7 @@ public class IscController {
       HttpServletRequest request, @RequestBody IscDraftRequest draft) {
     IscMutationResponse created = iscService.createDraft(request, draft);
     HttpStatus status = HttpStatus.CREATED;
-    return ResponseEntity.status(status).body(new ApiSuccess(status, "Draft created.", created));
+    return ResponseEntity.status(status).cacheControl(org.springframework.http.CacheControl.noStore()).body(new ApiSuccess(status, "Draft created.", created));
   }
 
   @PutMapping("/drafts/{draftId}")
@@ -96,7 +99,7 @@ public class IscController {
       @RequestBody IscDraftRequest draft) {
     iscService.updateDraft(request, draftId, draft);
     HttpStatus status = HttpStatus.OK;
-    return ResponseEntity.status(status).body(new ApiSuccess(status, "Draft saved."));
+    return ResponseEntity.status(status).cacheControl(org.springframework.http.CacheControl.noStore()).body(new ApiSuccess(status, "Draft saved."));
   }
 
   @PostMapping("/{iscId}/edit-draft")
@@ -104,7 +107,7 @@ public class IscController {
       HttpServletRequest request, @PathVariable String iscId) {
     IscMutationResponse draft = iscService.createOrFindEditDraft(request, iscId);
     HttpStatus status = HttpStatus.OK;
-    return ResponseEntity.status(status).body(new ApiSuccess(status, "Edit draft ready.", draft));
+    return ResponseEntity.status(status).cacheControl(org.springframework.http.CacheControl.noStore()).body(new ApiSuccess(status, "Edit draft ready.", draft));
   }
 
   @PostMapping("/drafts/{draftId}/publish")
@@ -112,6 +115,7 @@ public class IscController {
     IscMutationResponse published = iscService.publishDraft(request, draftId);
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
+        .cacheControl(org.springframework.http.CacheControl.noStore())
         .body(new ApiSuccess(status, "ISC published successfully.", published));
   }
 
@@ -119,7 +123,7 @@ public class IscController {
   public ResponseEntity<?> deleteDraft(HttpServletRequest request, @PathVariable String draftId) {
     iscService.deleteDraft(request, draftId);
     HttpStatus status = HttpStatus.OK;
-    return ResponseEntity.status(status).body(new ApiSuccess(status, "Draft discarded."));
+    return ResponseEntity.status(status).cacheControl(org.springframework.http.CacheControl.noStore()).body(new ApiSuccess(status, "Draft discarded."));
   }
 
   // TODO: APIs for copy/duplicate my ISCs

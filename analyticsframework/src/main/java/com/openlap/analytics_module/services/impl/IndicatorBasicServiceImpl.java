@@ -72,24 +72,16 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
   public void validateUserRequest(
       HttpServletRequest request, List<LrsStoresStatementRequest> lrsStores) {
     User foundUser = tokenService.getUserFromToken(request);
-    boolean invalidRequest = true;
-    if (foundUser == null || foundUser.getLrsConsumerList() == null) {
+    if (foundUser == null || foundUser.getLrsConsumerList() == null
+        || lrsStores == null || lrsStores.isEmpty()) {
       throw new LrsNotFoundException("Invalid LRS id and/or unique identifier provided");
     }
-    for (LrsStoresStatementRequest lrsStore : lrsStores) {
-      if (lrsStore == null) continue;
-      for (LrsConsumer lrsConsumer : foundUser.getLrsConsumerList()) {
-        if (lrsConsumer == null) continue;
-        if (Objects.equals(lrsConsumer.getLrsId(), lrsStore.getLrsId())
-            && Objects.equals(lrsConsumer.getUniqueIdentifier(), lrsStore.getUniqueIdentifier())) {
-          log.info("Valid LRS id and unique identifier provided");
-          invalidRequest = false;
-          break;
-        }
-      }
-    }
-    if (invalidRequest) {
-      throw new LrsNotFoundException("Invalid LRS id and/or unique identifier provided");
+    for (LrsStoresStatementRequest store : lrsStores) {
+      boolean owned = store != null && foundUser.getLrsConsumerList().stream()
+          .filter(Objects::nonNull).anyMatch(connection ->
+              Objects.equals(connection.getLrsId(), store.getLrsId())
+                  && Objects.equals(connection.getUniqueIdentifier(), store.getUniqueIdentifier()));
+      if (!owned) throw new LrsNotFoundException("Invalid LRS id and/or unique identifier provided");
     }
   }
 

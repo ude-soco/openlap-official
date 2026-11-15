@@ -82,6 +82,73 @@ An interrupted dependency write can deliberately keep deletion blocked. A
 maintainer must establish the write's outcome before repairing its reservation;
 elapsed time alone is not grounds for clearing it.
 
+## Community Indicator Pool
+
+Every completed original Basic, Composite or Multilevel indicator appears in
+**Indicator Pool** automatically. New drafts and edits in progress stay private.
+Search, type/method/chart filters, name/date sorting and pagination run on the
+server. Pool sidebar links and **Community copy** dashboard badges share the
+community network icon. A dashboard Origin filter separates personal creations
+from community copies.
+
+The pool exposes a separate community-facing projection with an opaque UUID.
+It does not return the creator, account/learner identifiers, original indicator
+IDs, raw editor configuration, uploaded data or original chart results. Known
+creator-identifying text and arbitrary executable chart annotations are removed
+from the projection. Titles and free text must still avoid identifying people:
+automatic filtering cannot establish anonymity for arbitrary contextual clues.
+Implicit Spring Data REST repository exports are disabled; owner definition APIs
+remain separate from community endpoints. The former cross-user list and GET
+copy routes return `410` rather than bypassing the new privacy/preview boundary.
+
+Opening a community indicator runs **Preview with my data** automatically. Every
+required source LRS must match a registered connection belonging to the current
+account. Each store is paired with that store's own registered learner identifier;
+personal preview/copy always uses `ONLY_ME`. Original activities, time range,
+methods, parameters, matching keys and chart mappings are preserved. Unsupported
+or identifying selectors are rejected rather than silently changed. No original
+result cache is reused. Missing connections, missing data, unavailable plugins or
+incompatible columns prevent saving. Multiple registered identities can be selected
+from the viewer's own connections; arbitrary learner IDs are not accepted.
+
+For complex indicators, all Basic leaves are reconstructed and analyzed with the
+viewer's data before the normal merge/final-analysis/chart pipeline runs. Saving
+requires a fresh server preview receipt for the exact source graph, profile and
+bindings. The frontend also waits for the current chart to finish rendering.
+Receipt expiry or a changed definition requires another preview. Previewing alone
+persists no indicators. Saving revalidates the pipeline and uses an idempotent
+owner/pool claim, hidden staged sources and a final parent visibility step. These
+are per-document MongoDB safeguards, not a cross-collection transaction.
+
+The saved copy has independent, viewer-owned source definitions and regenerated
+editor configuration. Supporting sources are hidden from the dashboard but remain
+available in the owner's source picker so the complex indicator can be edited.
+The original author's later edits/deletion do not alter an existing copy. Source
+provenance survives edits and owner duplication; copies do not create duplicate
+pool listings. Expired interrupted saves are recovered or removed under the normal
+dependency deletion gates. Uncertain reference reservations are retained rather
+than bypassed.
+
+Authenticated community APIs, relative to `/api`:
+
+| Method and path | Purpose |
+| --- | --- |
+| `GET /v1/community/indicators` | Paged safe catalog metadata |
+| `GET /v1/community/indicators/filters` | Available safe filter choices |
+| `GET /v1/community/indicators/{poolId}` | Anonymous requirements and configuration summary |
+| `POST /v1/community/indicators/{poolId}/preview` | Viewer-bound execution; optional saved connection choices |
+| `POST /v1/community/indicators/{poolId}/copy` | Save using a successful preview receipt |
+
+Community pages are available to signed-in users before they connect an LRS;
+executable copies still require compatible registered data. Responses carrying
+viewer-specific state use `Cache-Control: private, no-store`.
+
+`npm run test:community-pools` exercises the actual frontend routes with isolated
+synthetic APIs and WebKit. Backend community tests cover identity isolation,
+privacy, all complex pipeline stages, receipt validation, interrupted writes,
+retries, and independent source ownership. Existing Basic/complex, draft and ISC
+regressions remain part of the CI suite.
+
 ## Deploying the workflows
 
 Source-deletion and dependency guarantees require **every backend writer** to run

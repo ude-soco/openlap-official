@@ -91,7 +91,7 @@ public class SecurityConfig {
         .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString())
         .requestMatchers("/v1/lrs/**")
         .hasAnyAuthority(RoleType.ROLE_DATA_PROVIDER.toString())
-        .requestMatchers("/v1/users/my/lrs/**", "/v1/isc/**", "/v1/analytics/goals/**")
+        .requestMatchers("/v1/users/my/lrs/**", "/v1/isc/**", "/v1/analytics/goals/**", "/v1/community/**")
         .hasAnyAuthority(RoleType.ROLE_USER.toString(), RoleType.ROLE_USER_WITHOUT_LRS.toString())
         // Admin-only user administration (list users). Must precede the broader
         // "/v1/users/my/**" self-service rule below (requestMatchers are first-match-wins).

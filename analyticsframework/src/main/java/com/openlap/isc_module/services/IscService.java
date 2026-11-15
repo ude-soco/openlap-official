@@ -33,6 +33,9 @@ public interface IscService {
       String status,
       String search);
 
+  Page<IndicatorSpecificationCardResponse> getAllMyISCs(HttpServletRequest request, int page,
+      int size, String sortBy, String sortDirection, String status, String search, String origin);
+
   // ---- Draft lifecycle (Phase 0) ----
 
   /** Creates a new DRAFT (sourceId = null). Validation is relaxed (incomplete state allowed). */

@@ -35,6 +35,34 @@ public class Indicator {
   @DBRef private AnalyticsGoal goalRef;
   private String configurationRequest;
 
+  // Community IDs are opaque public references; provenance contains no author identity.
+  private String communityId;
+  private String communitySourceId;
+  private String communitySourceVersion;
+  private boolean communityDependency;
+  private String communityCopyPending;
+
+  /** Preserve the existing saved-definition constructor for plugins and legacy services. */
+  public Indicator(String id, String name, IndicatorType indicatorType, User createdBy,
+      VisualizationTechniqueReference visualizationTechniqueReference, LocalDateTime createdOn,
+      Integer timesExecuted, AnalyticsGoal goalRef, String configurationRequest,
+      String indicatorQuery, AnalyticsTechniqueReference analyticsTechniqueReference,
+      String columnToMerge, List<IndicatorsToMerge> indicators) {
+    this.id = id;
+    this.name = name;
+    this.indicatorType = indicatorType;
+    this.createdBy = createdBy;
+    this.visualizationTechniqueReference = visualizationTechniqueReference;
+    this.createdOn = createdOn;
+    this.timesExecuted = timesExecuted;
+    this.goalRef = goalRef;
+    this.configurationRequest = configurationRequest;
+    this.indicatorQuery = indicatorQuery;
+    this.analyticsTechniqueReference = analyticsTechniqueReference;
+    this.columnToMerge = columnToMerge;
+    this.indicators = indicators;
+  }
+
   // Only for BASIC
   private String indicatorQuery;
 

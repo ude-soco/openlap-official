@@ -94,6 +94,35 @@ public class IscServiceImplTest {
         .build();
   }
 
+  @Test public void communityOriginSurvivesEditingWithoutChangingTheSavedSource() {
+    var source = ownedCard("source", IscStatus.SAVED, null);
+    source.setCommunitySourceId("opaque-public-id");
+    source.setCommunitySourceVersion("verified-version");
+    when(iscRepository.findById("source")).thenReturn(Optional.of(source));
+    when(mongoTemplate.findOne(any(Query.class), eq(IndicatorSpecificationCard.class))).thenReturn(null);
+    service.createOrFindEditDraft(request, "source");
+    var captured = org.mockito.ArgumentCaptor.forClass(IndicatorSpecificationCard.class);
+    verify(iscRepository).save(captured.capture());
+    assertThat(captured.getValue().getCommunitySourceId()).isEqualTo("opaque-public-id");
+    assertThat(captured.getValue().getCommunitySourceVersion()).isEqualTo("verified-version");
+    assertThat(captured.getValue().getStatus()).isEqualTo(IscStatus.DRAFT);
+    assertThat(source.getStatus()).isEqualTo(IscStatus.SAVED);
+  }
+
+  @Test public void originFilteringIsServerSideAndDoesNotAcceptAnOwnerOverride() {
+    when(mongoTemplate.find(any(Query.class), eq(IndicatorSpecificationCard.class)))
+        .thenReturn(java.util.List.of());
+    service.getAllMyISCs(request, 0, 10, "indicatorName", "asc", "", "", "COMMUNITY");
+    var captured = org.mockito.ArgumentCaptor.forClass(Query.class);
+    verify(mongoTemplate).find(captured.capture(), eq(IndicatorSpecificationCard.class));
+    assertThat(captured.getValue().getQueryObject())
+        .containsEntry("createdBy.$id", new org.bson.types.ObjectId(OWNER_ID))
+        .containsEntry("communitySourceId", new org.bson.Document("$ne", null));
+    assertThatThrownBy(() -> service.getAllMyISCs(request, 0, 10,
+        "indicatorName", "asc", "", "", "another-owner"))
+        .isInstanceOf(com.openlap.infrastructure.exception.ValidationException.class);
+  }
+
   // ---- create ----
 
   @Test

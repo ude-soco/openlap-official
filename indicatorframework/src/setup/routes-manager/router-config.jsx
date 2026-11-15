@@ -12,6 +12,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import HistoryIcon from "@mui/icons-material/History";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
+import HubOutlinedIcon from "@mui/icons-material/HubOutlined";
 import RoleTypes from "../../pages/account-manager/utils/enums/role-types.js";
 
 const menus = [
@@ -41,7 +42,7 @@ const menus = [
         primary: "ISC Pool",
         secondary: "Search for ISCs",
         navigate: "/isc/pool",
-        icon: <AddchartIcon />,
+        icon: <HubOutlinedIcon />,
       },
     ],
   },
@@ -51,10 +52,11 @@ const menus = [
     defaultOpen: false,
     icon: <BarChartIcon />,
     allowedRoles: [RoleTypes.user, RoleTypes.userWithoutLRS],
-    disabledRoles: [RoleTypes.userWithoutLRS],
+    disabledRoles: [],
     items: [
       {
         primary: "My Indicators",
+        disabledRoles: [RoleTypes.userWithoutLRS],
         secondary: "List of my Indicators",
         navigate: "/indicator",
         icon: <DashboardIcon />,
@@ -69,6 +71,7 @@ const menus = [
       },
       {
         primary: "Indicator Editor",
+        disabledRoles: [RoleTypes.userWithoutLRS],
         secondary: "Create an Indicator",
         navigate: "/indicator/editor",
         icon: <AddchartIcon />,
@@ -97,7 +100,7 @@ const menus = [
         primary: "Indicator Pool",
         secondary: "Search for indicators",
         navigate: "/indicator/pool",
-        icon: <AddchartIcon />,
+        icon: <HubOutlinedIcon />,
       },
     ],
   },

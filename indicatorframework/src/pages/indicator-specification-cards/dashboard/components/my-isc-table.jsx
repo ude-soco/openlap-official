@@ -14,6 +14,8 @@ import { MEDIUM, WIDE, statusColumn, detailColumn, dateColumn, actionColumn, das
 import { requestDeleteISC, requestMyISCs } from "../utils/dashboard-api.js";
 import { discardDraft } from "../../creator/utils/isc-draft-api.js";
 
+import { CommunityCopyBadge } from "../../../../common/components/community-pool/community-copy-badge.jsx";
+
 const SORT_FIELDS = { indicatorName: "ISC", updatedOn: "Last updated" };
 const isDraft = (item) => item.status === "DRAFT";
 const isEditing = (item) => isDraft(item) && Boolean(item.sourceId || item.draftKind === "EDIT_DRAFT");
@@ -27,7 +29,7 @@ export default function MyIscTable({ onStats, draftsOnly = false, onDraftsOnlyCh
   const { enqueueSnackbar } = useSnackbar();
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
-  const [query, setQuery] = useState({ page: 0, size: 10, sortBy: "updatedOn", sortDirection: "desc", search: "" });
+  const [query, setQuery] = useState({ page: 0, size: 10, sortBy: "updatedOn", sortDirection: "desc", search: "", origin: "" });
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -82,6 +84,7 @@ export default function MyIscTable({ onStats, draftsOnly = false, onDraftsOnlyCh
     title: "Delete indicator?", confirm: "Delete indicator",
     description: `This permanently deletes the saved ISC “${nameOf(removeTarget)}”.`,
   };
+  const filtered = Boolean(query.search || query.origin);
 
   return <WorkspaceDashboard>
     <WorkspaceToolbar label="ISC controls" onCreate={onCreate} sortFields={SORT_FIELDS} sortBy={query.sortBy}
@@ -91,6 +94,12 @@ export default function MyIscTable({ onStats, draftsOnly = false, onDraftsOnlyCh
       <TextField size="small" label="Search ISCs" placeholder="Search by name" value={search}
         sx={{ flex: "1 1 220px", minWidth: 180 }} onChange={(event) => setSearch(event.target.value)}
         slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }} />
+      <TextField select size="small" label="Origin" value={query.origin}
+        sx={{ flex: "0 1 160px", minWidth: 140 }}
+        onChange={(event) => setQuery((previous) => ({ ...previous, page: 0, origin: event.target.value }))}>
+        <MenuItem value="">All origins</MenuItem><MenuItem value="OWN">Created by me</MenuItem>
+        <MenuItem value="COMMUNITY">Community copies</MenuItem>
+      </TextField>
       <FormControlLabel sx={{ m: 0, flexShrink: 0, whiteSpace: "nowrap" }} label="Drafts only"
         control={<Checkbox checked={draftsOnly} onChange={(event) => {
           setQuery((previous) => ({ ...previous, page: 0 })); onDraftsOnlyChange(event.target.checked);
@@ -101,8 +110,8 @@ export default function MyIscTable({ onStats, draftsOnly = false, onDraftsOnlyCh
       onPageChange={(page) => setQuery((previous) => ({ ...previous, page }))}
       onSizeChange={(size) => setQuery((previous) => ({ ...previous, page: 0, size }))}
       emptyState={!loading && !error && !rows.length && <Box sx={{ p: 4, textAlign: "center" }}>
-        <Typography sx={{ fontWeight: 600 }}>{query.search ? "No matching ISCs" : draftsOnly ? "No drafts yet" : "No ISCs yet"}</Typography>
-        <Typography variant="body2" color="text.secondary">{query.search ? "Try another name." : "Create an ISC to prototype an indicator."}</Typography>
+        <Typography sx={{ fontWeight: 600 }}>{filtered ? "No matching ISCs" : draftsOnly ? "No drafts yet" : "No ISCs yet"}</Typography>
+        <Typography variant="body2" color="text.secondary">{filtered ? "Try another name or origin." : "Create an ISC to prototype an indicator."}</Typography>
         <Button sx={{ mt: 2 }} variant="contained" onClick={onCreate}>Create an ISC</Button>
       </Box>}
       header={<TableRow>
@@ -115,6 +124,7 @@ export default function MyIscTable({ onStats, draftsOnly = false, onDraftsOnlyCh
       {!error && rows.map((item) => <TableRow key={item.id} hover>
         <TableCell><Stack sx={{ gap: 0.75 }}>
           <Typography sx={{ fontWeight: 600 }}>{nameOf(item)}</Typography>
+          {item.communityCopy && <CommunityCopyBadge />}
           <Box sx={{ display: "block", [MEDIUM]: { display: "none" } }}><WorkspaceStatusChip draft={isDraft(item)} /></Box>
           {isEditing(item) && <Typography variant="caption" color="text.secondary">Editing saved ISC</Typography>}
           {item.datasetRows != null && item.datasetColumns != null && <Typography variant="caption" color="text.secondary">

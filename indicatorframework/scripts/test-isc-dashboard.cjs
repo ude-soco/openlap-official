@@ -164,7 +164,8 @@ async function listing(browser) {
     assert.equal(latest().query.sortBy, "updatedOn"); assert.equal(latest().query.sortDirection, "desc");
     assert.equal(f.calls.filter((call) => /^v1\/isc\/[^/]+$/.test(call.endpoint) && call.endpoint !== "v1/isc/my").length, 0,
       "One paginated list renders all rows without fetching each ISC body");
-    const controls = [page.getByRole("button", { name: "Create new", exact: true }), search, draftsOnly];
+    const controls = [page.getByRole("button", { name: "Create new", exact: true }), search,
+      page.getByRole("combobox", { name: "Origin", exact: true }), draftsOnly];
     const geometry = () => Promise.all(controls.map((control) => control.evaluate((element) => {
       const box = (element.closest(".MuiFormControl-root") || element.closest("label") || element).getBoundingClientRect();
       return { x: box.x, y: box.y, width: box.width, height: box.height };

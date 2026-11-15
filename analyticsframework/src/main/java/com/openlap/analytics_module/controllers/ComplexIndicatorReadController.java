@@ -116,7 +116,7 @@ public class ComplexIndicatorReadController {
   public ResponseEntity<?> result(HttpServletRequest request, @PathVariable String id) {
     Indicator parent = indicators.findById(id).orElseThrow(() -> new ComplexIndicatorException(
         HttpStatus.NOT_FOUND, "INDICATOR_NOT_FOUND", "This indicator is no longer available."));
-    if (parent.getCreatedBy() == null
+    if (parent.getCommunityCopyPending() != null || parent.getCreatedBy() == null
         || !tokens.getUserFromToken(request).getId().equals(parent.getCreatedBy().getId())) {
       throw new ComplexIndicatorException(HttpStatus.FORBIDDEN, "INDICATOR_NOT_ALLOWED",
           "Open one of your own indicators to view its result data.");

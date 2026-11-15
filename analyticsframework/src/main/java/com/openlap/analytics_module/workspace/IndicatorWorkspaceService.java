@@ -23,9 +23,15 @@ public class IndicatorWorkspaceService {
       boolean draftsOnly,
       String sortBy,
       String direction) {
+    return list(request, page, size, search, indicatorType, draftsOnly, sortBy, direction, "");
+  }
+
+  public Page<IndicatorWorkspaceRow> list(HttpServletRequest request, int page, int size,
+      String search, String indicatorType, boolean draftsOnly, String sortBy, String direction,
+      String origin) {
     IndicatorWorkspaceQuery query =
         IndicatorWorkspaceQuery.checked(
-            page, size, search, indicatorType, draftsOnly, sortBy, direction);
+            page, size, search, indicatorType, draftsOnly, sortBy, direction, origin);
     String owner = tokens.getUserFromToken(request).getId();
     drafts.migrateLegacyForOwner(request);
     return workspace.page(owner, query);

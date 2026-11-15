@@ -22,6 +22,26 @@ public class IndicatorSpecificationCard {
   @DBRef private User createdBy;
   private LocalDateTime createdOn;
 
+  private String communityId;
+  private String communitySourceId;
+  private String communitySourceVersion;
+
+  public IndicatorSpecificationCard(String id, String requirements, String dataset, String visRef,
+      String lockedStep, User createdBy, LocalDateTime createdOn, IscStatus status,
+      String sourceId, LocalDateTime updatedOn, String indicatorName) {
+    this.id = id;
+    this.requirements = requirements;
+    this.dataset = dataset;
+    this.visRef = visRef;
+    this.lockedStep = lockedStep;
+    this.createdBy = createdBy;
+    this.createdOn = createdOn;
+    this.status = status;
+    this.sourceId = sourceId;
+    this.updatedOn = updatedOn;
+    this.indicatorName = indicatorName;
+  }
+
   // ---- Phase 0 (Draft/Saved lifecycle) additions — all optional/additive ----
 
   /**

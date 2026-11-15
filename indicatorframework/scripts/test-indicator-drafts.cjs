@@ -250,6 +250,7 @@ async function dashboard(browser) {
       page.getByRole("button", { name: "Create new", exact: true }),
       page.getByRole("textbox", { name: "Search indicators", exact: true }),
       page.getByRole("combobox", { name: "Indicator type", exact: true }),
+      page.getByRole("combobox", { name: "Origin", exact: true }),
       draftsOnly,
     ];
     const toolbarGeometry = () => Promise.all(toolbarControls().map((control) => control.evaluate((element) => {
@@ -261,7 +262,7 @@ async function dashboard(browser) {
     assert.ok(Math.max(...desktopCenters) - Math.min(...desktopCenters) <= 2,
       `Desktop creation and filters align in one row: ${JSON.stringify(desktopControls)}`);
     assert.ok(desktopControls.every((control, index) => index === 0 || control.x >= desktopControls[index - 1].x + desktopControls[index - 1].width),
-      "The desktop toolbar places Create new, Search, Indicator type and Drafts only in order");
+      "The desktop toolbar places Create new, Search, Indicator type, Origin and Drafts only in order");
     assert.equal(await draftsOnly.isChecked(), false);
     await row("Saved actions fixture").getByText("Saved", { exact: true }).filter({ visible: true }).waitFor();
     await row("Working indicator 19").getByText("Draft", { exact: true }).filter({ visible: true }).waitFor();

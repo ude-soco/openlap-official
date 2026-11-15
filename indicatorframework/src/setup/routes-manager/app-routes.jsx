@@ -296,7 +296,7 @@ const AppRoutes = () => {
                   element={
                     <PrivateRoute
                       component={<IndicatorPool />}
-                      allowedRoles={[RoleTypes.user]}
+                      allowedRoles={[RoleTypes.user, RoleTypes.userWithoutLRS]}
                     />
                   }
                 />

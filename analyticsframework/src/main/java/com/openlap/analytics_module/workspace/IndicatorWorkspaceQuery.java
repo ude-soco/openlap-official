@@ -12,7 +12,12 @@ public record IndicatorWorkspaceQuery(
     String indicatorType,
     boolean draftsOnly,
     String sortBy,
-    boolean descending) {
+    boolean descending,
+    String origin) {
+  public IndicatorWorkspaceQuery(int page, int size, String search, String indicatorType,
+      boolean draftsOnly, String sortBy, boolean descending) {
+    this(page, size, search, indicatorType, draftsOnly, sortBy, descending, "");
+  }
   public static IndicatorWorkspaceQuery checked(
       int page,
       int size,
@@ -21,6 +26,14 @@ public record IndicatorWorkspaceQuery(
       boolean draftsOnly,
       String sortBy,
       String direction) {
+    return checked(page, size, search, indicatorType, draftsOnly, sortBy, direction, "");
+  }
+
+  public static IndicatorWorkspaceQuery checked(int page, int size, String search,
+      String indicatorType, boolean draftsOnly, String sortBy, String direction, String origin) {
+    String checkedOrigin = origin == null ? "" : origin.toUpperCase(Locale.ROOT);
+    if (!Set.of("", "OWN", "COMMUNITY").contains(checkedOrigin))
+      throw new ValidationException("Invalid indicator origin filter.");
     if (page < 0
         || page > 1000000
         || size < 1
@@ -40,6 +53,6 @@ public record IndicatorWorkspaceQuery(
         throw new ValidationException("Invalid indicator type.");
       }
     return new IndicatorWorkspaceQuery(
-        page, size, search.strip(), type, draftsOnly, sortBy, "desc".equalsIgnoreCase(direction));
+        page, size, search.strip(), type, draftsOnly, sortBy, "desc".equalsIgnoreCase(direction), checkedOrigin);
   }
 }
