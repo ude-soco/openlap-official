@@ -883,6 +883,18 @@ let chartCatalogFailures = 0;
       await sourceStep.getByRole("button", { name: "Close", exact: true }).click();
     };
     const saveIndicator = async (name, update = false) => {
+      await waitForPreview(previews.at(-1));
+      // An iframe can paint before the surrounding Collapse finishes opening.
+      // Wait for its final geometry so pointerup still lands on the save button.
+      await page.waitForFunction(() => {
+        const action = document.querySelector('button[aria-label="Save indicator"],button[aria-label="Review changes"]');
+        if (!action || action.disabled) return false;
+        for (let parent = action.parentElement; parent; parent = parent.parentElement) {
+          if (parent.classList.contains("MuiCollapse-root")
+            && !parent.classList.contains("MuiCollapse-entered")) return false;
+        }
+        return true;
+      });
       const previewsBeforeSave = previews.length;
       const mergesBeforeSave = mergeRequests.length, analysesBeforeSave = analysisRequests.length;
       await button(update ? "Review changes" : "Save indicator").click();
