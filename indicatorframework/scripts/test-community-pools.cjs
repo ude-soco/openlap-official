@@ -226,6 +226,18 @@ async function screenshot(page, name) {
     await page.getByRole("button", { name: "View Monitor learning materials", exact: true }).click();
     await page.getByRole("heading", { name: "Illustrative preview", exact: true }).waitFor();
     await until(async () => await page.locator(".apexcharts-svg").count() > 0, "Synthetic ISC chart paints");
+    const chartFigure = page.getByRole("figure", { name: "Illustrative community chart", exact: true });
+    const chartFits = () => chartFigure.evaluate((figure) => {
+      const container = figure.getBoundingClientRect(), svg = figure.querySelector("svg.apexcharts-svg")?.getBoundingClientRect();
+      const bars = [...figure.querySelectorAll(".apexcharts-bar-area")].map((bar) => bar.getBoundingClientRect());
+      return svg && svg.width > 0 && svg.width <= container.width + 1 && bars.length === 3
+        && bars.every((bar) => bar.width > 0 && bar.left >= container.left - 1 && bar.right <= container.right + 1);
+    });
+    await until(chartFits, "Every illustrative bar and the actual SVG fit the mobile chart panel");
+    for (const width of [1440, 390, 1024, 390]) {
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
+      await until(chartFits, `Illustrative bars remain visible after resizing to ${width}px`);
+    }
     assert.equal(await page.getByRole("button", { name: "Save to My ISCs", exact: true }).isEnabled(), true);
     const previewCalls = f.calls.filter((call) => call.endpoint.includes("/isc/") && call.endpoint.endsWith("/preview"));
     assert.equal(previewCalls.length, 0, "ISC copying does not introduce an executable LRS workflow");
@@ -233,6 +245,11 @@ async function screenshot(page, name) {
     await page.getByRole("button", { name: "Save to My ISCs", exact: true }).click();
     await page.getByText("Saved to My ISCs as a community copy.", { exact: true }).waitFor();
     await closeDetail(page);
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await page.getByRole("button", { name: "View Monitor learning materials", exact: true }).click();
+      await until(chartFits, "Reopened illustrative chart paints all bars at its current width");
+      await closeDetail(page);
+    }
     for (const pathname of ["indicator", "isc"]) {
       await page.goto(new URL(pathname, base).href);
       await page.getByText("Community copy", { exact: true }).waitFor();

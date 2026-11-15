@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 import ChartPreview from "../../../pages/indicators/indicator-editor/components/chart-preview.jsx";
 import parseChartCode from "../../../pages/indicators/indicator-editor/components/utils/parse-chart-code.jsx";
-import PreviewChart from "../../../pages/indicator-specification-cards/dashboard/components/preview-chart.jsx";
+import CommunityIscPreview from "./community-isc-preview.jsx";
 import { canSaveCommunityPreview, communityError, communityTypeName, requestCommunityCopy,
   requestCommunityDetail, requestCommunityPreview } from "./community-pool-api.js";
 import CommunityCopyBadge from "./community-copy-badge.jsx";
@@ -182,7 +182,7 @@ export default function CommunityPoolDetail({ kind, row, onClose, onSaved }) {
               onClick={() => setPreviewRun((value) => value + 1)}>Run preview again</Button>}
           </Stack>
           {isc ? detail.visRef?.chart?.code && detail.visRef?.data?.options && Array.isArray(detail.visRef?.data?.series)
-            ? <PreviewChart visRef={detail.visRef} />
+            ? <CommunityIscPreview visRef={detail.visRef} />
             : <Alert severity="info">A chart preview is unavailable. You can still save and edit this specification.</Alert>
             : <>
               {checking && <Stack role="status" sx={{ gap: 1.5 }}><LinearProgress /><Typography variant="body2">Checking every source and generating your preview…</Typography></Stack>}
