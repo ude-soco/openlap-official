@@ -40,7 +40,14 @@ function Fixture() {
       defaults: { baseURL: "/fixture-api/" },
       post: (path, body) => mutation("post", path, body),
       put: (path, body) => mutation("put", path, body),
-      delete: async (path) => { control.calls.push({ method: "delete", path }); return response({}); },
+      delete: async (path) => {
+        control.calls.push({ method: "delete", path });
+        const id = path.split("?")[0].split("/").at(-1);
+        const receipt = { ...control.drafts[id], status: "DISCARDED", configuration: null,
+          revision: Number(new URLSearchParams(path.split("?")[1]).get("revision")) + 1 };
+        control.drafts[id] = receipt;
+        return response(receipt);
+      },
       get: async (path) => { const id = path.split("/").at(-1); return response(control.drafts[id]); },
     };
   }, [initialDraft]);
