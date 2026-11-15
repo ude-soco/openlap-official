@@ -232,13 +232,11 @@ public class QuestionServiceImpl implements QuestionService {
   @Override
   public String requestInteractiveQuestionCode(String questionId, HttpServletRequest request) {
     AnalyticsQuestion foundQuestion = fetchQuestionMethod(questionId);
-    String baseUrl =
-        String.format(
-            "%s://%s:%d", request.getScheme(), request.getServerName(), request.getServerPort());
-    String apiUrl = "/api/v1/code/questions?questionId=";
-    String metaDataUrl = "' frameborder='0' height='500px' width='500px'";
-
-    return "<iframe src='" + baseUrl + apiUrl + foundQuestion.getId() + metaDataUrl + " />";
+    String src = org.springframework.web.servlet.support.ServletUriComponentsBuilder
+        .fromContextPath(request).path("/v1/code/questions")
+        .queryParam("questionId", foundQuestion.getId()).build().encode().toUriString();
+    return "<iframe src=\"" + src + "\" title=\"OpenLAP question\""
+        + " style=\"width:100%;min-height:500px;border:0\" loading=\"lazy\"></iframe>";
   }
 
   @Cacheable("questions")

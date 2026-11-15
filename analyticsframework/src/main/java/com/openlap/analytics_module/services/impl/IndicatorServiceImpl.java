@@ -289,13 +289,9 @@ public class IndicatorServiceImpl implements IndicatorService {
   @Override
   public String requestInteractiveIndicatorCode(String indicatorId, HttpServletRequest request) {
     Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
-    String baseUrl = String.format("%s://%s", request.getScheme(), request.getServerName());
-    String apiUrl = "/api/v1/code/indicators?indicatorId=";
-    // Same endpoint URL as before — only the surrounding markup is now responsive:
-    // the iframe fills the host container's width with a sensible height floor.
-    // Uses style border:0 (frameborder is deprecated), a meaningful title, and
-    // lazy loading. No sandbox — the embedded page runs the chart's own scripts.
-    String src = baseUrl + apiUrl + foundIndicator.getId();
+    String src = org.springframework.web.servlet.support.ServletUriComponentsBuilder
+        .fromContextPath(request).path("/v1/code/indicators")
+        .queryParam("indicatorId", foundIndicator.getId()).build().encode().toUriString();
 
     return "<iframe src=\""
         + src
@@ -415,42 +411,23 @@ public class IndicatorServiceImpl implements IndicatorService {
   public String getInteractiveIndicatorTemplate(String indicatorId, Model model) {
     Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
     String indicatorCode = generateIndicatorCode(foundIndicator.getId(), false);
-    model.addAttribute("indicatorCode", Utils.decodeURIComponent(indicatorCode));
+    model.addAttribute("indicatorCode", indicatorCode);
     model.addAttribute("indicatorName", foundIndicator.getName());
+    model.addAttribute("visualizationTypeId", foundIndicator.getVisualizationTechniqueReference().getVisType().getId());
     return "indicator";
   }
 
   @Override
   public String getInteractiveQuestionCode(String questionId, Model model) {
     AnalyticsQuestion analyticsQuestion = questionService.fetchQuestionMethod(questionId);
-    StringBuilder stringBuilder = new StringBuilder();
-    List<Indicator> indicators = analyticsQuestion.getIndicators();
-    for (int i = 0; i < indicators.size(); i++) {
-      int count = i + 1;
-      Indicator indicator = indicators.get(i);
-      if (count % 2 == 1)
-        stringBuilder.append("<div class=\"row justify-content-sm-center padTopBottom\">");
-      stringBuilder.append(
-          "<div class=\"col col-lg-6\" align=\"center\">\n"
-              + "\t\t\t\t<div class=\"row justify-content-sm-center padTopBottom\">\n"
-              + "\t\t\t\t\t<div class=\"col col-lg-6\" align=\"center\">\n"
-              + "\t\t\t\t\t\t<h6>"
-              + indicator.getName()
-              + "</h6>\n"
-              + "\t\t\t\t\t</div>\n"
-              + "\t\t\t\t</div>\n"
-              + "\t\t\t\t<div class=\"row padTopBottom\" align=\"center\">");
-      stringBuilder.append(generateIndicatorCode(indicator.getId(), false));
-      stringBuilder.append("\t\t\t\t</div>\n" + "\t\t\t</div>");
-      if (indicators.size() == 1 || count % 2 == 0) {
-        stringBuilder.append("</div>");
-      }
-      if (indicators.size() == count) {
-        stringBuilder.append("</div>");
-      }
+    List<Map<String,String>> charts = new ArrayList<>();
+    for (Indicator indicator : analyticsQuestion.getIndicators()) {
+      charts.add(Map.of("name", indicator.getName(),
+          "typeId", indicator.getVisualizationTechniqueReference().getVisType().getId(),
+          "code", generateIndicatorCode(indicator.getId(), false)));
     }
     model.addAttribute("questionName", analyticsQuestion.getName());
-    model.addAttribute("questionCode", stringBuilder);
+    model.addAttribute("questionCharts", charts);
 
     return "question";
   }

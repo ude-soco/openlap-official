@@ -1,47 +1,17 @@
-<!DOCTYPE html>
-<html lang="de">
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="ISO-8859-1"/>
-    <link
-            href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.18/c3.min.css"
-            rel="stylesheet"
-            type="text/css"
-    />
-    <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css"
-            rel="stylesheet"
-            integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl"
-            crossorigin="anonymous"
-    />
-
-    <title>OpenLAP</title>
-
-    <script src="https://d3js.org/d3.v5.min.js" charset="utf-8"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.18/c3.min.js"></script>
-    <script
-            src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0"
-            crossorigin="anonymous"
-    ></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts@8.8.1/dist/apexcharts.min.js"></script>
-    <style>
-        .padTop {
-            padding-top: 48px;
-        }
-
-        .padBottom {
-            padding-bottom: 16px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OpenLAP</title>
+  <style>body{margin:0;background:white;font:14px system-ui,sans-serif}main{width:100%;min-width:0}h1,h2{font-size:18px;text-align:center;padding:12px;margin:0}iframe{max-width:100%}[role=status]{padding:0 16px}button{margin:8px;padding:8px 16px}</style>
+  <script defer th:src="@{/v1/code/runtime.js}"></script>
 </head>
-<body>
-<div class="container padTop">
-    <div class="row justify-content-sm-center padBottom">
-        <div class="col col-lg-6" align="center">
-            <h3>Q. [(${questionName})]</h3>
-        </div>
-    </div>
-</div>
-[(${questionCode})]
-</body>
-</html>
+<body><main>
+  <h1 th:text="${questionName}">OpenLAP question</h1>
+  <section th:each="chart : ${questionCharts}" data-openlap-chart th:attr="data-type-id=${chart.typeId},data-title=${chart.name}">
+    <h2 th:text="${chart.name}"></h2>
+    <template data-chart-code th:utext="${chart.code}"></template>
+    <div data-chart-slot></div>
+  </section>
+</main></body></html>
