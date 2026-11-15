@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import { useRef, useState } from "react";
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   CircularProgress,
@@ -119,29 +120,62 @@ export default function ComplexVisualizationStep({
         title="Visualization library"
         helper="The library that renders your chart. The default works for most indicators."
       >
-        <TextField
-          fullWidth
-          select
-          label="Library"
-          value={libraryId}
-          onChange={(event) =>
-            change((previous) => ({
-              ...previous,
-              visualization: {
-                ...previous.visualization,
-                libraryId: event.target.value,
-                typeId: "",
-                mapping: { mapping: [] },
-              },
-            }))
-          }
-        >
-          {libraries.map((library) => (
-            <MenuItem key={library.id} value={library.id}>
-              {library.name}
-            </MenuItem>
-          ))}
-        </TextField>
+        <Stack sx={{ gap: 0.75 }}>
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            Library
+          </Typography>
+          <Autocomplete
+            disableClearable
+            disablePortal
+            fullWidth
+            options={libraries}
+            getOptionLabel={(library) => library.name || ""}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            value={libraries.find((library) => library.id === libraryId) || null}
+            onChange={(_, library) => {
+              if (!library) return;
+              change((previous) => ({
+                ...previous,
+                visualization: {
+                  ...previous.visualization,
+                  libraryId: library.id,
+                  typeId: "",
+                  mapping: { mapping: [] },
+                },
+              }));
+            }}
+            renderInput={(inputParams) => (
+              <TextField
+                {...inputParams}
+                placeholder="Search for a visualization library"
+                slotProps={{
+                  ...inputParams.slotProps,
+                  htmlInput: {
+                    ...inputParams.slotProps.htmlInput,
+                    "aria-label": "Visualization library",
+                  },
+                }}
+              />
+            )}
+            renderOption={(optionProps, library) => {
+              const { key, ...restProps } = optionProps;
+              return (
+                <li key={key} {...restProps}>
+                  <Stack sx={{ py: 0.5 }}>
+                    <Typography>{library.name}</Typography>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      sx={{ fontStyle: "italic" }}
+                    >
+                      {library.description}
+                    </Typography>
+                  </Stack>
+                </li>
+              );
+            }}
+          />
+        </Stack>
       </SectionCard>
       {!isMulti && (
         <SectionCard

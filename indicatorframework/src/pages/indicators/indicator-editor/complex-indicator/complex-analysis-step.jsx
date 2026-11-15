@@ -60,6 +60,7 @@ export default function ComplexAnalysisStep({
             Analytics method
           </Typography>
           <Autocomplete
+            disableClearable
             disablePortal
             fullWidth
             options={methods}
