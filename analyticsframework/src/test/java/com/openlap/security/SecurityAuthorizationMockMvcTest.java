@@ -89,6 +89,7 @@ import org.springframework.web.cors.CorsConfiguration;
       com.openlap.plugins.visualization.VisualizationRuntimeController.class,
       com.openlap.analytics_module.drafts.IndicatorDraftController.class,
       com.openlap.analytics_module.workspace.IndicatorWorkspaceController.class,
+      com.openlap.community.CommunityCatalogController.class,
       SecurityAuthorizationMockMvcTest.CsrfProtectedController.class
     })
 @ImportAutoConfiguration(Jackson2AutoConfiguration.class)
@@ -129,6 +130,9 @@ public class SecurityAuthorizationMockMvcTest {
   @MockitoBean private com.openlap.plugins.visualization.VisualizationRuntimeService visualizationRuntimeService;
   @MockitoBean private com.openlap.analytics_module.drafts.IndicatorDraftService indicatorDraftService;
   @MockitoBean private com.openlap.analytics_module.workspace.IndicatorWorkspaceService indicatorWorkspaceService;
+  @MockitoBean private com.openlap.community.CommunityCatalogService communityCatalogService;
+  @MockitoBean private com.openlap.community.CommunityIscService communityIscService;
+  @MockitoBean private com.openlap.community.CommunityIndicatorDetails communityIndicatorDetails;
   @MockitoBean private AnalyticsTechniqueService analyticsTechniqueService;
   @MockitoBean private VisualizationLibraryService visualizationLibraryService;
   @MockitoBean private VisualizationTypeService visualizationTypeService;
@@ -140,6 +144,24 @@ public class SecurityAuthorizationMockMvcTest {
   // Bootstrap CommandLineRunner safety net (prevents any MongoDB access if it is invoked)
   @MockitoBean private UserRoleService userRoleService;
   @MockitoBean private EngineService engineService;
+
+  @Test
+  public void communityBrowsingRequiresLoginButDoesNotRequireAnLrs() throws Exception {
+    mockMvc.perform(get("/v1/community/indicators")).andExpect(status().isForbidden());
+    org.mockito.Mockito.verifyNoInteractions(communityCatalogService);
+    given(tokenService.verifyToken(any())).willReturn(new TokenRequest("new-user@example.test",
+        new String[] {"ROLE_USER_WITHOUT_LRS"}, "tok", null));
+    given(communityCatalogService.page(any(), org.mockito.ArgumentMatchers.eq("indicators"),
+        org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt(),
+        org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString(),
+        org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString(),
+        org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString(),
+        org.mockito.ArgumentMatchers.anyString())).willReturn(org.springframework.data.domain.Page.empty());
+    mockMvc.perform(get("/v1/community/indicators").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk()).andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
+    mockMvc.perform(get("/v1/indicators/my/workspace").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden());
+  }
 
   @Test
   public void anonymousClientsCannotReadOrMutatePrivateIndicatorDrafts() throws Exception {
@@ -177,7 +199,7 @@ public class SecurityAuthorizationMockMvcTest {
     given(tokenService.verifyToken(any())).willReturn(new TokenRequest("user@example.test",new String[]{"ROLE_USER"},"tok",null));
     given(indicatorWorkspaceService.list(any(),org.mockito.ArgumentMatchers.eq(0),org.mockito.ArgumentMatchers.eq(10),
         org.mockito.ArgumentMatchers.eq(""),org.mockito.ArgumentMatchers.isNull(),org.mockito.ArgumentMatchers.eq(false),
-        org.mockito.ArgumentMatchers.eq("updatedAt"),org.mockito.ArgumentMatchers.eq("desc")))
+        org.mockito.ArgumentMatchers.eq("updatedAt"),org.mockito.ArgumentMatchers.eq("desc"),org.mockito.ArgumentMatchers.eq("")))
         .willReturn(org.springframework.data.domain.Page.empty());
     mockMvc.perform(get("/v1/indicators/my/workspace").header(AUTHORIZATION,"Bearer valid-token"))
         .andExpect(status().isOk()).andExpect(header().string("Cache-Control","no-store"));

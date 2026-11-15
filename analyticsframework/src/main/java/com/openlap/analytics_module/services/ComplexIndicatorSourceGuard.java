@@ -23,6 +23,17 @@ public class ComplexIndicatorSourceGuard {
   private final IndicatorRepository indicators;
   private final TokenService tokens;
 
+  /** Owner-only definitions must never become a side door around anonymous community DTOs. */
+  public void requireOwned(HttpServletRequest request, String id) {
+    Indicator source = indicators.findById(id).orElse(null);
+    String owner = tokens.getUserFromToken(request).getId();
+    if (source == null || source.getCreatedBy() == null
+        || !java.util.Objects.equals(owner, source.getCreatedBy().getId())
+        || source.getCommunityCopyPending() != null)
+      throw new ComplexIndicatorException(HttpStatus.NOT_FOUND, "INDICATOR_NOT_FOUND",
+          "This saved indicator is not available.");
+  }
+
   public void validate(HttpServletRequest request, List<IndicatorsToMergeRequest> sources,
       boolean sameMethod) {
     if (sources == null || sources.stream().anyMatch(s -> s == null)) {
@@ -35,6 +46,11 @@ public class ComplexIndicatorSourceGuard {
   public void validateIds(HttpServletRequest request, List<String> ids, boolean sameMethod,
       boolean requireMultiple) {
     validateForOwner(tokens.getUserFromToken(request).getId(), ids, sameMethod, requireMultiple);
+    for (String id : ids) {
+      if (indicators.findById(id).orElseThrow().getCommunityCopyPending() != null)
+        throw new ComplexIndicatorException(HttpStatus.NOT_FOUND, "SOURCE_INDICATOR_UNAVAILABLE",
+            "A source indicator is not yet available.");
+    }
   }
 
   public void validateForOwner(String owner, List<String> ids, boolean sameMethod,

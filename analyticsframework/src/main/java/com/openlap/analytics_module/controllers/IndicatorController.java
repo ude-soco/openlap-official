@@ -54,7 +54,7 @@ public class IndicatorController {
     String message =
         allMyIndicators.getContent().isEmpty() ? "No indicators found." : "Indicators found.";
     HttpStatus status = HttpStatus.OK;
-    return ResponseEntity.status(status).body(new ApiSuccess(status, message, allMyIndicators));
+    return ResponseEntity.status(status).cacheControl(org.springframework.http.CacheControl.noStore()).body(new ApiSuccess(status, message, allMyIndicators));
   }
 
   /**
@@ -70,7 +70,7 @@ public class IndicatorController {
     String message =
         allMyIndicators.getContent().isEmpty() ? "No indicators found." : "Indicators found.";
     HttpStatus status = HttpStatus.OK;
-    return ResponseEntity.status(status).body(new ApiSuccess(status, message, allMyIndicators));
+    return ResponseEntity.status(status).cacheControl(org.springframework.http.CacheControl.noStore()).body(new ApiSuccess(status, message, allMyIndicators));
   }
 
   @GetMapping("/{indicatorId}/compatible")
@@ -78,6 +78,7 @@ public class IndicatorController {
       HttpServletRequest request,
       @PathVariable String indicatorId,
       @RequestParam(defaultValue = "0") int page) {
+    sourceGuard.requireOwned(request, indicatorId);
     PageImpl<CompatibleIndicatorsCompositeResponse> compatibleBasicIndicators =
         indicatorService.findCompatibleIndicators(request, indicatorId, page);
     String message =
@@ -86,6 +87,7 @@ public class IndicatorController {
             : "Compatible basic indicators found.";
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
+        .cacheControl(org.springframework.http.CacheControl.noStore())
         .body(new ApiSuccess(status, message, compatibleBasicIndicators));
   }
 
@@ -98,38 +100,19 @@ public class IndicatorController {
         indicatorService.getAnalyzedIndicators(indicatorList);
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
+        .cacheControl(org.springframework.http.CacheControl.noStore())
         .body(new ApiSuccess(status, "Analyzed indicators found.", analyzedIndicators));
   }
 
-  /**
-   * This API is to provide the list of all available indicators. It also provides the pagination
-   * and filter options.
-   *
-   * @param sortBy possible options: name, createdBy, indicatorType, createdOn.
-   * @param sortDirection possible options: asc, dsc.
-   */
+  /** Retired: community browsing uses anonymous DTOs, never owner records. */
   @GetMapping("/all")
   public ResponseEntity<?> getAllIndicators(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "createdOn") String sortBy,
       @RequestParam(defaultValue = "asc") String sortDirection) {
-    // Set the minimum and maximum size values
-    int minSize = 1;
-    int maxSize = 100;
-
-    // Enforce the minimum and maximum size values
-    if (size < minSize) {
-      size = minSize;
-    } else if (size > maxSize) {
-      size = maxSize;
-    }
-    Page<IndicatorResponse> allIndicators =
-        indicatorService.getAllIndicators(page, size, sortBy, sortDirection);
-    String message =
-        allIndicators.getContent().isEmpty() ? "No indicators found." : "Indicators found.";
-    HttpStatus status = HttpStatus.OK;
-    return ResponseEntity.status(status).body(new ApiSuccess(status, message, allIndicators));
+    throw new com.openlap.analytics_module.exceptions.indicator.ComplexIndicatorException(
+        HttpStatus.GONE, "COMMUNITY_ROUTE_REQUIRED", "Browse indicators through the community pool.");
   }
 
   /**
@@ -138,10 +121,12 @@ public class IndicatorController {
    * @param indicatorId ID of the indicator
    */
   @GetMapping("/{indicatorId}")
-  public ResponseEntity<?> getIndicatorById(@PathVariable String indicatorId,
+  public ResponseEntity<?> getIndicatorById(HttpServletRequest request, @PathVariable String indicatorId,
       @RequestParam(defaultValue = "true") boolean includeCode) {
+    sourceGuard.requireOwned(request, indicatorId);
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
+        .cacheControl(org.springframework.http.CacheControl.noStore())
         .body(
             new ApiSuccess(
                 status, "Indicator found.", indicatorService.getIndicatorById(indicatorId, includeCode)));
@@ -155,8 +140,10 @@ public class IndicatorController {
   @GetMapping("/{indicatorId}/code")
   public ResponseEntity<?> requestInteractiveIndicatorCode(
       @PathVariable String indicatorId, HttpServletRequest request) {
+    sourceGuard.requireOwned(request, indicatorId);
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
+        .cacheControl(org.springframework.http.CacheControl.noStore())
         .body(
             new ApiSuccess(
                 status,
@@ -175,6 +162,7 @@ public class IndicatorController {
     indicatorService.copyMyExistingIndicator(request, indicatorId);
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
+        .cacheControl(org.springframework.http.CacheControl.noStore())
         .body(new ApiSuccess(status, "Indicator duplicated successfully."));
   }
 
@@ -188,43 +176,25 @@ public class IndicatorController {
       HttpServletRequest request, @PathVariable String indicatorId) {
     indicatorService.deleteExistingIndicator(request, indicatorId);
     HttpStatus status = HttpStatus.OK;
-    return ResponseEntity.status(status).body(new ApiSuccess(status, "Indicator deleted."));
+    return ResponseEntity.status(status).cacheControl(org.springframework.http.CacheControl.noStore()).body(new ApiSuccess(status, "Indicator deleted."));
   }
 
-  /**
-   * This API is to validate an indicator whether it can be duplicated. This indicator is found from
-   * the pool of indicators. The user validating this indicator is not the original owner of the
-   * indicator.
-   *
-   * @param indicatorId ID of the indicator
-   */
+  /** Retired: use the viewer-bound POST community preview. */
   @GetMapping("/{indicatorId}/validate-duplicate")
   public ResponseEntity<?> validatePreviewBeforeDuplicationIndicator(
       HttpServletRequest request, @PathVariable String indicatorId) {
-    String indicatorCode =
-        indicatorService.validatePreviewBeforeDuplicationBasicIndicator(request, indicatorId);
-    HttpStatus status = HttpStatus.OK;
-    return ResponseEntity.status(status)
-        .body(
-            new ApiSuccess(
-                status,
-                "Validation was successful and preview could be generated.",
-                indicatorCode));
+    throw new com.openlap.analytics_module.exceptions.indicator.ComplexIndicatorException(
+        HttpStatus.GONE, "COMMUNITY_ROUTE_REQUIRED",
+        "Preview and save through the community pool to use your own data safely.");
   }
 
-  /**
-   * This API is to duplicate an indicator from a pool of indicators. The user duplicating this
-   * indicator is NOT the original owner of the indicator.
-   *
-   * @param indicatorId ID of the indicator
-   */
+  /** Retired: a community copy requires a fresh personal preview receipt. */
   @GetMapping("/{indicatorId}/duplicate")
   public ResponseEntity<?> duplicateBasicIndicator(
       HttpServletRequest request, @PathVariable String indicatorId) {
-    indicatorService.duplicateIndicator(request, indicatorId);
-    HttpStatus status = HttpStatus.OK;
-    return ResponseEntity.status(status)
-        .body(new ApiSuccess(status, "Indicator duplicated successfully."));
+    throw new com.openlap.analytics_module.exceptions.indicator.ComplexIndicatorException(
+        HttpStatus.GONE, "COMMUNITY_ROUTE_REQUIRED",
+        "Preview and save through the community pool to use your own data safely.");
   }
 
 }

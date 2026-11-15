@@ -295,22 +295,25 @@ public class StatementServiceImpl implements StatementService {
             .gte(statementsRequest.getDuration().getFrom())
             .lte(statementsRequest.getDuration().getUntil());
 
-    // User query condition
+    // A learner identifier is meaningful only within its own LRS. Never cross-match
+    // the union of all store IDs with the union of identities from other stores.
     List<Criteria> orUserCriteriaList = new ArrayList<>();
-
-    for (LrsStoresStatementRequest lrsStore : statementsRequest.getLrsStores()) {
-      if (statementsRequest.getUserQueryCondition() == UserQueryCondition.ONLY_ME) {
-        orUserCriteriaList.add(
-            Criteria.where(getIdentifierTypeAttribute(lrsStore.getLrsId()))
-                .in(lrsStore.getUniqueIdentifier()));
-      } else if (statementsRequest.getUserQueryCondition() == UserQueryCondition.EXCLUDE_ME) {
-        orUserCriteriaList.add(
-            Criteria.where(getIdentifierTypeAttribute(lrsStore.getLrsId()))
-                .ne(lrsStore.getUniqueIdentifier()));
-      }
+    if (statementsRequest.getUserQueryCondition() == UserQueryCondition.ONLY_ME
+        || statementsRequest.getUserQueryCondition() == UserQueryCondition.EXCLUDE_ME) {
+      Map<String, Set<String>> identitiesByStore = new LinkedHashMap<>();
+      for (LrsStoresStatementRequest store : statementsRequest.getLrsStores())
+        identitiesByStore.computeIfAbsent(store.getLrsId(), ignored -> new LinkedHashSet<>())
+            .add(store.getUniqueIdentifier());
+      identitiesByStore.forEach((store, identities) -> {
+        Criteria paired = Criteria.where("lrs_id").is(new ObjectId(store));
+        if (statementsRequest.getUserQueryCondition() == UserQueryCondition.ONLY_ME)
+          paired.and(getIdentifierTypeAttribute(store)).in(identities);
+        else paired.and(getIdentifierTypeAttribute(store)).nin(identities);
+        orUserCriteriaList.add(paired);
+      });
     }
-    Criteria orUserCriteria =
-        new Criteria().orOperator(orUserCriteriaList.toArray(new Criteria[0]));
+    Criteria orUserCriteria = orUserCriteriaList.isEmpty() ? new Criteria()
+        : new Criteria().orOperator(orUserCriteriaList.toArray(new Criteria[0]));
 
     // OR criteria to dynamically to build the activities
     List<Criteria> orCriteriaList = new ArrayList<>();

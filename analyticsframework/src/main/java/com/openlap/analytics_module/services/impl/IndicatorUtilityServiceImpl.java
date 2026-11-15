@@ -61,7 +61,7 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
   public Indicator fetchIndicatorMethod(String indicatorId) {
     try {
       Optional<Indicator> foundIndicator = indicatorRepository.findById(indicatorId);
-      if (foundIndicator.isEmpty()) {
+      if (foundIndicator.isEmpty() || foundIndicator.get().getCommunityCopyPending() != null) {
         throw new IndicatorNotFoundException("Indicator with id '" + indicatorId + "' not found");
       }
       return foundIndicator.get();
