@@ -180,7 +180,7 @@ const charts = [
       port("group", "Text", "Series"),
       port("value", "Numeric", "Values"),
     ],
-    chartConfiguration: {},
+    chartConfiguration: { showHideLegendAvailable: true, chartTitleAvailable: true },
   },
   {
     id: "scatter",
@@ -191,7 +191,7 @@ const charts = [
       port("y", "Numeric", "Vertical values"),
       port("group", "Text", "Groups"),
     ],
-    chartConfiguration: {},
+    chartConfiguration: { showHideLegendAvailable: true, chartTitleAvailable: true },
   },
 ];
 const chartMarkup =
@@ -202,7 +202,19 @@ const code = encodeURIComponent(
 const failures = [],
   pageErrors = [],
   saved = [],
-  requests = [];
+  requests = [],
+  previews = [],
+  previewPlans = [];
+const codeForPreview = (token) => encodeURIComponent(
+  `<div id="complex-test-chart"></div><script>document.getElementById("complex-test-chart").innerHTML=${JSON.stringify(chartMarkup.replace('<svg ', '<svg data-preview-token="' + token + '" '))};</script>`,
+);
+const until = async (predicate, message) => {
+  const deadline = Date.now() + 15000;
+  while (!predicate()) {
+    assert.ok(Date.now() < deadline, message);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+};
 let failMerge = true;
 let failMethodContract = true;
 let failUpdate = true;
@@ -361,8 +373,21 @@ let delayedDashboardModule = false;
       if (
         path === "v1/indicators/composite/preview" ||
         path === "v1/indicators/multilevel/preview"
-      )
-        return send(code);
+      ) {
+        const call = { path, body, token: `preview-${previews.length + 1}`, completed: false };
+        const plan = previewPlans.shift() || {};
+        previews.push(call);
+        if (plan.delayMs) await new Promise((resolve) => setTimeout(resolve, plan.delayMs));
+        try {
+          if (plan.fail) {
+            return await route.fulfill({ status: 503, contentType: "application/json",
+              body: JSON.stringify({ message: "Chart service temporarily unavailable. Retry the preview." }) });
+          }
+          return await send(codeForPreview(call.token));
+        } finally {
+          call.completed = true;
+        }
+      }
       if (
         /^v1\/indicators\/(composite|multilevel)\/(create|[^/]+\/update)$/.test(
           path,
@@ -477,8 +502,8 @@ let delayedDashboardModule = false;
       const live = page.getByRole("region", {name: "Live preview", exact: true});
       const customize = live.getByRole("button", {name: "Customize chart", exact: true});
       await assertContained(customize, "Customize action uses the Basic primary button");
-      await assertContained(live.getByRole("button", {name: "Generate chart preview", exact: true}),
-        "Chart-preview action is contained within Live preview");
+      assert.equal(await live.getByRole("button", {name: "Generate chart preview", exact: true}).count(), 0,
+        "Chart previews generate automatically without an extra action");
       await customize.click();
       const panel = page.getByRole("region", {name: "Chart customization", exact: true});
       await panel.getByRole("tab", {name: "ELEMENTS", exact: true}).waitFor();
@@ -506,14 +531,76 @@ let delayedDashboardModule = false;
       assert.ok(Math.abs(saveBox.x + saveBox.width / 2 - sectionBox.x - sectionBox.width / 2) < 3,
         "Save footer is centered within the workflow frame");
     };
+    const resultChart = () => page.getByRole("img", { name: "Synthetic result chart", exact: true });
+    const waitForPreview = async (call) => {
+      await until(() => call.completed, "Preview response completes");
+      await page.waitForFunction((token) => document.querySelector('[data-preview-token]')?.getAttribute('data-preview-token') === token, call.token);
+    };
     const generateChart = async (name) => {
+      const before = previews.length;
       await chartChoice(name).click();
-      await button("Generate chart preview").click();
-      await page
-        .getByRole("img", { name: "Synthetic result chart", exact: true })
-        .waitFor();
+      await until(() => previews.length > before, "Selecting a chart automatically requests its preview");
+      const call = previews.at(-1);
+      await waitForPreview(call);
+      await page.waitForTimeout(350);
+      assert.equal(previews.length, before + 1, "One selection generates one preview, without a render loop");
+    };
+    const checkAutomaticUpdates = async (chartName, indicatorType) => {
+      const mapping = page.getByRole("region", { name: "Configure chart", exact: true });
+      const input = charts.find((chart) => chart.name === chartName).chartInputs[0];
+      const selected = previews.at(-1).body.visualizationMapping.mapping.find((item) => item.inputPort.id === input.id).outputPort;
+      const field = mapping.getByRole("combobox", { name: new RegExp("^" + input.title) });
+      let before = previews.length;
+      await field.click();
+      await page.getByRole("option", { name: "Select a column", exact: true }).click();
+      await page.waitForTimeout(800);
+      assert.equal(previews.length, before, "An incomplete required chart mapping never requests a preview");
+      assert.equal(await button("Save indicator").isDisabled(), true, "Incomplete mappings invalidate Save");
+      assert.equal(await resultChart().count(), 0, "Incomplete mappings remove the previous chart");
+
+      previewPlans.push({ fail: true });
+      await field.click();
+      await page.getByRole("option", { name: selected.title || selected.id, exact: true }).click();
+      await until(() => previews.length === before + 1, "Restoring a required mapping refreshes automatically");
+      await page.getByRole("alert").filter({ hasText: "Chart service temporarily unavailable" }).waitFor();
+      assert.equal(await button("Save indicator").isDisabled(), true, "Failed previews do not enable Save");
+      await page.waitForTimeout(900);
+      assert.equal(previews.length, before + 1, "A failed automatic preview does not loop or retry itself");
+      await button("Retry preview").click();
+      await until(() => previews.length === before + 2, "Explicit retry requests one replacement preview");
+      await waitForPreview(previews.at(-1));
+      assert.equal(await button("Save indicator").isDisabled(), false, "Successful latest preview enables Save");
+
+      const live = page.getByRole("region", { name: "Live preview", exact: true });
+      await live.getByRole("button", { name: "Customize chart", exact: true }).click();
+      const panel = page.getByRole("region", { name: "Chart customization", exact: true });
+      const title = panel.getByRole("textbox", { name: "Chart title", exact: true });
+      before = previews.length;
+      previewPlans.push({ delayMs: 1500 });
+      await title.fill(`${indicatorType} obsolete title`);
+      await until(() => previews.length === before + 1, "Customization changes refresh automatically");
+      const obsolete = previews.at(-1);
+      assert.equal(obsolete.body.visualizationParams.chartTitle, `${indicatorType} obsolete title`);
+      assert.equal(await button("Save indicator").isDisabled(), true, "Save waits for the latest in-flight preview");
+      await title.fill(`${indicatorType} latest title`);
+      await until(() => previews.length === before + 2, "Newer customization starts a replacement request");
+      const latest = previews.at(-1);
+      assert.equal(latest.body.visualizationParams.chartTitle, `${indicatorType} latest title`);
+      await waitForPreview(latest);
+      await until(() => obsolete.completed, "Obsolete delayed response has finished");
+      await page.waitForTimeout(100);
+      assert.equal(await resultChart().getAttribute("data-preview-token"), latest.token,
+        "An obsolete response cannot replace the latest chart");
+      assert.equal(await button("Save indicator").isDisabled(), false, "Only the latest successful chart enables Save");
+      await panel.getByRole("button", { name: "Close customization", exact: true }).click();
+      assert.equal(previews.length, before + 2, "Preview completion and panel closure do not generate more requests");
+      before = previews.length;
+      await chartChoice(chartName).click();
+      await until(() => previews.length === before + 1, "Reselecting the same chart refreshes its invalidated preview");
+      await waitForPreview(previews.at(-1));
     };
     const saveIndicator = async (name, update = false) => {
+      const previewsBeforeSave = previews.length;
       await button(update ? "Review changes" : "Save indicator").click();
       const dialog = page.getByRole("dialog", {
         name: /(?:Save|Update) (?:composite|multilevel analysis) indicator/,
@@ -537,6 +624,8 @@ let delayedDashboardModule = false;
       await page
         .getByRole("heading", { name: "My Indicators", exact: true })
         .waitFor();
+      assert.equal(previews.length, previewsBeforeSave,
+        "Editing only the indicator name and saving do not regenerate the chart");
     };
 
     await page.goto(new URL("/indicator/editor/composite", base).href);
@@ -563,6 +652,7 @@ let delayedDashboardModule = false;
     );
     await select("Student count");
     await button("Continue to combine data").click();
+    assert.equal(previews.length, 0, "No chart preview runs before combined result data is available");
     await checkPreviewAction();
     await dataPreviewAction().click();
     await page
@@ -579,6 +669,7 @@ let delayedDashboardModule = false;
     await button("Continue to visualization").click();
     await chooseLibrary();
     await generateChart("Grouped bar");
+    await checkAutomaticUpdates("Grouped bar", "COMPOSITE");
     await checkVisualizationDesign("Grouped bar");
     await saveIndicator("Composite fixture");
     assert.ok(delayedDashboardModule, "The first save waits for a cold lazy destination");
@@ -601,10 +692,14 @@ let delayedDashboardModule = false;
     await page
       .getByRole("region", { name: "Source indicators", exact: true })
       .waitFor();
+    const beforeEditPreviews = previews.length;
     await page.goto(
       new URL("/indicator/editor/composite/edit/saved-0", base).href,
     );
     await dataPreviewAction().waitFor();
+    await page.waitForTimeout(800);
+    assert.equal(previews.length, beforeEditPreviews,
+      "Saved chart selections do not preview until their source result is recomputed");
     await page
       .getByRole("textbox", {
         name: "Series label for Access count",
@@ -644,10 +739,7 @@ let delayedDashboardModule = false;
       .fill("Access count");
     await dataPreviewAction().click();
     await button("Continue to visualization").click();
-    await button("Generate chart preview").click();
-    await page
-      .getByRole("img", { name: "Synthetic result chart", exact: true })
-      .waitFor();
+    await resultChart().waitFor();
     await saveIndicator("Composite updated", true);
     assert.match(saved[1].path, /saved-0\/update$/);
 
@@ -696,6 +788,7 @@ let delayedDashboardModule = false;
     await button("Continue to visualization").click();
     await chooseLibrary();
     await generateChart("Scatter plot");
+    await checkAutomaticUpdates("Scatter plot", "MULTI_LEVEL");
     await checkVisualizationDesign("Scatter plot");
     await saveIndicator("Multilevel fixture");
     assert.equal(saved[2].indicatorType, "MULTI_LEVEL");
@@ -790,7 +883,7 @@ let delayedDashboardModule = false;
     assert.deepEqual(failures, []);
     assert.ok(requests.includes("v1/indicators/saved-0/result"));
     console.log(
-      "PASS: Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; new/edit tab recovery, failed-save preservation, delayed-navigation save cleanup, confirmed reset, metadata retry, undo, mobile containment; blocked source deletion retains source and safely links its dependents; no browser errors.",
+      "PASS: Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; new/edit tab recovery, failed-save preservation, delayed-navigation save cleanup, confirmed reset, metadata retry, undo, mobile containment; blocked source deletion retains source and safely links its dependents; automatic chart selection/mapping/customization previews, invalid-input gating, explicit error retry and stale-response suppression for both types; no browser errors.",
     );
   } finally {
     await context.close();
