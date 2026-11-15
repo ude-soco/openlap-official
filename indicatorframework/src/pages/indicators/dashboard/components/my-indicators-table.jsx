@@ -6,6 +6,7 @@ import {
   Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination,
   TableRow, TableSortLabel, TextField, Tooltip, Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -116,8 +117,10 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
   };
   const header = (field, label) => <TableSortLabel active={query.sortBy === field} direction={query.sortBy === field ? query.sortDirection : "asc"}
     onClick={() => sort(field)}>{label}</TableSortLabel>;
-  const status = (item) => <Chip size="small" variant={item.kind === "DRAFT" ? "filled" : "outlined"}
-    color={item.kind === "DRAFT" ? "warning" : "success"} label={item.kind === "DRAFT" ? "Draft" : "Saved"} />;
+  const status = (item) => <Chip size="small" variant="outlined" color={item.kind === "DRAFT" ? "warning" : "success"}
+    label={item.kind === "DRAFT" ? "Draft" : "Saved"} sx={item.kind === "DRAFT" ? (theme) => ({
+      color: theme.palette.text.primary, bgcolor: alpha(theme.palette.warning.main, 0.12), fontWeight: 600,
+    }) : undefined} />;
   const filtered = Boolean(search || query.indicatorType);
 
   return <Stack sx={{ gap: 2, minWidth: 0 }}>
@@ -168,8 +171,8 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
               <Typography sx={{ fontWeight: 600 }}>{item.name}</Typography>
               <Box sx={{ display: { sm: "none" } }}>{status(item)}</Box>
               {item.kind === "DRAFT" && item.sourceIndicatorId && <Typography variant="caption" color="text.secondary">Editing saved indicator</Typography>}
-              {item.recoverable === false && <Typography variant="caption" color="warning.main">Older draft needs review</Typography>}
-              {item.completionPending && <Typography variant="caption" color="warning.main">Continue to confirm the previous save</Typography>}
+              {item.recoverable === false && <Typography variant="caption" color="text.secondary">Older draft needs review</Typography>}
+              {item.completionPending && <Typography variant="caption" color="text.secondary">Continue to confirm the previous save</Typography>}
               <Typography variant="caption" sx={{ display: { md: "none" } }}>{TYPES[item.indicatorType] || item.indicatorType}</Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: { sm: "none" } }}>{dateTime(item.updatedAt)}</Typography>
             </Stack></TableCell>
