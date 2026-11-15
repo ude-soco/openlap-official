@@ -55,8 +55,15 @@ function Fixture() {
     activityTypesList: activityTypes,
     selectedActivities: [{ id: "activity-a", selectedActivityType: activityTypes[0], selectedActionList: [], actionList: [] }],
   });
-  const [analysis, setAnalysis] = useState({ analyzedData: { item_name: { data: ["Alpha", "Beta", "Gamma"] } } });
-  const [visualization, setVisualization] = useState({ selectedType: { id: "bar", chartConfiguration }, params: {} });
+  const [analysis, setAnalysis] = useState({ analyzedData: {
+    other_text: { configurationData: { type: "Text" }, data: ["Unmapped category"] },
+    category_output: { configurationData: { type: "Text" }, data: ["Alpha", "Beta", "Gamma"] },
+  } });
+  const [visualization, setVisualization] = useState({
+    selectedType: { id: "bar", chartConfiguration, chartInputs: [{ id: "x_axis", type: "Text" }] },
+    mapping: { mapping: [{ inputPort: { id: "x_axis" }, outputPort: { id: "category_output" } }] },
+    params: {},
+  });
   const [requirements, setRequirements] = useState({ goalType: null, data: [] });
   const [enabled, setEnabled] = useState(true);
   const [addColumn, setAddColumn] = useState(false);
@@ -162,6 +169,8 @@ async function customizationChecks(page) {
   assert.equal(await filters.evaluate((el) => document.activeElement === el), true, "Lab tabs retain keyboard navigation");
   await page.keyboard.press("Enter");
   await panel.getByRole("combobox", { name: "Categories Filter", exact: true }).click();
+  assert.deepEqual(await page.getByRole("option").allTextContents(), ["Alpha", "Beta", "Gamma"],
+    "Basic category choices follow the mapped output column, not an unrelated text column or a historical field name");
   await page.getByRole("option", { name: "Beta", exact: true }).click();
   await page.keyboard.press("Escape");
   await page.waitForFunction(() => window.__muiFixture.snapshot().visualization.params.hiddenCategoriesIndexes?.includes("1"));
