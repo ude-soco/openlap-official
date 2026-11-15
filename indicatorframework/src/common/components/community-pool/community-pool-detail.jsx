@@ -22,7 +22,7 @@ const previewMessages = {
   NO_DATA: "No matching data was found for your user and these filters.",
   PLUGIN_UNAVAILABLE: "An analytics method or chart required by this indicator is unavailable.",
   INCOMPATIBLE: "Your data does not meet all of this indicator’s requirements.",
-  CHOOSE_CONNECTION: "Choose which of your connected identities to use, then run the preview.",
+  CHOOSE_CONNECTION: "Choose which of your connected identities to use. The preview updates automatically.",
 };
 const textOf = (value) => typeof value === "string" || typeof value === "number" ? String(value) : "";
 
@@ -92,7 +92,10 @@ export default function CommunityPoolDetail({ kind, row, onClose, onSaved }) {
     let current = true; const controller = new AbortController();
     setChecking(true); setPreview(null); setChartReady(false); setSaveError("");
     requestCommunityPreview(api, row.id, connections, controller.signal).then((result) => {
-      if (current) setPreview(result);
+      if (!current) return;
+      setPreview(result.status === "READY" && result.version !== version
+        ? { status: "CHANGED", message: "This indicator changed while the preview was running. Reload its details before saving." }
+        : result);
     }).catch((failure) => {
       if (current) setPreview({ status: "ERROR", message: communityError(failure, "Could not preview your data. Please try again.") });
     }).finally(() => { if (current) setChecking(false); });
@@ -189,7 +192,9 @@ export default function CommunityPoolDetail({ kind, row, onClose, onSaved }) {
                 {chartReady && <Alert severity="success" sx={{ mt: 2 }}>Your data is compatible. Ready to save.</Alert>}
               </>}
               {!checking && preview && preview.status !== "READY" && <Alert severity={preview.status === "ERROR" ? "error" : "info"}
-                action={["NO_CONNECTION", "MISSING_LRS", "CHOOSE_CONNECTION"].includes(preview.status) && <Button color="inherit" onClick={() => navigate("/manage-lrs")}>Manage LRS</Button>}>{statusMessage}</Alert>}
+                action={preview.status === "CHANGED" ? <Button color="inherit" onClick={() => setLoadRun((value) => value + 1)}>Reload details</Button>
+                  : (["NO_CONNECTION", "MISSING_LRS"].includes(preview.status) || preview.status === "CHOOSE_CONNECTION" && !preview.choices?.length)
+                    && <Button color="inherit" onClick={() => navigate("/manage-lrs")}>Manage LRS</Button>}>{statusMessage}</Alert>}
               {!checking && Array.isArray(preview?.choices) && preview.choices.length > 0 && <Stack sx={{ gap: 2, mt: 2 }}>
                 {preview.choices.map((choice, index) => <TextField key={choice.lrsId || index} select fullWidth size="small" label={choice.lrsTitle || `Your LRS connection ${index + 1}`}
                   value={connections[choice.lrsId] || ""} onChange={(event) => setConnections((previous) => ({ ...previous, [choice.lrsId]: event.target.value }))}>

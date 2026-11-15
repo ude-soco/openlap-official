@@ -184,6 +184,24 @@ async function screenshot(page, name) {
     assert.equal(await page.getByRole("button", { name: "Save to My Indicators", exact: true }).isDisabled(), true);
     await page.getByRole("button", { name: "Manage LRS", exact: true }).waitFor();
     await closeDetail(page);
+    f.previewPlans.push({ result: { status: "READY", version: "v2", receiptId: "wrong-version", previewCode: "unreviewed chart" } });
+    await page.getByRole("button", { name: "View Clusters of learning activities", exact: true }).click();
+    await page.getByText("This indicator changed while the preview was running. Reload its details before saving.", { exact: true }).waitFor();
+    assert.equal(await page.getByRole("button", { name: "Save to My Indicators", exact: true }).isDisabled(), true);
+    await page.getByRole("button", { name: "Reload details", exact: true }).click();
+    await page.getByText("Your data is compatible. Ready to save.", { exact: true }).waitFor();
+    await closeDetail(page);
+    f.previewPlans.push({ result: { status: "CHOOSE_CONNECTION", message: "Choose your connected identity.", choices: [
+      { lrsId: "viewer-store", lrsTitle: "Your connected data source 1", options: [{ id: "identity-one", label: "My first identity" }, { id: "identity-two", label: "My second identity" }] },
+    ] } });
+    await page.getByRole("button", { name: "View Clusters of learning activities", exact: true }).click();
+    await page.getByText("Choose your connected identity.", { exact: true }).waitFor();
+    assert.equal(await page.getByRole("button", { name: "Save to My Indicators", exact: true }).isDisabled(), true);
+    await choose(page, "Your connected data source 1", "My second identity");
+    await page.getByText("Your data is compatible. Ready to save.", { exact: true }).waitFor();
+    assert.deepEqual(f.calls.filter((call) => call.endpoint === "v1/community/indicators/multi/preview").at(-1).body.connections,
+      { "viewer-store": "identity-two" }, "Changing a registered identity automatically reruns the personal preview");
+    await closeDetail(page);
     const stale = { hold: deferred() }; f.previewPlans.push(stale);
     await page.getByRole("button", { name: "View Material views", exact: true }).click();
     await until(() => stale.started, "Held preview started");
