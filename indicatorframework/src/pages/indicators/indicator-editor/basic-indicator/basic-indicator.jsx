@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 import { Alert, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import Dataset from "./components/dataset/dataset";
 import Filters from "./components/filters/filters";
@@ -30,7 +31,13 @@ const referencesOf = (value) => JSON.stringify({ lrs: value.dataset.selectedLRSL
 
 export default function BasicIndicator({ initialDraft = null, initialState = null, onDraftCreated }) {
   const { api, user, SESSION_INDICATOR } = useContext(AuthContext);
-  const first = useRef(initialState?.state || restoreBasicState(initialDraft?.configuration));
+  const navigate = useNavigate();
+  const first = useRef(null);
+  if (!first.current) {
+    const restored = initialState?.state || restoreBasicState(initialDraft?.configuration);
+    first.current = { ...restored, indicator: { ...restored.indicator,
+      indicatorName: initialDraft?.name ?? restored.indicator.indicatorName } };
+  }
   const [indicator, setIndicator] = useState(first.current.indicator);
   const [dataset, setDataset] = useState(first.current.dataset);
   const [filters, setFilters] = useState(first.current.filters);
@@ -73,7 +80,8 @@ export default function BasicIndicator({ initialDraft = null, initialState = nul
   }, [api, applyState]);
   const draft = useIndicatorDraft({ api, owner: user?.sub, indicatorType: "BASIC", configuration,
     name: indicator.indicatorName, initialDraft, meaningful: basicDraftMeaningful(configuration),
-    onCreated: onDraftCreated, onApply: applyDraft });
+    onCreated: onDraftCreated, onApply: applyDraft,
+    onCompleted: () => { draftNavigation.release(); navigate("/indicator"); } });
   const draftNavigation = useDraftNavigation(draft);
   useEffect(() => {
     if (!legacyPending.current || draft.status !== "saved" || !draft.draftId) return;
@@ -148,16 +156,16 @@ export default function BasicIndicator({ initialDraft = null, initialState = nul
           setVisualization,
           setIndicator,
           handleResetIfDatasetEmpty,
-          draft, draftNavigation, referencesValid,
+          draft, draftNavigation, referencesValid: referencesValid && !draft.finalizing,
         }}
       >
         <Stack sx={{ gap: 3 }}>
           <PageHeader
             title="Basic Indicator"
             breadcrumbs={[
-              { label: "Home", to: "/" },
-              { label: "My Indicators", to: "/indicator" },
-              { label: "Create an indicator", to: "/indicator/editor" },
+              { label: "Home", to: "/", onClick: (event) => { event.preventDefault(); draftNavigation.requestLeave("/"); } },
+              { label: "My Indicators", to: "/indicator", onClick: (event) => { event.preventDefault(); draftNavigation.requestLeave("/indicator"); } },
+              { label: "Create an indicator", to: "/indicator/editor", onClick: (event) => { event.preventDefault(); draftNavigation.requestLeave("/indicator/editor"); } },
             ]}
           />
           {!hydrating && <DraftHeader name={indicator.indicatorName} onNameChange={(name) => setIndicator((previous) => ({ ...previous, indicatorName: name }))}

@@ -57,8 +57,11 @@ export default function IndicatorDraftsTable({ onStats }) {
       else {
         const current = await transport.get(action.item.id);
         if (current.revision !== action.item.revision) throw new Error("This draft changed since the list was loaded. Close this dialog and refresh the list before renaming it.");
+        const configuration = current.indicatorType === "BASIC"
+          ? { ...current.configuration, indicator: { ...current.configuration.indicator, indicatorName: name.trim() } }
+          : { ...current.configuration, name: name.trim() };
         await transport.update(current.id, { revision: current.revision, clientRequestId: crypto.randomUUID(),
-          name: name.trim(), configuration: current.configuration, schemaVersion: current.schemaVersion });
+          name: name.trim(), configuration, schemaVersion: current.schemaVersion });
       }
       setAction(null); setRefresh((value) => value + 1);
     } catch (failure) { setActionError(draftErrorMessage(failure)); }

@@ -36,7 +36,6 @@ import CustomTooltip from "../../../../../../common/components/custom-tooltip/cu
 import PaletteIcon from "@mui/icons-material/Palette";
 import { getAnalyzedRowCount } from "../../utils/analyzed-data.js";
 import { getCustomizationErrors, getVisualizationDescriptor } from "./utils/visualization-descriptor";
-import { useNavigate } from "react-router-dom";
 import { buildBasicDraftIndicatorRequest } from "../../utils/basic-draft-request.js";
 
 export default function Visualization() {
@@ -50,7 +49,7 @@ export default function Visualization() {
     lockedStep,
     setVisualization,
     setIndicator,
-    draft, draftNavigation, referencesValid,
+    draft, referencesValid,
   } = useContext(BasicContext);
   const [state, setState] = useState({
     nameIndicator: {
@@ -67,12 +66,11 @@ export default function Visualization() {
   const customizationsValid = Object.keys(getCustomizationErrors(
     getVisualizationDescriptor(visualization.selectedType), visualization.params,
   )).length === 0;
-  const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     if (
-      referencesValid === false || Boolean(draft?.conflict || draft?.recovery) ||
+      referencesValid === false || Boolean(draft?.finalizing || draft?.conflict || draft?.recovery) ||
       visualization.inputs.length === 0 ||
       !allInputsHaveSelected(visualization.inputs) ||
       !customizationsValid ||
@@ -162,8 +160,6 @@ export default function Visualization() {
         ...p,
         nameIndicator: { ...p.nameIndicator, loading: false },
       }));
-      draftNavigation.release();
-      navigate("/indicator");
     } catch (error) {
       setState((p) => ({
         ...p,
@@ -345,10 +341,10 @@ export default function Visualization() {
           </Stack>
         </Collapse>
         <SaveIndicatorDialog
-          open={!!state.openDialog}
+          open={Boolean(state.openDialog && !(draft?.finalizing && !state.nameIndicator.loading))}
           onClose={handleToggleNameIndicator}
           onSave={handleSaveIndicator}
-          saving={state.nameIndicator.loading}
+          saving={Boolean(state.nameIndicator.loading || draft?.finalizing)}
           isEdit={Boolean(draft?.sourceIndicatorId)}
           indicatorName={indicator.indicatorName}
           onChangeName={handleOnChangeNameIndicator}

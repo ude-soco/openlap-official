@@ -3,7 +3,7 @@ import { Alert, Button, CircularProgress, Stack } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 import { createIndicatorDraftApi } from "./drafts/indicator-draft-api.js";
-import { refreshBasicReferences } from "./basic-indicator/utils/basic-draft-model.js";
+import { refreshBasicReferences, restoreBasicState } from "./basic-indicator/utils/basic-draft-model.js";
 import { editorRoute } from "./utils/indicator-draft-routes.js";
 
 const BasicIndicator = lazy(() => import("./basic-indicator/basic-indicator.jsx"));
@@ -56,7 +56,8 @@ export default function IndicatorDraftWorkspace() {
         if (draft.status !== "DRAFT" || draft.recoverable === false) throw new Error(
           draft.recoverable === false ? "This older draft cannot be safely restored. You can discard it from My Indicators." : "This draft is no longer available.");
         const refreshed = draft.indicatorType === "BASIC"
-          ? await refreshBasicReferences(api, draft.configuration) : null;
+          ? draft.completionPending ? { state: restoreBasicState(draft.configuration), warnings: [] }
+            : await refreshBasicReferences(api, draft.configuration) : null;
         if (run !== generation.current) return;
         const draftIdentity = `draft:${draft.id}`;
         setWorkspace({ key: `${user?.sub}:${draft.id}:${retry}`, identities: [identity, draftIdentity],

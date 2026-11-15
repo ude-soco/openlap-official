@@ -69,3 +69,14 @@ test("unavailable references preserve the saved choice and produce an actionable
   assert.equal(result.state.dataset.selectedLRSList[0].lrsId, "gone");
   assert.match(result.warnings.join(" "), /no longer available/);
 });
+
+test("partial versioned Basic documents retain completed choices and receive safe missing-section defaults", () => {
+  const restored = restoreBasicState({ schemaVersion: 1, type: "BASIC", analysis: {
+    selectedAnalyticsMethod: { method: { id: "selected-method", name: "Counting" }, mapping: { mapping: [] } },
+    params: [{ id: "limit", value: 0 }],
+  } });
+  assert.equal(restored.analysis.selectedAnalyticsMethod.method.id, "selected-method");
+  assert.equal(restored.analysis.params[0].value, 0);
+  assert.equal(restored.filters.selectedUserFilter, "ONLY_ME");
+  assert.deepEqual(restored.dataset.selectedLRSList, []);
+});

@@ -37,7 +37,7 @@ export function serializeBasicDraft(state) {
     dataset: { selectedLRSList: list(value.dataset?.selectedLRSList).map((entry) =>
       pick(entry, ["id", "lrsId", "uniqueIdentifier", "lrsTitle"])) },
     filters: {
-      selectedUserFilter: text(value.filters?.selectedUserFilter),
+      selectedUserFilter: text(value.filters?.selectedUserFilter) || "ONLY_ME",
       selectedTime: pick(value.filters?.selectedTime, ["from", "until"]),
       selectedActivities: list(value.filters?.selectedActivities).map((entry) => ({
         id: text(entry.id), selectedActivityType: reference(entry.selectedActivityType),
@@ -64,8 +64,9 @@ export function readBasicDraft(raw) {
     if (typeof raw === "string" && raw.length > 1048576) return null;
     const value = typeof raw === "string" ? JSON.parse(raw) : raw;
     if (!value || (value.schemaVersion != null && value.schemaVersion !== 1) ||
-        (value.type || value.indicator?.type) !== "BASIC" || !value.indicator || !value.dataset || !value.filters ||
-        !value.analysis || !value.visualization) return null;
+        (value.type || value.indicator?.type) !== "BASIC") return null;
+    const canonical = value.schemaVersion === 1 && value.type === "BASIC";
+    if (!canonical && (!value.indicator || !value.dataset || !value.filters || !value.analysis || !value.visualization)) return null;
     return serializeBasicDraft(value);
   } catch { return null; }
 }
