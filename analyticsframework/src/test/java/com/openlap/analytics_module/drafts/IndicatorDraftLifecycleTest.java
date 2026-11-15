@@ -54,6 +54,16 @@ public class IndicatorDraftLifecycleTest {
     assertThat(retried.revision()).isEqualTo(1); assertThat(store.rows).hasSize(1);
     verifyNoInteractions(definitions,targets);
   }
+  @Test public void listingReturnsOnlyMetadataAndDetailsRetainTheFullPrivateConfiguration() {
+    var draft=create();
+    var page=service.list(request,0,10,"",null,"updatedAt","desc");
+    assertThat(page.getTotalElements()).isEqualTo(1);
+    var summary=page.getContent().get(0);
+    assertThat(summary.id()).isEqualTo(draft.id()); assertThat(summary.name()).isEqualTo(draft.name());
+    assertThat(summary.indicatorType()).isEqualTo(IndicatorType.BASIC); assertThat(summary.revision()).isZero();
+    assertThat(summary.configuration()).isNull();
+    assertThat(service.get(request,draft.id()).configuration()).isEqualTo(draft.configuration());
+  }
   @Test public void staleUpdatesAndDiscardNeverOverwriteNewerWork() {
     var draft=create(); service.update(request,draft.id(),change(0,"Newer",null));
     assertThatThrownBy(()->service.update(request,draft.id(),change(0,"Old",null))).isInstanceOf(ConflictException.class);

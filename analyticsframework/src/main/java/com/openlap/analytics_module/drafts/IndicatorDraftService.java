@@ -88,7 +88,7 @@ public class IndicatorDraftService {
       catch(IllegalArgumentException error) { throw new ValidationException("Invalid indicator type."); }
     String owner=owner(request);
     return store.list(owner,page,size,search,indicatorType==null||indicatorType.isBlank()?null:indicatorType,sortBy,"desc".equalsIgnoreCase(sortDirection))
-        .map(doc->response(migrate(owner,doc)));
+        .map(doc->response(migrate(owner,doc),false));
   }
   public IndicatorDraftResponse update(HttpServletRequest request,String id,IndicatorDraftRequests.Update body) {
     String owner=owner(request); Document current=required(owner,id);
@@ -193,10 +193,11 @@ public class IndicatorDraftService {
     receipt.put("recoverable",false); if(savedId!=null) receipt.put("savedIndicatorId",savedId);
     return receipt;
   }
-  private IndicatorDraftResponse response(Document doc) {
+  private IndicatorDraftResponse response(Document doc) { return response(doc,true); }
+  private IndicatorDraftResponse response(Document doc,boolean includeConfiguration) {
     String status=doc.getString("status");
     return new IndicatorDraftResponse(doc.get("_id").toString(),type(doc),doc.getString("name"),
-        doc.containsKey("configuration")?configuration(doc):null,1,revision(doc),doc.getString("sourceIndicatorId"),
+        includeConfiguration && doc.containsKey("configuration")?configuration(doc):null,1,revision(doc),doc.getString("sourceIndicatorId"),
         doc.getString("sourceRevision"),instant(doc.get("createdAt")),instant(doc.get("updatedAt")),
         "COMPLETING".equals(status)?"DRAFT":status,doc.getString("savedIndicatorId"),
         Boolean.TRUE.equals(doc.getBoolean("recoverable")),"COMPLETING".equals(status));
