@@ -49,6 +49,23 @@ const entry = "/src/pages/indicators/indicator-editor/drafts/fixtures/draft-foun
     await page.waitForURL("**/__draft_fixture/leave");
     assert.equal(await page.evaluate(() => Object.values(window.__draftFixture.drafts)[0].configuration.sources.length), 2);
 
+    await page.goto(`${base}/__draft_fixture`);
+    await page.getByRole("button", { name: "Add source", exact: true }).click();
+    await page.getByRole("status").filter({ hasText: "Draft saved" }).waitFor();
+    await page.evaluate(() => { window.__draftFixture.failWrites = true; });
+    await page.getByRole("button", { name: "Add source", exact: true }).click();
+    await page.getByRole("alert").filter({ hasText: "Fixture offline" }).waitFor();
+    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await leave.waitFor();
+    await leave.getByRole("button", { name: "Save draft and leave", exact: true }).click();
+    await leave.getByRole("alert").filter({ hasText: "Fixture offline" }).waitFor();
+    assert.equal(await page.evaluate(() => window.__draftFixture.logoutCalls), 0, "a failed draft flush must preserve authentication");
+    await page.evaluate(() => { window.__draftFixture.failWrites = false; });
+    await leave.getByRole("button", { name: "Save draft and leave", exact: true }).click();
+    await page.waitForURL("**/__draft_fixture/signed-out");
+    assert.equal(await page.evaluate(() => window.__draftFixture.logoutCalls), 1);
+    assert.equal(await page.evaluate(() => Object.values(window.__draftFixture.drafts)[0].configuration.sources.length), 2, "logout action runs only after latest payload acknowledgment");
+
     await page.goto(`${base}/__draft_fixture?case=conflict`);
     await page.getByRole("button", { name: "Add source", exact: true }).click();
     await page.getByRole("button", { name: "Save as separate draft", exact: true }).waitFor();
@@ -59,7 +76,7 @@ const entry = "/src/pages/indicators/indicator-editor/drafts/fixtures/draft-foun
     await page.setViewportSize({ width: 390, height: 844 });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "draft header stays inside mobile viewport");
     assert.deepEqual(errors, []);
-    console.log("PASS: StrictMode draft creation, server acknowledgment, confirmed discard, failed-leave preservation, latest flush, separate-draft conflict recovery and mobile header.");
+    console.log("PASS: StrictMode draft creation, server acknowledgment, confirmed discard, failed-leave/logout preservation, latest flush before logout action, separate-draft conflict recovery and mobile header.");
   } finally {
     await browser?.close();
     await server?.close();

@@ -27,7 +27,7 @@ export default function useDraftNavigation(draft, { exitTo = "/indicator" } = {}
       setTarget(next);
       return true;
     };
-    navigation.registerGuard(guard);
+    navigation.registerGuard(guard, { actions: true });
     return () => navigation.unregisterGuard(guard);
   }, [navigation, needsReview]);
   useEffect(() => {
@@ -48,8 +48,10 @@ export default function useDraftNavigation(draft, { exitTo = "/indicator" } = {}
     try {
       await action();
       released.current = true;
-      navigate(destination);
+      if (typeof destination?.action === "function") await destination.action();
+      else navigate(destination);
     } catch (failure) {
+      released.current = false;
       setError(failure?.message || "Couldn’t finish this action. Stay here and retry.");
       throw failure;
     } finally { setBusy(false); }
@@ -61,6 +63,7 @@ export default function useDraftNavigation(draft, { exitTo = "/indicator" } = {}
     release: () => { released.current = true; },
     requestLeave: (destination) => {
       if (needsReview()) { setError(""); setDiscardOnly(false); setTarget(destination); }
+      else if (typeof destination?.action === "function") destination.action();
       else navigate(destination);
     },
     requestDiscard: (destination = exitTo) => { setError(""); setDiscardOnly(true); setTarget(destination); },

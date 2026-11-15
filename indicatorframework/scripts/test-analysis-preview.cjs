@@ -80,17 +80,23 @@ async function until(predicate, description) {
 }
 
 async function fixture(browser, saved, options = {}) {
+  const { serializeBasicDraft } = await import("../src/pages/indicators/indicator-editor/basic-indicator/utils/basic-draft-model.js");
+  saved = structuredClone(saved);
+  saved.indicator.indicatorName = "Fixture working draft";
+  const draft = { id: "fixture-basic-draft", indicatorType: "BASIC", schemaVersion: 1,
+    name: saved.indicator.indicatorName, configuration: serializeBasicDraft(saved), revision: 0,
+    status: "DRAFT", recoverable: true, createdAt: "2026-11-15T10:00:00Z", updatedAt: "2026-11-15T10:00:00Z" };
   const context = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
   // Development HMR must not replace modules during a synthetic scenario.
   await context.routeWebSocket(/.*/, (socket) => socket.close());
-  const failures = [], analysisRequests = [], chartRequests = [];
+  const failures = [], analysisRequests = [], chartRequests = [], draftRequests = [];
   const methodCatalogRequests = [], methodContractRequests = [];
+  let methodCatalogCount = 0;
   const token = "e30." + Buffer.from(JSON.stringify({ sub: "fixture@localhost", roles: ["ROLE_USER"],
     exp: Math.floor(Date.now() / 1000) + 3600 })).toString("base64url") + ".fixture";
-  await context.addInitScript(({ token, saved }) => {
+  await context.addInitScript(({ token }) => {
     localStorage.setItem("authTokens", JSON.stringify({ access_token: token, refresh_token: token }));
-    sessionStorage.setItem("session_indicator", JSON.stringify(saved));
-  }, { token, saved });
+  }, { token });
   const chartRendererRoute = chartRendererFixture(base, { runtimeDelayMs: options.runtimeDelayMs || 0 });
   await context.route("**/*", async (route) => {
     const request = route.request(), url = new URL(request.url());
@@ -105,7 +111,20 @@ async function fixture(browser, saved, options = {}) {
     if (!url.pathname.startsWith("/api/")) return route.continue();
     const path = url.pathname.slice(5);
     const send = (data, status = 200) => route.fulfill({ status, contentType: "application/json", body: JSON.stringify(data) });
-    if ((path === "v1/analytics/methods" && options.holdMethods) ||
+    if (path === `v1/indicators/drafts/${draft.id}`) {
+      if (request.method() === "GET") return send({ data: draft });
+      if (request.method() === "PUT") {
+        const body = request.postDataJSON();
+        draftRequests.push(body);
+        if (body.revision !== draft.revision) return send({ message: "Fixture draft revision changed" }, 409);
+        Object.assign(draft, body, { revision: draft.revision + 1, updatedAt: new Date().toISOString() });
+        return send({ data: draft });
+      }
+    }
+    if (path === "v1/analytics/methods") methodCatalogCount += 1;
+    // Resume first refreshes referenced metadata authoritatively. Hold only the
+    // mounted method picker's subsequent catalog request for the existing race.
+    if ((path === "v1/analytics/methods" && options.holdMethods && methodCatalogCount > 1) ||
         (path.startsWith("v1/analytics/methods/input-params/") && options.holdContracts)) {
       const queue = path === "v1/analytics/methods" ? methodCatalogRequests : methodContractRequests;
       return new Promise((resolve) => queue.push({ path, completed: false,
@@ -123,9 +142,15 @@ async function fixture(browser, saved, options = {}) {
     const responses = {
       "v1/users/my/lrs": [source], "v1/users/my": { name: "Fixture user", email: "fixture@localhost", roles: ["ROLE_USER"] },
       "v1/analytics/methods": [method, alternateMethod],
-      "v1/analytics/methods/input-params/fixture-method": { inputs: [input], params: [] },
+      "v1/analytics/methods/input-params/fixture-method": {
+        inputs: saved.analysis.inputs.map(({ selectedInput: _selectedInput, ...port }) => port),
+        params: saved.analysis.params,
+      },
       "v1/visualizations/libraries": [library],
       "v1/visualizations/libraries/fixture-library/types": [chart],
+      "v1/statements/activity-types": [activityType],
+      "v1/statements/actions": [action],
+      "v1/statements/activities": [activity],
     };
     if (!(path in responses)) failures.push("Unexpected API request: " + path);
     await send({ data: responses[path] ?? {}, message: "Synthetic fixture" });
@@ -135,10 +160,10 @@ async function fixture(browser, saved, options = {}) {
     failures.push(error.message);
     console.error("Browser error:", error.stack);
   });
-  await page.goto(new URL("/indicator/editor/basic", base).href);
+  await page.goto(new URL(`/indicator/editor/drafts/${draft.id}`, base).href);
   const analysis = page.getByRole("region", { name: "Analysis step", exact: true });
   await analysis.getByRole("button", { name: "Next", exact: true }).waitFor();
-  return { context, page, analysis, analysisRequests, chartRequests, methodCatalogRequests, methodContractRequests, failures };
+  return { context, page, analysis, analysisRequests, chartRequests, draftRequests, draft, methodCatalogRequests, methodContractRequests, failures };
 }
 
 async function recovery(browser) {

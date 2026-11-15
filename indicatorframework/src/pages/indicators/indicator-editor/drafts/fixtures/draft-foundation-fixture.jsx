@@ -24,7 +24,7 @@ function Fixture() {
   const [configuration, setConfiguration] = useState(initialDraft?.configuration || { sources: [] });
   const [name, setName] = useState(initialDraft?.name || defaultDraftName("COMPOSITE"));
   const api = useMemo(() => {
-    const control = { calls: [], failWrites: false, conflict: Boolean(initialDraft), drafts: initialDraft ? { [initialDraft.id]: clone(initialDraft) } : {} };
+    const control = { calls: [], logoutCalls: 0, failWrites: false, conflict: Boolean(initialDraft), drafts: initialDraft ? { [initialDraft.id]: clone(initialDraft) } : {} };
     const response = (data) => ({ data: { data: clone(data) } });
     const mutation = (method, path, body) => {
       control.calls.push({ method, path, body: clone(body) });
@@ -59,6 +59,10 @@ function Fixture() {
       onSaveAndExit={() => navigation.saveAndExit()} onDiscard={() => navigation.requestDiscard()} />
     <Button onClick={() => setConfiguration((previous) => ({ sources: [...previous.sources, { id: `source-${previous.sources.length}` }] }))}>Add source</Button>
     <Button onClick={() => guardedNavigation.guardedNavigate("/__draft_fixture/leave")}>Go to indicators</Button>
+    <Button onClick={() => guardedNavigation.guardedAction(() => {
+      api.control.logoutCalls += 1;
+      navigate("/__draft_fixture/signed-out");
+    })}>Sign out</Button>
     <Typography role="note">{configuration.sources.length} sources</Typography>
     <Typography data-testid="location">{location.pathname}</Typography>
     {navigation.dialog}
