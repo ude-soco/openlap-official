@@ -27,6 +27,28 @@ public class CommunitySanitizerTest {
     assertThat(CommunitySanitizer.text("Ed's progress", shortName, "fallback")).isEqualTo("fallback");
     assertThat(CommunitySanitizer.text("Learning data", null, "fallback")).isEqualTo("fallback");
   }
+  @Test public void contactAndFixedWidthIdentifierDetectionPreservesPrivacy() {
+    for (String raw : List.of("user+group@example.test", "Contact @ hidden identity", "HTTP://example.test",
+        "HTTPS://example.test", "WWW.example.test", "MAILTO:learner", "Markup > text",
+        "Account fedcba9876543210fedcba98", "Reference 12345678-abcd-0123-4567-89abcdef0123"))
+      assertThat(CommunitySanitizer.text(raw, creator(), "fallback")).as(raw).isEqualTo("fallback");
+    assertThat(CommunitySanitizer.text("Weekly  material\naccesses", creator(), "fallback"))
+        .isEqualTo("Weekly material accesses");
+  }
+
+  @Test(timeout = 5000) public void adversarialNonEmailRunsRemainBoundedAndOversizedInputIsRejectedEarly() {
+    String plus = "+".repeat(500);
+    String dotted = "a.".repeat(250);
+    for (int count = 0; count < 1000; count++) {
+      assertThat(CommunitySanitizer.text(plus, creator(), "fallback")).isEqualTo(plus);
+      assertThat(CommunitySanitizer.text(dotted, creator(), "fallback")).isEqualTo(dotted);
+    }
+    assertThat(CommunitySanitizer.text("+".repeat(1_000_000), creator(), "fallback")).isEqualTo("fallback");
+    assertThat(CommunitySanitizer.text(" ".repeat(1_000_000) + "Weekly accesses", creator(), "fallback"))
+        .isEqualTo("fallback");
+    assertThat(CommunitySanitizer.text("+".repeat(498) + "@x", creator(), "fallback")).isEqualTo("fallback");
+  }
+
   @Test public void chartStyleKeepsPresentationButDropsIdentifyingStringsCallbacksAndData() {
     Object sanitized = CommunitySanitizer.safeStyle(JsonParser.parseString("""
         {"title":{"text":"Alice"},"annotations":[{"label":"private-learner-id"}],

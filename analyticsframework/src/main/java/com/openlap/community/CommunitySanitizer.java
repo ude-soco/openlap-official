@@ -9,15 +9,20 @@ import java.util.regex.Pattern;
 /** Community responses are projections, never serialized owner entities or saved chart payloads. */
 public final class CommunitySanitizer {
   private static final Gson JSON = new Gson();
-  private static final Pattern CONTACT = Pattern.compile("(?i)([\\w.+-]+@[\\w.-]+|https?://|www\\.|mailto:|\\b[0-9a-f]{24}\\b|\\b[0-9a-f]{8}-[0-9a-f-]{27,}\\b|[<>])");
+  private static final int MAX_TEXT_LENGTH = 500;
+  // Each identifier alternative has fixed width; contact detection uses literal scans below.
+  private static final Pattern IDENTIFIER = Pattern.compile("(?i)(\\b[0-9a-f]{24}\\b|\\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\b)");
   private static final Set<String> ENUMS = Set.of("left", "right", "center", "top", "bottom", "horizontal", "vertical", "linear", "smooth", "stepline", "solid", "gradient", "light", "dark", "asc", "desc", "ascending", "descending", "none", "normal", "bold", "dashed", "dotted", "auto", "true", "false");
   private CommunitySanitizer() {}
 
   public static String text(String raw, User creator, String fallback) {
-    if (raw == null || raw.isBlank()) return fallback;
+    // Reject oversized input before normalization, case folding or any regular expression.
+    if (raw == null || raw.length() > MAX_TEXT_LENGTH || creator == null || raw.isBlank()) return fallback;
     String value = raw.strip().replaceAll("[\\p{Cntrl}]", " ").replaceAll("\\s+", " ");
-    if (value.length() > 500 || CONTACT.matcher(value).find() || creator == null) return fallback;
     String lower = value.toLowerCase(Locale.ROOT);
+    if (value.indexOf('@') >= 0 || value.indexOf('<') >= 0 || value.indexOf('>') >= 0
+        || lower.contains("http://") || lower.contains("https://") || lower.contains("www.")
+        || lower.contains("mailto:") || IDENTIFIER.matcher(value).find()) return fallback;
     List<String> identifiers = new ArrayList<>();
     identifiers.add(creator.getId()); identifiers.add(creator.getEmail());
     if (creator.getName() != null) {
