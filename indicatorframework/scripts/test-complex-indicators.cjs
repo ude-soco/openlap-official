@@ -227,6 +227,7 @@ const failures = [],
   requests = [],
   previews = [],
   previewPlans = [];
+const mergeRequests = [], mergePlans = [], analysisRequests = [], analysisPlans = [];
 const codeForPreview = (token) => encodeURIComponent(
   `<div id="complex-test-chart"></div><script>document.getElementById("complex-test-chart").innerHTML=${JSON.stringify(chartMarkup.replace('<svg ', '<svg data-preview-token="' + token + '" '))};</script>`,
 );
@@ -410,35 +411,43 @@ let chartCatalogFailures = 0;
         }
         return send(charts);
       }
-      if (path === "v1/indicators/composite/merge") {
-        assert.deepEqual(
-          body.indicators.map((item) => item.indicatorId),
-          ["access", "students"],
-        );
-        if (failMerge) {
-          failMerge = false;
-          return route.fulfill({
-            status: 503,
-            contentType: "application/json",
-            body: JSON.stringify({
-              message:
-                "Source data temporarily unavailable. Retry without changing your selection.",
-            }),
-          });
-        }
-        return send(wide);
+      if (/^v1\/indicators\/(composite|multilevel)\/merge$/.test(path)) {
+        const multi = path.includes("/multilevel/");
+        if (!multi) assert.deepEqual(body.indicators.map((item) => item.indicatorId), ["access", "students"]);
+        const call = { path, body, completed: false };
+        mergeRequests.push(call);
+        const plan = mergePlans.shift() || {};
+        if (plan.delayMs) await new Promise((resolve) => setTimeout(resolve, plan.delayMs));
+        try {
+          if ((!multi && failMerge) || plan.fail) {
+            failMerge = false;
+            return await route.fulfill({ status: 503, contentType: "application/json",
+              body: JSON.stringify({ message: "Source data temporarily unavailable. Retry without changing your selection." }) });
+          }
+          const data = structuredClone(multi ? intersection : wide);
+          if (plan.value) data.columns.source_access__count.data[0] = plan.value;
+          return await send(multi ? { mergedData: data } : data);
+        } finally { call.completed = true; }
       }
-      if (path === "v1/indicators/multilevel/merge")
-        return send({ mergedData: intersection });
       if (path === "v1/indicators/multilevel/analyze") {
+        const call = { path, body, completed: false };
+        analysisRequests.push(call);
+        const plan = analysisPlans.shift() || {};
+        if (plan.delayMs) await new Promise((resolve) => setTimeout(resolve, plan.delayMs));
         assert.equal(body.analyticsTechniqueId, "kmeans");
         assert.deepEqual(
-          body.analyticsTechniqueMapping.mapping.map(
-            (item) => item.outputPort.id,
-          ),
-          ["source_access__count", "source_annotations__count"],
+          Object.fromEntries(body.analyticsTechniqueMapping.mapping.map(
+            (item) => [item.inputPort.id, item.outputPort.id],
+          )),
+          { attribute_1: "source_access__count", attribute_2: "source_annotations__count" },
         );
-        return send(analysis);
+        try {
+          if (plan.fail) return await route.fulfill({ status: 503, contentType: "application/json",
+            body: JSON.stringify({ message: "Analysis service temporarily unavailable. Retry your analysis." }) });
+          const data = structuredClone(analysis);
+          if (plan.value) data.columns.attribute_1.data[0] = plan.value;
+          return await send(data);
+        } finally { call.completed = true; }
       }
       if (
         path === "v1/indicators/composite/preview" ||
@@ -559,6 +568,106 @@ let chartCatalogFailures = 0;
       const [action, card] = await Promise.all([control.boundingBox(), previewResults().boundingBox()]);
       assert.ok(Math.abs(action.x + action.width / 2 - card.x - card.width / 2) < 3,
         "Data-preview actions are centered in their results card");
+    };
+    const checkCombineLayout = async (secondName) => {
+      const first = page.getByRole("region", { name: "Access count", exact: true });
+      const second = page.getByRole("region", { name: secondName, exact: true });
+      let [a, b] = await Promise.all([first.boundingBox(), second.boundingBox()]);
+      assert.ok(Math.abs(a.y - b.y) < 2 && b.x > a.x + a.width,
+        "Combine source panels use two comfortable desktop columns");
+      await page.setViewportSize({ width: 390, height: 844 });
+      [a, b] = await Promise.all([first.boundingBox(), second.boundingBox()]);
+      assert.ok(Math.abs(a.x - b.x) < 2 && b.y >= a.y + a.height,
+        "Combine source panels stack into one column on narrow screens");
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2),
+        "Combine cards and their fields stay inside the mobile viewport");
+      await page.setViewportSize({ width: 1280, height: 1000 });
+    };
+    const checkAutomaticCombine = async (type) => {
+      const results = previewResults();
+      const next = button(type === "COMPOSITE" ? "Continue to visualization" : "Continue to analysis");
+      const measures = page.getByRole("combobox", { name: "Measures from Access count", exact: true });
+      const label = page.getByRole("textbox", { name: "Series label for Access count", exact: true });
+      let before = mergeRequests.length;
+      await measures.click();
+      await page.getByRole("option", { name: "Count", exact: true }).click();
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(900);
+      assert.equal(mergeRequests.length, before, "Incomplete source measures never trigger an automatic merge");
+      assert.equal(await next.isDisabled(), true, "Incomplete source choices invalidate the previous data preview");
+      assert.equal(await results.getByRole("table").count(), 0, "Incomplete data choices remove the previous result table");
+      await measures.click();
+      await page.getByRole("option", { name: "Count", exact: true }).click();
+      await page.keyboard.press("Escape");
+      await until(() => mergeRequests.length === before + 1, "Restoring a source measure automatically refreshes the merge");
+      await results.getByText(`${type === "COMPOSITE" ? 8 : 6} rows · 3 columns`, { exact: true }).waitFor();
+      before = mergeRequests.length;
+      mergePlans.push({ delayMs: 1500, value: 7777 });
+      await label.fill(`${type} obsolete source`);
+      await until(() => mergeRequests.length === before + 1, "Source labels refresh the combined preview automatically");
+      const obsolete = mergeRequests.at(-1);
+      mergePlans.push({ value: 8888 });
+      await label.fill(`${type} latest source`);
+      await until(() => mergeRequests.length === before + 2, "A newer source choice starts a replacement merge");
+      await results.getByRole("cell", { name: "8888", exact: true }).waitFor();
+      await until(() => obsolete.completed, "Obsolete delayed data response completes");
+      assert.equal(await results.getByRole("cell", { name: "7777", exact: true }).count(), 0,
+        "An obsolete data response cannot replace the current combined preview");
+      assert.equal(await next.isDisabled(), false, "Only the latest successful merge enables the next step");
+      await page.waitForTimeout(700);
+      assert.equal(mergeRequests.length, before + 2, "Automatic merge completion does not cause a request loop");
+      await label.fill("Access count");
+      await until(() => mergeRequests.length === before + 3, "Resetting the label refreshes without a manual preview action");
+      await results.getByRole("cell", { name: "860", exact: true }).waitFor();
+    };
+    const checkAutomaticAnalysis = async () => {
+      const results = previewResults();
+      const param = page.getByRole("spinbutton", { name: /^Number of clusters/ });
+      let before = analysisRequests.length;
+      const firstInput = page.getByRole("region", { name: "Method inputs", exact: true })
+        .getByRole("combobox", { name: /^First feature/ });
+      await firstInput.click();
+      await page.getByRole("option", { name: "Select a column", exact: true }).click();
+      await page.waitForTimeout(900);
+      assert.equal(analysisRequests.length, before, "An incomplete method input never requests automatic analysis");
+      assert.equal(await button("Continue to visualization").isDisabled(), true,
+        "An incomplete method input invalidates the old analysis");
+      await firstInput.click();
+      await page.getByRole("option", { name: "Access count · Count", exact: true }).click();
+      await until(() => analysisRequests.length === before + 1, "Restoring a method input automatically refreshes analysis");
+      await results.getByRole("cell", { name: "Cluster 1", exact: true }).first().waitFor();
+      before = analysisRequests.length;
+      await param.fill("");
+      await page.waitForTimeout(900);
+      assert.equal(analysisRequests.length, before, "An empty required parameter never requests an automatic analysis");
+      assert.equal(await button("Continue to visualization").isDisabled(), true,
+        "Changing a required parameter invalidates the old analysis");
+      await param.fill("2.5");
+      await page.waitForTimeout(700);
+      assert.equal(analysisRequests.length, before, "A fractional value for an integer method parameter never requests analysis");
+      analysisPlans.push({ fail: true });
+      await param.fill("3");
+      await until(() => analysisRequests.length === before + 1, "A valid parameter automatically requests the analysis");
+      await results.getByRole("alert").filter({ hasText: "Analysis service temporarily unavailable" }).waitFor();
+      await page.waitForTimeout(900);
+      assert.equal(analysisRequests.length, before + 1, "Failed analysis does not retry in a loop");
+      await dataPreviewAction().click();
+      await until(() => analysisRequests.length === before + 2, "Explicit retry recovers the analysis without changing inputs");
+      await results.getByRole("cell", { name: "Cluster 1", exact: true }).first().waitFor();
+      before = analysisRequests.length;
+      analysisPlans.push({ delayMs: 1500, value: 7777 });
+      await param.fill("4");
+      await until(() => analysisRequests.length === before + 1, "Analysis parameters refresh the preview automatically");
+      const obsolete = analysisRequests.at(-1);
+      analysisPlans.push({ value: 8888 });
+      await param.fill("3");
+      await until(() => analysisRequests.length === before + 2, "Newer parameters replace an in-flight analysis");
+      await results.getByRole("cell", { name: "8888", exact: true }).waitFor();
+      await until(() => obsolete.completed, "Obsolete analysis response completes");
+      assert.equal(await results.getByRole("cell", { name: "7777", exact: true }).count(), 0,
+        "An obsolete analysis cannot overwrite the latest result");
+      await dataPreviewAction().click();
+      await results.getByRole("cell", { name: "860", exact: true }).waitFor();
     };
     const checkVisualizationDesign = async (name) => {
       const choice = chartChoice(name);
@@ -691,6 +800,7 @@ let chartCatalogFailures = 0;
     };
     const saveIndicator = async (name, update = false) => {
       const previewsBeforeSave = previews.length;
+      const mergesBeforeSave = mergeRequests.length, analysesBeforeSave = analysisRequests.length;
       await button(update ? "Review changes" : "Save indicator").click();
       const dialog = page.getByRole("dialog", {
         name: /(?:Save|Update) (?:composite|multilevel analysis) indicator/,
@@ -716,6 +826,8 @@ let chartCatalogFailures = 0;
         .waitFor();
       assert.equal(previews.length, previewsBeforeSave,
         "Editing only the indicator name and saving do not regenerate the chart");
+      assert.equal(mergeRequests.length, mergesBeforeSave, "Indicator name edits do not recompute combined data");
+      assert.equal(analysisRequests.length, analysesBeforeSave, "Indicator name edits do not rerun the analysis");
     };
 
     expandedCatalog = true;
@@ -977,14 +1089,17 @@ let chartCatalogFailures = 0;
       "Unavailable source stays readable but unselectable",
     );
     await select("Student count");
+    assert.equal(mergeRequests.length, 0, "Source selection and browsing do not execute a merge before confirmation");
     await button("Continue to combine data").click();
     assert.equal(previews.length, 0, "No chart preview runs before combined result data is available");
-    await checkPreviewAction();
-    await dataPreviewAction().click();
     await page
       .getByRole("alert")
       .filter({ hasText: "Source data temporarily unavailable" })
       .waitFor();
+    assert.equal(mergeRequests.length, 1, "Preselected valid source columns automatically request their first merge");
+    await checkPreviewAction();
+    await page.waitForTimeout(900);
+    assert.equal(mergeRequests.length, 1, "A failed automatic merge does not retry itself");
     await dataPreviewAction().click();
     const combined = page.getByRole("region", {
       name: "Preview results",
@@ -992,6 +1107,8 @@ let chartCatalogFailures = 0;
     });
     await combined.getByText("8 rows · 3 columns", { exact: true }).waitFor();
     await combined.getByText(/4 cells were filled with zero/).waitFor();
+    await checkCombineLayout("Student count");
+    await checkAutomaticCombine("COMPOSITE");
     await button("Continue to visualization").click();
     await chooseLibrary();
     await generateChart("Grouped bar");
@@ -1020,13 +1137,16 @@ let chartCatalogFailures = 0;
       .getByRole("region", { name: "Source indicators", exact: true })
       .waitFor();
     const beforeEditPreviews = previews.length;
+    const beforeEditMerges = mergeRequests.length;
     await page.goto(
       new URL("/indicator/editor/composite/edit/saved-0", base).href,
     );
     await dataPreviewAction().waitFor();
-    await page.waitForTimeout(800);
-    assert.equal(previews.length, beforeEditPreviews,
-      "Saved chart selections do not preview until their source result is recomputed");
+    await until(() => mergeRequests.length > beforeEditMerges, "Saved source selections recompute automatically when opened");
+    await previewResults().getByText("8 rows · 3 columns", { exact: true }).waitFor();
+    await until(() => previews.length > beforeEditPreviews,
+      "Saved chart selections preview after their data is automatically recomputed");
+    await until(() => previews.at(-1).completed, "Reopened saved chart preview completes");
     await page
       .getByRole("textbox", {
         name: "Series label for Access count",
@@ -1064,7 +1184,7 @@ let chartCatalogFailures = 0;
         exact: true,
       })
       .fill("Access count");
-    await dataPreviewAction().click();
+    await previewResults().getByText("8 rows · 3 columns", { exact: true }).waitFor();
     await button("Continue to visualization").click();
     await resultChart().waitFor();
     await saveIndicator("Composite updated", true);
@@ -1091,12 +1211,16 @@ let chartCatalogFailures = 0;
       "Multilevel can use another method",
     );
     await select("Annotation count");
+    const beforeMultiMerge = mergeRequests.length;
     await button("Continue to combine data").click();
-    await dataPreviewAction().click();
     await page
       .getByRole("region", { name: "Preview results", exact: true })
       .getByText("6 rows · 3 columns", { exact: true })
       .waitFor();
+    assert.equal(mergeRequests.length, beforeMultiMerge + 1,
+      "Multilevel preselected source columns automatically generate their first combined preview");
+    await checkCombineLayout("Annotation count");
+    await checkAutomaticCombine("MULTI_LEVEL");
     await button("Continue to analysis").click();
     await page
       .getByRole("combobox", { name: "Analytics method", exact: true })
@@ -1117,12 +1241,14 @@ let chartCatalogFailures = 0;
       "Retry preserves the selected method",
     );
     await checkPreviewAction();
-    await dataPreviewAction().click();
     await page
       .getByRole("region", { name: "Preview results", exact: true })
       .getByRole("cell", { name: "Cluster 1", exact: true })
       .first()
       .waitFor();
+    assert.equal(analysisRequests.length, 1,
+      "Multilevel valid preselected method inputs and defaults run the first analysis automatically");
+    await checkAutomaticAnalysis();
     await button("Continue to visualization").click();
     await chooseLibrary();
     await generateChart("Scatter plot");
@@ -1149,10 +1275,9 @@ let chartCatalogFailures = 0;
     await button("Undo").click();
     await page.setViewportSize({ width: 390, height: 844 });
     await button("Continue to combine data").click();
-    await dataPreviewAction().click();
     await page
       .getByRole("region", { name: "Preview results", exact: true })
-      .waitFor();
+      .getByText("8 rows · 3 columns", { exact: true }).waitFor();
     assert.ok(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth + 2,
@@ -1216,7 +1341,7 @@ let chartCatalogFailures = 0;
     assert.deepEqual(failures, []);
     assert.ok(requests.includes("v1/indicators/saved-0/result"));
     console.log(
-      "PASS: compact source table server sorting/filtering/pagination, persistent checked selections and max10 feedback, owner-scoped on-demand chart/data inspection with retry/focus/stale-response protection; Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; new/edit tab recovery, failed-save preservation, delayed-navigation save cleanup, confirmed reset, metadata retry, undo, mobile containment; blocked source deletion retains source and safely links its dependents; automatic chart selection/mapping/customization previews, invalid-input gating, explicit retry, stale catalog-error recovery and stale-response suppression for both types; no browser errors.",
+      "PASS: compact source table server sorting/filtering/pagination, persistent checked selections and max10 feedback, owner-scoped on-demand chart/data inspection with retry/focus/stale-response protection; Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; responsive two-column combine panels and automatic data/analysis previews for valid preselected choices, incomplete-input and integer-parameter gating, explicit failure retry, no request loops, name-only edit stability and stale-response protection; new/edit tab recovery, failed-save preservation, delayed-navigation save cleanup, confirmed reset, metadata retry, undo, mobile containment; blocked source deletion retains source and safely links its dependents; automatic chart selection/mapping/customization previews, invalid-input gating, explicit retry, stale catalog-error recovery and stale-response suppression for both types; no browser errors.",
     );
   } catch (error) {
     console.error("Synthetic browser diagnostics:", { pageErrors, failures,
