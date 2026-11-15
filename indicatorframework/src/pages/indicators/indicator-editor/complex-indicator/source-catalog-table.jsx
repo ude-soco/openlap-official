@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
-import { canSelectSource } from "./complex-model";
+import { canSelectSource, MAX_SOURCES } from "./complex-model";
 
 const savedDate = (value) => {
   if (!value) return "—";
@@ -107,6 +107,9 @@ export default function SourceCatalogTable({
             const selected = Boolean(selectedSource);
             const selection = canSelectSource(type, selectedSources, source);
             const reason = !selection.allowed && selection.reason !== "Already selected" ? selection.reason : "";
+            const blockedStatus = reason ? source.available === false ? "Source unavailable"
+              : selectedSources.length >= MAX_SOURCES ? "Selection limit reached"
+                : "Different analytics method" : "";
             const reasonId = `complex-source-${source.id}-reason`;
             const disabled = !selected && !selection.allowed;
             return (
@@ -125,18 +128,21 @@ export default function SourceCatalogTable({
                 <TableCell component="th" scope="row" sx={{ py: 1.5, overflowWrap: "anywhere", verticalAlign: "top" }}>
                   <Stack sx={{ gap: 0.5, alignItems: "flex-start", minWidth: 0 }}>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>{source.name}</Typography>
-                    <Box sx={{ height: 24, display: "inline-flex", alignItems: "center" }}>
-                      {selected
+                    <Box sx={{ height: 24, width: "100%", display: "inline-flex", alignItems: "center" }}>
+                      {blockedStatus
+                        ? <Typography variant="caption" color={source.available === false ? "error" : "text.secondary"} noWrap sx={{ display: "block", maxWidth: "100%" }}>{blockedStatus}</Typography>
+                        : selected
                         ? <Chip size="small" color="primary" variant="outlined" icon={<CheckIcon />} label="Selected" sx={{ height: 24 }} />
                         : <Typography variant="caption" color="text.secondary">Not selected</Typography>}
                     </Box>
+                    {reason && <Box component="span" id={reasonId}
+                      sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)", whiteSpace: "nowrap" }}>{reason}</Box>}
                     <Typography variant="caption" color="text.secondary" sx={{ display: { xs: "block", md: "none" } }}>
                       {source.analyticsMethod?.name || "Method unavailable"}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ display: { xs: "block", md: "none" } }}>
                       Last saved {savedDate(source.createdOn)}
                     </Typography>
-                    {reason && <Typography id={reasonId} variant="caption" color={source.available === false ? "error" : "text.secondary"}>{reason}</Typography>}
                   </Stack>
                 </TableCell>
                 <TableCell sx={{ display: { xs: "none", md: "table-cell" }, verticalAlign: "top", py: 1.5, overflowWrap: "anywhere" }}>
@@ -146,7 +152,7 @@ export default function SourceCatalogTable({
                   <Typography variant="body2" color="text.secondary">{savedDate(source.createdOn)}</Typography>
                 </TableCell>
                 <TableCell align="center" sx={{ verticalAlign: "top", px: 0.5, py: 1 }}>
-                  <Tooltip title="Preview indicator">
+                  <Tooltip title={reason ? `Preview indicator. ${reason}` : "Preview indicator"}>
                     <IconButton color="primary" aria-label={`Preview ${source.name}`}
                       aria-describedby={reason ? reasonId : undefined}
                       data-source-preview-id={source.id}
