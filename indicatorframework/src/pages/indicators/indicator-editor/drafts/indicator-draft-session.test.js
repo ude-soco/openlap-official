@@ -45,6 +45,7 @@ function fixture(options = {}) {
     get: async (id) => { calls.push({ action: "get", id }); return saved(9, value(4)); },
     discard: async (id, revision) => { calls.push({ action: "discard", id, revision }); },
     complete: async (id, body) => { calls.push({ action: "complete", id, body }); return { ...saved(body.revision), status: "COMPLETED", savedIndicatorId: "indicator-1" }; },
+    resume: async (id) => { calls.push({ action: "resume", id }); return { ...saved(2), status: "COMPLETED", savedIndicatorId: "indicator-1" }; },
     ...options.transport,
   };
   let requestCount = 0;
@@ -64,8 +65,10 @@ test("draft API unwraps envelopes, encodes IDs and keeps execution separate", as
   await draftApi.update("draft/one", { revision: 2 });
   await draftApi.discard("draft/one", 3);
   await draftApi.complete("draft/one", { revision: 2, indicator: {} });
+  await draftApi.resume("draft/one");
   assert.equal(calls[0].args[0], "v1/indicators/drafts/draft%2Fone");
   assert.equal(calls[2].args[0], "v1/indicators/drafts/draft%2Fone?revision=3");
+  assert.equal(calls[4].args[0], "v1/indicators/drafts/draft%2Fone/resume");
   assert.ok(calls.every(({ args }) => !/preview|analyze|merge/.test(args[0])));
 });
 
@@ -364,4 +367,168 @@ test("malformed, oversized and unrelated recovery never hydrates another account
   assert.equal(validateDraftRecovery("x".repeat(1048577), scope), null);
   storage.setItem("session_indicator", JSON.stringify(value(2)));
   assert.equal(readDraftRecovery(scope, storage).record, null);
+});
+
+test("lost completion acknowledgment locks edits and reconciles its receipt without duplicate output", async () => {
+  const completed = [];
+  const receipt = { ...saved(4), configuration: null, status: "COMPLETED", savedIndicatorId: "indicator-1" };
+  const f = fixture({ initialDraft: saved(2), initialValue: value(1), onCompleted: (result) => completed.push(result), transport: {
+    complete: async (id, body) => { f.calls.push({ action: "complete", id, body }); throw new Error("Lost after commit"); },
+    get: async (id) => { f.calls.push({ action: "get", id }); return receipt; },
+  } });
+  await assert.rejects(f.session.complete({ name: "Original", configuration: "original" }), /Lost/);
+  assert.equal(f.session.getState().finalizing, true);
+  assert.equal(f.session.getState().saving, false, "The reconciliation action is available after the request ends");
+  assert.equal(f.session.getState().pendingTerminal.kind, "complete");
+  f.session.update(value(4));
+  f.clock.advance(10000);
+  await settle();
+  await assert.rejects(f.session.flush(), /previous save/);
+  await assert.rejects(f.session.saveAsSeparateDraft(), /previous save/);
+  await assert.rejects(f.session.discard(), /previous save/);
+  assert.equal(f.calls.length, 1, "No autosave, separate draft or discard can race the uncertain completion");
+  await f.session.retry();
+  assert.deepEqual(f.calls.map((call) => call.action), ["complete", "get"]);
+  assert.deepEqual(completed, [receipt]);
+  assert.equal(f.session.getState().status, "completed");
+  assert.equal(f.storage.length, 0);
+});
+
+test("an unclaimed completion retry replays the original exact body and revision", async () => {
+  let attempts = 0;
+  const f = fixture({ initialDraft: saved(2), initialValue: value(1), transport: {
+    get: async (id) => { f.calls.push({ action: "get", id }); return saved(2); },
+    complete: async (id, body) => {
+      f.calls.push({ action: "complete", id, body });
+      if (++attempts === 1) throw new Error("Request did not arrive");
+      return { ...saved(4), status: "COMPLETED", savedIndicatorId: "indicator-1" };
+    },
+  } });
+  await assert.rejects(f.session.complete({ name: "Original", configuration: "exact" }), /arrive/);
+  await f.session.complete({ name: "Changed retry must be ignored", configuration: "changed" });
+  assert.deepEqual(f.calls.filter((call) => call.action === "complete").map((call) => call.body), [
+    { revision: 2, indicator: { name: "Original", configuration: "exact" } },
+    { revision: 2, indicator: { name: "Original", configuration: "exact" } },
+  ]);
+});
+
+test("a claimed completion survives refresh through the server's durable resume payload", async () => {
+  const claimed = { ...saved(3), completionPending: true };
+  const completed = [];
+  const f = fixture({ initialDraft: claimed, initialValue: value(1), onCompleted: (receipt) => completed.push(receipt), transport: {
+    get: async (id) => { f.calls.push({ action: "get", id }); return claimed; },
+  } });
+  f.session.activate();
+  f.session.update(value(4));
+  f.clock.advance(10000);
+  await settle();
+  assert.equal(f.calls.length, 0, "A claimed draft never autosaves on reload");
+  assert.equal(f.session.getState().finalizing, true);
+  assert.equal(f.session.getState().saving, false);
+  await f.session.retry();
+  assert.deepEqual(f.calls.map((call) => call.action), ["get", "resume"]);
+  assert.equal(completed.length, 1);
+  assert.equal(f.session.getState().status, "completed");
+});
+
+test("lost discard acknowledgment reconciles a discarded receipt without applying null configuration", async () => {
+  const applied = [];
+  const f = fixture({ initialDraft: saved(2), initialValue: value(1), onApply: (next) => applied.push(next), transport: {
+    discard: async (id, revision) => { f.calls.push({ action: "discard", id, revision }); throw new Error("Lost discard acknowledgment"); },
+    get: async (id) => { f.calls.push({ action: "get", id }); return { ...saved(3), configuration: null, status: "DISCARDED" }; },
+  } });
+  await assert.rejects(f.session.discard(), /Lost/);
+  await assert.rejects(f.session.complete({}), /previous save/);
+  await assert.rejects(f.session.saveAsSeparateDraft(), /previous save/);
+  f.session.update(value(5));
+  await f.session.discard();
+  assert.deepEqual(f.calls.map((call) => call.action), ["discard", "get"]);
+  assert.deepEqual(applied, []);
+  assert.equal(f.session.getState().status, "discarded");
+  assert.equal(f.storage.length, 0);
+});
+
+test("an uncommitted discard retry retains its original revision", async () => {
+  let attempts = 0;
+  const f = fixture({ initialDraft: saved(2), initialValue: value(1), transport: {
+    get: async (id) => { f.calls.push({ action: "get", id }); return saved(2); },
+    discard: async (id, revision) => {
+      f.calls.push({ action: "discard", id, revision });
+      if (++attempts === 1) throw new Error("Not delivered");
+      return { ...saved(3), configuration: null, status: "DISCARDED" };
+    },
+  } });
+  await assert.rejects(f.session.discard(), /delivered/);
+  await f.session.retry();
+  assert.deepEqual(f.calls.filter((call) => call.action === "discard").map((call) => call.revision), [2, 2]);
+});
+
+test("terminal receipts preserve unapplied local changes for an explicit separate draft", async () => {
+  for (const status of ["COMPLETED", "DISCARDED"]) {
+    const applied = [], completed = [];
+    const f = fixture({ initialDraft: saved(2), initialValue: value(1), onApply: (next) => applied.push(next),
+      onCompleted: (next) => completed.push(next), transport: {
+        get: async () => ({ ...saved(4), configuration: null, status, savedIndicatorId: status === "COMPLETED" ? "indicator-1" : undefined }),
+      } });
+    f.session.update(value(3));
+    await f.session.reloadLatest();
+    assert.equal(f.session.getState().conflict.kind, "closed");
+    assert.equal(f.session.getState().closedReceipt.status, status);
+    assert.deepEqual(applied, []);
+    assert.deepEqual(completed, [], "Local changes are not silently abandoned by navigation to a saved result");
+    assert.equal(readDraftRecovery({ ...ownerScope, draftId: "draft-1" }, f.storage).record.configuration.sources.length, 3);
+    await f.session.saveAsSeparateDraft();
+    assert.equal(f.calls.at(-1).action, "create");
+    assert.equal(f.calls.at(-1).body.configuration.sources.length, 3);
+  }
+});
+
+test("completed receipts with no local edits reconcile directly and never hydrate missing configuration", async () => {
+  const applied = [], completed = [];
+  const receipt = { ...saved(4), configuration: null, status: "COMPLETED", savedIndicatorId: "indicator-1" };
+  const f = fixture({ initialDraft: saved(2), initialValue: value(1), onApply: (next) => applied.push(next),
+    onCompleted: (next) => completed.push(next), transport: { get: async () => receipt } });
+  await f.session.reloadLatest();
+  assert.deepEqual(applied, []);
+  assert.deepEqual(completed, [receipt]);
+  assert.equal(f.session.getState().status, "completed");
+});
+
+test("definitively rejected completion permits correction while an unresolved revision claim does not", async () => {
+  const f = fixture({ initialDraft: saved(2), initialValue: value(1), transport: {
+    complete: async () => { throw Object.assign(new Error("Invalid mapping"), { response: { status: 400 } }); },
+  } });
+  await assert.rejects(f.session.complete({}), /mapping/);
+  assert.equal(f.session.getState().pendingTerminal, null);
+  assert.equal(f.session.getState().finalizing, false);
+  f.session.update(value(2));
+  await f.session.flush();
+  assert.equal(f.calls.at(-1).action, "update");
+});
+
+test("a proven newer draft resolves uncertainty before offering editable conflict recovery", async () => {
+  const f = fixture({ initialDraft: saved(2), initialValue: value(1), transport: {
+    complete: async () => { throw new Error("Uncertain response"); },
+    get: async () => saved(4, value(3)),
+  } });
+  await assert.rejects(f.session.complete({ name: "Original" }), /Uncertain/);
+  await assert.rejects(f.session.retry(), /draft changed/);
+  assert.equal(f.session.getState().pendingTerminal, null);
+  assert.equal(f.session.getState().finalizing, false);
+  assert.equal(f.session.getState().conflict !== null, true);
+  await f.session.saveAsSeparateDraft();
+  assert.equal(f.calls.at(-1).body.configuration.sources.length, 1, "The local definition is preserved after the server state is known");
+});
+
+test("reconciling another writer's claimed save preserves this tab's different definition", async () => {
+  const f = fixture({ initialDraft: saved(2), initialValue: value(1), transport: {
+    complete: async () => { throw new Error("Uncertain response"); },
+    get: async () => ({ ...saved(4, value(3)), completionPending: true }),
+  } });
+  await assert.rejects(f.session.complete({ name: "Local definition" }), /Uncertain/);
+  await assert.rejects(f.session.retry(), /local changes are still here/,
+    "A navigation caller must not leave while the separate-copy decision remains unresolved");
+  assert.equal(f.session.getState().conflict.kind, "closed");
+  assert.equal(f.session.getState().closedReceipt.savedIndicatorId, "indicator-1");
+  assert.equal(readDraftRecovery({ ...ownerScope, draftId: "draft-1" }, f.storage).record.configuration.sources.length, 1);
 });

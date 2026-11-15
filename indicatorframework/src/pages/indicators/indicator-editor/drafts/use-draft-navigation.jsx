@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNavigationGuard } from "../../../../setup/routes-manager/navigation-guard-context.js";
 import { DraftLeaveDialog } from "./draft-header.jsx";
+import { draftErrorMessage } from "./indicator-draft-api.js";
 
 export default function useDraftNavigation(draft, { exitTo = "/indicator" } = {}) {
   const navigation = useNavigationGuard();
@@ -52,7 +53,7 @@ export default function useDraftNavigation(draft, { exitTo = "/indicator" } = {}
       else navigate(destination);
     } catch (failure) {
       released.current = false;
-      setError(failure?.message || "Couldn’t finish this action. Stay here and retry.");
+      setError(draftErrorMessage(failure));
       throw failure;
     } finally { setBusy(false); }
   }, [navigate]);
@@ -67,7 +68,7 @@ export default function useDraftNavigation(draft, { exitTo = "/indicator" } = {}
       else navigate(destination);
     },
     requestDiscard: (destination = exitTo) => { setError(""); setDiscardOnly(true); setTarget(destination); },
-    dialog: <DraftLeaveDialog open={Boolean(target)} busy={busy || draft.finalizing} error={error} discardOnly={discardOnly}
+    dialog: <DraftLeaveDialog open={Boolean(target)} busy={busy || draft.saving} error={error} discardOnly={discardOnly}
       onStay={() => setTarget(null)}
       onSaveAndExit={() => { saveAndExit(target).catch(() => {}); }}
       onDiscardAndExit={() => { discardAndExit(target).catch(() => {}); }} />,

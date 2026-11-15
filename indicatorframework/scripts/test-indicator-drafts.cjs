@@ -24,7 +24,7 @@ async function until(predicate, description) {
   while (!await predicate()) { assert.ok(Date.now() < deadline, description); await pause(25); }
 }
 
-async function fixture(browser, { seeded = false, legacy = null } = {}) {
+async function fixture(browser, { seeded = false, legacy = null, claimed = false, loseResumeAck = false, loseDiscardAck = false } = {}) {
   const { emptyBasicState, serializeBasicDraft } = await import("../src/pages/indicators/indicator-editor/basic-indicator/utils/basic-draft-model.js");
   const makeConfiguration = (name, withLrs = false) => {
     const state = emptyBasicState(new Date("2026-11-15T10:00:00Z"));
@@ -33,7 +33,7 @@ async function fixture(browser, { seeded = false, legacy = null } = {}) {
     return serializeBasicDraft(state);
   };
   const accounts = new Map([[FIRST, new Map()], [SECOND, new Map()]]);
-  const calls = [], failures = [], pendingCreates = [];
+  const calls = [], failures = [], pendingCreates = [], terminalCommits = [];
   let sequence = 0, holdCreate = false;
   const timestamps = (index = 0) => new Date(Date.UTC(2026, 10, 15, 10, index)).toISOString();
   const seed = (id, name, type = "BASIC", extra = {}) => {
@@ -50,6 +50,8 @@ async function fixture(browser, { seeded = false, legacy = null } = {}) {
     for (let index = 1; index <= 19; index += 1) seed(`fixture-${index}`, `Working indicator ${String(index).padStart(2, "0")}`,
       ["BASIC", "COMPOSITE", "MULTI_LEVEL"][index % 3]);
   }
+  if (claimed) seed("claimed", "Previously started save", "BASIC", { completionPending: true });
+  if (loseDiscardAck) seed("discarding", "Draft with uncertain discard");
   const context = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
   await context.routeWebSocket(/.*/, (socket) => socket.close());
   await context.addInitScript(({ token, legacy }) => {
@@ -101,6 +103,19 @@ async function fixture(browser, { seeded = false, legacy = null } = {}) {
       } }));
       return acknowledge();
     }
+    const resumeMatch = path.match(/^v1\/indicators\/drafts\/([^/]+)\/resume$/);
+    if (resumeMatch && method === "POST") {
+      const current = store.get(decodeURIComponent(resumeMatch[1]));
+      assert.ok(current?.completionPending, "Only a durable claimed save needs the resume endpoint");
+      terminalCommits.push({ kind: "complete", id: current.id });
+      Object.assign(current, { status: "COMPLETED", configuration: null, completionPending: false,
+        revision: current.revision + 1, savedIndicatorId: "saved-resumed" });
+      if (loseResumeAck) {
+        loseResumeAck = false;
+        return send({ message: "The connection failed after the indicator was saved." }, 503);
+      }
+      return send({ data: clone(current) });
+    }
     const match = path.match(/^v1\/indicators\/drafts\/([^/]+)$/);
     if (match) {
       const id = decodeURIComponent(match[1]), current = store.get(id);
@@ -113,14 +128,22 @@ async function fixture(browser, { seeded = false, legacy = null } = {}) {
         Object.assign(current, clone(body), { name: body.name.trim() || "Untitled indicator", revision: current.revision + 1, updatedAt: new Date().toISOString() });
         return send({ data: clone(current) });
       }
-      if (method === "DELETE") { store.delete(id); return send({ data: { discarded: true } }); }
+      if (method === "DELETE") {
+        if (loseDiscardAck) {
+          loseDiscardAck = false;
+          terminalCommits.push({ kind: "discard", id });
+          Object.assign(current, { status: "DISCARDED", configuration: null, revision: current.revision + 1 });
+          return send({ message: "The connection failed after the draft was discarded." }, 503);
+        }
+        store.delete(id); return send({ data: { discarded: true } });
+      }
     }
     failures.push(`Unexpected API request: ${method} ${path}`);
     return send({ message: "Unexpected synthetic API request" }, 500);
   });
   const page = await context.newPage();
   page.on("pageerror", (error) => failures.push(error.message));
-  return { context, page, accounts, calls, failures, pendingCreates, makeConfiguration,
+  return { context, page, accounts, calls, failures, pendingCreates, terminalCommits, makeConfiguration,
     holdCreates: (value) => { holdCreate = value; }, store: accounts.get(FIRST) };
 }
 
@@ -310,9 +333,61 @@ async function authoringAndRecovery(browser) {
   } finally { await f.context.close(); }
 }
 
+async function terminalReconciliation(browser) {
+  const f = await fixture(browser, { claimed: true, loseResumeAck: true });
+  const { page } = f;
+  try {
+    await page.goto(new URL("/indicator/editor/drafts/claimed", base).href);
+    const name = page.getByRole("textbox", { name: "Indicator name", exact: true });
+    const resume = page.getByRole("button", { name: "Resume previous save", exact: true });
+    await resume.waitFor();
+    assert.equal(await name.isDisabled(), true, "A reloaded completion claim is readonly before any retry");
+    await page.reload();
+    await resume.waitFor();
+    assert.equal(await name.isDisabled(), true, "The server claim survives a document reload");
+    assert.equal(f.calls.some((call) => call.method === "PUT"), false, "Claimed drafts never autosave while loading");
+    assert.equal(f.calls.some((call) => /analytics|visualizations|statements/.test(call.path)), false,
+      "Resume-only authoring does not execute analysis, preview or plugin metadata requests");
+    await resume.click();
+    await page.getByRole("alert").filter({ hasText: "connection failed after the indicator was saved" }).waitFor();
+    await until(async () => await resume.isEnabled(), "Resume is available after an uncertain response ends");
+    assert.equal(await name.isDisabled(), true, "A lost save acknowledgment never unlocks authoring");
+    assert.equal(await page.getByRole("button", { name: "Save draft", exact: true }).isDisabled(), true);
+    assert.equal(await page.getByRole("button", { name: "Discard draft", exact: true }).isDisabled(), true);
+    await resume.click();
+    await page.waitForURL("**/indicator");
+    assert.equal(f.terminalCommits.length, 1, "Receipt reconciliation cannot create a duplicate output");
+    assert.equal(f.calls.filter((call) => call.path.endsWith("/resume")).length, 1,
+      "A committed receipt is resolved by GET without replaying execution");
+    assert.equal(f.calls.filter((call) => call.path.endsWith("/resume"))[0].body, undefined,
+      "Resume uses the durable server payload, never a reconstructed client definition");
+    assert.equal(f.calls.some((call) => call.method === "PUT" || call.path.endsWith("/complete")), false);
+    assert.deepEqual(f.failures, []);
+  } finally { await f.context.close(); }
+
+  const d = await fixture(browser, { loseDiscardAck: true });
+  try {
+    await d.page.goto(new URL("/indicator/editor/drafts/discarding", base).href);
+    await d.page.getByRole("button", { name: "Discard draft", exact: true }).click();
+    const dialog = d.page.getByRole("dialog", { name: "Discard this draft?", exact: true });
+    await dialog.getByRole("button", { name: "Discard draft", exact: true }).click();
+    await dialog.getByRole("alert").filter({ hasText: "connection failed after the draft was discarded" }).waitFor();
+    const retry = dialog.getByRole("button", { name: "Discard draft", exact: true });
+    await until(async () => await retry.isEnabled(), "An uncertain discard can be checked again from its confirmation");
+    await retry.click();
+    await d.page.waitForURL("**/indicator");
+    assert.equal(d.terminalCommits.length, 1);
+    assert.equal(d.calls.filter((call) => call.method === "DELETE").length, 1, "Discard receipt needs no second delete");
+    assert.equal(d.calls.some((call) => call.method === "PUT"), false, "No edit can race an uncertain discard");
+    assert.equal(d.store.get("discarding").status, "DISCARDED");
+    assert.deepEqual(d.failures, []);
+    console.log("PASS: reloaded completion claims stay readonly, lost save/discard acknowledgments reconcile receipts without duplicate writes, and resume uses the server's durable payload");
+  } finally { await d.context.close(); }
+}
+
 (async () => {
   const browser = await webkit.launch({ headless: true,
     ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}) });
-  try { await dashboard(browser); await authoringAndRecovery(browser); }
+  try { await dashboard(browser); await authoringAndRecovery(browser); await terminalReconciliation(browser); }
   finally { await browser.close(); }
 })().catch((error) => { console.error(error); process.exitCode = 1; });

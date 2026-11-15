@@ -3,6 +3,7 @@
 // Start Vite with VITE_BACKEND_URL=/api/, then use the existing WebKit tools:
 // OPENLAP_TEST_BASE_URL=http://127.0.0.1:15281 npm run test:complex-indicators
 // OPENLAP_COMPLEX_DRAFT_ONLY=1 runs just persistent draft lifecycle checks.
+// OPENLAP_COMPLEX_TERMINAL_ONLY=1 checks an uncertain completion and exact retry.
 const { webkit } = require("playwright");
 const assert = require("node:assert/strict");
 const chartRendererFixture = require("./chart-renderer-fixture.cjs");
@@ -876,10 +877,10 @@ let chartCatalogFailures = 0;
       });
       await saveAction.click();
       if (update) {
-        await dialog.getByRole("alert").filter({ hasText: "Update temporarily unavailable" }).waitFor();
+        await page.getByRole("alert").filter({ hasText: "Update temporarily unavailable" }).waitFor();
         await until(() => [...drafts.values()].some((draft) => draft.sourceIndicatorId === "saved-0"
           && draft.status === "DRAFT" && draft.name === name), "A failed completion retains the latest server draft");
-        await saveAction.click();
+        await button("Resume previous save").click();
       }
       await page.waitForURL("**/indicator");
       await page
@@ -1133,9 +1134,10 @@ let chartCatalogFailures = 0;
       await selectionCount(0);
       assert.equal(await checkbox("Select Access count").isEnabled(), true);
     };
-    if (process.env.OPENLAP_COMPLEX_DRAFT_ONLY === "1") {
+    if (process.env.OPENLAP_COMPLEX_DRAFT_ONLY === "1" || process.env.OPENLAP_COMPLEX_TERMINAL_ONLY === "1") {
       expandedCatalog = false;
-      failMerge = failMethodContract = failUpdate = false;
+      failMerge = failMethodContract = false;
+      failUpdate = process.env.OPENLAP_COMPLEX_TERMINAL_ONLY === "1";
       const configuration = {
         schemaVersion: 1, type: "COMPOSITE", name: "Saved Composite fixture",
         sources: [sources[0], sources[1]].map((item) => ({
@@ -1143,10 +1145,27 @@ let chartCatalogFailures = 0;
           keyColumnId: "material", measureColumnIds: ["count"], label: item.name,
         })),
         analysis: { methodId: "", mapping: { mapping: [] }, params: [] },
-        visualization: { libraryId: "library", typeId: "grouped", mapping: { mapping: [] }, params: {}, dataMode: "combined" },
+        visualization: { libraryId: "library", typeId: "grouped", mapping: { mapping: [
+          { inputPort: charts[0].chartInputs[0], outputPort: wide.chartData.columns.combined_key.configurationData },
+          { inputPort: charts[0].chartInputs[1], outputPort: wide.chartData.columns.combined_series.configurationData },
+          { inputPort: charts[0].chartInputs[2], outputPort: wide.chartData.columns.combined_value.configurationData },
+        ] }, params: {}, dataMode: "combined" },
       };
       saved.push({ indicatorType: "COMPOSITE", name: configuration.name,
         configuration: JSON.stringify(configuration), visualizationTypeId: "grouped" });
+      if (process.env.OPENLAP_COMPLEX_TERMINAL_ONLY === "1") {
+        await page.goto(new URL("/indicator/editor/composite/edit/saved-0", base).href);
+        await previewResults().getByText("8 rows · 3 columns", { exact: true }).waitFor();
+        await button("Continue to visualization").click();
+        await resultChart().waitFor();
+        await button("Review changes").waitFor({ state: "visible" });
+        await saveIndicator("Reconciled saved edit", true);
+        assert.equal(saved.at(-1).sourceIndicatorId, "saved-0");
+        assert.deepEqual(pageErrors, []);
+        assert.deepEqual(failures, []);
+        console.log("PASS: Complex uncertain completion locks authoring, exposes Resume previous save, reconciles the server draft and retries the original definition without extra preview execution");
+        return;
+      }
     } else {
     await checkSourcePicker();
     const sourceSection = page.getByRole("region", {name:"Select indicators step", exact:true});

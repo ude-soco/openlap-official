@@ -34,6 +34,10 @@ export function createIndicatorDraftSession({
   let creationAttempted = false;
   let pendingMutation = null;
   let finalization = null;
+  let pendingTerminal = initialDraft?.completionPending
+    ? { kind: "complete", id: initialDraft.id, revision: initialDraft.revision, value: copy(current), request: null }
+    : null;
+  let closedReceipt = null;
   const scope = () => ({ owner, environment, indicatorType, draftId: draft?.id || null, clientRequestId });
   const recovered = readDraftRecovery(scope(), storage);
   localAvailable = recovered.available;
@@ -43,12 +47,14 @@ export function createIndicatorDraftSession({
     recovery = null;
   }
   if (recovery) status = "recovery";
+  if (pendingTerminal) status = "pending";
 
-  const isDirty = () => !terminal && Boolean(pendingMutation || (Boolean(draft || meaningfulValue) && fingerprint(current) !== acknowledged));
+  const isDirty = () => !terminal && Boolean(pendingTerminal || pendingMutation || (Boolean(draft || meaningfulValue) && fingerprint(current) !== acknowledged));
   const snapshot = () => ({
     draftId: draft?.id || null, revision: draft?.revision ?? null, status, error,
     updatedAt: draft?.updatedAt || null, conflict, recovery, localAvailable,
-    dirty: isDirty(), saving: Boolean(running || actionBusy), finalizing: actionBusy, draft,
+    dirty: isDirty(), saving: Boolean(running || actionBusy), finalizing: Boolean(actionBusy || pendingTerminal || terminal), draft,
+    pendingTerminal: pendingTerminal ? { kind: pendingTerminal.kind } : null, closedReceipt,
     sourceIndicatorId: draft?.sourceIndicatorId || null,
   });
   const emit = () => { if (!disposed) onState(snapshot()); };
@@ -66,7 +72,10 @@ export function createIndicatorDraftSession({
   };
   const fail = (failure) => {
     error = draftErrorMessage(failure);
-    if (failure?.response?.status === 409) {
+    if (pendingTerminal) {
+      conflict = null;
+      status = "pending";
+    } else if (failure?.response?.status === 409) {
       conflict = { message: error };
       status = "conflict";
     } else status = "error";
@@ -77,6 +86,7 @@ export function createIndicatorDraftSession({
   const persist = () => {
     if (running) return running;
     if (disposed || terminal) return Promise.reject(blocked("This editor is no longer active."));
+    if (pendingTerminal) return Promise.reject(blocked("Resolve the previous save or discard before editing this draft."));
     if (recovery) return Promise.reject(blocked("Choose whether to restore the browser recovery before saving."));
     if (conflict) return Promise.reject(blocked("Resolve the newer draft version before saving."));
     if (!owner) return Promise.reject(blocked("Sign in before saving a draft."));
@@ -135,7 +145,7 @@ export function createIndicatorDraftSession({
     return running;
   };
   const schedule = () => {
-    if (disposed || terminal || recovery || conflict || !isDirty() || !owner) return;
+    if (disposed || terminal || pendingTerminal || recovery || conflict || !isDirty() || !owner) return;
     status = "unsaved";
     if (debounceTimer !== null) timers.clear(debounceTimer);
     const start = () => { persist().catch(() => {}); };
@@ -143,7 +153,7 @@ export function createIndicatorDraftSession({
     if (maximumTimer === null) maximumTimer = timers.set(start, maxWaitMs);
   };
   const update = (value, isMeaningful = true) => {
-    if (disposed || terminal || actionBusy) return;
+    if (disposed || terminal || pendingTerminal || actionBusy) return;
     const next = copy(value);
     meaningfulValue = isMeaningful;
     if (fingerprint(next) === fingerprint(current)) return;
@@ -158,8 +168,9 @@ export function createIndicatorDraftSession({
     if (running) await running;
     return persist();
   };
-  const retry = () => { error = ""; return flush(); };
+  const retry = () => { error = ""; return pendingTerminal ? resumeTerminal() : flush(); };
   const reloadLatest = async () => {
+    if (pendingTerminal) return resumeTerminal();
     if (!draft?.id) throw blocked("There is no server draft to reload.");
     if (running) await running.catch(() => {});
     actionBusy = true;
@@ -167,7 +178,17 @@ export function createIndicatorDraftSession({
     emit();
     try {
       const latest = await transport.get(draft.id);
-      if (latest.status === "COMPLETED") throw blocked("This draft has already been saved as an indicator. Return to My Indicators.");
+      if (latest.status === "COMPLETED" || latest.status === "DISCARDED") return finishReceipt(latest);
+      if (latest.completionPending) {
+        draft = latest;
+        pendingTerminal = { kind: "complete", id: latest.id, revision: latest.revision, value: copy(current), request: null,
+          preserveLocal: fingerprint(current) !== fingerprint(latest) };
+        status = "pending";
+        conflict = null;
+        error = "";
+        retain();
+        return latest;
+      }
       draft = latest;
       current = { name: latest.name, configuration: copy(latest.configuration) };
       acknowledged = fingerprint(current);
@@ -182,6 +203,7 @@ export function createIndicatorDraftSession({
     finally { actionBusy = false; emit(); }
   };
   const restoreRecovery = () => {
+    if (pendingTerminal || closedReceipt) return;
     if (!recovery) return;
     const candidate = recovery;
     current = { name: candidate.name, configuration: copy(candidate.configuration) };
@@ -196,12 +218,14 @@ export function createIndicatorDraftSession({
     emit();
   };
   const dismissRecovery = () => {
+    if (pendingTerminal || closedReceipt) return;
     if (recovery) removeDraftRecovery({ ...scope(), clientRequestId: recovery.clientRequestId }, storage);
     recovery = null;
     status = draft ? "saved" : "idle";
     emit();
   };
   const saveAsSeparateDraft = async () => {
+    if (pendingTerminal || actionBusy) throw blocked("Resolve the previous save or discard before creating a separate draft.");
     clearTimers();
     if (running) await running.catch(() => {});
     const oldScope = recovery ? { ...scope(), clientRequestId: recovery.clientRequestId } : scope();
@@ -211,6 +235,8 @@ export function createIndicatorDraftSession({
       onApply(copy(current));
     }
     draft = null;
+    terminal = false;
+    closedReceipt = null;
     pendingMutation = null;
     creationAttempted = false;
     acknowledged = null;
@@ -225,27 +251,116 @@ export function createIndicatorDraftSession({
     removeDraftRecovery(oldScope, storage);
     return created;
   };
+  const finishReceipt = (receipt) => {
+    if (!["COMPLETED", "DISCARDED"].includes(receipt?.status)) throw new Error("The server did not confirm the previous draft action.");
+    const previous = pendingTerminal;
+    const originalScope = scope();
+    const candidateScope = recovery ? { ...scope(), clientRequestId: recovery.clientRequestId } : null;
+    const unapplied = previous?.kind !== "discard" && (previous?.preserveLocal ||
+      (recovery && fingerprint(recovery) !== fingerprint(previous?.value || current)) ||
+      (previous ? fingerprint(current) !== fingerprint(previous.value) : isDirty())
+    );
+    draft = { ...draft, ...receipt };
+    pendingTerminal = null;
+    pendingMutation = null;
+    creationAttempted = false;
+    clearTimers();
+    error = "";
+    if (unapplied) {
+      // Another writer may have completed/discarded the server draft while
+      // this tab still has edits. Keep those edits and their recovery; never
+      // apply a receipt's absent configuration or silently navigate away.
+      closedReceipt = receipt;
+      conflict = { kind: "closed", message: receipt.status === "COMPLETED"
+        ? "This draft has already been saved as an indicator. Your local changes are still here; keep them as a separate draft."
+        : "This draft was discarded elsewhere. Your local changes are still here; keep them as a separate draft." };
+      status = "conflict";
+      retain();
+      emit();
+      return receipt;
+    }
+    terminal = true;
+    closedReceipt = null;
+    conflict = null;
+    recovery = null;
+    status = receipt.status === "COMPLETED" ? "completed" : "discarded";
+    removeDraftRecovery(scope(), storage);
+    removeDraftRecovery(originalScope, storage);
+    if (candidateScope) removeDraftRecovery(candidateScope, storage);
+    for (const oldScope of previous?.cleanupScopes || []) removeDraftRecovery(oldScope, storage);
+    if (receipt.status === "COMPLETED" && !disposed) onCompleted(receipt);
+    emit();
+    return receipt;
+  };
+  const releaseChangedTerminal = (latest) => {
+    pendingTerminal = null;
+    draft = latest;
+    acknowledged = fingerprint(latest);
+    const message = "The previous save is no longer pending, but this draft changed. Reload its latest version or keep your work as a separate draft.";
+    throw Object.assign(new Error(message), { response: { status: 409, data: { message } } });
+  };
+  const resolvePendingTerminal = async () => {
+    const pending = pendingTerminal;
+    if (!pending) throw blocked("There is no previous draft action to resume.");
+    const accept = (receipt) => {
+      const result = finishReceipt(receipt);
+      // Callers such as Save-and-exit must remain in this editor until the
+      // user explicitly decides what to do with unapplied local changes.
+      if (closedReceipt) throw blocked(conflict.message);
+      return result;
+    };
+    try {
+      const latest = await transport.get(pending.id);
+      if (["COMPLETED", "DISCARDED"].includes(latest?.status)) return accept(latest);
+      if (latest?.status !== "DRAFT" || latest.id !== pending.id || !Number.isSafeInteger(latest.revision)) {
+        throw new Error("The server could not confirm this draft's current state. Retry the previous action.");
+      }
+      draft = latest;
+      if (latest.completionPending) {
+        if (pending.kind !== "complete") {
+          // A different writer started completion; its saved indicator must be
+          // reconciled before a discard can be considered.
+          pendingTerminal = { kind: "complete", id: latest.id, revision: latest.revision,
+            value: copy(current), request: null, preserveLocal: true };
+        }
+        if (fingerprint(current) !== fingerprint(latest)) pendingTerminal.preserveLocal = true;
+        return accept(await transport.resume(latest.id));
+      }
+      if (latest.revision !== pending.revision || (pending.kind === "complete" && !pending.request)) releaseChangedTerminal(latest);
+      if (pending.kind === "discard") {
+        const result = await transport.discard(pending.id, pending.revision);
+        return accept(result || { ...latest, status: "DISCARDED" });
+      }
+      try {
+        return accept(await transport.complete(pending.id, copy(pending.request)));
+      } catch (failure) {
+        if ([400, 422].includes(failure?.response?.status)) pendingTerminal = null;
+        throw failure;
+      }
+    } catch (failure) {
+      if (!closedReceipt || !failure.draftActionBlocked) fail(failure);
+      throw failure;
+    }
+  };
   const completeOnce = async (indicator) => {
     const started = fingerprint(current);
     await flush();
     if (!draft) throw blocked("Add an indicator configuration before saving.");
     if (typeof indicator !== "function" && fingerprint(current) !== started) throw blocked("Your configuration changed while saving. Review the latest preview and save again.");
-    actionBusy = true;
-    clearTimers();
+    const request = { revision: draft.revision,
+      indicator: typeof indicator === "function" ? indicator(copy(current)) : indicator };
+    pendingTerminal = { kind: "complete", id: draft.id, revision: draft.revision,
+      request: copy(request), value: copy(current) };
+    retain();
     emit();
-    try {
-      const result = await transport.complete(draft.id, {
-        revision: draft.revision,
-        indicator: typeof indicator === "function" ? indicator(copy(current)) : indicator,
-      });
-      terminal = true;
-      status = "completed";
-      error = "";
-      removeDraftRecovery(scope(), storage);
-      if (!disposed) onCompleted(result);
-      return result;
-    } catch (failure) { fail(failure); throw failure; }
-    finally { actionBusy = false; emit(); }
+    try { return finishReceipt(await transport.complete(draft.id, copy(request))); }
+    catch (failure) {
+      // Rejected definitions never reached a completion claim. Network/5xx
+      // failures remain ambiguous and must be reconciled before editing.
+      if ([400, 422].includes(failure?.response?.status)) pendingTerminal = null;
+      fail(failure);
+      throw failure;
+    }
   };
   const discardOnce = async () => {
     clearTimers();
@@ -267,13 +382,12 @@ export function createIndicatorDraftSession({
         // key before deleting, rather than abandoning a possible server draft.
         draft = await transport.create({ ...copy(current), name: normalizedName(current.name), schemaVersion: 1, indicatorType, clientRequestId });
       }
-      if (draft) await transport.discard(draft.id, draft.revision);
-      terminal = true;
-      status = "discarded";
-      error = "";
-      removeDraftRecovery(scope(), storage);
-      removeDraftRecovery(originalScope, storage);
-      if (candidateScope) removeDraftRecovery(candidateScope, storage);
+      pendingTerminal = { kind: "discard", id: draft?.id || null, revision: draft?.revision, value: copy(current),
+        cleanupScopes: [originalScope, ...(candidateScope ? [candidateScope] : [])] };
+      if (!draft) return finishReceipt({ status: "DISCARDED" });
+      retain();
+      const result = await transport.discard(draft.id, draft.revision);
+      return finishReceipt(result || { ...draft, status: "DISCARDED" });
     } catch (failure) { fail(failure); throw failure; }
     finally { actionBusy = false; emit(); }
   };
@@ -281,6 +395,7 @@ export function createIndicatorDraftSession({
     if (finalization) return finalization.kind === kind ? finalization.promise
       : Promise.reject(blocked("Another draft action is still running."));
     if (terminal || disposed) return Promise.reject(blocked("This draft is no longer being edited."));
+    if (pendingTerminal && pendingTerminal.kind !== kind) return Promise.reject(blocked("Resolve the previous save or discard before starting another draft action."));
     const entry = { kind, promise: null };
     finalization = entry;
     actionBusy = true;
@@ -293,8 +408,9 @@ export function createIndicatorDraftSession({
     emit();
     return entry.promise;
   };
-  const complete = (indicator) => finalize("complete", () => completeOnce(indicator));
-  const discard = () => finalize("discard", discardOnce);
+  const resumeTerminal = () => finalize(pendingTerminal?.kind || "complete", resolvePendingTerminal);
+  const complete = (indicator) => finalize("complete", () => pendingTerminal ? resolvePendingTerminal() : completeOnce(indicator));
+  const discard = () => finalize("discard", () => pendingTerminal ? resolvePendingTerminal() : discardOnce());
   return {
     getState: snapshot, update, flush, retry, complete, discard, reloadLatest,
     saveAsSeparateDraft, restoreRecovery, dismissRecovery,

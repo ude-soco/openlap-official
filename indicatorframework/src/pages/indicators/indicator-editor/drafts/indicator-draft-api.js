@@ -11,6 +11,7 @@ export function createIndicatorDraftApi(api) {
     update: async (id, body) => dataOf(await api.put(`v1/indicators/drafts/${segment(id)}`, body)),
     edit: async (id) => dataOf(await api.post(`v1/indicators/${segment(id)}/edit-draft`)),
     complete: async (id, body) => dataOf(await api.post(`v1/indicators/drafts/${segment(id)}/complete`, body)),
+    resume: async (id) => dataOf(await api.post(`v1/indicators/drafts/${segment(id)}/resume`)),
     discard: async (id, revision) => dataOf(await api.delete(`v1/indicators/drafts/${segment(id)}?revision=${segment(revision)}`)),
   };
 }

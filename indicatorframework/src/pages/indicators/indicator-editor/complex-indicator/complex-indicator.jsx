@@ -159,7 +159,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     indicatorType: type, name: configuration.name, configuration: draftConfiguration,
     initialDraft, meaningful: loaded && Boolean(configuration.sources.length || configuration.name.trim()),
     onCreated: onDraftCreated, onApply: applyDraft,
-    onCompleted: () => draftNavigation.release(),
+    onCompleted: () => { draftNavigation.release(); navigate("/indicator"); },
   });
   const draftNavigation = useDraftNavigation(draft);
 
@@ -174,7 +174,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     api,
     path: `v1/indicators/${endpoint}/merge`,
     fingerprint: JSON.stringify(compositionRequest(configuration)),
-    ready: Boolean(loaded && sourcesConfirmed &&
+    ready: Boolean(loaded && !draft.finalizing && sourcesConfirmed &&
       sourcesReady(configuration.sources)),
   });
   const merged = isMulti ? combinePreview.data?.mergedData : combinePreview.data;
@@ -185,7 +185,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     path: "v1/indicators/multilevel/analyze",
     fingerprint: JSON.stringify(analysisRequest(configuration)),
     upstream: merged,
-    ready: Boolean(isMulti && loaded &&
+    ready: Boolean(isMulti && loaded && !draft.finalizing &&
       datasetRows(merged) > 0 && methodId && !methodLoading &&
       methodContractId === methodId && methodInputs.length &&
       configuration.analysis.mapping.mapping.length > 0 &&
@@ -215,7 +215,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     (chart?.chartInputs || []).filter((input) => input.type === "Text")
       .length >= 2;
   const autoPreviewReady = Boolean(
-    loaded && !chartLoading && libraryId &&
+    loaded && !draft.finalizing && !chartLoading && libraryId &&
       selectedType?.chartInputs?.length && sourcesReady(configuration.sources) &&
       datasetRows(chartDataset) > 0 && supportsSeries(selectedType) &&
       mappingsReady(selectedType.chartInputs, configuration.visualization.mapping, chartDataset) &&
@@ -566,7 +566,6 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
           id ? "Indicator updated." : "Indicator saved to My Indicators.",
           { variant: "success" },
         );
-        navigate("/indicator");
       },
     );
 
@@ -588,6 +587,9 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     setLegacyRecovery(null);
     setImportingRecovery(true);
   };
+  useEffect(() => {
+    if (draft.pendingTerminal && !draft.saving) setSaveOpen(false);
+  }, [draft.pendingTerminal, draft.saving]);
   useEffect(() => {
     if (importingRecovery && draft.draftId && !draft.dirty && !draft.saving && !draft.error) {
       try { sessionStorage.removeItem(key); } catch { /* The server copy remains authoritative. */ }
@@ -730,13 +732,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     </Stack>;
 
   return (
-    <Stack component="fieldset" disabled={Boolean(draft.finalizing)}
-      aria-busy={draft.finalizing || undefined}
-      onKeyDownCapture={(event) => {
-        if (draft.finalizing) { event.preventDefault(); event.stopPropagation(); }
-      }}
-      sx={{ gap: 3, width: "100%", minWidth: 0, border: 0, m: 0, p: 0,
-        pointerEvents: draft.finalizing ? "none" : undefined }}>
+    <Stack sx={{ gap: 3, width: "100%", minWidth: 0 }}>
       <PageHeader
         title={`${id ? "Edit " : "Create "}${title.toLowerCase()}`}
 
@@ -780,6 +776,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
         onSaveAndExit={() => draftNavigation.saveAndExit()}
         onDiscard={() => draftNavigation.requestDiscard()}
       />
+      <Stack inert={draft.finalizing || undefined} sx={{ gap: 3 }}>
       {legacyRecovery && <Alert severity="info" action={<Button onClick={importLegacyRecovery}>Import local draft</Button>}>
         An older {title.toLowerCase()} is saved only in this tab. Import those selections into this private draft. Saved indicators stay unchanged.
       </Alert>}
@@ -895,6 +892,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
           id={id}
         />,
       )}
+      </Stack>
       </Stack>
       <SourceIndicatorPreview
         source={catalogPreview}
