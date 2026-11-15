@@ -75,7 +75,7 @@ const SaveIndicatorDialog = ({
   const { dataset, filters, analysis, visualization } =
     useContext(BasicContext);
 
-  const nameMissing = indicatorName.length === 0;
+  const nameMissing = indicatorName.trim().length === 0;
 
   const datasetSource =
     dataset.selectedLRSList?.map((lrs) => lrs.lrsTitle).filter(Boolean).join(", ") ||
@@ -155,6 +155,7 @@ const SaveIndicatorDialog = ({
           <TextField
             fullWidth
             autoFocus
+            disabled={saving}
             label="Indicator name"
             value={indicatorName}
             onChange={onChangeName}

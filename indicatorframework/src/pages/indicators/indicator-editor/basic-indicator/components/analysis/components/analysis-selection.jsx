@@ -46,7 +46,8 @@ export default function AnalysisSelection() {
             ...previous,
             inputs: response.inputs || [],
             params: (response.params || []).map((param) => ({
-              ...param, value: param.defaultValue,
+              ...param, value: previous.params.some((saved) => saved.id === param.id)
+                ? previous.params.find((saved) => saved.id === param.id).value : param.defaultValue,
             })),
           });
       })

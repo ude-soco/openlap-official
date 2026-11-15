@@ -31,6 +31,11 @@ const PrivacyPolicy = lazy(() =>
 const UserProfile = lazy(() =>
   import("../../pages/account-manager/user-profile")
 );
+const IndicatorDraftWorkspace = lazy(() => import("../../pages/indicators/indicator-editor/indicator-draft-workspace.jsx"));
+const IndicatorDraftAlias = () => {
+  const { draftId } = useParams();
+  return <Navigate replace to={`/indicator/editor/drafts/${encodeURIComponent(draftId)}`} />;
+};
 const IndicatorEditorDashboard = lazy(() =>
   import("../../pages/indicators/dashboard/indicator-editor-dashboard")
 );
@@ -50,17 +55,11 @@ const GQIPool = lazy(() => import("../../pages/gqi-editor/gqi-pool/gqi-pool"));
 const IndicatorPreview = lazy(() =>
   import("../../pages/indicators/dashboard/components/indicator-preview")
 );
-const CompositeIndicator = lazy(() =>
-  import(
-    "../../pages/indicators/indicator-editor/composite-indicator/composite-indicator"
-  )
-);
+
 const CsvXapiDashboard = lazy(() =>
   import("../../pages/csv-xapi-converter/csv-xapi-dashboard")
 );
-const MultiLevelAnalysisIndicator = lazy(() =>
-  import("../../pages/indicators/indicator-editor/multi-level-analysis-indicator/multi-level-analysis-indicator")
-);
+
 const ManageLrs = lazy(() => import("../../pages/account-manager/manage-lrs"));
 const Home = lazy(() => import("../../pages/home/home"));
 const IndicatorSpecificationCard = lazy(() =>
@@ -92,14 +91,8 @@ const IscEditBootstrap = lazy(() =>
     (m) => ({ default: m.IscEditBootstrap })
   )
 );
-const IndicatorEditor = lazy(() =>
-  import("../../pages/indicators/indicator-editor/indicator-editor")
-);
-const BasicIndicator = lazy(() =>
-  import(
-    "../../pages/indicators/indicator-editor/basic-indicator/basic-indicator"
-  )
-);
+
+
 const AdminOverview = lazy(() =>
   import("../../pages/admin/admin-overview.jsx")
 );
@@ -130,6 +123,7 @@ const ContentArchive = lazy(() =>
 // Basic Indicator wizard, whose own step panels already provide framing). Other
 // authenticated routes are unaffected.
 const FULL_BLEED_PATH_PREFIXES = [
+  "/indicator/editor/drafts",
   "/isc/creator",
   "/isc/new",
   "/isc/drafts",
@@ -271,71 +265,12 @@ const AppRoutes = () => {
                     />
                   }
                 />
-                <Route path="/indicator/editor">
-                  <Route
-                    index
-                    element={
-                      <PrivateRoute
-                        component={<IndicatorEditor />}
-                        allowedRoles={[RoleTypes.user]}
-                      />
-                    }
-                  />
-                  <Route
-                    path="basic"
-                    element={
-                      <PrivateRoute
-                        component={<BasicIndicator />}
-                        allowedRoles={[RoleTypes.user]}
-                      />
-                    }
-                  />
-                  <Route
-                    path="basic/edit/:id"
-                    element={
-                      <PrivateRoute
-                        component={<BasicIndicator />}
-                        allowedRoles={[RoleTypes.user]}
-                      />
-                    }
-                  />
-                  <Route
-                    path="composite"
-                    element={
-                      <PrivateRoute
-                        component={<CompositeIndicator />}
-                        allowedRoles={[RoleTypes.user]}
-                      />
-                    }
-                  />
-                  <Route
-                    path="composite/edit/:id"
-                    element={
-                      <PrivateRoute
-                        component={<CompositeIndicator />}
-                        allowedRoles={[RoleTypes.user]}
-                      />
-                    }
-                  />
-                  <Route
-                    path="multi-level-analysis"
-                    element={
-                      <PrivateRoute
-                        component={<MultiLevelAnalysisIndicator />}
-                        allowedRoles={[RoleTypes.user]}
-                      />
-                    }
-                  />
-                  <Route
-                    path="multi-level-analysis/edit/:id"
-                    element={
-                      <PrivateRoute
-                        component={<MultiLevelAnalysisIndicator />}
-                        allowedRoles={[RoleTypes.user]}
-                      />
-                    }
-                  />
-                </Route>
+                <Route path="/indicator/editor/*" element={
+                  <PrivateRoute component={<IndicatorDraftWorkspace />} allowedRoles={[RoleTypes.user]} />
+                } />
+                <Route path="/indicator/drafts/:draftId" element={
+                  <PrivateRoute component={<IndicatorDraftAlias />} allowedRoles={[RoleTypes.user]} />
+                } />
                 <Route path="/indicator">
                   <Route
                     index

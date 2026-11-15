@@ -36,15 +36,11 @@ import CustomTooltip from "../../../../../../common/components/custom-tooltip/cu
 import PaletteIcon from "@mui/icons-material/Palette";
 import { getAnalyzedRowCount } from "../../utils/analyzed-data.js";
 import { getCustomizationErrors, getVisualizationDescriptor } from "./utils/visualization-descriptor";
-import {
-  requestCreateBasicIndicator,
-  requestUpdateBasicIndicator,
-} from "../../utils/basic-indicator-api";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { buildBasicDraftIndicatorRequest } from "../../utils/basic-draft-request.js";
 
 export default function Visualization() {
-  const params = useParams();
-  const { api, SESSION_INDICATOR } = useContext(AuthContext);
+  const { api } = useContext(AuthContext);
   const {
     indicator,
     dataset,
@@ -54,6 +50,7 @@ export default function Visualization() {
     lockedStep,
     setVisualization,
     setIndicator,
+    draft, draftNavigation, referencesValid,
   } = useContext(BasicContext);
   const [state, setState] = useState({
     nameIndicator: {
@@ -75,6 +72,7 @@ export default function Visualization() {
 
   useEffect(() => {
     if (
+      referencesValid === false || Boolean(draft?.conflict || draft?.recovery) ||
       visualization.inputs.length === 0 ||
       !allInputsHaveSelected(visualization.inputs) ||
       !customizationsValid ||
@@ -158,55 +156,26 @@ export default function Visualization() {
       ...p,
       nameIndicator: { ...p.nameIndicator, loading: true },
     }));
-    let indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
-    let analysisRef = buildAnalysisRef(analysis);
-    let visRef = buildVisRef(visualization);
-    let configuration = JSON.stringify({
-      indicator,
-      dataset,
-      filters,
-      analysis,
-      visualization,
-      lockedStep,
-    });
     try {
-      if (params.id) {
-        await requestUpdateBasicIndicator(
-          api,
-          params.id,
-          indicatorQuery,
-          analysisRef,
-          visRef,
-          indicator,
-          configuration
-        );
-      } else {
-        await requestCreateBasicIndicator(
-          api,
-          indicatorQuery,
-          analysisRef,
-          visRef,
-          indicator,
-          configuration
-        );
-      }
+      await draft.complete((current) => buildBasicDraftIndicatorRequest(current.configuration, current.name));
       setState((p) => ({
         ...p,
         nameIndicator: { ...p.nameIndicator, loading: false },
       }));
-      sessionStorage.removeItem(SESSION_INDICATOR);
+      draftNavigation.release();
       navigate("/indicator");
     } catch (error) {
       setState((p) => ({
         ...p,
         nameIndicator: { ...p.nameIndicator, loading: false },
       }));
-      console.error("Failed to save the indicator", error);
+      enqueueSnackbar(error?.response?.data?.message || error?.message || "Could not save this indicator. Your draft is still here.", { variant: "error" });
     }
   };
 
   const handleCheckDisabled = () => {
     return (
+      referencesValid === false || Boolean(draft?.conflict || draft?.recovery) ||
       visualization.inputs.length === 0 ||
       !allInputsHaveSelected(visualization.inputs) ||
       getAnalyzedRowCount(analysis.analyzedData) === 0 ||
@@ -380,7 +349,7 @@ export default function Visualization() {
           onClose={handleToggleNameIndicator}
           onSave={handleSaveIndicator}
           saving={state.nameIndicator.loading}
-          isEdit={Boolean(params.id)}
+          isEdit={Boolean(draft?.sourceIndicatorId)}
           indicatorName={indicator.indicatorName}
           onChangeName={handleOnChangeNameIndicator}
         />

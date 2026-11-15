@@ -1,8 +1,6 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { useSnackbar } from "notistack";
-import { Stack } from "@mui/material";
-import dayjs from "dayjs";
-import { Condition } from "../utils/indicator-data";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import PropTypes from "prop-types";
+import { Alert, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import Dataset from "./components/dataset/dataset";
 import Filters from "./components/filters/filters";
 import Analysis from "./components/analysis/analysis";
@@ -16,84 +14,73 @@ import {
   isStepRevealed,
 } from "./utils/basic-workflow-ui.js";
 
+import useIndicatorDraft from "../drafts/use-indicator-draft.js";
+import DraftHeader from "../drafts/draft-header.jsx";
+import useDraftNavigation from "../drafts/use-draft-navigation.jsx";
+import { basicDraftMeaningful, emptyBasicState, readBasicDraft, refreshBasicReferences, restoreBasicState, serializeBasicDraft } from "./utils/basic-draft-model.js";
+
 export const BasicContext = createContext(undefined);
 
-export default function BasicIndicator() {
-  const { SESSION_INDICATOR } = useContext(AuthContext);
-  const { enqueueSnackbar } = useSnackbar();
-  const [indicator, setIndicator] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION_INDICATOR);
-    return savedState
-      ? { ...JSON.parse(savedState).indicator }
-      : { indicatorName: "", type: "BASIC" };
+const referencesOf = (value) => JSON.stringify({ lrs: value.dataset.selectedLRSList.map((entry) => [entry.lrsId, entry.uniqueIdentifier]),
+  method: value.analysis.selectedAnalyticsMethod.method.id, library: value.visualization.selectedLibrary.id,
+  chart: value.visualization.selectedType.id,
+  filters: value.filters.selectedActivities.map((entry) => [entry.selectedActivityType?.id,
+    entry.selectedActionList?.map((action) => action.id), entry.selectedActivityList?.map((item) => item.id)]),
+});
+
+export default function BasicIndicator({ initialDraft = null, initialState = null, onDraftCreated }) {
+  const { api, user, SESSION_INDICATOR } = useContext(AuthContext);
+  const first = useRef(initialState?.state || restoreBasicState(initialDraft?.configuration));
+  const [indicator, setIndicator] = useState(first.current.indicator);
+  const [dataset, setDataset] = useState(first.current.dataset);
+  const [filters, setFilters] = useState(first.current.filters);
+  const [analysis, setAnalysis] = useState(first.current.analysis);
+  const [visualization, setVisualization] = useState(first.current.visualization);
+  const [lockedStep, setLockedStep] = useState(first.current.lockedStep);
+  const [hydrating, setHydrating] = useState(false);
+  const [referenceWarnings, setReferenceWarnings] = useState(initialState?.warnings || []);
+  const refreshGeneration = useRef(0);
+  useEffect(() => () => { refreshGeneration.current += 1; }, []);
+  const legacyPending = useRef(false);
+  const [legacyCandidate, setLegacyCandidate] = useState(() => {
+    if (initialDraft) return null;
+    try { return readBasicDraft(sessionStorage.getItem(SESSION_INDICATOR)); }
+    catch { return null; }
   });
-  const [dataset, setDataset] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION_INDICATOR);
-    return savedState
-      ? { ...JSON.parse(savedState).dataset }
-      : { myLRSList: [], selectedLRSList: [] };
-  });
-  const [filters, setFilters] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION_INDICATOR);
-    return savedState
-      ? { ...JSON.parse(savedState).filters }
-      : {
-          selectedUserFilter: Condition.only_me,
-          selectedTime: {
-            from: dayjs().subtract(1, "year").toISOString(),
-            until: dayjs().toISOString(),
-          },
-          activityTypesList: [],
-          selectedActivities: [
-            // {activityType: {}, actionOnActivityList: [], selectedActionOnActivity: [{}], activities: [{}]}
-          ],
-        };
-  });
-  const [analysis, setAnalysis] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION_INDICATOR);
-    return savedState
-      ? { ...JSON.parse(savedState).analysis, analyzedData: {} }
-      : {
-          analyticsMethodList: [],
-          inputs: [],
-          params: [],
-          selectedAnalyticsMethod: {
-            method: { id: "", name: "" },
-            mapping: { mapping: [] },
-          },
-          analyzedData: {},
-        };
-  });
-  const [visualization, setVisualization] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION_INDICATOR);
-    return savedState
-      ? {
-          ...JSON.parse(savedState).visualization,
-          previewData: { displayCode: [], scriptData: {} },
-        }
-      : {
-          libraryList: [],
-          selectedLibrary: { id: "", name: "" },
-          typeList: [],
-          selectedType: { id: "", name: "", chartInputs: [] },
-          inputs: [],
-          params: { height: 500, width: 500 },
-          mapping: { mapping: [] },
-          previewData: { displayCode: [], scriptData: {} },
-        };
-  });
-  const [lockedStep, setLockedStep] = useState(() => {
-    const savedState = sessionStorage.getItem(SESSION_INDICATOR);
-    return savedState
-      ? { ...JSON.parse(savedState).lockedStep }
-      : {
-          dataset: { locked: false, openPanel: true, step: "1" },
-          filters: { locked: true, openPanel: false, step: "2" },
-          analysis: { locked: true, openPanel: false, step: "3" },
-          visualization: { locked: true, openPanel: false, step: "4" },
-          finalize: { locked: true, openPanel: false, step: "5" },
-        };
-  });
+  const [legacyOpen, setLegacyOpen] = useState(false);
+  const live = useMemo(() => ({ indicator, dataset, filters, analysis, visualization, lockedStep }),
+    [indicator, dataset, filters, analysis, visualization, lockedStep]);
+  const configuration = useMemo(() => serializeBasicDraft(live), [live]);
+  const warningReferences = useRef(referencesOf(first.current));
+  const referencesValid = !hydrating && (!referenceWarnings.length || referencesOf(live) !== warningReferences.current);
+  const applyState = useCallback((next) => {
+    setIndicator(next.indicator); setDataset(next.dataset); setFilters(next.filters);
+    setAnalysis(next.analysis); setVisualization(next.visualization); setLockedStep(next.lockedStep);
+  }, []);
+  const applyDraft = useCallback(async ({ name, configuration: saved }) => {
+    const run = ++refreshGeneration.current;
+    const restored = restoreBasicState(saved);
+    restored.indicator.indicatorName = name || restored.indicator.indicatorName;
+    applyState(restored);
+    setHydrating(true);
+    try {
+      const refreshed = await refreshBasicReferences(api, serializeBasicDraft(restored));
+      if (run !== refreshGeneration.current) return;
+      warningReferences.current = referencesOf(refreshed.state);
+      setReferenceWarnings(refreshed.warnings);
+      applyState(refreshed.state);
+    } finally { if (run === refreshGeneration.current) setHydrating(false); }
+  }, [api, applyState]);
+  const draft = useIndicatorDraft({ api, owner: user?.sub, indicatorType: "BASIC", configuration,
+    name: indicator.indicatorName, initialDraft, meaningful: basicDraftMeaningful(configuration),
+    onCreated: onDraftCreated, onApply: applyDraft });
+  const draftNavigation = useDraftNavigation(draft);
+  useEffect(() => {
+    if (!legacyPending.current || draft.status !== "saved" || !draft.draftId) return;
+    try { sessionStorage.removeItem(SESSION_INDICATOR); } catch { /* The confirmed server draft is safe. */ }
+    legacyPending.current = false;
+    setLegacyCandidate(null);
+  }, [draft.status, draft.draftId, SESSION_INDICATOR]);
 
   const handleResetIfDatasetEmpty = () => {
     setLockedStep({
@@ -104,10 +91,9 @@ export default function BasicIndicator() {
       finalize: { locked: true, openPanel: false, step: "5" },
     });
     setFilters({
-      selectedUserFilter: Condition.only_me,
+      selectedUserFilter: "ONLY_ME",
       selectedTime: {
-        from: dayjs().subtract(1, "year").toISOString(),
-        until: dayjs().toISOString(),
+        ...emptyBasicState().filters.selectedTime,
       },
       activityTypesList: [],
       selectedActivities: [],
@@ -133,54 +119,6 @@ export default function BasicIndicator() {
       previewData: { displayCode: [], scriptData: {} },
     });
   };
-
-  const prevDependencies = useRef({
-    lockedStep,
-    dataset,
-    filters,
-    analysis,
-    visualization,
-    indicator,
-  });
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      let session = {
-        lockedStep,
-        dataset,
-        filters,
-        analysis,
-        visualization,
-        indicator,
-      };
-
-      sessionStorage.setItem(SESSION_INDICATOR, JSON.stringify(session));
-
-      // Check if any of the dependencies have changed
-      if (
-        prevDependencies.current.lockedStep !== lockedStep ||
-        prevDependencies.current.dataset !== dataset ||
-        prevDependencies.current.filters !== filters ||
-        prevDependencies.current.analysis !== analysis ||
-        prevDependencies.current.visualization !== visualization ||
-        prevDependencies.current.indicator !== indicator
-      ) {
-        enqueueSnackbar("Autosaved", { variant: "success" });
-      }
-
-      // Update the previous dependencies to the current ones
-      prevDependencies.current = {
-        lockedStep,
-        dataset,
-        filters,
-        analysis,
-        visualization,
-        indicator,
-      };
-    }, 5000);
-
-    return () => clearInterval(intervalId);
-  }, [lockedStep, dataset, filters, analysis, visualization, indicator]);
 
   // Informational workflow view, derived purely from the live state (no gating
   // change). The stepper reflects progress; panel open/close stays owned by
@@ -210,6 +148,7 @@ export default function BasicIndicator() {
           setVisualization,
           setIndicator,
           handleResetIfDatasetEmpty,
+          draft, draftNavigation, referencesValid,
         }}
       >
         <Stack sx={{ gap: 3 }}>
@@ -221,15 +160,39 @@ export default function BasicIndicator() {
               { label: "Create an indicator", to: "/indicator/editor" },
             ]}
           />
+          {!hydrating && <DraftHeader name={indicator.indicatorName} onNameChange={(name) => setIndicator((previous) => ({ ...previous, indicatorName: name }))}
+            indicatorType="BASIC" draft={draft} onSaveAndExit={() => draftNavigation.saveAndExit()}
+            onDiscard={() => draftNavigation.requestDiscard()} />}
+          {legacyCandidate && !legacyPending.current && <Alert severity="info" action={<Button color="inherit" onClick={() => setLegacyOpen(true)}>Review legacy recovery</Button>}>
+            An older Basic indicator recovery copy exists in this browser tab. It has no recorded account owner.
+          </Alert>}
+          {referenceWarnings.length > 0 && !referencesValid && <Alert severity="warning" action={<Button color="inherit" onClick={() => applyDraft({ name: indicator.indicatorName, configuration })}>Refresh selections</Button>}>
+            {referenceWarnings.join(" ")}
+          </Alert>}
+          {hydrating ? <CircularProgress aria-label="Refreshing saved selections" /> : <>
           <WorkflowStepper steps={workflowSteps} current={currentStep} />
-          <Stack sx={{ gap: 2 }}>
+          <Stack sx={{ gap: 2 }} inert={draft.finalizing || undefined}>
             {isStepRevealed(lockedStep, "dataset") && <Dataset />}
             {isStepRevealed(lockedStep, "filters") && <Filters />}
             {isStepRevealed(lockedStep, "analysis") && <Analysis />}
             {isStepRevealed(lockedStep, "visualization") && <Visualization />}
           </Stack>
+          </>}
+          {draftNavigation.dialog}
+          <Dialog open={legacyOpen} onClose={() => setLegacyOpen(false)} aria-labelledby="legacy-basic-draft-title">
+            <DialogTitle id="legacy-basic-draft-title">Restore this older recovery copy?</DialogTitle>
+            <DialogContent><Typography>This copy was saved before drafts were linked to accounts. Restore it only if it is your work. It will become a new private draft; your saved indicators stay unchanged.</Typography></DialogContent>
+            <DialogActions><Button onClick={() => setLegacyOpen(false)}>Cancel</Button>
+              <Button variant="contained" onClick={() => {
+                legacyPending.current = true;
+                setLegacyOpen(false);
+                applyDraft({ name: legacyCandidate.indicator.indicatorName, configuration: legacyCandidate });
+              }}>Restore my work</Button></DialogActions>
+          </Dialog>
         </Stack>
       </BasicContext.Provider>
     </>
   );
 }
+
+BasicIndicator.propTypes = { initialDraft: PropTypes.object, initialState: PropTypes.object, onDraftCreated: PropTypes.func };
