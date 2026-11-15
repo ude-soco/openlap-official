@@ -26,6 +26,7 @@ async function dashboardScreenshot(page, filename) {
   if (!process.env.OPENLAP_DASHBOARD_SCREENSHOT_DIR) return;
   await fs.mkdir(process.env.OPENLAP_DASHBOARD_SCREENSHOT_DIR, { recursive: true, mode: 0o700 });
   await page.mouse.move(0, 0);
+  await page.getByRole("tooltip").waitFor({ state: "hidden" });
   await until(async () => await page.getByRole("alert").filter({ hasText: /Draft discarded\.|Draft renamed\.|Indicator deleted\./ }).filter({ visible: true }).count() === 0,
     "Success feedback settles before the review screenshot");
   await page.screenshot({ path: path.join(process.env.OPENLAP_DASHBOARD_SCREENSHOT_DIR, filename), animations: "disabled", fullPage: page.viewportSize().width <= 500 });
@@ -239,7 +240,25 @@ async function dashboard(browser) {
     await page.getByRole("table", { name: "Indicators" }).waitFor();
     await until(() => latestList(), "One owner-scoped workspace endpoint loads the combined table");
     assert.equal(await page.getByRole("tab").count(), 0, "Saved indicators and drafts share one table without tabs");
+    assert.equal(await page.getByRole("button", { name: "Refresh", exact: true }).count(), 0, "The compact toolbar has no redundant Refresh action");
+    assert.equal(await page.getByText(/^Drafts are private unfinished work\./).count(), 0, "Draft status needs no permanent explanatory paragraph");
     const draftsOnly = page.getByRole("checkbox", { name: "Drafts only", exact: true });
+    const toolbarControls = [
+      page.getByRole("button", { name: "Create new", exact: true }),
+      page.getByRole("textbox", { name: "Search indicators", exact: true }),
+      page.getByRole("combobox", { name: "Indicator type", exact: true }),
+      draftsOnly,
+    ];
+    const toolbarGeometry = () => Promise.all(toolbarControls.map((control) => control.evaluate((element) => {
+      const rectangle = (element.closest(".MuiFormControl-root") || element.closest("label") || element).getBoundingClientRect();
+      return { x: rectangle.x, y: rectangle.y, width: rectangle.width, height: rectangle.height };
+    })));
+    const desktopControls = await toolbarGeometry();
+    const desktopCenters = desktopControls.map((control) => control.y + control.height / 2);
+    assert.ok(Math.max(...desktopCenters) - Math.min(...desktopCenters) <= 2,
+      `Desktop creation and filters align in one row: ${JSON.stringify(desktopControls)}`);
+    assert.ok(desktopControls.every((control, index) => index === 0 || control.x >= desktopControls[index - 1].x + desktopControls[index - 1].width),
+      "The desktop toolbar places Create new, Search, Indicator type and Drafts only in order");
     assert.equal(await draftsOnly.isChecked(), false);
     await row("Saved actions fixture").getByText("Saved", { exact: true }).filter({ visible: true }).waitFor();
     await row("Working indicator 19").getByText("Draft", { exact: true }).filter({ visible: true }).waitFor();
@@ -255,6 +274,8 @@ async function dashboard(browser) {
       assert.ok(geometry.cellWidth >= 150 && geometry.textWidth >= 120 && geometry.lines <= 3,
         `The ${width}px sidebar layout keeps indicator names readable: ${JSON.stringify(geometry)}`);
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${width}px workspace stays inside the viewport`);
+      assert.ok((await toolbarGeometry()).every((control) => control.x >= 0 && control.width > 0 && control.x + control.width <= width + 1),
+        `The ${width}px toolbar wraps without clipping its controls`);
       await dashboardScreenshot(page, `unified-indicators-${width}.png`);
     }
     await page.setViewportSize({ width: 1280, height: 1000 });
@@ -264,7 +285,7 @@ async function dashboard(browser) {
     assert.equal(latestList().query.sortBy, "updatedAt");
     assert.equal(latestList().query.sortDirection, "desc");
     f.workspacePlans.push({ fail: true });
-    await page.getByRole("button", { name: "Refresh", exact: true }).click();
+    await page.reload();
     await page.getByRole("alert").filter({ hasText: "Workspace temporarily unavailable" }).waitFor();
     assert.equal(await page.getByRole("table", { name: "Indicators" }).getByRole("row").count(), 1,
       "A failed combined list cannot masquerade as a partial saved-only or draft-only result");
@@ -342,7 +363,7 @@ async function dashboard(browser) {
     await page.getByRole("dialog").getByRole("alert").filter({ hasText: "changed since the list was loaded" }).waitFor();
     assert.equal(f.calls.filter((call) => call.method === "PUT").length, beforeStaleRename);
     await page.getByRole("button", { name: "Cancel", exact: true }).click();
-    await page.getByRole("button", { name: "Refresh", exact: true }).click();
+    await page.reload();
     await row(renamed.name).getByRole("button", { name: /^Continue / }).click();
     await page.waitForURL("**/indicator/editor/drafts/alpha");
     await page.getByRole("textbox", { name: "Indicator name", exact: true }).waitFor();
@@ -386,6 +407,8 @@ async function dashboard(browser) {
     await row("Saved actions fixture").getByText("Saved", { exact: true }).filter({ visible: true }).waitFor();
     await row("Working indicator 19").getByText("Draft", { exact: true }).filter({ visible: true }).waitFor();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "Draft list has no page overflow at 390px");
+    assert.ok((await toolbarGeometry()).every((control) => control.x >= 0 && control.width > 0 && control.x + control.width <= 391),
+      "All creation and filter controls remain visible in the wrapped 390px toolbar");
     await page.getByRole("combobox", { name: "Sort by", exact: true }).click();
     await page.getByRole("option", { name: "Indicator", exact: true }).click();
     await page.getByRole("listbox").waitFor({ state: "hidden" });
