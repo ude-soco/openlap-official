@@ -24,7 +24,8 @@ async function until(predicate, description) {
   while (!await predicate()) { assert.ok(Date.now() < deadline, description); await pause(25); }
 }
 
-async function fixture(browser, { seeded = false, legacy = null, claimed = false, loseResumeAck = false, loseDiscardAck = false } = {}) {
+async function fixture(browser, { seeded = false, legacy = null, claimed = false, loseResumeAck = false, loseDiscardAck = false,
+  closedRecoveryStatus = null, loseCopyAck = false } = {}) {
   const { emptyBasicState, serializeBasicDraft } = await import("../src/pages/indicators/indicator-editor/basic-indicator/utils/basic-draft-model.js");
   const makeConfiguration = (name, withLrs = false) => {
     const state = emptyBasicState(new Date("2026-11-15T10:00:00Z"));
@@ -52,15 +53,30 @@ async function fixture(browser, { seeded = false, legacy = null, claimed = false
   }
   if (claimed) seed("claimed", "Previously started save", "BASIC", { completionPending: true });
   if (loseDiscardAck) seed("discarding", "Draft with uncertain discard");
+  const closedRecovery = closedRecoveryStatus ? {
+    schemaVersion: 1, owner: FIRST, environment: `${base.origin}|/api/`, indicatorType: "BASIC", draftId: "closed-with-local-work",
+    clientRequestId: "writer-with-local-work", revision: 2, name: "Locally changed after the previous save",
+    configuration: makeConfiguration("Locally changed after the previous save", true), updatedAt: timestamps(),
+  } : null;
+  if (closedRecoveryStatus) seed("closed-with-local-work", "Server title", "BASIC", {
+    status: closedRecoveryStatus, recoverable: false, configuration: null,
+    savedIndicatorId: closedRecoveryStatus === "COMPLETED" ? savedSource.id : undefined,
+  });
+  const { recoveryStorageKey } = await import("../src/pages/indicators/indicator-editor/drafts/indicator-draft-storage.js");
+  const closedRecoveryKey = closedRecovery && recoveryStorageKey(closedRecovery);
   const context = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
   await context.routeWebSocket(/.*/, (socket) => socket.close());
-  await context.addInitScript(({ token, legacy }) => {
+  await context.addInitScript(({ token, legacy, closedRecovery, closedRecoveryKey }) => {
     if (!localStorage.getItem("authTokens")) localStorage.setItem("authTokens", JSON.stringify({ access_token: token, refresh_token: token }));
     if (legacy && !sessionStorage.getItem("draft-fixture-legacy-seeded")) {
       sessionStorage.setItem("session_indicator", JSON.stringify(legacy));
       sessionStorage.setItem("draft-fixture-legacy-seeded", "yes");
     }
-  }, { token: tokenFor(FIRST), legacy });
+    if (closedRecovery && !localStorage.getItem("closed-recovery-fixture-seeded")) {
+      localStorage.setItem(closedRecoveryKey, JSON.stringify(closedRecovery));
+      localStorage.setItem("closed-recovery-fixture-seeded", "yes");
+    }
+  }, { token: tokenFor(FIRST), legacy, closedRecovery, closedRecoveryKey });
   await context.route("**/*", async (route) => {
     const request = route.request(), url = new URL(request.url());
     if (url.origin !== base.origin) { failures.push(`Off-origin request: ${url.origin}`); return route.abort(); }
@@ -95,7 +111,10 @@ async function fixture(browser, { seeded = false, legacy = null, claimed = false
             status: "DRAFT", recoverable: true, createdAt: timestamps(), updatedAt: new Date().toISOString() };
           store.set(draft.id, draft);
         }
-        await send({ data: clone(draft) }, 201);
+        if (loseCopyAck) {
+          loseCopyAck = false;
+          await send({ message: "Connection failed after the recovery draft was created." }, 503);
+        } else await send({ data: clone(draft) }, 201);
         return draft;
       };
       if (holdCreate) return new Promise((resolve) => pendingCreates.push({ body, owner, respond: async () => {
@@ -135,7 +154,7 @@ async function fixture(browser, { seeded = false, legacy = null, claimed = false
           Object.assign(current, { status: "DISCARDED", configuration: null, revision: current.revision + 1 });
           return send({ message: "The connection failed after the draft was discarded." }, 503);
         }
-        store.delete(id); return send({ data: { discarded: true } });
+        store.delete(id); return send({ data: { ...clone(current), configuration: null, status: "DISCARDED", revision: current.revision + 1 } });
       }
     }
     failures.push(`Unexpected API request: ${method} ${path}`);
@@ -143,7 +162,7 @@ async function fixture(browser, { seeded = false, legacy = null, claimed = false
   });
   const page = await context.newPage();
   page.on("pageerror", (error) => failures.push(error.message));
-  return { context, page, accounts, calls, failures, pendingCreates, terminalCommits, makeConfiguration,
+  return { context, page, accounts, calls, failures, pendingCreates, terminalCommits, makeConfiguration, closedRecoveryKey,
     holdCreates: (value) => { holdCreate = value; }, store: accounts.get(FIRST) };
 }
 
@@ -385,9 +404,62 @@ async function terminalReconciliation(browser) {
   } finally { await d.context.close(); }
 }
 
+async function closedWorkspaceRecovery(browser) {
+  const f = await fixture(browser, { closedRecoveryStatus: "COMPLETED", loseCopyAck: true });
+  const { page } = f;
+  try {
+    await page.goto(new URL("/indicator/editor/drafts/closed-with-local-work", base).href);
+    const notice = page.getByRole("heading", { name: "Browser recovery available", exact: true });
+    await notice.waitFor();
+    assert.equal(await page.getByRole("textbox", { name: "Indicator name", exact: true }).count(), 0,
+      "A terminal receipt is never mounted as an editable draft");
+    assert.equal(await page.getByRole("link", { name: "View saved indicator", exact: true }).getAttribute("target"), "_blank");
+    await page.getByRole("button", { name: "Keep as separate draft", exact: true }).click();
+    await page.getByRole("alert").filter({ hasText: "Connection failed after the recovery draft was created" }).waitFor();
+    assert.equal(f.store.size, 2, "The server committed one private copy before its acknowledgment was lost");
+    assert.notEqual(await page.evaluate((key) => localStorage.getItem(key), f.closedRecoveryKey), null,
+      "Lost acknowledgments retain the original scoped browser recovery");
+    await page.reload();
+    await notice.waitFor();
+    await page.getByRole("button", { name: "Keep as separate draft", exact: true }).click();
+    await page.waitForURL(/\/indicator\/editor\/drafts\/created-/);
+    await page.getByRole("textbox", { name: "Indicator name", exact: true }).waitFor();
+    assert.equal(await page.getByRole("textbox", { name: "Indicator name", exact: true }).inputValue(), "Locally changed after the previous save");
+    const copies = f.calls.filter((call) => call.method === "POST" && call.path === "v1/indicators/drafts");
+    assert.equal(copies.length, 2);
+    assert.deepEqual(copies[0].body, copies[1].body, "A document reload retries the identical copy request and stable UUID");
+    assert.equal(f.store.size, 2, "The original receipt and exactly one new private draft remain");
+    assert.equal(await page.evaluate((key) => localStorage.getItem(key), f.closedRecoveryKey), null,
+      "Recovery is removed only after a confirmed copy acknowledgment");
+    assert.equal(f.calls.some((call) => call.method === "PUT" && call.path.endsWith("/closed-with-local-work")), false);
+    assert.deepEqual(f.failures, []);
+  } finally { await f.context.close(); }
+
+  const d = await fixture(browser, { closedRecoveryStatus: "DISCARDED" });
+  try {
+    await d.page.goto(new URL("/indicator/editor/drafts/closed-with-local-work", base).href);
+    await d.page.getByRole("heading", { name: "Browser recovery available", exact: true }).waitFor();
+    await d.page.getByRole("button", { name: "Discard recovered changes", exact: true }).click();
+    let dialog = d.page.getByRole("dialog", { name: "Discard recovered changes?", exact: true });
+    await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+    await dialog.waitFor({ state: "hidden" });
+    assert.notEqual(await d.page.evaluate((key) => localStorage.getItem(key), d.closedRecoveryKey), null);
+    await d.page.getByRole("button", { name: "Discard recovered changes", exact: true }).click();
+    dialog = d.page.getByRole("dialog", { name: "Discard recovered changes?", exact: true });
+    await dialog.getByRole("button", { name: "Discard recovered changes", exact: true }).click();
+    await d.page.waitForURL("**/indicator?view=drafts");
+    assert.equal(await d.page.evaluate((key) => localStorage.getItem(key), d.closedRecoveryKey), null);
+    assert.equal(d.calls.some((call) => ["PUT", "POST", "DELETE"].includes(call.method)), false,
+      "Discarding a local recovery cannot mutate saved indicators or server receipts");
+    assert.equal(d.store.get("closed-with-local-work").status, "DISCARDED");
+    assert.deepEqual(d.failures, []);
+    console.log("PASS: closed-draft recovery remains discoverable after refresh, lost copy acknowledgments retry one stable private draft, and scoped local discard requires confirmation");
+  } finally { await d.context.close(); }
+}
+
 (async () => {
   const browser = await webkit.launch({ headless: true,
     ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}) });
-  try { await dashboard(browser); await authoringAndRecovery(browser); await terminalReconciliation(browser); }
+  try { await dashboard(browser); await authoringAndRecovery(browser); await terminalReconciliation(browser); await closedWorkspaceRecovery(browser); }
   finally { await browser.close(); }
 })().catch((error) => { console.error(error); process.exitCode = 1; });
