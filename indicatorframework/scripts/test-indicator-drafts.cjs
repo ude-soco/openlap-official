@@ -555,6 +555,11 @@ async function authoringAndRecovery(browser) {
     await page.getByRole("checkbox", { name: "Drafts only", exact: true }).click();
     await until(async () => !await page.getByRole("checkbox", { name: "Drafts only", exact: true }).isChecked(), "Account's default mixed filter is restored");
     await page.getByText("No indicators yet", { exact: true }).waitFor();
+    const emptyHeader = await page.getByRole("table", { name: "Indicators", exact: true }).getByRole("columnheader").first().evaluate((cell) => ({
+      cellWidth: cell.getBoundingClientRect().width, labelHeight: cell.querySelector(".MuiTableSortLabel-root").getBoundingClientRect().height,
+    }));
+    assert.ok(emptyHeader.cellWidth >= 150 && emptyHeader.labelHeight <= 32,
+      `An empty mobile indicator table keeps its heading readable: ${JSON.stringify(emptyHeader)}`);
     assert.equal(await page.getByText(savedSource.name, { exact: true }).count(), 0, "The second account cannot list the first account's saved indicators");
     const mixedRequest = f.calls.filter((call) => call.path === "v1/indicators/my/workspace").at(-1);
     assert.equal(mixedRequest.owner, SECOND);

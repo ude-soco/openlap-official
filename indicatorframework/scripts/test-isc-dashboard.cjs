@@ -217,6 +217,13 @@ async function listing(browser) {
     await page.evaluate((token) => localStorage.setItem("authTokens", JSON.stringify({ access_token: token, refresh_token: token })), tokenFor(SECOND));
     await page.reload(); await tableOf(page).waitFor(); await page.getByText(/No ISCs yet/).waitFor();
     assert.equal(await rowOf(page, "CPU Activity Trend").count(), 0, "A different account sees neither saved ISCs nor another owner's drafts");
+    await page.setViewportSize({ width: 390, height: 844 });
+    const emptyHeader = await tableOf(page).getByRole("columnheader").first().evaluate((cell) => ({
+      cellWidth: cell.getBoundingClientRect().width, labelHeight: cell.querySelector(".MuiTableSortLabel-root").getBoundingClientRect().height,
+    }));
+    assert.ok(emptyHeader.cellWidth >= 150 && emptyHeader.labelHeight <= 32,
+      `An empty mobile ISC table preserves a readable header rather than phantom colspan columns: ${JSON.stringify(emptyHeader)}`);
+    await screenshot(page, "isc-empty-390.png");
     assert.deepEqual(f.failures, []);
     console.log("PASS: compact mixed ISC table, lifecycle labels, owner-scoped search/sort/pagination, keyboard Drafts only, metadata-only rows, loading/error Retry, stale-response protection and900/1024/390 containment");
   } finally { await f.context.close(); }
