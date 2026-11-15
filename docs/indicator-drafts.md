@@ -44,6 +44,13 @@ Concurrent tabs/devices use revision checks. A conflict preserves local changes
 and offers **Reload latest draft** or **Save as separate draft**. Changes to the
 saved source of an editing draft also require review before replacing it. The
 separate-draft option creates independent new work and leaves that source intact.
+The existing update and delete APIs also compare the saved definition before
+writing, so an older request cannot replace or remove a newer completed edit.
+
+If another tab finishes or discards a draft while this browser still has pending
+changes, reopening its address offers to keep that recovered work as a new draft.
+Removing the recovered copy requires confirmation. Retrying this recovery after
+a lost server response reuses the same request identity.
 
 Internal navigation and sign out offer to save or discard pending changes.
 Explicit sign out clears that account's active browser recovery after the
