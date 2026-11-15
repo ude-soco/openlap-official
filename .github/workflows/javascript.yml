@@ -89,6 +89,7 @@ jobs:
           npm run test:public-routes
           npm run test:indicator-drafts
           npm run test:isc-dashboard
+          npm run test:community-pools
           npm run test:analysis-preview
           npm run test:complex-indicators
           npm run test:saved-preview
