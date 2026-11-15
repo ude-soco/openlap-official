@@ -75,7 +75,7 @@ export default function SourceCatalogTable({
         <TableHead>
           <TableRow>
             <TableCell padding="checkbox" sx={{ width: 48 }}>
-              <Box component="span" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}>
+              <Box component="span" sx={{ position: "absolute", width: "1px", height: "1px", overflow: "hidden", clipPath: "inset(50%)" }}>
                 Selection
               </Box>
             </TableCell>
@@ -136,7 +136,7 @@ export default function SourceCatalogTable({
                         : <Typography variant="caption" color="text.secondary">Not selected</Typography>}
                     </Box>
                     {reason && <Box component="span" id={reasonId}
-                      sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)", whiteSpace: "nowrap" }}>{reason}</Box>}
+                      sx={{ position: "absolute", width: "1px", height: "1px", overflow: "hidden", clipPath: "inset(50%)", whiteSpace: "nowrap" }}>{reason}</Box>}
                     <Typography variant="caption" color="text.secondary" sx={{ display: { xs: "block", md: "none" } }}>
                       {source.analyticsMethod?.name || "Method unavailable"}
                     </Typography>

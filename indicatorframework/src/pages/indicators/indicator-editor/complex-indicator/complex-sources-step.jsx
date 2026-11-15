@@ -63,7 +63,7 @@ export default function ComplexSourcesStep({
   const visibleSelected = showAllSelected ? selected : selected.slice(0, 3);
   const total = catalog.totalElements ?? catalog.content?.length ?? 0;
   const methodConstraint = firstMethod?.id
-    ? `Required method: ${firstMethod.name}. Other methods remain available to preview.`
+    ? `Required method: ${firstMethod.name}. ${filteringByMethod ? "Turn off this filter to preview other methods." : "Other methods can be previewed but not selected."}`
     : "Select the first indicator to set the required method.";
   const clearFilters = () => {
     setSearch("");
