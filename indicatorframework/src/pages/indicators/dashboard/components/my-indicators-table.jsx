@@ -48,7 +48,6 @@ import { useSnackbar } from "notistack";
 import {
   requestIndicatorCode,
   requestIndicatorDeletion,
-  requestIndicatorFullDetail,
   requestMyIndicatorDuplication,
   requestMyIndicators,
 } from "../utils/indicator-dashboard-api.js";
@@ -87,7 +86,7 @@ const ICC_TOOLTIP = (
 );
 
 const MyIndicatorsTable = ({ onStats }) => {
-  const { api, SESSION_INDICATOR } = useContext(AuthContext);
+  const { api } = useContext(AuthContext);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
@@ -147,38 +146,14 @@ const MyIndicatorsTable = ({ onStats }) => {
   const closeMenu = () => setMenu({ anchorEl: null, item: null });
 
   const handleCreateNew = () => {
-    sessionStorage.removeItem(SESSION_INDICATOR);
     navigate("/indicator/editor");
   };
 
   const handlePreview = (id) => navigate(`/indicator/${id}`);
 
-  const handleEditIndicator = async (item) => {
-    if (item.type === "COMPOSITE" || item.type === "MULTI_LEVEL") {
-      navigate(`${EDIT_ROUTES[item.type]}/${item.id}`);
-      return;
-    }
-    setBusyId(item.id);
-    try {
-      const indicator = await requestIndicatorFullDetail(api, item.id);
-      const configuration = JSON.parse(indicator.configuration);
-      sessionStorage.setItem(
-        SESSION_INDICATOR,
-        JSON.stringify({
-          ...configuration,
-          indicator: { ...configuration.indicator, id: item.id },
-        }),
-      );
-      const baseRoute = EDIT_ROUTES[indicator.type];
-      navigate(`${baseRoute}/${item.id}`);
-    } catch (error) {
-      console.error("Error opening indicator for editing", error);
-      enqueueSnackbar("Could not open this indicator for editing.", {
-        variant: "error",
-      });
-    } finally {
-      setBusyId(undefined);
-    }
+  const handleEditIndicator = (item) => {
+    const baseRoute = EDIT_ROUTES[item.type];
+    if (baseRoute) navigate(`${baseRoute}/${encodeURIComponent(item.id)}`);
   };
 
   const handleCopyEmbedCode = async (item) => {
