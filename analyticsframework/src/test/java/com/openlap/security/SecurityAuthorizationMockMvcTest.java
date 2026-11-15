@@ -151,6 +151,7 @@ public class SecurityAuthorizationMockMvcTest {
     mockMvc.perform(post("/v1/indicators/drafts/private/complete").contentType(MediaType.APPLICATION_JSON).content("{}"))
         .andExpect(status().isForbidden());
     mockMvc.perform(post("/v1/indicators/saved/edit-draft")).andExpect(status().isForbidden());
+    mockMvc.perform(post("/v1/indicators/drafts/private/resume")).andExpect(status().isForbidden());
     org.mockito.Mockito.verifyNoInteractions(indicatorDraftService);
   }
 

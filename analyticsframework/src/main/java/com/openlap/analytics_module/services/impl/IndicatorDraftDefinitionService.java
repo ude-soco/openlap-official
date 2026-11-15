@@ -27,20 +27,49 @@ public class IndicatorDraftDefinitionService {
   private final IndicatorUtilityServiceImpl utility;
 
   public Indicator prepare(HttpServletRequest request, IndicatorType type, JsonNode payload) {
-    if (!payload.isObject() || payload.toString().length() > 2 * IndicatorDraftConfiguration.MAX_BYTES
+    if (!payload.isObject()
+        || payload.toString().length() > 2 * IndicatorDraftConfiguration.MAX_BYTES
         || !type.name().equals(payload.path("indicatorType").asText())
-        || !payload.path("name").isTextual() || payload.path("name").asText().length() > 300) throw invalid();
+        || !payload.path("name").isTextual()
+        || payload.path("name").asText().length() > 300) throw invalid();
+    java.util.Set<String> allowed =
+        new java.util.HashSet<>(
+            java.util.Set.of(
+                "name",
+                "indicatorType",
+                "visualizationLibraryId",
+                "visualizationTypeId",
+                "visualizationParams",
+                "visualizationMapping",
+                "configuration"));
+    if (type == IndicatorType.BASIC || type == IndicatorType.MULTI_LEVEL)
+      allowed.addAll(
+          java.util.Set.of(
+              "analyticsTechniqueId", "analyticsTechniqueMapping", "analyticsTechniqueParams"));
+    if (type == IndicatorType.BASIC) allowed.add("indicatorQuery");
+    else allowed.addAll(java.util.Set.of("indicators", "columnToMerge"));
+    payload
+        .fieldNames()
+        .forEachRemaining(
+            key -> {
+              if (!allowed.contains(key)) throw invalid();
+            });
     JsonNode clean = payload.deepCopy();
     try {
-      JsonNode config = configurations.validate(mapper.readTree(payload.path("configuration").asText()), type, 1);
-      ((com.fasterxml.jackson.databind.node.ObjectNode) clean).put("configuration", config.toString());
-    } catch (Exception error) { throw invalid(); }
+      JsonNode config =
+          configurations.validate(mapper.readTree(payload.path("configuration").asText()), type, 1);
+      ((com.fasterxml.jackson.databind.node.ObjectNode) clean)
+          .put("configuration", config.toString());
+    } catch (Exception error) {
+      throw invalid();
+    }
     IndicatorReference reference;
     switch (type) {
       case BASIC -> {
         IndicatorBasicRequest body = convert(clean, IndicatorBasicRequest.class);
         // Every selected store must be owned; the legacy bulk check accepts any matching store.
-        for (var store : body.getIndicatorQuery().getLrsStores()) basic.validateUserRequest(request, List.of(store));
+        for (var store : body.getIndicatorQuery().getLrsStores())
+          basic.validateUserRequest(request, List.of(store));
         reference = IndicatorBasicServiceImpl.getIndicatorReferenceForBasicIndicator(body);
       }
       case COMPOSITE -> {
@@ -59,16 +88,28 @@ public class IndicatorDraftDefinitionService {
     }
     return utility.prepareDraftCompletion(request, reference);
   }
+
   private <T> T convert(JsonNode node, Class<T> type) {
     final T result;
-    try { result = mapper.treeToValue(node, type); } catch (Exception error) { throw invalid(); }
+    try {
+      result = mapper.treeToValue(node, type);
+    } catch (Exception error) {
+      throw invalid();
+    }
     var errors = validator.validate(result);
-    if (!errors.isEmpty()) throw new ValidationException("INCOMPLETE_INDICATOR",
-        "Complete the required indicator inputs before saving.",
-        java.util.Map.of("fields", errors.stream().map(error -> error.getPropertyPath().toString()).sorted().toList()));
+    if (!errors.isEmpty())
+      throw new ValidationException(
+          "INCOMPLETE_INDICATOR",
+          "Complete the required indicator inputs before saving.",
+          java.util.Map.of(
+              "fields",
+              errors.stream().map(error -> error.getPropertyPath().toString()).sorted().toList()));
     return result;
   }
+
   private static ValidationException invalid() {
-    return new ValidationException("INVALID_INDICATOR_DEFINITION", "The complete indicator definition is invalid. Review the editor before saving.");
+    return new ValidationException(
+        "INVALID_INDICATOR_DEFINITION",
+        "The complete indicator definition is invalid. Review the editor before saving.");
   }
 }

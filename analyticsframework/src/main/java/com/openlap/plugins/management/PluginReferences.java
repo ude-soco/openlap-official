@@ -29,7 +29,8 @@ public final class PluginReferences {
     if (Boolean.TRUE.equals(document.get("_indicatorDraftReceipt"))
         && Set.of("COMPLETED", "DISCARDED").contains(document.getString("status"))
         && !document.containsKey("configuration") && !document.containsKey("session")
-        && !document.containsKey("legacyRecovery") && !document.containsKey("sourceSnapshot")) return Set.of();
+        && !document.containsKey("legacyRecovery") && !document.containsKey("sourceSnapshot")
+        && !document.containsKey("completionPayload")) return Set.of();
     Set<String> values = new LinkedHashSet<>();
     walk(document, null, 0, new int[] {0}, values, wanted);
     return values;
