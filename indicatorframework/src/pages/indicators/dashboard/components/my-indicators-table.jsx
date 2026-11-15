@@ -22,6 +22,13 @@ import { requestIndicatorCode, requestIndicatorDeletion, requestMyIndicatorDupli
 
 const TYPES = { BASIC: "Basic", COMPOSITE: "Composite", MULTI_LEVEL: "Multilevel analysis" };
 const SORT_FIELDS = { name: "Indicator", status: "Status", indicatorType: "Type", updatedAt: "Last updated" };
+// The permanent sidebar reduces the table's space independently of viewport width.
+const MEDIUM = "@container indicator-dashboard (min-width: 640px)";
+const WIDE = "@container indicator-dashboard (min-width: 820px)";
+const statusColumn = { width: 110, display: "none", [MEDIUM]: { display: "table-cell" } };
+const typeColumn = { width: "18%", display: "none", [WIDE]: { display: "table-cell" } };
+const dateColumn = { width: 150, display: "none", [MEDIUM]: { display: "table-cell" } };
+const actionColumn = { width: 120, px: 1, [MEDIUM]: { width: 155, px: 2 } };
 const EDIT_ROUTES = { BASIC: "/indicator/editor/basic/edit", COMPOSITE: "/indicator/editor/composite/edit",
   MULTI_LEVEL: "/indicator/editor/multi-level-analysis/edit" };
 const keyOf = (item) => `${item.kind}:${item.id}`;
@@ -123,13 +130,13 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
     }) : undefined} />;
   const filtered = Boolean(search || query.indicatorType);
 
-  return <Stack sx={{ gap: 2, minWidth: 0 }}>
+  return <Stack sx={{ gap: 2, minWidth: 0, containerType: "inline-size", containerName: "indicator-dashboard" }}>
     <Paper variant="outlined" sx={{ p: 2 }}><Stack sx={{ gap: 2 }}>
       <Stack direction="row" sx={{ justifyContent: "space-between", gap: 1 }}>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate("/indicator/editor")}>Create new</Button>
         <Button variant="outlined" onClick={() => setRefresh((value) => value + 1)}>Refresh</Button>
       </Stack>
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(180px, 1fr) 200px auto" }, gap: 2, alignItems: "center" }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr", [MEDIUM]: { gridTemplateColumns: "minmax(180px, 1fr) 180px auto" }, gap: 2, alignItems: "center" }}>
         <TextField fullWidth size="small" label="Search indicators" placeholder="Search by name" value={search} onChange={(event) => setSearch(event.target.value)}
           slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }} />
         <TextField select size="small" label="Indicator type" value={query.indicatorType}
@@ -140,7 +147,7 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
           setQuery((previous) => ({ ...previous, page: 0 })); onDraftsOnlyChange(event.target.checked);
         }} />} />
       </Box>
-      <Stack direction="row" sx={{ display: { xs: "flex", md: "none" }, gap: 1, alignItems: "center" }}>
+      <Stack direction="row" sx={{ display: "flex", [WIDE]: { display: "none" }, gap: 1, alignItems: "center" }}>
         <TextField select fullWidth size="small" label="Sort by" value={query.sortBy}
           onChange={(event) => setQuery((previous) => ({ ...previous, page: 0, sortBy: event.target.value, sortDirection: "asc" }))}>
           {Object.entries(SORT_FIELDS).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
@@ -161,25 +168,25 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
         <Table aria-label="Indicators" aria-busy={loading} sx={{ tableLayout: "fixed", width: "100%", "& td, & th": { overflowWrap: "anywhere" } }}>
           <TableHead><TableRow>
             <TableCell sortDirection={query.sortBy === "name" ? query.sortDirection : false}>{header("name", "Indicator")}</TableCell>
-            <TableCell sx={{ width: 110, display: { xs: "none", sm: "table-cell" } }} sortDirection={query.sortBy === "status" ? query.sortDirection : false}>{header("status", "Status")}</TableCell>
-            <TableCell sx={{ width: "18%", display: { xs: "none", md: "table-cell" } }} sortDirection={query.sortBy === "indicatorType" ? query.sortDirection : false}>{header("indicatorType", "Type")}</TableCell>
-            <TableCell sx={{ width: "22%", display: { xs: "none", sm: "table-cell" } }} sortDirection={query.sortBy === "updatedAt" ? query.sortDirection : false}>{header("updatedAt", "Last updated")}</TableCell>
-            <TableCell align="right" sx={{ width: { xs: 120, sm: 155 }, px: { xs: 1, sm: 2 } }}>Actions</TableCell>
+            <TableCell sx={statusColumn} sortDirection={query.sortBy === "status" ? query.sortDirection : false}>{header("status", "Status")}</TableCell>
+            <TableCell sx={typeColumn} sortDirection={query.sortBy === "indicatorType" ? query.sortDirection : false}>{header("indicatorType", "Type")}</TableCell>
+            <TableCell sx={dateColumn} sortDirection={query.sortBy === "updatedAt" ? query.sortDirection : false}>{header("updatedAt", "Last updated")}</TableCell>
+            <TableCell align="right" sx={actionColumn}>Actions</TableCell>
           </TableRow></TableHead>
           <TableBody>{!error && rows.map((item) => <TableRow key={keyOf(item)} hover>
             <TableCell><Stack sx={{ gap: 0.75 }}>
               <Typography sx={{ fontWeight: 600 }}>{item.name}</Typography>
-              <Box sx={{ display: { sm: "none" } }}>{status(item)}</Box>
+              <Box sx={{ display: "block", [MEDIUM]: { display: "none" } }}>{status(item)}</Box>
               {item.kind === "DRAFT" && item.sourceIndicatorId && <Typography variant="caption" color="text.secondary">Editing saved indicator</Typography>}
               {item.recoverable === false && <Typography variant="caption" color="text.secondary">Older draft needs review</Typography>}
               {item.completionPending && <Typography variant="caption" color="text.secondary">Continue to confirm the previous save</Typography>}
-              <Typography variant="caption" sx={{ display: { md: "none" } }}>{TYPES[item.indicatorType] || item.indicatorType}</Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: { sm: "none" } }}>{dateTime(item.updatedAt)}</Typography>
+              <Typography variant="caption" sx={{ display: "block", [WIDE]: { display: "none" } }}>{TYPES[item.indicatorType] || item.indicatorType}</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", [MEDIUM]: { display: "none" } }}>{dateTime(item.updatedAt)}</Typography>
             </Stack></TableCell>
-            <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>{status(item)}</TableCell>
-            <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{TYPES[item.indicatorType] || item.indicatorType}</TableCell>
-            <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>{dateTime(item.updatedAt)}</TableCell>
-            <TableCell align="right" sx={{ px: { xs: 1, sm: 2 } }}><Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: "flex-end", justifyContent: "flex-end", gap: 0.5 }}>
+            <TableCell sx={statusColumn}>{status(item)}</TableCell>
+            <TableCell sx={typeColumn}>{TYPES[item.indicatorType] || item.indicatorType}</TableCell>
+            <TableCell sx={dateColumn}>{dateTime(item.updatedAt)}</TableCell>
+            <TableCell align="right" sx={{ px: 1, [MEDIUM]: { px: 2 } }}><Stack sx={{ flexDirection: "column", [MEDIUM]: { flexDirection: "row" }, alignItems: "flex-end", justifyContent: "flex-end", gap: 0.5 }}>
               <Button sx={{ whiteSpace: "nowrap", minWidth: "auto", px: 0.5 }} disabled={loading || Boolean(busyKey) || item.recoverable === false}
                 startIcon={item.kind === "SAVED" ? <VisibilityIcon fontSize="small" /> : undefined} aria-label={`${item.kind === "SAVED" ? "Preview" : "Continue"} ${item.name}`}
                 onClick={() => navigate(item.kind === "DRAFT" ? `/indicator/editor/drafts/${encodeURIComponent(item.id)}` : `/indicator/${encodeURIComponent(item.id)}`)}>
