@@ -46,6 +46,11 @@ const expandedSources = [
     ...source(`extra-${index + 1}`, `Extra indicator ${String(index + 1).padStart(2, "0")}`),
     createdOn: `2026-02-${String(index + 1).padStart(2, "0")}T12:00:00`,
   })),
+  {
+    ...source("long-label", "Access count with a long descriptive indicator name " + "UnbrokenLabel".repeat(12), "long-method"),
+    analyticsMethod: { id: "long-method", name: "A method with a long descriptive label " + "UnbrokenMethod".repeat(10) },
+    createdOn: "2025-01-01T12:00:00",
+  },
 ];
 let expandedCatalog = false;
 const sourceCatalogRequests = [], sourcePreviewRequests = [], sourcePreviewPlans = [], sourceDataRequests = [], sourceDataPlans = [];
@@ -726,8 +731,74 @@ let chartCatalogFailures = 0;
       hasText: new RegExp(`^${count} of 10 selected\\.`),
     }).waitFor();
     const sourceSearch = () => page.getByRole("searchbox", { name: "Search your Basic indicators", exact: true });
+    const checkSourceGeometry = async (label) => {
+      const table = sourceTable();
+      await table.waitFor();
+      await table.scrollIntoViewIfNeeded();
+      const geometry = await table.evaluate((element) => {
+        const container = element.parentElement;
+        const stepper = document.querySelector("main .MuiStepper-root");
+        const style = getComputedStyle(container);
+        const oldTop = container.scrollTop;
+        container.scrollTop = container.scrollHeight;
+        const verticalMovement = container.scrollTop;
+        container.scrollTop = oldTop;
+        container.scrollLeft = 200;
+        const horizontalMovement = container.scrollLeft;
+        container.scrollLeft = 0;
+        const overflowingScrollers = [...document.querySelectorAll("main, main *")].filter((node) => {
+          const box = node.getBoundingClientRect();
+          const css = getComputedStyle(node);
+          return box.width > 1 && box.height > 1 && css.visibility !== "hidden"
+            && ["auto", "scroll"].includes(css.overflowX)
+            && node.scrollWidth > node.clientWidth + 1;
+        }).map((node) => ({ tag: node.tagName, label: node.getAttribute("aria-label"),
+          className: String(node.className), client: node.clientWidth, scroll: node.scrollWidth }));
+        const rows = [...element.querySelectorAll("tbody tr")].flatMap((row) => {
+          const checkbox = row.querySelector(".MuiCheckbox-root");
+          const preview = row.querySelector("button[data-source-preview-id]");
+          if (!checkbox || !preview) return [];
+          const a = checkbox.getBoundingClientRect(), b = preview.getBoundingClientRect();
+          const cell = checkbox.closest("td").getBoundingClientRect(), r = row.getBoundingClientRect();
+          return [{ checkboxWidth: a.width, checkboxHeight: a.height,
+            horizontalError: Math.abs(a.x + a.width / 2 - cell.x - cell.width / 2),
+            verticalError: Math.abs(a.y + a.height / 2 - r.y - r.height / 2),
+            previewError: Math.abs(a.y + a.height / 2 - b.y - b.height / 2) }];
+        });
+        return { viewport: innerWidth, documentWidth: document.documentElement.scrollWidth,
+          table: { client: element.clientWidth, scroll: element.scrollWidth },
+          container: { client: container.clientWidth, scroll: container.scrollWidth,
+            overflowX: style.overflowX, overscrollX: style.overscrollBehaviorX,
+            verticalRange: container.scrollHeight - container.clientHeight, verticalMovement, horizontalMovement },
+          stepper: stepper ? { client: stepper.clientWidth, scroll: stepper.scrollWidth } : null,
+          overflowingScrollers, rows };
+      });
+      assert.ok(geometry.documentWidth <= geometry.viewport + 1, label + ": editor stays within viewport");
+      assert.deepEqual(geometry.overflowingScrollers, [], label + ": no nested horizontal scroll range");
+      assert.ok(geometry.table.scroll <= geometry.table.client + 1, label + ": source table content fits without clipping");
+      assert.ok(geometry.container.scroll <= geometry.container.client + 1, label + ": source container has no horizontal range");
+      assert.equal(geometry.container.horizontalMovement, 0, label + ": source table cannot move sideways");
+      assert.equal(geometry.container.overflowX, "hidden", label + ": horizontal scrolling is explicitly disabled");
+      assert.equal(geometry.container.overscrollX, "none", label + ": sideways elastic scrolling is disabled");
+      assert.ok(geometry.stepper.scroll <= geometry.stepper.client + 1, label + ": step controls fit their section");
+      if (geometry.container.verticalRange > 1) {
+        assert.ok(geometry.container.verticalMovement > 0, label + ": vertical source scrolling remains available");
+      }
+      for (const row of geometry.rows) {
+        assert.ok(row.checkboxWidth >= 40 && row.checkboxHeight >= 40, label + ": checkbox keeps its touch target");
+        assert.ok(row.horizontalError <= 1.5 && row.verticalError <= 1.5 && row.previewError <= 1.5,
+          label + ": checkbox and preview are centered in each row: " + JSON.stringify(row));
+      }
+      const box = await table.boundingBox();
+      await page.mouse.move(box.x + box.width / 2, Math.min(box.y + 40, (await page.viewportSize()).height - 40));
+      await page.mouse.wheel(180, 0);
+      await page.waitForTimeout(100);
+      assert.equal(await table.evaluate((element) => element.parentElement.scrollLeft), 0,
+        label + ": a horizontal gesture does not pan the source list");
+    };
     const checkSourcePicker = async () => {
       await checkbox("Select Access count").waitFor();
+      await checkSourceGeometry("Desktop source picker");
       assert.equal(sourcePreviewRequests.length, 0, "Catalog browsing does not generate source charts");
       assert.equal(sourceDataRequests.length, 0, "Catalog browsing does not analyze source data");
       await sourceTable().getByRole("button", { name: "Sort by indicator name", exact: true }).click();
@@ -864,6 +935,7 @@ let chartCatalogFailures = 0;
       await page.setViewportSize({ width: 390, height: 844 });
       await checkbox("Select Access count").waitFor();
       await button("Preview Access count").waitFor();
+      await checkSourceGeometry("Mobile picker with long labels and expanded selections");
       const mobileLayout = await page.evaluate(() => ({
         width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
         offenders: [...document.querySelectorAll('main *')].map((element) => ({element, rect:element.getBoundingClientRect()}))
