@@ -112,6 +112,30 @@ public class IndicatorDraftLifecycleTest {
     String target=store.rows.get(draft.id()).getString("targetIndicatorId");
     assertThat(service.complete(request,draft.id(),body).savedIndicatorId()).isEqualTo(target);
   }
+  @Test public void committedTargetRecoveryPrecedesAnyLaterPluginValidationFailure() {
+    var draft=create(); var body=new IndicatorDraftRequests.Complete(0L,completeBody());
+    doThrow(new IllegalStateException("lost acknowledgement")).when(targets).publish(anyString(),any(),any(),anyString());
+    assertThatThrownBy(()->service.complete(request,draft.id(),body)).isInstanceOf(IllegalStateException.class);
+    when(targets.recover(anyString(),any(),anyString())).thenReturn(true);
+    when(definitions.prepare(any(),any(),any())).thenThrow(new ValidationException("Plugin was disabled after the committed save"));
+    assertThat(service.complete(request,draft.id(),body).status()).isEqualTo("COMPLETED");
+    verify(definitions,times(1)).prepare(any(),any(),any());
+  }
+  @Test public void publicationConflictsNeverAllocateAnotherTargetIdentity() {
+    var draft=create(); List<String> identities=new ArrayList<>();
+    doAnswer(call->{identities.add(call.getArgument(1,Document.class).getString("targetIndicatorId"));
+      throw new ConflictException("Source changed");
+    }).when(targets).publish(anyString(),any(),any(),anyString());
+    assertThatThrownBy(()->service.complete(request,draft.id(),new IndicatorDraftRequests.Complete(0L,completeBody()))).isInstanceOf(ConflictException.class);
+    var retry=service.get(request,draft.id());
+    assertThatThrownBy(()->service.complete(request,draft.id(),new IndicatorDraftRequests.Complete(retry.revision(),completeBody()))).isInstanceOf(ConflictException.class);
+    assertThat(identities).hasSize(2); assertThat(identities.get(1)).isEqualTo(identities.get(0));
+  }
+  @Test public void terminalDisplayMetadataCannotAccidentallyPinAMatchingPluginId() {
+    var draft=create(UUID.randomUUID().toString(),"plugin");
+    service.discard(request,draft.id(),0);
+    assertThat(new PluginReferences().collect(store.rows.get(draft.id()),Set.of("plugin"))).isEmpty();
+  }
   @Test public void completeValidationFailureLeavesThePartialDraftEditable() {
     var draft=create(); when(definitions.prepare(any(),any(),any())).thenThrow(new ValidationException("Required mapping missing"));
     assertThatThrownBy(()->service.complete(request,draft.id(),new IndicatorDraftRequests.Complete(0L,completeBody()))).isInstanceOf(ValidationException.class);

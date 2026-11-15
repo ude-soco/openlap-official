@@ -125,6 +125,7 @@ public class IndicatorDraftService {
     String owner=owner(request);
     // Ownership is rechecked even when an old edit draft exists.
     Document source=targets.snapshot(owner,sourceId);
+    sourceId=source.get("_id").toString();
     Document existing=store.findActiveEdit(owner,sourceId);
     if(existing!=null) return response(existing);
     IndicatorType type=IndicatorType.valueOf(source.getString("indicatorType"));
