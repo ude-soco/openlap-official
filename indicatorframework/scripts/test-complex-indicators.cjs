@@ -219,6 +219,8 @@ let failMerge = true;
 let failMethodContract = true;
 let failUpdate = true;
 let delayedDashboardModule = false;
+let failChartCatalog = false;
+let chartCatalogFailures = 0;
 
 (async () => {
   const browser = await webkit.launch({
@@ -338,8 +340,15 @@ let delayedDashboardModule = false;
       }
       if (path === "v1/visualizations/libraries")
         return send([{ id: "library", name: "Synthetic charts" }]);
-      if (path === "v1/visualizations/libraries/library/types")
+      if (path === "v1/visualizations/libraries/library/types") {
+        if (failChartCatalog) {
+          failChartCatalog = false;
+          chartCatalogFailures++;
+          return route.fulfill({ status: 503, contentType: "application/json",
+            body: JSON.stringify({ message: "Chart catalog temporarily unavailable." }) });
+        }
         return send(charts);
+      }
       if (path === "v1/indicators/composite/merge") {
         assert.deepEqual(
           body.indicators.map((item) => item.indicatorId),
@@ -599,6 +608,21 @@ let delayedDashboardModule = false;
       await until(() => previews.length === before + 1, "Reselecting the same chart refreshes its invalidated preview");
       await waitForPreview(previews.at(-1));
     };
+    const checkCatalogRecovery = async () => {
+      const sourceStep = page.getByRole("region", { name: "Select indicators step", exact: true });
+      await sourceStep.getByRole("button", { name: "Open", exact: true }).click();
+      const before = previews.length;
+      failChartCatalog = true;
+      await sourceStep.getByRole("button", { name: "Refresh sources", exact: true }).click();
+      await until(() => chartCatalogFailures === 1, "Catalog refresh exercises a failed chart-type request");
+      await until(() => previews.length > before, "Known valid chart automatically refreshes after the catalog attempt");
+      await waitForPreview(previews.at(-1));
+      assert.equal(await page.getByRole("alert").filter({ hasText: "Chart catalog temporarily unavailable" }).count(), 0,
+        "A successful automatic preview clears the stale visualization-catalog error");
+      assert.equal(await button("Retry preview").count(), 0, "Successful preview is not presented as a failed request");
+      assert.equal(await button("Save indicator").isDisabled(), false);
+      await sourceStep.getByRole("button", { name: "Close", exact: true }).click();
+    };
     const saveIndicator = async (name, update = false) => {
       const previewsBeforeSave = previews.length;
       await button(update ? "Review changes" : "Save indicator").click();
@@ -669,6 +693,7 @@ let delayedDashboardModule = false;
     await button("Continue to visualization").click();
     await chooseLibrary();
     await generateChart("Grouped bar");
+    await checkCatalogRecovery();
     await checkAutomaticUpdates("Grouped bar", "COMPOSITE");
     await checkVisualizationDesign("Grouped bar");
     await saveIndicator("Composite fixture");
@@ -883,7 +908,7 @@ let delayedDashboardModule = false;
     assert.deepEqual(failures, []);
     assert.ok(requests.includes("v1/indicators/saved-0/result"));
     console.log(
-      "PASS: Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; new/edit tab recovery, failed-save preservation, delayed-navigation save cleanup, confirmed reset, metadata retry, undo, mobile containment; blocked source deletion retains source and safely links its dependents; automatic chart selection/mapping/customization previews, invalid-input gating, explicit error retry and stale-response suppression for both types; no browser errors.",
+      "PASS: Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; new/edit tab recovery, failed-save preservation, delayed-navigation save cleanup, confirmed reset, metadata retry, undo, mobile containment; blocked source deletion retains source and safely links its dependents; automatic chart selection/mapping/customization previews, invalid-input gating, explicit retry, stale catalog-error recovery and stale-response suppression for both types; no browser errors.",
     );
   } finally {
     await context.close();
