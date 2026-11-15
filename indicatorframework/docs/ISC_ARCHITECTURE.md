@@ -146,3 +146,31 @@ For a change, run the frontend tests and production build described in the
 chart selection and customization, refresh/resume, new/edit publish and discard,
 failed autosave, and preview/edit of existing cards. Preserve the four-field
 payload and step/path constants throughout.
+
+## Community ISC Pool
+
+Completed original specifications appear automatically in **ISC Pool**; drafts
+and community copies do not produce additional public listings. The pool supports
+server-side search, goal/chart filters, name/date sorting and pagination using
+safe metadata and opaque community UUIDs. Original entity read/edit routes remain
+owner-only.
+
+Pool details contain a sanitized specification and a fresh illustrative dataset
+constructed from the required columns. Creator names, account identifiers,
+uploaded rows, filenames and original chart annotations are not shared. The
+illustrative chart is generated from the same synthetic rows shown in the copied
+specification. It is not a chart of the original author's data.
+
+Saving creates an independent viewer-owned `SAVED` specification, with persistent
+community provenance. My ISCs shows a **Community copy** badge and an Origin
+filter; provenance survives edit drafts and final saves. An owner/source unique
+key makes concurrent saves idempotent. A source version check rejects a changed
+specification until its details are reopened. Later source edits or deletion do
+not change existing copies.
+
+`GET /v1/community/isc`, `/filters` and `/{poolId}` provide browsing and details.
+`POST /v1/community/isc/{poolId}/copy` saves the reviewed template version. All
+responses are authenticated and non-cacheable. ISC copying does not require an
+LRS: converting a specification into an executable indicator is outside this
+feature. See [community executable indicators](../../docs/complex-indicators.md#community-indicator-pool)
+for the separate personal-data preview requirement.
