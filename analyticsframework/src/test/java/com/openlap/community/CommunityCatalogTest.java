@@ -72,6 +72,21 @@ public class CommunityCatalogTest {
     assertThat(query.getValue().getQueryObject().toJson()).contains("communityDependency", "communityCopyPending", "createdBy.$id");
     assertThat(query.getValue().getQueryObject().toJson()).contains("$ne", "true");
   }
+  @Test public void staticFilterRoutesAreNotMistakenForOpaqueIndicatorIds() throws Exception {
+    var catalog = mock(CommunityCatalogService.class);
+    when(catalog.filters("indicators")).thenReturn(Map.of("types", List.of("BASIC")));
+    when(catalog.filters("isc")).thenReturn(Map.of("charts", List.of("Bar chart")));
+    var isc = mock(CommunityIscService.class); var detail = mock(CommunityIndicatorDetails.class);
+    var mvc = org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup(
+        new CommunityCatalogController(catalog, isc, detail)).build();
+    mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/v1/community/indicators/filters"))
+        .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+        .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.types[0]").value("BASIC"));
+    mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/v1/community/isc/filters"))
+        .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+        .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.charts[0]").value("Bar chart"));
+    verifyNoInteractions(isc, detail);
+  }
   @Test public void viewerSpecificCatalogResponsesCannotBeCached() {
     var controller = new CommunityCatalogController(mock(CommunityCatalogService.class), mock(CommunityIscService.class), mock(CommunityIndicatorDetails.class));
     var response = new MockHttpServletResponse(); controller.privateResponses(response);

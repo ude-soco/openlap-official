@@ -29,7 +29,9 @@ public class CommunityCatalogController {
       @RequestParam(defaultValue = "") String goal) {
     return success(catalog.page(request, kind, page, size, search, sortBy, sortDirection, type, method, chart, goal));
   }
-  @GetMapping("/{kind}/filters") public ApiSuccess filters(@PathVariable String kind) { return success(catalog.filters(kind)); }
+  // Static routes must outrank /indicators/{poolId} and /isc/{poolId}.
+  @GetMapping("/indicators/filters") public ApiSuccess indicatorFilters() { return success(catalog.filters("indicators")); }
+  @GetMapping("/isc/filters") public ApiSuccess iscFilters() { return success(catalog.filters("isc")); }
   @GetMapping("/isc/{poolId}") public ApiSuccess isc(HttpServletRequest request, @PathVariable String poolId) { return success(isc.detail(request, poolId)); }
   @GetMapping("/indicators/{poolId}") public ApiSuccess indicator(HttpServletRequest request, @PathVariable String poolId) { return success(details.detail(request, poolId)); }
   public record IscCopyRequest(String version) {}
