@@ -74,7 +74,7 @@ export default function SourceCatalogTable({
       >
         <TableHead>
           <TableRow>
-            <TableCell padding="checkbox" sx={{ width: 48 }}>
+            <TableCell padding="none" sx={{ width: 48 }}>
               <Box component="span" sx={{ position: "absolute", width: "1px", height: "1px", overflow: "hidden", clipPath: "inset(50%)" }}>
                 Selection
               </Box>
@@ -114,7 +114,8 @@ export default function SourceCatalogTable({
             const disabled = !selected && !selection.allowed;
             return (
               <TableRow key={source.id} selected={selected} aria-selected={selected} hover>
-                <TableCell padding="checkbox" sx={{ verticalAlign: "top", pt: 1 }}>
+                <TableCell padding="none" align="center" sx={{ width: 48, verticalAlign: "middle" }}>
+                  <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
                   <Checkbox
                     checked={selected}
                     disabled={disabled}
@@ -124,8 +125,9 @@ export default function SourceCatalogTable({
                       "aria-describedby": reason ? reasonId : undefined,
                     } }}
                   />
+                  </Box>
                 </TableCell>
-                <TableCell component="th" scope="row" sx={{ py: 1.5, overflowWrap: "anywhere", verticalAlign: "top" }}>
+                <TableCell component="th" scope="row" sx={{ py: 1.5, overflowWrap: "anywhere", verticalAlign: "middle" }}>
                   <Stack sx={{ gap: 0.5, alignItems: "flex-start", minWidth: 0 }}>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>{source.name}</Typography>
                     <Box sx={{ height: 24, width: "100%", display: "inline-flex", alignItems: "center" }}>
@@ -145,13 +147,13 @@ export default function SourceCatalogTable({
                     </Typography>
                   </Stack>
                 </TableCell>
-                <TableCell sx={{ display: { xs: "none", md: "table-cell" }, verticalAlign: "top", py: 1.5, overflowWrap: "anywhere" }}>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" }, verticalAlign: "middle", py: 1.5, overflowWrap: "anywhere" }}>
                   <Typography variant="body2" color="text.secondary">{source.analyticsMethod?.name || "Method unavailable"}</Typography>
                 </TableCell>
-                <TableCell sx={{ display: { xs: "none", md: "table-cell" }, verticalAlign: "top", py: 1.5 }}>
+                <TableCell sx={{ display: { xs: "none", md: "table-cell" }, verticalAlign: "middle", py: 1.5 }}>
                   <Typography variant="body2" color="text.secondary">{savedDate(source.createdOn)}</Typography>
                 </TableCell>
-                <TableCell align="center" sx={{ verticalAlign: "top", px: 0.5, py: 1 }}>
+                <TableCell align="center" sx={{ verticalAlign: "middle", px: 0.5, py: 1 }}>
                   <Tooltip title={reason ? `Preview indicator. ${reason}` : "Preview indicator"}>
                     <IconButton color="primary" aria-label={`Preview ${source.name}`}
                       aria-describedby={reason ? reasonId : undefined}
