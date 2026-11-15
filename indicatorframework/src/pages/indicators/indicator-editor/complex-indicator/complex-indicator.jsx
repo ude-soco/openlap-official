@@ -5,7 +5,7 @@ import ComplexVisualizationStep from "./complex-visualization-step";
 import ComplexDialogs from "./complex-dialogs";
 import SourceIndicatorPreview from "./complex-source-preview";
 import chartPreviewData from "./complex-preview-data";
-import useDataPreview from "./use-data-preview";
+import useDataPreview from "../utils/use-data-preview";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate, useParams } from "react-router-dom";

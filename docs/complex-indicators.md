@@ -41,6 +41,11 @@ values. A failed preview preserves the selections and waits for an edit or
 **Try again**; **Run preview again** explicitly refreshes successful results.
 Outdated results cannot unlock the next step or overwrite a newer preview.
 
+Basic indicators use the same automatic data-preview behavior. Once the required
+method inputs and parameters are valid, analysis starts automatically. Changing
+the inputs, parameters, dataset or filters refreshes the result. Restored tab
+selections also receive a fresh preview; incomplete values pause generation.
+
 The chart preview generates automatically once a visualization type is selected
 and its required inputs are mapped. Changing chart inputs or customization
 options refreshes it automatically. If generation fails, use **Retry preview**;

@@ -52,7 +52,7 @@ export default function BasicIndicator() {
   const [analysis, setAnalysis] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION_INDICATOR);
     return savedState
-      ? { ...JSON.parse(savedState).analysis }
+      ? { ...JSON.parse(savedState).analysis, analyzedData: {} }
       : {
           analyticsMethodList: [],
           inputs: [],
@@ -67,7 +67,10 @@ export default function BasicIndicator() {
   const [visualization, setVisualization] = useState(() => {
     const savedState = sessionStorage.getItem(SESSION_INDICATOR);
     return savedState
-      ? { ...JSON.parse(savedState).visualization }
+      ? {
+          ...JSON.parse(savedState).visualization,
+          previewData: { displayCode: [], scriptData: {} },
+        }
       : {
           libraryList: [],
           selectedLibrary: { id: "", name: "" },

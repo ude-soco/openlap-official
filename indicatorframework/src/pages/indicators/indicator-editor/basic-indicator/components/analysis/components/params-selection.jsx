@@ -18,12 +18,11 @@ export default function ParamsSelection() {
 
   const handleChangeParam = (event, param) => {
     const { value } = event.target;
-    setAnalysis((p) => {
-      let tempParams = [...p.params];
-      const item = tempParams.find((item) => param.id === item.id);
-      if (item) item.value = value;
-      return { ...p, params: tempParams, analyzedData: {} };
-    });
+    setAnalysis((p) => ({
+      ...p,
+      params: p.params.map((item) => item.id === param.id ? { ...item, value } : item),
+      analyzedData: {},
+    }));
   };
 
   return (
@@ -68,7 +67,7 @@ export default function ParamsSelection() {
                 value={
                   param.value !== undefined && param.value !== null
                     ? param.value
-                    : param.defaultValue || ""
+                    : param.defaultValue ?? ""
                 }
                 type={param.dataType === "INTEGER" ? "number" : "text"}
                 required={Boolean(param.required)}

@@ -18,44 +18,25 @@ export default function InputsSelection() {
 
   const handleSelectInputs = (input, value) => {
     const tempInputMappings = { inputPort: input, outputPort: value };
-    setAnalysis((p) => {
-      const updatedMappings = updateMappingsMethod(
-        tempInputMappings,
-        p.selectedAnalyticsMethod.mapping.mapping
-      );
-      let tempInputs = [...p.inputs];
-      const item = tempInputs.find((item) => input.id === item.id);
-
-      if (item) item.selectedInput = value;
-      return {
+    setAnalysis((p) => ({
         ...p,
-        inputs: tempInputs,
+        inputs: p.inputs.map((item) => item.id === input.id
+          ? { ...item, selectedInput: value } : item),
         selectedAnalyticsMethod: {
           ...p.selectedAnalyticsMethod,
           mapping: {
             ...p.selectedAnalyticsMethod.mapping,
-            mapping: updatedMappings,
+            mapping: [
+              ...p.selectedAnalyticsMethod.mapping.mapping.filter(
+                (item) => item.inputPort.id !== input.id,
+              ),
+              tempInputMappings,
+            ],
           },
         },
         analyzedData: {},
-      };
-    });
+    }));
   };
-
-  // * Helper function
-  function updateMappingsMethod(newMappings, oldMappings) {
-    let found = false;
-    oldMappings.forEach((item, index) => {
-      if (item.inputPort.id === newMappings.inputPort.id) {
-        oldMappings[index].outputPort = newMappings.outputPort;
-        found = true;
-      }
-    });
-    if (!found) {
-      oldMappings.push(newMappings);
-    }
-    return oldMappings;
-  }
 
   return (
     <SectionCard
@@ -64,17 +45,22 @@ export default function InputsSelection() {
     >
       <Stack sx={{ gap: 2 }}>
         {analysis.inputs.map((input, index) => {
+          const selected = analysis.selectedAnalyticsMethod.mapping.mapping.find(
+            (item) => item.inputPort.id === input.id,
+          )?.outputPort;
           const requiredMissing =
-            Boolean(input.required) && input.selectedInput === undefined;
+            Boolean(input.required) && !selected;
           const labelText = `${input.title} ${
             input.required ? "(Required)" : "(Optional)"
           }`;
+          const labelId = `analysis-input-${input.id || index}-label`;
           return (
             <FormControl key={input.id ?? index} fullWidth error={requiredMissing}>
-              <InputLabel>{labelText}</InputLabel>
+              <InputLabel id={labelId}>{labelText}</InputLabel>
               <Select
+                labelId={labelId}
                 label={labelText}
-                value={input.selectedInput?.id || ""}
+                value={selected?.id || ""}
                 onChange={(event) => {
                   const selectedMenu = analyticsInputMenuList.find(
                     (menu) => menu.id === event.target.value

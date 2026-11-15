@@ -237,25 +237,7 @@ export function mappingsReady(inputs = [], mapping = { mapping: [] }, dataset) {
     });
 }
 
-export function parametersReady(params = []) {
-  return params.every((param) => {
-    const value = param.value ?? param.defaultValue;
-    const blank = value == null ||
-      (typeof value === "string" && !value.trim());
-    if (blank) return !param.required;
-    if (param.type === "Choice" &&
-      !String(param.possibleValues || "").split(",").includes(String(value))) {
-      return false;
-    }
-    if (["INTEGER", "DOUBLE", "FLOAT"].includes(param.dataType)) {
-      if (!["string", "number"].includes(typeof value)) return false;
-      const numeric = Number(value);
-      return Number.isFinite(numeric) &&
-        (param.dataType !== "INTEGER" || Number.isInteger(numeric));
-    }
-    return true;
-  });
-}
+export { parametersReady } from "../utils/analysis-readiness.js";
 
 export function withMapping(mapping, inputPort, outputPort) {
   return {
