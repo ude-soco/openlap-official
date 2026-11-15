@@ -31,6 +31,8 @@ public class CommunityPreviewStore {
         new com.mongodb.client.model.IndexOptions().expireAfter(0L, java.util.concurrent.TimeUnit.SECONDS));
     mongo.getCollection(COPIES).createIndex(new Document("owner", 1).append("poolId", 1),
         new com.mongodb.client.model.IndexOptions().unique(true));
+    mongo.getCollection(COPIES).createIndex(new Document("receiptId", 1));
+    mongo.getCollection("analytics-indicator").createIndex(new Document("communityCopyPending", 1).append("createdOn", 1));
     indexed = true;
   }
 
@@ -129,6 +131,33 @@ public class CommunityPreviewStore {
     mongo.getCollection(COPIES).updateOne(new Document("owner", copy.getString("owner"))
         .append("poolId", copy.getString("poolId")).append("receiptId", copy.getString("receiptId")).append("lease", token),
         new Document("$set", new Document("state", "SAVED")).append("$unset", new Document("lease", "").append("leaseUntil", "")));
+  }
+
+  /** Only IDs/provenance are read. A late worker can insert after its abandoned claim was removed. */
+  static List<Document> orphanPipeline(Date cutoff) {
+    return List.of(
+        new Document("$match", new Document("communityCopyPending", new Document("$type", "string").append("$ne", ""))
+            .append("createdOn", new Document("$lt", cutoff))),
+        new Document("$project", new Document("_id", 1).append("createdBy", 1).append("createdOn", 1)
+            .append("communitySourceId", 1).append("communitySourceVersion", 1)
+            .append("communityCopyPending", 1).append("communityDependency", 1)),
+        new Document("$lookup", new Document("from", COPIES).append("localField", "communityCopyPending")
+            .append("foreignField", "receiptId").append("as", "_copyClaims")),
+        new Document("$match", new Document("_copyClaims", new Document("$size", 0))),
+        new Document("$sort", new Document("communityDependency", 1).append("createdOn", 1).append("_id", 1)),
+        new Document("$limit", 50),
+        new Document("$project", new Document("_copyClaims", 0)));
+  }
+
+  public List<Document> orphanPendingRows() {
+    indexes();
+    return mongo.getCollection("analytics-indicator").aggregate(orphanPipeline(
+        Date.from(Instant.now().minusSeconds(15 * 60)))).into(new java.util.ArrayList<>());
+  }
+
+  public boolean hasClaim(String owner, String poolId, String receiptId) {
+    return mongo.getCollection(COPIES).find(new Document("owner", owner).append("poolId", poolId)
+        .append("receiptId", receiptId)).projection(new Document("_id", 1)).first() != null;
   }
 
   public static ValidationException invalid() {

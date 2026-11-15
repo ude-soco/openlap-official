@@ -21,6 +21,10 @@ public class CommunityCopyRecovery {
         try { service.cleanup(claim); }
         catch (RuntimeException error) { LOG.warn("A protected community copy still needs recovery; its incomplete parent remains hidden."); }
       }
+      for (var row : receipts.orphanPendingRows()) {
+        try { service.cleanupOrphan(row); }
+        catch (RuntimeException error) { LOG.warn("A protected orphaned community copy will be checked again after its pending writes are resolved."); }
+      }
     } catch (RuntimeException error) { LOG.warn("Community copy recovery is temporarily unavailable; it will retry."); }
   }
 }

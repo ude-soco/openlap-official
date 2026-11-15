@@ -220,6 +220,14 @@ class CommunityIndicatorExecutionTest {
     verify(statements, never()).findStatements(any());
   }
 
+  @Test void aPrivateValueInLegacyTimeBoundsIsRejectedBeforeItCanReachCopiedConfiguration() {
+    var source = basic("Activity count");
+    source.setIndicatorQuery(source.getIndicatorQuery().replace("2026-01-01", "author@example.test"));
+    assertThatThrownBy(() -> execution.execute(source, viewer, Map.of(), Map.of()))
+        .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("INCOMPATIBLE");
+    verify(statements, never()).findStatements(any());
+  }
+
   @Test void connectionChoicesExposeOnlyViewerOwnedIdentitiesInMatchedStores() {
     var source = basic("Activity count");
     viewer.getLrsConsumerList().add(connection(lrs, "second-viewer"));

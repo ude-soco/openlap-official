@@ -259,6 +259,69 @@ class CommunityIndicatorServiceTest {
     verify(receipts).releaseLease(any(), eq("cleanup-lease"));
   }
 
+  @Test void aWorkerThatResumesAfterItsClaimWasAbandonedCannotLeaveAPermanentHiddenRow() {
+    var row = orphanRow();
+    when(references.beginDelete(row.get("_id").toString())).thenReturn("gate");
+    @SuppressWarnings("unchecked") var collection = mock(com.mongodb.client.MongoCollection.class);
+    @SuppressWarnings("unchecked") var found = mock(com.mongodb.client.FindIterable.class);
+    when(mongo.getCollection("analytics-indicator")).thenReturn(collection);
+    when(collection.find(any(org.bson.conversions.Bson.class))).thenReturn(found);
+    when(collection.deleteOne(any(org.bson.conversions.Bson.class))).thenReturn(com.mongodb.client.result.DeleteResult.acknowledged(1));
+    // This row is the delayed insert after the old claim has already disappeared.
+    service.cleanupOrphan(row);
+    var filter = ArgumentCaptor.forClass(org.bson.conversions.Bson.class);
+    verify(collection).deleteOne(filter.capture());
+    assertThat((Document) filter.getValue()).containsEntry("_id", row.get("_id"))
+        .containsEntry("communityCopyPending", receiptId).containsEntry("communitySourceId", pool)
+        .containsEntry("createdBy", row.get("createdBy"));
+    verify(receipts, times(3)).hasClaim(viewer.getId(), pool, receiptId);
+    verify(references).cancelDelete(row.get("_id").toString(), "gate");
+    verifyNoInteractions(indicators);
+  }
+
+  @Test void orphanSweepDoesNotTouchARecoveredActiveCopyClaim() {
+    var row = orphanRow();
+    when(receipts.hasClaim(viewer.getId(), pool, receiptId)).thenReturn(false, true);
+    when(references.beginDelete(row.get("_id").toString())).thenReturn("gate");
+    service.cleanupOrphan(row);
+    verifyNoInteractions(mongo, indicators);
+    verify(references).cancelDelete(row.get("_id").toString(), "gate");
+  }
+
+  @Test void orphanSweepRetainsAReferencedSupportingSource() {
+    var row = orphanRow();
+    when(references.beginDelete(row.get("_id").toString())).thenReturn("gate");
+    @SuppressWarnings("unchecked") var collection = mock(com.mongodb.client.MongoCollection.class);
+    @SuppressWarnings("unchecked") var found = mock(com.mongodb.client.FindIterable.class);
+    when(mongo.getCollection("analytics-indicator")).thenReturn(collection);
+    when(collection.find(any(org.bson.conversions.Bson.class))).thenReturn(found);
+    when(found.first()).thenReturn(new Document("_id", "referencing-parent"));
+    service.cleanupOrphan(row);
+    verify(collection, never()).deleteOne(any(org.bson.conversions.Bson.class));
+    verify(references).cancelDelete(row.get("_id").toString(), "gate");
+  }
+
+  @Test void orphanSweepNeverOverridesAnUncertainWriteReservation() {
+    var row = orphanRow();
+    when(references.beginDelete(row.get("_id").toString())).thenThrow(new ConflictException("INDICATOR_REFERENCE_BUSY", "Protected write"));
+    assertThatThrownBy(() -> service.cleanupOrphan(row)).isInstanceOf(ConflictException.class);
+    verifyNoInteractions(mongo, indicators);
+  }
+
+  @Test void orphanScanReadsOnlyIdentitiesAndProvenanceAndExcludesRowsWithExistingClaims() {
+    var pipeline = CommunityPreviewStore.orphanPipeline(new Date());
+    Document projection = pipeline.get(1).get("$project", Document.class);
+    assertThat(projection.keySet()).contains("_id", "createdBy", "communityCopyPending")
+        .doesNotContain("indicatorQuery", "configurationRequest", "analyticsTechniqueReference");
+    assertThat(pipeline.toString()).contains("$lookup", "receiptId", "_copyClaims", "$size=0", "$limit=50");
+  }
+
+  Document orphanRow() {
+    return new Document("_id", new ObjectId()).append("createdBy", new com.mongodb.DBRef("openlap-users", new ObjectId(viewer.getId())))
+        .append("communitySourceId", pool).append("communitySourceVersion", "version")
+        .append("communityCopyPending", receiptId).append("communityDependency", true);
+  }
+
   Document copyClaim(CommunityIndicatorExecution.Graph graph) {
     var ids = new ArrayList<String>(); ids.add(graph.root().getId()); graph.leaves().forEach(row -> ids.add(row.getId()));
     return new Document("owner", viewer.getId()).append("poolId", pool).append("version", "version")

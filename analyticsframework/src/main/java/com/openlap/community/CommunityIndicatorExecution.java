@@ -227,7 +227,7 @@ public class CommunityIndicatorExecution {
       if (author.getName() != null) secrets.addAll(Arrays.asList(author.getName().split("[^a-zA-Z0-9]+")));
     }
     for (var original : query.getLrsStores()) if (original != null) secrets.add(original.getUniqueIdentifier());
-    Object selectors = Arrays.asList(query.getActivityTypes(), query.getActionOnActivities(), query.getActivities(), query.getOutputs());
+    Object selectors = Arrays.asList(query.getActivityTypes(), query.getActionOnActivities(), query.getActivities(), query.getOutputs(), query.getDuration().getFrom(), query.getDuration().getUntil());
     String values = gson.toJson(selectors).toLowerCase(Locale.ROOT);
     if (secrets.stream().filter(Objects::nonNull).anyMatch(secret -> secret.length() > 2 && values.contains(secret.toLowerCase(Locale.ROOT))))
       throw failure("INCOMPATIBLE", "This indicator uses private selectors that cannot be reused anonymously.");
@@ -279,6 +279,8 @@ public class CommunityIndicatorExecution {
       List<OpenLAPDynamicParam> params = gson.fromJson(method.getAdditionalParams(), new TypeToken<List<OpenLAPDynamicParam>>() {}.getType());
       List<Object> cleanParams = new ArrayList<>();
       for (var param : params == null ? List.<OpenLAPDynamicParam>of() : params) {
+        if (param.getId() == null || !param.getId().equals(CommunitySanitizer.text(param.getId(), source.getCreatedBy(), "\u0000")))
+          throw failure("INCOMPATIBLE", "A saved analytics parameter contains private content and cannot be shared safely.");
         Object value = param.getValue();
         var safe = com.google.gson.JsonParser.parseString(remap(gson.toJson(value), targets));
         requirePublicParameter(safe, source.getCreatedBy(), 0);

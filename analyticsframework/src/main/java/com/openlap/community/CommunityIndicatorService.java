@@ -182,6 +182,28 @@ public class CommunityIndicatorService {
     }
   }
 
+  /** Handles a worker that resumed between its last lease check and a delayed database insert. */
+  public void cleanupOrphan(Document row) {
+    if (!(row.get("createdBy") instanceof com.mongodb.DBRef owner)
+        || row.get("_id") == null || row.getString("communitySourceId") == null
+        || row.getString("communitySourceVersion") == null || row.getString("communityCopyPending") == null) return;
+    String viewer = owner.getId().toString(), poolId = row.getString("communitySourceId"),
+        receiptId = row.getString("communityCopyPending"), id = row.get("_id").toString();
+    if (receipts.hasClaim(viewer, poolId, receiptId)) return;
+    String gate = references.beginDelete(id);
+    try {
+      List<Object> identities = ObjectId.isValid(id) ? List.of(id, new ObjectId(id)) : List.of(id);
+      if (receipts.hasClaim(viewer, poolId, receiptId)) return;
+      var collection = mongo.getCollection("analytics-indicator");
+      if (collection.find(new Document("indicators.indicator.$id", new Document("$in", identities))).first() != null) return;
+      // Recheck immediately before the conditional delete; an active/recovered copy always wins.
+      if (receipts.hasClaim(viewer, poolId, receiptId)) return;
+      collection.deleteOne(new Document("_id", row.get("_id")).append("createdBy", owner)
+          .append("communitySourceId", poolId).append("communitySourceVersion", row.getString("communitySourceVersion"))
+          .append("communityCopyPending", receiptId));
+    } finally { references.cancelDelete(id, gate); }
+  }
+
   private boolean ownedCopy(Indicator value, User viewer, String poolId, String version) {
     return value.getCreatedBy() != null && viewer.getId().equals(value.getCreatedBy().getId())
         && poolId.equals(value.getCommunitySourceId()) && version.equals(value.getCommunitySourceVersion());
