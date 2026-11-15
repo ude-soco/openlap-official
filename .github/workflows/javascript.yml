@@ -70,6 +70,7 @@ jobs:
         run: |
           npm run test:visualization-descriptor
           npm run test:chart-runtime
+          OPENLAP_DRAFT_FIXTURE_PORT=15287 npm run test:draft-foundation
       - name: Verify real application previews and dependency interactions
         env:
           OPENLAP_TEST_BASE_URL: http://127.0.0.1:15281
@@ -85,6 +86,7 @@ jobs:
           done
           curl --silent --fail "$OPENLAP_TEST_BASE_URL" > /dev/null
           npm run test:public-routes
+          npm run test:indicator-drafts
           npm run test:analysis-preview
           npm run test:complex-indicators
           npm run test:saved-preview

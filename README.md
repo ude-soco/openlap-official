@@ -287,6 +287,7 @@ building, releasing and recovering installations; they are not additional local 
 | Frontend architecture | [UI architecture](indicatorframework/docs/UI_ARCHITECTURE.md) |
 | Specification cards, drafts and saved-card compatibility | [ISC architecture](indicatorframework/docs/ISC_ARCHITECTURE.md) |
 | Composite and multilevel indicators, with a local example account | [Complex indicator guide](docs/complex-indicators.md) |
+| Private indicator drafts, autosave, recovery and concurrent editing | [Indicator drafts](docs/indicator-drafts.md) |
 | Content editing and review | [Content management](docs/content-management-testing.md) |
 | Authentication | [Token policy](analyticsframework/docs/AUTH_TOKEN_POLICY.md) |
 | Plugin storage | [Artifact migration](docs/plugin-artifact-migration.md) · [S3-compatible storage](docs/plugin-storage-versity.md) |

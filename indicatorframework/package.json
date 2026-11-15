@@ -16,6 +16,8 @@
     "test:mui-updates": "node scripts/test-mui-updates.cjs",
     "test:runtime-updates": "node scripts/test-runtime-updates.cjs",
     "test:complex-indicators": "node scripts/test-complex-indicators.cjs",
+    "test:indicator-drafts": "node scripts/test-indicator-drafts.cjs",
+    "test:draft-foundation": "node src/pages/indicators/indicator-editor/drafts/test-draft-foundation.cjs",
     "test:visualization-descriptor": "node scripts/test-visualization-descriptor.cjs",
     "test:chart-runtime": "node scripts/test-chart-runtime.cjs"
   },
