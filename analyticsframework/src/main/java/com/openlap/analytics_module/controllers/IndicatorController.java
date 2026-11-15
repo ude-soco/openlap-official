@@ -159,6 +159,7 @@ public class IndicatorController {
   @GetMapping("/my/{indicatorId}/copy")
   public ResponseEntity<?> copyMyExistingIndicator(
       HttpServletRequest request, @PathVariable String indicatorId) {
+    sourceGuard.requireOwned(request, indicatorId);
     indicatorService.copyMyExistingIndicator(request, indicatorId);
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)

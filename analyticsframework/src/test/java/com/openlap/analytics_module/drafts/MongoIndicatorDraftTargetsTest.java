@@ -166,6 +166,11 @@ public class MongoIndicatorDraftTargetsTest {
         .append("timesExecuted", 17);
   }
 
+  @Test public void pendingCommunityGraphsCannotBeReadAsEditableSavedDefinitions() {
+    saved.set(original().append("communityCopyPending", "unacknowledged-receipt"));
+    assertThatThrownBy(() -> targets.snapshot(owner, target)).isInstanceOf(NotFoundException.class);
+  }
+
   @Test
   public void newTargetIsInsertedOnceAndMatchingRetriesRecoverItsReceipt() {
     targets.publish(owner, draft(), indicator(), "hash");

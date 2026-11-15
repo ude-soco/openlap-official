@@ -74,6 +74,7 @@ public class MongoIndicatorDraftTargets implements IndicatorDraftTargets {
 
   private static void requireOwner(Document source, String owner) {
     if (source == null
+        || source.get("communityCopyPending") != null
         || !(source.get("createdBy") instanceof DBRef creator)
         || !owner.equals(creator.getId().toString()))
       throw new NotFoundException(

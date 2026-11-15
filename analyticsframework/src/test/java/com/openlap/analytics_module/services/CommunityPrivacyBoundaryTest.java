@@ -32,6 +32,8 @@ public class CommunityPrivacyBoundaryTest {
         .isInstanceOf(ComplexIndicatorException.class);
     assertThatThrownBy(() -> controller.findCompatibleIndicators(request, "private", 0))
         .isInstanceOf(ComplexIndicatorException.class);
+    assertThatThrownBy(() -> controller.copyMyExistingIndicator(request, "private"))
+        .isInstanceOf(ComplexIndicatorException.class);
     source.setCreatedBy(viewer); source.setCommunityCopyPending("unacknowledged-copy");
     assertThatThrownBy(() -> controller.getIndicatorById(request, "private", false))
         .isInstanceOf(ComplexIndicatorException.class);
