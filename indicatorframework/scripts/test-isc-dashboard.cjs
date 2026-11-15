@@ -244,7 +244,13 @@ async function actions(browser) {
     await page.getByRole("textbox", { name: "I need an indicator that shows", exact: true }).waitFor();
     assert.equal(await page.getByRole("textbox", { name: "I need an indicator that shows", exact: true }).inputValue(), "CPU Activity Trend (editing)");
     assert.deepEqual(f.store.get("saved"), sourceBefore, "Opening an edit draft cannot overwrite the saved ISC");
-    await page.goto(new URL("/isc", base).href);
+    await page.getByRole("navigation", { name: "Breadcrumb", exact: true }).getByRole("link", { name: "My ISCs", exact: true }).click();
+    await page.getByRole("dialog", { name: "Leave this editing session?", exact: true })
+      .getByRole("button", { name: "Keep this draft", exact: true }).click();
+    await page.waitForURL("**/isc");
+    await rowOf(page, "CPU Activity Trend (editing)").waitFor();
+    assert.deepEqual(f.store.get("saved"), sourceBefore, "Keeping the editing draft preserves its saved source");
+    assert.equal(f.store.has("editing"), true, "The guarded leave action retains the backend editing draft");
     await rowOf(page, "Working engagement draft").getByRole("button", { name: "Continue Working engagement draft", exact: true }).click();
     await page.waitForURL("**/isc/drafts/draft");
     await page.getByRole("textbox", { name: "I need an indicator that shows", exact: true }).waitFor();
