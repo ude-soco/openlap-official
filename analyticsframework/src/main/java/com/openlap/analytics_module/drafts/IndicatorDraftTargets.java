@@ -13,5 +13,9 @@ public interface IndicatorDraftTargets {
     return false;
   }
 
+  void updateSaved(String owner, Document expected, Indicator indicator);
+
+  void deleteSaved(String owner, Document expected);
+
   void publish(String owner, Document draft, Indicator indicator, String completionHash);
 }

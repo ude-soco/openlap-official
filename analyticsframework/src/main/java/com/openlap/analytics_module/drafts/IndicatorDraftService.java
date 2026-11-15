@@ -81,14 +81,18 @@ public class IndicatorDraftService {
     migrated.put("schemaVersion", 1);
     migrated.put("revision", 0L);
     migrated.put("status", "DRAFT");
-    migrated.put(
-        "name",
+    String legacyName =
         recovered == null
             ? "Unrecoverable legacy draft"
-            : name(
-                type(old) == IndicatorType.BASIC
-                    ? recovered.path("indicator").path("indicatorName").asText()
-                    : recovered.path("name").asText()));
+            : type(old) == IndicatorType.BASIC
+                ? recovered.path("indicator").path("indicatorName").asText()
+                : recovered.path("name").asText();
+    // Older saves had no title bound. Keep their full configuration while fitting display metadata.
+    int displayLength = Math.min(300, legacyName.length());
+    if (displayLength < legacyName.length()
+        && displayLength > 0
+        && Character.isHighSurrogate(legacyName.charAt(displayLength - 1))) displayLength--;
+    migrated.put("name", name(legacyName.substring(0, displayLength)));
     Object previousTime = old.get("lastUpdated");
     Date timestamp = previousTime instanceof Date ? (Date) previousTime : new Date();
     migrated.put("createdAt", timestamp);

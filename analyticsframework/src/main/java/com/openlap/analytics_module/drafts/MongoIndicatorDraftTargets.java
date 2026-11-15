@@ -60,17 +60,93 @@ public class MongoIndicatorDraftTargets implements IndicatorDraftTargets {
   @Override
   public Document snapshot(String owner, String id) {
     Document found = mongo.getCollection(COLLECTION).find(identity(id)).first();
-    if (found == null
-        || !(found.get("createdBy") instanceof DBRef creator)
-        || !owner.equals(creator.getId().toString()))
-      throw new NotFoundException(
-          "INDICATOR_NOT_FOUND", "This saved indicator is not available to edit.");
+    requireOwner(found, owner);
     Document snapshot = new Document("_id", found.get("_id"));
     DEFINITION.forEach(
         key -> {
           if (found.containsKey(key)) snapshot.put(key, found.get(key));
         });
     return snapshot;
+  }
+
+  private static void requireOwner(Document source, String owner) {
+    if (source == null
+        || !(source.get("createdBy") instanceof DBRef creator)
+        || !owner.equals(creator.getId().toString()))
+      throw new NotFoundException(
+          "INDICATOR_NOT_FOUND", "This saved indicator is not available to edit.");
+  }
+
+  private static Document definitionFilter(Document source) {
+    Document filter = new Document("_id", source.get("_id"));
+    DEFINITION.forEach(
+        key ->
+            filter.put(
+                key, source.containsKey(key) ? source.get(key) : new Document("$exists", false)));
+    return filter;
+  }
+
+  private boolean updateDefinition(Document source, Document output) {
+    Document set = new Document();
+    Document unset = new Document();
+    DEFINITION.forEach(
+        key -> {
+          if (output.containsKey(key)) set.put(key, output.get(key));
+          else unset.put(key, "");
+        });
+    // Legacy edits keep receipt markers and counters. Only a new draft publication replaces its
+    // markers.
+    for (String marker :
+        List.of(COMPLETION_ID, COMPLETION_HASH, "_complexIndicatorWrite", "_pluginReferenceWrite"))
+      if (output.containsKey(marker)) set.put(marker, output.get(marker));
+    Document update = new Document("$set", set);
+    if (!unset.isEmpty()) update.put("$unset", unset);
+    return mongo
+            .getCollection(COLLECTION)
+            .updateOne(definitionFilter(source), update)
+            .getMatchedCount()
+        == 1;
+  }
+
+  @Override
+  public void updateSaved(String owner, Document expected, Indicator indicator) {
+    requireOwner(expected, owner);
+    indicator.setId(expected.get("_id").toString());
+    Document output = new Document();
+    mongo.getConverter().write(indicator, output);
+    output.put("_id", expected.get("_id"));
+    sources.onBeforeSave(new BeforeSaveEvent<>(indicator, output, COLLECTION));
+    try {
+      plugins.beforeSave(output, COLLECTION);
+    } catch (RuntimeException error) {
+      release(indicator, output);
+      throw error;
+    }
+    boolean saved = updateDefinition(expected, output);
+    // An uncertain driver exception retains pins; an acknowledged nonmatch can release them.
+    release(indicator, output);
+    if (!saved) throw conflict();
+  }
+
+  @Override
+  public void deleteSaved(String owner, Document expected) {
+    requireOwner(expected, owner);
+    // The caller holds the existing deletion gate, preventing a source writer from racing this CAS.
+    // Publication creates its claim before its target. Once a target is visible, this protects the
+    // gap between that write and its durable completion receipt (including a crashed publisher).
+    if (mongo
+            .getCollection(IndicatorDraftStore.COLLECTION)
+            .find(
+                new Document("targetIndicatorId", expected.get("_id").toString())
+                    .append("status", "COMPLETING"))
+            .projection(new Document("_id", 1))
+            .first()
+        != null)
+      throw new ConflictException(
+          "DRAFT_FINALIZING",
+          "This indicator has an unfinished save. Resume that save before deleting it.");
+    if (mongo.getCollection(COLLECTION).deleteOne(definitionFilter(expected)).getDeletedCount()
+        != 1) throw conflict();
   }
 
   @Override
@@ -145,24 +221,7 @@ public class MongoIndicatorDraftTargets implements IndicatorDraftTargets {
         saved = false;
       }
     } else {
-      Document filter = new Document("_id", source.get("_id"));
-      DEFINITION.forEach(
-          key ->
-              filter.put(
-                  key, source.containsKey(key) ? source.get(key) : new Document("$exists", false)));
-      // Only definition fields change; execution counters and unrelated metadata stay intact.
-      Document set = new Document(COMPLETION_ID, draftId).append(COMPLETION_HASH, hash);
-      Document unset = new Document();
-      DEFINITION.forEach(
-          key -> {
-            if (output.containsKey(key)) set.put(key, output.get(key));
-            else unset.put(key, "");
-          });
-      for (String marker : List.of("_complexIndicatorWrite", "_pluginReferenceWrite"))
-        if (output.containsKey(marker)) set.put(marker, output.get(marker));
-      Document update = new Document("$set", set);
-      if (!unset.isEmpty()) update.put("$unset", unset);
-      saved = mongo.getCollection(COLLECTION).updateOne(filter, update).getMatchedCount() == 1;
+      saved = updateDefinition(source, output);
     }
     // Uncertain driver exceptions deliberately keep reservations. A matching retry releases them.
     release(indicator, output);

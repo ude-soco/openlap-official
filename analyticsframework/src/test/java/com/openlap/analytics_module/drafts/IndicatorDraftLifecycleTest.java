@@ -483,6 +483,25 @@ public class IndicatorDraftLifecycleTest {
   }
 
   @Test
+  public void longLegacyTitlesRemainReadableAndDiscardableWithoutTruncatingTheirConfiguration() {
+    String title = "a".repeat(299) + "😀" + "older title";
+    store.rows.put(
+        "long-legacy",
+        new Document("_id", "long-legacy")
+            .append("ownerIdForTest", owner)
+            .append("indicatorType", "BASIC")
+            .append("session", config(title).toString()));
+    var list = service.list(request, 0, 10, "", null, "updatedAt", "desc");
+    assertThat(list.getContent()).hasSize(1);
+    assertThat(list.getContent().get(0).name()).isEqualTo("a".repeat(299));
+    var detail = service.get(request, "long-legacy");
+    assertThat(detail.configuration().path("indicator").path("indicatorName").asText())
+        .isEqualTo(title);
+    assertThat(service.discard(request, detail.id(), detail.revision()).status())
+        .isEqualTo("DISCARDED");
+  }
+
+  @Test
   public void invalidRequestIdsSortColumnsAndOversizedSearchesFailBeforePersistence() {
     assertThatThrownBy(() -> create("not-a-uuid", "Draft")).isInstanceOf(ValidationException.class);
     assertThatThrownBy(() -> service.list(request, 0, 10, "", null, "createdBy.$id", "asc"))

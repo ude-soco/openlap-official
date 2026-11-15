@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.*;
 import com.mongodb.client.*;
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.openlap.analytics_module.entities.Indicator;
 import com.openlap.analytics_module.services.ComplexIndicatorReferences;
@@ -33,6 +34,11 @@ public class MongoIndicatorDraftTargetsTest {
   @SuppressWarnings("unchecked")
   private final MongoCollection<Document> catalog = mock(MongoCollection.class);
 
+  @SuppressWarnings("unchecked")
+  private final MongoCollection<Document> drafts = mock(MongoCollection.class);
+
+  private final AtomicReference<Document> pendingClaim = new AtomicReference<>();
+
   private final ObjectMapper mapper = new ObjectMapper();
   private final IndicatorDraftConfiguration configurations =
       new IndicatorDraftConfiguration(mapper);
@@ -47,7 +53,12 @@ public class MongoIndicatorDraftTargetsTest {
     when(mongo.getConverter()).thenReturn(converter);
     when(mongo.getCollection(anyString()))
         .thenAnswer(
-            call -> "analytics-indicator".equals(call.getArgument(0)) ? indicators : catalog);
+            call ->
+                "analytics-indicator".equals(call.getArgument(0))
+                    ? indicators
+                    : IndicatorDraftStore.COLLECTION.equals(call.getArgument(0))
+                        ? drafts
+                        : catalog);
     @SuppressWarnings("unchecked")
     FindIterable<Document> rows = mock(FindIterable.class);
     @SuppressWarnings("unchecked")
@@ -55,6 +66,11 @@ public class MongoIndicatorDraftTargetsTest {
     when(catalog.find()).thenReturn(rows);
     when(rows.projection(any())).thenReturn(rows);
     when(rows.iterator()).thenReturn(cursor);
+    @SuppressWarnings("unchecked")
+    FindIterable<Document> pending = mock(FindIterable.class);
+    when(drafts.find(any(Document.class))).thenReturn(pending);
+    when(pending.projection(any())).thenReturn(pending);
+    when(pending.first()).thenAnswer(call -> pendingClaim.get());
     when(indicators.find(any(Document.class)))
         .thenAnswer(
             call -> {
@@ -70,7 +86,7 @@ public class MongoIndicatorDraftTargetsTest {
               Indicator indicator = call.getArgument(0);
               out.putAll(
                   new Document("_id", new ObjectId(indicator.getId()))
-                      .append("name", "Updated")
+                      .append("name", indicator.getName() == null ? "Updated" : indicator.getName())
                       .append("createdBy", new DBRef("openlap-users", new ObjectId(owner)))
                       .append("indicatorType", "BASIC")
                       .append("createdOn", new Date(2000))
@@ -110,6 +126,24 @@ public class MongoIndicatorDraftTargetsTest {
                   update.get("$unset", Document.class).keySet().forEach(current::remove);
               }
               return UpdateResult.acknowledged(matches ? 1L : 0L, matches ? 1L : 0L, null);
+            });
+    when(indicators.deleteOne(any(Document.class)))
+        .thenAnswer(
+            call -> {
+              Document filter = call.getArgument(0), current = saved.get();
+              boolean matches =
+                  current != null
+                      && filter.entrySet().stream()
+                          .allMatch(
+                              entry -> {
+                                Object expected = entry.getValue();
+                                return expected instanceof Document doc
+                                        && doc.containsKey("$exists")
+                                    ? !current.containsKey(entry.getKey())
+                                    : Objects.equals(expected, current.get(entry.getKey()));
+                              });
+              if (matches) saved.set(null);
+              return DeleteResult.acknowledged(matches ? 1 : 0);
             });
     targets = new MongoIndicatorDraftTargets(mongo, sources, mapper, configurations);
   }
@@ -215,5 +249,77 @@ public class MongoIndicatorDraftTargetsTest {
         .isInstanceOf(ConflictException.class);
     assertThat(inserts).hasValue(1);
     assertThat(saved.get()).containsEntry("_draftCompletionHash", "first");
+  }
+
+  @Test
+  public void legacyUpdateCannotOverwriteADraftCommittedAfterItsOriginalRead() {
+    saved.set(original());
+    Document legacyRead = targets.snapshot(owner, target);
+    targets.publish(owner, draft().append("sourceSnapshot", legacyRead), indicator(), "hash");
+    Indicator legacy = new Indicator();
+    legacy.setName("Stale legacy update");
+    assertThatThrownBy(() -> targets.updateSaved(owner, legacyRead, legacy))
+        .isInstanceOf(ConflictException.class);
+    assertThat(saved.get())
+        .containsEntry("name", "Updated")
+        .containsEntry("_draftCompletionId", "draft")
+        .containsEntry("_draftCompletionHash", "hash")
+        .containsEntry("timesExecuted", 17);
+  }
+
+  @Test
+  public void freshLegacyUpdatesPreserveCompletionReceiptsCountersAndUnrelatedMetadata() {
+    saved.set(original().append("goalRef", new DBRef("analytics-goal", "goal")));
+    Document source = targets.snapshot(owner, target);
+    targets.publish(owner, draft().append("sourceSnapshot", source), indicator(), "hash");
+    Document current = targets.snapshot(owner, target);
+    saved.get().put("timesExecuted", 23);
+    Indicator legacy = new Indicator();
+    legacy.setName("Later intentional edit");
+    targets.updateSaved(owner, current, legacy);
+    assertThat(saved.get())
+        .containsEntry("name", "Later intentional edit")
+        .containsEntry("timesExecuted", 23)
+        .containsEntry("goalRef", new DBRef("analytics-goal", "goal"))
+        .containsEntry("_draftCompletionId", "draft")
+        .containsEntry("_draftCompletionHash", "hash");
+    assertThat(targets.recover(owner, draft(), "hash")).isTrue();
+  }
+
+  @Test
+  public void deletionCannotRemoveADraftCommittedAfterItsOriginalReadButIgnoresCounterChanges() {
+    saved.set(original());
+    Document before = targets.snapshot(owner, target);
+    targets.publish(owner, draft().append("sourceSnapshot", before), indicator(), "hash");
+    assertThatThrownBy(() -> targets.deleteSaved(owner, before))
+        .isInstanceOf(ConflictException.class);
+    assertThat(saved.get()).containsEntry("name", "Updated");
+    Document latest = targets.snapshot(owner, target);
+    saved.get().put("timesExecuted", 24);
+    targets.deleteSaved(owner, latest);
+    assertThat(saved.get()).isNull();
+  }
+
+  @Test
+  public void deletionWaitsUntilAnAlreadyPublishedTargetHasItsCompletionReceipt() {
+    saved.set(original());
+    Document source = targets.snapshot(owner, target);
+    targets.publish(owner, draft().append("sourceSnapshot", source), indicator(), "hash");
+    Document visibleTarget = targets.snapshot(owner, target);
+    pendingClaim.set(
+        new Document("_id", "draft")
+            .append("status", "COMPLETING")
+            .append("targetIndicatorId", target));
+    assertThatThrownBy(() -> targets.deleteSaved(owner, visibleTarget))
+        .isInstanceOf(ConflictException.class)
+        .hasMessageContaining("unfinished save");
+    assertThat(saved.get()).containsEntry("_draftCompletionId", "draft");
+    verify(indicators, never()).deleteOne(any(Document.class));
+    assertThat(targets.recover(owner, draft(), "hash")).isTrue();
+    pendingClaim.set(null); // the completion receipt is now durable
+    targets.deleteSaved(owner, visibleTarget);
+    assertThat(saved.get()).isNull();
+    verify(drafts, times(2))
+        .find(eq(new Document("targetIndicatorId", target).append("status", "COMPLETING")));
   }
 }

@@ -58,7 +58,7 @@ public class IndicatorJsonCompatibilityTest {
   private final VisualizationMethodUtilityService visualizations =
       mock(VisualizationMethodUtilityService.class);
   private final IndicatorUtilityServiceImpl utility =
-      new IndicatorUtilityServiceImpl(null, null, visualizations, analytics, indicators);
+      new IndicatorUtilityServiceImpl(null, null, visualizations, analytics, indicators, null);
   private final IndicatorBasicServiceImpl basic =
       new IndicatorBasicServiceImpl(analytics, statements, utility, null, caches);
 

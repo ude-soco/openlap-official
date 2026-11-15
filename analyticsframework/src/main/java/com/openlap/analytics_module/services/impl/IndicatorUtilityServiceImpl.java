@@ -3,6 +3,8 @@ package com.openlap.analytics_module.services.impl;
 import com.google.gson.Gson;
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorsToMergeRequest;
 import com.openlap.analytics_module.entities.Indicator;
+import com.openlap.analytics_module.drafts.IndicatorDraftTargets;
+import org.bson.Document;
 import com.openlap.analytics_module.entities.utility_entities.*;
 import com.openlap.analytics_module.exceptions.indicator.IndicatorManipulationNotAllowed;
 import com.openlap.analytics_module.exceptions.indicator.IndicatorNotFoundException;
@@ -53,6 +55,7 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
   private final VisualizationMethodUtilityService visualizationMethodUtilityService;
   private final AnalyticsTechniqueService analyticsTechniqueService;
   private final IndicatorRepository indicatorRepository;
+  private final IndicatorDraftTargets savedDefinitions;
 
   @Override
   public Indicator fetchIndicatorMethod(String indicatorId) {
@@ -130,17 +133,13 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
   public void updateIndicator(
       HttpServletRequest request, IndicatorReference indicatorReference, String indicatorId) {
     log.info("Attempting to update an indicator.");
-    Indicator foundIndicator = fetchIndicatorMethod(indicatorId);
     User userFromToken = tokenService.getUserFromToken(request);
+    Document expected = savedDefinitions.snapshot(userFromToken.getId(), indicatorId);
     try {
-      if (!foundIndicator.getCreatedBy().getId().equals(userFromToken.getId())) {
-        throw new IndicatorManipulationNotAllowed(
-            "You do not have the permission to update the indicator");
-      }
       Indicator indicator = new Indicator();
-      indicator.setId(foundIndicator.getId());
+      indicator.setId(expected.get("_id").toString());
       prepareIndicator(request, indicatorReference, indicator);
-      indicatorRepository.save(indicator);
+      savedDefinitions.updateSaved(userFromToken.getId(), expected, indicator);
       log.info("Successfully updated an indicator");
     } catch (IndicatorManipulationNotAllowed e) {
       throw e;
@@ -149,6 +148,16 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
     } catch (Exception e) {
       throw new DatabaseOperationException("Could not access database to update the indicator", e);
     }
+  }
+
+  @Override
+  public Document snapshotIndicatorDefinition(HttpServletRequest request, String indicatorId) {
+    return savedDefinitions.snapshot(tokenService.getUserFromToken(request).getId(), indicatorId);
+  }
+
+  @Override
+  public void deleteIndicatorDefinition(HttpServletRequest request, Document expected) {
+    savedDefinitions.deleteSaved(tokenService.getUserFromToken(request).getId(), expected);
   }
 
   /** Validate the complete definition without writing it; draft completion owns the atomic write. */
