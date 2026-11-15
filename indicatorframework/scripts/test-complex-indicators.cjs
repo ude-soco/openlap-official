@@ -6,6 +6,7 @@
 // OPENLAP_COMPLEX_TERMINAL_ONLY=1 checks an uncertain completion and exact retry.
 const { webkit } = require("playwright");
 const assert = require("node:assert/strict");
+const workspacePage = require("./indicator-workspace-fixture.cjs");
 const chartRendererFixture = require("./chart-renderer-fixture.cjs");
 const base = new URL(
   process.env.OPENLAP_TEST_BASE_URL || "http://127.0.0.1:5181",
@@ -553,6 +554,12 @@ let chartCatalogFailures = 0;
         draftWrites.push({ path, body: structuredClone(body), id: item.id });
         return send(item);
       }
+      if (path === "v1/indicators/my/workspace") return send(workspacePage({
+        saved: [
+          ...saved.map((item, index) => ({ id: "saved-" + index, name: item.name, type: item.indicatorType })),
+          { id: "access", name: "Access count", type: "BASIC" },
+        ], drafts: [...drafts.values()], query: url.searchParams,
+      }));
       if (path === "v1/indicators/my")
         return send({
           content: [
@@ -1454,6 +1461,7 @@ let chartCatalogFailures = 0;
     assert.equal(draftReceipts.get(durableDraft.id).configuration, null, "The terminal receipt retains no authoring configuration");
     assert.equal(saved.length, completedBeforeExit, "Discarding an incomplete draft preserves saved indicators");
     const openBlockedDeletion = async () => {
+      await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("Access count");
       await button("More actions for Access count").click();
       await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
       await page

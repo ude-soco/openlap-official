@@ -56,6 +56,7 @@ jobs:
         run: |
           npm ls --all > "$RUNNER_TEMP/openlap-dependency-tree.txt"
           npm test
+          node --test scripts/indicator-workspace-fixture.test.cjs
       - name: Build application
         run: npm run build
       - name: Verify authentication routing datasets and fonts

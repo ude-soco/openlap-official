@@ -4,6 +4,9 @@
 // OPENLAP_TEST_BASE_URL=http://127.0.0.1:5197 node scripts/test-indicator-drafts.cjs
 const { webkit } = require("playwright");
 const assert = require("node:assert/strict");
+const fs = require("node:fs/promises");
+const path = require("node:path");
+const workspacePage = require("./indicator-workspace-fixture.cjs");
 const base = new URL(process.env.OPENLAP_TEST_BASE_URL || "http://127.0.0.1:5197");
 assert.equal(base.protocol, "http:");
 assert.ok(["127.0.0.1", "localhost", "[::1]"].includes(base.hostname));
@@ -19,6 +22,14 @@ const ownerOf = (request) => {
 const lrs = { id: "fixture-lrs", lrsId: "fixture-lrs", lrsTitle: "Draft fixture learning records", uniqueIdentifier: "fixture-user" };
 const savedSource = { id: "saved-source", name: "Previously saved indicator", type: "BASIC", configuration: { retained: "unchanged" } };
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+async function dashboardScreenshot(page, filename) {
+  if (!process.env.OPENLAP_DASHBOARD_SCREENSHOT_DIR) return;
+  await fs.mkdir(process.env.OPENLAP_DASHBOARD_SCREENSHOT_DIR, { recursive: true, mode: 0o700 });
+  await page.mouse.move(0, 0);
+  await until(async () => await page.getByRole("alert").filter({ hasText: /Draft discarded\.|Draft renamed\.|Indicator deleted\./ }).filter({ visible: true }).count() === 0,
+    "Success feedback settles before the review screenshot");
+  await page.screenshot({ path: path.join(process.env.OPENLAP_DASHBOARD_SCREENSHOT_DIR, filename), animations: "disabled", fullPage: page.viewportSize().width <= 500 });
+}
 async function until(predicate, description) {
   const deadline = Date.now() + 12000;
   while (!await predicate()) { assert.ok(Date.now() < deadline, description); await pause(25); }
@@ -34,9 +45,11 @@ async function fixture(browser, { seeded = false, legacy = null, claimed = false
     return serializeBasicDraft(state);
   };
   const accounts = new Map([[FIRST, new Map()], [SECOND, new Map()]]);
-  const calls = [], failures = [], pendingCreates = [], terminalCommits = [];
+  const savedAccounts = new Map([[FIRST, new Map()], [SECOND, new Map()]]);
+  const calls = [], failures = [], pendingCreates = [], terminalCommits = [], workspacePlans = [];
   let sequence = 0, holdCreate = false;
   const timestamps = (index = 0) => new Date(Date.UTC(2026, 10, 15, 10, index)).toISOString();
+  savedAccounts.get(FIRST).set(savedSource.id, { ...clone(savedSource), createdOn: timestamps(30) });
   const seed = (id, name, type = "BASIC", extra = {}) => {
     const item = { id, name, indicatorType: type, schemaVersion: 1, revision: 3, status: "DRAFT", recoverable: true,
       configuration: type === "BASIC" ? makeConfiguration(name, id === "alpha") : { schemaVersion: 1, type, name, sources: [] },
@@ -45,6 +58,8 @@ async function fixture(browser, { seeded = false, legacy = null, claimed = false
     return item;
   };
   if (seeded) {
+    savedAccounts.get(FIRST).set("saved-actions", { id: "saved-actions", name: "Saved actions fixture", type: "BASIC", createdOn: timestamps(40) });
+    savedAccounts.get(FIRST).set("alpha", { id: "alpha", name: "Saved with shared identifier", type: "COMPOSITE", createdOn: timestamps(12) });
     seed("alpha", "Alpha working indicator");
     seed("editing", "Editing saved baseline", "BASIC", { sourceIndicatorId: savedSource.id, sourceRevision: "saved-source-revision" });
     seed("legacy-broken", "Needs review legacy draft", "BASIC", { recoverable: false, configuration: null });
@@ -76,6 +91,9 @@ async function fixture(browser, { seeded = false, legacy = null, claimed = false
       localStorage.setItem(closedRecoveryKey, JSON.stringify(closedRecovery));
       localStorage.setItem("closed-recovery-fixture-seeded", "yes");
     }
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: {
+      writeText: async (value) => { window.__draftFixtureClipboard = value; },
+    } });
   }, { token: tokenFor(FIRST), legacy, closedRecovery, closedRecoveryKey });
   await context.route("**/*", async (route) => {
     const request = route.request(), url = new URL(request.url());
@@ -86,11 +104,51 @@ async function fixture(browser, { seeded = false, legacy = null, claimed = false
     calls.push({ path, query: Object.fromEntries(url.searchParams), method, owner, body: request.postData() ? request.postDataJSON() : undefined });
     if (!accounts.has(owner)) { failures.push("API request without a fixture account"); return send({ message: "Fixture authentication required" }, 401); }
     const store = accounts.get(owner);
+    const savedStore = savedAccounts.get(owner);
     if (path === "v1/users/my") return send({ data: { name: "Draft fixture user", email: owner, roles: ["ROLE_USER"] } });
     if (path === "v1/users/my/lrs") return send({ data: [lrs] });
     if (["v1/analytics/methods", "v1/visualizations/libraries", "v1/statements/activity-types"].includes(path)) return send({ data: [] });
-    if (path === "v1/indicators/my") return send({ data: { content: [savedSource], totalElements: 1,
+    if (path === "v1/indicators/my/workspace" && method === "GET") {
+      const plan = workspacePlans.shift() || {};
+      if (plan.fail) return send({ message: "Workspace temporarily unavailable." }, 503);
+      return send({ data: workspacePage({ saved: [...savedStore.values()], drafts: [...store.values()], query: url.searchParams }) });
+    }
+    if (path === "v1/indicators/my") return send({ data: { content: [...savedStore.values()], totalElements: savedStore.size,
       pageable: { pageSize: 10, pageNumber: 0 } } });
+    const copySaved = path.match(/^v1\/indicators\/my\/([^/]+)\/copy$/);
+    if (copySaved && method === "GET") {
+      const item = savedStore.get(decodeURIComponent(copySaved[1]));
+      assert.ok(item, "Only an owned saved indicator can be duplicated");
+      const copy = { ...clone(item), id: item.id + "-copy", name: item.name + " copy", createdOn: timestamps(50) };
+      savedStore.set(copy.id, copy);
+      return send({ data: copy, message: "Indicator duplicated." });
+    }
+    const embedSaved = path.match(/^v1\/indicators\/([^/]+)\/code$/);
+    if (embedSaved && method === "GET") {
+      const item = savedStore.get(decodeURIComponent(embedSaved[1]));
+      assert.ok(item, "Only an owned saved indicator exposes embed code");
+      return send({ data: `<iframe title="${item.name}" src="/api/v1/code/indicators?indicatorId=${item.id}"></iframe>`, message: "Embed code copied." });
+    }
+    const deleteSaved = path.match(/^v1\/indicators\/([^/]+)\/delete$/);
+    if (deleteSaved && method === "DELETE") {
+      const id = decodeURIComponent(deleteSaved[1]);
+      assert.ok(savedStore.has(id));
+      savedStore.delete(id);
+      return send({ data: { id }, message: "Indicator deleted." });
+    }
+    const editSaved = path.match(/^v1\/indicators\/([^/]+)\/edit-draft$/);
+    if (editSaved && method === "POST") {
+      const item = savedStore.get(decodeURIComponent(editSaved[1]));
+      assert.ok(item, "Editing starts from an owned saved indicator");
+      let draft = [...store.values()].find((entry) => entry.sourceIndicatorId === item.id && entry.status === "DRAFT");
+      if (!draft) {
+        draft = { id: `edit-${item.id}`, name: item.name, indicatorType: item.type, schemaVersion: 1,
+          revision: 0, status: "DRAFT", recoverable: true, configuration: makeConfiguration(item.name),
+          sourceIndicatorId: item.id, sourceRevision: "fixture-source-version", createdAt: timestamps(), updatedAt: timestamps() };
+        store.set(draft.id, draft);
+      }
+      return send({ data: clone(draft) });
+    }
     if (path === "v1/indicators/drafts" && method === "GET") {
       const query = Object.fromEntries(url.searchParams);
       let records = [...store.values()].filter((entry) => entry.status === "DRAFT" &&
@@ -162,39 +220,95 @@ async function fixture(browser, { seeded = false, legacy = null, claimed = false
   });
   const page = await context.newPage();
   page.on("pageerror", (error) => failures.push(error.message));
-  return { context, page, accounts, calls, failures, pendingCreates, terminalCommits, makeConfiguration, closedRecoveryKey,
+  return { context, page, accounts, savedAccounts, savedRecords: savedAccounts.get(FIRST), calls, failures, pendingCreates, terminalCommits, workspacePlans, makeConfiguration, closedRecoveryKey,
     holdCreates: (value) => { holdCreate = value; }, store: accounts.get(FIRST) };
 }
 
 async function dashboard(browser) {
   const f = await fixture(browser, { seeded: true });
   const { page } = f;
-  const sourceBefore = clone(savedSource);
-  const row = (name) => page.getByRole("table", { name: "Indicator drafts" }).getByRole("row").filter({ has: page.getByText(name, { exact: true }) });
-  const latestList = () => f.calls.filter((call) => call.path === "v1/indicators/drafts" && call.method === "GET").at(-1);
+  const sourceBefore = clone(f.savedRecords.get(savedSource.id));
+  const row = (name) => page.getByRole("table", { name: "Indicators" }).getByRole("row").filter({ has: page.getByText(name, { exact: true }) });
+  const latestList = () => f.calls.filter((call) => call.path === "v1/indicators/my/workspace" && call.method === "GET").at(-1);
   const action = async (name, kind) => {
     await row(name).getByRole("button", { name: `Actions for ${name}`, exact: true }).click();
     await page.getByRole("menuitem", { name: kind, exact: true }).click();
   };
   try {
-    await page.goto(new URL("/indicator?view=drafts", base).href);
-    await page.getByRole("table", { name: "Indicator drafts" }).waitFor();
-    await until(() => latestList(), "Draft table loads from owner-scoped list API");
+    await page.goto(new URL("/indicator", base).href);
+    await page.getByRole("table", { name: "Indicators" }).waitFor();
+    await until(() => latestList(), "One owner-scoped workspace endpoint loads the combined table");
+    assert.equal(await page.getByRole("tab").count(), 0, "Saved indicators and drafts share one table without tabs");
+    const draftsOnly = page.getByRole("checkbox", { name: "Drafts only", exact: true });
+    assert.equal(await draftsOnly.isChecked(), false);
+    await row("Saved actions fixture").getByText("Saved", { exact: true }).filter({ visible: true }).waitFor();
+    await row("Working indicator 19").getByText("Draft", { exact: true }).filter({ visible: true }).waitFor();
+    await dashboardScreenshot(page, "unified-indicators-desktop.png");
+    for (const width of [900, 1024]) {
+      await page.setViewportSize({ width, height: 1000 });
+      const nameCell = row("Saved actions fixture").getByRole("cell").first();
+      const geometry = await nameCell.evaluate((cell) => {
+        const label = cell.querySelector(".MuiTypography-root"), style = getComputedStyle(label);
+        return { cellWidth: cell.getBoundingClientRect().width, textWidth: label.getBoundingClientRect().width,
+          lines: label.getBoundingClientRect().height / parseFloat(style.lineHeight) };
+      });
+      assert.ok(geometry.cellWidth >= 150 && geometry.textWidth >= 120 && geometry.lines <= 3,
+        `The ${width}px sidebar layout keeps indicator names readable: ${JSON.stringify(geometry)}`);
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${width}px workspace stays inside the viewport`);
+      await dashboardScreenshot(page, `unified-indicators-${width}.png`);
+    }
+    await page.setViewportSize({ width: 1280, height: 1000 });
+    assert.ok(!f.calls.some((call) => ["v1/indicators/my", "v1/indicators/drafts"].includes(call.path)),
+      "The dashboard does not merge independently paginated saved and draft requests in the browser");
+    assert.equal(latestList().query.draftsOnly, "false");
     assert.equal(latestList().query.sortBy, "updatedAt");
     assert.equal(latestList().query.sortDirection, "desc");
+    f.workspacePlans.push({ fail: true });
+    await page.getByRole("button", { name: "Refresh", exact: true }).click();
+    await page.getByRole("alert").filter({ hasText: "Workspace temporarily unavailable" }).waitFor();
+    assert.equal(await page.getByRole("table", { name: "Indicators" }).getByRole("row").count(), 1,
+      "A failed combined list cannot masquerade as a partial saved-only or draft-only result");
+    await page.getByRole("button", { name: "Retry", exact: true }).click();
+    await row("Saved actions fixture").waitFor();
+    await row("Working indicator 19").waitFor();
     await page.getByRole("button", { name: "Go to next page", exact: true }).click();
     await until(() => latestList().query.page === "1", "Pagination requests the next server page");
     await page.getByRole("combobox").last().click();
     await page.getByRole("option", { name: "25", exact: true }).click();
+    await page.getByRole("listbox").waitFor({ state: "hidden" });
     await until(() => latestList().query.size === "25" && latestList().query.page === "0", "Page size resets to the first server page");
-    await page.getByRole("textbox", { name: "Search drafts", exact: true }).fill("Alpha");
+    await until(async () => await page.getByRole("table", { name: "Indicators" }).getByRole("row").count() === 26, "One page contains all saved and unfinished records together");
+    await row("Saved with shared identifier").waitFor();
+    await row("Alpha working indicator").waitFor();
+    assert.equal(await row("Saved with shared identifier").getByRole("button", { name: /^Continue / }).count(), 0,
+      "A saved row sharing an ID with a draft keeps its saved actions");
+    assert.equal(await row("Alpha working indicator").getByRole("button", { name: /^Continue / }).count(), 1);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await draftsOnly.click();
+    await until(() => draftsOnly.isChecked(), "Drafts only checkbox becomes checked");
+    await until(() => latestList().query.draftsOnly === "true", "Drafts only is filtered on the combined server endpoint");
+    await until(async () => await row("Saved actions fixture").count() === 0, "Draft filtering removes saved rows");
+    await row("Editing saved baseline").getByText("Editing saved indicator", { exact: true }).waitFor();
+    await row("Editing saved baseline").getByText("Draft", { exact: true }).filter({ visible: true }).waitFor();
+    assert.equal(new URL(page.url()).searchParams.get("view"), "drafts", "The existing drafts URL represents the checkbox state");
+    await draftsOnly.click();
+    await until(async () => !await draftsOnly.isChecked(), "Drafts only checkbox becomes unchecked");
+    await until(() => latestList().query.draftsOnly === "false", "Unchecking returns to both kinds");
+    await row("Saved actions fixture").waitFor();
+    await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("Saved");
+    await until(async () => await page.getByRole("table", { name: "Indicators" }).getByRole("row").count() === 5,
+      "A single search matches saved indicators and editing drafts together");
+    await row("Saved actions fixture").getByText("Saved", { exact: true }).filter({ visible: true }).waitFor();
+    await row("Editing saved baseline").getByText("Editing saved indicator", { exact: true }).waitFor();
+    await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("Alpha");
     await row("Alpha working indicator").waitFor();
     await until(() => latestList().query.search === "Alpha", "Draft search is sent to the server");
-    await until(async () => await page.getByRole("table", { name: "Indicator drafts" }).getByRole("row").count() === 2, "Search response replaces the previous server page");
-    assert.equal(await page.getByRole("table", { name: "Indicator drafts" }).getByRole("row").count(), 2);
-    await page.getByRole("textbox", { name: "Search drafts", exact: true }).fill("");
+    await until(async () => await page.getByRole("table", { name: "Indicators" }).getByRole("row").count() === 2, "Search response replaces the previous server page");
+    assert.equal(await page.getByRole("table", { name: "Indicators" }).getByRole("row").count(), 2);
+    await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("");
     await page.getByRole("combobox", { name: "Indicator type", exact: true }).click();
     await page.getByRole("option", { name: "Composite", exact: true }).click();
+    await page.getByRole("listbox").waitFor({ state: "hidden" });
     await until(() => latestList().query.indicatorType === "COMPOSITE" && latestList().query.search === "", "Type filter applies across all server pages");
     await page.getByRole("button", { name: "Indicator", exact: true }).click();
     await until(() => latestList().query.sortBy === "name" && latestList().query.sortDirection === "asc", "Name sort ascending");
@@ -202,7 +316,8 @@ async function dashboard(browser) {
     await until(() => latestList().query.sortDirection === "desc", "Name sort descending");
     await page.getByRole("combobox", { name: "Indicator type", exact: true }).click();
     await page.getByRole("option", { name: "All types", exact: true }).click();
-    await page.getByRole("textbox", { name: "Search drafts", exact: true }).fill("Alpha");
+    await page.getByRole("listbox").waitFor({ state: "hidden" });
+    await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("Alpha");
     await row("Alpha working indicator").waitFor();
     const original = clone(f.store.get("alpha"));
     await action(original.name, "Rename draft");
@@ -217,7 +332,7 @@ async function dashboard(browser) {
     expected.indicator.indicatorName = "Renamed working indicator";
     assert.deepEqual(rename.body.configuration, expected, "Rename preserves all selections and only updates the mirrored title");
     assert.equal(renamed.name, "Renamed working indicator");
-    await page.getByRole("textbox", { name: "Search drafts", exact: true }).fill("Renamed");
+    await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("Renamed");
     await row(renamed.name).waitFor();
     await action(renamed.name, "Rename draft");
     const beforeStaleRename = f.calls.filter((call) => call.method === "PUT").length;
@@ -228,7 +343,7 @@ async function dashboard(browser) {
     assert.equal(f.calls.filter((call) => call.method === "PUT").length, beforeStaleRename);
     await page.getByRole("button", { name: "Cancel", exact: true }).click();
     await page.getByRole("button", { name: "Refresh", exact: true }).click();
-    await row(renamed.name).getByRole("button", { name: "Continue", exact: true }).click();
+    await row(renamed.name).getByRole("button", { name: /^Continue / }).click();
     await page.waitForURL("**/indicator/editor/drafts/alpha");
     await page.getByRole("textbox", { name: "Indicator name", exact: true }).waitFor();
     assert.equal(await page.getByRole("textbox", { name: "Indicator name", exact: true }).inputValue(), "Renamed working indicator");
@@ -236,17 +351,19 @@ async function dashboard(browser) {
     assert.equal(await page.getByText(lrs.lrsTitle, { exact: true }).count() > 0, true);
 
     await page.goto(new URL("/indicator?view=drafts", base).href);
-    await page.getByRole("textbox", { name: "Search drafts", exact: true }).fill("Needs review");
+    assert.equal(await page.getByRole("checkbox", { name: "Drafts only", exact: true }).isChecked(), true,
+      "Existing direct draft links enable the checkbox without restoring separate tabs");
+    await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("Needs review");
     const broken = row("Needs review legacy draft");
     await broken.waitFor();
-    assert.equal(await broken.getByRole("button", { name: "Continue", exact: true }).isDisabled(), true);
+    assert.equal(await broken.getByRole("button", { name: /^Continue / }).isDisabled(), true);
     await broken.getByRole("button", { name: "Actions for Needs review legacy draft", exact: true }).click();
     assert.equal(await page.getByRole("menuitem", { name: "Rename draft", exact: true }).getAttribute("aria-disabled"), "true");
     await page.getByRole("menuitem", { name: "Discard draft", exact: true }).click();
     await page.getByRole("dialog", { name: "Discard this draft?", exact: true }).getByRole("button", { name: "Discard draft", exact: true }).click();
     await until(() => !f.store.has("legacy-broken"), "Malformed legacy draft can be discarded safely");
     await page.getByRole("dialog").waitFor({ state: "hidden" });
-    await page.getByRole("textbox", { name: "Search drafts", exact: true }).fill("Editing saved");
+    await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("Editing saved");
     await row("Editing saved baseline").waitFor();
     await action("Editing saved baseline", "Discard draft");
     const discardDialog = page.getByRole("dialog", { name: "Discard this draft?", exact: true });
@@ -258,13 +375,79 @@ async function dashboard(browser) {
     await until(() => !f.store.has("editing"), "Confirmed discard removes the private edit draft");
     const removal = f.calls.find((call) => call.method === "DELETE" && call.path.endsWith("/editing"));
     assert.equal(removal.query.revision, "3");
-    assert.deepEqual(savedSource, sourceBefore, "Saved source and embeds remain untouched");
+    assert.deepEqual(f.savedRecords.get(savedSource.id), sourceBefore, "Saved source and embeds remain untouched");
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.getByRole("textbox", { name: "Search drafts", exact: true }).fill("");
+    await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("");
     await until(() => latestList().query.search === "", "Mobile list refresh");
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.getByRole("checkbox", { name: "Drafts only", exact: true }).click();
+    await until(async () => !await page.getByRole("checkbox", { name: "Drafts only", exact: true }).isChecked(), "Mobile checkbox returns to all indicators");
+    await row("Saved actions fixture").waitFor();
+    await row("Saved actions fixture").getByText("Saved", { exact: true }).filter({ visible: true }).waitFor();
+    await row("Working indicator 19").getByText("Draft", { exact: true }).filter({ visible: true }).waitFor();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "Draft list has no page overflow at 390px");
+    await page.getByRole("combobox", { name: "Sort by", exact: true }).click();
+    await page.getByRole("option", { name: "Indicator", exact: true }).click();
+    await page.getByRole("listbox").waitFor({ state: "hidden" });
+    await until(() => latestList().query.sortBy === "name" && latestList().query.sortDirection === "asc", "Mobile sort selects global name ordering");
+    await page.getByRole("button", { name: "Sort descending", exact: true }).click();
+    await until(() => latestList().query.sortDirection === "desc", "Mobile sort direction toggles on the server query");
+    await page.getByRole("button", { name: "Sort ascending", exact: true }).click();
+    await until(() => latestList().query.sortDirection === "asc", "Mobile sort direction toggles back");
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await dashboardScreenshot(page, "unified-indicators-mobile.png");
     assert.deepEqual(f.failures, []);
-    console.log("PASS: owner draft list search/type/sort/pagination, authoritative Continue, revision-safe Rename, confirmed Discard, malformed recovery and mobile containment");
+    console.log("PASS: one mixed saved/draft table with clear statuses, server-wide search/type/sort/pagination and Drafts only URL filter; authoritative Continue, revision-safe Rename, confirmed Discard, malformed recovery and mobile containment");
+  } finally { await f.context.close(); }
+}
+
+async function savedRowActions(browser) {
+  const f = await fixture(browser, { seeded: true });
+  const { page } = f;
+  const row = (name) => page.getByRole("table", { name: "Indicators" }).getByRole("row").filter({ has: page.getByText(name, { exact: true }) });
+  const menu = async (name, item) => {
+    await row(name).getByRole("button", { name: `More actions for ${name}`, exact: true }).click();
+    await page.getByRole("menuitem", { name: item, exact: true }).click();
+  };
+  const original = clone(f.savedRecords.get("saved-actions"));
+  try {
+    await page.goto(new URL("/indicator", base).href);
+    await row(original.name).waitFor();
+    await row(original.name).getByRole("button", { name: `Preview ${original.name}`, exact: true }).waitFor();
+    assert.equal(await row(original.name).getByRole("button", { name: /^Continue / }).count(), 0);
+    await row(original.name).getByRole("button", { name: `More actions for ${original.name}`, exact: true }).click();
+    for (const label of ["Edit", "Copy embed code", "Duplicate", "Delete"]) await page.getByRole("menuitem", { name: label, exact: true }).waitFor();
+    assert.equal(await page.getByRole("menuitem", { name: "Rename draft", exact: true }).count(), 0, "Saved rows cannot expose draft-only actions");
+    await page.getByRole("menuitem", { name: "Copy embed code", exact: true }).click();
+    await until(async () => Boolean(await page.evaluate(() => window.__draftFixtureClipboard)), "Embed code is copied using the existing saved API");
+    assert.equal(await page.evaluate(() => window.__draftFixtureClipboard),
+      `<iframe title="${original.name}" src="/api/v1/code/indicators?indicatorId=${original.id}"></iframe>`);
+    await menu(original.name, "Duplicate");
+    await row(original.name + " copy").waitFor();
+    assert.equal(f.savedRecords.get(original.id + "-copy").type, original.type);
+    assert.deepEqual(f.savedRecords.get(original.id), original);
+    await menu(original.name + " copy", "Delete");
+    const deletion = page.getByRole("dialog", { name: "Are you sure?", exact: true });
+    await deletion.waitFor();
+    await deletion.getByRole("button", { name: "Cancel", exact: true }).click();
+    await deletion.waitFor({ state: "hidden" });
+    assert.ok(f.savedRecords.has(original.id + "-copy"), "Cancel retains the saved duplicate");
+    await menu(original.name + " copy", "Delete");
+    await deletion.getByRole("button", { name: "Confirm delete", exact: true }).click();
+    await until(() => !f.savedRecords.has(original.id + "-copy"), "Confirmed saved deletion uses the saved API");
+    await deletion.waitFor({ state: "hidden" });
+    await menu(original.name, "Edit");
+    await page.waitForURL("**/indicator/editor/drafts/edit-saved-actions");
+    await page.getByRole("textbox", { name: "Indicator name", exact: true }).waitFor();
+    assert.equal(await page.getByRole("textbox", { name: "Indicator name", exact: true }).inputValue(), original.name);
+    assert.equal(f.store.get("edit-saved-actions").sourceIndicatorId, original.id);
+    assert.deepEqual(f.savedRecords.get(original.id), original, "Editing creates a private draft and preserves the saved definition");
+    assert.ok(f.calls.some((call) => call.method === "GET" && call.path === `v1/indicators/${original.id}/code`));
+    assert.ok(f.calls.some((call) => call.method === "GET" && call.path === `v1/indicators/my/${original.id}/copy`));
+    assert.ok(f.calls.some((call) => call.method === "DELETE" && call.path === `v1/indicators/${original.id}-copy/delete`));
+    assert.ok(f.calls.some((call) => call.method === "POST" && call.path === `v1/indicators/${original.id}/edit-draft`));
+    assert.deepEqual(f.failures, []);
+    console.log("PASS: saved rows retain Preview, edit-to-private-draft, embed copy, duplicate and confirmed Delete actions alongside drafts");
   } finally { await f.context.close(); }
 }
 
@@ -346,6 +529,13 @@ async function authoringAndRecovery(browser) {
     assert.equal(f.accounts.get(SECOND).size, 0, "Switching accounts creates no recovery-derived ghost draft");
     await page.goto(new URL("/indicator?view=drafts", base).href);
     await page.getByText("No drafts yet", { exact: true }).waitFor();
+    await page.getByRole("checkbox", { name: "Drafts only", exact: true }).click();
+    await until(async () => !await page.getByRole("checkbox", { name: "Drafts only", exact: true }).isChecked(), "Account's default mixed filter is restored");
+    await page.getByText("No indicators yet", { exact: true }).waitFor();
+    assert.equal(await page.getByText(savedSource.name, { exact: true }).count(), 0, "The second account cannot list the first account's saved indicators");
+    const mixedRequest = f.calls.filter((call) => call.path === "v1/indicators/my/workspace").at(-1);
+    assert.equal(mixedRequest.owner, SECOND);
+    assert.equal(mixedRequest.query.draftsOnly, "false");
     assert.equal(f.store.size, 2, "Another account cannot mutate or list the first account's drafts");
     assert.deepEqual(f.failures, []);
     console.log("PASS: empty Basic has no ghost, explicit legacy ownership review/acknowledged cleanup, first-save canonical URL preserves DOM/latest edits, multiple drafts, authoritative resume and account isolation");
@@ -460,6 +650,6 @@ async function closedWorkspaceRecovery(browser) {
 (async () => {
   const browser = await webkit.launch({ headless: true,
     ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}) });
-  try { await dashboard(browser); await authoringAndRecovery(browser); await terminalReconciliation(browser); await closedWorkspaceRecovery(browser); }
+  try { await dashboard(browser); await savedRowActions(browser); await authoringAndRecovery(browser); await terminalReconciliation(browser); await closedWorkspaceRecovery(browser); }
   finally { await browser.close(); }
 })().catch((error) => { console.error(error); process.exitCode = 1; });
