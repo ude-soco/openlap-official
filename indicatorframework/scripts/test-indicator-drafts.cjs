@@ -219,15 +219,18 @@ async function fixture(browser, { seeded = false, legacy = null, claimed = false
     failures.push(`Unexpected API request: ${method} ${path}`);
     return send({ message: "Unexpected synthetic API request" }, 500);
   });
+  context.on("page", (page) => {
+    page.on("pageerror", (error) => failures.push(error.message));
+    page.on("crash", () => failures.push("Browser page crashed"));
+  });
   const page = await context.newPage();
-  page.on("pageerror", (error) => failures.push(error.message));
   return { context, page, accounts, savedAccounts, savedRecords: savedAccounts.get(FIRST), calls, failures, pendingCreates, terminalCommits, workspacePlans, makeConfiguration, closedRecoveryKey,
     holdCreates: (value) => { holdCreate = value; }, store: accounts.get(FIRST) };
 }
 
 async function dashboard(browser) {
   const f = await fixture(browser, { seeded: true });
-  const { page } = f;
+  let page = f.page;
   const sourceBefore = clone(f.savedRecords.get(savedSource.id));
   const row = (name) => page.getByRole("table", { name: "Indicators" }).getByRole("row").filter({ has: page.getByText(name, { exact: true }) });
   const latestList = () => f.calls.filter((call) => call.path === "v1/indicators/my/workspace" && call.method === "GET").at(-1);
@@ -242,14 +245,14 @@ async function dashboard(browser) {
     assert.equal(await page.getByRole("tab").count(), 0, "Saved indicators and drafts share one table without tabs");
     assert.equal(await page.getByRole("button", { name: "Refresh", exact: true }).count(), 0, "The compact toolbar has no redundant Refresh action");
     assert.equal(await page.getByText(/^Drafts are private unfinished work\./).count(), 0, "Draft status needs no permanent explanatory paragraph");
-    const draftsOnly = page.getByRole("checkbox", { name: "Drafts only", exact: true });
-    const toolbarControls = [
+    let draftsOnly = page.getByRole("checkbox", { name: "Drafts only", exact: true });
+    const toolbarControls = () => [
       page.getByRole("button", { name: "Create new", exact: true }),
       page.getByRole("textbox", { name: "Search indicators", exact: true }),
       page.getByRole("combobox", { name: "Indicator type", exact: true }),
       draftsOnly,
     ];
-    const toolbarGeometry = () => Promise.all(toolbarControls.map((control) => control.evaluate((element) => {
+    const toolbarGeometry = () => Promise.all(toolbarControls().map((control) => control.evaluate((element) => {
       const rectangle = (element.closest(".MuiFormControl-root") || element.closest("label") || element).getBoundingClientRect();
       return { x: rectangle.x, y: rectangle.y, width: rectangle.width, height: rectangle.height };
     })));
@@ -391,6 +394,11 @@ async function dashboard(browser) {
     await page.waitForURL("**/indicator");
     await page.getByRole("heading", { name: "My Indicators", exact: true }).waitFor();
     assert.equal(f.store.get("alpha").name, resumedName, "Save and exit persists the latest working name before leaving");
+    // Verify a bookmarked URL from a cold page, without retaining the editor's
+    // document or sessionStorage. The account and authoritative server stay put.
+    await page.close();
+    page = await f.context.newPage();
+    draftsOnly = page.getByRole("checkbox", { name: "Drafts only", exact: true });
     await page.goto(new URL("/indicator?view=drafts", base).href);
     await page.getByRole("checkbox", { name: "Drafts only", exact: true }).waitFor();
     assert.equal(await page.getByRole("checkbox", { name: "Drafts only", exact: true }).isChecked(), true,
