@@ -1,175 +1,80 @@
 import { useContext, useEffect, useState } from "react";
-import {
-  Box,
-  Breadcrumbs,
-  Button,
-  Chip,
-  Divider,
-  Link,
-  Paper,
-  Stack,
-  Typography,
-} from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { useSnackbar } from "notistack";
-import HistoryEduOutlinedIcon from "@mui/icons-material/HistoryEduOutlined";
+import { Alert, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack } from "@mui/material";
 import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
-import ScheduleRoundedIcon from "@mui/icons-material/ScheduleRounded";
-import MyIscTable from "./components/my-isc-table.jsx";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import PageHeader from "../../../common/components/page-header/page-header.jsx";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
-import { discardDraft } from "../creator/utils/isc-draft-api.js";
+import MyIscTable from "./components/my-isc-table.jsx";
 
-const formatDate = (time) =>
-  time
-    ? new Date(time).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
-    : "";
-
-const IscDashboard = () => {
-  const { SESSION_ISC, api } = useContext(AuthContext);
+export default function IscDashboard() {
+  const { SESSION_ISC } = useContext(AuthContext);
   const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
-  // Best-effort, READ-ONLY description of the in-progress draft (for the banner).
-  const [draft, setDraft] = useState(null);
-  // Real stats reported up from the list (no invented numbers).
-  const [stats, setStats] = useState({ total: 0, latest: null });
+  const [params, setParams] = useSearchParams();
+  const draftsOnly = params.get("view") === "drafts";
+  const [stats, setStats] = useState({ total: 0 });
+  const [recovery, setRecovery] = useState(null);
+  const [recoveryAction, setRecoveryAction] = useState(null);
+  const [recoveryError, setRecoveryError] = useState("");
 
   useEffect(() => {
-    const saved = sessionStorage.getItem(SESSION_ISC);
-    if (!saved) {
-      setDraft(null);
-      return;
-    }
     try {
-      const parsed = JSON.parse(saved);
-      const meta = parsed?.draftMeta;
-      setDraft({
-        draftId: meta?.draftId || null,
-        isEdit: meta ? meta.mode === "EDIT_DRAFT" : Boolean(parsed?.id),
-        name: parsed?.requirements?.indicatorName || "",
-      });
-    } catch {
-      setDraft({ draftId: null, isEdit: false, name: "" });
-    }
+      const raw = sessionStorage.getItem(SESSION_ISC);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (!parsed?.draftMeta?.draftId) setRecovery({ name: parsed?.requirements?.indicatorName || "" });
+      } catch { setRecovery({ name: "" }); }
+    } catch { setRecoveryError("Browser recovery could not be checked on this device."); }
   }, [SESSION_ISC]);
 
-  const handleDiscard = () => {
-    // Remove the backend draft too (best-effort); the saved source ISC, if this
-    // is an edit draft, is untouched by the draft delete.
-    if (draft?.draftId) {
-      discardDraft(api, draft.draftId).catch((error) =>
-        console.warn("Could not discard backend draft", error)
-      );
-    }
-    sessionStorage.removeItem(SESSION_ISC);
-    setDraft(null);
+  const startNew = () => {
+    try {
+      sessionStorage.removeItem(SESSION_ISC);
+      navigate("/isc/new");
+    } catch { setRecoveryError("Could not clear this browser's working copy. Please try again."); }
+  };
+  const continueRecovery = () => navigate("/isc/creator");
+  const createNew = () => { if (recovery) setRecoveryAction("new"); else startNew(); };
+  const confirmRecoveryRemoval = () => {
+    try {
+      sessionStorage.removeItem(SESSION_ISC);
+      setRecovery(null); setRecoveryError(""); setRecoveryAction(null);
+      if (recoveryAction === "new") navigate("/isc/new");
+    } catch { setRecoveryError("Could not discard this browser recovery. Your work is still here."); }
   };
 
-  const handleContinue = () => {
-    navigate("/isc/creator");
-    enqueueSnackbar("Indicator progress restored", {
-      variant: "info",
-      autoHideDuration: 2000,
-    });
-  };
-
-  // Backend-backed drafts now appear as rows in My ISCs, so the banner is only
-  // for LEGACY local-recovery drafts that have no backend draft id (e.g. a
-  // pre-deploy session, or a brand-new draft before its first autosave landed).
-  const showRecoveryBanner = Boolean(draft) && !draft.draftId;
-  const draftTitle = !draft
-    ? ""
-    : draft.name
-      ? `Local recovery draft: “${draft.name}”`
-      : "You have a local recovery draft";
-
-  return (
-    <Stack sx={{ gap: 2 }}>
-      <Breadcrumbs>
-        <Link component={RouterLink} underline="hover" color="inherit" to="/">
-          Home
-        </Link>
-        <Typography sx={{ color: "text.primary" }}>My ISCs</Typography>
-      </Breadcrumbs>
-
-      <Stack sx={{ gap: 0.5 }}>
-        <Typography variant="h5" component="h1" sx={{ fontWeight: 600 }}>
-          My ISCs
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Create, review, and manage your indicator prototypes.
-        </Typography>
-      </Stack>
-
-      {/* Compact summary row — real data only */}
-      <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap", alignItems: "center" }}>
-        <Chip
-          icon={<InsightsOutlinedIcon />}
-          variant="outlined"
-          label={`${stats.total} ISC${stats.total === 1 ? "" : "s"}`}
-        />
-        {showRecoveryBanner && (
-          <Chip
-            icon={<HistoryEduOutlinedIcon />}
-            color="info"
-            variant="outlined"
-            label="Local recovery draft"
-          />
-        )}
-        {stats.latest && (
-          <Chip
-            icon={<ScheduleRoundedIcon />}
-            variant="outlined"
-            label={`Last updated ${formatDate(stats.latest)}`}
-          />
-        )}
-      </Stack>
-
-      <Divider />
-
-      {/* Local-recovery banner (legacy drafts without a backend id only). */}
-      {showRecoveryBanner && (
-        <Paper
-          variant="outlined"
-          sx={(t) => ({
-            p: 2,
-            borderRadius: `${t.custom?.radii?.card ?? 8}px`,
-            borderColor: alpha(t.palette.info.main, 0.4),
-            backgroundColor: alpha(t.palette.info.main, 0.06),
-          })}
-        >
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            sx={{ gap: 2, alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between" }}
-          >
-            <Stack direction="row" sx={{ gap: 1.5, alignItems: "center" }}>
-              <HistoryEduOutlinedIcon color="info" />
-              <Box>
-                <Typography sx={{ fontWeight: 600 }}>{draftTitle}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Continue where you left off, or discard it to start fresh.
-                </Typography>
-              </Box>
-            </Stack>
-            <Stack direction="row" sx={{ gap: 1, flexShrink: 0 }}>
-              <Button variant="outlined" onClick={handleDiscard}>
-                Discard
-              </Button>
-              <Button variant="contained" color="primary" onClick={handleContinue}>
-                Continue
-              </Button>
-            </Stack>
-          </Stack>
-        </Paper>
-      )}
-
-      <MyIscTable onStats={setStats} />
-    </Stack>
-  );
-};
-
-export default IscDashboard;
+  return <Stack sx={{ gap: 2 }}>
+    <PageHeader title="My ISCs" breadcrumbs={[{ label: "Home", to: "/" }]}
+      subtitle="Create, review, and manage your indicator prototypes."
+      actions={<Chip icon={<InsightsOutlinedIcon />} variant="outlined"
+        label={`${stats.total} ${draftsOnly ? "draft" : "ISC"}${stats.total === 1 ? "" : "s"}`} />} />
+    {recovery && <Alert severity="info" variant="outlined" action={<Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>
+      <Button color="inherit" onClick={() => setRecoveryAction("discard")}>Discard recovery</Button>
+      <Button color="inherit" onClick={continueRecovery}>Continue recovery</Button>
+    </Stack>}>
+      {recovery.name ? `Local recovery available for “${recovery.name}”.` : "A local recovery copy is available in this browser."}
+    </Alert>}
+    {recoveryError && <Alert severity="warning">{recoveryError}</Alert>}
+    <MyIscTable onStats={setStats} onCreate={createNew} draftsOnly={draftsOnly} onDraftsOnlyChange={(checked) => setParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (checked) next.set("view", "drafts");
+      else next.delete("view");
+      return next;
+    })} />
+    <Dialog open={Boolean(recoveryAction)} onClose={() => setRecoveryAction(null)} fullWidth maxWidth="sm"
+      aria-labelledby="isc-recovery-action-title" aria-describedby="isc-recovery-action-description">
+      <DialogTitle id="isc-recovery-action-title">{recoveryAction === "new" ? "Start a new ISC?" : "Discard local recovery?"}</DialogTitle>
+      <DialogContent><DialogContentText id="isc-recovery-action-description">
+        {recoveryAction === "new" ? "A working copy is still stored in this browser. Continue it, or discard that copy before starting a new ISC. Saved ISCs and server drafts remain available."
+          : "This removes only the local recovery copy in this browser. Saved ISCs and server drafts remain available."}
+      </DialogContentText></DialogContent>
+      <DialogActions sx={{ flexWrap: "wrap", gap: 1 }}>
+        <Button onClick={() => setRecoveryAction(null)}>Cancel</Button>
+        {recoveryAction === "new" && <Button onClick={continueRecovery}>Continue recovery</Button>}
+        <Button variant="contained" color="error" onClick={confirmRecoveryRemoval}>
+          {recoveryAction === "new" ? "Discard recovery and create" : "Discard recovery"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  </Stack>;
+}
