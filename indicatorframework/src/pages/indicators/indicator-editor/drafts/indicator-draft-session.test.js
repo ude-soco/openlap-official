@@ -278,6 +278,25 @@ test("discard cancels pending save, preserves saved source and clears only own r
   assert.equal(f.storage.length, 0);
 });
 
+test("rapid completion and discard clicks each share one terminal request", async () => {
+  for (const action of ["complete", "discard"]) {
+    let finish;
+    let count = 0;
+    const f = fixture({ initialDraft: saved(0), initialValue: value(1), transport: {
+      [action]: () => { count += 1; return new Promise((resolve) => { finish = resolve; }); },
+    } });
+    const first = f.session[action]({ name: "Complete" });
+    const second = f.session[action]({ name: "Complete" });
+    assert.equal(first, second, "the terminal action is single-flight before React rerenders");
+    assert.equal(f.session.getState().finalizing, true);
+    await settle();
+    assert.equal(count, 1);
+    finish({ status: action === "complete" ? "COMPLETED" : "DISCARDED", savedIndicatorId: "indicator-1" });
+    await Promise.all([first, second]);
+    await assert.rejects(f.session[action]({}), /no longer/);
+  }
+});
+
 test("discard resolves an uncertain create and clears its original pre-ID recovery", async () => {
   let stored;
   let attempt = 0;

@@ -33,6 +33,7 @@ export function createIndicatorDraftSession({
   let localAvailable = true;
   let creationAttempted = false;
   let pendingMutation = null;
+  let finalization = null;
   const scope = () => ({ owner, environment, indicatorType, draftId: draft?.id || null, clientRequestId });
   const recovered = readDraftRecovery(scope(), storage);
   localAvailable = recovered.available;
@@ -224,7 +225,7 @@ export function createIndicatorDraftSession({
     removeDraftRecovery(oldScope, storage);
     return created;
   };
-  const complete = async (indicator) => {
+  const completeOnce = async (indicator) => {
     const started = fingerprint(current);
     await flush();
     if (!draft) throw blocked("Add an indicator configuration before saving.");
@@ -246,7 +247,7 @@ export function createIndicatorDraftSession({
     } catch (failure) { fail(failure); throw failure; }
     finally { actionBusy = false; emit(); }
   };
-  const discard = async () => {
+  const discardOnce = async () => {
     clearTimers();
     const originalScope = scope();
     const candidateScope = recovery ? { ...scope(), clientRequestId: recovery.clientRequestId } : null;
@@ -276,6 +277,24 @@ export function createIndicatorDraftSession({
     } catch (failure) { fail(failure); throw failure; }
     finally { actionBusy = false; emit(); }
   };
+  const finalize = (kind, operation) => {
+    if (finalization) return finalization.kind === kind ? finalization.promise
+      : Promise.reject(blocked("Another draft action is still running."));
+    if (terminal || disposed) return Promise.reject(blocked("This draft is no longer being edited."));
+    const entry = { kind, promise: null };
+    finalization = entry;
+    actionBusy = true;
+    clearTimers();
+    entry.promise = Promise.resolve().then(operation).finally(() => {
+      if (finalization === entry) finalization = null;
+      actionBusy = false;
+      emit();
+    });
+    emit();
+    return entry.promise;
+  };
+  const complete = (indicator) => finalize("complete", () => completeOnce(indicator));
+  const discard = () => finalize("discard", discardOnce);
   return {
     getState: snapshot, update, flush, retry, complete, discard, reloadLatest,
     saveAsSeparateDraft, restoreRecovery, dismissRecovery,
