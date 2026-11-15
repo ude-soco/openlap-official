@@ -145,6 +145,8 @@ export default function ComplexIndicator({ type }) {
   const baseline = useRef(JSON.stringify(configuration));
   const configurationRef = useRef(configuration);
   configurationRef.current = configuration;
+  const recoveryTimer = useRef(null);
+  const savedRecovery = useRef(null);
 
   const endpoint = isMulti ? "multilevel" : "composite";
   const methodId = configuration.analysis.methodId;
@@ -238,10 +240,17 @@ export default function ComplexIndicator({ type }) {
 
   useEffect(() => {
     if (!loaded || recoveryCandidate) return undefined;
+    const serialized = JSON.stringify(configuration);
+    if (savedRecovery.current?.key === key
+        && savedRecovery.current.configuration === serialized) {
+      return undefined;
+    }
     setRecoveryStatus("Saving in this tab…");
     const timer = setTimeout(() => {
+      if (recoveryTimer.current !== timer) return;
+      recoveryTimer.current = null;
       try {
-        sessionStorage.setItem(key, JSON.stringify(configuration));
+        sessionStorage.setItem(key, serialized);
         setRecoveryStatus("Saved in this tab · not yet saved to My Indicators");
       } catch {
         setRecoveryStatus(
@@ -249,7 +258,11 @@ export default function ComplexIndicator({ type }) {
         );
       }
     }, 600);
-    return () => clearTimeout(timer);
+    recoveryTimer.current = timer;
+    return () => {
+      clearTimeout(timer);
+      if (recoveryTimer.current === timer) recoveryTimer.current = null;
+    };
   }, [configuration, key, loaded, recoveryCandidate]);
 
   useEffect(() => {
@@ -563,8 +576,13 @@ export default function ComplexIndicator({ type }) {
               saveRequest(configuration),
             ),
       () => {
-        baseline.current = JSON.stringify(configuration);
+        const serialized = JSON.stringify(configuration);
+        savedRecovery.current = { key, configuration: serialized };
+        clearTimeout(recoveryTimer.current);
+        recoveryTimer.current = null;
+        baseline.current = serialized;
         sessionStorage.removeItem(key);
+        setRecoveryStatus("Saved to My Indicators");
         setSaveOpen(false);
         enqueueSnackbar(
           id ? "Indicator updated." : "Indicator saved to My Indicators.",

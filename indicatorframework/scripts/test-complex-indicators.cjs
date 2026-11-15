@@ -205,6 +205,8 @@ const failures = [],
   requests = [];
 let failMerge = true;
 let failMethodContract = true;
+let failUpdate = true;
+let delayedDashboardModule = false;
 
 (async () => {
   const browser = await webkit.launch({
@@ -253,6 +255,13 @@ let failMethodContract = true;
           });
         failures.push("Unexpected off-origin request: " + url.origin);
         return route.abort();
+      }
+      if (url.pathname === "/src/pages/indicators/dashboard/indicator-editor-dashboard.jsx"
+          && !delayedDashboardModule) {
+        delayedDashboardModule = true;
+        // Hold navigation beyond the recovery debounce while the old editor
+        // remains mounted awaiting its lazy destination, as on a cold CI run.
+        await new Promise((resolve) => setTimeout(resolve, 1100));
       }
       if (!url.pathname.startsWith("/api/")) return route.continue();
       const path = url.pathname.slice(5);
@@ -359,6 +368,14 @@ let failMethodContract = true;
           path,
         )
       ) {
+        if (request.method() === "PUT" && failUpdate) {
+          failUpdate = false;
+          return route.fulfill({
+            status: 503,
+            contentType: "application/json",
+            body: JSON.stringify({ message: "Update temporarily unavailable. Retry your save." }),
+          });
+        }
         assert.equal(JSON.parse(body.configuration).type, body.indicatorType);
         assert.equal(JSON.parse(body.configuration).schemaVersion, 1);
         assert.equal(body.indicators.length, 2);
@@ -421,7 +438,7 @@ let failMethodContract = true;
     const button = (name) => page.getByRole("button", { name, exact: true });
     const chooseLibrary = async () => {
       await page
-        .getByRole("combobox", { name: "Library", exact: true })
+        .getByRole("combobox", { name: "Visualization library", exact: true })
         .click();
       await page
         .getByRole("option", { name: "Synthetic charts", exact: true })
@@ -502,12 +519,20 @@ let failMethodContract = true;
         name: /(?:Save|Update) (?:composite|multilevel analysis) indicator/,
       });
       await dialog.getByRole("textbox", { name: "Indicator name" }).fill(name);
-      await dialog
-        .getByRole("button", {
-          name: update ? "Update indicator" : "Save indicator",
-          exact: true,
-        })
-        .click();
+      await page.getByRole("status", { includeHidden: true })
+        .filter({ hasText: "Saving in this tab…" }).waitFor();
+      const saveAction = dialog.getByRole("button", {
+        name: update ? "Update indicator" : "Save indicator", exact: true,
+      });
+      await saveAction.click();
+      if (update) {
+        await dialog.getByRole("alert").filter({ hasText: "Update temporarily unavailable" }).waitFor();
+        await page.waitForFunction((name) => Object.keys(sessionStorage).some((key) =>
+          key.startsWith("openlap:complex:") && key.endsWith(":saved-0")
+          && JSON.parse(sessionStorage.getItem(key)).name === name,
+        ), name);
+        await saveAction.click();
+      }
       await page.waitForURL("**/indicator");
       await page
         .getByRole("heading", { name: "My Indicators", exact: true })
@@ -556,6 +581,10 @@ let failMethodContract = true;
     await generateChart("Grouped bar");
     await checkVisualizationDesign("Grouped bar");
     await saveIndicator("Composite fixture");
+    assert.ok(delayedDashboardModule, "The first save waits for a cold lazy destination");
+    assert.deepEqual(await page.evaluate(() => Object.keys(sessionStorage).filter(
+      (key) => key.startsWith("openlap:complex:") && key.endsWith(":COMPOSITE:new"),
+    )), [], "Successful save does not recreate its recovery draft during delayed navigation");
     assert.equal(saved[0].indicatorType, "COMPOSITE");
     assert.ok(
       saved[0].visualizationMapping.mapping.some(
@@ -671,6 +700,9 @@ let failMethodContract = true;
     await saveIndicator("Multilevel fixture");
     assert.equal(saved[2].indicatorType, "MULTI_LEVEL");
     await page.goto(new URL("/indicator/editor/composite", base).href);
+    await button("Select Access count").waitFor();
+    assert.equal(await button("Select Access count").isDisabled(), false,
+      "A fresh editor after saving has no recovered source selections");
     await select("Access count");
     await select("Student count");
     await page
@@ -758,7 +790,7 @@ let failMethodContract = true;
     assert.deepEqual(failures, []);
     assert.ok(requests.includes("v1/indicators/saved-0/result"));
     console.log(
-      "PASS: Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; new/edit tab recovery, confirmed reset, metadata retry, undo, mobile containment; blocked source deletion retains source and safely links its dependents; no browser errors.",
+      "PASS: Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; new/edit tab recovery, failed-save preservation, delayed-navigation save cleanup, confirmed reset, metadata retry, undo, mobile containment; blocked source deletion retains source and safely links its dependents; no browser errors.",
     );
   } finally {
     await context.close();
