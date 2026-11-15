@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -20,7 +20,8 @@ import {
   buildRequirementText,
   categorizeCharts,
 } from "../utils/chart-compatibility";
-import { getVisualizationDescriptor } from "../utils/visualization-descriptor";
+import { getVisualizationIconUrl } from "../utils/visualization-descriptor";
+import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
 
 const STATUS_ARIA = {
   recommended: "recommended for your data",
@@ -77,6 +78,8 @@ const ChartTypeOptions = ({
   // "Requires additional data" is collapsed by default, but the header + a short
   // explanation stay visible so it's discoverable.
   const [showNeedsData, setShowNeedsData] = useState(false);
+  const auth = useContext(AuthContext);
+  const apiBase = auth?.api?.defaults?.baseURL || import.meta.env.VITE_BACKEND_URL || "/api/";
 
   const groups = categorizeCharts(types, analyzedData);
   if (getUnavailableReason) {
@@ -100,9 +103,7 @@ const ChartTypeOptions = ({
 
   const renderChartCard = ({ type, compat, unavailableReason }) => {
     const svg = visualizationImages[type.imageCode];
-    const declaredIcon = getVisualizationDescriptor(type)?.iconUrl;
-    const iconUrl = typeof declaredIcon === "string" && /^(https?:\/\/|\/(?!\/))/.test(declaredIcon)
-      ? declaredIcon : "";
+    const iconUrl = getVisualizationIconUrl(type, apiBase, window.location.href);
     const selected = selectedTypeId === type.id;
     const incompatible = compat.status === "needs-data";
     const requirementText = incompatible

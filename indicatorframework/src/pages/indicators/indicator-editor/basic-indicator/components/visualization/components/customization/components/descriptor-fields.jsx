@@ -12,6 +12,10 @@ export default function DescriptorFields({ descriptor, group, state, setState })
   const visible = fields.filter((field) => field.group === group && customizationVisible(field, state));
   const errors = getCustomizationErrors(descriptor, state);
   const update = (field, value) => setState((previous) => ({ ...previous, [field.id]: value, edited: true }));
+  const choiceValue = (field) => {
+    const index = (field.options || []).findIndex((option) => option.value === state[field.id]);
+    return index < 0 ? "" : String(index);
+  };
   return (
     <Stack sx={{ gap: 2 }}>
       {unsupported > 0 && (
@@ -31,7 +35,7 @@ export default function DescriptorFields({ descriptor, group, state, setState })
           key={field.id}
           fullWidth
           label={field.label || field.id}
-          value={state[field.id] ?? ""}
+          value={field.type === "select" ? choiceValue(field) : state[field.id] ?? ""}
           select={field.type === "select"}
           type={field.type === "number" ? "number" : "text"}
           error={Boolean(errors[field.id])}
@@ -55,11 +59,14 @@ export default function DescriptorFields({ descriptor, group, state, setState })
           }}
           onChange={(event) => {
             const value = event.target.value;
-            update(field, field.type === "number" && value !== "" ? Number(value) : value);
+            if (field.type === "select") {
+              const option = field.options?.[Number(value)];
+              if (option) update(field, option.value);
+            } else update(field, field.type === "number" && value !== "" ? Number(value) : value);
           }}
         >
-          {field.type === "select" && (field.options || []).map((option) => (
-            <MenuItem key={String(option.value)} value={option.value}>{option.label || String(option.value)}</MenuItem>
+          {field.type === "select" && (field.options || []).map((option, index) => (
+            <MenuItem key={index} value={String(index)}>{option.label || String(option.value)}</MenuItem>
           ))}
         </TextField>
       ))}

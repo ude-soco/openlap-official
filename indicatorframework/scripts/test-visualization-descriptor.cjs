@@ -24,6 +24,7 @@ import { createAppTheme } from "/src/common/theme/app-theme.js";
 import { BasicContext } from "/src/pages/indicators/indicator-editor/basic-indicator/basic-indicator.jsx";
 import ChartTypeOptions from "/src/pages/indicators/indicator-editor/basic-indicator/components/visualization/components/chart-type-options.jsx";
 import ChartCustomizationPanel from "/src/pages/indicators/indicator-editor/basic-indicator/components/visualization/components/customization/chart-customization-panel.jsx";
+import PluginRuntimeReview from "/src/pages/admin/components/plugin-runtime-review.jsx";
 import { getVisualizationDefaults } from "/src/pages/indicators/indicator-editor/basic-indicator/components/visualization/utils/visualization-descriptor.js";
 import { defaultParams } from "/src/pages/indicators/indicator-editor/basic-indicator/components/visualization/utils/visualization-data.js";
 const descriptor = {
@@ -35,6 +36,8 @@ const descriptor = {
     { id: "fill", label: "Bar color", type: "color", group: "styles", defaultValue: "#1976d2" },
     { id: "direction", label: "Direction", type: "select", group: "styles", defaultValue: "horizontal", options: [
       { value: "horizontal", label: "Horizontal" }, { value: "vertical", label: "Vertical" } ] },
+    { id: "typedChoice", label: "Typed choice", type: "select", group: "styles", defaultValue: false, options: [
+      { value: false, label: "Boolean false" }, { value: "false", label: "Text false" }, { value: 0, label: "Zero" } ] },
     { id: "limit", label: "Number of values", type: "number", group: "filters", min: 1, max: 20, step: 1, defaultValue: 10 },
   ],
 };
@@ -43,25 +46,40 @@ const newChart = { id: "new", name: "New reusable chart", imageCode: "UnknownPlu
   chartConfiguration: {}, visualizationDescriptor: descriptor };
 const legacyChart = { id: "legacy", name: "Existing bar chart", imageCode: "Bar", chartInputs: inputs,
   chartConfiguration: { showHideLegendAvailable: true, chartTitleAvailable: true } };
+const brokenIconChart = { ...newChart, id: "broken", name: "Broken icon chart", visualizationDescriptor: { ...descriptor, iconAssetId: "missing-icon" } };
+const runtimeManifest = { schemaVersion: 1, pluginId: "org.openlap.fixture", pluginVersion: "2.4.0",
+  assets: [
+    { id: "style", path: "web/native-2.4.0.css", kind: "style", sha256: "1".repeat(64) },
+    { id: "script", path: "web/native-2.4.0.js", kind: "script", sha256: "2".repeat(64) },
+    { id: "chart-icon", path: "web/chart-icon.svg", kind: "image", sha256: "3".repeat(64) },
+  ], runtimes: [{ id: "native", version: "2.4.0", assets: ["style", "script"] }],
+  charts: [{ ...descriptor, implementingClass: "org.openlap.fixture.Bar", iconAssetId: "chart-icon" },
+    { id: "line", implementingClass: "org.openlap.fixture.Line", runtimeId: "native", customizations: [] }],
+};
 const columns = { category: { configurationData: { id: "category", type: "Text" }, data: ["Alpha"] },
   amount: { configurationData: { id: "amount", type: "Numeric" }, data: [4] } };
 function Fixture() {
   const [visualization, setVisualization] = useState({ selectedType: legacyChart,
     params: getVisualizationDefaults(legacyChart, defaultParams), mapping: { mapping: [] } });
   const [open, setOpen] = useState(true);
+  const [withIcon, setWithIcon] = useState(false);
+  const [legacyReview, setLegacyReview] = useState(false);
+  const declaredNew = withIcon ? { ...newChart, visualizationDescriptor: { ...descriptor, iconAssetId: "chart-icon" } } : newChart;
   window.__descriptorFixture = { snapshot: () => visualization, unsupported: () => setVisualization((previous) => ({
     ...previous, selectedType: { ...previous.selectedType, visualizationDescriptor: { ...descriptor,
       customizations: [...descriptor.customizations, { id: "extension", type: "executable", group: "elements" }] } },
-  })) };
+  })), enableIcon: () => setWithIcon(true), legacyReview: () => setLegacyReview(true) };
   return <MemoryRouter><ThemeProvider theme={createAppTheme(createTheme())}><CssBaseline />
     <Stack component="main" sx={{ gap: 3, p: 2, maxWidth: 1100, mx: "auto" }}>
-      <ChartTypeOptions types={[legacyChart, newChart]} analyzedData={columns} selectedTypeId={visualization.selectedType.id}
+      <ChartTypeOptions types={[legacyChart, declaredNew, brokenIconChart]} analyzedData={columns} selectedTypeId={visualization.selectedType.id}
         onSelect={(chart) => setVisualization({ selectedType: chart,
           params: getVisualizationDefaults(chart, defaultParams), mapping: { mapping: [] } })} />
       <button onClick={() => setOpen((value) => !value)}>{open ? "Close panel" : "Reopen panel"}</button>
       <BasicContext.Provider value={{ visualization, setVisualization, analysis: { analyzedData: columns } }}>
         {open && <Stack data-testid="customization" sx={{ width: { xs: "100%", md: 340 } }}><ChartCustomizationPanel /></Stack>}
       </BasicContext.Provider>
+      <section data-testid="runtime-review"><PluginRuntimeReview manifest={legacyReview ? null : runtimeManifest}
+        entries={[{ implementingClass: "org.openlap.fixture.Bar", name: "Reusable bar chart" }, { implementingClass: "org.openlap.fixture.Line", name: "Reusable line chart" }]} /></section>
     </Stack>
   </ThemeProvider></MemoryRouter>;
 }
@@ -100,9 +118,15 @@ async function waitForServer(child) {
     });
     const context = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
     await context.routeWebSocket(/.*/, (socket) => socket.close());
-    const errors = [], external = [];
+    const errors = [], external = [], iconRequests = [];
     await context.route("**/*", (route) => {
       const url = new URL(route.request().url());
+      if (url.origin === base.origin && /^\/api\/v1\/code\/visualizations\/(new|broken)\/icon$/.test(url.pathname)) {
+        iconRequests.push(url.pathname);
+        return url.pathname.includes("/broken/")
+          ? route.fulfill({ status: 404, contentType: "text/plain", body: "Missing fixture icon" })
+          : route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56"><rect x="8" y="8" width="40" height="40" fill="#1976d2"/></svg>' });
+      }
       if (url.origin !== base.origin || url.pathname.startsWith("/api/")) {
         external.push(url.origin + url.pathname);
         return route.abort();
@@ -119,6 +143,12 @@ async function waitForServer(child) {
     await selectNew.waitFor();
     assert.equal(await selectNew.locator('svg[data-testid="InsertChartOutlinedIcon"]').count(), 1,
       "A chart unknown to the fixed icon map remains visible and selectable");
+    const broken = page.getByRole("button", { name: /^Broken icon chart\./ });
+    await broken.locator('svg[data-testid="InsertChartOutlinedIcon"]').waitFor();
+    assert.equal(await broken.locator("img").count(), 0, "An unavailable declared icon falls back to the generic chart icon");
+    await page.evaluate(() => window.__descriptorFixture.enableIcon());
+    await selectNew.locator("img").waitFor();
+    assert.match(await selectNew.locator("img").getAttribute("src"), /\/api\/v1\/code\/visualizations\/new\/icon$/);
     await selectNew.click();
     await panel.getByRole("textbox", { name: "Chart caption", exact: true }).waitFor();
     assert.equal(await panel.getByRole("textbox", { name: "Chart caption", exact: true }).inputValue(), "Plugin default");
@@ -134,6 +164,12 @@ async function waitForServer(child) {
     assert.equal(await panel.getByLabel("Bar color color picker", { exact: true }).inputValue(), "#aabbcc");
     await panel.getByRole("combobox", { name: "Direction", exact: true }).click();
     await page.getByRole("option", { name: "Vertical", exact: true }).click();
+    await panel.getByRole("combobox", { name: "Typed choice", exact: true }).click();
+    await page.getByRole("option", { name: "Text false", exact: true }).click();
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.typedChoice === "false");
+    await panel.getByRole("combobox", { name: "Typed choice", exact: true }).click();
+    await page.getByRole("option", { name: "Zero", exact: true }).click();
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.typedChoice === 0);
     await panel.getByRole("tab", { name: "FILTERS", exact: true }).click();
     const limit = panel.getByRole("spinbutton", { name: "Number of values", exact: true });
     assert.equal(await limit.inputValue(), "10");
@@ -163,9 +199,34 @@ async function waitForServer(child) {
     await page.getByRole("button", { name: /^Existing bar chart\./ }).click();
     await panel.getByRole("switch", { name: "Show legend", exact: true }).waitFor();
     assert.equal(await panel.getByRole("textbox", { name: "Chart caption", exact: true }).count(), 0);
+    const review = page.getByTestId("runtime-review");
+    await review.getByRole("region", { name: "Browser runtime and customizations", exact: true }).waitFor();
+    await review.getByText("org.openlap.fixture", { exact: true }).waitFor();
+    await review.getByText("Version 2.4.0", { exact: true }).waitFor();
+    const ordered = await review.locator("ol li").allTextContents();
+    assert.ok(ordered[0].includes("web/native-2.4.0.css") && ordered[1].includes("web/native-2.4.0.js"), "Admin review preserves the declared asset loading order");
+    await review.getByText("Chart caption · Text", { exact: true }).waitFor();
+    await review.getByText("Default: Plugin default", { exact: true }).waitFor();
+    await review.getByText("Shown when Show values is Off.", { exact: true }).waitFor();
+    await review.getByRole("heading", { name: "Styles", exact: true }).waitFor();
+    await review.getByRole("heading", { name: "Filters", exact: true }).waitFor();
+    await review.getByRole("button").filter({ hasText: "Reusable line chart" }).click();
+    await review.getByText("This chart declares no customization controls.", { exact: true }).waitFor();
+    if (process.env.OPENLAP_DESCRIPTOR_PROOF_DIR) {
+      await fs.mkdir(process.env.OPENLAP_DESCRIPTOR_PROOF_DIR, { recursive: true });
+      await review.screenshot({ path: path.join(process.env.OPENLAP_DESCRIPTOR_PROOF_DIR, "plugin-runtime-review-desktop.png") });
+    }
+    await page.setViewportSize({ width: 390, height: 1000 });
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "Long asset hashes and review metadata wrap on mobile");
+    if (process.env.OPENLAP_DESCRIPTOR_PROOF_DIR) {
+      await review.screenshot({ path: path.join(process.env.OPENLAP_DESCRIPTOR_PROOF_DIR, "plugin-runtime-review-mobile.png") });
+    }
+    await page.evaluate(() => window.__descriptorFixture.legacyReview());
+    await review.getByRole("alert").filter({ hasText: "This JAR has no browser runtime manifest." }).waitFor();
     assert.deepEqual(errors, []);
     assert.deepEqual(external, []);
-    console.log("PASS: reusable chart visibility; native descriptor controls/defaults/conditional fields/validation; saved values; mobile layout; legacy fallback; no API/CDN traffic");
+    assert.deepEqual(iconRequests.sort(), ["/api/v1/code/visualizations/broken/icon", "/api/v1/code/visualizations/new/icon"]);
+    console.log("PASS: reusable chart visibility and declared icons; native controls/defaults/validation; readable admin runtime review; mobile layout; legacy fallback; only approved icon requests");
     await context.close();
   } catch (error) {
     console.error(serverOutput.slice(-2000));

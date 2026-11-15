@@ -8,6 +8,7 @@ import {
   getVisualizationDefaults,
   getVisualizationDescription,
   getVisualizationDescriptor,
+  getVisualizationIconUrl,
 } from "./visualization-descriptor.js";
 
 const descriptor = {
@@ -95,4 +96,17 @@ test("plugin description contributes guidance without discarding legacy optional
   const legacy = { summary: "Generic chart", bestFor: "Exploration" };
   assert.deepEqual(getVisualizationDescription(chart, legacy), { ...legacy, summary: descriptor.description });
   assert.equal(getVisualizationDescription({}, legacy), legacy);
+});
+
+test("declared icons use only the approved API route and preserve deployment context and port", () => {
+  const declared = { ...chart, id: "installed-type", visualizationDescriptor: { ...descriptor,
+    iconAssetId: "chart-icon", iconUrl: "https://unrelated.invalid/untrusted.svg" } };
+  assert.equal(getVisualizationIconUrl(declared, "http://localhost:8093/api/"),
+    "http://localhost:8093/api/v1/code/visualizations/installed-type/icon");
+  assert.equal(getVisualizationIconUrl(declared, "/service/api", "https://openlap.example/editor"),
+    "https://openlap.example/service/api/v1/code/visualizations/installed-type/icon");
+  assert.equal(getVisualizationIconUrl(chart), "", "No image request occurs without a declared icon asset");
+  assert.equal(getVisualizationIconUrl(declared, "javascript:alert(1)"), "");
+  assert.equal(getVisualizationIconUrl({ ...declared, id: "a/b" }, "/api/", "https://openlap.example"),
+    "https://openlap.example/api/v1/code/visualizations/a%2Fb/icon");
 });

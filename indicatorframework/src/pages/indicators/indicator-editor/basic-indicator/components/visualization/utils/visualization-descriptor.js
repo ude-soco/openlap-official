@@ -79,3 +79,14 @@ export function getVisualizationDescription(chart, legacy = {}) {
   const descriptor = getVisualizationDescriptor(chart);
   return descriptor?.description ? { ...legacy, summary: descriptor.description } : legacy;
 }
+
+/** Icons are served from the approved artifact, never a URL supplied by plugin metadata. */
+export function getVisualizationIconUrl(chart, apiBase = "/api/", documentUrl = "http://localhost/") {
+  if (!chart?.id || !getVisualizationDescriptor(chart)?.iconAssetId) return "";
+  try {
+    const base = new URL(apiBase, documentUrl);
+    if (!["http:", "https:"].includes(base.protocol)) return "";
+    if (!base.pathname.endsWith("/")) base.pathname += "/";
+    return new URL(`v1/code/visualizations/${encodeURIComponent(chart.id)}/icon`, base).href;
+  } catch { return ""; }
+}
