@@ -4,6 +4,7 @@ import axios from "axios";
 import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 import { safeDecode } from "./auth-tokens.js";
+import { clearAccountDraftRecovery } from "../../pages/indicators/indicator-editor/drafts/indicator-draft-storage.js";
 import {
   attachAuthInterceptors,
   createSingleFlight,
@@ -83,6 +84,16 @@ const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    const owner = safeDecode(authTokensRef.current?.access_token)?.sub;
+    clearAccountDraftRecovery({ owner, environment: `${globalThis.location?.origin || "local"}|${BackendURL}` });
+    try {
+      // Legacy recovery had no reliable account boundary. Explicit logout
+      // clears it after the active editor has offered to save or discard.
+      sessionStorage.removeItem(SESSION_INDICATOR);
+      const prefix = `openlap:complex:v1:${encodeURIComponent(owner || "anonymous")}:`;
+      const keys = Array.from({ length: sessionStorage.length }, (_, index) => sessionStorage.key(index));
+      keys.filter((key) => key?.startsWith(prefix)).forEach((key) => sessionStorage.removeItem(key));
+    } catch { /* Browser recovery availability must not prevent sign out. */ }
     clearSession();
     navigate("/login");
   };

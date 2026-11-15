@@ -1,5 +1,10 @@
 import parseChartCode from "../../indicator-editor/components/utils/parse-chart-code";
 
+export const requestMyIndicatorWorkspace = async (api, params = {}) => {
+  const response = await api.get(`v1/indicators/my/workspace?${new URLSearchParams(params)}`);
+  return response.data.data;
+};
+
 export const requestMyIndicators = async (api, params = {}) => {
   try {
     const queryString = new URLSearchParams(params).toString();
@@ -48,7 +53,7 @@ export const requestIndicatorDeletion = async (api, indicatorId) => {
     return response.data;
   } catch (error) {
     console.error("Failed to delete indicator");
-    throw error.response.data;
+    throw error.response?.data || error;
   }
 };
 
@@ -58,6 +63,6 @@ export const requestMyIndicatorDuplication = async (api, indicatorId) => {
     return response.data;
   } catch (error) {
     console.error("Failed to duplicate indicator");
-    throw error.response.data;
+    throw error.response?.data || error;
   }
 };

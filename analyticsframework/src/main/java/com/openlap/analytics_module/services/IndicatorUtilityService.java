@@ -9,6 +9,7 @@ import com.openlap.dataset.OpenLAPDataSet;
 import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.visualization_methods.entities.VisType;
 import org.springframework.data.domain.Page;
+import org.bson.Document;
 
 import java.util.List;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,6 +24,10 @@ public interface IndicatorUtilityService {
 
   void updateIndicator(
       HttpServletRequest request, IndicatorReference indicatorReference, String indicatorId);
+
+  Document snapshotIndicatorDefinition(HttpServletRequest request, String indicatorId);
+
+  void deleteIndicatorDefinition(HttpServletRequest request, Document expected);
 
   OpenLAPDataSet getAnalyzedDataSetMethod(
       IndicatorAnalysisTechnique indicatorAnalysisRequest, OpenLAPDataSet dataSet);

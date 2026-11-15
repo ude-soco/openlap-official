@@ -33,12 +33,12 @@ const EMPTY_COLUMNS = {};
 
 export default function Analysis() {
   const { api } = useContext(AuthContext);
-  const { dataset, filters, lockedStep, setLockedStep, analysis, setAnalysis, setVisualization } =
+  const { dataset, filters, lockedStep, setLockedStep, analysis, setAnalysis, setVisualization, referencesValid } =
     useContext(BasicContext);
   const indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
   const analysisRef = buildAnalysisRef(analysis);
   const selectionKey = JSON.stringify({ indicatorQuery, ...analysisRef });
-  const ready = !lockedStep.analysis.locked && basicAnalysisReady(dataset, filters, analysis);
+  const ready = referencesValid !== false && !lockedStep.analysis.locked && basicAnalysisReady(dataset, filters, analysis);
   const preview = useDataPreview({
     api,
     path: "v1/indicators/basic/analyze",

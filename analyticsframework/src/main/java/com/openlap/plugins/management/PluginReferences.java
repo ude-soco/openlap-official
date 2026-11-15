@@ -24,6 +24,13 @@ public final class PluginReferences {
   }
 
   public Set<String> collect(Document document, Set<String> wanted) {
+    // A server-created terminal draft receipt has no executable configuration. Its display name
+    // or source indicator ID must not accidentally pin a plugin whose ID happens to match it.
+    if (Boolean.TRUE.equals(document.get("_indicatorDraftReceipt"))
+        && Set.of("COMPLETED", "DISCARDED").contains(document.getString("status"))
+        && !document.containsKey("configuration") && !document.containsKey("session")
+        && !document.containsKey("legacyRecovery") && !document.containsKey("sourceSnapshot")
+        && !document.containsKey("completionPayload")) return Set.of();
     Set<String> values = new LinkedHashSet<>();
     walk(document, null, 0, new int[] {0}, values, wanted);
     return values;

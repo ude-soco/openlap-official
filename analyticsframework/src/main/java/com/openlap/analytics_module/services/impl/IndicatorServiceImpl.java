@@ -365,20 +365,22 @@ public class IndicatorServiceImpl implements IndicatorService {
   @Override
   public void deleteExistingIndicator(HttpServletRequest request, String indicatorId) {
     log.info("Attempting to delete an indicator.");
+    org.bson.Document expected = indicatorUtilityService.snapshotIndicatorDefinition(request, indicatorId);
     Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
+    String canonicalId = expected.get("_id").toString();
     User userFromToken = tokenService.getUserFromToken(request);
     try {
       if (!foundIndicator.getCreatedBy().getId().equals(userFromToken.getId())) {
         throw new IndicatorManipulationNotAllowed(
             "You do not have the permission to delete the indicator");
       }
-      String deleteToken = complexReferences.beginDelete(indicatorId);
+      String deleteToken = complexReferences.beginDelete(canonicalId);
       List<Object> sourceIds = new ArrayList<>();
-      sourceIds.add(indicatorId);
-      if (ObjectId.isValid(indicatorId)) sourceIds.add(new ObjectId(indicatorId));
+      sourceIds.add(canonicalId);
+      if (ObjectId.isValid(canonicalId)) sourceIds.add(new ObjectId(canonicalId));
       Page<Indicator> dependents = indicatorRepository.findReferencingSources(sourceIds, PageRequest.of(0, 10));
       if (!dependents.isEmpty()) {
-        complexReferences.cancelDelete(indicatorId, deleteToken);
+        complexReferences.cancelDelete(canonicalId, deleteToken);
         List<Map<String, String>> usedBy = dependents.getContent().stream()
             .filter(parent -> parent.getCreatedBy() != null
                 && userFromToken.getId().equals(parent.getCreatedBy().getId()))
@@ -388,7 +390,13 @@ public class IndicatorServiceImpl implements IndicatorService {
             "This indicator is used by a complex indicator. Remove or replace that source first.",
             Map.of("count", dependents.getTotalElements(), "usedBy", usedBy));
       }
-      indicatorRepository.delete(foundIndicator);
+      try {
+        indicatorUtilityService.deleteIndicatorDefinition(request, expected);
+      } catch (com.openlap.infrastructure.exception.ConflictException conflict) {
+        // A proven CAS nonmatch removed nothing and must not leave the source locked for deletion.
+        complexReferences.cancelDelete(canonicalId, deleteToken);
+        throw conflict;
+      }
 
       indicatorCacheRepository
           .findById(foundIndicator.getId())

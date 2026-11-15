@@ -1,657 +1,216 @@
 import { useContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Box,
-  Button,
-  Card,
-  CardActionArea,
-  CardContent,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Divider,
-  Grid,
-  IconButton,
-  InputAdornment,
-  LinearProgress,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Paper,
-  Stack,
-  TablePagination,
-  TextField,
-  ToggleButton,
-  ToggleButtonGroup,
-  Tooltip,
-  Typography,
+  Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogContentText,
+  DialogTitle, FormControlLabel, IconButton, InputAdornment, Menu, MenuItem,
+  Stack, TableCell,
+  TableRow, TableSortLabel, TextField, Tooltip, Typography,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
-import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import CodeIcon from "@mui/icons-material/Code";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
-import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
-import ViewListRoundedIcon from "@mui/icons-material/ViewListRounded";
-import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import {
-  requestIndicatorCode,
-  requestIndicatorDeletion,
-  requestIndicatorFullDetail,
-  requestMyIndicatorDuplication,
-  requestMyIndicators,
-} from "../utils/indicator-dashboard-api.js";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
-import { handleDisplayType } from "../utils/utils.js";
-import CustomDialog from "../../../../common/components/custom-dialog/custom-dialog.jsx";
-import EmptyState from "../../../../common/components/empty-state/empty-state.jsx";
+import { createIndicatorDraftApi, draftErrorMessage } from "../../indicator-editor/drafts/indicator-draft-api.js";
+import { requestIndicatorCode, requestIndicatorDeletion, requestMyIndicatorDuplication,
+  requestMyIndicatorWorkspace } from "../utils/indicator-dashboard-api.js";
+import { WorkspaceDashboard, WorkspaceStatusChip, WorkspaceTable, WorkspaceToolbar }
+  from "../../../../common/components/workspace-dashboard/workspace-dashboard.jsx";
+import { MEDIUM, WIDE, statusColumn, detailColumn, dateColumn, actionColumn, dashboardDateTime }
+  from "../../../../common/components/workspace-dashboard/workspace-dashboard-styles.js";
 
-const toSentenceCase = (str) =>
-  !str ? "" : str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+const TYPES = { BASIC: "Basic", COMPOSITE: "Composite", MULTI_LEVEL: "Multilevel analysis" };
+const SORT_FIELDS = { name: "Indicator", status: "Status", indicatorType: "Type", updatedAt: "Last updated" };
+const EDIT_ROUTES = { BASIC: "/indicator/editor/basic/edit", COMPOSITE: "/indicator/editor/composite/edit",
+  MULTI_LEVEL: "/indicator/editor/multi-level-analysis/edit" };
+const keyOf = (item) => `${item.kind}:${item.id}`;
 
-const formatDate = (time) =>
-  time
-    ? new Date(time).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
-    : "";
-
-// Edit routing is keyed by indicator type (server contract preserved).
-const EDIT_ROUTES = {
-  BASIC: "/indicator/editor/basic/edit",
-  COMPOSITE: "/indicator/editor/composite/edit",
-  MULTI_LEVEL: "/indicator/editor/multi-level-analysis/edit",
-};
-
-const ICC_TOOLTIP = (
-  <>
-    <Typography gutterBottom>Copy embed code (ICC)</Typography>
-    <Typography variant="body2">
-      An Interactive Indicator Code (ICC) is an iframe snippet you can embed in
-      any web app that supports iframes, to show this indicator live.
-    </Typography>
-  </>
-);
-
-const MyIndicatorsTable = ({ onStats }) => {
-  const { api, SESSION_INDICATOR } = useContext(AuthContext);
+export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraftsOnlyChange }) {
+  const { api } = useContext(AuthContext);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-
-  const [indicatorList, setIndicatorList] = useState([]);
-  const [pageable, setPageable] = useState({ pageSize: 10, pageNumber: 0 });
-  const [totalElements, setTotalElements] = useState(0);
-  // Server contract preserved verbatim: sortDirection "dsc", sortBy "createdOn".
-  const [params, setParams] = useState({
-    page: 0,
-    size: 10,
-    sortDirection: "dsc",
-    sortBy: "createdOn",
-  });
-  const [loading, setLoading] = useState(false);
-  const [busyId, setBusyId] = useState(undefined); // per-row action in progress
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filtered, setFiltered] = useState([]);
-  const [view, setView] = useState("list");
-  const [menu, setMenu] = useState({ anchorEl: null, item: null });
-  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [rows, setRows] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [query, setQuery] = useState({ page: 0, size: 10, search: "", indicatorType: "", sortBy: "updatedAt", sortDirection: "desc" });
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [refresh, setRefresh] = useState(0);
+  const [menu, setMenu] = useState(null);
+  const [action, setAction] = useState(null);
+  const [name, setName] = useState("");
+  const [busyKey, setBusyKey] = useState(null);
+  const [actionError, setActionError] = useState("");
   const [blockedDeletion, setBlockedDeletion] = useState(null);
 
-  const loadMyIndicatorList = async () => {
-    setLoading(true);
-    try {
-      const result = await requestMyIndicators(api, params);
-      setIndicatorList(result.content);
-      setPageable(result.pageable);
-      setTotalElements(result.totalElements);
-      if (onStats) onStats({ total: result.totalElements });
-    } catch (error) {
-      console.error("Error requesting my indicators", error);
-      enqueueSnackbar("Could not load your indicators. Please try again.", {
-        variant: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadMyIndicatorList();
-    // Reload when paging/size changes; client-side name filter is applied below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params]);
-
-  // Client-side name filter over the current page (behaviour preserved).
+    const timer = setTimeout(() => setQuery((previous) => previous.search === search ? previous : { ...previous, page: 0, search }), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+  useEffect(() => { setQuery((previous) => previous.page ? { ...previous, page: 0 } : previous); }, [draftsOnly]);
   useEffect(() => {
-    const term = searchTerm.toLowerCase();
-    setFiltered(
-      indicatorList.filter((i) =>
-        (i.indicatorName || "").toLowerCase().includes(term),
-      ),
-    );
-  }, [searchTerm, indicatorList]);
+    let active = true;
+    setLoading(true); setError("");
+    requestMyIndicatorWorkspace(api, { ...query, draftsOnly }).then((result) => {
+      if (!active) return;
+      setRows(result.content || []); setTotal(result.totalElements || 0);
+      onStats?.({ total: result.totalElements || 0 });
+      if (!(result.content || []).length && query.page > 0) setQuery((previous) => ({ ...previous,
+        page: Math.max(0, Math.ceil(result.totalElements / previous.size) - 1) }));
+    }).catch((failure) => { if (active) setError(draftErrorMessage(failure)); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [api, query, draftsOnly, refresh, onStats]);
 
-  const closeMenu = () => setMenu({ anchorEl: null, item: null });
-
-  const handleCreateNew = () => {
-    sessionStorage.removeItem(SESSION_INDICATOR);
-    navigate("/indicator/editor");
+  const sort = (sortBy) => setQuery((previous) => ({ ...previous, page: 0, sortBy,
+    sortDirection: previous.sortBy === sortBy && previous.sortDirection === "asc" ? "desc" : "asc" }));
+  const beginAction = (kind, item) => {
+    setMenu(null); setActionError(""); setName(item.name || ""); setAction({ kind, item });
   };
-
-  const handlePreview = (id) => navigate(`/indicator/${id}`);
-
-  const handleEditIndicator = async (item) => {
-    if (item.type === "COMPOSITE" || item.type === "MULTI_LEVEL") {
-      navigate(`${EDIT_ROUTES[item.type]}/${item.id}`);
-      return;
-    }
-    setBusyId(item.id);
+  const savedAction = async (item, kind) => {
+    setMenu(null); setBusyKey(keyOf(item));
     try {
-      const indicator = await requestIndicatorFullDetail(api, item.id);
-      const configuration = JSON.parse(indicator.configuration);
-      sessionStorage.setItem(
-        SESSION_INDICATOR,
-        JSON.stringify({
-          ...configuration,
-          indicator: { ...configuration.indicator, id: item.id },
-        }),
-      );
-      const baseRoute = EDIT_ROUTES[indicator.type];
-      navigate(`${baseRoute}/${item.id}`);
-    } catch (error) {
-      console.error("Error opening indicator for editing", error);
-      enqueueSnackbar("Could not open this indicator for editing.", {
-        variant: "error",
-      });
-    } finally {
-      setBusyId(undefined);
-    }
-  };
-
-  const handleCopyEmbedCode = async (item) => {
-    setBusyId(item.id);
-    try {
-      const indicatorCode = await requestIndicatorCode(api, item.id);
-      await navigator.clipboard.writeText(indicatorCode.data);
-      enqueueSnackbar(indicatorCode.message, { variant: "success" });
-    } catch (error) {
-      enqueueSnackbar(
-        error?.response?.data?.message || "Could not copy the embed code.",
-        { variant: "error" },
-      );
-    } finally {
-      setBusyId(undefined);
-    }
-  };
-
-  const handleDuplicate = async (item) => {
-    setBusyId(item.id);
-    try {
-      const response = await requestMyIndicatorDuplication(api, item.id);
-      await loadMyIndicatorList();
-      enqueueSnackbar(response.message, { variant: "success" });
-    } catch (error) {
-      console.error("Error duplicating indicator", error);
-      enqueueSnackbar("Could not duplicate this indicator.", {
-        variant: "error",
-      });
-    } finally {
-      setBusyId(undefined);
-    }
-  };
-
-  const handleDeleteIndicator = async () => {
-    const item = deleteTarget;
-    if (!item) return;
-    setBusyId(item.id);
-    try {
-      const response = await requestIndicatorDeletion(api, item.id);
-      setIndicatorList((prev) => prev.filter((i) => i.id !== item.id));
-      enqueueSnackbar(response.message, { variant: "success" });
-    } catch (error) {
-      if (error?.code === "INDICATOR_IN_USE") {
-        setBlockedDeletion({
-          sourceName: item.indicatorName,
-          message: error.message,
-          count: error.details?.count,
-          usedBy: Array.isArray(error.details?.usedBy)
-            ? error.details.usedBy.filter(
-                (parent) =>
-                  typeof parent?.id === "string" &&
-                  typeof parent?.name === "string",
-              )
-            : [],
-        });
+      if (kind === "embed") {
+        const response = await requestIndicatorCode(api, item.id);
+        await navigator.clipboard.writeText(response.data);
+        enqueueSnackbar(response.message || "Embed code copied.", { variant: "success" });
       } else {
-        enqueueSnackbar(error?.message || "Could not delete this indicator.", {
-          variant: "error",
-        });
+        const response = await requestMyIndicatorDuplication(api, item.id);
+        setRefresh((value) => value + 1);
+        enqueueSnackbar(response.message || "Indicator duplicated.", { variant: "success" });
       }
-    } finally {
-      setBusyId(undefined);
-      setDeleteTarget(null);
-    }
+    } catch (failure) { enqueueSnackbar(draftErrorMessage(failure), { variant: "error" }); }
+    finally { setBusyKey(null); }
   };
-
-  const handlePageChange = (event, newPage) =>
-    setParams((p) => ({ ...p, page: newPage }));
-
-  const handleRowsPerPageChange = (event) =>
-    setParams((p) => ({
-      ...p,
-      size: parseInt(event.target.value, 10),
-      page: 0,
-    }));
-
-  const isSearching = searchTerm.trim().length > 0;
-  const isEmpty = !loading && filtered.length === 0;
-
-  // Consistent action area for every row/card: primary "Preview" + overflow menu.
-  const renderActions = (item) => {
-    const busy = busyId === item.id;
-    const name = item.indicatorName;
-    return (
-      <Stack direction="row" sx={{ gap: 0.5, alignItems: "center" }}>
-        <Button
-          variant="text"
-          size="small"
-          color="primary"
-          startIcon={<VisibilityIcon fontSize="small" />}
-          aria-label={`Preview ${name}`}
-          disabled={busy}
-          onClick={(e) => {
-            e.stopPropagation();
-            handlePreview(item.id);
-          }}
-        >
-          Preview
-        </Button>
-        <Tooltip arrow title="More actions">
-          <span>
-            <IconButton
-              size="small"
-              aria-label={`More actions for ${name}`}
-              aria-haspopup="true"
-              disabled={busy}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setMenu({ anchorEl: e.currentTarget, item });
-              }}
-            >
-              <MoreVertRoundedIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Stack>
-    );
+  const finishAction = async () => {
+    setBusyKey(keyOf(action.item)); setActionError("");
+    try {
+      if (action.kind === "delete") await requestIndicatorDeletion(api, action.item.id);
+      else {
+        const transport = createIndicatorDraftApi(api);
+        if (action.kind === "discard") await transport.discard(action.item.id, action.item.revision);
+        else {
+          const current = await transport.get(action.item.id);
+          if (current.revision !== action.item.revision || current.status !== "DRAFT" || current.completionPending) {
+            throw new Error("This draft changed since the list was loaded. Close this dialog and refresh the list before renaming it.");
+          }
+          const configuration = current.indicatorType === "BASIC"
+            ? { ...current.configuration, indicator: { ...current.configuration.indicator, indicatorName: name.trim() } }
+            : { ...current.configuration, name: name.trim() };
+          await transport.update(current.id, { revision: current.revision, clientRequestId: crypto.randomUUID(),
+            name: name.trim(), configuration, schemaVersion: current.schemaVersion });
+        }
+      }
+      enqueueSnackbar(action.kind === "rename" ? "Draft renamed." : action.kind === "discard" ? "Draft discarded." : "Indicator deleted.", { variant: "success" });
+      setAction(null); setRefresh((value) => value + 1);
+    } catch (failure) {
+      if (failure?.code === "INDICATOR_IN_USE") {
+        setBlockedDeletion({ sourceName: action.item.name, message: failure.message, count: failure.details?.count,
+          usedBy: Array.isArray(failure.details?.usedBy) ? failure.details.usedBy.filter((parent) =>
+            typeof parent?.id === "string" && typeof parent?.name === "string") : [] });
+        setAction(null);
+      } else setActionError(draftErrorMessage(failure));
+    } finally { setBusyKey(null); }
   };
+  const header = (field, label) => <TableSortLabel active={query.sortBy === field} direction={query.sortBy === field ? query.sortDirection : "asc"}
+    onClick={() => sort(field)}>{label}</TableSortLabel>;
+  const status = (item) => <WorkspaceStatusChip draft={item.kind === "DRAFT"} />;
+  const filtered = Boolean(search || query.indicatorType);
 
-  const menuItemsFor = (item) => {
-    if (!item) return [];
-    const withClose = (fn) => () => {
-      closeMenu();
-      fn();
-    };
-    return [
-      {
-        key: "edit",
-        label: "Edit",
-        icon: <EditIcon fontSize="small" />,
-        onClick: withClose(() => handleEditIndicator(item)),
-      },
-      {
-        key: "copy",
-        label: "Copy embed code",
-        icon: <CodeIcon fontSize="small" />,
-        tooltip: ICC_TOOLTIP,
-        onClick: withClose(() => handleCopyEmbedCode(item)),
-      },
-      {
-        key: "duplicate",
-        label: "Duplicate",
-        icon: <ContentCopyIcon fontSize="small" />,
-        onClick: withClose(() => handleDuplicate(item)),
-      },
-      {
-        key: "delete",
-        label: "Delete",
-        icon: <DeleteIcon fontSize="small" color="error" />,
-        destructive: true,
-        onClick: withClose(() => setDeleteTarget(item)),
-      },
-    ];
-  };
-
-  const metaChips = (item) => (
-    <Stack
-      direction="row"
-      sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}
-    >
-      <Chip
-        size="small"
-        variant="outlined"
-        icon={<InsightsOutlinedIcon />}
-        label={handleDisplayType(item.type)}
-      />
-      <Typography variant="body2" color="text.secondary">
-        Created {formatDate(item.createdOn)}
-      </Typography>
-    </Stack>
-  );
-
-  return (
-    <Stack sx={{ gap: 2 }}>
-      {/* Control bar */}
-      <Paper
-        variant="outlined"
-        sx={(t) => ({ p: 2, borderRadius: `${t.custom?.radii?.card ?? 8}px` })}
-      >
-        <Grid
-          container
-          spacing={2}
-          sx={{ alignItems: "center", justifyContent: "space-between" }}
-        >
-          <Grid size={{ xs: 12, md: "auto" }}>
-            <Button
-              startIcon={<AddIcon />}
-              variant="contained"
-              color="primary"
-              onClick={handleCreateNew}
-            >
-              Create new
-            </Button>
-          </Grid>
-          <Grid size={{ xs: 12, md: "auto" }}>
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              sx={{ gap: 1.5, alignItems: { xs: "stretch", sm: "center" } }}
-            >
-              <TextField
-                size="small"
-                label="Search"
-                placeholder="Search by name"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-              <ToggleButtonGroup
-                size="small"
-                exclusive
-                value={view}
-                onChange={(e, v) => v && setView(v)}
-                aria-label="View mode"
-              >
-                <ToggleButton value="list" aria-label="List view">
-                  <ViewListRoundedIcon fontSize="small" />
-                </ToggleButton>
-                <ToggleButton value="cards" aria-label="Card view">
-                  <GridViewRoundedIcon fontSize="small" />
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Stack>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      {loading && <LinearProgress />}
-
-      {isEmpty &&
-        (isSearching ? (
-          <EmptyState
-            icon={SearchOffRoundedIcon}
-            title="No indicators match your search"
-            description="Try a different name, or clear the search to see all your indicators."
-          />
-        ) : (
-          <EmptyState
-            icon={InsightsOutlinedIcon}
-            title="No indicators yet"
-            description="An indicator turns your learning data into a chart you can read and reuse. Create your first one to get started."
-            action={
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreateNew}
-              >
-                Create new
+  return <WorkspaceDashboard>
+    <WorkspaceToolbar label="Indicator controls" onCreate={() => navigate("/indicator/editor")}
+      sortFields={SORT_FIELDS} sortBy={query.sortBy} sortDirection={query.sortDirection}
+      onSortField={(sortBy) => setQuery((previous) => ({ ...previous, page: 0, sortBy, sortDirection: "asc" }))}
+      onSortDirection={(sortDirection) => setQuery((previous) => ({ ...previous, page: 0, sortDirection }))}>
+        <TextField size="small" label="Search indicators" placeholder="Search by name" value={search} sx={{ flex: "1 1 220px", minWidth: 180 }} onChange={(event) => setSearch(event.target.value)}
+          slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }} />
+        <TextField select size="small" label="Indicator type" value={query.indicatorType} sx={{ flex: "1 1 180px", minWidth: 160, [WIDE]: { maxWidth: 180 } }}
+          onChange={(event) => setQuery((previous) => ({ ...previous, page: 0, indicatorType: event.target.value }))}>
+          <MenuItem value="">All types</MenuItem>{Object.entries(TYPES).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
+        </TextField>
+        <FormControlLabel sx={{ m: 0, flexShrink: 0, whiteSpace: "nowrap" }} label="Drafts only" control={<Checkbox checked={draftsOnly} onChange={(event) => {
+          setQuery((previous) => ({ ...previous, page: 0 })); onDraftsOnlyChange(event.target.checked);
+        }} />} />
+    </WorkspaceToolbar>
+    {error && <Alert severity="error" action={<Button color="inherit" onClick={() => setRefresh((value) => value + 1)}>Retry</Button>}>{error}</Alert>}
+    <WorkspaceTable label="Indicators" loading={loading} total={total} page={query.page} size={query.size}
+      onPageChange={(page) => setQuery((previous) => ({ ...previous, page }))}
+      onSizeChange={(size) => setQuery((previous) => ({ ...previous, page: 0, size }))}
+      emptyState={!loading && !rows.length && !error && <Box sx={{ p: 4, textAlign: "center" }}>
+        <Typography sx={{ fontWeight: 600 }}>{filtered ? "No matching indicators" : draftsOnly ? "No drafts yet" : "No indicators yet"}</Typography>
+        <Typography variant="body2" color="text.secondary">{filtered ? "Try another name or indicator type." : "Start an indicator and your unfinished work will appear here after its first save."}</Typography>
+        <Button sx={{ mt: 2 }} variant="contained" onClick={() => navigate("/indicator/editor")}>Create an indicator</Button>
+      </Box>}
+      header={<TableRow>
+            <TableCell sortDirection={query.sortBy === "name" ? query.sortDirection : false}>{header("name", "Indicator")}</TableCell>
+            <TableCell sx={statusColumn} sortDirection={query.sortBy === "status" ? query.sortDirection : false}>{header("status", "Status")}</TableCell>
+            <TableCell sx={detailColumn} sortDirection={query.sortBy === "indicatorType" ? query.sortDirection : false}>{header("indicatorType", "Type")}</TableCell>
+            <TableCell sx={dateColumn} sortDirection={query.sortBy === "updatedAt" ? query.sortDirection : false}>{header("updatedAt", "Last updated")}</TableCell>
+            <TableCell align="right" sx={actionColumn}>Actions</TableCell>
+          </TableRow>}>
+          {!error && rows.map((item) => <TableRow key={keyOf(item)} hover>
+            <TableCell><Stack sx={{ gap: 0.75 }}>
+              <Typography sx={{ fontWeight: 600 }}>{item.name}</Typography>
+              <Box sx={{ display: "block", [MEDIUM]: { display: "none" } }}>{status(item)}</Box>
+              {item.kind === "DRAFT" && item.sourceIndicatorId && <Typography variant="caption" color="text.secondary">Editing saved indicator</Typography>}
+              {item.recoverable === false && <Typography variant="caption" color="text.secondary">Older draft needs review</Typography>}
+              {item.completionPending && <Typography variant="caption" color="text.secondary">Continue to confirm the previous save</Typography>}
+              <Typography variant="caption" sx={{ display: "block", [WIDE]: { display: "none" } }}>{TYPES[item.indicatorType] || item.indicatorType}</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", [MEDIUM]: { display: "none" } }}>{dashboardDateTime(item.updatedAt)}</Typography>
+            </Stack></TableCell>
+            <TableCell sx={statusColumn}>{status(item)}</TableCell>
+            <TableCell sx={detailColumn}>{TYPES[item.indicatorType] || item.indicatorType}</TableCell>
+            <TableCell sx={dateColumn}>{dashboardDateTime(item.updatedAt)}</TableCell>
+            <TableCell align="right" sx={{ px: 1, [MEDIUM]: { px: 2 } }}><Stack sx={{ flexDirection: "column", [MEDIUM]: { flexDirection: "row" }, alignItems: "flex-end", justifyContent: "flex-end", gap: 0.5 }}>
+              <Button sx={{ whiteSpace: "nowrap", minWidth: "auto", px: 0.5 }} disabled={loading || Boolean(busyKey) || item.recoverable === false}
+                startIcon={item.kind === "SAVED" ? <VisibilityIcon fontSize="small" /> : undefined} aria-label={`${item.kind === "SAVED" ? "Preview" : "Continue"} ${item.name}`}
+                onClick={() => navigate(item.kind === "DRAFT" ? `/indicator/editor/drafts/${encodeURIComponent(item.id)}` : `/indicator/${encodeURIComponent(item.id)}`)}>
+                {item.kind === "DRAFT" ? "Continue" : "Preview"}
               </Button>
-            }
-          />
-        ))}
-
-      {/* List view */}
-      {!isEmpty && view === "list" && (
-        <Stack sx={{ gap: 1 }}>
-          {filtered.map((item) => (
-            <Paper
-              key={item.id}
-              variant="outlined"
-              sx={(t) => ({
-                borderRadius: `${t.custom?.radii?.card ?? 8}px`,
-                overflow: "hidden",
-              })}
-            >
-              <Grid container sx={{ alignItems: "center" }}>
-                <Grid size="grow">
-                  <Box sx={{ p: 1.5 }}>
-                    <Typography sx={{ fontWeight: 600 }}>
-                      {toSentenceCase(item.indicatorName)}
-                    </Typography>
-                    <Box sx={{ mt: 0.5 }}>{metaChips(item)}</Box>
-                  </Box>
-                </Grid>
-                <Grid size="auto" sx={{ pr: 1.5 }}>
-                  {renderActions(item)}
-                </Grid>
-              </Grid>
-              {busyId === item.id && <LinearProgress />}
-            </Paper>
-          ))}
-        </Stack>
-      )}
-
-      {/* Card view */}
-      {!isEmpty && view === "cards" && (
-        <Grid container spacing={2}>
-          {filtered.map((item) => (
-            <Grid
-              key={item.id}
-              size={{ xs: 12, sm: 6, lg: 4 }}
-              sx={{ display: "flex" }}
-            >
-              <Card
-                variant="outlined"
-                sx={(t) => ({
-                  width: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  borderRadius: `${t.custom?.radii?.card ?? 8}px`,
-                })}
-              >
-                <CardActionArea
-                  onClick={() => handlePreview(item.id)}
-                  aria-label={`Preview ${item.indicatorName}`}
-                >
-                  <Box
-                    sx={(t) => ({
-                      height: 96,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: alpha(t.palette.primary.main, 0.06),
-                    })}
-                  >
-                    <InsightsOutlinedIcon
-                      color="primary"
-                      sx={{ fontSize: 36 }}
-                    />
-                  </Box>
-                  <CardContent>
-                    <Typography sx={{ fontWeight: 600 }} noWrap gutterBottom>
-                      {toSentenceCase(item.indicatorName)}
-                    </Typography>
-                    <Stack
-                      direction="row"
-                      sx={{ gap: 1, alignItems: "center", flexWrap: "wrap" }}
-                    >
-                      <Chip
-                        size="small"
-                        variant="outlined"
-                        icon={<InsightsOutlinedIcon />}
-                        label={handleDisplayType(item.type)}
-                      />
-                    </Stack>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 1 }}
-                    >
-                      Created {formatDate(item.createdOn)}
-                    </Typography>
-                  </CardContent>
-                </CardActionArea>
-                <Box sx={{ mt: "auto" }}>
-                  {busyId === item.id && <LinearProgress />}
-                  <Divider />
-                  <Box
-                    sx={{ p: 1, display: "flex", justifyContent: "flex-end" }}
-                  >
-                    {renderActions(item)}
-                  </Box>
-                </Box>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
-
-      <TablePagination
-        component="div"
-        count={totalElements}
-        page={pageable.pageNumber}
-        onPageChange={handlePageChange}
-        rowsPerPage={pageable.pageSize}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        rowsPerPageOptions={[5, 10, 20, 50]}
-      />
-
-      <Menu
-        anchorEl={menu.anchorEl}
-        open={Boolean(menu.anchorEl && menu.item)}
-        onClose={closeMenu}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        {menuItemsFor(menu.item).map((mi) => (
-          <MenuItem
-            key={mi.key}
-            onClick={mi.onClick}
-            sx={mi.destructive ? { color: "error.main" } : undefined}
-          >
-            <ListItemIcon>{mi.icon}</ListItemIcon>
-            {mi.tooltip ? (
-              <Tooltip arrow placement="right" title={mi.tooltip}>
-                <ListItemText>{mi.label}</ListItemText>
-              </Tooltip>
-            ) : (
-              <ListItemText>{mi.label}</ListItemText>
-            )}
-          </MenuItem>
-        ))}
-      </Menu>
-
-      <CustomDialog
-        type="delete"
-        content="This will delete the indicator permanently from your dashboard."
-        open={Boolean(deleteTarget)}
-        toggleOpen={() => setDeleteTarget(null)}
-        handler={handleDeleteIndicator}
-      />
-      <Dialog
-        open={Boolean(blockedDeletion)}
-        onClose={() => setBlockedDeletion(null)}
-        aria-labelledby="indicator-in-use-title"
-        aria-describedby="indicator-in-use-description"
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle id="indicator-in-use-title">
-          Cannot delete indicator
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="indicator-in-use-description">
-            {blockedDeletion?.message ||
-              "This indicator is used by a complex indicator. Remove or replace that source first."}
-          </DialogContentText>
-          <Typography variant="body2" sx={{ mt: 2 }}>
-            {blockedDeletion?.sourceName} is still available in your dashboard.
-          </Typography>
-          {blockedDeletion?.usedBy.length > 0 && (
-            <Stack
-              component="ul"
-              sx={{ pl: 0, mt: 2, mb: 0, listStyle: "none", gap: 1 }}
-            >
-              {blockedDeletion.usedBy.map((parent) => (
-                <Box component="li" key={parent.id}>
-                  <Button
-                    startIcon={<VisibilityIcon />}
-                    aria-label={`Preview dependent indicator ${parent.name}`}
-                    sx={{
-                      justifyContent: "flex-start",
-                      textAlign: "left",
-                      textTransform: "none",
-                    }}
-                    onClick={() => {
-                      setBlockedDeletion(null);
-                      handlePreview(parent.id);
-                    }}
-                  >
-                    {parent.name}
-                  </Button>
-                </Box>
-              ))}
-            </Stack>
-          )}
-          {blockedDeletion?.count > blockedDeletion?.usedBy.length && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              Additional indicators also depend on this source.
-            </Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setBlockedDeletion(null)} autoFocus>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Stack>
-  );
-};
-
-MyIndicatorsTable.propTypes = {
-  onStats: PropTypes.func,
-};
-
-export default MyIndicatorsTable;
+              <Tooltip title={`Actions for ${item.name}`}><IconButton disabled={loading || Boolean(busyKey)} aria-haspopup="menu"
+                aria-label={`${item.kind === "DRAFT" ? "Actions" : "More actions"} for ${item.name}`} onClick={(event) => setMenu({ item, anchor: event.currentTarget })}><MoreVertIcon /></IconButton></Tooltip>
+            </Stack></TableCell>
+          </TableRow>)}
+    </WorkspaceTable>
+    <Menu open={Boolean(menu)} anchorEl={menu?.anchor} onClose={() => setMenu(null)}>
+      {menu?.item.kind === "DRAFT" ? [
+        <MenuItem key="rename" disabled={menu.item.recoverable === false || menu.item.completionPending} onClick={() => beginAction("rename", menu.item)}>Rename draft</MenuItem>,
+        <MenuItem key="discard" disabled={menu.item.completionPending} onClick={() => beginAction("discard", menu.item)} sx={{ color: "error.main" }}>Discard draft</MenuItem>,
+      ] : [
+        <MenuItem key="edit" onClick={() => { navigate(`${EDIT_ROUTES[menu.item.indicatorType]}/${encodeURIComponent(menu.item.id)}`); setMenu(null); }}>Edit</MenuItem>,
+        <MenuItem key="embed" onClick={() => savedAction(menu.item, "embed")}>Copy embed code</MenuItem>,
+        <MenuItem key="duplicate" onClick={() => savedAction(menu.item, "duplicate")}>Duplicate</MenuItem>,
+        <MenuItem key="delete" onClick={() => beginAction("delete", menu.item)} sx={{ color: "error.main" }}>Delete</MenuItem>,
+      ]}
+    </Menu>
+    <Dialog open={Boolean(action)} onClose={busyKey ? undefined : () => setAction(null)} fullWidth maxWidth="sm" aria-labelledby="indicator-list-action-title"
+      aria-describedby={action?.kind === "rename" ? undefined : "indicator-list-action-description"}>
+      <DialogTitle id="indicator-list-action-title">{action?.kind === "discard" ? "Discard this draft?" : action?.kind === "delete" ? "Are you sure?" : "Rename draft"}</DialogTitle>
+      <DialogContent><Stack sx={{ gap: 2, pt: 1 }}>{action?.kind === "rename"
+        ? <TextField autoFocus fullWidth label="Draft name" value={name} disabled={Boolean(busyKey)} onChange={(event) => setName(event.target.value)} slotProps={{ htmlInput: { maxLength: 300 } }} />
+        : <DialogContentText id="indicator-list-action-description">{action?.kind === "discard" ? `This removes “${action.item.name}” from your unfinished work. Any previously saved indicator and its embeds stay unchanged.`
+          : `This permanently deletes “${action?.item.name}”. Its embedded charts will no longer be available.`}</DialogContentText>}
+        {actionError && <Alert severity="error">{actionError}</Alert>}</Stack></DialogContent>
+      <DialogActions><Button disabled={Boolean(busyKey)} onClick={() => setAction(null)}>Cancel</Button>
+        <Button variant="contained" color={action?.kind === "rename" ? "primary" : "error"} disabled={Boolean(busyKey) || (action?.kind === "rename" && !name.trim())}
+          onClick={finishAction}>{busyKey ? action?.kind === "discard" ? "Discarding…" : action?.kind === "delete" ? "Deleting…" : "Saving…"
+            : action?.kind === "discard" ? "Discard draft" : action?.kind === "delete" ? "Confirm delete" : "Save name"}</Button></DialogActions>
+    </Dialog>
+    <Dialog open={Boolean(blockedDeletion)} onClose={() => setBlockedDeletion(null)} fullWidth maxWidth="sm" aria-labelledby="indicator-in-use-title" aria-describedby="indicator-in-use-description">
+      <DialogTitle id="indicator-in-use-title">Cannot delete indicator</DialogTitle>
+      <DialogContent>
+        <DialogContentText id="indicator-in-use-description">{blockedDeletion?.message || "This indicator is used by a complex indicator. Remove or replace that source first."}</DialogContentText>
+        <Typography variant="body2" sx={{ mt: 2 }}>{blockedDeletion?.sourceName} is still available in your dashboard.</Typography>
+        {blockedDeletion?.usedBy.length > 0 && <Stack component="ul" sx={{ pl: 0, mt: 2, mb: 0, listStyle: "none", gap: 1 }}>
+          {blockedDeletion.usedBy.map((parent) => <Box component="li" key={parent.id}><Button startIcon={<VisibilityIcon />}
+            aria-label={`Preview dependent indicator ${parent.name}`} sx={{ justifyContent: "flex-start", textAlign: "left", textTransform: "none" }}
+            onClick={() => { setBlockedDeletion(null); navigate(`/indicator/${encodeURIComponent(parent.id)}`); }}>{parent.name}</Button></Box>)}
+        </Stack>}
+        {blockedDeletion?.count > blockedDeletion?.usedBy.length && <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>Additional indicators also depend on this source.</Typography>}
+      </DialogContent>
+      <DialogActions><Button onClick={() => setBlockedDeletion(null)} autoFocus>Close</Button></DialogActions>
+    </Dialog>
+  </WorkspaceDashboard>;
+}
+MyIndicatorsTable.propTypes = { onStats: PropTypes.func, draftsOnly: PropTypes.bool, onDraftsOnlyChange: PropTypes.func.isRequired };

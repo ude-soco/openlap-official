@@ -22,21 +22,14 @@ export default function LibrarySelection() {
     };
     if (visualization.libraryList.length === 0) {
       loadVisualizationLibraryList().then((libraryList) => {
-        // * Setting it to default if the library list is empty
+        // Catalog refresh must never reset a resumed draft's selections.
         setVisualization((p) => ({
           ...p,
-          libraryList: libraryList,
-          selectedLibrary: { name: "" },
-          typeList: [],
-          selectedType: { name: "", chartInputs: [] },
-          inputs: [],
-          params: { height: 500, width: 500 },
-          mapping: { mapping: [] },
-          previewData: { displayCode: [], scriptData: {} },
+          libraryList: libraryList || [],
         }));
       });
     }
-  }, []);
+  }, [api, setVisualization, visualization.libraryList.length]);
 
   const handleSelectVisualizationLibrary = async (value) => {
     // * If the user changes the library, all the settings sets to default
@@ -89,8 +82,8 @@ export default function LibrarySelection() {
               }}
             />
           )}
-          renderOption={(props, option) => {
-            const { key, ...restProps } = props;
+          renderOption={(attributes, option) => {
+            const { key, ...restProps } = attributes;
             return (
               <li key={key} {...restProps}>
                 <Stack sx={{ py: 0.5 }}>

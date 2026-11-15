@@ -43,7 +43,7 @@ Outdated results cannot unlock the next step or overwrite a newer preview.
 
 Basic indicators use the same automatic data-preview behavior. Once the required
 method inputs and parameters are valid, analysis starts automatically. Changing
-the inputs, parameters, dataset or filters refreshes the result. Restored tab
+the inputs, parameters, dataset or filters refreshes the result. Resumed draft
 selections also receive a fresh preview; incomplete values pause generation.
 
 The chart preview generates automatically once a visualization type is selected
@@ -67,8 +67,10 @@ an individual measure. The reviewed C3 plugin supplies a multiline chart; it doe
 not supply a grouped bar chart. Available choices follow the installed library.
 
 The initial workflow accepts the user's saved Basic indicators, with up to ten
-distinct sources. Nested complex sources are not supported. Recovery labelled
-**saved in this tab** is browser recovery, not a cross-device database draft.
+distinct sources. Nested complex sources are not supported. All three editor
+types now share [persistent private drafts](indicator-drafts.md), with autosave,
+cross-device resume, revision conflicts and optional browser recovery. Editing a
+saved indicator keeps its current definition unchanged until final save.
 
 Source definitions remain live dependencies. Updating a source can change a
 complex indicator's next result; changed schemas need reviewed mappings. A source

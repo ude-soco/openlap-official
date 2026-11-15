@@ -40,7 +40,9 @@ confirm that an environment has finished updating.
 - **Design indicators:** use Indicator Specification Cards to connect learning goals,
   questions, data requirements, and visualization choices.
 - **Build analytics:** select an xAPI dataset, filter activities, choose an analytics method,
-  and preview or save an indicator. Combine indicators for broader analyses.
+  and preview or save an indicator. Combine indicators for broader analyses. Keep
+  unfinished work as private drafts alongside saved indicators in My Indicators;
+  use **Drafts only** to focus on work in progress.
 - **Administer the platform:** manage users, plugin catalogs, and audit logs. Configured
   S3 storage enables plugin upload, version, and recovery workflows.
 - **Publish homepage content:** edit news and publications with rich text, private drafts,
@@ -287,6 +289,7 @@ building, releasing and recovering installations; they are not additional local 
 | Frontend architecture | [UI architecture](indicatorframework/docs/UI_ARCHITECTURE.md) |
 | Specification cards, drafts and saved-card compatibility | [ISC architecture](indicatorframework/docs/ISC_ARCHITECTURE.md) |
 | Composite and multilevel indicators, with a local example account | [Complex indicator guide](docs/complex-indicators.md) |
+| Private indicator drafts, autosave, recovery and concurrent editing | [Indicator drafts](docs/indicator-drafts.md) |
 | Content editing and review | [Content management](docs/content-management-testing.md) |
 | Authentication | [Token policy](analyticsframework/docs/AUTH_TOKEN_POLICY.md) |
 | Plugin storage | [Artifact migration](docs/plugin-artifact-migration.md) · [S3-compatible storage](docs/plugin-storage-versity.md) |

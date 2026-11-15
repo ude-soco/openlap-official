@@ -82,14 +82,14 @@ public class IndicatorMultiLevelServiceImpl implements IndicatorMultiLevelServic
     indicatorUtilityService.updateIndicator(request, reference(body), indicatorId);
   }
 
-  private void validateSavedDefinition(IndicatorMultiLevelRequest body) {
+  void validateSavedDefinition(IndicatorMultiLevelRequest body) {
     ComplexIndicatorConfiguration.validate(body.getConfiguration(), body.getIndicatorType());
     OpenLAPDataSet analyzed = analyzeBasicIndicatorsForMultiLevelIndicator(new IndicatorMultiLevelAnalysisRequest(
         body.getIndicators(), body.getAnalyticsTechniqueId(), body.getAnalyticsTechniqueMapping(), body.getAnalyticsTechniqueParams()));
     ComplexIndicatorDataService.requireMapping(analyzed, body.getVisualizationMapping());
   }
 
-  private static IndicatorReference reference(IndicatorMultiLevelRequest body) {
+  static IndicatorReference reference(IndicatorMultiLevelRequest body) {
     IndicatorReference reference = new IndicatorReference();
     reference.setName(body.getName());
     reference.setIndicatorType(body.getIndicatorType());

@@ -1,4 +1,3 @@
-import { useContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import {
@@ -18,7 +17,6 @@ import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import HistoryEduOutlinedIcon from "@mui/icons-material/HistoryEduOutlined";
 import { indicatorData } from "./utils/indicator-data";
 import PageHeader from "../../../common/components/page-header/page-header";
-import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
 
 // Consistent hero panel for each type card: the type artwork centred on a
 // faint tinted background with a fixed aspect ratio, so cards line up even
@@ -56,45 +54,8 @@ CardHero.propTypes = {
 };
 
 const IndicatorEditor = () => {
-  const { SESSION_INDICATOR } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [indicatorInProgress, setIndicatorInProgress] = useState(false);
-
-  useEffect(() => {
-    const savedState = sessionStorage.getItem(SESSION_INDICATOR);
-    setIndicatorInProgress(Boolean(savedState));
-  }, [SESSION_INDICATOR]);
-
-  const handleClearSession = () => {
-    setIndicatorInProgress(false);
-    sessionStorage.removeItem(SESSION_INDICATOR);
-  };
-
-  const handleContinueEditing = () => {
-    if (!indicatorInProgress) return;
-    switch (
-      JSON.parse(sessionStorage.getItem(SESSION_INDICATOR)).indicator.type
-    ) {
-      case "BASIC":
-        navigate("/indicator/editor/basic");
-        break;
-      case "COMPOSITE":
-        navigate("/indicator/editor/composite");
-        break;
-      case "MULTI_LEVEL":
-        navigate("/indicator/editor/multi-level-analysis");
-        break;
-      default:
-        break;
-    }
-  };
-
-  // Behaviour preserved: starting a fresh indicator clears any in-progress
-  // draft from sessionStorage before navigating into the flow.
-  const handleCreateIndicator = (link) => {
-    handleClearSession();
-    navigate(link);
-  };
+  const handleCreateIndicator = (link) => navigate(link);
 
   const cardSx = (theme) => ({
     display: "flex",
@@ -114,47 +75,9 @@ const IndicatorEditor = () => {
         subtitle="Choose the type of indicator you want to build."
       />
 
-      {/* In-progress draft banner (session-restore). Behaviour unchanged; only
-          restyled from a stock Alert to the shared alpha-tinted banner. */}
-      {indicatorInProgress && (
-        <Box
-          sx={(theme) => ({
-            p: 2,
-            borderRadius: `${theme.custom.radii.card}px`,
-            border: `1px solid ${alpha(theme.palette.info.main, 0.4)}`,
-            backgroundColor: alpha(theme.palette.info.main, 0.06),
-          })}
-        >
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            sx={{ gap: 2, alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between" }}
-          >
-            <Stack direction="row" sx={{ gap: 1.5, alignItems: "center" }}>
-              <HistoryEduOutlinedIcon color="info" />
-              <Box>
-                <Typography sx={{ fontWeight: 600 }}>
-                  You have an indicator in progress
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Continue where you left off, or discard it to start fresh.
-                </Typography>
-              </Box>
-            </Stack>
-            <Stack direction="row" sx={{ gap: 1, flexShrink: 0 }}>
-              <Button variant="outlined" onClick={handleClearSession}>
-                Discard
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleContinueEditing}
-              >
-                Continue
-              </Button>
-            </Stack>
-          </Stack>
-        </Box>
-      )}
+      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+        <Button variant="outlined" startIcon={<HistoryEduOutlinedIcon />} onClick={() => navigate("/indicator?view=drafts")}>View my drafts</Button>
+      </Box>
 
       <Grid container spacing={3} sx={{ alignItems: "stretch" }}>
         {indicatorData.map((type) => (

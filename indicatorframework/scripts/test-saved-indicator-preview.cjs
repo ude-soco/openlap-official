@@ -6,6 +6,7 @@
 // packaged Apex distribution with its declared hash; off-origin traffic fails.
 const { webkit } = require("playwright");
 const assert = require("node:assert/strict");
+const workspacePage = require("./indicator-workspace-fixture.cjs");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const crypto = require("node:crypto");
@@ -180,6 +181,10 @@ async function openFromDashboard(page, name) {
         return route.fulfill({ contentType: "text/javascript", body: apex });
       }
       if (apiPath === "v1/users/my") return send({ name: "Synthetic fixture user", email: "fixture@localhost", roles: ["ROLE_USER"] });
+      if (apiPath === "v1/indicators/my/workspace") return send(workspacePage({
+        saved: definitions.map((item) => ({ id: item.id, name: item.name, type: "BASIC", createdOn: "2026-01-01T12:00:00" })),
+        query: url.searchParams,
+      }));
       if (apiPath === "v1/indicators/my") return send({
         content: definitions.map((item) => ({ id: item.id, indicatorName: item.name, type: "BASIC", createdOn: "2026-01-01T12:00:00" })),
         totalElements: definitions.length, pageable: { pageSize: 10, pageNumber: 0 },

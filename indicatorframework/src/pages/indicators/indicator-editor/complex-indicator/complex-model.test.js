@@ -13,8 +13,32 @@ import {
   recoveryKey,
   saveRequest,
   sourceSelection,
+  toComplexDraftConfiguration,
   withMapping,
 } from "./complex-model.js";
+
+test("draft configuration keeps choices and refreshes method contract metadata on resume", () => {
+  const configuration = newComplexConfiguration("MULTI_LEVEL");
+  configuration.analysis.params = [{ id: "clusters", value: "3", title: "Clusters", required: true,
+    possibleValues: "1,2,3", defaultValue: "2", description: "Installed plugin contract" }];
+  configuration.analysis.analyzedData = { privateRows: [1, 2] };
+  configuration.visualization.previewData = { html: "<script>legacy preview</script>" };
+  configuration.sources = [{ id: "source", name: "Source", label: "Source", keyColumnId: "count", measureColumnIds: ["count"], filterSummary: "",
+    analyticsMethod: { id: "method", name: "Method", cachedCatalog: true },
+    outputs: [{ id: "count", type: "Numeric", title: "Count", cachedValues: [1, 2] }] }];
+  configuration.analysis.mapping = { mapping: [{ inputPort: { id: "input", type: "Numeric", cache: "discard" },
+    outputPort: { id: "count", type: "Numeric", privateRows: [1, 2] } }] };
+  const draft = toComplexDraftConfiguration(configuration);
+  assert.deepEqual(draft.analysis.params, [{ id: "clusters", value: "3" }]);
+  assert.equal(draft.analysis.analyzedData, undefined);
+  assert.equal(draft.visualization.previewData, undefined);
+  assert.deepEqual(draft.sources[0].analyticsMethod, { id: "method", name: "Method" });
+  assert.deepEqual(draft.sources[0].outputs, [{ id: "count", type: "Numeric", title: "Count" }]);
+  assert.deepEqual(draft.analysis.mapping.mapping[0], { inputPort: { id: "input", type: "Numeric" }, outputPort: { id: "count", type: "Numeric" } });
+  assert.deepEqual(JSON.parse(saveRequest(configuration).configuration), draft,
+    "Completing an indicator uses the exact canonical configuration saved in its draft");
+  assert.equal(configuration.analysis.params[0].title, "Clusters", "The live method controls keep their contract metadata");
+});
 
 const text = {
   id: "material",

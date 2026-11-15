@@ -55,6 +55,7 @@ export default function ComplexVisualizationStep({
   previewChart,
   previewCurrent,
   rendererReady,
+  saveBlocked = false,
   onRendererStatus,
   preview,
   setSaveOpen,
@@ -355,7 +356,7 @@ export default function ComplexVisualizationStep({
             size="large"
             variant="contained"
             aria-label={id ? "Review changes" : "Save indicator"}
-            disabled={!previewCurrent || !rendererReady || Boolean(busy)}
+            disabled={!previewCurrent || !rendererReady || saveBlocked || Boolean(busy)}
             onClick={() => setSaveOpen(true)}
           >
             {id ? "Review changes" : "Save Indicator"}
@@ -388,6 +389,7 @@ ComplexVisualizationStep.propTypes = {
   previewChart: PropTypes.func,
   previewCurrent: PropTypes.bool,
   rendererReady: PropTypes.bool,
+  saveBlocked: PropTypes.bool,
   onRendererStatus: PropTypes.func,
   preview: PropTypes.object,
   setSaveOpen: PropTypes.func,

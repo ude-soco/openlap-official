@@ -87,6 +87,8 @@ import org.springframework.web.cors.CorsConfiguration;
       com.openlap.admin.controller.AdminPluginController.class,
       com.openlap.content.PublicContentController.class,
       com.openlap.plugins.visualization.VisualizationRuntimeController.class,
+      com.openlap.analytics_module.drafts.IndicatorDraftController.class,
+      com.openlap.analytics_module.workspace.IndicatorWorkspaceController.class,
       SecurityAuthorizationMockMvcTest.CsrfProtectedController.class
     })
 @ImportAutoConfiguration(Jackson2AutoConfiguration.class)
@@ -125,6 +127,8 @@ public class SecurityAuthorizationMockMvcTest {
   @MockitoBean private com.openlap.plugins.management.PluginRemovalService pluginRemovalService;
   @MockitoBean private com.openlap.plugins.management.PluginArtifactCleanup pluginArtifactCleanup;
   @MockitoBean private com.openlap.plugins.visualization.VisualizationRuntimeService visualizationRuntimeService;
+  @MockitoBean private com.openlap.analytics_module.drafts.IndicatorDraftService indicatorDraftService;
+  @MockitoBean private com.openlap.analytics_module.workspace.IndicatorWorkspaceService indicatorWorkspaceService;
   @MockitoBean private AnalyticsTechniqueService analyticsTechniqueService;
   @MockitoBean private VisualizationLibraryService visualizationLibraryService;
   @MockitoBean private VisualizationTypeService visualizationTypeService;
@@ -136,6 +140,50 @@ public class SecurityAuthorizationMockMvcTest {
   // Bootstrap CommandLineRunner safety net (prevents any MongoDB access if it is invoked)
   @MockitoBean private UserRoleService userRoleService;
   @MockitoBean private EngineService engineService;
+
+  @Test
+  public void anonymousClientsCannotReadOrMutatePrivateIndicatorDrafts() throws Exception {
+    mockMvc.perform(get("/v1/indicators/drafts")).andExpect(status().isForbidden());
+    mockMvc.perform(get("/v1/indicators/drafts/private")).andExpect(status().isForbidden());
+    mockMvc.perform(post("/v1/indicators/drafts").contentType(MediaType.APPLICATION_JSON).content("{}"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/v1/indicators/drafts/private")
+        .contentType(MediaType.APPLICATION_JSON).content("{}")) .andExpect(status().isForbidden());
+    mockMvc.perform(delete("/v1/indicators/drafts/private").param("revision", "0")).andExpect(status().isForbidden());
+    mockMvc.perform(post("/v1/indicators/drafts/private/complete").contentType(MediaType.APPLICATION_JSON).content("{}"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(post("/v1/indicators/saved/edit-draft")).andExpect(status().isForbidden());
+    mockMvc.perform(post("/v1/indicators/drafts/private/resume")).andExpect(status().isForbidden());
+    org.mockito.Mockito.verifyNoInteractions(indicatorDraftService);
+  }
+
+  @Test
+  public void draftAccessRequiresUserRoleAndResponsesAreNotCached() throws Exception {
+    given(tokenService.verifyToken(any())).willReturn(new TokenRequest("user@example.test", new String[] {"ROLE_USER"}, "tok", null));
+    given(indicatorDraftService.list(any(), org.mockito.ArgumentMatchers.eq(0), org.mockito.ArgumentMatchers.eq(10),
+        org.mockito.ArgumentMatchers.eq(""), org.mockito.ArgumentMatchers.isNull(), org.mockito.ArgumentMatchers.eq("updatedAt"),
+        org.mockito.ArgumentMatchers.eq("desc"))).willReturn(org.springframework.data.domain.Page.empty());
+    mockMvc.perform(get("/v1/indicators/drafts").header(AUTHORIZATION,"Bearer valid-token"))
+        .andExpect(status().isOk()).andExpect(header().string("Cache-Control","no-store"));
+    given(tokenService.verifyToken(any())).willReturn(new TokenRequest("admin@example.test",new String[]{"ROLE_SUPER_ADMIN"},"tok",null));
+    mockMvc.perform(get("/v1/indicators/drafts").header(AUTHORIZATION,"Bearer valid-token"))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  public void unifiedWorkspaceIsPrivateUserOnlyAndNeverCached() throws Exception {
+    mockMvc.perform(get("/v1/indicators/my/workspace")).andExpect(status().isForbidden());
+    org.mockito.Mockito.verifyNoInteractions(indicatorWorkspaceService);
+    given(tokenService.verifyToken(any())).willReturn(new TokenRequest("user@example.test",new String[]{"ROLE_USER"},"tok",null));
+    given(indicatorWorkspaceService.list(any(),org.mockito.ArgumentMatchers.eq(0),org.mockito.ArgumentMatchers.eq(10),
+        org.mockito.ArgumentMatchers.eq(""),org.mockito.ArgumentMatchers.isNull(),org.mockito.ArgumentMatchers.eq(false),
+        org.mockito.ArgumentMatchers.eq("updatedAt"),org.mockito.ArgumentMatchers.eq("desc")))
+        .willReturn(org.springframework.data.domain.Page.empty());
+    mockMvc.perform(get("/v1/indicators/my/workspace").header(AUTHORIZATION,"Bearer valid-token"))
+        .andExpect(status().isOk()).andExpect(header().string("Cache-Control","no-store"));
+    given(tokenService.verifyToken(any())).willReturn(new TokenRequest("admin@example.test",new String[]{"ROLE_SUPER_ADMIN"},"tok",null));
+    mockMvc.perform(get("/v1/indicators/my/workspace").header(AUTHORIZATION,"Bearer valid-token")).andExpect(status().isForbidden());
+  }
 
   @Test
   public void loginUsesTheConfiguredAuthenticationProviderAndIssuesTokens() throws Exception {

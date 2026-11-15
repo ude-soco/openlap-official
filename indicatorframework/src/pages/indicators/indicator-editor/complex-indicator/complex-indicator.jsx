@@ -7,16 +7,15 @@ import SourceIndicatorPreview from "./complex-source-preview";
 import chartPreviewData from "./complex-preview-data";
 import useDataPreview from "../utils/use-data-preview";
 import { getCustomizationErrors, getVisualizationDescriptor } from "../basic-indicator/components/visualization/utils/visualization-descriptor";
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import {
   Alert,
   Button,
   Chip,
   Collapse,
-  LinearProgress,
   Stack,
   Typography,
 } from "@mui/material";
@@ -30,7 +29,9 @@ import ToggleSummaryButton from "../../../../common/components/toggle-summary-bu
 import TipPopover from "../../../../common/components/tip-popover/tip-popover";
 
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager";
-import { useNavigationGuard } from "../../../../setup/routes-manager/navigation-guard-context";
+import useIndicatorDraft from "../drafts/use-indicator-draft.js";
+import DraftHeader from "../drafts/draft-header.jsx";
+import useDraftNavigation from "../drafts/use-draft-navigation.jsx";
 
 import {
   analysisRequest,
@@ -38,7 +39,6 @@ import {
   compositionRequest,
   datasetRows,
   defaultMappings,
-  fallbackConfiguration,
   mappingsReady,
   parametersReady,
   newComplexConfiguration,
@@ -48,6 +48,7 @@ import {
   saveRequest,
   sourceSelection,
   sourcesReady,
+  toComplexDraftConfiguration,
 } from "./complex-model";
 import { Failure } from "./complex-controls";
 
@@ -65,30 +66,31 @@ const STEP_TIPS = {
   visualization: "Choose a chart suited to your results, review its input mappings, and customize the live preview before saving.",
 };
 
-export default function ComplexIndicator({ type }) {
+export default function ComplexIndicator({ type, initialDraft = null, onDraftCreated }) {
   const { api, user } = useContext(AuthContext);
-  const { id } = useParams();
+  const id = initialDraft?.sourceIndicatorId || null;
   const navigate = useNavigate();
-  const navigation = useNavigationGuard();
   const { enqueueSnackbar } = useSnackbar();
   const isMulti = type === "MULTI_LEVEL";
   const title = TYPE_LABELS[type];
   const key = recoveryKey(type, user?.sub, id);
   const [configuration, setConfiguration] = useState(() => {
-    if (id) return newComplexConfiguration(type);
-    return (
-      readComplexConfiguration(sessionStorage.getItem(key), type) ||
-      newComplexConfiguration(type)
-    );
+    const restored = initialDraft && readComplexConfiguration(initialDraft.configuration, type);
+    return restored ? { ...restored, name: initialDraft.name || restored.name } : newComplexConfiguration(type);
   });
-  const [loaded, setLoaded] = useState(!id);
-  const [loadError, setLoadError] = useState("");
-  const [recoveryStatus, setRecoveryStatus] = useState("");
-  const [recoveryCandidate, setRecoveryCandidate] = useState(null);
+  const loaded = !initialDraft || Boolean(readComplexConfiguration(initialDraft.configuration, type));
+  const [legacyRecovery, setLegacyRecovery] = useState(() => {
+    try {
+      const local = readComplexConfiguration(sessionStorage.getItem(key), type);
+      return local && JSON.stringify(local) !== JSON.stringify(configuration) ? local : null;
+    }
+    catch { return null; }
+  });
+  const [importingRecovery, setImportingRecovery] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [workflow, setWorkflow] = useState({
-    current: "sources",
-    panels: { sources: true },
+    current: initialDraft && configuration.sources.length >= 2 ? "combine" : "sources",
+    panels: initialDraft && configuration.sources.length >= 2 ? { combine: true } : { sources: true },
   });
   const current = workflow.current;
   const setCurrent = useCallback((step) => {
@@ -99,7 +101,7 @@ export default function ComplexIndicator({ type }) {
   }, []);
   const [summaryVisible, setSummaryVisible] = useState({});
   const [tip, setTip] = useState({ step: "", anchor: null });
-  const [sourcesConfirmed, setSourcesConfirmed] = useState(false);
+  const [sourcesConfirmed, setSourcesConfirmed] = useState(Boolean(initialDraft && configuration.sources.length >= 2));
   const [catalog, setCatalog] = useState({ content: [], totalPages: 0, totalElements: 0 });
   const [sourcePage, setSourcePage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -136,14 +138,30 @@ export default function ComplexIndicator({ type }) {
   const [saveOpen, setSaveOpen] = useState(false);
   const [removeSource, setRemoveSource] = useState(null);
   const [removedSource, setRemovedSource] = useState(null);
-  const [leaveTarget, setLeaveTarget] = useState(null);
   const generation = useRef(0);
   const pendingMethodDefaults = useRef("");
-  const baseline = useRef(JSON.stringify(configuration));
   const configurationRef = useRef(configuration);
   configurationRef.current = configuration;
-  const recoveryTimer = useRef(null);
-  const savedRecovery = useRef(null);
+  const draftConfiguration = useMemo(() => toComplexDraftConfiguration(configuration), [configuration]);
+  const applyDraft = useCallback(({ name, configuration: savedConfiguration }) => {
+    const restored = readComplexConfiguration(savedConfiguration, type);
+    if (!restored) throw new Error("This draft uses an unsupported indicator configuration.");
+    generation.current += 1;
+    setConfiguration({ ...restored, name: name || restored.name });
+    setSourcesConfirmed(restored.sources.length >= 2);
+    setWorkflow({ current: restored.sources.length >= 2 ? "combine" : "sources",
+      panels: restored.sources.length >= 2 ? { combine: true } : { sources: true } });
+    setPreview(null);
+    setPreviewFingerprint("");
+  }, [type]);
+  const draft = useIndicatorDraft({
+    api, owner: user?.sub,
+    indicatorType: type, name: configuration.name, configuration: draftConfiguration,
+    initialDraft, meaningful: loaded && Boolean(configuration.sources.length || configuration.name.trim()),
+    onCreated: onDraftCreated, onApply: applyDraft,
+    onCompleted: () => { draftNavigation.release(); navigate("/indicator"); },
+  });
+  const draftNavigation = useDraftNavigation(draft);
 
   const endpoint = isMulti ? "multilevel" : "composite";
   const methodId = configuration.analysis.methodId;
@@ -156,7 +174,7 @@ export default function ComplexIndicator({ type }) {
     api,
     path: `v1/indicators/${endpoint}/merge`,
     fingerprint: JSON.stringify(compositionRequest(configuration)),
-    ready: Boolean(loaded && !recoveryCandidate && sourcesConfirmed &&
+    ready: Boolean(loaded && !draft.finalizing && sourcesConfirmed &&
       sourcesReady(configuration.sources)),
   });
   const merged = isMulti ? combinePreview.data?.mergedData : combinePreview.data;
@@ -167,7 +185,7 @@ export default function ComplexIndicator({ type }) {
     path: "v1/indicators/multilevel/analyze",
     fingerprint: JSON.stringify(analysisRequest(configuration)),
     upstream: merged,
-    ready: Boolean(isMulti && loaded && !recoveryCandidate &&
+    ready: Boolean(isMulti && loaded && !draft.finalizing &&
       datasetRows(merged) > 0 && methodId && !methodLoading &&
       methodContractId === methodId && methodInputs.length &&
       configuration.analysis.mapping.mapping.length > 0 &&
@@ -197,16 +215,12 @@ export default function ComplexIndicator({ type }) {
     (chart?.chartInputs || []).filter((input) => input.type === "Text")
       .length >= 2;
   const autoPreviewReady = Boolean(
-    loaded && !recoveryCandidate && !chartLoading && libraryId &&
+    loaded && !draft.finalizing && !chartLoading && libraryId &&
       selectedType?.chartInputs?.length && sourcesReady(configuration.sources) &&
       datasetRows(chartDataset) > 0 && supportsSeries(selectedType) &&
       mappingsReady(selectedType.chartInputs, configuration.visualization.mapping, chartDataset) &&
       Object.keys(getCustomizationErrors(getVisualizationDescriptor(selectedType), configuration.visualization.params)).length === 0,
   );
-  const dirty =
-    loaded &&
-    configuration.sources.length > 0 &&
-    baseline.current !== JSON.stringify(configuration);
 
   useEffect(
     () => () => {
@@ -214,111 +228,6 @@ export default function ComplexIndicator({ type }) {
     },
     [],
   );
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!id) return undefined;
-    const load = async () => {
-      setLoaded(false);
-      setLoadError("");
-      try {
-        const detail = apiData(
-          await api.get(
-            `v1/indicators/${encodeURIComponent(id)}?includeCode=false`,
-          ),
-        );
-        if (detail.type !== type)
-          throw new Error("This indicator belongs to a different editor type.");
-        let restored = fallbackConfiguration(detail, type);
-        if (!restored) {
-          const allSources = [];
-          for (let page = 0; page < 100; page += 1) {
-            const result = apiData(
-              await api.get(`v1/indicators/sources?page=${page}&size=100`),
-            );
-            allSources.push(...result.content);
-            if (page + 1 >= result.totalPages) break;
-          }
-          restored = fallbackConfiguration(detail, type, allSources);
-        }
-        if (!restored)
-          throw new Error(
-            "This saved indicator has no recoverable configuration. Its sources may no longer be available.",
-          );
-        if (!cancelled) {
-          setConfiguration(restored);
-          baseline.current = JSON.stringify(restored);
-          const local = readComplexConfiguration(
-            sessionStorage.getItem(key),
-            type,
-          );
-          setRecoveryCandidate(
-            local && JSON.stringify(local) !== baseline.current ? local : null,
-          );
-          setLoaded(true);
-          setSourcesConfirmed(restored.sources.length >= 2);
-          setCurrent("combine");
-        }
-      } catch (error) {
-        if (!cancelled)
-          setLoadError(messageOf(error, "Could not open the saved indicator."));
-      }
-    };
-    load();
-    return () => {
-      cancelled = true;
-      generation.current += 1;
-    };
-  }, [api, id, type, key, setCurrent]);
-
-  useEffect(() => {
-    if (!loaded || recoveryCandidate) return undefined;
-    const serialized = JSON.stringify(configuration);
-    if (savedRecovery.current?.key === key
-        && savedRecovery.current.configuration === serialized) {
-      return undefined;
-    }
-    setRecoveryStatus("Saving in this tab…");
-    const timer = setTimeout(() => {
-      if (recoveryTimer.current !== timer) return;
-      recoveryTimer.current = null;
-      try {
-        sessionStorage.setItem(key, serialized);
-        setRecoveryStatus("Saved in this tab · not yet saved to My Indicators");
-      } catch {
-        setRecoveryStatus(
-          "Tab recovery unavailable. Save your indicator before leaving.",
-        );
-      }
-    }, 600);
-    recoveryTimer.current = timer;
-    return () => {
-      clearTimeout(timer);
-      if (recoveryTimer.current === timer) recoveryTimer.current = null;
-    };
-  }, [configuration, key, loaded, recoveryCandidate]);
-
-  useEffect(() => {
-    const beforeUnload = (event) => {
-      if (dirty || busy) {
-        event.preventDefault();
-        event.returnValue = "";
-      }
-    };
-    window.addEventListener("beforeunload", beforeUnload);
-    return () => window.removeEventListener("beforeunload", beforeUnload);
-  }, [dirty, busy]);
-
-  useEffect(() => {
-    if (!navigation) return undefined;
-    const guard = (target) => {
-      if (!dirty && !busy) return false;
-      setLeaveTarget(target);
-      return true;
-    };
-    navigation.registerGuard(guard);
-    return () => navigation.unregisterGuard(guard);
-  }, [navigation, dirty, busy]);
 
   useEffect(() => setSourcePage(0), [methodFilterId]);
   useEffect(() => {
@@ -650,30 +559,13 @@ export default function ComplexIndicator({ type }) {
   const save = () =>
     run(
       "save",
-      () =>
-        id
-          ? api.put(
-              `v1/indicators/${endpoint}/${encodeURIComponent(id)}/update`,
-              saveRequest(configuration),
-            )
-          : api.post(
-              `v1/indicators/${endpoint}/create`,
-              saveRequest(configuration),
-            ),
+      () => draft.complete(saveRequest(configuration)),
       () => {
-        const serialized = JSON.stringify(configuration);
-        savedRecovery.current = { key, configuration: serialized };
-        clearTimeout(recoveryTimer.current);
-        recoveryTimer.current = null;
-        baseline.current = serialized;
-        sessionStorage.removeItem(key);
-        setRecoveryStatus("Saved to My Indicators");
         setSaveOpen(false);
         enqueueSnackbar(
           id ? "Indicator updated." : "Indicator saved to My Indicators.",
           { variant: "success" },
         );
-        navigate("/indicator");
       },
     );
 
@@ -690,14 +582,22 @@ export default function ComplexIndicator({ type }) {
           dataset: apiData(response).indicators?.[0]?.analyzedDataset,
         }),
     );
-  const keepAndLeave = () => {
-    sessionStorage.setItem(key, JSON.stringify(configurationRef.current));
-    navigate(leaveTarget);
+  const importLegacyRecovery = () => {
+    applyDraft({ name: legacyRecovery.name, configuration: legacyRecovery });
+    setLegacyRecovery(null);
+    setImportingRecovery(true);
   };
+  useEffect(() => {
+    if (draft.pendingTerminal && !draft.saving) setSaveOpen(false);
+  }, [draft.pendingTerminal, draft.saving]);
+  useEffect(() => {
+    if (importingRecovery && draft.draftId && !draft.dirty && !draft.saving && !draft.error) {
+      try { sessionStorage.removeItem(key); } catch { /* The server copy remains authoritative. */ }
+      setImportingRecovery(false);
+    }
+  }, [draft.draftId, draft.dirty, draft.saving, draft.error, importingRecovery, key]);
   const resetCurrent = () => {
     const fresh = newComplexConfiguration(type);
-    baseline.current = JSON.stringify(fresh);
-    sessionStorage.removeItem(key);
     change(fresh, "sources");
     setWorkflow({ current: "sources", panels: { sources: true } });
     setSummaryVisible({});
@@ -825,79 +725,24 @@ export default function ComplexIndicator({ type }) {
   };
 
   if (!loaded)
-    return (
-      <Stack sx={{ gap: 2 }}>
-        <PageHeader title={`Edit ${title.toLowerCase()}`} />
-        {loadError ? (
-          <Failure message={loadError} retry={() => window.location.reload()} />
-        ) : (
-          <LinearProgress aria-label="Opening saved indicator" />
-        )}
-      </Stack>
-    );
-
-  if (recoveryCandidate)
-    return (
-      <Stack sx={{ gap: 2 }}>
-        <PageHeader title={`Edit ${title.toLowerCase()}`} />
-        <Alert severity="info">
-          Unsaved changes from this browser tab are available. Restore those
-          selections, or continue with the server-saved indicator. Computed
-          previews will be refreshed either way.
-        </Alert>
-        <Stack direction={{ xs: "column", sm: "row" }} sx={{ gap: 1 }}>
-          <Button
-            variant="contained"
-            onClick={() => {
-              setConfiguration(recoveryCandidate);
-              setRecoveryCandidate(null);
-              setSourcesConfirmed(recoveryCandidate.sources.length >= 2);
-              setCurrent("combine");
-            }}
-          >
-            Restore tab changes
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => {
-              sessionStorage.removeItem(key);
-              setRecoveryCandidate(null);
-            }}
-          >
-            Use saved indicator
-          </Button>
-        </Stack>
-      </Stack>
-    );
+    return <Stack sx={{ gap: 2 }}>
+      <PageHeader title={title} />
+      <Failure message="This draft uses an unsupported indicator configuration. Your saved draft has not been changed." />
+      <Button onClick={() => navigate("/indicator")}>Back to My Indicators</Button>
+    </Stack>;
 
   return (
     <Stack sx={{ gap: 3, width: "100%", minWidth: 0 }}>
       <PageHeader
         title={`${id ? "Edit " : "Create "}${title.toLowerCase()}`}
-        actions={
-          <Stack sx={{ gap: 1, alignItems: { xs: "flex-start", sm: "flex-end" } }}>
-            <Typography variant="caption" color="text.secondary" role="status">
-              {recoveryStatus}
-            </Typography>
-          {!id && configuration.sources.length > 0 && (
-            <Button
-              variant="outlined"
-              disabled={Boolean(busy)}
-              onClick={() => setResetOpen(true)}
-            >
-              Start over
-            </Button>
-          )}
-          </Stack>
-        }
+
         breadcrumbs={[
           {
             label: "Home",
             to: "/",
             onClick: (event) => {
               event.preventDefault();
-              if (navigation) navigation.guardedNavigate("/");
-              else navigate("/");
+              draftNavigation.requestLeave("/");
             },
           },
           {
@@ -905,8 +750,7 @@ export default function ComplexIndicator({ type }) {
             to: "/indicator",
             onClick: (event) => {
               event.preventDefault();
-              navigation?.guardedNavigate("/indicator") ||
-                (!navigation && navigate("/indicator"));
+              draftNavigation.requestLeave("/indicator");
             },
           },
           {
@@ -914,8 +758,7 @@ export default function ComplexIndicator({ type }) {
             to: "/indicator/editor",
             onClick: (event) => {
               event.preventDefault();
-              if (navigation) navigation.guardedNavigate("/indicator/editor");
-              else navigate("/indicator/editor");
+              draftNavigation.requestLeave("/indicator/editor");
             },
           },
         ]}
@@ -925,6 +768,21 @@ export default function ComplexIndicator({ type }) {
             : "Combine Basic indicators using the same analytics method and compare their results in one chart."
         }
       />
+      <DraftHeader
+        name={configuration.name}
+        onNameChange={(name) => setConfiguration((previous) => ({ ...previous, name }))}
+        indicatorType={type}
+        draft={draft}
+        onSaveAndExit={() => draftNavigation.saveAndExit()}
+        onDiscard={() => draftNavigation.requestDiscard()}
+      />
+      <Stack inert={draft.finalizing || undefined} sx={{ gap: 3 }}>
+      {legacyRecovery && <Alert severity="info" action={<Button onClick={importLegacyRecovery}>Import local draft</Button>}>
+        An older {title.toLowerCase()} is saved only in this tab. Import those selections into this private draft. Saved indicators stay unchanged.
+      </Alert>}
+      {!id && configuration.sources.length > 0 && <Stack direction="row" sx={{ justifyContent: "flex-end" }}>
+        <Button variant="outlined" disabled={Boolean(busy) || draft.saving} onClick={() => setResetOpen(true)}>Start over</Button>
+      </Stack>}
       <WorkflowStepper
         steps={steps}
         current={current}
@@ -1026,6 +884,7 @@ export default function ComplexIndicator({ type }) {
           busy={busy}
           previewChart={previewChart}
           previewCurrent={previewCurrent}
+          saveBlocked={Boolean(draft.conflict || draft.recovery)}
           rendererReady={rendererReady}
           onRendererStatus={setRendererReady}
           preview={preview}
@@ -1033,6 +892,7 @@ export default function ComplexIndicator({ type }) {
           id={id}
         />,
       )}
+      </Stack>
       </Stack>
       <SourceIndicatorPreview
         source={catalogPreview}
@@ -1066,16 +926,16 @@ export default function ComplexIndicator({ type }) {
         libraryId={libraryId}
         selectedType={selectedType}
         operationError={operationError}
-        previewCurrent={previewCurrent}
+        previewCurrent={previewCurrent && !draft.conflict && !draft.recovery}
         save={save}
-        leaveTarget={leaveTarget}
-        setLeaveTarget={setLeaveTarget}
-        keepAndLeave={keepAndLeave}
       />
+      {draftNavigation.dialog}
     </Stack>
   );
 }
 
 ComplexIndicator.propTypes = {
   type: PropTypes.oneOf(["COMPOSITE", "MULTI_LEVEL"]).isRequired,
+  initialDraft: PropTypes.object,
+  onDraftCreated: PropTypes.func,
 };

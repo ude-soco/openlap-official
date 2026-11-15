@@ -2,8 +2,11 @@
 // markup are synthetic. Real plugin/database execution is qualified separately.
 // Start Vite with VITE_BACKEND_URL=/api/, then use the existing WebKit tools:
 // OPENLAP_TEST_BASE_URL=http://127.0.0.1:15281 npm run test:complex-indicators
+// OPENLAP_COMPLEX_DRAFT_ONLY=1 runs just persistent draft lifecycle checks.
+// OPENLAP_COMPLEX_TERMINAL_ONLY=1 checks an uncertain completion and exact retry.
 const { webkit } = require("playwright");
 const assert = require("node:assert/strict");
+const workspacePage = require("./indicator-workspace-fixture.cjs");
 const chartRendererFixture = require("./chart-renderer-fixture.cjs");
 const base = new URL(
   process.env.OPENLAP_TEST_BASE_URL || "http://127.0.0.1:5181",
@@ -229,6 +232,20 @@ const failures = [],
   previews = [],
   previewPlans = [];
 const mergeRequests = [], mergePlans = [], analysisRequests = [], analysisPlans = [];
+const drafts = new Map(), draftReceipts = new Map(), draftWrites = [], draftWritePlans = [];
+let nextDraftId = 1;
+const draftResponse = (body, sourceIndicatorId = null) => ({
+  id: `draft-${nextDraftId++}`, indicatorType: body.indicatorType,
+  schemaVersion: 1, name: body.name || "", configuration: structuredClone(body.configuration),
+  sourceIndicatorId, revision: 1, status: "DRAFT",
+  createdAt: "2026-11-15T12:00:00Z", updatedAt: "2026-11-15T12:00:00Z",
+});
+const terminalDraftReceipt = (item, status, savedIndicatorId) => ({
+  id: item.id, indicatorType: item.indicatorType, schemaVersion: item.schemaVersion,
+  name: item.name, revision: item.revision + 1, status, configuration: null,
+  createdAt: item.createdAt, updatedAt: new Date().toISOString(),
+  ...(savedIndicatorId ? { savedIndicatorId } : {}),
+});
 const codeForPreview = (token) => encodeURIComponent(
   `${chartMarkup.replace('<svg ', '<svg data-preview-token="' + token + '" ')}<script>/* Static workflow fixture. */</script>`,
 );
@@ -470,25 +487,79 @@ let chartCatalogFailures = 0;
           call.completed = true;
         }
       }
-      if (
-        /^v1\/indicators\/(composite|multilevel)\/(create|[^/]+\/update)$/.test(
-          path,
-        )
-      ) {
-        if (request.method() === "PUT" && failUpdate) {
-          failUpdate = false;
-          return route.fulfill({
-            status: 503,
-            contentType: "application/json",
-            body: JSON.stringify({ message: "Update temporarily unavailable. Retry your save." }),
-          });
-        }
-        assert.equal(JSON.parse(body.configuration).type, body.indicatorType);
-        assert.equal(JSON.parse(body.configuration).schemaVersion, 1);
-        assert.equal(body.indicators.length, 2);
-        saved.push({ path, ...body });
-        return send(null);
+      const draftMatch = path.match(/^v1\/indicators\/drafts\/([^/]+)(?:\/(complete|resume))?$/);
+      if (path === "v1/indicators/drafts" && request.method() === "POST") {
+        const existing = [...drafts.values()].find((item) => item.clientRequestId === body.clientRequestId);
+        if (existing) return send(existing);
+        const draft = { ...draftResponse(body), clientRequestId: body.clientRequestId };
+        drafts.set(draft.id, draft);
+        draftWrites.push({ path, body: structuredClone(body), id: draft.id });
+        return send(draft);
       }
+      if (path === "v1/indicators/drafts" && request.method() === "GET") {
+        const content = [...drafts.values()].filter((item) => item.status === "DRAFT");
+        return send({ content, totalElements: content.length, totalPages: 1,
+          pageable: { pageSize: 10, pageNumber: 0 } });
+      }
+      if (path === "v1/indicators/saved-0/edit-draft") {
+        const existing = [...drafts.values()].find((item) => item.sourceIndicatorId === "saved-0" && item.status === "DRAFT");
+        if (existing) return send(existing);
+        const draft = draftResponse({ indicatorType: "COMPOSITE", name: saved[0].name,
+          configuration: JSON.parse(saved[0].configuration) }, "saved-0");
+        drafts.set(draft.id, draft);
+        return send(draft);
+      }
+      if (draftMatch) {
+        const draftId = decodeURIComponent(draftMatch[1]);
+        const item = drafts.get(draftId) || draftReceipts.get(draftId);
+        assert.ok(item, `Only an existing private draft can be accessed: ${request.method()} ${path}; available ${[...drafts.keys()].join(", ")}`);
+        if (request.method() === "GET" || draftMatch[2] === "resume") return send(item);
+        if ((request.method() === "DELETE" && item.status === "DISCARDED") ||
+            (draftMatch[2] === "complete" && item.status === "COMPLETED")) return send(item);
+        const revision = request.method() === "DELETE" ? Number(url.searchParams.get("revision")) : body.revision;
+        assert.equal(revision, item.revision, "Every draft mutation uses the current acknowledged revision");
+        if (request.method() === "DELETE") {
+          const receipt = terminalDraftReceipt(item, "DISCARDED");
+          draftReceipts.set(item.id, receipt);
+          drafts.delete(item.id);
+          return send(receipt);
+        }
+        if (draftMatch[2] === "complete") {
+          assert.equal(item.status, "DRAFT", "A completed draft cannot be completed again");
+          if (item.sourceIndicatorId && failUpdate) {
+            failUpdate = false;
+            return route.fulfill({ status: 503, contentType: "application/json",
+              body: JSON.stringify({ message: "Update temporarily unavailable. Retry your save." }) });
+          }
+          const indicator = body.indicator;
+          assert.equal(JSON.parse(indicator.configuration).type, indicator.indicatorType);
+          assert.equal(JSON.parse(indicator.configuration).schemaVersion, 1);
+          assert.deepEqual(JSON.parse(indicator.configuration), item.configuration,
+            "Completion executes precisely the configuration acknowledged by the draft save");
+          assert.equal(indicator.indicators.length, 2);
+          const indicatorId = item.sourceIndicatorId || `saved-${saved.length}`;
+          saved.push({ path, sourceIndicatorId: item.sourceIndicatorId, indicatorId, ...indicator });
+          const receipt = terminalDraftReceipt(item, "COMPLETED", indicatorId);
+          draftReceipts.set(item.id, receipt);
+          drafts.delete(item.id);
+          return send(receipt);
+        }
+        assert.equal(item.status, "DRAFT", "Autosave must stop after completion");
+        const plan = draftWritePlans.shift() || {};
+        if (plan.delayMs) await new Promise((resolve) => setTimeout(resolve, plan.delayMs));
+        if (plan.fail) return route.fulfill({ status: 503, contentType: "application/json",
+          body: JSON.stringify({ message: "Draft storage temporarily unavailable." }) });
+        Object.assign(item, { name: body.name, configuration: structuredClone(body.configuration), revision: item.revision + 1,
+          updatedAt: new Date().toISOString() });
+        draftWrites.push({ path, body: structuredClone(body), id: item.id });
+        return send(item);
+      }
+      if (path === "v1/indicators/my/workspace") return send(workspacePage({
+        saved: [
+          ...saved.map((item, index) => ({ id: "saved-" + index, name: item.name, type: item.indicatorType })),
+          { id: "access", name: "Access count", type: "BASIC" },
+        ], drafts: [...drafts.values()], query: url.searchParams,
+      }));
       if (path === "v1/indicators/my")
         return send({
           content: [
@@ -812,6 +883,18 @@ let chartCatalogFailures = 0;
       await sourceStep.getByRole("button", { name: "Close", exact: true }).click();
     };
     const saveIndicator = async (name, update = false) => {
+      await waitForPreview(previews.at(-1));
+      // An iframe can paint before the surrounding Collapse finishes opening.
+      // Wait for its final geometry so pointerup still lands on the save button.
+      await page.waitForFunction(() => {
+        const action = document.querySelector('button[aria-label="Save indicator"],button[aria-label="Review changes"]');
+        if (!action || action.disabled) return false;
+        for (let parent = action.parentElement; parent; parent = parent.parentElement) {
+          if (parent.classList.contains("MuiCollapse-root")
+            && !parent.classList.contains("MuiCollapse-entered")) return false;
+        }
+        return true;
+      });
       const previewsBeforeSave = previews.length;
       const mergesBeforeSave = mergeRequests.length, analysesBeforeSave = analysisRequests.length;
       await button(update ? "Review changes" : "Save indicator").click();
@@ -819,19 +902,15 @@ let chartCatalogFailures = 0;
         name: /(?:Save|Update) (?:composite|multilevel analysis) indicator/,
       });
       await dialog.getByRole("textbox", { name: "Indicator name" }).fill(name);
-      await page.getByRole("status", { includeHidden: true })
-        .filter({ hasText: "Saving in this tab…" }).waitFor();
       const saveAction = dialog.getByRole("button", {
         name: update ? "Update indicator" : "Save indicator", exact: true,
       });
       await saveAction.click();
       if (update) {
-        await dialog.getByRole("alert").filter({ hasText: "Update temporarily unavailable" }).waitFor();
-        await page.waitForFunction((name) => Object.keys(sessionStorage).some((key) =>
-          key.startsWith("openlap:complex:") && key.endsWith(":saved-0")
-          && JSON.parse(sessionStorage.getItem(key)).name === name,
-        ), name);
-        await saveAction.click();
+        await page.getByRole("alert").filter({ hasText: "Update temporarily unavailable" }).waitFor();
+        await until(() => [...drafts.values()].some((draft) => draft.sourceIndicatorId === "saved-0"
+          && draft.status === "DRAFT" && draft.name === name), "A failed completion retains the latest server draft");
+        await button("Resume previous save").click();
       }
       await page.waitForURL("**/indicator");
       await page
@@ -1085,6 +1164,39 @@ let chartCatalogFailures = 0;
       await selectionCount(0);
       assert.equal(await checkbox("Select Access count").isEnabled(), true);
     };
+    if (process.env.OPENLAP_COMPLEX_DRAFT_ONLY === "1" || process.env.OPENLAP_COMPLEX_TERMINAL_ONLY === "1") {
+      expandedCatalog = false;
+      failMerge = failMethodContract = false;
+      failUpdate = process.env.OPENLAP_COMPLEX_TERMINAL_ONLY === "1";
+      const configuration = {
+        schemaVersion: 1, type: "COMPOSITE", name: "Saved Composite fixture",
+        sources: [sources[0], sources[1]].map((item) => ({
+          id: item.id, name: item.name, analyticsMethod: item.analyticsMethod, outputs: item.outputs,
+          keyColumnId: "material", measureColumnIds: ["count"], label: item.name,
+        })),
+        analysis: { methodId: "", mapping: { mapping: [] }, params: [] },
+        visualization: { libraryId: "library", typeId: "grouped", mapping: { mapping: [
+          { inputPort: charts[0].chartInputs[0], outputPort: wide.chartData.columns.combined_key.configurationData },
+          { inputPort: charts[0].chartInputs[1], outputPort: wide.chartData.columns.combined_series.configurationData },
+          { inputPort: charts[0].chartInputs[2], outputPort: wide.chartData.columns.combined_value.configurationData },
+        ] }, params: {}, dataMode: "combined" },
+      };
+      saved.push({ indicatorType: "COMPOSITE", name: configuration.name,
+        configuration: JSON.stringify(configuration), visualizationTypeId: "grouped" });
+      if (process.env.OPENLAP_COMPLEX_TERMINAL_ONLY === "1") {
+        await page.goto(new URL("/indicator/editor/composite/edit/saved-0", base).href);
+        await previewResults().getByText("8 rows · 3 columns", { exact: true }).waitFor();
+        await button("Continue to visualization").click();
+        await resultChart().waitFor();
+        await button("Review changes").waitFor({ state: "visible" });
+        await saveIndicator("Reconciled saved edit", true);
+        assert.equal(saved.at(-1).sourceIndicatorId, "saved-0");
+        assert.deepEqual(pageErrors, []);
+        assert.deepEqual(failures, []);
+        console.log("PASS: Complex uncertain completion locks authoring, exposes Resume previous save, reconciles the server draft and retries the original definition without extra preview execution");
+        return;
+      }
+    } else {
     await checkSourcePicker();
     const sourceSection = page.getByRole("region", {name:"Select indicators step", exact:true});
     await sourceSection.getByRole("button", {name:"Close", exact:true}).click();
@@ -1130,9 +1242,9 @@ let chartCatalogFailures = 0;
     await checkVisualizationDesign("Grouped bar");
     await saveIndicator("Composite fixture");
     assert.ok(delayedDashboardModule, "The first save waits for a cold lazy destination");
-    assert.deepEqual(await page.evaluate(() => Object.keys(sessionStorage).filter(
-      (key) => key.startsWith("openlap:complex:") && key.endsWith(":COMPOSITE:new"),
-    )), [], "Successful save does not recreate its recovery draft during delayed navigation");
+    assert.equal([...drafts.values()].filter((draft) => draft.indicatorType === "COMPOSITE" && draft.status === "DRAFT").length, 0,
+      "Successful completion leaves no active draft during delayed navigation");
+    assert.ok(draftWrites.length > 0, "The workflow persists incomplete progress through the draft API");
     assert.equal(saved[0].indicatorType, "COMPOSITE");
     assert.ok(
       saved[0].visualizationMapping.mapping.some(
@@ -1166,21 +1278,13 @@ let chartCatalogFailures = 0;
         exact: true,
       })
       .fill("Recovered access label");
-    await page.waitForFunction(() =>
-      Object.keys(sessionStorage)
-        .filter(
-          (key) =>
-            key.startsWith("openlap:complex:") && key.endsWith(":saved-0"),
-        )
-        .some(
-          (key) =>
-            JSON.parse(sessionStorage.getItem(key)).sources[0].label ===
-            "Recovered access label",
-        ),
-    );
-    page.once("dialog", (dialog) => dialog.accept());
+    await until(() => [...drafts.values()].some((draft) => draft.sourceIndicatorId === "saved-0"
+      && draft.configuration.sources[0].label === "Recovered access label"),
+      "Changed source labels are saved to the private edit draft");
+    await page.getByRole("status").filter({ hasText: "Draft saved" }).waitFor();
+    const editDraftUrl = page.url();
+    assert.match(editDraftUrl, /\/indicator\/editor\/drafts\/draft-/, "Editing is canonicalized to the draft URL");
     await page.reload();
-    await button("Restore tab changes").click();
     assert.equal(
       await page
         .getByRole("textbox", {
@@ -1189,7 +1293,7 @@ let chartCatalogFailures = 0;
         })
         .inputValue(),
       "Recovered access label",
-      "Unsaved edits survive refresh after explicit recovery",
+      "Server-saved draft edits survive refresh without a local storage dependency",
     );
     await page
       .getByRole("textbox", {
@@ -1201,7 +1305,8 @@ let chartCatalogFailures = 0;
     await button("Continue to visualization").click();
     await resultChart().waitFor();
     await saveIndicator("Composite updated", true);
-    assert.match(saved[1].path, /saved-0\/update$/);
+    assert.match(saved[1].path, /drafts\/draft-[^/]+\/complete$/);
+    assert.equal(saved[1].sourceIndicatorId, "saved-0", "Completing an edit draft updates its saved source");
 
     await page.goto(
       new URL("/indicator/editor/multi-level-analysis", base).href,
@@ -1269,22 +1374,30 @@ let chartCatalogFailures = 0;
     await checkVisualizationDesign("Scatter plot");
     await saveIndicator("Multilevel fixture");
     assert.equal(saved[2].indicatorType, "MULTI_LEVEL");
+    }
     await page.goto(new URL("/indicator/editor/composite", base).href);
     await checkbox("Select Access count").waitFor();
     assert.equal(await checkbox("Select Access count").isDisabled(), false,
       "A fresh editor after saving has no recovered source selections");
     await select("Access count");
     await select("Student count");
-    await page
-      .getByRole("status")
-      .filter({ hasText: "Saved in this tab" })
-      .waitFor();
+    await page.getByRole("status").filter({ hasText: "Draft saved" }).waitFor();
+    await until(() => [...drafts.values()].some((draft) => draft.status === "DRAFT"
+      && draft.indicatorType === "COMPOSITE" && draft.configuration.sources.length === 2),
+      "The new Composite draft is durably saved before refresh");
+    const freshDraftUrl = page.url();
+    assert.match(freshDraftUrl, /\/indicator\/editor\/drafts\/draft-/);
     await page.reload();
+    await previewResults().getByText("8 rows · 3 columns", { exact: true }).waitFor();
+    await page.getByRole("region", { name: "Select indicators step", exact: true })
+      .getByRole("button", { name: "Open", exact: true }).click();
     await page
       .getByRole("region", { name: "Selected indicators", exact: true })
       .getByText("Student count", { exact: true })
       .waitFor();
     await button("Remove Student count").click();
+    await page.getByRole("dialog", { name: "Remove this source?", exact: true })
+      .getByRole("button", { name: "Remove source", exact: true }).click();
     await button("Undo").click();
     await page.setViewportSize({ width: 390, height: 844 });
     await button("Continue to combine data").click();
@@ -1303,9 +1416,64 @@ let chartCatalogFailures = 0;
       .getByRole("button", { name: "Start over", exact: true })
       .click();
     assert.equal(await checkbox("Select Access count").isChecked(), false,
-      "Confirmed reset clears this tab's source selection");
-    await page.goto(new URL("/indicator", base).href);
+      "Confirmed reset clears this draft's source selection");
+    await button("Save draft").click();
+    await page.getByRole("status").filter({ hasText: "Draft saved" }).waitFor();
+    await select("Access count");
+    await select("Student count");
+    draftWritePlans.push({ fail: true, delayMs: 200 });
+    await page.getByRole("textbox", { name: "Indicator name", exact: true }).fill("Draft durability fixture");
+    await button("Save draft and exit").click();
+    await page.getByRole("alert").filter({ hasText: "Draft storage temporarily unavailable" }).waitFor();
+    assert.match(page.url(), /\/indicator\/editor\/drafts\/draft-/, "A failed draft flush cannot navigate away");
+    assert.equal(await page.getByRole("textbox", { name: "Indicator name", exact: true }).inputValue(), "Draft durability fixture");
+    assert.equal(await checkbox("Deselect Access count").isChecked(), true, "A failed save retains selected sources");
+    await button("Retry save").click();
+    await page.getByRole("status").filter({ hasText: "Draft saved" }).waitFor();
+    const durableDraftUrl = page.url();
+    const durableDraft = [...drafts.values()].find((draft) => draft.name === "Draft durability fixture");
+    assert.equal(durableDraft.configuration.sources.length, 2, "Retry saves the latest full selection");
+    assert.equal(durableDraft.configuration.mergedData, undefined, "Drafts exclude computed rows");
+    assert.equal(durableDraft.configuration.visualization.previewData, undefined, "Drafts exclude executable preview markup");
+    const completedBeforeExit = saved.length;
+    await button("Save draft and exit").click();
+    await page.waitForURL("**/indicator");
+    assert.equal(saved.length, completedBeforeExit, "Saving an incomplete draft does not create an executable indicator");
+    const previousPage = page;
+    page = await context.newPage();
+    page.on("pageerror", (error) => pageErrors.push(error.stack || error.message));
+    await previousPage.close();
+    await page.goto(durableDraftUrl);
+    await page.getByRole("textbox", { name: "Indicator name", exact: true }).waitFor();
+    assert.equal(await page.getByRole("textbox", { name: "Indicator name", exact: true }).inputValue(), "Draft durability fixture",
+      "A second tab resumes the authoritative server draft without the previous sessionStorage");
+    await page.getByRole("region", { name: "Combine data step", exact: true }).waitFor();
+    // Let the resumed editor's catalog load settle before deliberately replacing
+    // the whole document; WebKit reports interrupted XHRs as browser errors.
+    await page.waitForLoadState("networkidle");
+    await page.goto(new URL("/indicator/editor/composite", base).href);
+    await checkbox("Select Access count").waitFor();
+    assert.equal(await checkbox("Select Access count").isChecked(), false, "Starting a second draft does not rehydrate an older draft");
+    assert.equal(drafts.get(durableDraft.id).configuration.sources.length, 2, "Starting another indicator does not destroy the previous draft");
+    await page.waitForLoadState("networkidle");
+    await page.goto(durableDraftUrl);
+    await page.getByRole("status").filter({ hasText: "Draft saved" }).waitFor();
+    await button("Discard draft").click();
+    let discardDialog = page.getByRole("dialog", { name: "Discard this draft?", exact: true });
+    await discardDialog.waitFor();
+    assert.ok(drafts.has(durableDraft.id), "Opening discard confirmation retains the clean server draft");
+    await discardDialog.getByRole("button", { name: "Stay here", exact: true }).click();
+    await discardDialog.waitFor({ state: "hidden" });
+    await button("Discard draft").click();
+    discardDialog = page.getByRole("dialog", { name: "Discard this draft?", exact: true });
+    await discardDialog.getByRole("button", { name: "Discard draft", exact: true }).click();
+    await page.waitForURL("**/indicator");
+    assert.equal(drafts.has(durableDraft.id), false, "Confirmed discard deletes only the selected private draft");
+    assert.equal(draftReceipts.get(durableDraft.id).status, "DISCARDED", "Discard is acknowledged by a terminal server receipt");
+    assert.equal(draftReceipts.get(durableDraft.id).configuration, null, "The terminal receipt retains no authoring configuration");
+    assert.equal(saved.length, completedBeforeExit, "Discarding an incomplete draft preserves saved indicators");
     const openBlockedDeletion = async () => {
+      await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("Access count");
       await button("More actions for Access count").click();
       await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
       await page
@@ -1353,8 +1521,10 @@ let chartCatalogFailures = 0;
     assert.deepEqual(pageErrors, []);
     assert.deepEqual(failures, []);
     assert.ok(requests.includes("v1/indicators/saved-0/result"));
-    console.log(
-      "PASS: compact source table server sorting/filtering/pagination, persistent checked selections and max10 feedback, owner-scoped on-demand chart/data inspection with retry/focus/stale-response protection; Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; responsive two-column combine panels and automatic data/analysis previews for valid preselected choices, incomplete-input and integer-parameter gating, explicit failure retry, no request loops, name-only edit stability and stale-response protection; new/edit tab recovery, failed-save preservation, delayed-navigation save cleanup, confirmed reset, metadata retry, undo, mobile containment; blocked source deletion retains source and safely links its dependents; automatic chart selection/mapping/customization previews, invalid-input gating, explicit retry, stale catalog-error recovery and stale-response suppression for both types; no browser errors.",
+    console.log(process.env.OPENLAP_COMPLEX_DRAFT_ONLY === "1"
+      ? "PASS: private server draft save/refresh/second-tab resume, latest-state failure retry and save-and-exit, independent draft creation, confirmed clean-draft discard, no computed data or executable preview storage, saved-indicator preservation and blocked source deletion; no browser errors."
+      :
+      "PASS: compact source table server sorting/filtering/pagination, persistent checked selections and max10 feedback, owner-scoped on-demand chart/data inspection with retry/focus/stale-response protection; Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; responsive two-column combine panels and automatic data/analysis previews for valid preselected choices, incomplete-input and integer-parameter gating, explicit failure retry, no request loops, name-only edit stability and stale-response protection; new/edit server draft resume, failed-completion preservation, revision-checked saves and delayed-navigation completion cleanup, confirmed reset, metadata retry, undo, mobile containment; blocked source deletion retains source and safely links its dependents; automatic chart selection/mapping/customization previews, invalid-input gating, explicit retry, stale catalog-error recovery and stale-response suppression for both types; no browser errors.",
     );
   } catch (error) {
     console.error("Synthetic browser diagnostics:", { pageErrors, failures,
