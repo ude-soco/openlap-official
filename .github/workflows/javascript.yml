@@ -2,7 +2,6 @@ name: JavaScript regression checks
 
 on:
   pull_request:
-    branches: [main]
     paths:
       - indicatorframework/**
       - analyticsframework/src/main/resources/templates/indicator.html
