@@ -13,5 +13,6 @@ public class PluginInspection {
   private List<String> classes = new ArrayList<>();
   private String libraryClass;
   private Document library;
+  private Document visualizationManifest;
   private List<Document> entries = new ArrayList<>();
 }

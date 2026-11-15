@@ -318,6 +318,8 @@ public class PluginManagementService {
       } else {
         row.append("visualizationLib", new DBRef("visualization-library", libraryId))
             .append("chartConfiguration", entry.get("chartConfiguration"));
+        if (entry.get("visualizationDescriptor") != null)
+          row.append("visualizationDescriptor", entry.get("visualizationDescriptor"));
       }
       versions.decorate(operation, kind == PluginKind.ANALYTICS ? PluginCatalogKind.ANALYTICS_METHOD : PluginCatalogKind.VISUALIZATION_TYPE, row);
       rows.add(new CatalogRow(kind == PluginKind.ANALYTICS ? "analytics-technique" : "visualization-type", row));
