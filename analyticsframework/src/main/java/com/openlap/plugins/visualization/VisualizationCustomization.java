@@ -30,7 +30,10 @@ public final class VisualizationCustomization {
     }
     if (supplied != null) for (Map.Entry<String,Object> entry : supplied.entrySet()) {
       if (!allowed.contains(entry.getKey())) throw VisualizationManifest.invalid("Unknown chart customization: " + entry.getKey() + ".");
-      if ("width".equals(entry.getKey()) || "height".equals(entry.getKey())) {
+      // A declared field owns its semantics, including percentage dimensions.
+      // The implicit numeric layout contract applies only to undeclared keys.
+      if (("width".equals(entry.getKey()) || "height".equals(entry.getKey()))
+          && !values.containsKey(entry.getKey())) {
         Object value = entry.getValue();
         if (!(value instanceof Number) || !Double.isFinite(((Number)value).doubleValue()) || ((Number)value).doubleValue() <= 0 || ((Number)value).doubleValue() > 10000) throw VisualizationManifest.invalid("Chart dimensions must be positive numbers no larger than 10000.");
         result.put(entry.getKey(), value);
