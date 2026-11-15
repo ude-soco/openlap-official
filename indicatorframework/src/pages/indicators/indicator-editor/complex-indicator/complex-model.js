@@ -269,11 +269,48 @@ export function previewRequest(configuration) {
   };
 }
 
+// Drafts contain the user's choices; method contracts are refreshed from the
+// installed plugin on resume. Keeping them out also avoids resaving a draft
+// merely because descriptive contract metadata has been refreshed.
+const draftPort = (port) => Object.fromEntries(
+  ["id", "type", "name", "title", "required", "description"]
+    .filter((key) => Object.prototype.hasOwnProperty.call(port || {}, key))
+    .map((key) => [key, port[key]]),
+);
+const draftMapping = (mapping) => ({ mapping: (mapping?.mapping || []).map((entry) => ({
+  inputPort: draftPort(entry.inputPort), outputPort: draftPort(entry.outputPort),
+})) });
+
+export function toComplexDraftConfiguration(configuration) {
+  const restored = readComplexConfiguration(configuration, configuration.type);
+  if (!restored) throw new Error("This indicator configuration cannot be saved as a draft.");
+  return {
+    ...restored,
+    sources: restored.sources.map((source) => ({
+      ...source,
+      analyticsMethod: { id: source.analyticsMethod?.id || "", name: source.analyticsMethod?.name || "" },
+      outputs: source.outputs.map(draftPort),
+    })),
+    analysis: {
+      methodId: restored.analysis.methodId,
+      mapping: draftMapping(restored.analysis.mapping),
+      params: restored.analysis.params.map(({ id, value }) => ({ id, value })),
+    },
+    visualization: {
+      libraryId: restored.visualization.libraryId,
+      typeId: restored.visualization.typeId,
+      mapping: draftMapping(restored.visualization.mapping),
+      params: restored.visualization.params,
+      dataMode: restored.visualization.dataMode,
+    },
+  };
+}
+
 export const saveRequest = (configuration) => ({
   ...previewRequest(configuration),
   name: configuration.name.trim(),
   indicatorType: configuration.type,
-  configuration: JSON.stringify(configuration),
+  configuration: JSON.stringify(toComplexDraftConfiguration(configuration)),
 });
 
 export function fallbackConfiguration(detail, type, sources = []) {

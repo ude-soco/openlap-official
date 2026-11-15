@@ -38,9 +38,6 @@ export default function ComplexDialogs({
   operationError,
   previewCurrent,
   save,
-  leaveTarget,
-  setLeaveTarget,
-  keepAndLeave,
 }) {
   return (
     <>
@@ -53,7 +50,7 @@ export default function ComplexDialogs({
           Start a new indicator?
         </DialogTitle>
         <DialogContent>
-          This clears the source selections, mappings and previews in this tab.
+          This clears the source selections, mappings and previews in this draft.
           Previously saved indicators are retained.
         </DialogContent>
         <DialogActions>
@@ -116,6 +113,7 @@ export default function ComplexDialogs({
               autoFocus
               required
               fullWidth
+              disabled={busy === "save"}
               label="Indicator name"
               value={configuration.name}
               onChange={(event) =>
@@ -181,23 +179,6 @@ export default function ComplexDialogs({
           </Button>
         </DialogActions>
       </Dialog>
-      <Dialog
-        open={Boolean(leaveTarget)}
-        onClose={() => setLeaveTarget(null)}
-        aria-labelledby="complex-leave-title"
-      >
-        <DialogTitle id="complex-leave-title">Leave this editor?</DialogTitle>
-        <DialogContent>
-          Your configuration can be kept in this tab. Computed previews will be
-          refreshed when you return.{" "}
-          {busy &&
-            "A request is still running; leaving will discard its response."}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setLeaveTarget(null)}>Stay here</Button>
-          <Button onClick={keepAndLeave}>Keep in this tab and leave</Button>
-        </DialogActions>
-      </Dialog>
     </>
   );
 }
@@ -226,7 +207,4 @@ ComplexDialogs.propTypes = {
   operationError: PropTypes.object,
   previewCurrent: PropTypes.bool,
   save: PropTypes.func,
-  leaveTarget: PropTypes.string,
-  setLeaveTarget: PropTypes.func,
-  keepAndLeave: PropTypes.func,
 };
