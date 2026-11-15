@@ -3,9 +3,10 @@ import ComplexCombineStep from "./complex-combine-step";
 import ComplexAnalysisStep from "./complex-analysis-step";
 import ComplexVisualizationStep from "./complex-visualization-step";
 import ComplexDialogs from "./complex-dialogs";
+import SourceIndicatorPreview from "./complex-source-preview";
+import chartPreviewData from "./complex-preview-data";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import parse from "html-react-parser";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import {
@@ -61,23 +62,6 @@ const STEP_TIPS = {
   visualization: "Choose a chart suited to your results, review its input mappings, and customize the live preview before saving.",
 };
 
-function chartPreviewData(code) {
-  const markup = decodeURIComponent(code);
-  const elements = parse(markup);
-  const nodes = Array.isArray(elements) ? elements : [elements];
-  return {
-    displayCode: [
-      <span key="complex-chart-markup">
-        {nodes.filter((node) => node?.type !== "script")}
-      </span>,
-    ],
-    scriptData: nodes
-      .filter((node) => node?.type === "script")
-      .map((node) => node.props?.dangerouslySetInnerHTML?.__html || "")
-      .join("\n"),
-  };
-}
-
 export default function ComplexIndicator({ type }) {
   const { api, user } = useContext(AuthContext);
   const { id } = useParams();
@@ -113,11 +97,15 @@ export default function ComplexIndicator({ type }) {
   const [summaryVisible, setSummaryVisible] = useState({});
   const [tip, setTip] = useState({ step: "", anchor: null });
   const [sourcesConfirmed, setSourcesConfirmed] = useState(false);
-  const [catalog, setCatalog] = useState({ content: [], totalPages: 0 });
+  const [catalog, setCatalog] = useState({ content: [], totalPages: 0, totalElements: 0 });
   const [sourcePage, setSourcePage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortBy, setSortBy] = useState("name");
+  const [sortDirection, setSortDirection] = useState("asc");
+  const [compatibleOnly, setCompatibleOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [sourceError, setSourceError] = useState("");
-  const [sourcesLoading, setSourcesLoading] = useState(false);
+  const [sourcesLoading, setSourcesLoading] = useState(true);
   const [catalogRetry, setCatalogRetry] = useState(0);
   const [methods, setMethods] = useState([]);
   const [libraries, setLibraries] = useState([]);
@@ -141,6 +129,8 @@ export default function ComplexIndicator({ type }) {
     message: "",
   });
   const [sourcePreview, setSourcePreview] = useState(null);
+  const [catalogPreview, setCatalogPreview] = useState(null);
+  const previewOrigin = useRef(null);
   const [saveOpen, setSaveOpen] = useState(false);
   const [removeSource, setRemoveSource] = useState(null);
   const [removedSource, setRemovedSource] = useState(null);
@@ -157,6 +147,10 @@ export default function ComplexIndicator({ type }) {
   const endpoint = isMulti ? "multilevel" : "composite";
   const methodId = configuration.analysis.methodId;
   const libraryId = configuration.visualization.libraryId;
+  const sourceMethodId = configuration.sources[0]?.analyticsMethod?.id || "";
+  const methodFilterId = !isMulti && compatibleOnly
+    ? sourceMethodId
+    : "";
   const selectedType = types.find(
     (chart) => chart.id === configuration.visualization.typeId,
   );
@@ -299,18 +293,32 @@ export default function ComplexIndicator({ type }) {
     return () => navigation.unregisterGuard(guard);
   }, [navigation, dirty, busy]);
 
+  useEffect(() => setSourcePage(0), [methodFilterId]);
+  useEffect(() => {
+    if (!sourceMethodId) setCompatibleOnly(false);
+  }, [sourceMethodId]);
+
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
+    setSourcesLoading(true);
+    setSourceError("");
+    setCatalog((previous) => ({ ...previous, content: [] }));
     const timer = setTimeout(async () => {
-      setSourcesLoading(true);
-      setSourceError("");
       try {
         const result = apiData(
           await api.get(
-            `v1/indicators/sources?${new URLSearchParams({ page: sourcePage, size: 6, searchText: search })}`,
+            `v1/indicators/sources?${new URLSearchParams({
+              page: sourcePage, size: pageSize, searchText: search,
+              sortBy, sortDirection, ...(methodFilterId ? { methodId: methodFilterId } : {}),
+            })}`,
+            { signal: controller.signal },
           ),
         );
-        if (!cancelled) setCatalog(result);
+        if (!cancelled) {
+          setCatalog(result);
+          if (sourcePage >= Math.max(1, result.totalPages)) setSourcePage(Math.max(0, result.totalPages - 1));
+        }
       } catch (error) {
         if (!cancelled)
           setSourceError(
@@ -323,8 +331,9 @@ export default function ComplexIndicator({ type }) {
     return () => {
       cancelled = true;
       clearTimeout(timer);
+      controller.abort();
     };
-  }, [api, sourcePage, search, catalogRetry]);
+  }, [api, sourcePage, pageSize, sortBy, sortDirection, methodFilterId, search, catalogRetry]);
 
   useEffect(() => {
     let cancelled = false;
@@ -497,7 +506,9 @@ export default function ComplexIndicator({ type }) {
     setRemoveSource(null);
     setCurrent("sources");
   };
-  const requestRemove = (source) => {
+  const requestRemove = (candidate) => {
+    const source = configuration.sources.find((entry) => entry.id === candidate.id);
+    if (!source) return;
     if (merged || analyzed || preview) {
       setRemoveSource(source);
       return;
@@ -510,6 +521,18 @@ export default function ComplexIndicator({ type }) {
       }),
       "sources",
     );
+  };
+  const previewIndicator = (source) => {
+    previewOrigin.current = { element: document.activeElement, id: source.id };
+    setCatalogPreview(source);
+  };
+  const restorePreviewFocus = () => {
+    const origin = previewOrigin.current;
+    const replacement = Array.from(document.querySelectorAll("[data-source-preview-id]"))
+      .find((element) => element.dataset.sourcePreviewId === origin?.id);
+    const target = origin?.element?.isConnected ? origin.element
+      : replacement || document.getElementById("complex-source-search");
+    target?.focus();
   };
   const run = async (step, action, success) => {
     const request = ++generation.current;
@@ -590,6 +613,9 @@ export default function ComplexIndicator({ type }) {
         if (cancelled || request !== generation.current) return;
         setPreview(chartPreviewData(apiData(response)));
         setPreviewFingerprint(currentPreviewFingerprint);
+        setOperationError((previous) => previous.step === "visualization"
+          ? { step: "", message: "" }
+          : previous);
       } catch (error) {
         if (!cancelled && request === generation.current) {
           setPreviewError(messageOf(error, "Could not generate the chart preview. Review the inputs and retry."));
@@ -606,7 +632,7 @@ export default function ComplexIndicator({ type }) {
         setBusy((previous) => previous === "visualization" ? "" : previous);
       }
     };
-  }, [api, endpoint, currentPreviewFingerprint, chartDataset, autoPreviewReady, previewRevision, previewRetry]);
+  }, [api, endpoint, currentPreviewFingerprint, chartDataset, autoPreviewReady, previewRevision, previewRetry, catalogRetry]);
   const save = () =>
     run(
       "save",
@@ -911,6 +937,18 @@ export default function ComplexIndicator({ type }) {
           configuration={configuration}
           addSource={addSource}
           sourcePage={sourcePage}
+          pageSize={pageSize}
+          setPageSize={(size) => { setPageSize(size); setSourcePage(0); }}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSort={(field) => {
+            setSortDirection(field === sortBy && sortDirection === "asc" ? "desc" : "asc");
+            setSortBy(field);
+            setSourcePage(0);
+          }}
+          compatibleOnly={compatibleOnly}
+          setCompatibleOnly={setCompatibleOnly}
+          previewIndicator={previewIndicator}
           requestRemove={requestRemove}
           removedSource={removedSource}
           change={change}
@@ -966,7 +1004,8 @@ export default function ComplexIndicator({ type }) {
           chartDataset={chartDataset}
           supportsSeries={supportsSeries}
           selectedType={selectedType}
-          operationError={previewError ? { step: "visualization", message: previewError } : operationError}
+          operationError={operationError}
+          previewError={previewError}
           setCatalogRetry={setCatalogRetry}
           busy={busy}
           previewChart={previewChart}
@@ -977,6 +1016,15 @@ export default function ComplexIndicator({ type }) {
         />,
       )}
       </Stack>
+      <SourceIndicatorPreview
+        source={catalogPreview}
+        type={type}
+        selectedSources={configuration.sources}
+        onSelect={addSource}
+        onRemove={requestRemove}
+        onClose={() => setCatalogPreview(null)}
+        onExited={restorePreviewFocus}
+      />
       <ComplexDialogs
         resetOpen={resetOpen}
         setResetOpen={setResetOpen}

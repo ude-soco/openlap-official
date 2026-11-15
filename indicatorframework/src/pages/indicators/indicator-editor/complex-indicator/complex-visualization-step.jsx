@@ -45,6 +45,7 @@ export default function ComplexVisualizationStep({
   supportsSeries,
   selectedType,
   operationError,
+  previewError = "",
   setCatalogRetry,
   busy,
   previewChart,
@@ -87,8 +88,6 @@ export default function ComplexVisualizationStep({
     setCustomize(false);
     requestAnimationFrame(() => customizeButton.current?.focus());
   };
-  const previewError = operationError.step === "visualization"
-    ? operationError.message : "";
   const readinessItems = [
     {
       label: "Basic indicators selected",
@@ -198,6 +197,9 @@ export default function ComplexVisualizationStep({
             <MenuItem value="individual">Individual measure columns</MenuItem>
           </TextField>
         </SectionCard>
+      )}
+      {operationError.step === "visualization" && (
+        <Failure message={operationError.message} retry={() => setCatalogRetry((value) => value + 1)} />
       )}
       {chartLoading && (
         <SectionCard title="Chart" helper="Loading available charts…">
@@ -336,12 +338,6 @@ export default function ComplexVisualizationStep({
           </Grid>
         </>
       )}
-      {!selectedType && (
-        <Failure
-          message={operationError.step === "visualization" ? operationError.message : ""}
-          retry={operationError.step === "visualization" ? () => setCatalogRetry((value) => value + 1) : undefined}
-        />
-      )}
       <ReadinessSummary items={readinessItems} />
       <Divider sx={{ mt: 1 }} />
       <Grid container spacing={1} sx={{ justifyContent: "center", alignItems: "center", pt: 2 }}>
@@ -378,6 +374,7 @@ ComplexVisualizationStep.propTypes = {
   supportsSeries: PropTypes.func,
   selectedType: PropTypes.object,
   operationError: PropTypes.object,
+  previewError: PropTypes.string,
   setCatalogRetry: PropTypes.func,
   busy: PropTypes.string,
   previewChart: PropTypes.func,

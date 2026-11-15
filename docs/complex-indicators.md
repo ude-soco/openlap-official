@@ -37,6 +37,15 @@ and its required inputs are mapped. Changing chart inputs or customization
 options refreshes it automatically. If generation fails, use **Retry preview**;
 saving remains unavailable until the current preview succeeds.
 
+The source picker is a paginated table with name search and name/date sorting.
+Checkboxes, selected-row labels and a live count show which indicators are chosen;
+the selection summary is retained across searches and pages. Composite users can
+narrow the entire catalog to the first selection's installed method. Unavailable
+or incompatible sources show the reason they cannot be selected.
+Use a row's **Preview** action to inspect its chart, analysis data or details in a
+side panel without selecting it or leaving the list. Data is calculated only when
+the **Data** tab is opened, and selections can also be changed inside the preview.
+
 For Composite charts, **Combined series** provides matching-key, source-label and
 measure columns in a long table suitable for grouped line/area charts. The normal
 combined table retains separate numeric columns for reviewing values or mapping
