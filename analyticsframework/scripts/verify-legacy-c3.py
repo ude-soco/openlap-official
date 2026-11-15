@@ -97,8 +97,9 @@ def verify(options):
         raise RuntimeError("The Java source fixture did not produce its report: "
                            + completed.stderr.decode(errors="replace")[-3000:])
     report = json.loads(lines[0].removeprefix(b"C3_RENDER_RESULT="))
-    expected = {(chart, scenario) for chart in CHARTS for scenario in ("defaults", "customized")}
+    expected = {(chart, scenario) for chart in CHARTS for scenario in ("defaults", "customized", "escaped")}
     expected.add(("Bar", "filtered"))
+    expected.add(("ScatterPlot", "clustered"))
     rows = report.get("results", [])
     actual = {(row.get("chart"), row.get("scenario")) for row in rows}
     coverage_valid = report.get("historicalSha256") == SHA256 and len(rows) == len(expected) and actual == expected
@@ -118,7 +119,7 @@ def verify(options):
     if not passed:
         raise RuntimeError("Historical C3 generator assertions failed: " + json.dumps(failures))
     assertions = sum(row["assertions"] for row in rows)
-    print(f"PASS: 9 historical C3 types, {len(rows)} default/customized/filter fixtures, {assertions} generator assertions; browser rendering was not exercised.")
+    print(f"PASS: 9 historical C3 types, {len(rows)} default/customized/filter/escaped-text/clustered fixtures, {assertions} generator assertions; browser rendering was not exercised.")
 
 
 def main():

@@ -1,143 +1,40 @@
-import { TabContext, TabList, TabPanel } from "@mui/lab";
 import PropTypes from "prop-types";
-import {
-  Box,
-  IconButton,
-  Paper,
-  Grid,
-  Stack,
-  Tab,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 import { useContext, useEffect, useState } from "react";
-import { BasicContext } from "../../../../basic-indicator";
-import { ElementsBar } from "./components/elements-bar";
-import { StylesBar } from "./components/styles";
-import { FiltersBar } from "./components/filter";
-import { defaultParams } from "../../utils/visualization-data";
 import { useParams } from "react-router-dom";
-
-const HEIGHT = "440px";
+import { BasicContext } from "../../../../basic-indicator";
+import { defaultParams } from "../../utils/visualization-data";
+import ChartCustomizationControls from "./chart-customization-controls";
 
 const ChartCustomizationPanel = ({ onClose }) => {
   const params = useParams();
-  const { analysis, visualization, setVisualization } =
-    useContext(BasicContext);
-  const [value, setValue] = useState("1");
-  const [state, setState] = useState(() => {
-    if (params.id) {
-      return { edited: false, ...visualization.params };
-    }
-    return { ...defaultParams };
-  });
-
-  const handleChangeTab = (_, newTabValue) => {
-    setValue(newTabValue);
-  };
+  const { analysis, visualization, setVisualization } = useContext(BasicContext);
+  const [state, setState] = useState(() => params.id
+    ? { edited: false, ...visualization.params }
+    : { ...defaultParams });
 
   useEffect(() => {
     if (state.edited) {
-      setVisualization((p) => ({
-        ...p,
-        params: { ...p.params, ...state },
+      setVisualization((previous) => ({
+        ...previous,
+        params: { ...previous.params, ...state },
         previewData: { displayCode: [], scriptData: {} },
       }));
-      setState((p) => ({ ...p, edited: false }));
+      setState((previous) => ({ ...previous, edited: false }));
     }
-  }, [state.edited]);
-
-  useEffect(() => {
-    setValue("1");
-  }, [visualization.selectedType.id]);
+  }, [setVisualization, state]);
 
   return (
-    <>
-      <Stack
-        direction="row"
-        sx={{ alignItems: "center", justifyContent: "space-between", mb: 1 }}
-      >
-        <Typography variant="subtitle2" color="text.secondary">
-          Customization panel
-        </Typography>
-        {onClose && (
-          <Tooltip title="Close">
-            <IconButton
-              size="small"
-              aria-label="Close customization"
-              onClick={onClose}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
-      </Stack>
-      <Grid container component={Paper} variant="outlined">
-        <Grid size={{ xs: 12 }}>
-          <TabContext value={value}>
-            <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-              <TabList
-                variant="fullWidth"
-                textColor="primary"
-                indicatorColor="primary"
-                onChange={handleChangeTab}
-                sx={{ width: "100%" }}
-              >
-                <Tab label="ELEMENTS" value="1" />
-                <Tab label="STYLES" value="2" />
-                {(visualization.selectedType.chartConfiguration
-                  .categoriesFilteringAvailable ||
-                  visualization.selectedType.chartConfiguration
-                    .sortingOrderChangeable) && (
-                  <Tab label="FILTERS" value="3" />
-                )}
-              </TabList>
-            </Box>
-            <TabPanel value="1">
-              <Box sx={{ height: HEIGHT, overflowY: "scroll", px: 1 }}>
-                <ElementsBar
-                  state={state}
-                  setState={setState}
-                  chartConfiguration={
-                    visualization.selectedType.chartConfiguration
-                  }
-                />
-              </Box>
-            </TabPanel>
-            <TabPanel value="2">
-              <Box sx={{ height: HEIGHT, overflowY: "scroll", px: 1 }}>
-                <StylesBar
-                  categories={analysis.analyzedData?.item_name?.data}
-                  state={state}
-                  setState={setState}
-                  chartConfiguration={
-                    visualization.selectedType.chartConfiguration
-                  }
-                />
-              </Box>
-            </TabPanel>
-            <TabPanel value="3">
-              <Box sx={{ height: HEIGHT, overflowY: "scroll", px: 1 }}>
-                <FiltersBar
-                  categories={analysis.analyzedData?.item_name?.data}
-                  state={state}
-                  setState={setState}
-                  chartConfiguration={
-                    visualization.selectedType.chartConfiguration
-                  }
-                />
-              </Box>
-            </TabPanel>
-          </TabContext>
-        </Grid>
-      </Grid>
-    </>
+    <ChartCustomizationControls
+      state={state}
+      setState={setState}
+      chartId={visualization.selectedType.id}
+      chartConfiguration={visualization.selectedType.chartConfiguration}
+      categories={analysis.analyzedData?.item_name?.data}
+      onClose={onClose}
+    />
   );
 };
 
-ChartCustomizationPanel.propTypes = {
-  onClose: PropTypes.func,
-};
+ChartCustomizationPanel.propTypes = { onClose: PropTypes.func };
 
 export default ChartCustomizationPanel;

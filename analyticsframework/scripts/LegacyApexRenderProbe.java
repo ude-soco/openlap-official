@@ -7,6 +7,8 @@ import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.dataset.OpenLAPPortMapping;
 import com.openlap.template.VisualizationCodeGenerator;
 import com.openlap.visualization_methods.utilities.VisualizerClassPathLoader;
+import com.openlap.visualization_methods.compatibility.LegacyApexScatter;
+import com.openlap.visualization_methods.compatibility.LegacyC3Strings;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -89,7 +91,13 @@ public final class LegacyApexRenderProbe {
     String defaultColors = circular
         ? "['#008ffb','#ff5733','#3498db','#2ecc71','#9b59b6','#f1c40f','#e74c3c','#1abc9c','#34495e','#d35400','#95a5a6']"
         : "['#008ffb']";
-    checks.verify(compact.contains("colors:" + (custom ? "['#102030','#405060']" : defaultColors)), "Wrong historical color normalization or palette");
+    if (name.equals("ScatterPlot")) {
+      com.google.gson.JsonArray colors = optionArray(code, "colors");
+      checks.verify(colors.size() == 4 && colors.get(0).getAsString().equals(custom ? "#102030" : "#008ffb")
+          && colors.get(1).getAsString().equals(custom ? "#405060" : "#ff5733"), "Wrong scatter group palette");
+    } else {
+      checks.verify(compact.contains("colors:" + (custom ? "['#102030','#405060']" : defaultColors)), "Wrong historical color normalization or palette");
+    }
     checks.verify(compact.contains("dataLabels:{enabled:" + !custom + ","), "Wrong data-label visibility");
     checks.verify(compact.contains("background:{enabled:" + custom + "}"), "Wrong data-label background");
     if (!circular) {
@@ -97,10 +105,13 @@ public final class LegacyApexRenderProbe {
       checks.verify(compact.contains("yaxis:{labels:{show:" + !custom + "}"), "Wrong Y-axis visibility");
     }
     if (name.equals("ScatterPlot")) {
-      checks.verify(compact.contains("name:\"point-a\",data:[[1.0,11.0]]")
-          && compact.contains("name:\"point-b\",data:[[2.0,3.0]]"), "Wrong first scatter series or X/Y alignment");
-      checks.verify(compact.contains("name:\"point-c\",data:[[3.0,7.0]]")
-          && compact.contains("name:\"point-d\",data:[[4.0,5.0]]"), "Wrong remaining scatter series or X/Y alignment");
+      com.google.gson.JsonArray series = optionArray(code, "series");
+      checks.verify(series.size() == 4 && series.get(0).getAsJsonObject().get("name").getAsString().equals("point-a")
+          && series.get(1).getAsJsonObject().get("name").getAsString().equals("point-b"), "Wrong scatter series names");
+      checks.verify(series.get(0).getAsJsonObject().getAsJsonArray("data").get(0).getAsJsonArray().get(0).getAsDouble() == 1
+          && series.get(3).getAsJsonObject().getAsJsonArray("data").get(0).getAsJsonArray().get(0).getAsDouble() == 4
+          && series.get(3).getAsJsonObject().getAsJsonArray("data").get(0).getAsJsonArray().get(1).getAsDouble() == 5, "Wrong scatter coordinate alignment");
+      checks.verify(code.contains("\"type\":\"numeric\""), "Scatter X axis is not numeric");
     } else if (circular) {
       checks.verify(compact.contains("series:[11.0,3.0,7.0,5.0]"), "Wrong slice values");
       String quote = name.equals("Donut") ? "\"" : "'";
@@ -118,6 +129,95 @@ public final class LegacyApexRenderProbe {
     return checks.count;
   }
 
+  private static final String UNSAFE_TEXT = "Learner's \"group\" \\ workshop\nnext\u2028\u2029</script><script>bad()</script>";
+
+  private static com.google.gson.JsonArray optionArray(String code, String key) {
+    int object = code.indexOf('{', code.indexOf("var options"));
+    int depth = 1, arrays = 0;
+    char quote = 0;
+    for (int i = object + 1; i < code.length(); i++) {
+      char c = code.charAt(i);
+      if (quote != 0) {
+        if (c == '\\') i++;
+        else if (c == quote) quote = 0;
+        continue;
+      }
+      if (c == '\'' || c == '"') { quote = c; continue; }
+      if (c == '{') depth++;
+      else if (c == '}') depth--;
+      else if (c == '[') arrays++;
+      else if (c == ']') arrays--;
+      else if (depth == 1 && arrays == 0 && code.startsWith(key + ":", i)) {
+        int start = i + key.length() + 1;
+        while (Character.isWhitespace(code.charAt(start))) start++;
+        int level = 0;
+        char innerQuote = 0;
+        for (int end = start; end < code.length(); end++) {
+          char value = code.charAt(end);
+          if (innerQuote != 0) {
+            if (value == '\\') end++;
+            else if (value == innerQuote) innerQuote = 0;
+          } else if (value == '"' || value == '\'') innerQuote = value;
+          else if (value == '[') level++;
+          else if (value == ']' && --level == 0) return com.google.gson.JsonParser.parseString(code.substring(start, end + 1)).getAsJsonArray();
+        }
+      }
+    }
+    throw new AssertionError("Missing generated option " + key);
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private static OpenLAPDataSet snapshot(VisualizationCodeGenerator chart, String scenario) throws Exception {
+    boolean clustered = scenario.equals("clustered") || scenario.equals("repeated-x");
+    boolean repeated = scenario.equals("repeated-x");
+    OpenLAPDataSet source = new OpenLAPDataSet();
+    for (OpenLAPColumnConfigData config : chart.getInput().getColumnsConfigurationData()) {
+      OpenLAPDataColumn column = new OpenLAPDataColumn(config.getId(), config.getType(), config.isRequired(), config.getTitle(), config.getDescription());
+      List<?> values = chart.getInput().getColumns().get(config.getId()).getData();
+      if (clustered) {
+        if (config.getId().equals("GroupBy")) values = Arrays.asList(repeated ? UNSAFE_TEXT : "Cluster A", repeated ? UNSAFE_TEXT : "Cluster A", "Cluster B", "Cluster C", "Cluster B", "Cluster C");
+        else if (config.getId().equals("xAxisStrings")) values = Arrays.asList(10.25, repeated ? 10.25 : 20.5, 30.75, 40.0, 50.125, 60.875);
+        else values = Arrays.asList(1,2,3,4,5,6);
+      }
+      column.setData(new ArrayList(values));
+      source.addOpenLAPDataColumn(column);
+    }
+    return source;
+  }
+
+  private static int assertClusters(String scenario, String code, Map<String, Object> settings) {
+    Checks checks = new Checks();
+    com.google.gson.JsonArray series = optionArray(code, "series");
+    checks.verify(series.size() == 3, "Clusters were split or lost");
+    double[][] x = {{10.25, scenario.equals("repeated-x") ? 10.25 : 20.5},{30.75,50.125},{40.0,60.875}};
+    double[][] y = {{1,2},{3,5},{4,6}};
+    int points = 0;
+    for (int group = 0; group < 3; group++) {
+      com.google.gson.JsonArray values = series.get(group).getAsJsonObject().getAsJsonArray("data");
+      checks.verify(values.size() == 2, "A cluster lost paired observations");
+      for (int row = 0; row < 2; row++) {
+        com.google.gson.JsonArray pair = values.get(row).getAsJsonArray();
+        checks.verify(pair.size() == 2, "Scatter coordinate pair changed shape");
+        checks.verify(pair.get(0).getAsDouble() == x[group][row], "Scatter X coordinate was lost or changed");
+        checks.verify(pair.get(1).getAsDouble() == y[group][row], "Scatter Y coordinate was lost or changed");
+        points++;
+      }
+    }
+    checks.verify(points == 6, "Not every observation reached the chart");
+    java.util.Set<String> colors = new java.util.HashSet<>();
+    for (com.google.gson.JsonElement color : optionArray(code, "colors")) colors.add(color.getAsString());
+    checks.verify(colors.size() == 3, "Default cluster colors are not distinct");
+    checks.verify(code.contains("\"type\":\"numeric\""), "Scatter axis is categorical");
+    if (scenario.equals("repeated-x")) {
+      checks.verify(series.get(0).getAsJsonObject().get("name").getAsString().equals(UNSAFE_TEXT), "Original group label was lost or double escaped");
+      String json = new com.google.gson.Gson().toJson(UNSAFE_TEXT);
+      checks.verify(code.contains(json.substring(1,json.length()-1)), "Unsafe title text was lost or double escaped");
+      checks.verify(!code.contains(UNSAFE_TEXT), "Original text reached raw JavaScript or HTML");
+      checks.verify(settings.get("chartTitle").equals(UNSAFE_TEXT), "Source parameters were mutated");
+    }
+    return checks.count;
+  }
+
   public static void main(String[] args) throws Exception {
     Path jar = Path.of(args[0]);
     require(Files.size(jar) == SIZE_BYTES, "Historical Apex size mismatch");
@@ -125,7 +225,9 @@ public final class LegacyApexRenderProbe {
     List<Map<String, Object>> results = new ArrayList<>();
     int passed = 0;
     for (String name : CHARTS) {
-      for (String scenario : name.equals("Bar") ? new String[]{"defaults", "customized", "filtered"} : new String[]{"defaults", "customized"}) {
+      for (String scenario : name.equals("Bar") ? new String[]{"defaults", "customized", "filtered"}
+          : name.equals("ScatterPlot") ? new String[]{"defaults", "customized", "clustered", "repeated-x"}
+          : new String[]{"defaults", "customized"}) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("chart", name);
         result.put("scenario", scenario);
@@ -134,11 +236,15 @@ public final class LegacyApexRenderProbe {
           require(chart.getClass().getProtectionDomain().getCodeSource().getLocation().toURI().equals(jar.toUri()),
               "Plugin came from an unexpected classpath entry");
           OpenLAPPortConfig mapping = populate(chart);
-          Map<String, Object> settings = parameters(!scenario.equals("defaults"));
+          Map<String, Object> settings = parameters(scenario.equals("customized") || scenario.equals("filtered"));
+          if (scenario.equals("repeated-x")) settings.put("chartTitle", UNSAFE_TEXT);
           if (scenario.equals("filtered")) settings.put("hiddenCategoriesIndexes", "[1]");
-          String code = chart.generateVisualizationCode(chart.getInput(), mapping, settings);
+          OpenLAPDataSet source = snapshot(chart, scenario);
+          LegacyC3Strings.Inputs input = LegacyApexScatter.prepare(chart, source, settings);
+          String code = chart.generateVisualizationCode(input.data(), mapping, input.parameters());
+          code = LegacyApexScatter.repair(chart, code, source, mapping, settings);
           if (Boolean.getBoolean("probe.include-output")) result.put("generatedCode", code);
-          result.put("assertions", assertOutput(name, scenario, code));
+          result.put("assertions", scenario.equals("clustered") || scenario.equals("repeated-x") ? assertClusters(scenario, code, settings) : assertOutput(name, scenario, code));
           result.put("status", "PASS");
           result.put("characters", code.length());
           result.put("sha256", sha256(code.getBytes(java.nio.charset.StandardCharsets.UTF_8)));

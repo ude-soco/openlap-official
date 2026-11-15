@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect } from "react";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
 import { BasicContext } from "../../basic-indicator";
 import {
@@ -16,7 +16,6 @@ import AnalysisSummary from "./components/analysis-summary";
 import AnalysisSelection from "./components/analysis-selection";
 import InputsSelection from "./components/inputs-selection";
 import ParamsSelection from "./components/params-selection";
-import { fetchAnalyzedData } from "./utils/analysis-api";
 import {
   buildAnalysisRef,
   buildIndicatorQuery,
@@ -27,60 +26,43 @@ import WorkflowSection from "../../../../../../common/components/workflow-sectio
 import SectionCard from "../../../../../../common/components/section-card/section-card.jsx";
 import { getStepStatus } from "../../utils/basic-workflow-ui.js";
 import { getAnalyzedRowCount } from "../../utils/analyzed-data.js";
+import useDataPreview from "../../../utils/use-data-preview";
+import { basicAnalysisReady } from "../../../utils/analysis-readiness.js";
+
+const EMPTY_COLUMNS = {};
 
 export default function Analysis() {
   const { api } = useContext(AuthContext);
-  const { dataset, filters, lockedStep, setLockedStep, analysis, setAnalysis } =
+  const { dataset, filters, lockedStep, setLockedStep, analysis, setAnalysis, setVisualization } =
     useContext(BasicContext);
-  const [state, setState] = useState({
-    loadingPreview: false,
-    previewError: false,
-    previewComplete: false,
-  });
-  const requestVersion = useRef(0);
   const indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
   const analysisRef = buildAnalysisRef(analysis);
   const selectionKey = JSON.stringify({ indicatorQuery, ...analysisRef });
+  const ready = !lockedStep.analysis.locked && basicAnalysisReady(dataset, filters, analysis);
+  const preview = useDataPreview({
+    api,
+    path: "v1/indicators/basic/analyze",
+    fingerprint: selectionKey,
+    ready,
+  });
+  const columns = preview.data?.columns || EMPTY_COLUMNS;
 
-  // Discard requests for selections that changed while the analysis was running.
+  // Share only current results with Visualization and saving. Invalidating a
+  // request clears the old chart without resetting its type or customization.
   useEffect(() => {
-    setState({ loadingPreview: false, previewError: false, previewComplete: false });
-    return () => { requestVersion.current += 1; };
-  }, [selectionKey]);
-
-  const handlePreviewAnalyzedData = async () => {
-    const version = ++requestVersion.current;
-    setState({ loadingPreview: true, previewError: false, previewComplete: false });
-    setAnalysis((p) => ({ ...p, analyzedData: {} }));
-    try {
-      const analyzedData = await fetchAnalyzedData(
-        api,
-        indicatorQuery,
-        analysisRef
-      );
-      if (version !== requestVersion.current) return;
-      setAnalysis((p) => ({ ...p, analyzedData: analyzedData.data }));
-      setState({ loadingPreview: false, previewError: false, previewComplete: true });
-    } catch (error) {
-      if (version !== requestVersion.current) return;
-      setState({ loadingPreview: false, previewError: true, previewComplete: false });
-      console.error("Error analyzing data:", error);
+    setAnalysis((previous) => previous.analyzedData === columns
+      ? previous : { ...previous, analyzedData: columns });
+    if (!preview.data || !getAnalyzedRowCount(columns)) {
+      setVisualization((previous) => previous.previewData?.displayCode?.length ||
+        Object.keys(previous.previewData?.scriptData || {}).length
+        ? { ...previous, previewData: { displayCode: [], scriptData: {} } }
+        : previous);
     }
-  };
+  }, [columns, preview.data, setAnalysis, setVisualization]);
 
   const handleCheckDisabled = () => {
     return (
-      getAnalyzedRowCount(analysis.analyzedData) === 0 ||
-      state.loadingPreview || state.previewError
-    );
-  };
-
-  const handleCheckPreviewDisabled = () => {
-    const allEmpty = filters.selectedActivities.every(
-      (activity) => activity.selectedActivityList.length === 0
-    );
-    return (
-      analysis.selectedAnalyticsMethod.mapping.mapping.length === 0 || allEmpty
+      getAnalyzedRowCount(columns) === 0 || preview.loading || Boolean(preview.error)
     );
   };
 
@@ -94,8 +76,8 @@ export default function Analysis() {
 
   const methodSelected =
     analysis.selectedAnalyticsMethod.method.id.length > 0;
-  const hasAnalyzedData = Object.keys(analysis.analyzedData).length > 0;
-  const previewDisabled = handleCheckPreviewDisabled();
+  const previewComplete = Boolean(preview.data);
+  const previewDisabled = !ready;
 
   return (
     <>
@@ -143,45 +125,45 @@ export default function Analysis() {
 
                 <SectionCard
                   title="Preview results"
-                  helper="Run the analysis to preview the data that will feed your visualization."
+                  helper="The preview updates automatically when the required inputs and parameters are valid."
                 >
-                  {state.loadingPreview ? (
+                  {preview.loading ? (
                     <Stack sx={{ gap: 1.5, alignItems: "center", py: 3 }}>
-                      <CircularProgress />
-                      <Typography variant="body2" color="text.secondary">
+                      <CircularProgress aria-label="Running analysis" />
+                      <Typography variant="body2" color="text.secondary" role="status">
                         Running analysis…
                       </Typography>
                     </Stack>
-                  ) : state.previewError ? (
+                  ) : preview.error ? (
                     <Alert severity="error">
                       The analysis could not be run. Please check your inputs
                       and filters, then try again.
                     </Alert>
-                  ) : hasAnalyzedData || state.previewComplete ? (
-                    <AnalyzedDataTable />
+                  ) : previewComplete ? (
+                    <AnalyzedDataTable data={columns} />
                   ) : (
                     <Stack sx={{ alignItems: "center", py: 3, textAlign: "center" }}>
                       <Typography variant="body2" color="text.secondary">
-                        Choose your inputs and parameters, then run a preview of
-                        the analysed data.
+                        Complete the required inputs, parameters, and filters.
+                        Your analysed data will appear automatically.
                       </Typography>
                     </Stack>
                   )}
                   <Stack direction="row" sx={{ gap: 1, alignItems: "center", justifyContent: "center", mt: 2 }}>
                     <Button
                       variant="contained"
-                      disabled={previewDisabled || state.loadingPreview}
-                      onClick={handlePreviewAnalyzedData}
+                      disabled={previewDisabled || preview.loading}
+                      onClick={preview.retry}
                     >
-                      {state.loadingPreview ? "Running analysis…"
-                        : state.previewError ? "Try again"
-                        : hasAnalyzedData || state.previewComplete ? "Run preview again"
+                      {preview.loading ? "Running analysis…"
+                        : preview.error ? "Try again"
+                        : previewComplete ? "Run preview again"
                         : "Preview"}
                     </Button>
                     {previewDisabled && (
                       <CustomTooltip
                         type="help"
-                        message={`The Preview button is disabled until:<br/>● A required <b>Input</b> of the analytics method is selected.<br/>● At least one <b>Activity</b> is selected in <b>Filters</b>.`}
+                        message={`The preview updates when:<br/>● All required method <b>Inputs</b> are mapped.<br/>● Required <b>Parameters</b> contain valid values.<br/>● The dataset and activity <b>Filters</b> are complete.`}
                       />
                     )}
                   </Stack>

@@ -108,6 +108,7 @@ def verify(options):
     report = json.loads(lines[0].removeprefix(b"APEX_RENDER_RESULT="))
     expected = {(chart, scenario) for chart in CHARTS for scenario in ("defaults", "customized")}
     expected.add(("Bar", "filtered"))
+    expected.update({("ScatterPlot", "clustered"), ("ScatterPlot", "repeated-x")})
     rows = report.get("results", [])
     actual = {(row.get("chart"), row.get("scenario")) for row in rows}
     coverage_valid = report.get("historicalSha256") == SHA256 and len(rows) == len(expected) and actual == expected
@@ -128,7 +129,7 @@ def verify(options):
     if not passed:
         raise RuntimeError("Historical Apex generator assertions failed: " + json.dumps(failures))
     assertions = sum(row["assertions"] for row in rows)
-    print(f"PASS: 6 historical Apex types, {len(rows)} default/customized/filter fixtures, {assertions} generator assertions; browser rendering was not exercised.")
+    print(f"PASS: 6 historical Apex types, {len(rows)} default/customized/filter/clustered/repeated-x fixtures, {assertions} generator assertions; browser rendering was not exercised.")
 
 
 def main():

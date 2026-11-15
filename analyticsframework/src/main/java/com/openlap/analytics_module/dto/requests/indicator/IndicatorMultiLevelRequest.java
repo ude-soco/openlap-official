@@ -9,6 +9,7 @@ import java.util.List;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -49,5 +50,9 @@ public class IndicatorMultiLevelRequest {
 
   @Valid
   @NotEmpty(message = "List of indicators is mandatory")
+  @Size(min = 2, max = 10, message = "Choose between two and ten indicators")
   private List<IndicatorsToMergeRequest> indicators = new ArrayList<>();
+  @NotBlank(message = "Configuration is mandatory")
+  @Size(max = 1048576, message = "Configuration is too large")
+  private String configuration;
 }

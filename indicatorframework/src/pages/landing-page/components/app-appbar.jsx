@@ -7,7 +7,8 @@ import {
   Container,
   Divider,
   Drawer,
-  MenuItem,
+  List,
+  ListItemButton,
   Toolbar,
   Typography,
   useScrollTrigger,
@@ -104,17 +105,22 @@ const AppAppBar = () => {
                 }
               }}
             />
-            <Box sx={{ display: { xs: "none", md: "flex" } }}>
+            <Box
+              component="nav"
+              aria-label="Homepage sections"
+              sx={{ display: { xs: "none", md: "flex" } }}
+            >
               {navigationItems.map((item) => (
-                <MenuItem
+                <Button
                   key={item.id}
+                  color="inherit"
                   onClick={() => handleNav(item.id)}
                   sx={{ py: 1, px: 1.5, borderRadius: 2 }}
                 >
                   <Typography variant="body2" color="text.primary">
                     {item.name}
                   </Typography>
-                </MenuItem>
+                </Button>
               ))}
             </Box>
           </Box>
@@ -184,14 +190,19 @@ const AppAppBar = () => {
                 >
                   <ToggleColorMode />
                 </Box>
-                {navigationItems.map((item) => (
-                  <MenuItem key={item.id} onClick={() => handleNav(item.id)}>
-                    {item.name}
-                  </MenuItem>
-                ))}
+                <List component="nav" aria-label="Mobile homepage sections">
+                  {navigationItems.map((item) => (
+                    <ListItemButton
+                      key={item.id}
+                      onClick={() => handleNav(item.id)}
+                    >
+                      {item.name}
+                    </ListItemButton>
+                  ))}
+                </List>
                 <Divider />
-                {user ? (
-                  <MenuItem>
+                <Box sx={{ display: "grid", gap: 1, pt: 2 }}>
+                  {user ? (
                     <Button
                       variant="contained"
                       onClick={() => navigate("/dashboard")}
@@ -199,10 +210,8 @@ const AppAppBar = () => {
                     >
                       Open workspace
                     </Button>
-                  </MenuItem>
-                ) : (
-                  <>
-                    <MenuItem>
+                  ) : (
+                    <>
                       <Button
                         color="primary"
                         variant="contained"
@@ -211,8 +220,6 @@ const AppAppBar = () => {
                       >
                         Sign up
                       </Button>
-                    </MenuItem>
-                    <MenuItem>
                       <Button
                         color="primary"
                         variant="outlined"
@@ -221,9 +228,9 @@ const AppAppBar = () => {
                       >
                         Sign in
                       </Button>
-                    </MenuItem>
-                  </>
-                )}
+                    </>
+                  )}
+                </Box>
               </Box>
             </Drawer>
           </Box>

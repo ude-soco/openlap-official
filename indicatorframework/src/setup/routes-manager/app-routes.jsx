@@ -58,6 +58,9 @@ const CompositeIndicator = lazy(() =>
 const CsvXapiDashboard = lazy(() =>
   import("../../pages/csv-xapi-converter/csv-xapi-dashboard")
 );
+const MultiLevelAnalysisIndicator = lazy(() =>
+  import("../../pages/indicators/indicator-editor/multi-level-analysis-indicator/multi-level-analysis-indicator")
+);
 const ManageLrs = lazy(() => import("../../pages/account-manager/manage-lrs"));
 const Home = lazy(() => import("../../pages/home/home"));
 const IndicatorSpecificationCard = lazy(() =>
@@ -131,6 +134,8 @@ const FULL_BLEED_PATH_PREFIXES = [
   "/isc/new",
   "/isc/drafts",
   "/indicator/editor/basic",
+  "/indicator/editor/composite",
+  "/indicator/editor/multi-level-analysis",
 ];
 // Full-bleed also for the edit bootstrap route /isc/:id/edit.
 const isFullBleedPath = (pathname) =>
@@ -312,7 +317,7 @@ const AppRoutes = () => {
                       />
                     }
                   />
-                  {/* <Route
+                  <Route
                     path="multi-level-analysis"
                     element={
                       <PrivateRoute
@@ -320,8 +325,8 @@ const AppRoutes = () => {
                         allowedRoles={[RoleTypes.user]}
                       />
                     }
-                  /> */}
-                  {/* <Route
+                  />
+                  <Route
                     path="multi-level-analysis/edit/:id"
                     element={
                       <PrivateRoute
@@ -329,7 +334,7 @@ const AppRoutes = () => {
                         allowedRoles={[RoleTypes.user]}
                       />
                     }
-                  /> */}
+                  />
                 </Route>
                 <Route path="/indicator">
                   <Route

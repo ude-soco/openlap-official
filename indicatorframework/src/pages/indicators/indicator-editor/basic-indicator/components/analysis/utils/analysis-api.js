@@ -32,14 +32,15 @@ export const fetchTechniqueParams = async (api, techniqueId) => {
   }
 };
 
-export const fetchTechniqueInputsAndParams = async (api, techniqueId) => {
+export const fetchTechniqueInputsAndParams = async (api, techniqueId, options) => {
   try {
     const response = await api.get(
-      "v1/analytics/methods/input-params/" + techniqueId
+      "v1/analytics/methods/input-params/" + techniqueId, options
     );
     return response.data.data;
   } catch (error) {
-    console.error("Failed to fetch analytics technique param data");
+    if (!options?.signal?.aborted)
+      console.error("Failed to fetch analytics technique param data");
     throw error; // Re-throw the error to handle it in the component
   }
 };
@@ -66,24 +67,20 @@ export const requestAnalyzedDataForMultiLevelIndicator = async (
   indicatorRef,
   analysisRef
 ) => {
-  try {
-    const requestBody = {
-      indicators: indicatorRef.indicators,
-      analyticsTechniqueId: analysisRef.analyticsTechniqueId,
-      analyticsTechniqueMapping: {
-        mapping: analysisRef.analyticsTechniqueMapping.mapping,
-      },
-      analyticsTechniqueParams: analysisRef.analyticsTechniqueParams,
-    };
-    const response = await api.post(
-      "v1/indicators/multilevel/analyze",
-      requestBody
-    );
-    return {
-      data: response.data.data.columns,
-      message: response.data.message,
-    };
-  } catch (error) {
-    throw error;
-  }
+  const requestBody = {
+    indicators: indicatorRef.indicators,
+    analyticsTechniqueId: analysisRef.analyticsTechniqueId,
+    analyticsTechniqueMapping: {
+      mapping: analysisRef.analyticsTechniqueMapping.mapping,
+    },
+    analyticsTechniqueParams: analysisRef.analyticsTechniqueParams,
+  };
+  const response = await api.post(
+    "v1/indicators/multilevel/analyze",
+    requestBody
+  );
+  return {
+    data: response.data.data.columns,
+    message: response.data.message,
+  };
 };

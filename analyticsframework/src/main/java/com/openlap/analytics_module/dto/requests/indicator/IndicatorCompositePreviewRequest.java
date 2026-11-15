@@ -7,6 +7,7 @@ import java.util.List;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -34,5 +35,6 @@ public class IndicatorCompositePreviewRequest {
 
   @Valid
   @NotEmpty(message = "List of indicators is mandatory")
+  @Size(min = 2, max = 10, message = "Choose between two and ten indicators")
   private List<IndicatorsToMergeRequest> indicators = new ArrayList<>();
 }

@@ -21,6 +21,7 @@ const SectionCard = ({
     sx={(theme) => ({
       p: 2,
       width: "100%",
+      minWidth: 0,
       height: "100%",
       borderRadius: `${theme.custom.radii.card}px`,
     })}
@@ -28,9 +29,9 @@ const SectionCard = ({
     <Stack sx={{ gap: 2 }}>
       <Stack
         direction="row"
-        sx={{ justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}
+        sx={{ justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 1 }}
       >
-        <Box>
+        <Box sx={{ flex: "1 1 220px", minWidth: 0 }}>
           <Typography
             variant="subtitle1"
             component={headingComponent}

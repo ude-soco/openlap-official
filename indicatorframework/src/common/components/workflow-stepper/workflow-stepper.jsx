@@ -23,7 +23,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
  * @param {(stepKey: string) => void} [onStepSelect]  when provided, unlocked
  *   steps become clickable (open that section). Locked steps stay disabled.
  */
-const WorkflowStepper = ({ steps, current, onStepSelect }) => {
+const WorkflowStepper = ({ steps, current, onStepSelect, ariaLabel = "ISC creation progress" }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const currentIndex = Math.max(
@@ -37,8 +37,8 @@ const WorkflowStepper = ({ steps, current, onStepSelect }) => {
       activeStep={currentIndex}
       alternativeLabel={!isMobile}
       orientation={isMobile ? "vertical" : "horizontal"}
-      aria-label="ISC creation progress"
-      sx={{ width: "100%" }}
+      aria-label={ariaLabel}
+      sx={{ width: "100%", minWidth: 0 }}
     >
       {steps.map((step) => {
         const isCurrent = step.key === current;
@@ -51,6 +51,7 @@ const WorkflowStepper = ({ steps, current, onStepSelect }) => {
           <Typography
             variant="caption"
             color={step.locked ? "text.disabled" : "text.secondary"}
+            sx={{ overflowWrap: "anywhere" }}
           >
             {optionalText}
           </Typography>
@@ -66,6 +67,7 @@ const WorkflowStepper = ({ steps, current, onStepSelect }) => {
             completed={step.completed && !isCurrent}
             active={isCurrent}
             disabled={step.locked}
+            sx={{ minWidth: 0 }}
           >
             {clickable ? (
               <StepButton
@@ -73,6 +75,7 @@ const WorkflowStepper = ({ steps, current, onStepSelect }) => {
                 icon={lockIcon}
                 optional={optionalNode}
                 aria-current={isCurrent ? "step" : undefined}
+                sx={{ m: 0, p: 0, width: "100%", minWidth: 0, minHeight: 44, boxSizing: "border-box" }}
               >
                 {step.label}
               </StepButton>
@@ -105,6 +108,7 @@ WorkflowStepper.propTypes = {
   ).isRequired,
   current: PropTypes.string,
   onStepSelect: PropTypes.func,
+  ariaLabel: PropTypes.string,
 };
 
 export default WorkflowStepper;

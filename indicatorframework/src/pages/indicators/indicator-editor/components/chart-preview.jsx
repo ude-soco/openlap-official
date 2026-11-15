@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { Box, Grid } from "@mui/material";
 import { makeApexChartsResponsive } from "./utils/make-apex-charts-responsive";
+import { makeC3ChartsResponsive } from "./utils/make-c3-charts-responsive";
 
 const ChartPreview = ({ previewData, responsive = false }) => {
   const scriptRef = useRef(null);
@@ -9,17 +10,18 @@ const ChartPreview = ({ previewData, responsive = false }) => {
   const firstCode = previewData?.displayCode?.[0];
   const scriptData = previewData?.scriptData;
 
-  // Inject the backend-generated chart script. C3 is responsive at the plugin
-  // level (height-only `size`). ApexCharts still bakes a fixed `chart.width` and
-  // its plugin source is unavailable to fix, so in responsive (editor-only) mode
-  // we strip that fixed width as a TEMPORARY, fail-safe fallback — a no-op for C3
-  // and for any non-matching output. Remove once the ApexCharts plugin omits the
-  // fixed width. The original previewData is never mutated.
+  // Qualified historical C3/Apex plugins include fixed widths. In responsive
+  // mode, omit only their reviewed width settings and let each library fit its
+  // container. Unknown formats are unchanged; previewData is never mutated.
   useEffect(() => {
     if (!scriptData) return undefined;
     const root = document.getElementById("root");
     if (!root) return undefined;
-    const code = responsive ? makeApexChartsResponsive(scriptData) : scriptData;
+    const code = responsive
+      ? scriptData.includes("c3.generate(")
+        ? makeC3ChartsResponsive(scriptData)
+        : makeApexChartsResponsive(scriptData)
+      : scriptData;
     const script = document.createElement("script");
     script.innerHTML = code;
     root.appendChild(script);

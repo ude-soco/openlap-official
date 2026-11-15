@@ -6,10 +6,7 @@ import Multi from "../../../../assets/images/vis-dashboard-cover/multi.png";
 //
 // `available: true`  → an enabled card that starts the corresponding flow.
 // `available: false` → a non-interactive "Coming soon" card (no link, not
-//   focusable). Composite and Multi-level are intentionally not buildable yet:
-//   the Composite route exists but its flow is not finalised, and the
-//   Multi-level route is not even registered — so neither card navigates
-//   anywhere. The images/copy are safe to show as a roadmap preview.
+//   focusable). Each available type opens its own guided workflow.
 export const indicatorData = [
   {
     image: Basic,
@@ -28,16 +25,18 @@ export const indicatorData = [
     description:
       "Combine two or more basic indicators that share a common analysis method into a single, richer view.",
     link: "/indicator/editor/composite",
-    available: false,
+    steps: ["Select indicators", "Combine data", "Visualization"],
+    available: true,
   },
   {
     image: Multi,
     imageCode: "MULTI_LEVEL",
     name: "Multi-level analysis indicator",
     description:
-      "Layer multiple basic indicators that share a common data column for deeper, multi-level analysis.",
+      "Combine shared results from basic indicators, run another analysis, and visualize the outcome.",
     link: "/indicator/editor/multi-level-analysis",
-    available: false,
+    steps: ["Select indicators", "Combine data", "Analysis", "Visualization"],
+    available: true,
   },
 ];
 

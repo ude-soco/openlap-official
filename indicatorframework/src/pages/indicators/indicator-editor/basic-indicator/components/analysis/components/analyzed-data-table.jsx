@@ -1,4 +1,5 @@
 import { useContext, useState } from "react";
+import PropTypes from "prop-types";
 import {
   Box,
   Paper,
@@ -17,10 +18,11 @@ import EmptyState from "../../../../../../../common/components/empty-state/empty
 import { DataTypes } from "../../../../../../indicator-specification-cards/creator/utils/data/config";
 import { getAnalyzedRowCount } from "../../../utils/analyzed-data.js";
 
-const AnalyzedDataTable = () => {
+const AnalyzedDataTable = ({ data }) => {
   const {
-    analysis: { analyzedData },
+    analysis,
   } = useContext(BasicContext);
+  const analyzedData = data || analysis.analyzedData;
   const [page, setPage] = useState(0); // Current page
   const [rowsPerPage, setRowsPerPage] = useState(5); // Rows per page
 
@@ -122,3 +124,4 @@ const AnalyzedDataTable = () => {
 };
 
 export default AnalyzedDataTable;
+AnalyzedDataTable.propTypes = { data: PropTypes.object };

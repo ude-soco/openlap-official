@@ -5,6 +5,7 @@ import com.openlap.analytics_module.dto.requests.indicator.IndicatorCompositePre
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorCompositeRequest;
 import com.openlap.analytics_module.services.IndicatorCompositeService;
 import com.openlap.response.ApiSuccess;
+import com.openlap.analytics_module.services.ComplexIndicatorSourceGuard;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +20,12 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class IndicatorCompositeController {
   private final IndicatorCompositeService indicatorCompositeService;
+  private final ComplexIndicatorSourceGuard sourceGuard;
 
   @PostMapping("/merge")
   public ResponseEntity<?> mergeBasicIndicatorsBeforeSaving(
-      @RequestBody IndicatorCompositeMergeRequest indicatorCompositeRequest) {
+      HttpServletRequest request, @RequestBody @Valid IndicatorCompositeMergeRequest indicatorCompositeRequest) {
+    sourceGuard.validate(request, indicatorCompositeRequest.getIndicators(), true);
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
         .body(
@@ -35,7 +38,8 @@ public class IndicatorCompositeController {
 
   @PostMapping("/preview")
   public ResponseEntity<?> previewCompositeIndicatorBeforeSaving(
-      @RequestBody IndicatorCompositePreviewRequest indicatorCompositeRequest) {
+      HttpServletRequest request, @RequestBody @Valid IndicatorCompositePreviewRequest indicatorCompositeRequest) {
+    sourceGuard.validate(request, indicatorCompositeRequest.getIndicators(), true);
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
         .body(
@@ -49,6 +53,7 @@ public class IndicatorCompositeController {
   public ResponseEntity<?> createCompositeIndicator(
       HttpServletRequest request,
       @RequestBody @Valid IndicatorCompositeRequest indicatorCompositeRequest) {
+    sourceGuard.validate(request, indicatorCompositeRequest.getIndicators(), true);
     indicatorCompositeService.createCompositeIndicator(request, indicatorCompositeRequest);
     HttpStatus status = HttpStatus.CREATED;
     return ResponseEntity.status(status)
@@ -60,6 +65,7 @@ public class IndicatorCompositeController {
       HttpServletRequest request,
       @RequestBody @Valid IndicatorCompositeRequest indicatorCompositeRequest,
       @PathVariable String indicatorId) {
+    sourceGuard.validate(request, indicatorCompositeRequest.getIndicators(), true);
     indicatorCompositeService.updateCompositeIndicator(
         request, indicatorCompositeRequest, indicatorId);
     HttpStatus status = HttpStatus.OK;

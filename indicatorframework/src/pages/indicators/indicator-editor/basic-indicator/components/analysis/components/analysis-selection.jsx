@@ -1,37 +1,65 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { BasicContext } from "../../../basic-indicator";
 import {
   fetchAnalyticsMethods,
   fetchTechniqueInputsAndParams,
 } from "../utils/analysis-api";
-import { Autocomplete, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Autocomplete, Button, Stack, TextField, Typography } from "@mui/material";
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
 
 export default function AnalysisSelection() {
   const { api } = useContext(AuthContext);
   const { analysis, setAnalysis } = useContext(BasicContext);
+  const methodId = analysis.selectedAnalyticsMethod.method.id;
+  const [methodError, setMethodError] = useState("");
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
     const loadAnalyticsMethodsList = async () => {
       try {
         const analyticsMethodList = await fetchAnalyticsMethods(api);
+        if (cancelled) return;
         setAnalysis((p) => ({
           ...p,
           analyticsMethodList: analyticsMethodList || [],
-          analyzedData: {},
         }));
       } catch (error) {
         console.error("Failed to fetch analysis methods:", error);
       }
     };
-    if (Object.keys(analysis.analyzedData).length === 0)
-      loadAnalyticsMethodsList();
-  }, []);
+    loadAnalyticsMethodsList();
+    return () => { cancelled = true; };
+  }, [api, setAnalysis]);
 
-  const handleSelectAnalyticsMethod = async (value) => {
-    const methodId = value.id;
+  useEffect(() => {
+    if (!methodId || analysis.inputs.length) return undefined;
+    let cancelled = false;
+    const controller = new AbortController();
+    setMethodError("");
+    fetchTechniqueInputsAndParams(api, methodId, { signal: controller.signal })
+      .then((response) => {
+        if (cancelled) return;
+        setAnalysis((previous) => previous.selectedAnalyticsMethod.method.id !== methodId
+          ? previous : {
+            ...previous,
+            inputs: response.inputs || [],
+            params: (response.params || []).map((param) => ({
+              ...param, value: param.defaultValue,
+            })),
+          });
+      })
+      .catch(() => {
+        if (!cancelled) setMethodError("Could not load method inputs and parameters. Your selection is preserved.");
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [api, methodId, analysis.inputs.length, retry, setAnalysis]);
 
+  const handleSelectAnalyticsMethod = (value) => {
     setAnalysis((p) => ({
       ...p,
       inputs: [],
@@ -44,22 +72,6 @@ export default function AnalysisSelection() {
       analyzedData: {},
     }));
 
-    try {
-      const response = await fetchTechniqueInputsAndParams(api, methodId);
-      const inputs = response.inputs;
-      const params = response.params;
-
-      // Assign default values to params
-      const initializedParams = params.map((param) => ({
-        ...param,
-        value: param.defaultValue,
-      }));
-
-      // Update both inputs and params together
-      setAnalysis((p) => ({ ...p, inputs, params: initializedParams }));
-    } catch (error) {
-      console.error("Error fetching method data:", error);
-    }
   };
 
   return (
@@ -92,8 +104,8 @@ export default function AnalysisSelection() {
               }}
             />
           )}
-          renderOption={(props, option) => {
-            const { key, ...restProps } = props;
+          renderOption={(attributes, option) => {
+            const { key, ...restProps } = attributes;
             return (
               <li key={key} {...restProps}>
                 <Stack sx={{ py: 0.5 }}>
@@ -110,6 +122,15 @@ export default function AnalysisSelection() {
             );
           }}
         />
+        {methodError && (
+          <Alert severity="error" action={
+            <Button color="inherit" size="small" onClick={() => setRetry((previous) => previous + 1)}>
+              Retry
+            </Button>
+          }>
+            {methodError}
+          </Alert>
+        )}
       </Stack>
     </SectionCard>
   );

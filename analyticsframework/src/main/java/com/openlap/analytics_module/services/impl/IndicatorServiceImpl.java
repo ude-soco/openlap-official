@@ -69,6 +69,7 @@ public class IndicatorServiceImpl implements IndicatorService {
   private final StatementService statementService;
   private final AnalyticsTechniqueService analyticsTechniqueService;
   private final IndicatorAnalysisCacheRepository indicatorAnalysisCacheRepository;
+  private final ComplexIndicatorReferences complexReferences;
 
   @Override
   public Page<IndicatorResponse> getAllMyIndicators(
@@ -128,6 +129,12 @@ public class IndicatorServiceImpl implements IndicatorService {
   }
 
   @Override
+  public IndicatorFullDetailResponse getIndicatorById(String indicatorId, boolean includeCode) {
+    return generateIndicatorFullDetailResponse(
+        indicatorUtilityService.fetchIndicatorMethod(indicatorId), includeCode);
+  }
+
+  @Override
   public List<IndicatorWithCodeResponse> getIndicatorDetailResponseList(
       List<Indicator> indicators) {
     if (indicators.isEmpty()) {
@@ -158,6 +165,11 @@ public class IndicatorServiceImpl implements IndicatorService {
 
   private IndicatorFullDetailResponse generateIndicatorFullDetailResponse(
       Indicator foundIndicator) {
+    return generateIndicatorFullDetailResponse(foundIndicator, true);
+  }
+
+  private IndicatorFullDetailResponse generateIndicatorFullDetailResponse(
+      Indicator foundIndicator, boolean includeCode) {
     Gson gson = new Gson();
     IndicatorType indicatorType = foundIndicator.getIndicatorType();
     IndicatorFullDetailResponse indicatorFullDetailResponse = new IndicatorFullDetailResponse();
@@ -165,16 +177,21 @@ public class IndicatorServiceImpl implements IndicatorService {
     indicatorFullDetailResponse.setName(foundIndicator.getName());
     indicatorFullDetailResponse.setType(indicatorType);
     indicatorFullDetailResponse.setCreatedBy(foundIndicator.getCreatedBy().getName());
-    indicatorFullDetailResponse.setIndicatorCode(
-        generateIndicatorCode(foundIndicator.getId(), true));
+    if (includeCode) {
+      indicatorFullDetailResponse.setIndicatorCode(generateIndicatorCode(foundIndicator.getId(), true));
+    }
     //    indicatorFullDetailResponse.setPlatforms(foundIndicator.getPlatforms());
     indicatorFullDetailResponse.setConfiguration(foundIndicator.getConfigurationRequest());
 
     // Visualization
     indicatorFullDetailResponse.setVisualizationLibrary(
         foundIndicator.getVisualizationTechniqueReference().getVisLibrary().getName());
+    indicatorFullDetailResponse.setVisualizationLibraryId(
+        foundIndicator.getVisualizationTechniqueReference().getVisLibrary().getId());
     indicatorFullDetailResponse.setVisualizationType(
         foundIndicator.getVisualizationTechniqueReference().getVisType().getName());
+    indicatorFullDetailResponse.setVisualizationTypeId(
+        foundIndicator.getVisualizationTechniqueReference().getVisType().getId());
     indicatorFullDetailResponse.setCreatedOn(foundIndicator.getCreatedOn());
     indicatorFullDetailResponse.setVisualizationParams(
         gson.fromJson(
@@ -233,6 +250,8 @@ public class IndicatorServiceImpl implements IndicatorService {
     if (indicatorType == IndicatorType.BASIC || indicatorType == IndicatorType.MULTI_LEVEL) {
       indicatorFullDetailResponse.setAnalyticsTechnique(
           foundIndicator.getAnalyticsTechniqueReference().getAnalyticsTechnique().getName());
+      indicatorFullDetailResponse.setAnalyticsTechniqueId(
+          foundIndicator.getAnalyticsTechniqueReference().getAnalyticsTechnique().getId());
       indicatorFullDetailResponse.setAnalyticsTechniqueParams(
           gson.fromJson(
               foundIndicator.getAnalyticsTechniqueReference().getAdditionalParams(),
@@ -250,10 +269,19 @@ public class IndicatorServiceImpl implements IndicatorService {
 
     if (indicatorType == IndicatorType.COMPOSITE || indicatorType == IndicatorType.MULTI_LEVEL) {
       List<String> indicatorList = new ArrayList<>();
+      List<IndicatorsToMergeRequest> sourceIndicators = new ArrayList<>();
       for (IndicatorsToMerge indicator : foundIndicator.getIndicators()) {
+        if (indicator.getIndicator() == null) continue;
         indicatorList.add(indicator.getIndicator().getName());
+        IndicatorsToMergeRequest source = new IndicatorsToMergeRequest();
+        source.setIndicatorId(indicator.getIndicator().getId());
+        source.setColumnToMerge(gson.fromJson(indicator.getColumnToMerge(), OpenLAPColumnConfigData.class));
+        source.setMeasureColumnIds(indicator.getMeasureColumnIds());
+        source.setLabel(indicator.getLabel());
+        sourceIndicators.add(source);
       }
       indicatorFullDetailResponse.setIndicators(indicatorList);
+      indicatorFullDetailResponse.setSourceIndicators(sourceIndicators);
     }
     return indicatorFullDetailResponse;
   }
@@ -281,6 +309,10 @@ public class IndicatorServiceImpl implements IndicatorService {
     Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
     Indicator indicator = new Indicator();
     User createdBy = tokenService.getUserFromToken(request);
+    if (foundIndicator.getCreatedBy() == null
+        || !createdBy.getId().equals(foundIndicator.getCreatedBy().getId())) {
+      throw new IndicatorManipulationNotAllowed("You can copy only your own indicators. Use the pool duplication workflow for shared indicators.");
+    }
     String indicatorName =
         indicatorUtilityService.fetchUserIndicatorForCopyMethod(
             createdBy.getId(), foundIndicator.getName());
@@ -292,7 +324,7 @@ public class IndicatorServiceImpl implements IndicatorService {
     indicator.setCreatedOn(LocalDateTime.now());
     indicator.setTimesExecuted(0);
     indicator.setIndicatorQuery(foundIndicator.getIndicatorQuery());
-    indicator.setConfigurationRequest(foundIndicator.getConfigurationRequest());
+    indicator.setConfigurationRequest(copyConfiguration(foundIndicator, indicatorName));
     try {
       switch (foundIndicator.getIndicatorType()) {
         case BASIC:
@@ -314,8 +346,23 @@ public class IndicatorServiceImpl implements IndicatorService {
       }
       indicatorRepository.save(indicator);
       log.info("Copied a new indicator with name '{}'", indicator.getName());
+    } catch (com.openlap.infrastructure.exception.OpenLapException e) {
+      throw e;
     } catch (Exception e) {
       throw new DatabaseOperationException("Could not access database to copy indicator", e);
+    }
+  }
+
+  static String copyConfiguration(Indicator source, String name) {
+    String configuration = source.getConfigurationRequest();
+    if (source.getIndicatorType() == IndicatorType.BASIC || configuration == null) return configuration;
+    try {
+      var object = com.google.gson.JsonParser.parseString(configuration).getAsJsonObject();
+      object.addProperty("name", name);
+      return object.toString();
+    } catch (RuntimeException legacy) {
+      // The editor can reconstruct legacy configurations from authoritative saved details.
+      return configuration;
     }
   }
 
@@ -329,6 +376,22 @@ public class IndicatorServiceImpl implements IndicatorService {
         throw new IndicatorManipulationNotAllowed(
             "You do not have the permission to delete the indicator");
       }
+      String deleteToken = complexReferences.beginDelete(indicatorId);
+      List<Object> sourceIds = new ArrayList<>();
+      sourceIds.add(indicatorId);
+      if (ObjectId.isValid(indicatorId)) sourceIds.add(new ObjectId(indicatorId));
+      Page<Indicator> dependents = indicatorRepository.findReferencingSources(sourceIds, PageRequest.of(0, 10));
+      if (!dependents.isEmpty()) {
+        complexReferences.cancelDelete(indicatorId, deleteToken);
+        List<Map<String, String>> usedBy = dependents.getContent().stream()
+            .filter(parent -> parent.getCreatedBy() != null
+                && userFromToken.getId().equals(parent.getCreatedBy().getId()))
+            .map(parent -> Map.of("id", parent.getId(), "name", parent.getName())).toList();
+        throw new com.openlap.analytics_module.exceptions.indicator.ComplexIndicatorException(
+            org.springframework.http.HttpStatus.CONFLICT, "INDICATOR_IN_USE",
+            "This indicator is used by a complex indicator. Remove or replace that source first.",
+            Map.of("count", dependents.getTotalElements(), "usedBy", usedBy));
+      }
       indicatorRepository.delete(foundIndicator);
 
       indicatorCacheRepository
@@ -340,6 +403,8 @@ public class IndicatorServiceImpl implements IndicatorService {
           .ifPresent(indicatorAnalysisCacheRepository::delete);
       log.info("Successfully deleted an indicator");
     } catch (IndicatorManipulationNotAllowed e) {
+      throw e;
+    } catch (com.openlap.infrastructure.exception.OpenLapException e) {
       throw e;
     } catch (Exception e) {
       throw new DatabaseOperationException("Could not access database to delete the indicator", e);
@@ -469,14 +534,15 @@ public class IndicatorServiceImpl implements IndicatorService {
 
   @Override
   public String generateIndicatorCode(String indicatorId, Boolean uriCode) {
-    // ! TODO: Cache is causing the problem of showing an updated indicator.
     Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
     Optional<IndicatorCache> indicatorCache = indicatorCacheRepository.findById(indicatorId);
     LocalDateTime indicatorCreatedOn = foundIndicator.getCreatedOn();
+    String fingerprint = indicatorFingerprint(foundIndicator, uriCode);
     // * This is checking, whether the indicator has been updated in the meantime. If yes, then the
     // cache will be overwritten.
     if (indicatorCache.isPresent()
-        && indicatorCreatedOn.isEqual(indicatorCache.get().getIndicatorCreatedOn())) {
+        && java.util.Objects.equals(indicatorCreatedOn, indicatorCache.get().getIndicatorCreatedOn())
+        && fingerprint.equals(indicatorCache.get().getRequestFingerprint())) {
       IndicatorCache cache = indicatorCache.get();
       LocalDateTime generatedOn = cache.getGeneratedOn();
 
@@ -528,7 +594,7 @@ public class IndicatorServiceImpl implements IndicatorService {
             indicatorCode,
             gson.toJson(analyzedDataSet),
             indicatorCreatedOn,
-            LocalDateTime.now()));
+            LocalDateTime.now(), fingerprint));
     return indicatorCode;
   }
 
@@ -807,14 +873,18 @@ public class IndicatorServiceImpl implements IndicatorService {
         indicatorsToMergeRequest.setColumnToMerge(
             gson.fromJson(entry.getColumnToMerge(), OpenLAPColumnConfigData.class));
       }
+      indicatorsToMergeRequest.setMeasureColumnIds(entry.getMeasureColumnIds());
+      indicatorsToMergeRequest.setLabel(entry.getLabel());
       indicatorsList.add(indicatorsToMergeRequest);
     }
     OpenLAPColumnConfigData columnToMerge =
         gson.fromJson(compositeIndicator.getColumnToMerge(), OpenLAPColumnConfigData.class);
     IndicatorCompositeMergeRequest indicatorCompositeMergeRequest =
         new IndicatorCompositeMergeRequest(columnToMerge, indicatorsList);
-    return indicatorCompositeService.mergeIndicatorsForCompositeIndicator(
-        indicatorCompositeMergeRequest);
+    OpenLAPPortConfig visualizationMapping = gson.fromJson(
+        compositeIndicator.getVisualizationTechniqueReference().getAnalyticsTechniqueToVisualizationMapping(),
+        OpenLAPPortConfig.class);
+    return indicatorCompositeService.visualizationData(indicatorCompositeMergeRequest, visualizationMapping);
   }
 
   private OpenLAPDataSet getAnalyzedDataSetForMultiLevelIndicator(
@@ -823,10 +893,12 @@ public class IndicatorServiceImpl implements IndicatorService {
     log.info("Analyzing data for multi-level analysis indicator");
     List<IndicatorsToMergeRequest> indicatorsList = new ArrayList<>();
     for (IndicatorsToMerge entry : indicatorsToCombine) {
-      indicatorsList.add(
-          new IndicatorsToMergeRequest(
+      IndicatorsToMergeRequest source = new IndicatorsToMergeRequest(
               entry.getIndicator().getId(),
-              gson.fromJson(entry.getColumnToMerge(), OpenLAPColumnConfigData.class)));
+              gson.fromJson(entry.getColumnToMerge(), OpenLAPColumnConfigData.class));
+      source.setMeasureColumnIds(entry.getMeasureColumnIds());
+      source.setLabel(entry.getLabel());
+      indicatorsList.add(source);
     }
 
     List<OpenLAPDynamicParam> paramList =
@@ -847,5 +919,62 @@ public class IndicatorServiceImpl implements IndicatorService {
 
     return indicatorMultiLevelService.analyzeBasicIndicatorsForMultiLevelIndicator(
         analyzeIndicators);
+  }
+
+  /** Source definitions and URI mode are part of a saved chart's identity. */
+  static String indicatorFingerprint(Indicator indicator, Boolean uriCode) {
+    Map<String, Object> identity = new LinkedHashMap<>();
+    // Bump this when a renderer adapter changes the generated HTML contract.
+    identity.put("format", "indicator-render-v2");
+    identity.put("encoded", uriCode);
+    identity.put("indicator", definitionFingerprint(indicator));
+    if (indicator.getIndicators() != null) {
+      List<Indicator> sources = new ArrayList<>();
+      List<Map<String, Object>> inputs = new ArrayList<>();
+      for (IndicatorsToMerge entry : indicator.getIndicators()) {
+        Indicator source = entry == null ? null : entry.getIndicator();
+        if (source == null) throw com.openlap.analytics_module.exceptions.indicator.ComplexIndicatorException
+            .invalid("A saved source is unavailable. Edit the indicator to repair it.");
+        sources.add(source);
+        Map<String, Object> input = new LinkedHashMap<>();
+        input.put("definition", definitionFingerprint(source));
+        input.put("key", entry.getColumnToMerge());
+        input.put("measures", entry.getMeasureColumnIds());
+        input.put("label", entry.getLabel());
+        inputs.add(input);
+      }
+      ComplexIndicatorSourceGuard.validateResolved(indicator.getCreatedBy().getId(), sources,
+          indicator.getIndicatorType() == IndicatorType.COMPOSITE);
+      identity.put("sources", inputs);
+    }
+    try {
+      byte[] digest = java.security.MessageDigest.getInstance("SHA-256")
+          .digest(new Gson().toJson(identity).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      return java.util.HexFormat.of().formatHex(digest);
+    } catch (java.security.NoSuchAlgorithmException impossible) {
+      throw new IllegalStateException(impossible);
+    }
+  }
+
+  private static Map<String, Object> definitionFingerprint(Indicator indicator) {
+    Map<String, Object> definition = new LinkedHashMap<>();
+    definition.put("id", indicator.getId());
+    definition.put("type", indicator.getIndicatorType());
+    definition.put("createdOn", String.valueOf(indicator.getCreatedOn()));
+    definition.put("query", indicator.getIndicatorQuery());
+    if (indicator.getAnalyticsTechniqueReference() != null) {
+      var method = indicator.getAnalyticsTechniqueReference();
+      definition.put("method", method.getAnalyticsTechnique() == null ? null : method.getAnalyticsTechnique().getId());
+      definition.put("analysisMapping", method.getQueryToAnalyticsTechniqueMapping());
+      definition.put("analysisParams", method.getAdditionalParams());
+    }
+    if (indicator.getVisualizationTechniqueReference() != null) {
+      var chart = indicator.getVisualizationTechniqueReference();
+      definition.put("library", chart.getVisLibrary() == null ? null : chart.getVisLibrary().getId());
+      definition.put("chart", chart.getVisType() == null ? null : chart.getVisType().getId());
+      definition.put("chartMapping", chart.getAnalyticsTechniqueToVisualizationMapping());
+      definition.put("chartParams", chart.getAdditionalParams());
+    }
+    return definition;
   }
 }

@@ -4,6 +4,7 @@ import com.openlap.analytics_module.dto.requests.indicator.IndicatorDraftRequest
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorsToAnalyzeRequest;
 import com.openlap.analytics_module.dto.response.indicator.*;
 import com.openlap.analytics_module.services.IndicatorService;
+import com.openlap.analytics_module.services.ComplexIndicatorSourceGuard;
 import com.openlap.response.ApiSuccess;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class IndicatorController {
   private final IndicatorService indicatorService;
+  private final ComplexIndicatorSourceGuard sourceGuard;
 
   /**
    * This API provides the list of the user's own indicators. It also provides the pagination and
@@ -90,7 +92,9 @@ public class IndicatorController {
 
   @PostMapping("/analyze")
   public ResponseEntity<?> getAnalyzedIndicators(
-      @RequestBody IndicatorsToAnalyzeRequest indicatorList) {
+      HttpServletRequest request, @RequestBody @Valid IndicatorsToAnalyzeRequest indicatorList) {
+    sourceGuard.validateIds(request,
+        indicatorList.getIndicators().stream().map(i -> i.getIndicatorId()).toList(), false, false);
     IndicatorsAnalyzedResponse analyzedIndicators =
         indicatorService.getAnalyzedIndicators(indicatorList);
     HttpStatus status = HttpStatus.OK;
@@ -135,12 +139,13 @@ public class IndicatorController {
    * @param indicatorId ID of the indicator
    */
   @GetMapping("/{indicatorId}")
-  public ResponseEntity<?> getIndicatorById(@PathVariable String indicatorId) {
+  public ResponseEntity<?> getIndicatorById(@PathVariable String indicatorId,
+      @RequestParam(defaultValue = "true") boolean includeCode) {
     HttpStatus status = HttpStatus.OK;
     return ResponseEntity.status(status)
         .body(
             new ApiSuccess(
-                status, "Indicator found.", indicatorService.getIndicatorById(indicatorId)));
+                status, "Indicator found.", indicatorService.getIndicatorById(indicatorId, includeCode)));
   }
 
   /**
