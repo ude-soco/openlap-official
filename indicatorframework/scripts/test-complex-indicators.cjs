@@ -515,6 +515,12 @@ let failMethodContract = true;
     };
 
     await page.goto(new URL("/indicator/editor/composite", base).href);
+    const interLoaded = await page.evaluate(async () => {
+      await document.fonts.ready;
+      const faces = await document.fonts.load("14px Inter");
+      return faces.length > 0 && faces.every((face) => face.status === "loaded");
+    });
+    assert.ok(interLoaded, "Visual consistency is checked with the app's actual Inter font");
     const sourceSection = page.getByRole("region", {name:"Select indicators step", exact:true});
     await sourceSection.getByRole("button", {name:"Close", exact:true}).click();
     await button("Select Access count").waitFor({state:"detached"});
