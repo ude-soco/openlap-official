@@ -137,6 +137,11 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
     <WorkspaceTable label="Indicators" loading={loading} total={total} page={query.page} size={query.size}
       onPageChange={(page) => setQuery((previous) => ({ ...previous, page }))}
       onSizeChange={(size) => setQuery((previous) => ({ ...previous, page: 0, size }))}
+      emptyState={!loading && !rows.length && !error && <Box sx={{ p: 4, textAlign: "center" }}>
+        <Typography sx={{ fontWeight: 600 }}>{filtered ? "No matching indicators" : draftsOnly ? "No drafts yet" : "No indicators yet"}</Typography>
+        <Typography variant="body2" color="text.secondary">{filtered ? "Try another name or indicator type." : "Start an indicator and your unfinished work will appear here after its first save."}</Typography>
+        <Button sx={{ mt: 2 }} variant="contained" onClick={() => navigate("/indicator/editor")}>Create an indicator</Button>
+      </Box>}
       header={<TableRow>
             <TableCell sortDirection={query.sortBy === "name" ? query.sortDirection : false}>{header("name", "Indicator")}</TableCell>
             <TableCell sx={statusColumn} sortDirection={query.sortBy === "status" ? query.sortDirection : false}>{header("status", "Status")}</TableCell>
@@ -166,11 +171,7 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
               <Tooltip title={`Actions for ${item.name}`}><IconButton disabled={loading || Boolean(busyKey)} aria-haspopup="menu"
                 aria-label={`${item.kind === "DRAFT" ? "Actions" : "More actions"} for ${item.name}`} onClick={(event) => setMenu({ item, anchor: event.currentTarget })}><MoreVertIcon /></IconButton></Tooltip>
             </Stack></TableCell>
-          </TableRow>)}{!loading && !rows.length && !error && <TableRow><TableCell colSpan={5}><Box sx={{ p: 4, textAlign: "center" }}>
-            <Typography sx={{ fontWeight: 600 }}>{filtered ? "No matching indicators" : draftsOnly ? "No drafts yet" : "No indicators yet"}</Typography>
-            <Typography variant="body2" color="text.secondary">{filtered ? "Try another name or indicator type." : "Start an indicator and your unfinished work will appear here after its first save."}</Typography>
-            <Button sx={{ mt: 2 }} variant="contained" onClick={() => navigate("/indicator/editor")}>Create an indicator</Button>
-          </Box></TableCell></TableRow>}
+          </TableRow>)}
     </WorkspaceTable>
     <Menu open={Boolean(menu)} anchorEl={menu?.anchor} onClose={() => setMenu(null)}>
       {menu?.item.kind === "DRAFT" ? [

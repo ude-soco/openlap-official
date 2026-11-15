@@ -100,6 +100,11 @@ export default function MyIscTable({ onStats, draftsOnly = false, onDraftsOnlyCh
     <WorkspaceTable label="ISCs" loadingLabel="Loading ISCs" loading={loading} total={total} page={query.page} size={query.size}
       onPageChange={(page) => setQuery((previous) => ({ ...previous, page }))}
       onSizeChange={(size) => setQuery((previous) => ({ ...previous, page: 0, size }))}
+      emptyState={!loading && !error && !rows.length && <Box sx={{ p: 4, textAlign: "center" }}>
+        <Typography sx={{ fontWeight: 600 }}>{query.search ? "No matching ISCs" : draftsOnly ? "No drafts yet" : "No ISCs yet"}</Typography>
+        <Typography variant="body2" color="text.secondary">{query.search ? "Try another name." : "Create an ISC to prototype an indicator."}</Typography>
+        <Button sx={{ mt: 2 }} variant="contained" onClick={onCreate}>Create an ISC</Button>
+      </Box>}
       header={<TableRow>
         <TableCell sortDirection={query.sortBy === "indicatorName" ? query.sortDirection : false}>{header("indicatorName", "ISC")}</TableCell>
         <TableCell sx={statusColumn}>Status</TableCell>
@@ -136,11 +141,6 @@ export default function MyIscTable({ onStats, draftsOnly = false, onDraftsOnlyCh
           </Stack>
         </TableCell>
       </TableRow>)}
-      {!loading && !error && !rows.length && <TableRow><TableCell colSpan={5}><Box sx={{ p: 4, textAlign: "center" }}>
-        <Typography sx={{ fontWeight: 600 }}>{query.search ? "No matching ISCs" : draftsOnly ? "No drafts yet" : "No ISCs yet"}</Typography>
-        <Typography variant="body2" color="text.secondary">{query.search ? "Try another name." : "Create an ISC to prototype an indicator."}</Typography>
-        <Button sx={{ mt: 2 }} variant="contained" onClick={onCreate}>Create an ISC</Button>
-      </Box></TableCell></TableRow>}
     </WorkspaceTable>
     <Menu open={Boolean(menu)} anchorEl={menu?.anchor} onClose={() => setMenu(null)}>
       {menu && !isDraft(menu.item) && <MenuItem onClick={() => { navigate(`/isc/${encodeURIComponent(menu.item.id)}/edit`); setMenu(null); }}>Edit</MenuItem>}

@@ -46,7 +46,7 @@ WorkspaceToolbar.propTypes = {
 };
 
 export function WorkspaceTable({ label, loading, loadingLabel = `Loading ${label.toLowerCase()}`,
-  header, children, total, page, size, onPageChange, onSizeChange }) {
+  header, children, emptyState, total, page, size, onPageChange, onSizeChange }) {
   return <Paper variant="outlined" sx={{ minWidth: 0, overflow: "hidden" }}>
     {loading && <LinearProgress aria-label={loadingLabel} />}
     <TableContainer sx={{ overflowX: "hidden" }}>
@@ -55,6 +55,8 @@ export function WorkspaceTable({ label, loading, loadingLabel = `Loading ${label
         <TableBody>{children}</TableBody>
       </Table>
     </TableContainer>
+    {/* A full-width colspan would create phantom columns when responsive cells are hidden. */}
+    {emptyState}
     <TablePagination component="div" count={total} page={page} rowsPerPage={size} rowsPerPageOptions={[10, 25, 50]}
       sx={{ "& .MuiTablePagination-toolbar": { flexWrap: "wrap", justifyContent: "flex-end", px: 1 }, "& .MuiTablePagination-spacer": { display: "none" } }}
       onPageChange={(_event, nextPage) => onPageChange(nextPage)}
@@ -63,7 +65,7 @@ export function WorkspaceTable({ label, loading, loadingLabel = `Loading ${label
 }
 WorkspaceTable.propTypes = {
   label: PropTypes.string.isRequired, loading: PropTypes.bool.isRequired, loadingLabel: PropTypes.string,
-  header: PropTypes.node.isRequired, children: PropTypes.node, total: PropTypes.number.isRequired,
+  header: PropTypes.node.isRequired, children: PropTypes.node, emptyState: PropTypes.node, total: PropTypes.number.isRequired,
   page: PropTypes.number.isRequired, size: PropTypes.number.isRequired,
   onPageChange: PropTypes.func.isRequired, onSizeChange: PropTypes.func.isRequired,
 };
