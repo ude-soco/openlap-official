@@ -12,6 +12,7 @@ import lombok.*;
 @Builder
 public class ISCResponse {
   private String id;
+  private boolean communityCopy;
   private String requirements;
   private String dataset;
   private String visRef;

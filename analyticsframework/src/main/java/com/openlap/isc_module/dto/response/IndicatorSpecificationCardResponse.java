@@ -12,6 +12,7 @@ import lombok.*;
 @Builder
 public class IndicatorSpecificationCardResponse {
   private String id;
+  private boolean communityCopy;
   private String indicatorName;
   private String createdBy;
   private LocalDateTime createdOn;

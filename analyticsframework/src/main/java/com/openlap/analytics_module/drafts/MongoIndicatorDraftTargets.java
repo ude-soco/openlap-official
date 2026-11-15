@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DBRef;
 import com.mongodb.MongoWriteException;
 import com.openlap.analytics_module.entities.Indicator;
+import com.openlap.community.CommunityMetadata;
 import com.openlap.analytics_module.services.ComplexIndicatorReferences;
 import com.openlap.infrastructure.exception.ConflictException;
 import com.openlap.infrastructure.exception.NotFoundException;
@@ -66,6 +67,8 @@ public class MongoIndicatorDraftTargets implements IndicatorDraftTargets {
         key -> {
           if (found.containsKey(key)) snapshot.put(key, found.get(key));
         });
+    for (String key : List.of("communitySourceId", "communitySourceVersion", "communityDependency"))
+      if (found.containsKey(key)) snapshot.put(key, found.get(key));
     return snapshot;
   }
 
@@ -99,6 +102,7 @@ public class MongoIndicatorDraftTargets implements IndicatorDraftTargets {
     for (String marker :
         List.of(COMPLETION_ID, COMPLETION_HASH, "_complexIndicatorWrite", "_pluginReferenceWrite"))
       if (output.containsKey(marker)) set.put(marker, output.get(marker));
+    if (output.containsKey("communityMetadata")) set.put("communityMetadata", output.get("communityMetadata"));
     Document update = new Document("$set", set);
     if (!unset.isEmpty()) update.put("$unset", unset);
     return mongo
@@ -114,6 +118,7 @@ public class MongoIndicatorDraftTargets implements IndicatorDraftTargets {
     indicator.setId(expected.get("_id").toString());
     Document output = new Document();
     mongo.getConverter().write(indicator, output);
+    CommunityMetadata.populate(indicator, output);
     output.put("_id", expected.get("_id"));
     sources.onBeforeSave(new BeforeSaveEvent<>(indicator, output, COLLECTION));
     try {
@@ -201,6 +206,7 @@ public class MongoIndicatorDraftTargets implements IndicatorDraftTargets {
     indicator.setId(target);
     Document output = new Document();
     mongo.getConverter().write(indicator, output);
+    CommunityMetadata.populate(indicator, output);
     if (source != null) output.put("_id", source.get("_id"));
     output.put(COMPLETION_ID, draftId);
     output.put(COMPLETION_HASH, hash);
@@ -213,6 +219,7 @@ public class MongoIndicatorDraftTargets implements IndicatorDraftTargets {
     }
     boolean saved;
     if (source == null) {
+      output.put("communityId", UUID.randomUUID().toString());
       try {
         mongo.getCollection(COLLECTION).insertOne(output);
         saved = true;

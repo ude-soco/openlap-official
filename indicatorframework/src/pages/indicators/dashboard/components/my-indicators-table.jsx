@@ -20,6 +20,8 @@ import { WorkspaceDashboard, WorkspaceStatusChip, WorkspaceTable, WorkspaceToolb
 import { MEDIUM, WIDE, statusColumn, detailColumn, dateColumn, actionColumn, dashboardDateTime }
   from "../../../../common/components/workspace-dashboard/workspace-dashboard-styles.js";
 
+import { CommunityCopyBadge } from "../../../../common/components/community-pool/community-copy-badge.jsx";
+
 const TYPES = { BASIC: "Basic", COMPOSITE: "Composite", MULTI_LEVEL: "Multilevel analysis" };
 const SORT_FIELDS = { name: "Indicator", status: "Status", indicatorType: "Type", updatedAt: "Last updated" };
 const EDIT_ROUTES = { BASIC: "/indicator/editor/basic/edit", COMPOSITE: "/indicator/editor/composite/edit",
@@ -32,7 +34,7 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
   const { enqueueSnackbar } = useSnackbar();
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
-  const [query, setQuery] = useState({ page: 0, size: 10, search: "", indicatorType: "", sortBy: "updatedAt", sortDirection: "desc" });
+  const [query, setQuery] = useState({ page: 0, size: 10, search: "", indicatorType: "", sortBy: "updatedAt", sortDirection: "desc", origin: "" });
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -116,7 +118,7 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
   const header = (field, label) => <TableSortLabel active={query.sortBy === field} direction={query.sortBy === field ? query.sortDirection : "asc"}
     onClick={() => sort(field)}>{label}</TableSortLabel>;
   const status = (item) => <WorkspaceStatusChip draft={item.kind === "DRAFT"} />;
-  const filtered = Boolean(search || query.indicatorType);
+  const filtered = Boolean(search || query.indicatorType || query.origin);
 
   return <WorkspaceDashboard>
     <WorkspaceToolbar label="Indicator controls" onCreate={() => navigate("/indicator/editor")}
@@ -128,6 +130,12 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
         <TextField select size="small" label="Indicator type" value={query.indicatorType} sx={{ flex: "1 1 180px", minWidth: 160, [WIDE]: { maxWidth: 180 } }}
           onChange={(event) => setQuery((previous) => ({ ...previous, page: 0, indicatorType: event.target.value }))}>
           <MenuItem value="">All types</MenuItem>{Object.entries(TYPES).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
+        </TextField>
+        <TextField select size="small" label="Origin" value={query.origin}
+          sx={{ flex: "0 1 160px", minWidth: 140 }}
+          onChange={(event) => setQuery((previous) => ({ ...previous, page: 0, origin: event.target.value }))}>
+          <MenuItem value="">All origins</MenuItem><MenuItem value="OWN">Created by me</MenuItem>
+          <MenuItem value="COMMUNITY">Community copies</MenuItem>
         </TextField>
         <FormControlLabel sx={{ m: 0, flexShrink: 0, whiteSpace: "nowrap" }} label="Drafts only" control={<Checkbox checked={draftsOnly} onChange={(event) => {
           setQuery((previous) => ({ ...previous, page: 0 })); onDraftsOnlyChange(event.target.checked);
@@ -152,6 +160,7 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
           {!error && rows.map((item) => <TableRow key={keyOf(item)} hover>
             <TableCell><Stack sx={{ gap: 0.75 }}>
               <Typography sx={{ fontWeight: 600 }}>{item.name}</Typography>
+              {item.communityCopy && <CommunityCopyBadge />}
               <Box sx={{ display: "block", [MEDIUM]: { display: "none" } }}>{status(item)}</Box>
               {item.kind === "DRAFT" && item.sourceIndicatorId && <Typography variant="caption" color="text.secondary">Editing saved indicator</Typography>}
               {item.recoverable === false && <Typography variant="caption" color="text.secondary">Older draft needs review</Typography>}

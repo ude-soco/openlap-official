@@ -32,6 +32,20 @@ public class IndicatorWorkspaceTest {
     return IndicatorWorkspaceQuery.checked(page, size, search, type, draftsOnly, sort, direction);
   }
 
+  @Test public void communityFiltersApplyToTheUnifiedPageAndPendingDependenciesStayHidden() {
+    var query = IndicatorWorkspaceQuery.checked(0, 10, "", null, false, "name", "asc", "community");
+    var stages = MongoIndicatorWorkspace.pipeline(OWNER, query);
+    assertThat(stages.get(0).get("$match", Document.class))
+        .containsEntry("communityCopyPending", null)
+        .containsEntry("communityDependency", new Document("$ne", true));
+    assertThat(stages).contains(new Document("$match", new Document("communityCopy", true)));
+    var projection = stages.get(1).get("$project", Document.class);
+    assertThat(projection).containsKeys("communityCopy").doesNotContainKey("communitySourceId");
+    assertThatThrownBy(() -> IndicatorWorkspaceQuery.checked(0, 10, "", null,
+        false, "name", "asc", "some-other-owner"))
+        .isInstanceOf(ValidationException.class);
+  }
+
   @Test
   public void combinedOwnerFilteredInputsAreUnitedBeforeTheSingleCountAndPage() {
     var query = query(2, 10, ".*", "BASIC", false, "updatedAt", "desc");

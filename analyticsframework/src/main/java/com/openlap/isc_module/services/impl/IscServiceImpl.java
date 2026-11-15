@@ -99,6 +99,7 @@ public class IscServiceImpl implements IscService {
     IndicatorSpecificationCard isc = findOwnedOrThrow(iscId, user);
     return ISCResponse.builder()
         .id(isc.getId())
+        .communityCopy(isc.getCommunitySourceId() != null)
         .requirements(isc.getRequirements())
         .dataset(isc.getDataset())
         .visRef(isc.getVisRef())
@@ -137,6 +138,16 @@ public class IscServiceImpl implements IscService {
       String sortDirection,
       String status,
       String search) {
+    return getAllMyISCs(request, page, size, sortBy, sortDirection, status, search, "");
+  }
+
+  @Override
+  public Page<IndicatorSpecificationCardResponse> getAllMyISCs(HttpServletRequest request,
+      int page, int size, String sortBy, String sortDirection, String status, String search,
+      String origin) {
+    String filterOrigin = origin == null ? "" : origin.toUpperCase(java.util.Locale.ROOT);
+    if (!java.util.Set.of("", "OWN", "COMMUNITY").contains(filterOrigin))
+      throw new com.openlap.infrastructure.exception.ValidationException("Invalid ISC origin filter.");
     User user = tokenService.getUserFromToken(request);
     log.info("Looking up indicators for user '{}'", user.getName());
 
@@ -150,6 +161,8 @@ public class IscServiceImpl implements IscService {
     try {
       Criteria criteria = Criteria.where("createdBy.$id").is(new ObjectId(user.getId()));
       applyStatusFilter(criteria, status);
+      if ("COMMUNITY".equals(filterOrigin)) criteria.and("communitySourceId").ne(null);
+      if ("OWN".equals(filterOrigin)) criteria.and("communitySourceId").is(null);
       if (search != null && !search.trim().isEmpty()) {
         criteria = criteria.and("indicatorName").regex(Pattern.quote(search.trim()), "i");
       }
@@ -237,6 +250,8 @@ public class IscServiceImpl implements IscService {
             .updatedOn(now)
             .status(IscStatus.DRAFT)
             .sourceId(sourceId)
+            .communitySourceId(source.getCommunitySourceId())
+            .communitySourceVersion(source.getCommunitySourceVersion())
             .indicatorName(
                 source.getIndicatorName() != null
                     ? source.getIndicatorName()
@@ -341,6 +356,7 @@ public class IscServiceImpl implements IscService {
       responses.add(
           IndicatorSpecificationCardResponse.builder()
               .id(isc.getId())
+              .communityCopy(isc.getCommunitySourceId() != null)
               .indicatorName(name)
               .createdBy(isc.getCreatedBy() != null ? isc.getCreatedBy().getName() : null)
               .createdOn(isc.getCreatedOn())

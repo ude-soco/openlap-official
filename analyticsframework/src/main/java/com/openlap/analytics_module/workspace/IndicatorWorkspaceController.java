@@ -21,7 +21,8 @@ public class IndicatorWorkspaceController {
       @RequestParam(required = false) String indicatorType,
       @RequestParam(defaultValue = "false") boolean draftsOnly,
       @RequestParam(defaultValue = "updatedAt") String sortBy,
-      @RequestParam(defaultValue = "desc") String sortDirection) {
+      @RequestParam(defaultValue = "desc") String sortDirection,
+      @RequestParam(defaultValue = "") String origin) {
     return ResponseEntity.ok()
         .cacheControl(CacheControl.noStore())
         .body(
@@ -36,6 +37,7 @@ public class IndicatorWorkspaceController {
                     indicatorType,
                     draftsOnly,
                     sortBy,
-                    sortDirection)));
+                    sortDirection,
+                    origin)));
   }
 }
