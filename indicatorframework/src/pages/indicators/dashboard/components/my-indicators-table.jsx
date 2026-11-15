@@ -132,18 +132,16 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
 
   return <Stack sx={{ gap: 2, minWidth: 0, containerType: "inline-size", containerName: "indicator-dashboard" }}>
     <Paper variant="outlined" sx={{ p: 2 }}><Stack sx={{ gap: 2 }}>
-      <Stack direction="row" sx={{ justifyContent: "space-between", gap: 1 }}>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate("/indicator/editor")}>Create new</Button>
-        <Button variant="outlined" onClick={() => setRefresh((value) => value + 1)}>Refresh</Button>
-      </Stack>
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr", [MEDIUM]: { gridTemplateColumns: "minmax(180px, 1fr) 180px auto" }, gap: 2, alignItems: "center" }}>
-        <TextField fullWidth size="small" label="Search indicators" placeholder="Search by name" value={search} onChange={(event) => setSearch(event.target.value)}
+      <Box component="section" aria-label="Indicator controls" sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center" }}>
+        <Button variant="contained" startIcon={<AddIcon />} sx={{ flexShrink: 0, whiteSpace: "nowrap", minHeight: 40 }}
+          onClick={() => navigate("/indicator/editor")}>Create new</Button>
+        <TextField size="small" label="Search indicators" placeholder="Search by name" value={search} sx={{ flex: "1 1 220px", minWidth: 180 }} onChange={(event) => setSearch(event.target.value)}
           slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }} />
-        <TextField select size="small" label="Indicator type" value={query.indicatorType}
+        <TextField select size="small" label="Indicator type" value={query.indicatorType} sx={{ flex: "1 1 180px", minWidth: 160, [WIDE]: { maxWidth: 180 } }}
           onChange={(event) => setQuery((previous) => ({ ...previous, page: 0, indicatorType: event.target.value }))}>
           <MenuItem value="">All types</MenuItem>{Object.entries(TYPES).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
         </TextField>
-        <FormControlLabel sx={{ m: 0 }} label="Drafts only" control={<Checkbox checked={draftsOnly} onChange={(event) => {
+        <FormControlLabel sx={{ m: 0, flexShrink: 0, whiteSpace: "nowrap" }} label="Drafts only" control={<Checkbox checked={draftsOnly} onChange={(event) => {
           setQuery((previous) => ({ ...previous, page: 0 })); onDraftsOnlyChange(event.target.checked);
         }} />} />
       </Box>
@@ -159,7 +157,6 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
           </IconButton>
         </Tooltip>
       </Stack>
-      <Typography variant="body2" color="text.secondary">Drafts are private unfinished work. Editing drafts leave the saved indicator and its embeds unchanged until you save the completed indicator.</Typography>
     </Stack></Paper>
     {error && <Alert severity="error" action={<Button color="inherit" onClick={() => setRefresh((value) => value + 1)}>Retry</Button>}>{error}</Alert>}
     <Paper variant="outlined" sx={{ minWidth: 0, overflow: "hidden" }}>
