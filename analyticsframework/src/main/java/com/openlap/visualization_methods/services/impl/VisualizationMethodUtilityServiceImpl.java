@@ -151,9 +151,18 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
       List<VisType> existingVisualizationTypes) {
     com.openlap.plugins.visualization.VisualizationManifest manifest =
         com.openlap.plugins.visualization.VisualizationManifest.read(Paths.get(jarFile), null);
-    if (manifest != null) new com.openlap.plugins.management.PluginInspector()
-        .discover(com.openlap.plugins.artifacts.PluginKind.VISUALIZATION, Paths.get(jarFile));
-    List<String> classNames = Utils.getClassNamesFromJar(jarFile, visualizerClassDirectory);
+    List<String> classNames;
+    if (manifest != null) {
+      com.openlap.plugins.management.PluginInspection discovery = new com.openlap.plugins.management.PluginInspector()
+          .discover(com.openlap.plugins.artifacts.PluginKind.VISUALIZATION, Paths.get(jarFile));
+      // Manifest plugins have explicit entry points. Associate their library
+      // before their charts, independent of package names or archive ordering.
+      classNames = new ArrayList<>();
+      classNames.add(discovery.getLibraryClass());
+      classNames.addAll(discovery.getClasses());
+    } else {
+      classNames = Utils.getClassNamesFromJar(jarFile, visualizerClassDirectory);
+    }
 
     VisualizerClassPathLoader classPathLoader = new VisualizerClassPathLoader(jarFile);
     VisLibrary visualizationLibrary = null;

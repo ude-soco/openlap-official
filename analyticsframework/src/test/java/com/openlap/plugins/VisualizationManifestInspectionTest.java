@@ -47,16 +47,18 @@ class VisualizationManifestInspectionTest {
     assertThat(descriptor.getString("pluginVersion")).isEqualTo("1.0.0");
     assertThat((List<?>)descriptor.get("customizations")).hasSize(1);
   }
-  @Test void localPopulationPersistsDescriptorsWithTheExistingCompiledContract() throws Exception {
+  @Test void manifestLocalPopulationUsesDiscoveredEntriesOutsideTheHistoricalPackagePrefix() throws Exception {
     plugin("Local");
     VisualizationTypeRepository types=mock(VisualizationTypeRepository.class);VisualizationLibraryRepository libraries=mock(VisualizationLibraryRepository.class);
     when(types.findAll()).thenReturn(List.of());when(libraries.findAll()).thenReturn(List.of());
     when(libraries.save(any())).thenAnswer(invocation -> {VisLibrary library=invocation.getArgument(0);library.setId("library");return library;});
     VisualizationMethodUtilityServiceImpl service=new VisualizationMethodUtilityServiceImpl(types,libraries,PluginArtifactResolver.local(),PluginCatalogVisibility.legacyOnly());
-    ReflectionTestUtils.setField(service,"visualizerJarsFolder",folder.toString());ReflectionTestUtils.setField(service,"visualizerClassDirectory","managedfixture");
+    ReflectionTestUtils.setField(service,"visualizerJarsFolder",folder.toString());ReflectionTestUtils.setField(service,"visualizerClassDirectory","openlap.visualizer");
     service.populateVisualizationMethods();
     org.mockito.ArgumentCaptor<List<VisType>> captured=org.mockito.ArgumentCaptor.forClass(List.class);verify(types).saveAll(captured.capture());
     assertThat(captured.getValue()).hasSize(1);
+    assertThat(captured.getValue().get(0).getVisualizationLib().getId()).isEqualTo("library");
+    assertThat(captured.getValue().get(0).getImplementingClass()).isEqualTo("managedfixture.ManagedChartLocal");
     assertThat(captured.getValue().get(0).getVisualizationDescriptor()).containsEntry("pluginId","example.charts").containsEntry("id","bar");
   }
 }
