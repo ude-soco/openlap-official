@@ -28,6 +28,7 @@ const nativeFallback = `(function(){window.OpenLAPExample={version:"1.0.0",rende
 }};}());`;
 
 function chartCode(type, title = "Native chart") {
+  if (type === "static" || type === "missing") return "";
   if (type === "c3") return "c3.generate({bindto:'#chart',size:{height:360},data:{columns:[['Value',3,8,5]],type:'bar'},axis:{x:{type:'category',categories:['Alpha','Beta','Gamma']}},transition:{duration:0}});";
   if (type === "apex") return "new ApexCharts(document.querySelector('#chart'),{chart:{type:'bar',height:360,animations:{enabled:false}},series:[{name:'Value',data:[3,8,5]}],xaxis:{categories:['Alpha','Beta','Gamma']}}).render();";
   return "window.OpenLAPExample.render(document.getElementById('chart')," + JSON.stringify(points) + "," + JSON.stringify({
@@ -80,6 +81,7 @@ async function until(predicate, message) {
       apex: { version: "8.8.1", assets: [await vendor("apex", "script", "apexcharts-8.8.1.min.js")] },
       native: { version: "1.0.0", assets: native },
       "native-v2": { version: "2.0.0", assets: second },
+      static: { version: "1.0.0", assets: [{ id: "static-style", kind: "style", bytes: Buffer.from(".static-mark{fill:rgb(11,22,33)}") }] },
       throwing: { version: "1.0.0", assets: [{ id: "broken-script", kind: "script", bytes: Buffer.from('throw new Error("Synthetic runtime script failure.");') }] },
     };
     for (const value of Object.values(types)) value.artifact = digest(Buffer.concat(value.assets.map((asset) => asset.bytes)));
@@ -144,13 +146,14 @@ import {ThemeProvider,createTheme} from "@mui/material/styles";
 import {Stack} from "@mui/material";
 import ChartPreview from "/src/pages/indicators/indicator-editor/components/chart-preview.jsx";
 import {AuthContext} from "/src/setup/auth-context-manager/auth-context-manager.jsx";
-const scripts=${JSON.stringify(Object.fromEntries(["c3", "apex", "native", "native-v2", "throwing", "undeclared"].map((id) => [id, chartCode(id, "Native chart")])))};
+const scripts=${JSON.stringify(Object.fromEntries(["c3", "apex", "native", "native-v2", "static", "missing", "throwing", "undeclared"].map((id) => [id, chartCode(id, "Native chart")])))};
+const staticMarkup='<svg width="100%" height="320" role="img" aria-label="Static stylesheet chart"><rect class="static-mark" width="100" height="100"/></svg>';
 function Fixture(){const [types,setTypes]=useState(["c3"]);const [revision,setRevision]=useState(0);
 window.__chartRuntimeFixture={show:(...next)=>setTypes(next),update:()=>setRevision(value=>value+1)};
 return <ThemeProvider theme={createTheme()}><AuthContext.Provider value={{api:{defaults:{baseURL:${JSON.stringify(api.href)}}}}}>
 <Stack component="main" sx={{gap:2,width:"100%",maxWidth:1000,mx:"auto"}}>
 <h1>OpenLAP isolated chart preview fixture</h1>
-{types.map((id,index)=><section key={index} data-chart={id}><ChartPreview responsive visualizationTypeId={id} previewData={{html:'<div id="chart"></div>',scriptData:scripts[id]+(revision?'\\nwindow.updatedTitle='+revision+';':'')}} /></section>)}
+{types.map((id,index)=><section key={index} data-chart={id}><ChartPreview responsive visualizationTypeId={id==="missing"?undefined:id} previewData={{html:id==="static"||id==="missing"?staticMarkup:'<div id="chart"></div>',scriptData:scripts[id]+(revision?'\\nwindow.updatedTitle='+revision+';':'')}} /></section>)}
 </Stack></AuthContext.Provider></ThemeProvider>;}
 createRoot(document.getElementById("fixture")).render(<Fixture/>);`;
     await fs.writeFile(fixturePath, fixtureSource);
@@ -184,6 +187,12 @@ createRoot(document.getElementById("fixture")).render(<Fixture/>);`;
     await loaded("c3");
     assert.equal(await frame("c3").locator(".c3-bar").count(), 3);
     assert.equal(await frame("c3").locator("body").evaluate(() => typeof window.d3), "object");
+    await page.evaluate(() => window.__chartRuntimeFixture.show("static")); await loaded("static");
+    assert.equal(await frame("static").locator(".static-mark").evaluate((element) => getComputedStyle(element).fill), "rgb(11, 22, 33)",
+      "A static SVG without inline JavaScript still receives its declared packaged CSS inside the renderer");
+    await page.evaluate(() => window.__chartRuntimeFixture.show("missing"));
+    await preview("missing").getByRole("alert").filter({ hasText: "missing its visualization type" }).waitFor();
+    assert.equal(await preview("missing").locator("iframe").count(), 0, "Untyped chart fragments receive a metadata error instead of executing in the host");
     await page.evaluate(() => window.__chartRuntimeFixture.show("apex")); await loaded("apex");
     assert.equal(await frame("apex").locator(".apexcharts-bar-area").count(), 3);
     const [downloaded] = await Promise.all([
@@ -277,7 +286,7 @@ createRoot(document.getElementById("fixture")).render(<Fixture/>);`;
       await fs.mkdir(process.env.OPENLAP_RUNTIME_PROOF_DIR, { recursive: true });
       await fs.writeFile(path.join(process.env.OPENLAP_RUNTIME_PROOF_DIR, "runtime-browser-proof.json"), JSON.stringify({ runtimes: ["native", "c3", "apex"], runtimeRequests, assetRequests,
         nativeJar: Boolean(process.env.OPENLAP_EXAMPLE_PLUGIN_JAR), multipleVersions: true, retries: true, integrityFailure: true,
-        svgExport, undeclaredRuntimeRetry: true, scriptLoadFailure: true,
+        svgExport, staticStylesheet: true, missingMetadataRejected: true, undeclaredRuntimeRetry: true, scriptLoadFailure: true,
         staleFrameRejected: true, untrustedParentRejected: true, hostGlobalsAbsent: true, externalRequests: unexpected, browserErrors: errors }, null, 2));
     }
     console.log("PASS: real renderer and packaged C3/Apex/native assets; isolated previews and blank-platform embeds; SVG export; retry/integrity/script failures; stale and untrusted messages; simultaneous versions; no host globals or CDN requests");
