@@ -23,10 +23,11 @@ import { useSnackbar } from "notistack";
 import OpenLAPLogo from "../../../assets/brand/openlap-logo.svg";
 import { CustomThemeContext } from "../../../setup/theme-manager/theme-context-manager";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
-import { useGuardedNavigate } from "../../../setup/routes-manager/navigation-guard-context.js";
+import { useGuardedNavigate, useNavigationGuard } from "../../../setup/routes-manager/navigation-guard-context.js";
 
 const AppTopBar = ({ drawerWidth, onMenuToggle }) => {
   const guardedNavigate = useGuardedNavigate();
+  const navigation = useNavigationGuard();
   const { user, logout } = useContext(AuthContext);
   const { darkMode, toggleDarkMode, handleLightMode } =
     useContext(CustomThemeContext);
@@ -40,9 +41,13 @@ const AppTopBar = ({ drawerWidth, onMenuToggle }) => {
 
   const handleSignOut = () => {
     setMenu(null);
-    logout();
-    handleLightMode();
-    enqueueSnackbar("Logout successful!", { variant: "success" });
+    const finish = () => {
+      logout();
+      handleLightMode();
+      enqueueSnackbar("Logout successful!", { variant: "success" });
+    };
+    if (navigation?.guardedAction) navigation.guardedAction(finish);
+    else finish();
   };
 
   return (
