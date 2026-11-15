@@ -23,6 +23,7 @@ const source = (id, name, method = "counts") => ({
   },
   outputs: [material, count],
   available: true,
+  createdOn: "2026-01-02T12:00:00",
   indicatorQuery: {
     duration: { from: "2026-01-01", until: "2026-11-01" },
     userQueryCondition: "INCLUDE_ME",
@@ -39,6 +40,22 @@ const sources = [
     unavailableReason: "Plugin unavailable",
   },
 ];
+const expandedSources = [
+  ...sources,
+  ...Array.from({ length: 14 }, (_, index) => ({
+    ...source(`extra-${index + 1}`, `Extra indicator ${String(index + 1).padStart(2, "0")}`),
+    createdOn: `2026-02-${String(index + 1).padStart(2, "0")}T12:00:00`,
+  })),
+];
+let expandedCatalog = false;
+const sourceCatalogRequests = [], sourcePreviewRequests = [], sourcePreviewPlans = [], sourceDataRequests = [], sourceDataPlans = [];
+const codeForSource = (item) => encodeURIComponent(
+  `<div id="source-test-chart"></div><script>document.getElementById("source-test-chart").innerHTML=${JSON.stringify(`<svg width="100%" height="260" viewBox="0 0 500 260" role="img" aria-label="${item.name} source chart"><title>${item.name}</title><rect width="100" height="100" fill="blue" /></svg>`)};</script>`,
+);
+const sourceDataset = (item) => ({ columns: {
+  material: column(material, [`${item.name} material 1`, `${item.name} material 2`]),
+  count: column(count, [42, 17]),
+} });
 const keys = [
   "Material 1",
   "Material 6",
@@ -232,6 +249,7 @@ let chartCatalogFailures = 0;
   const context = await browser.newContext({
     viewport: { width: 1280, height: 1000 },
   });
+  let page;
   try {
     await context.routeWebSocket(/.*/, (socket) => socket.close());
     const token =
@@ -295,12 +313,50 @@ let chartCatalogFailures = 0;
           email: "complex.fixture@example.test",
           roles: ["ROLE_USER"],
         });
-      if (path === "v1/indicators/sources")
-        return send({
-          content: sources,
-          totalPages: 1,
-          totalElements: sources.length,
+      if (path === "v1/indicators/sources") {
+        const query = Object.fromEntries(url.searchParams);
+        sourceCatalogRequests.push(query);
+        const pageNumber = Number(query.page || 0), size = Number(query.size || 10);
+        const sortBy = query.sortBy || "name", descending = query.sortDirection === "desc";
+        let filtered = (expandedCatalog ? expandedSources : sources).filter((item) =>
+          item.name.toLowerCase().includes((query.searchText || "").toLowerCase())
+          && (!query.methodId || item.analyticsMethod.id === query.methodId));
+        filtered = [...filtered].sort((a, b) => {
+          const compared = String(a[sortBy] || "").localeCompare(String(b[sortBy] || ""));
+          return (descending ? -compared : compared) || a.id.localeCompare(b.id);
         });
+        return send({
+          content: filtered.slice(pageNumber * size, (pageNumber + 1) * size),
+          totalPages: Math.ceil(filtered.length / size), totalElements: filtered.length,
+          number: pageNumber, size, numberOfElements: Math.min(size, Math.max(0, filtered.length - pageNumber * size)),
+          pageable: { pageNumber, pageSize: size },
+        });
+      }
+      const sourcePreviewMatch = path.match(/^v1\/indicators\/sources\/([^/]+)\/preview$/);
+      if (sourcePreviewMatch) {
+        const item = expandedSources.find((item) => item.id === decodeURIComponent(sourcePreviewMatch[1]));
+        assert.ok(item, "Only a catalog source can be previewed");
+        const call = { id: item.id, completed: false };
+        sourcePreviewRequests.push(call);
+        const plan = sourcePreviewPlans.shift() || {};
+        if (plan.delayMs) await new Promise((resolve) => setTimeout(resolve, plan.delayMs));
+        try {
+          if (plan.fail) return await route.fulfill({ status: 503, contentType: "application/json",
+            body: JSON.stringify({ message: "Source chart temporarily unavailable." }) });
+          return await send({ id: item.id, name: item.name, type: "BASIC", createdOn: item.createdOn,
+            analyticsTechnique: item.analyticsMethod.name, analyticsTechniqueId: item.analyticsMethod.id,
+            indicatorCode: codeForSource(item) });
+        } finally { call.completed = true; }
+      }
+      if (path === "v1/indicators/analyze") {
+        const item = expandedSources.find((item) => item.id === body.indicators[0].indicatorId);
+        assert.ok(item);
+        sourceDataRequests.push(item.id);
+        const plan = sourceDataPlans.shift() || {};
+        if (plan.fail) return route.fulfill({ status: 503, contentType: "application/json",
+          body: JSON.stringify({ message: "Source data temporarily unavailable." }) });
+        return send({ indicators: [{ indicatorId: item.id, analyzedDataset: sourceDataset(item) }] });
+      }
       if (path === "v1/analytics/methods")
         return send([
           {
@@ -465,10 +521,10 @@ let chartCatalogFailures = 0;
         body: JSON.stringify({ message: "Unexpected synthetic API request" }),
       });
     });
-    const page = await context.newPage();
-    page.on("pageerror", (error) => pageErrors.push(error.message));
-    const select = async (name) =>
-      page.getByRole("button", { name: "Select " + name, exact: true }).click();
+    page = await context.newPage();
+    page.on("pageerror", (error) => pageErrors.push(error.stack || error.message));
+    const checkbox = (name) => page.getByRole("checkbox", { name, exact: true });
+    const select = async (name) => checkbox("Select " + name).check();
     const button = (name) => page.getByRole("button", { name, exact: true });
     const chooseLibrary = async () => {
       await page
@@ -616,9 +672,14 @@ let chartCatalogFailures = 0;
       await sourceStep.getByRole("button", { name: "Refresh sources", exact: true }).click();
       await until(() => chartCatalogFailures === 1, "Catalog refresh exercises a failed chart-type request");
       await until(() => previews.length > before, "Known valid chart automatically refreshes after the catalog attempt");
-      await waitForPreview(previews.at(-1));
-      assert.equal(await page.getByRole("alert").filter({ hasText: "Chart catalog temporarily unavailable" }).count(), 0,
-        "A successful automatic preview clears the stale visualization-catalog error");
+      await page.waitForFunction((before) => {
+        const token = document.querySelector('[data-preview-token]')?.getAttribute('data-preview-token') || '';
+        const action = document.querySelector('button[aria-label="Save indicator"]');
+        return Number(token.replace('preview-', '')) > before && action && !action.disabled;
+      }, before);
+      const live = page.getByRole("region", { name: "Live preview", exact: true });
+      assert.equal(await live.getByRole("alert").filter({ hasText: "Chart catalog temporarily unavailable" }).count(), 0,
+        "A metadata refresh error never replaces a valid chart with a false preview failure");
       assert.equal(await button("Retry preview").count(), 0, "Successful preview is not presented as a failed request");
       assert.equal(await button("Save indicator").isDisabled(), false);
       await sourceStep.getByRole("button", { name: "Close", exact: true }).click();
@@ -652,6 +713,7 @@ let chartCatalogFailures = 0;
         "Editing only the indicator name and saving do not regenerate the chart");
     };
 
+    expandedCatalog = true;
     await page.goto(new URL("/indicator/editor/composite", base).href);
     const interLoaded = await page.evaluate(async () => {
       await document.fonts.ready;
@@ -659,18 +721,186 @@ let chartCatalogFailures = 0;
       return faces.length > 0 && faces.every((face) => face.status === "loaded");
     });
     assert.ok(interLoaded, "Visual consistency is checked with the app's actual Inter font");
+    const sourceTable = () => page.getByRole("table", { name: "Available Basic indicators", exact: true });
+    const selectionCount = async (count) => page.getByRole("status").filter({
+      hasText: new RegExp(`^${count} of 10 selected\\.`),
+    }).waitFor();
+    const sourceSearch = () => page.getByRole("searchbox", { name: "Search your Basic indicators", exact: true });
+    const checkSourcePicker = async () => {
+      await checkbox("Select Access count").waitFor();
+      assert.equal(sourcePreviewRequests.length, 0, "Catalog browsing does not generate source charts");
+      assert.equal(sourceDataRequests.length, 0, "Catalog browsing does not analyze source data");
+      await sourceTable().getByRole("button", { name: "Sort by indicator name", exact: true }).click();
+      await until(() => sourceCatalogRequests.at(-1)?.sortDirection === "desc", "Name sort applies across the server catalog");
+      await checkbox("Select Unavailable plugin").waitFor();
+      await sourceTable().getByRole("button", { name: "Sort by date", exact: true }).click();
+      await until(() => sourceCatalogRequests.at(-1)?.sortBy === "createdOn", "Date header requests server ordering");
+      await sourceTable().getByRole("button", { name: "Sort by date", exact: true }).click();
+      await checkbox("Select Extra indicator 14").waitFor();
+      await select("Extra indicator 14");
+      await selectionCount(1);
+      assert.equal(await checkbox("Deselect Extra indicator 14").isChecked(), true,
+        "Selected rows expose a checked checkbox instead of a disabled Select button");
+
+      await sourceSearch().fill("Access count");
+      await button("Preview Access count").click();
+      let drawer = page.getByRole("dialog", { name: "Preview indicator", exact: true });
+      await drawer.getByRole("img", { name: "Access count source chart", exact: true }).waitFor();
+      assert.equal(await page.getByRole("checkbox", { name: "Select Access count", exact: true, includeHidden: true }).isChecked(), false,
+        "Inspecting an eligible source does not select it");
+      await drawer.getByRole("button", { name: "Select indicator", exact: true }).click();
+      await drawer.getByRole("button", { name: "Remove from selection", exact: true }).waitFor();
+      await drawer.getByRole("button", { name: "Back to indicators", exact: true }).click();
+      await drawer.waitFor({ state: "hidden" });
+      await checkbox("Deselect Access count").waitFor();
+      await selectionCount(2);
+      const selected = page.getByRole("region", { name: "Selected indicators", exact: true });
+      await selected.getByText("Extra indicator 14", { exact: true }).waitFor();
+      assert.equal(await sourceTable().getByText("Extra indicator 14", { exact: true }).count(), 0,
+        "Selected items remain visible outside the filtered catalog page");
+      await selected.getByRole("button", { name: "Remove Extra indicator 14", exact: true }).click();
+      await selectionCount(1);
+      await button("Undo").click();
+      await selectionCount(2);
+      await checkbox("Deselect Access count").waitFor();
+      assert.equal(await checkbox("Deselect Access count").isChecked(), true);
+
+      await sourceSearch().fill("");
+      const sameMethod = page.getByRole("checkbox", { name: "Same analytics method only", exact: true });
+      await sameMethod.check();
+      await until(() => sourceCatalogRequests.at(-1)?.methodId === "counts", "Matching-method filtering is global and server-side");
+      assert.equal(sourceCatalogRequests.at(-1).page, "0", "Changing filters resets pagination");
+      await sameMethod.uncheck();
+      await until(() => !sourceCatalogRequests.at(-1)?.methodId, "Disabling the method filter restores the full catalog");
+      await sourceSearch().fill("Different method");
+      await checkbox("Select Different method").waitFor();
+      assert.equal(await checkbox("Select Different method").isDisabled(), true);
+      assert.ok(await checkbox("Select Different method").getAttribute("aria-describedby"),
+        "Unavailable choices point to a visible explanation, not color alone");
+      const incompatiblePreview = button("Preview Different method");
+      assert.equal(await incompatiblePreview.isEnabled(), true, "Incompatible sources remain inspectable");
+      await incompatiblePreview.click();
+      drawer = page.getByRole("dialog", { name: "Preview indicator", exact: true });
+      await drawer.getByRole("img", { name: "Different method source chart", exact: true }).waitFor();
+      assert.equal(await drawer.getByRole("button", { name: "Select indicator", exact: true }).isDisabled(), true);
+      await page.keyboard.press("Escape");
+      await drawer.waitFor({ state: "hidden" });
+      await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "Preview Different method");
+      await selectionCount(2);
+      assert.equal(await sourceSearch().inputValue(), "Different method", "Preview close preserves the catalog search");
+
+      await sourceSearch().fill("Nothing matches this search");
+      await sourceTable().getByText("No indicators match these filters. Clear the filters or try another name.", { exact: true }).waitFor();
+      await selectionCount(2);
+      await button("Clear filters").click();
+      await checkbox("Deselect Extra indicator 14").waitFor();
+      assert.equal(sourceCatalogRequests.at(-1).searchText, "");
+      await button("Go to next page").click();
+      await until(() => sourceCatalogRequests.at(-1)?.page === "1", "Pagination requests the next server page");
+      await checkbox("Deselect Access count").waitFor();
+      assert.equal(await checkbox("Deselect Access count").isChecked(), true,
+        "Selection stays checked when returning to its later catalog page");
+      await checkbox("Deselect Access count").uncheck();
+      await selectionCount(1);
+      await page.getByRole("combobox", { name: /^Rows per page/ }).click();
+      await page.getByRole("option", { name: "25", exact: true }).click();
+      await until(() => sourceCatalogRequests.at(-1)?.size === "25" && sourceCatalogRequests.at(-1)?.page === "0", "Page size changes reset paging without clearing selections");
+      for (let number = 1; number <= 9; number++) await select(`Extra indicator ${String(number).padStart(2, "0")}`);
+      await selectionCount(10);
+      assert.equal(await checkbox("Select Student count").isDisabled(), true, "The limit blocks only additional choices");
+      assert.equal(await checkbox("Deselect Extra indicator 14").isEnabled(), true, "Selected choices can still be deselected at the limit");
+      await button("Show all selected (10)").click();
+      await selected.getByRole("button", { name: "Remove Extra indicator 01", exact: true }).click();
+      await selectionCount(9);
+      await select("Extra indicator 01");
+      await selectionCount(10);
+
+      await sourceSearch().fill("Student count");
+      await button("Preview Student count").click();
+      drawer = page.getByRole("dialog", { name: "Preview indicator", exact: true });
+      await drawer.getByRole("img", { name: "Student count source chart", exact: true }).waitFor();
+      assert.equal(sourceDataRequests.length, 0, "Opening a chart does not eagerly calculate source data");
+      sourceDataPlans.push({ fail: true });
+      await drawer.getByRole("tab", { name: "Data", exact: true }).click();
+      await drawer.getByRole("alert").filter({ hasText: "Source data temporarily unavailable" }).waitFor();
+      await drawer.getByRole("button", { name: "Retry source data", exact: true }).click();
+      await drawer.getByRole("cell", { name: "Student count material 1", exact: true }).waitFor();
+      assert.deepEqual(sourceDataRequests, ["students", "students"], "Source data is calculated only on request or explicit retry");
+      await drawer.getByRole("tab", { name: "Details", exact: true }).click();
+      await drawer.getByRole("tab", { name: "Data", exact: true }).click();
+      assert.equal(sourceDataRequests.length, 2, "Revisiting already loaded data does not repeat execution");
+      await drawer.getByRole("button", { name: "Back to indicators", exact: true }).click();
+      await drawer.waitFor({ state: "hidden" });
+      assert.equal(await sourceSearch().inputValue(), "Student count");
+      await selectionCount(10);
+
+      sourcePreviewPlans.push({ fail: true });
+      await button("Preview Student count").click();
+      drawer = page.getByRole("dialog", { name: "Preview indicator", exact: true });
+      await drawer.getByRole("alert").filter({ hasText: "Source chart temporarily unavailable" }).waitFor();
+      await drawer.getByRole("button", { name: "Retry chart preview", exact: true }).click();
+      await drawer.getByRole("img", { name: "Student count source chart", exact: true }).waitFor();
+      await drawer.getByRole("button", { name: "Close indicator preview", exact: true }).click();
+      await drawer.waitFor({ state: "hidden" });
+
+      sourcePreviewPlans.push({ delayMs: 1000 });
+      const beforeDelayedPreview = sourcePreviewRequests.length;
+      await button("Preview Student count").click();
+      drawer = page.getByRole("dialog", { name: "Preview indicator", exact: true });
+      await drawer.getByRole("progressbar", { name: "Loading indicator preview", exact: true }).waitFor();
+      await until(() => sourcePreviewRequests.length > beforeDelayedPreview, "Delayed source preview starts");
+      const obsoleteSource = sourcePreviewRequests.at(-1);
+      await drawer.getByRole("button", { name: "Close indicator preview", exact: true }).click();
+      await drawer.waitFor({ state: "hidden" });
+      await sourceSearch().fill("Access count");
+      await button("Preview Access count").click();
+      drawer = page.getByRole("dialog", { name: "Preview indicator", exact: true });
+      await drawer.getByRole("img", { name: "Access count source chart", exact: true }).waitFor();
+      await until(() => obsoleteSource.completed, "The obsolete source preview response completes");
+      assert.equal(await drawer.getByRole("img", { name: "Student count source chart", exact: true }).count(), 0,
+        "A closed source's delayed preview cannot replace a newer source");
+      await drawer.getByRole("button", { name: "Back to indicators", exact: true }).click();
+      await drawer.waitFor({ state: "hidden" });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await checkbox("Select Access count").waitFor();
+      await button("Preview Access count").waitFor();
+      const mobileLayout = await page.evaluate(() => ({
+        width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+        offenders: [...document.querySelectorAll('main *')].map((element) => ({element, rect:element.getBoundingClientRect()}))
+          .filter(({rect}) => rect.width > 0 && rect.right > innerWidth + 2)
+          .slice(0, 12).map(({element,rect}) => ({tag:element.tagName, class:element.className,
+            text:element.textContent.slice(0,70), right:rect.right, width:rect.width})),
+      }));
+      if (mobileLayout.scrollWidth > mobileLayout.width + 2) {
+        await page.screenshot({ path: '/private/tmp/openlap-source-picker-mobile-overflow.png', fullPage: true });
+      }
+      assert.ok(mobileLayout.scrollWidth <= mobileLayout.width + 2,
+        "The compact source table remains inside the mobile page: " + JSON.stringify(mobileLayout));
+      await page.setViewportSize({ width: 1280, height: 1000 });
+      await button("Start over").click();
+      await page.getByRole("dialog", { name: "Start a new indicator?", exact: true })
+        .getByRole("button", { name: "Start over", exact: true }).click();
+      expandedCatalog = false;
+      await sourceSearch().fill("");
+      await button("Refresh sources").click();
+      await checkbox("Select Access count").waitFor();
+      await checkbox("Select Student count").waitFor();
+      await selectionCount(0);
+      assert.equal(await checkbox("Select Access count").isEnabled(), true);
+    };
+    await checkSourcePicker();
     const sourceSection = page.getByRole("region", {name:"Select indicators step", exact:true});
     await sourceSection.getByRole("button", {name:"Close", exact:true}).click();
-    await button("Select Access count").waitFor({state:"detached"});
+    await checkbox("Select Access count").waitFor({state:"detached"});
     await sourceSection.getByRole("button", {name:"Open", exact:true}).click();
     await select("Access count");
     assert.equal(
-      await button("Select Different method").isDisabled(),
+      await checkbox("Select Different method").isDisabled(),
       true,
       "Composite excludes a different method",
     );
     assert.equal(
-      await button("Select Unavailable plugin").isDisabled(),
+      await checkbox("Select Unavailable plugin").isDisabled(),
       true,
       "Unavailable source stays readable but unselectable",
     );
@@ -771,9 +1001,20 @@ let chartCatalogFailures = 0;
     await page.goto(
       new URL("/indicator/editor/multi-level-analysis", base).href,
     );
+    await select("Different method");
+    await select("Access count");
+    await selectionCount(2);
+    assert.equal(await page.getByRole("checkbox", { name: "Same analytics method only", exact: true }).count(), 0,
+      "Multilevel selection does not impose the Composite method filter");
+    assert.equal(await checkbox("Deselect Different method").isChecked(), true,
+      "Multilevel can actually select a different analytics method");
+    await button("Start over").click();
+    await page.getByRole("dialog", { name: "Start a new indicator?", exact: true })
+      .getByRole("button", { name: "Start over", exact: true }).click();
+    await selectionCount(0);
     await select("Access count");
     assert.equal(
-      await button("Select Different method").isDisabled(),
+      await checkbox("Select Different method").isDisabled(),
       false,
       "Multilevel can use another method",
     );
@@ -818,8 +1059,8 @@ let chartCatalogFailures = 0;
     await saveIndicator("Multilevel fixture");
     assert.equal(saved[2].indicatorType, "MULTI_LEVEL");
     await page.goto(new URL("/indicator/editor/composite", base).href);
-    await button("Select Access count").waitFor();
-    assert.equal(await button("Select Access count").isDisabled(), false,
+    await checkbox("Select Access count").waitFor();
+    assert.equal(await checkbox("Select Access count").isDisabled(), false,
       "A fresh editor after saving has no recovered source selections");
     await select("Access count");
     await select("Student count");
@@ -851,13 +1092,8 @@ let chartCatalogFailures = 0;
       .getByRole("dialog", { name: "Start a new indicator?", exact: true })
       .getByRole("button", { name: "Start over", exact: true })
       .click();
-    assert.equal(
-      await page
-        .getByRole("region", { name: "Selected indicators", exact: true })
-        .count(),
-      0,
-      "Confirmed reset clears this tab's configuration",
-    );
+    assert.equal(await checkbox("Select Access count").isChecked(), false,
+      "Confirmed reset clears this tab's source selection");
     await page.goto(new URL("/indicator", base).href);
     const openBlockedDeletion = async () => {
       await button("More actions for Access count").click();
@@ -908,8 +1144,18 @@ let chartCatalogFailures = 0;
     assert.deepEqual(failures, []);
     assert.ok(requests.includes("v1/indicators/saved-0/result"));
     console.log(
-      "PASS: Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; new/edit tab recovery, failed-save preservation, delayed-navigation save cleanup, confirmed reset, metadata retry, undo, mobile containment; blocked source deletion retains source and safely links its dependents; automatic chart selection/mapping/customization previews, invalid-input gating, explicit retry, stale catalog-error recovery and stale-response suppression for both types; no browser errors.",
+      "PASS: compact source table server sorting/filtering/pagination, persistent checked selections and max10 feedback, owner-scoped on-demand chart/data inspection with retry/focus/stale-response protection; Composite same-method selection, recovery/retry,8-row union+filled zeros, grouped mappings/create/directedit/update/saved current table; Multilevel6-row intersection, two-feature analysis, scatter/save; new/edit tab recovery, failed-save preservation, delayed-navigation save cleanup, confirmed reset, metadata retry, undo, mobile containment; blocked source deletion retains source and safely links its dependents; automatic chart selection/mapping/customization previews, invalid-input gating, explicit retry, stale catalog-error recovery and stale-response suppression for both types; no browser errors.",
     );
+  } catch (error) {
+    console.error("Synthetic browser diagnostics:", { pageErrors, failures,
+      latestQueries: sourceCatalogRequests.slice(-3), latestRequests: requests.slice(-8) });
+    if (page) console.error("Visible fixture state:", await page.evaluate(() => ({
+      text: document.body.innerText.slice(0, 2200),
+      checkboxes: [...document.querySelectorAll('input[type="checkbox"]')].map((input) => ({
+        name: input.getAttribute('aria-label'), checked: input.checked, disabled: input.disabled,
+      })),
+    })).catch(() => "Page unavailable"));
+    throw error;
   } finally {
     await context.close();
     await browser.close();
