@@ -36,22 +36,52 @@ public class ComplexIndicatorReadController {
   private final ComplexIndicatorSourceGuard sourceGuard;
   private final IndicatorCompositeService composites;
   private final IndicatorMultiLevelService multilevel;
+  private final IndicatorService indicatorService;
 
   @GetMapping("/sources")
   public ResponseEntity<?> sources(HttpServletRequest request,
       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
-      @RequestParam(defaultValue = "") String searchText) {
+      @RequestParam(defaultValue = "") String searchText,
+      @RequestParam(defaultValue = "name") String sortBy,
+      @RequestParam(defaultValue = "asc") String sortDirection,
+      @RequestParam(defaultValue = "") String methodId) {
+    if (!"name".equals(sortBy) && !"createdOn".equals(sortBy)) {
+      throw ComplexIndicatorException.invalid("Sort by indicator name or creation date.");
+    }
+    if (!"asc".equalsIgnoreCase(sortDirection) && !"desc".equalsIgnoreCase(sortDirection)) {
+      throw ComplexIndicatorException.invalid("Sort direction must be asc or desc.");
+    }
+    String method = methodId == null ? "" : methodId.trim();
+    if (!method.isEmpty() && !ObjectId.isValid(method)) {
+      throw ComplexIndicatorException.invalid("Choose a valid installed analytics method.");
+    }
     Pageable pageable = PageRequest.of(Math.max(0, page), Math.min(50, Math.max(1, size)),
-        Sort.by("name").ascending().and(Sort.by("id")));
+        Sort.by(Sort.Direction.fromString(sortDirection), sortBy).and(Sort.by("id")));
     if (searchText.length() > 300) throw ComplexIndicatorException.invalid("Search must be 300 characters or fewer.");
-    Page<Indicator> result = indicators.findBasicIndicatorByCreatedBy_IdAndNameLike(
-        new ObjectId(tokens.getUserFromToken(request).getId()), Pattern.quote(searchText.trim()), pageable);
-    List<Map<String, Object>> rows = result.getContent().stream().map(this::sourceSummary).toList();
+    ObjectId owner = new ObjectId(tokens.getUserFromToken(request).getId());
+    String search = Pattern.quote(searchText.trim());
+    Page<Indicator> result = method.isEmpty()
+        ? indicators.findBasicIndicatorByCreatedBy_IdAndNameLike(owner, search, pageable)
+        : indicators.findBasicIndicatorByOwnerAndMethodAndNameLike(owner, new ObjectId(method), search, pageable);
+    // Many indicators share a method. Resolve its port metadata once per page,
+    // including failures, without retaining stale plugin state across requests.
+    Map<String, Optional<List<OpenLAPColumnConfigData>>> outputs = new HashMap<>();
+    List<Map<String, Object>> rows = result.getContent().stream()
+        .map(source -> sourceSummary(source, outputs)).toList();
     return ResponseEntity.ok(new ApiSuccess(HttpStatus.OK, "Saved Basic indicators found.",
         new PageImpl<>(rows, pageable, result.getTotalElements())));
   }
 
-  private Map<String, Object> sourceSummary(Indicator source) {
+  @GetMapping("/sources/{id}/preview")
+  public ResponseEntity<?> sourcePreview(HttpServletRequest request, @PathVariable String id) {
+    // Resolve ownership and BASIC eligibility before any plugin can execute.
+    sourceGuard.validateIds(request, List.of(id), false, false);
+    return ResponseEntity.ok(new ApiSuccess(HttpStatus.OK, "Source indicator preview generated.",
+        indicatorService.getIndicatorById(id)));
+  }
+
+  private Map<String, Object> sourceSummary(Indicator source,
+      Map<String, Optional<List<OpenLAPColumnConfigData>>> outputs) {
     Map<String, Object> row = new LinkedHashMap<>();
     row.put("id", source.getId());
     row.put("name", source.getName());
@@ -62,7 +92,15 @@ public class ComplexIndicatorReadController {
     try {
       var method = source.getAnalyticsTechniqueReference().getAnalyticsTechnique();
       row.put("analyticsMethod", Map.of("id", method.getId(), "name", method.getName()));
-      row.put("outputs", analytics.getAnalyticsTechniqueOutputs(method.getId()));
+      Optional<List<OpenLAPColumnConfigData>> ports = outputs.computeIfAbsent(method.getId(), id -> {
+        try {
+          return Optional.of(analytics.getAnalyticsTechniqueOutputs(id));
+        } catch (RuntimeException error) {
+          return Optional.empty();
+        }
+      });
+      if (ports.isEmpty()) throw new IllegalArgumentException("Unavailable source method");
+      row.put("outputs", ports.get());
       // Saved query is the owner's existing configuration, never evaluated while browsing.
       Object query = new Gson().fromJson(source.getIndicatorQuery(), Object.class);
       if (!(query instanceof Map)) throw new IllegalArgumentException("Missing source query");
