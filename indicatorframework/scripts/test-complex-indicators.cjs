@@ -4,6 +4,7 @@
 // OPENLAP_TEST_BASE_URL=http://127.0.0.1:15281 npm run test:complex-indicators
 const { webkit } = require("playwright");
 const assert = require("node:assert/strict");
+const chartRendererFixture = require("./chart-renderer-fixture.cjs");
 const base = new URL(
   process.env.OPENLAP_TEST_BASE_URL || "http://127.0.0.1:5181",
 );
@@ -55,7 +56,7 @@ const expandedSources = [
 let expandedCatalog = false;
 const sourceCatalogRequests = [], sourcePreviewRequests = [], sourcePreviewPlans = [], sourceDataRequests = [], sourceDataPlans = [];
 const codeForSource = (item) => encodeURIComponent(
-  `<div id="source-test-chart"></div><script>document.getElementById("source-test-chart").innerHTML=${JSON.stringify(`<svg width="100%" height="260" viewBox="0 0 500 260" role="img" aria-label="${item.name} source chart"><title>${item.name}</title><rect width="100" height="100" fill="blue" /></svg>`)};</script>`,
+  `<svg width="100%" height="260" viewBox="0 0 500 260" role="img" aria-label="${item.name} source chart"><title>${item.name}</title><rect width="100" height="100" fill="blue" /></svg><script>/* Static workflow fixture. Runtime execution is qualified by test:chart-runtime. */</script>`,
 );
 const sourceDataset = (item) => ({ columns: {
   material: column(material, [`${item.name} material 1`, `${item.name} material 2`]),
@@ -219,7 +220,7 @@ const charts = [
 const chartMarkup =
   '<svg width="100%" height="350" viewBox="0 0 600 350" role="img" aria-label="Synthetic result chart"><title>Synthetic result chart</title><rect width="300" height="200" fill="blue" /></svg>';
 const code = encodeURIComponent(
-  `<div id="complex-test-chart"></div><script>document.getElementById("complex-test-chart").innerHTML=${JSON.stringify(chartMarkup)};</script>`,
+  `${chartMarkup}<script>/* Static workflow fixture. */</script>`,
 );
 const failures = [],
   pageErrors = [],
@@ -229,7 +230,7 @@ const failures = [],
   previewPlans = [];
 const mergeRequests = [], mergePlans = [], analysisRequests = [], analysisPlans = [];
 const codeForPreview = (token) => encodeURIComponent(
-  `<div id="complex-test-chart"></div><script>document.getElementById("complex-test-chart").innerHTML=${JSON.stringify(chartMarkup.replace('<svg ', '<svg data-preview-token="' + token + '" '))};</script>`,
+  `${chartMarkup.replace('<svg ', '<svg data-preview-token="' + token + '" ')}<script>/* Static workflow fixture. */</script>`,
 );
 const until = async (predicate, message) => {
   const deadline = Date.now() + 15000;
@@ -276,6 +277,7 @@ let chartCatalogFailures = 0;
         ),
       token,
     );
+    const chartRendererRoute = chartRendererFixture(base);
     await context.route("**/*", async (route) => {
       const request = route.request(),
         url = new URL(request.url());
@@ -294,6 +296,7 @@ let chartCatalogFailures = 0;
         failures.push("Unexpected off-origin request: " + url.origin);
         return route.abort();
       }
+      if (await chartRendererRoute(route)) return;
       if (url.pathname === "/src/pages/indicators/dashboard/indicator-editor-dashboard.jsx"
           && !delayedDashboardModule) {
         delayedDashboardModule = true;
@@ -351,7 +354,7 @@ let chartCatalogFailures = 0;
             body: JSON.stringify({ message: "Source chart temporarily unavailable." }) });
           return await send({ id: item.id, name: item.name, type: "BASIC", createdOn: item.createdOn,
             analyticsTechnique: item.analyticsMethod.name, analyticsTechniqueId: item.analyticsMethod.id,
-            indicatorCode: codeForSource(item) });
+            visualizationTypeId: "grouped", indicatorCode: codeForSource(item) });
         } finally { call.completed = true; }
       }
       if (path === "v1/indicators/analyze") {
@@ -525,6 +528,7 @@ let chartCatalogFailures = 0;
           name: saved[0].name,
           type: "COMPOSITE",
           configuration: saved[0].configuration,
+          visualizationTypeId: saved[0].visualizationTypeId,
           indicatorCode: code,
         });
       if (path === "v1/indicators/saved-0/result") return send(wide);
@@ -710,10 +714,18 @@ let chartCatalogFailures = 0;
       assert.ok(Math.abs(saveBox.x + saveBox.width / 2 - sectionBox.x - sectionBox.width / 2) < 3,
         "Save footer is centered within the workflow frame");
     };
-    const resultChart = () => page.getByRole("img", { name: "Synthetic result chart", exact: true });
+    const chartFrame = () => page.getByRole("region", { name: "Live preview", exact: true }).frameLocator('iframe[title="OpenLAP chart preview"]');
+    const resultChart = () => chartFrame().getByRole("img", { name: "Synthetic result chart", exact: true });
+    const sourceChart = (drawer, name) => drawer.frameLocator('iframe[title="OpenLAP chart preview"]').getByRole("img", { name, exact: true });
     const waitForPreview = async (call) => {
       await until(() => call.completed, "Preview response completes");
-      await page.waitForFunction((token) => document.querySelector('[data-preview-token]')?.getAttribute('data-preview-token') === token, call.token);
+      await resultChart().waitFor();
+      await chartFrame().locator('[data-preview-token="' + call.token + '"]').waitFor();
+      await page.getByRole("region", { name: "Live preview", exact: true }).locator('iframe[aria-busy="false"]').waitFor();
+      await page.waitForFunction(() => {
+        const action = document.querySelector('button[aria-label="Save indicator"],button[aria-label="Review changes"]');
+        return action && !action.disabled;
+      });
     };
     const generateChart = async (name) => {
       const before = previews.length;
@@ -735,7 +747,7 @@ let chartCatalogFailures = 0;
       await page.waitForTimeout(800);
       assert.equal(previews.length, before, "An incomplete required chart mapping never requests a preview");
       assert.equal(await button("Save indicator").isDisabled(), true, "Incomplete mappings invalidate Save");
-      assert.equal(await resultChart().count(), 0, "Incomplete mappings remove the previous chart");
+      assert.equal(await page.getByRole("region", { name: "Live preview", exact: true }).locator("iframe").count(), 0, "Incomplete mappings remove the previous chart frame");
 
       previewPlans.push({ fail: true });
       await field.click();
@@ -787,7 +799,8 @@ let chartCatalogFailures = 0;
       await until(() => chartCatalogFailures === 1, "Catalog refresh exercises a failed chart-type request");
       await until(() => previews.length > before, "Known valid chart automatically refreshes after the catalog attempt");
       await page.waitForFunction((before) => {
-        const token = document.querySelector('[data-preview-token]')?.getAttribute('data-preview-token') || '';
+        const frame = document.querySelector('[aria-label="Live preview"] iframe');
+        const token = frame?.contentDocument?.querySelector('[data-preview-token]')?.getAttribute('data-preview-token') || '';
         const action = document.querySelector('button[aria-label="Save indicator"]');
         return Number(token.replace('preview-', '')) > before && action && !action.disabled;
       }, before);
@@ -928,7 +941,7 @@ let chartCatalogFailures = 0;
       await sourceSearch().fill("Access count");
       await button("Preview Access count").click();
       let drawer = page.getByRole("dialog", { name: "Preview indicator", exact: true });
-      await drawer.getByRole("img", { name: "Access count source chart", exact: true }).waitFor();
+      await sourceChart(drawer, "Access count source chart").waitFor();
       assert.equal(await page.getByRole("checkbox", { name: "Select Access count", exact: true, includeHidden: true }).isChecked(), false,
         "Inspecting an eligible source does not select it");
       await drawer.getByRole("button", { name: "Select indicator", exact: true }).click();
@@ -964,7 +977,7 @@ let chartCatalogFailures = 0;
       assert.equal(await incompatiblePreview.isEnabled(), true, "Incompatible sources remain inspectable");
       await incompatiblePreview.click();
       drawer = page.getByRole("dialog", { name: "Preview indicator", exact: true });
-      await drawer.getByRole("img", { name: "Different method source chart", exact: true }).waitFor();
+      await sourceChart(drawer, "Different method source chart").waitFor();
       assert.equal(await drawer.getByRole("button", { name: "Select indicator", exact: true }).isDisabled(), true);
       await page.keyboard.press("Escape");
       await drawer.waitFor({ state: "hidden" });
@@ -1001,7 +1014,7 @@ let chartCatalogFailures = 0;
       await sourceSearch().fill("Student count");
       await button("Preview Student count").click();
       drawer = page.getByRole("dialog", { name: "Preview indicator", exact: true });
-      await drawer.getByRole("img", { name: "Student count source chart", exact: true }).waitFor();
+      await sourceChart(drawer, "Student count source chart").waitFor();
       assert.equal(sourceDataRequests.length, 0, "Opening a chart does not eagerly calculate source data");
       sourceDataPlans.push({ fail: true });
       await drawer.getByRole("tab", { name: "Data", exact: true }).click();
@@ -1022,7 +1035,7 @@ let chartCatalogFailures = 0;
       drawer = page.getByRole("dialog", { name: "Preview indicator", exact: true });
       await drawer.getByRole("alert").filter({ hasText: "Source chart temporarily unavailable" }).waitFor();
       await drawer.getByRole("button", { name: "Retry chart preview", exact: true }).click();
-      await drawer.getByRole("img", { name: "Student count source chart", exact: true }).waitFor();
+      await sourceChart(drawer, "Student count source chart").waitFor();
       await drawer.getByRole("button", { name: "Close indicator preview", exact: true }).click();
       await drawer.waitFor({ state: "hidden" });
 
@@ -1038,9 +1051,9 @@ let chartCatalogFailures = 0;
       await sourceSearch().fill("Access count");
       await button("Preview Access count").click();
       drawer = page.getByRole("dialog", { name: "Preview indicator", exact: true });
-      await drawer.getByRole("img", { name: "Access count source chart", exact: true }).waitFor();
+      await sourceChart(drawer, "Access count source chart").waitFor();
       await until(() => obsoleteSource.completed, "The obsolete source preview response completes");
-      assert.equal(await drawer.getByRole("img", { name: "Student count source chart", exact: true }).count(), 0,
+      assert.equal(await sourceChart(drawer, "Student count source chart").count(), 0,
         "A closed source's delayed preview cannot replace a newer source");
       await drawer.getByRole("button", { name: "Back to indicators", exact: true }).click();
       await drawer.waitFor({ state: "hidden" });

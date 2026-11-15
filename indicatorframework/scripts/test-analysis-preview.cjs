@@ -3,6 +3,7 @@
 // All API responses and identities below are synthetic; off-origin requests fail.
 const { webkit } = require("playwright");
 const assert = require("node:assert/strict");
+const chartRendererFixture = require("./chart-renderer-fixture.cjs");
 const inertAssets = new Set([
   "https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.18/c3.min.css",
   "https://d3js.org/d3.v5.min.js",
@@ -90,6 +91,7 @@ async function fixture(browser, saved, options = {}) {
     localStorage.setItem("authTokens", JSON.stringify({ access_token: token, refresh_token: token }));
     sessionStorage.setItem("session_indicator", JSON.stringify(saved));
   }, { token, saved });
+  const chartRendererRoute = chartRendererFixture(base, { runtimeDelayMs: options.runtimeDelayMs || 0 });
   await context.route("**/*", async (route) => {
     const request = route.request(), url = new URL(request.url());
     if (inertAssets.has(url.href)) return route.fulfill({
@@ -99,6 +101,7 @@ async function fixture(browser, saved, options = {}) {
       failures.push("Off-origin request: " + url.origin);
       return route.abort();
     }
+    if (await chartRendererRoute(route)) return;
     if (!url.pathname.startsWith("/api/")) return route.continue();
     const path = url.pathname.slice(5);
     const send = (data, status = 200) => route.fulfill({ status, contentType: "application/json", body: JSON.stringify(data) });
@@ -340,7 +343,7 @@ async function emptyVisualization(browser) {
 }
 
 async function chartInvalidation(browser) {
-  const f = await fixture(browser, session(columns("Original result"), true));
+  const f = await fixture(browser, session(columns("Original result"), true), { runtimeDelayMs: 200 });
   try {
     const visualization = f.page.getByRole("region", { name: "Visualization step", exact: true });
     await until(() => f.analysisRequests.length === 1, "Automatic analysis invalidates cached chart output on reopening");
@@ -350,7 +353,7 @@ async function chartInvalidation(browser) {
     await f.analysisRequests[0].respond({ data: { columns: columns() } });
     await f.analysis.getByText("No data for this combination", { exact: true }).waitFor();
     assert.equal(await visualization.getByRole("button", { name: "Save Indicator", exact: true }).isDisabled(), true);
-    assert.equal(await visualization.getByText("Stale chart", { exact: true }).count(), 0);
+    assert.equal(await visualization.locator("iframe").count(), 0);
 
     await f.analysis.getByRole("button", { name: "Run preview again", exact: true }).click();
     await until(() => f.analysisRequests.length === 2, "Analysis rerun after empty result");
@@ -358,8 +361,13 @@ async function chartInvalidation(browser) {
     await until(() => f.chartRequests.length > oldCount, "Fresh chart for new analysis with unchanged row count");
     await f.page.evaluate(() => new Promise((resolve) => requestAnimationFrame(resolve)));
     for (const request of f.chartRequests.slice(oldCount)) await request.respond(chartResponse("Fresh chart"));
-    await visualization.getByText("Fresh chart", { exact: true }).waitFor();
-    assert.equal(await visualization.getByText("Stale chart", { exact: true }).count(), 0);
+    assert.equal(await visualization.getByRole("button", { name: "Save Indicator", exact: true }).isDisabled(), true,
+      "Receiving chart code does not enable Save before the renderer acknowledges readiness");
+    const rendered = visualization.frameLocator('iframe[title="OpenLAP chart preview"]');
+    await rendered.getByText("Fresh chart", { exact: true }).waitFor();
+    await visualization.locator('iframe[aria-busy="false"]').waitFor();
+    await f.page.waitForFunction(() => [...document.querySelectorAll("button")].some((element) => element.textContent === "Save Indicator" && !element.disabled));
+    assert.equal(await rendered.getByText("Stale chart", { exact: true }).count(), 0);
     assert.equal(await visualization.getByRole("button", { name: "Save Indicator", exact: true }).isEnabled(), true);
     assert.deepEqual(f.failures, []);
     console.log("PASS: analysis invalidates pending chart output and a rerun refreshes chart readiness");
