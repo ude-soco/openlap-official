@@ -1,5 +1,5 @@
 /* eslint-disable no-useless-catch */
-import parse from "html-react-parser";
+import parseChartCode from "../../../../components/utils/parse-chart-code";
 
 export const fetchVisualizationLibrary = async (api) => {
   try {
@@ -74,18 +74,9 @@ export const requestBasicIndicatorPreview = async (
 
     const response = await api.post("v1/indicators/basic/preview", requestBody);
 
-    const unescapedVizCode = decodeURIComponent(response.data.data);
-    let displayCode = parse(unescapedVizCode);
-    let scriptData;
-    try {
-      scriptData = displayCode[1].props.dangerouslySetInnerHTML.__html;
-    } catch (error) {
-      console.error("Error script code", error);
-    }
     return {
+      ...parseChartCode(response.data.data, visRef.visualizationTypeId),
       message: response.data.message,
-      displayCode,
-      scriptData,
     };
   } catch (error) {
     throw error;
@@ -115,18 +106,9 @@ export const requestCompositeIndicatorPreview = async (
       requestBody
     );
 
-    const unescapedVizCode = decodeURIComponent(response.data.data);
-    let displayCode = parse(unescapedVizCode);
-    let scriptData;
-    try {
-      scriptData = displayCode[1].props.dangerouslySetInnerHTML.__html;
-    } catch (error) {
-      console.error("Error script code", error);
-    }
     return {
+      ...parseChartCode(response.data.data, visRef.visualizationTypeId),
       message: response.data.message,
-      displayCode,
-      scriptData,
     };
   } catch (e) {
     throw e;
@@ -158,18 +140,9 @@ export const requestMultiLevelIndicatorPreview = async (
       "v1/indicators/multilevel/preview",
       requestBody
     );
-    const unescapedVizCode = decodeURIComponent(response.data.data);
-    let displayCode = parse(unescapedVizCode);
-    let scriptData;
-    try {
-      scriptData = displayCode[1].props.dangerouslySetInnerHTML.__html;
-    } catch (error) {
-      console.error("Error script code", error);
-    }
     return {
+      ...parseChartCode(response.data.data, visRef.visualizationTypeId),
       message: response.data.message,
-      displayCode,
-      scriptData,
     };
   } catch (error) {
     throw error;

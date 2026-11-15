@@ -35,6 +35,7 @@ import { getStepStatus } from "../../utils/basic-workflow-ui.js";
 import CustomTooltip from "../../../../../../common/components/custom-tooltip/custom-tooltip";
 import PaletteIcon from "@mui/icons-material/Palette";
 import { getAnalyzedRowCount } from "../../utils/analyzed-data.js";
+import { getCustomizationErrors, getVisualizationDescriptor } from "./utils/visualization-descriptor";
 import {
   requestCreateBasicIndicator,
   requestUpdateBasicIndicator,
@@ -65,6 +66,10 @@ export default function Visualization() {
   // Customization panel is hidden by default so the live preview is the focus;
   // toggled by the "Customize chart" button (preview stays mounted either way).
   const [customize, setCustomize] = useState(false);
+  const [rendererReady, setRendererReady] = useState(false);
+  const customizationsValid = Object.keys(getCustomizationErrors(
+    getVisualizationDescriptor(visualization.selectedType), visualization.params,
+  )).length === 0;
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
@@ -72,12 +77,19 @@ export default function Visualization() {
     if (
       visualization.inputs.length === 0 ||
       !allInputsHaveSelected(visualization.inputs) ||
+      !customizationsValid ||
       getAnalyzedRowCount(analysis.analyzedData) === 0
     ) {
+      setRendererReady(false);
+      setState((previous) => previous.previewLoading || previous.previewError
+        ? { ...previous, previewLoading: false, previewError: false } : previous);
+      setVisualization((previous) => previous.previewData?.displayCode?.length
+        ? { ...previous, previewData: { displayCode: [], scriptData: {} } } : previous);
       return;
     }
 
     let cancelled = false;
+    setRendererReady(false);
     // Clear any stale preview and mark loading before the request starts, so a
     // previously-rendered chart never lingers under a new (possibly failing)
     // selection and the page stays in a known state.
@@ -93,9 +105,7 @@ export default function Visualization() {
         setVisualization((p) => ({
           ...p,
           previewData: {
-            ...p.previewData,
-            displayCode: previewData.displayCode,
-            scriptData: previewData.scriptData,
+            ...previewData,
           },
         }));
         setState((p) => ({ ...p, previewLoading: false, previewError: false }));
@@ -117,7 +127,7 @@ export default function Visualization() {
     // Invalidate in-flight charts when analysis changes, including reruns that
     // produce the same number of rows.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visualization.inputs, visualization.params, analysis.analyzedData]);
+  }, [visualization.inputs, visualization.params, analysis.analyzedData, customizationsValid]);
 
   const handleLoadPreviewVisualization = async () => {
     let indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
@@ -200,6 +210,7 @@ export default function Visualization() {
       visualization.inputs.length === 0 ||
       !allInputsHaveSelected(visualization.inputs) ||
       getAnalyzedRowCount(analysis.analyzedData) === 0 ||
+      !customizationsValid || !rendererReady ||
       state.previewError ||
       !visualization.previewData?.displayCode?.length
     );
@@ -306,6 +317,8 @@ export default function Visualization() {
                       ) : visualization.previewData?.displayCode?.length ? (
                         <ChartPreview
                           previewData={visualization.previewData}
+                          visualizationTypeId={visualization.selectedType.id}
+                          onStatusChange={setRendererReady}
                           responsive
                         />
                       ) : (

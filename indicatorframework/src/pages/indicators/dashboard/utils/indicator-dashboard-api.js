@@ -1,4 +1,4 @@
-import parse from "html-react-parser";
+import parseChartCode from "../../indicator-editor/components/utils/parse-chart-code";
 
 export const requestMyIndicators = async (api, params = {}) => {
   try {
@@ -14,16 +14,6 @@ export const requestMyIndicators = async (api, params = {}) => {
 export const requestIndicatorFullDetail = async (api, indicatorId) => {
   try {
     const response = await api.get(`v1/indicators/${indicatorId}`);
-    const unescapedVizCode = decodeURIComponent(
-      response.data.data.indicatorCode
-    );
-    let displayCode = parse(unescapedVizCode);
-    let scriptData;
-    try {
-      scriptData = displayCode[1].props.dangerouslySetInnerHTML.__html;
-    } catch (error) {
-      console.error("Error script code", error);
-    }
 
     return {
       indicatorName: response.data.data.name,
@@ -33,10 +23,7 @@ export const requestIndicatorFullDetail = async (api, indicatorId) => {
       analyticsMethod: response.data.data.analyticsTechnique,
       library: response.data.data.visualizationLibrary,
       chart: response.data.data.visualizationType,
-      previewData: {
-        displayCode,
-        scriptData,
-      },
+      previewData: parseChartCode(response.data.data.indicatorCode, response.data.data.visualizationTypeId),
       configuration: response.data.data.configuration,
     };
   } catch (error) {

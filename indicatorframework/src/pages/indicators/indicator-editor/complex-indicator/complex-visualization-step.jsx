@@ -54,6 +54,8 @@ export default function ComplexVisualizationStep({
   busy,
   previewChart,
   previewCurrent,
+  rendererReady,
+  onRendererStatus,
   preview,
   setSaveOpen,
   id,
@@ -107,7 +109,7 @@ export default function ComplexVisualizationStep({
     },
     {
       label: "Chart selected and configured",
-      done: previewCurrent,
+      done: previewCurrent && rendererReady,
     },
   ];
 
@@ -314,7 +316,7 @@ export default function ComplexVisualizationStep({
                     </Stack>
                   </Stack>
                 ) : previewCurrent ? (
-                  <ChartPreview previewData={preview} visualizationTypeId={configuration.visualization.typeId} responsive />
+                  <ChartPreview previewData={preview} visualizationTypeId={configuration.visualization.typeId} onStatusChange={onRendererStatus} responsive />
                 ) : (
                   <Stack sx={{ gap: 2, alignItems: "center", justifyContent: "center", minHeight: 360 }}>
                     {canPreview && <CircularProgress aria-label="Generating chart preview" />}
@@ -353,7 +355,7 @@ export default function ComplexVisualizationStep({
             size="large"
             variant="contained"
             aria-label={id ? "Review changes" : "Save indicator"}
-            disabled={!previewCurrent || Boolean(busy)}
+            disabled={!previewCurrent || !rendererReady || Boolean(busy)}
             onClick={() => setSaveOpen(true)}
           >
             {id ? "Review changes" : "Save Indicator"}
@@ -385,6 +387,8 @@ ComplexVisualizationStep.propTypes = {
   busy: PropTypes.string,
   previewChart: PropTypes.func,
   previewCurrent: PropTypes.bool,
+  rendererReady: PropTypes.bool,
+  onRendererStatus: PropTypes.func,
   preview: PropTypes.object,
   setSaveOpen: PropTypes.func,
   id: PropTypes.string,

@@ -6,6 +6,7 @@ import ComplexDialogs from "./complex-dialogs";
 import SourceIndicatorPreview from "./complex-source-preview";
 import chartPreviewData from "./complex-preview-data";
 import useDataPreview from "../utils/use-data-preview";
+import { getCustomizationErrors, getVisualizationDescriptor } from "../basic-indicator/components/visualization/utils/visualization-descriptor";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate, useParams } from "react-router-dom";
@@ -120,6 +121,7 @@ export default function ComplexIndicator({ type }) {
   const [preview, setPreview] = useState(null);
   const [previewFingerprint, setPreviewFingerprint] = useState("");
   const [previewError, setPreviewError] = useState("");
+  const [rendererReady, setRendererReady] = useState(false);
   // Reselecting a chart may invalidate a preview without changing its payload.
   const [previewRevision, setPreviewRevision] = useState(0);
   const [previewRetry, setPreviewRetry] = useState(0);
@@ -198,7 +200,8 @@ export default function ComplexIndicator({ type }) {
     loaded && !recoveryCandidate && !chartLoading && libraryId &&
       selectedType?.chartInputs?.length && sourcesReady(configuration.sources) &&
       datasetRows(chartDataset) > 0 && supportsSeries(selectedType) &&
-      mappingsReady(selectedType.chartInputs, configuration.visualization.mapping, chartDataset),
+      mappingsReady(selectedType.chartInputs, configuration.visualization.mapping, chartDataset) &&
+      Object.keys(getCustomizationErrors(getVisualizationDescriptor(selectedType), configuration.visualization.params)).length === 0,
   );
   const dirty =
     loaded &&
@@ -496,6 +499,7 @@ export default function ComplexIndicator({ type }) {
     setPreview(null);
     setPreviewFingerprint("");
     setPreviewError("");
+    setRendererReady(false);
     setPreviewRevision((previous) => previous + 1);
     setOperationError({ step: "", message: "" });
     if (from === "sources") setSourcesConfirmed(false);
@@ -596,6 +600,7 @@ export default function ComplexIndicator({ type }) {
 
   useEffect(() => {
     if (!autoPreviewReady) {
+      setRendererReady(false);
       setPreview(null);
       setPreviewFingerprint("");
       return undefined;
@@ -607,6 +612,7 @@ export default function ComplexIndicator({ type }) {
     setPreview(null);
     setPreviewFingerprint("");
     setPreviewError("");
+    setRendererReady(false);
     setOperationError((previous) => previous.step === "visualization"
       ? { step: "", message: "" }
       : previous);
@@ -619,7 +625,7 @@ export default function ComplexIndicator({ type }) {
           { signal: controller.signal },
         );
         if (cancelled || request !== generation.current) return;
-        setPreview(chartPreviewData(apiData(response)));
+        setPreview(chartPreviewData(apiData(response), configurationRef.current.visualization.typeId));
         setPreviewFingerprint(currentPreviewFingerprint);
         setOperationError((previous) => previous.step === "visualization"
           ? { step: "", message: "" }
@@ -733,7 +739,7 @@ export default function ComplexIndicator({ type }) {
       key: "visualization",
       label: "Visualization",
       locked: !datasetRows(resultDataset),
-      completed: previewCurrent,
+      completed: previewCurrent && rendererReady,
       summary: selectedType?.name,
     },
   ];
@@ -1020,6 +1026,8 @@ export default function ComplexIndicator({ type }) {
           busy={busy}
           previewChart={previewChart}
           previewCurrent={previewCurrent}
+          rendererReady={rendererReady}
+          onRendererStatus={setRendererReady}
           preview={preview}
           setSaveOpen={setSaveOpen}
           id={id}
