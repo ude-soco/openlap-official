@@ -371,7 +371,28 @@ async function dashboard(browser) {
     assert.ok(f.calls.some((call) => call.path === "v1/indicators/drafts/alpha" && call.method === "GET"));
     assert.equal(await page.getByText(lrs.lrsTitle, { exact: true }).count() > 0, true);
 
+    // Leave through the real flush action before loading a direct dashboard URL.
+    // A hard navigation during autosave legitimately opens native beforeunload.
+    let heldUpdate = false, releaseUpdate;
+    const updateGate = new Promise((resolve) => { releaseUpdate = resolve; });
+    await f.context.route("**/api/v1/indicators/drafts/alpha", async (route) => {
+      if (route.request().method() !== "PUT") return route.fallback();
+      heldUpdate = true; await updateGate; return route.fallback();
+    });
+    const resumedName = "Renamed working indicator, ready to resume";
+    await page.getByRole("textbox", { name: "Indicator name", exact: true }).fill(resumedName);
+    const exiting = page.getByRole("button", { name: "Save draft and exit", exact: true }).click();
+    try {
+      await until(() => heldUpdate, "Save and exit waits for the queued draft update");
+      assert.match(new URL(page.url()).pathname, /\/indicator\/editor\/drafts\/alpha$/,
+        "The editor remains open until its latest changes are acknowledged");
+    } finally { releaseUpdate(); }
+    await exiting;
+    await page.waitForURL("**/indicator");
+    await page.getByRole("heading", { name: "My Indicators", exact: true }).waitFor();
+    assert.equal(f.store.get("alpha").name, resumedName, "Save and exit persists the latest working name before leaving");
     await page.goto(new URL("/indicator?view=drafts", base).href);
+    await page.getByRole("checkbox", { name: "Drafts only", exact: true }).waitFor();
     assert.equal(await page.getByRole("checkbox", { name: "Drafts only", exact: true }).isChecked(), true,
       "Existing direct draft links enable the checkbox without restoring separate tabs");
     await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("Needs review");
