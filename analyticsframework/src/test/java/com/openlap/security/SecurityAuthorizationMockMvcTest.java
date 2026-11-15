@@ -86,6 +86,7 @@ import org.springframework.web.cors.CorsConfiguration;
       com.openlap.admin.controller.AdminContentController.class,
       com.openlap.admin.controller.AdminPluginController.class,
       com.openlap.content.PublicContentController.class,
+      com.openlap.plugins.visualization.VisualizationRuntimeController.class,
       SecurityAuthorizationMockMvcTest.CsrfProtectedController.class
     })
 @ImportAutoConfiguration(Jackson2AutoConfiguration.class)
@@ -123,6 +124,7 @@ public class SecurityAuthorizationMockMvcTest {
   @MockitoBean private com.openlap.plugins.management.PluginCatalogEditor pluginCatalogEditor;
   @MockitoBean private com.openlap.plugins.management.PluginRemovalService pluginRemovalService;
   @MockitoBean private com.openlap.plugins.management.PluginArtifactCleanup pluginArtifactCleanup;
+  @MockitoBean private com.openlap.plugins.visualization.VisualizationRuntimeService visualizationRuntimeService;
   @MockitoBean private AnalyticsTechniqueService analyticsTechniqueService;
   @MockitoBean private VisualizationLibraryService visualizationLibraryService;
   @MockitoBean private VisualizationTypeService visualizationTypeService;
@@ -429,6 +431,28 @@ public class SecurityAuthorizationMockMvcTest {
     given(lrsService.getAvailableLrs()).willReturn(Collections.emptyList());
 
     mockMvc.perform(get("/v1/register/lrs")).andExpect(status().isOk());
+  }
+
+  @Test
+  public void visualizationRuntimeIsPublicWithoutMakingThePluginCatalogPublic() throws Exception {
+    given(visualizationRuntimeService.runtime("type", ""))
+        .willReturn(java.util.Map.of("schemaVersion", 1, "artifactId", "visualizations-example"));
+    mockMvc.perform(get("/v1/code/visualizations/type/runtime"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.artifactId").value("visualizations-example"));
+    mockMvc.perform(get("/v1/admin/plugins/catalog/VISUALIZATION_TYPE"))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  public void declaredBrowserAssetsArePublicWithoutAuthenticationCookies() throws Exception {
+    given(visualizationRuntimeService.asset("type", "artifact", "script"))
+        .willReturn(new com.openlap.plugins.visualization.VisualizationRuntimeService.Asset(
+            new byte[] {1, 2}, "text/javascript", "a".repeat(64)));
+    mockMvc.perform(get("/v1/code/visualizations/type/assets/artifact/script"))
+        .andExpect(status().isOk())
+        .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+        .andExpect(header().doesNotExist("Set-Cookie"));
   }
 
   @Test
