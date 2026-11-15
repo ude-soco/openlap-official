@@ -157,6 +157,7 @@ public class CommunityCatalogService {
       query.fields().include("_id").include("communityId").include("name").include("indicatorName")
           .include("createdBy").include("createdOn").include("updatedOn").include("indicatorType")
           .include("requirements").include("visRef")
+          .include("indicators.indicator")
           .include("analyticsTechniqueReference.analyticsTechnique")
           .include("visualizationTechniqueReference.visType");
       List<?> sources = kind.equals("isc") ? mongo.find(query, IndicatorSpecificationCard.class) : mongo.find(query, Indicator.class);

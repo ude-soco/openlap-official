@@ -7,13 +7,19 @@ import org.bson.Document;
 
 /** Indexed metadata contains only the same public text exposed by catalog responses. */
 public final class CommunityMetadata {
-  public static final int VERSION = 1;
+  public static final int VERSION = 2;
   private CommunityMetadata() {}
 
   public static void populate(Indicator source, Document target) {
-    String method = source.getAnalyticsTechniqueReference() != null
-        && source.getAnalyticsTechniqueReference().getAnalyticsTechnique() != null
-        ? source.getAnalyticsTechniqueReference().getAnalyticsTechnique().getName() : "";
+    var technique = source.getAnalyticsTechniqueReference();
+    // Composite definitions inherit their common method from the Basic sources.
+    if (technique == null && source.getIndicators() != null && !source.getIndicators().isEmpty()) {
+      var first = source.getIndicators().get(0);
+      if (first != null && first.getIndicator() != null)
+        technique = first.getIndicator().getAnalyticsTechniqueReference();
+    }
+    String method = technique != null && technique.getAnalyticsTechnique() != null
+        ? technique.getAnalyticsTechnique().getName() : "";
     String chart = source.getVisualizationTechniqueReference() != null
         && source.getVisualizationTechniqueReference().getVisType() != null
         ? source.getVisualizationTechniqueReference().getVisType().getName() : "";

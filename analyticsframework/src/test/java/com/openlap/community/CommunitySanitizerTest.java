@@ -38,6 +38,18 @@ public class CommunitySanitizerTest {
     assertThat(json).contains("#ff8800", "400", "bottom", "enabled");
     assertThat(json).doesNotContain("Alice", "private", "formatter", "annotations", "title", "https", "function");
   }
+  @Test public void compositeMethodFiltersUseTheSourcesCommonAnalyticsMethod() {
+    var method = new com.openlap.analytics_technique.entities.AnalyticsTechnique();
+    method.setName("Count items");
+    Indicator basic = new Indicator();
+    basic.setAnalyticsTechniqueReference(new com.openlap.analytics_module.entities.utility_entities.AnalyticsTechniqueReference("[]", "{}", method));
+    Indicator composite = new Indicator(); composite.setCreatedBy(creator());
+    composite.setIndicatorType(IndicatorType.COMPOSITE);
+    composite.setIndicators(List.of(new com.openlap.analytics_module.entities.utility_entities.IndicatorsToMerge(basic, null)));
+    Document document = new Document(); CommunityMetadata.populate(composite, document);
+    assertThat(document.get("communityMetadata", Document.class).getString("method")).isEqualTo("Count items");
+    assertThat(document.toJson()).doesNotContain("createdBy", "Alice", "indicators");
+  }
   @Test public void indexedMetadataUsesOnlyAnonymizedNamesNotRawTitlesOrQueries() {
     Indicator source = new Indicator(); source.setCreatedBy(creator()); source.setIndicatorType(IndicatorType.BASIC);
     source.setName("Alice's private indicator"); source.setIndicatorQuery("private original query");
