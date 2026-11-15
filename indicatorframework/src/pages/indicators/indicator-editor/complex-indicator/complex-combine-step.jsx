@@ -37,106 +37,111 @@ export default function ComplexCombineStep({
           ? "Only rows whose matching value appears in every selected indicator are included. Unmatched rows are excluded; values are not filled or normalized."
           : "All matching values from every selected indicator are included. Absent numeric measures are filled with zero and marked in the preview."}
       </Alert>
-      {configuration.sources.map((source) => (
-        <SectionCard
-          key={source.id}
-          title={source.name}
-          helper={`Analytics method: ${source.analyticsMethod?.name || "Unknown"}`}
-          action={
-            <Button
-              component={RouterLink}
-              to={`/indicator/${source.id}`}
-              target="_blank"
-              rel="noopener"
-              size="small"
+      <Grid container spacing={2} sx={{ alignItems: "stretch", minWidth: 0 }}>
+        {configuration.sources.map((source) => (
+          <Grid
+            key={source.id}
+            size={{ xs: 12, lg: 6 }}
+            sx={{
+              display: "flex",
+              minWidth: 0,
+              "& .MuiTypography-root": { overflowWrap: "anywhere" },
+            }}
+          >
+            <SectionCard
+              title={source.name}
+              helper={`Analytics method: ${source.analyticsMethod?.name || "Unknown"}`}
+              action={
+                <Button
+                  component={RouterLink}
+                  to={`/indicator/${source.id}`}
+                  target="_blank"
+                  rel="noopener"
+                  size="small"
+                >
+                  View source
+                </Button>
+              }
             >
-              View source
-            </Button>
-          }
-        >
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <TextField
-                select
-                fullWidth
-                label={`Match rows from ${source.name} by`}
-                value={source.keyColumnId}
-                onChange={(event) =>
-                  updateSource(source.id, {
-                    keyColumnId: event.target.value,
-                    measureColumnIds: source.measureColumnIds.filter(
-                      (column) => column !== event.target.value,
-                    ),
-                  })
-                }
-                helperText="Choose a unique, nonempty identifier. Matching values must use the same type."
-              >
-                {source.outputs.map((column) => (
-                  <MenuItem key={column.id} value={column.id}>
-                    {column.title || column.id} ({column.type})
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <TextField
-                select
-                fullWidth
-                label={`Measures from ${source.name}`}
-                value={source.measureColumnIds}
-                slotProps={{ select: { multiple: true } }}
-                onChange={(event) =>
-                  updateSource(source.id, {
-                    measureColumnIds: event.target.value,
-                  })
-                }
-                helperText="Choose numerical measures to include."
-              >
-                {source.outputs
-                  .filter(
-                    (column) =>
-                      column.type === "Numeric" &&
-                      column.id !== source.keyColumnId,
-                  )
-                  .map((column) => (
+              <Stack sx={{ gap: 2, minWidth: 0 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label={`Match rows from ${source.name} by`}
+                  value={source.keyColumnId}
+                  onChange={(event) =>
+                    updateSource(source.id, {
+                      keyColumnId: event.target.value,
+                      measureColumnIds: source.measureColumnIds.filter(
+                        (column) => column !== event.target.value,
+                      ),
+                    })
+                  }
+                  helperText="Choose a unique, nonempty identifier. Matching values must use the same type."
+                >
+                  {source.outputs.map((column) => (
                     <MenuItem key={column.id} value={column.id}>
-                      {column.title || column.id}
+                      {column.title || column.id} ({column.type})
                     </MenuItem>
                   ))}
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <TextField
-                fullWidth
-                label={`Series label for ${source.name}`}
-                value={source.label}
-                onChange={(event) =>
-                  updateSource(source.id, { label: event.target.value })
-                }
-                slotProps={{ htmlInput: { maxLength: 150 } }}
-                helperText="Use a short chart label. The original source name remains visible in this review."
-              />
-            </Grid>
+                </TextField>
+                <TextField
+                  select
+                  fullWidth
+                  label={`Measures from ${source.name}`}
+                  value={source.measureColumnIds}
+                  slotProps={{ select: { multiple: true } }}
+                  onChange={(event) =>
+                    updateSource(source.id, {
+                      measureColumnIds: event.target.value,
+                    })
+                  }
+                  helperText="Choose numerical measures to include."
+                >
+                  {source.outputs
+                    .filter(
+                      (column) =>
+                        column.type === "Numeric" &&
+                        column.id !== source.keyColumnId,
+                    )
+                    .map((column) => (
+                      <MenuItem key={column.id} value={column.id}>
+                        {column.title || column.id}
+                      </MenuItem>
+                    ))}
+                </TextField>
+                <TextField
+                  fullWidth
+                  label={`Series label for ${source.name}`}
+                  value={source.label}
+                  onChange={(event) =>
+                    updateSource(source.id, { label: event.target.value })
+                  }
+                  slotProps={{ htmlInput: { maxLength: 150 } }}
+                  helperText="Use a short chart label. The original source name remains visible in this review."
+                />
+              </Stack>
+              {source.filterSummary && (
+                <Typography variant="caption" color="text.secondary">
+                  {typeof source.filterSummary === "string"
+                    ? source.filterSummary
+                    : JSON.stringify(source.filterSummary)}
+                </Typography>
+              )}
+              <Stack direction="row" sx={{ justifyContent: "center", mt: 2 }}>
+                <Button
+                  variant="contained"
+                  size="medium"
+                  disabled={Boolean(busy)}
+                  onClick={() => previewSourceData(source)}
+                >
+                  Preview source data
+                </Button>
+              </Stack>
+            </SectionCard>
           </Grid>
-          {source.filterSummary && (
-            <Typography variant="caption" color="text.secondary">
-              {typeof source.filterSummary === "string"
-                ? source.filterSummary
-                : JSON.stringify(source.filterSummary)}
-            </Typography>
-          )}
-          <Stack direction="row" sx={{ justifyContent: "center", mt: 2 }}>
-            <Button
-              variant="contained"
-              size="medium"
-              disabled={Boolean(busy)}
-              onClick={() => previewSourceData(source)}
-            >
-              Preview source data
-            </Button>
-          </Stack>
-        </SectionCard>
-      ))}
+        ))}
+      </Grid>
       <Failure
         message={
           operationError.step === "source"
@@ -146,7 +151,7 @@ export default function ComplexCombineStep({
       />
       <SectionCard
         title="Preview results"
-        helper="Preview the combined source data before continuing to the next step."
+        helper="The preview updates automatically when the matching columns, measures, or series labels change."
       >
         {previewLoading ? (
           <Stack sx={{ gap: 1.5, alignItems: "center", py: 3 }}>
@@ -182,8 +187,8 @@ export default function ComplexCombineStep({
         ) : (
           <Stack sx={{ alignItems: "center", py: 3, textAlign: "center" }}>
             <Typography variant="body2" color="text.secondary">
-              Choose each source&apos;s matching column and measures, then run a
-              preview of the combined data.
+              Choose each source&apos;s matching column and measures. Your combined
+              data will appear automatically once all sources are ready.
             </Typography>
           </Stack>
         )}

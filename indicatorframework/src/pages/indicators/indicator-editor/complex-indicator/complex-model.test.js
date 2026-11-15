@@ -8,6 +8,7 @@ import {
   fallbackConfiguration,
   mappingsReady,
   newComplexConfiguration,
+  parametersReady,
   readComplexConfiguration,
   recoveryKey,
   saveRequest,
@@ -205,6 +206,47 @@ test("mapping edits preserve other inputs and support clearing optional mappings
     "Original mapping is immutable",
   );
   assert.equal(withMapping(edited, inputs[0], undefined).mapping.length, 1);
+});
+
+test("parameter readiness uses displayed defaults and permits optional blank values", () => {
+  assert.equal(parametersReady(), true);
+  assert.equal(parametersReady([
+    { required: true, defaultValue: "3", dataType: "INTEGER" },
+    { required: false, value: "" },
+    { required: false, value: "   ", dataType: "DOUBLE" },
+  ]), true);
+  for (const value of ["", "   ", null, undefined]) {
+    assert.equal(parametersReady([{ required: true, value }]), false);
+  }
+  assert.equal(parametersReady([
+    { required: true, value: "", defaultValue: "3", dataType: "INTEGER" },
+  ]), false, "An explicitly cleared field does not reuse its default");
+  assert.equal(parametersReady([
+    { required: true, value: null, defaultValue: "3", dataType: "INTEGER" },
+  ]), true);
+});
+
+test("numeric parameter readiness rejects non-finite and fractional integer inputs", () => {
+  for (const dataType of ["INTEGER", "DOUBLE", "FLOAT"]) {
+    for (const value of ["not a number", "Infinity", NaN, Infinity, -Infinity, {}]) {
+      assert.equal(parametersReady([{ dataType, value }]), false);
+    }
+    for (const value of [0, "0", "-2", "3e2"]) {
+      assert.equal(parametersReady([{ dataType, value }]), true);
+    }
+  }
+  assert.equal(parametersReady([{ dataType: "INTEGER", value: "2.5" }]), false);
+  assert.equal(parametersReady([{ dataType: "DOUBLE", value: "2.5" }]), true);
+  assert.equal(parametersReady([{ dataType: "FLOAT", value: "-0.25" }]), true);
+});
+
+test("choice parameter readiness requires one of the advertised options", () => {
+  const choice = { type: "Choice", required: true, possibleValues: "All items,Unique items" };
+  assert.equal(parametersReady([{ ...choice, defaultValue: "All items" }]), true);
+  assert.equal(parametersReady([{ ...choice, value: "Unique items" }]), true);
+  assert.equal(parametersReady([{ ...choice, value: "Unsupported option" }]), false);
+  assert.equal(parametersReady([{ ...choice, value: "" }]), false);
+  assert.equal(parametersReady([{ ...choice, required: false, value: "" }]), true);
 });
 
 test("saved payload includes canonical type/configuration and real analysis references", () => {

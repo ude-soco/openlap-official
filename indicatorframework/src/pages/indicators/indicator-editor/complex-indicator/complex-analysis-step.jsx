@@ -11,7 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import SectionCard from "../../../../common/components/section-card/section-card";
-import { datasetRows, mappingsReady } from "./complex-model";
+import { datasetRows, mappingsReady, parametersReady } from "./complex-model";
 import {
   ColumnMappings,
   Failure,
@@ -42,7 +42,10 @@ export default function ComplexAnalysisStep({
   const previewLoading = busy === "analysis";
   const previewDisabled =
     !contractReady ||
+    !datasetRows(merged) ||
+    !configuration.analysis.mapping.mapping.length ||
     !mappingsReady(methodInputs, configuration.analysis.mapping, merged) ||
+    !parametersReady(configuration.analysis.params) ||
     Boolean(busy);
   const methodLabel = (option) =>
     methods.filter((method) => method.name === option.name).length > 1
@@ -176,7 +179,7 @@ export default function ComplexAnalysisStep({
       {contractReady && (
         <SectionCard
           title="Preview results"
-          helper="Run the analysis to preview the data that will feed your visualization."
+          helper="The preview updates automatically when your method, inputs, or parameters change."
         >
           {previewLoading ? (
             <Stack sx={{ gap: 1.5, alignItems: "center", py: 3 }}>
@@ -196,8 +199,8 @@ export default function ComplexAnalysisStep({
           ) : (
             <Stack sx={{ alignItems: "center", py: 3, textAlign: "center" }}>
               <Typography variant="body2" color="text.secondary">
-                Choose your inputs and parameters, then run a preview of the
-                analysed data.
+                Choose your inputs and parameters. Your analysed data will
+                appear automatically once the configuration is ready.
               </Typography>
             </Stack>
           )}

@@ -66,7 +66,7 @@ export function ResultTable({ dataset, title = "Data preview", framed = true }) 
   const content = (
     <Stack sx={{ gap: 2, minWidth: 0 }}>
       {!framed && (
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" color="text.secondary" role="status" aria-live="polite">
           {rowCount} rows · {columns.length} columns
         </Typography>
       )}

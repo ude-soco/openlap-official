@@ -22,15 +22,24 @@ their selected matching columns and measures are compatible.
 2. Select sources. Review their methods, output columns and filter summaries.
    The first Composite source establishes its required analytics method.
 3. Choose the matching column for each source, the numeric measures to retain,
-   and readable source labels. Preview the combined table before continuing.
+   and readable source labels. The combined table previews automatically once
+   these selections are complete, including preselected defaults. Source panels
+   appear side by side on desktop and stack on smaller screens.
    Duplicate or missing keys must be resolved in the sources rather than silently
    overwriting a row. A Composite's filled zero is distinguishable from a measured
    zero; a Multilevel result shows excluded rows.
 4. For Multilevel, map the next method's inputs to the **combined numeric columns**
-   and review its declared parameters. K-means is available only when an installed
+   and review its declared parameters. Its data preview also updates automatically
+   once the required mappings and parameters are valid. K-means is available only when an installed
    plugin provides it; the editor does not install or invent analytics algorithms.
 5. Map the resulting columns to a compatible chart, preview it and save. Reopen
    the saved indicator from **My Indicators** to preview or edit its configuration.
+
+Data previews refresh after a short pause when matching columns, measures, labels,
+method inputs or parameters change. Incomplete selections wait for the missing
+values. A failed preview preserves the selections and waits for an edit or
+**Try again**; **Run preview again** explicitly refreshes successful results.
+Outdated results cannot unlock the next step or overwrite a newer preview.
 
 The chart preview generates automatically once a visualization type is selected
 and its required inputs are mapped. Changing chart inputs or customization

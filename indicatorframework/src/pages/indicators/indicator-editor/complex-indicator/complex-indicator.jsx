@@ -5,6 +5,7 @@ import ComplexVisualizationStep from "./complex-visualization-step";
 import ComplexDialogs from "./complex-dialogs";
 import SourceIndicatorPreview from "./complex-source-preview";
 import chartPreviewData from "./complex-preview-data";
+import useDataPreview from "./use-data-preview";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate, useParams } from "react-router-dom";
@@ -38,6 +39,7 @@ import {
   defaultMappings,
   fallbackConfiguration,
   mappingsReady,
+  parametersReady,
   newComplexConfiguration,
   previewRequest,
   readComplexConfiguration,
@@ -115,15 +117,13 @@ export default function ComplexIndicator({ type }) {
   const [methodContractId, setMethodContractId] = useState("");
   const [chartLoading, setChartLoading] = useState(false);
   const [catalogError, setCatalogError] = useState("");
-  const [merged, setMerged] = useState(null);
-  const [analyzed, setAnalyzed] = useState(null);
   const [preview, setPreview] = useState(null);
   const [previewFingerprint, setPreviewFingerprint] = useState("");
   const [previewError, setPreviewError] = useState("");
   // Reselecting a chart may invalidate a preview without changing its payload.
   const [previewRevision, setPreviewRevision] = useState(0);
   const [previewRetry, setPreviewRetry] = useState(0);
-  const [busy, setBusy] = useState("");
+  const [operationBusy, setBusy] = useState("");
   const [operationError, setOperationError] = useState({
     step: "",
     message: "",
@@ -136,8 +136,7 @@ export default function ComplexIndicator({ type }) {
   const [removedSource, setRemovedSource] = useState(null);
   const [leaveTarget, setLeaveTarget] = useState(null);
   const generation = useRef(0);
-  const mergedRef = useRef(merged);
-  mergedRef.current = merged;
+  const pendingMethodDefaults = useRef("");
   const baseline = useRef(JSON.stringify(configuration));
   const configurationRef = useRef(configuration);
   configurationRef.current = configuration;
@@ -151,6 +150,31 @@ export default function ComplexIndicator({ type }) {
   const methodFilterId = !isMulti && compatibleOnly
     ? sourceMethodId
     : "";
+  const combinePreview = useDataPreview({
+    api,
+    path: `v1/indicators/${endpoint}/merge`,
+    fingerprint: JSON.stringify(compositionRequest(configuration)),
+    ready: Boolean(loaded && !recoveryCandidate && sourcesConfirmed &&
+      sourcesReady(configuration.sources)),
+  });
+  const merged = isMulti ? combinePreview.data?.mergedData : combinePreview.data;
+  const mergedRef = useRef(merged);
+  mergedRef.current = merged;
+  const analysisPreview = useDataPreview({
+    api,
+    path: "v1/indicators/multilevel/analyze",
+    fingerprint: JSON.stringify(analysisRequest(configuration)),
+    upstream: merged,
+    ready: Boolean(isMulti && loaded && !recoveryCandidate &&
+      datasetRows(merged) > 0 && methodId && !methodLoading &&
+      methodContractId === methodId && methodInputs.length &&
+      configuration.analysis.mapping.mapping.length > 0 &&
+      mappingsReady(methodInputs, configuration.analysis.mapping, merged) &&
+      parametersReady(configuration.analysis.params)),
+  });
+  const analyzed = analysisPreview.data;
+  const busy = combinePreview.loading ? "combine"
+    : analysisPreview.loading ? "analysis" : operationBusy;
   const selectedType = types.find(
     (chart) => chart.id === configuration.visualization.typeId,
   );
@@ -386,6 +410,8 @@ export default function ComplexIndicator({ type }) {
         const result = apiData(response);
         setMethodInputs(result.inputs || []);
         setMethodContractId(methodId);
+        setOperationError((previous) => previous.step === "analysis"
+          ? { step: "", message: "" } : previous);
         setConfiguration((previous) => ({
           ...previous,
           analysis: {
@@ -402,6 +428,7 @@ export default function ComplexIndicator({ type }) {
             })),
           },
         }));
+        pendingMethodDefaults.current = methodId;
       })
       .catch((error) => {
         if (!cancelled)
@@ -420,6 +447,21 @@ export default function ComplexIndicator({ type }) {
       cancelled = true;
     };
   }, [api, methodId, isMulti, catalogRetry]);
+
+  useEffect(() => {
+    if (!datasetRows(merged) || methodContractId !== methodId ||
+        pendingMethodDefaults.current !== methodId) return;
+    pendingMethodDefaults.current = "";
+    setConfiguration((previous) => previous.analysis.mapping.mapping.length
+      ? previous
+      : {
+        ...previous,
+        analysis: {
+          ...previous.analysis,
+          mapping: defaultMappings(methodInputs, merged),
+        },
+      });
+  }, [merged, methodId, methodContractId, methodInputs]);
 
   useEffect(() => {
     let cancelled = false;
@@ -456,11 +498,6 @@ export default function ComplexIndicator({ type }) {
     setPreviewError("");
     setPreviewRevision((previous) => previous + 1);
     setOperationError({ step: "", message: "" });
-    if (from === "sources" || from === "combine") {
-      setMerged(null);
-      setAnalyzed(null);
-    }
-    if (from === "analysis") setAnalyzed(null);
     if (from === "sources") setSourcesConfirmed(false);
     setConfiguration((previous) =>
       typeof updater === "function" ? updater(previous) : updater,
@@ -555,35 +592,6 @@ export default function ComplexIndicator({ type }) {
       if (request === generation.current) setBusy("");
     }
   };
-  const combine = () =>
-    run(
-      "combine",
-      () =>
-        api.post(
-          `v1/indicators/${endpoint}/merge`,
-          compositionRequest(configuration),
-        ),
-      (response) => {
-        const result = apiData(response);
-        setMerged(isMulti ? result.mergedData : result);
-        setAnalyzed(null);
-        setPreview(null);
-        setPreviewFingerprint("");
-      },
-    );
-  const analyze = () =>
-    run(
-      "analysis",
-      () =>
-        api.post(
-          "v1/indicators/multilevel/analyze",
-          analysisRequest(configuration),
-        ),
-      (response) => {
-        setAnalyzed(apiData(response));
-        setPreview(null);
-      },
-    );
   const previewChart = useCallback(() => setPreviewRetry((previous) => previous + 1), []);
 
   useEffect(() => {
@@ -965,8 +973,9 @@ export default function ComplexIndicator({ type }) {
           updateSource={updateSource}
           busy={busy}
           previewSourceData={previewSourceData}
-          operationError={operationError}
-          combine={combine}
+          operationError={combinePreview.error
+            ? { step: "combine", message: combinePreview.error } : operationError}
+          combine={combinePreview.retry}
           merged={merged}
           setCurrent={setCurrent}
         />,
@@ -982,11 +991,12 @@ export default function ComplexIndicator({ type }) {
             methodInputs={methodInputs}
             merged={merged}
             configuration={configuration}
-            operationError={operationError}
+            operationError={analysisPreview.error
+              ? { step: "analysis", message: analysisPreview.error } : operationError}
             setCatalogRetry={setCatalogRetry}
             methodContractId={methodContractId}
             busy={busy}
-            analyze={analyze}
+            analyze={analysisPreview.retry}
             analyzed={analyzed}
             setCurrent={setCurrent}
           />,
