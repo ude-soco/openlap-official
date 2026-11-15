@@ -4,8 +4,10 @@ import {
   Alert,
   Button,
   CircularProgress,
+  Divider,
   Grid,
   MenuItem,
+  Stack,
   TextField,
   Typography,
 } from "@mui/material";
@@ -24,6 +26,10 @@ export default function ComplexCombineStep({
   merged,
   setCurrent,
 }) {
+  const previewError =
+    operationError.step === "combine" ? operationError.message : "";
+  const previewLoading = busy === "combine";
+
   return (
     <>
       <Alert severity="info">
@@ -119,51 +125,102 @@ export default function ComplexCombineStep({
                 : JSON.stringify(source.filterSummary)}
             </Typography>
           )}
-          <Button
-            size="small"
-            disabled={Boolean(busy)}
-            onClick={() => previewSourceData(source)}
-          >
-            Preview source data
-          </Button>
+          <Stack direction="row" sx={{ justifyContent: "center", mt: 2 }}>
+            <Button
+              variant="contained"
+              size="medium"
+              disabled={Boolean(busy)}
+              onClick={() => previewSourceData(source)}
+            >
+              Preview source data
+            </Button>
+          </Stack>
         </SectionCard>
       ))}
       <Failure
         message={
-          operationError.step === "combine" || operationError.step === "source"
+          operationError.step === "source"
             ? operationError.message
             : ""
         }
       />
-      <Button
-        variant="outlined"
-        disabled={!sourcesReady(configuration.sources) || Boolean(busy)}
-        onClick={combine}
+      <SectionCard
+        title="Preview results"
+        helper="Preview the combined source data before continuing to the next step."
       >
-        {busy === "combine" ? (
-          <CircularProgress size={20} />
-        ) : (
-          "Generate combined data"
-        )}
-      </Button>
-      {merged && (
-        <>
-          <ResultTable dataset={merged} title="Combined data preview" />
-          {(merged.sources || []).map((source) => (
-            <Typography variant="caption" key={source.indicatorId}>
-              {source.label}: {source.includedRows} included ·{" "}
-              {source.excludedRows} excluded from {source.inputRows} source rows
+        {previewLoading ? (
+          <Stack sx={{ gap: 1.5, alignItems: "center", py: 3 }}>
+            <CircularProgress aria-label="Combining source data" />
+            <Typography variant="body2" color="text.secondary">
+              Combining data…
             </Typography>
-          ))}
+          </Stack>
+        ) : previewError ? (
+          <Failure message={previewError} />
+        ) : merged ? (
+          <>
+            <ResultTable
+              dataset={merged}
+              title="Combined data preview"
+              framed={false}
+            />
+            {(merged.sources || []).length > 0 && (
+              <Stack sx={{ gap: 0.5 }}>
+                {merged.sources.map((source) => (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    key={source.indicatorId}
+                  >
+                    {source.label}: {source.includedRows} included ·{" "}
+                    {source.excludedRows} excluded from {source.inputRows} source rows
+                  </Typography>
+                ))}
+              </Stack>
+            )}
+          </>
+        ) : (
+          <Stack sx={{ alignItems: "center", py: 3, textAlign: "center" }}>
+            <Typography variant="body2" color="text.secondary">
+              Choose each source&apos;s matching column and measures, then run a
+              preview of the combined data.
+            </Typography>
+          </Stack>
+        )}
+        <Stack direction="row" sx={{ justifyContent: "center", mt: 2 }}>
           <Button
             variant="contained"
-            disabled={!datasetRows(merged)}
+            size="medium"
+            disabled={!sourcesReady(configuration.sources) || Boolean(busy)}
+            onClick={combine}
+          >
+            {previewLoading
+              ? "Combining data…"
+              : previewError
+                ? "Try again"
+                : merged
+                  ? "Run preview again"
+                  : "Preview"}
+          </Button>
+        </Stack>
+      </SectionCard>
+      <Divider />
+      <Grid container sx={{ justifyContent: "center" }}>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Button
+            fullWidth
+            variant="contained"
+            size="medium"
+            aria-label={`Continue to ${isMulti ? "analysis" : "visualization"}`}
+            disabled={
+              !datasetRows(merged) || Boolean(previewError) || Boolean(busy)
+            }
             onClick={() => setCurrent(isMulti ? "analysis" : "visualization")}
           >
-            Continue to {isMulti ? "analysis" : "visualization"}
+            Next
           </Button>
-        </>
-      )}
+        </Grid>
+      </Grid>
     </>
   );
 }

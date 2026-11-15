@@ -4,6 +4,7 @@ import {
   Alert,
   Box,
   Button,
+  Divider,
   Grid,
   IconButton,
   LinearProgress,
@@ -45,7 +46,8 @@ export default function ComplexSourcesStep({
         title="Your Basic indicators"
         action={
           <Button
-            size="small"
+            variant="outlined"
+            size="medium"
             onClick={() => setCatalogRetry((value) => value + 1)}
             disabled={sourcesLoading}
           >
@@ -99,26 +101,37 @@ export default function ComplexSourcesStep({
             );
             return (
               <Grid size={{ xs: 12, md: 6 }} key={source.id}>
-                <Paper variant="outlined" sx={{ p: 2, height: "100%" }}>
-                  <Stack sx={{ gap: 1 }}>
-                    <Typography fontWeight={600}>{source.name}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {source.analyticsMethod?.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {(source.outputs || [])
-                        .map(
-                          (column) =>
-                            `${column.title || column.id} (${column.type})`,
-                        )
-                        .join(" · ")}
-                    </Typography>
+                <Paper
+                  variant="outlined"
+                  sx={(theme) => ({
+                    p: 2,
+                    height: "100%",
+                    borderRadius: `${theme.custom.radii.card}px`,
+                  })}
+                >
+                  <Stack sx={{ gap: 2, height: "100%" }}>
+                    <Box>
+                      <Typography fontWeight={600}>{source.name}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {source.analyticsMethod?.name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {(source.outputs || [])
+                          .map(
+                            (column) =>
+                              `${column.title || column.id} (${column.type})`,
+                          )
+                          .join(" · ")}
+                      </Typography>
+                    </Box>
                     <Button
                       startIcon={<AddIcon />}
                       variant="outlined"
+                      size="medium"
                       disabled={!selection.allowed}
                       onClick={() => addSource(source)}
                       aria-label={`Select ${source.name}`}
+                      sx={{ mt: "auto", alignSelf: "flex-start" }}
                     >
                       Select indicator
                     </Button>
@@ -139,6 +152,7 @@ export default function ComplexSourcesStep({
             page={sourcePage + 1}
             onChange={(_, page) => setSourcePage(page - 1)}
             aria-label="Basic indicator pages"
+            sx={{ alignSelf: "center" }}
           />
         )}
       </SectionCard>
@@ -154,13 +168,14 @@ export default function ComplexSourcesStep({
                 direction="row"
                 sx={{ alignItems: "center", gap: 1 }}
               >
-                <Box sx={{ flex: 1 }}>
+                <Box sx={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>
                   <Typography fontWeight={500}>{source.name}</Typography>
                   <Typography variant="caption" color="text.secondary">
                     {source.analyticsMethod?.name}
                   </Typography>
                 </Box>
                 <IconButton
+                  color="error"
                   aria-label={`Remove ${source.name}`}
                   onClick={() => requestRemove(source)}
                 >
@@ -210,16 +225,24 @@ export default function ComplexSourcesStep({
             `Restore unavailable: ${canSelectSource(type, configuration.sources, removedSource.source).reason}`}
         </Alert>
       )}
-      <Button
-        variant="contained"
-        disabled={configuration.sources.length < 2}
-        onClick={() => {
-          setSourcesConfirmed(true);
-          setCurrent("combine");
-        }}
-      >
-        Continue to combine data
-      </Button>
+      <Divider />
+      <Grid container sx={{ justifyContent: "center" }}>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Button
+            fullWidth
+            variant="contained"
+            size="medium"
+            aria-label="Continue to combine data"
+            disabled={configuration.sources.length < 2}
+            onClick={() => {
+              setSourcesConfirmed(true);
+              setCurrent("combine");
+            }}
+          >
+            Next
+          </Button>
+        </Grid>
+      </Grid>
     </>
   );
 }
