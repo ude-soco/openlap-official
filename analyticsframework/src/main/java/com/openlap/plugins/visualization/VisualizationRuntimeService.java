@@ -76,6 +76,19 @@ public class VisualizationRuntimeService {
         VisualizationManifest.mediaType(asset.getString("kind"),asset.getString("path")),asset.getString("sha256"));
   }
 
+  public Asset icon(String id) {
+    VisType type = type(id);
+    Path jar = jar(type);
+    VisualizationManifest manifest = VisualizationManifest.read(jar, null);
+    if (manifest == null) throw new NotFoundException("This chart does not declare an icon.");
+    String icon = manifest.chart(type.getImplementingClass()).getString("iconAssetId");
+    if (icon == null) throw new NotFoundException("This chart does not declare an icon.");
+    Asset resource = asset(id, artifactId(type, jar), icon);
+    if (!resource.mediaType().startsWith("image/"))
+      throw new NotFoundException("This chart does not declare an image icon.");
+    return resource;
+  }
+
   public Document descriptor(String id) {
     VisType type = type(id);
     if (type.getVisualizationDescriptor() != null) return new Document(type.getVisualizationDescriptor());

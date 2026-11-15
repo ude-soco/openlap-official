@@ -25,4 +25,14 @@ class VisualizationRuntimeControllerTest {
     assertThat(result.getHeaders().getFirst("Content-Security-Policy")).isEqualTo("default-src 'none'; sandbox");
     assertThat(result.getHeaders().getETag()).isEqualTo("\""+"a".repeat(64)+"\"");
   }
+  @Test void iconRouteServesOnlyAnImageWithBoundedCaching() {
+    VisualizationRuntimeService service=mock(VisualizationRuntimeService.class);
+    when(service.icon("type")).thenReturn(new VisualizationRuntimeService.Asset(new byte[]{1},"image/png","b".repeat(64)));
+    var result=new VisualizationRuntimeController(service).icon("type");
+    assertThat(result.getHeaders().getContentType().toString()).isEqualTo("image/png");
+    assertThat(result.getHeaders().getCacheControl()).contains("max-age=3600","public").doesNotContain("immutable");
+    assertThat(result.getHeaders().getFirst("X-Content-Type-Options")).isEqualTo("nosniff");
+    when(service.icon("type")).thenReturn(new VisualizationRuntimeService.Asset(new byte[]{1},"text/javascript","b".repeat(64)));
+    assertThatThrownBy(() -> new VisualizationRuntimeController(service).icon("type")).hasMessageContaining("not found");
+  }
 }

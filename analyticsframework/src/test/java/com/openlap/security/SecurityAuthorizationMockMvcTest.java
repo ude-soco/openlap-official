@@ -453,6 +453,13 @@ public class SecurityAuthorizationMockMvcTest {
         .andExpect(status().isOk())
         .andExpect(header().string("X-Content-Type-Options", "nosniff"))
         .andExpect(header().doesNotExist("Set-Cookie"));
+    given(visualizationRuntimeService.icon("type"))
+        .willReturn(new com.openlap.plugins.visualization.VisualizationRuntimeService.Asset(
+            new byte[] {1, 2}, "image/png", "b".repeat(64)));
+    mockMvc.perform(get("/v1/code/visualizations/type/icon"))
+        .andExpect(status().isOk())
+        .andExpect(header().string("Content-Type", "image/png"))
+        .andExpect(header().doesNotExist("Set-Cookie"));
   }
 
   @Test

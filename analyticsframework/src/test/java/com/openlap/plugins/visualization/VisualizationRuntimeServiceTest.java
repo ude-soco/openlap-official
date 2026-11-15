@@ -40,4 +40,22 @@ class VisualizationRuntimeServiceTest {
     when(provider.runtime(any(),any(Path.class),eq("/api"))).thenReturn(Map.of("legacy",true));
     assertThat(service(jar,provider).runtime("type","/api")).containsEntry("legacy",true);
   }
+  @Test void iconsResolveOnlyTheSelectedChartsDeclaredImage() throws Exception {
+    VisualizationManifestTest fixtures = new VisualizationManifestTest(); fixtures.folder = folder;
+    byte[] image = "<svg xmlns='http://www.w3.org/2000/svg'/>".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    org.bson.Document manifest = VisualizationManifestTest.manifest();
+    List<org.bson.Document> assets = new java.util.ArrayList<>((List<org.bson.Document>)manifest.get("assets"));
+    assets.add(new org.bson.Document("id", "chart-icon").append("path", "web/icon.svg")
+        .append("kind", "image").append("sha256", VisualizationManifest.sha256(image)));
+    manifest.put("assets", assets);
+    ((org.bson.Document)((List<?>)manifest.get("charts")).get(0)).put("iconAssetId", "chart-icon");
+    Path jar = fixtures.jar(manifest.toJson(), Map.of("web/runtime.js", VisualizationManifestTest.SCRIPT, "web/icon.svg", image));
+    VisualizationRuntimeService.Asset icon = service(jar, null).icon("type");
+    assertThat(icon.bytes()).isEqualTo(image); assertThat(icon.mediaType()).isEqualTo("image/svg+xml");
+    assertThatThrownBy(() -> service(fixtures.jar(VisualizationManifestTest.manifest()), null).icon("type"))
+        .hasMessageContaining("does not declare an icon");
+    ((org.bson.Document)((List<?>)manifest.get("charts")).get(0)).put("iconAssetId", "runtime-js");
+    Path invalid = fixtures.jar(manifest.toJson(), Map.of("web/runtime.js", VisualizationManifestTest.SCRIPT, "web/icon.svg", image));
+    assertThatThrownBy(() -> service(invalid, null).icon("type")).hasMessageContaining("declared image");
+  }
 }

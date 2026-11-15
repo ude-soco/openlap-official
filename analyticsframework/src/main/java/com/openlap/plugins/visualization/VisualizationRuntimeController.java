@@ -26,4 +26,16 @@ public class VisualizationRuntimeController {
         .header("Content-Security-Policy","default-src 'none'; sandbox")
         .body(asset.bytes());
   }
+
+  @GetMapping("/{typeId}/icon")
+  public ResponseEntity<byte[]> icon(@PathVariable String typeId) {
+    VisualizationRuntimeService.Asset icon = service.icon(typeId);
+    if (!icon.mediaType().startsWith("image/"))
+      throw new com.openlap.infrastructure.exception.NotFoundException("Chart icon not found.");
+    return ResponseEntity.ok().contentType(MediaType.parseMediaType(icon.mediaType()))
+        .cacheControl(CacheControl.maxAge(java.time.Duration.ofHours(1)).cachePublic())
+        .eTag("\"" + icon.sha256() + "\"").header("X-Content-Type-Options", "nosniff")
+        .header("Content-Security-Policy", "default-src 'none'; sandbox")
+        .body(icon.bytes());
+  }
 }
