@@ -10,6 +10,8 @@ import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager.jsx";
@@ -18,6 +20,7 @@ import { requestIndicatorCode, requestIndicatorDeletion, requestMyIndicatorDupli
   requestMyIndicatorWorkspace } from "../utils/indicator-dashboard-api.js";
 
 const TYPES = { BASIC: "Basic", COMPOSITE: "Composite", MULTI_LEVEL: "Multilevel analysis" };
+const SORT_FIELDS = { name: "Indicator", status: "Status", indicatorType: "Type", updatedAt: "Last updated" };
 const EDIT_ROUTES = { BASIC: "/indicator/editor/basic/edit", COMPOSITE: "/indicator/editor/composite/edit",
   MULTI_LEVEL: "/indicator/editor/multi-level-analysis/edit" };
 const keyOf = (item) => `${item.kind}:${item.id}`;
@@ -100,6 +103,7 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
             name: name.trim(), configuration, schemaVersion: current.schemaVersion });
         }
       }
+      enqueueSnackbar(action.kind === "rename" ? "Draft renamed." : action.kind === "discard" ? "Draft discarded." : "Indicator deleted.", { variant: "success" });
       setAction(null); setRefresh((value) => value + 1);
     } catch (failure) {
       if (failure?.code === "INDICATOR_IN_USE") {
@@ -133,6 +137,18 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
           setQuery((previous) => ({ ...previous, page: 0 })); onDraftsOnlyChange(event.target.checked);
         }} />} />
       </Box>
+      <Stack direction="row" sx={{ display: { xs: "flex", md: "none" }, gap: 1, alignItems: "center" }}>
+        <TextField select fullWidth size="small" label="Sort by" value={query.sortBy}
+          onChange={(event) => setQuery((previous) => ({ ...previous, page: 0, sortBy: event.target.value, sortDirection: "asc" }))}>
+          {Object.entries(SORT_FIELDS).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
+        </TextField>
+        <Tooltip title={query.sortDirection === "asc" ? "Sort descending" : "Sort ascending"}>
+          <IconButton color="primary" aria-label={query.sortDirection === "asc" ? "Sort descending" : "Sort ascending"}
+            onClick={() => setQuery((previous) => ({ ...previous, page: 0, sortDirection: previous.sortDirection === "asc" ? "desc" : "asc" }))}>
+            {query.sortDirection === "asc" ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
+          </IconButton>
+        </Tooltip>
+      </Stack>
       <Typography variant="body2" color="text.secondary">Drafts are private unfinished work. Editing drafts leave the saved indicator and its embeds unchanged until you save the completed indicator.</Typography>
     </Stack></Paper>
     {error && <Alert severity="error" action={<Button color="inherit" onClick={() => setRefresh((value) => value + 1)}>Retry</Button>}>{error}</Alert>}
@@ -162,7 +178,7 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
             <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>{dateTime(item.updatedAt)}</TableCell>
             <TableCell align="right" sx={{ px: { xs: 1, sm: 2 } }}><Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: "flex-end", justifyContent: "flex-end", gap: 0.5 }}>
               <Button sx={{ whiteSpace: "nowrap", minWidth: "auto", px: 0.5 }} disabled={loading || Boolean(busyKey) || item.recoverable === false}
-                startIcon={item.kind === "SAVED" ? <VisibilityIcon fontSize="small" /> : undefined} aria-label={item.kind === "SAVED" ? `Preview ${item.name}` : undefined}
+                startIcon={item.kind === "SAVED" ? <VisibilityIcon fontSize="small" /> : undefined} aria-label={`${item.kind === "SAVED" ? "Preview" : "Continue"} ${item.name}`}
                 onClick={() => navigate(item.kind === "DRAFT" ? `/indicator/editor/drafts/${encodeURIComponent(item.id)}` : `/indicator/${encodeURIComponent(item.id)}`)}>
                 {item.kind === "DRAFT" ? "Continue" : "Preview"}
               </Button>
@@ -192,16 +208,18 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
         <MenuItem key="delete" onClick={() => beginAction("delete", menu.item)} sx={{ color: "error.main" }}>Delete</MenuItem>,
       ]}
     </Menu>
-    <Dialog open={Boolean(action)} onClose={busyKey ? undefined : () => setAction(null)} fullWidth maxWidth="sm" aria-labelledby="indicator-list-action-title">
+    <Dialog open={Boolean(action)} onClose={busyKey ? undefined : () => setAction(null)} fullWidth maxWidth="sm" aria-labelledby="indicator-list-action-title"
+      aria-describedby={action?.kind === "rename" ? undefined : "indicator-list-action-description"}>
       <DialogTitle id="indicator-list-action-title">{action?.kind === "discard" ? "Discard this draft?" : action?.kind === "delete" ? "Are you sure?" : "Rename draft"}</DialogTitle>
       <DialogContent><Stack sx={{ gap: 2, pt: 1 }}>{action?.kind === "rename"
         ? <TextField autoFocus fullWidth label="Draft name" value={name} disabled={Boolean(busyKey)} onChange={(event) => setName(event.target.value)} slotProps={{ htmlInput: { maxLength: 300 } }} />
-        : <Typography>{action?.kind === "discard" ? `This removes “${action.item.name}” from your unfinished work. Any previously saved indicator and its embeds stay unchanged.`
-          : `This permanently deletes “${action?.item.name}”. Its embedded charts will no longer be available.`}</Typography>}
+        : <DialogContentText id="indicator-list-action-description">{action?.kind === "discard" ? `This removes “${action.item.name}” from your unfinished work. Any previously saved indicator and its embeds stay unchanged.`
+          : `This permanently deletes “${action?.item.name}”. Its embedded charts will no longer be available.`}</DialogContentText>}
         {actionError && <Alert severity="error">{actionError}</Alert>}</Stack></DialogContent>
       <DialogActions><Button disabled={Boolean(busyKey)} onClick={() => setAction(null)}>Cancel</Button>
         <Button variant="contained" color={action?.kind === "rename" ? "primary" : "error"} disabled={Boolean(busyKey) || (action?.kind === "rename" && !name.trim())}
-          onClick={finishAction}>{busyKey ? "Saving…" : action?.kind === "discard" ? "Discard draft" : action?.kind === "delete" ? "Confirm delete" : "Save name"}</Button></DialogActions>
+          onClick={finishAction}>{busyKey ? action?.kind === "discard" ? "Discarding…" : action?.kind === "delete" ? "Deleting…" : "Saving…"
+            : action?.kind === "discard" ? "Discard draft" : action?.kind === "delete" ? "Confirm delete" : "Save name"}</Button></DialogActions>
     </Dialog>
     <Dialog open={Boolean(blockedDeletion)} onClose={() => setBlockedDeletion(null)} fullWidth maxWidth="sm" aria-labelledby="indicator-in-use-title" aria-describedby="indicator-in-use-description">
       <DialogTitle id="indicator-in-use-title">Cannot delete indicator</DialogTitle>
