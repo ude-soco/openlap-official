@@ -89,7 +89,7 @@ export default function IndicatorDraftsTable({ onStats }) {
             <TableCell sortDirection={query.sortBy === "name" ? query.sortDirection : false}>{header("name", "Indicator")}</TableCell>
             <TableCell sx={{ width: "18%", display: { xs: "none", md: "table-cell" } }}>{header("indicatorType", "Type")}</TableCell>
             <TableCell sx={{ width: "23%", display: { xs: "none", sm: "table-cell" } }}>{header("updatedAt", "Last saved")}</TableCell>
-            <TableCell align="right" sx={{ width: { xs: 105, sm: 155 } }}>Actions</TableCell>
+            <TableCell align="right" sx={{ width: { xs: 120, sm: 155 }, px: { xs: 1, sm: 2 } }}>Actions</TableCell>
           </TableRow></TableHead>
           <TableBody>{rows.map((item) => <TableRow key={item.id} hover>
             <TableCell><Stack sx={{ gap: 0.75 }}>
@@ -102,8 +102,8 @@ export default function IndicatorDraftsTable({ onStats }) {
             </Stack></TableCell>
             <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{TYPE_LABELS[item.indicatorType] || item.indicatorType}</TableCell>
             <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>{dateTime(item.updatedAt)}</TableCell>
-            <TableCell align="right"><Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: "flex-end", justifyContent: "flex-end", gap: 0.5 }}>
-              <Button disabled={item.recoverable === false} onClick={() => navigate(`/indicator/editor/drafts/${encodeURIComponent(item.id)}`)}>Continue</Button>
+            <TableCell align="right" sx={{ px: { xs: 1, sm: 2 } }}><Stack direction={{ xs: "column", sm: "row" }} sx={{ alignItems: "flex-end", justifyContent: "flex-end", gap: 0.5 }}>
+              <Button sx={{ whiteSpace: "nowrap", minWidth: "auto", px: 0.5 }} disabled={item.recoverable === false} onClick={() => navigate(`/indicator/editor/drafts/${encodeURIComponent(item.id)}`)}>Continue</Button>
               <Tooltip title={`Actions for ${item.name}`}><IconButton aria-label={`Actions for ${item.name}`} onClick={(event) => setMenu({ item, anchor: event.currentTarget })}><MoreVertIcon /></IconButton></Tooltip>
             </Stack></TableCell>
           </TableRow>)}{!loading && !rows.length && !error && <TableRow><TableCell colSpan={4}><Box sx={{ p: 4, textAlign: "center" }}>
