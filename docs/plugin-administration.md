@@ -70,6 +70,61 @@ prerequisite. Storage credentials never reach the browser.
   management is implemented through [Upload new version](#upload-a-replacement)
   and preserves original indicator references.
 
+## Self-contained visualization plugins
+
+Visualization plugins can declare their browser runtime in
+`META-INF/openlap/visualization.json` (schema version 1). The optional manifest
+preserves the existing Java plugin contract. It identifies the plugin version,
+ordered runtime dependencies, chart implementations, input roles and typed
+customization controls. The [visualization template and working two-chart example](https://github.com/ude-soco/openlap-official-visualization-template)
+provide the schema, build instructions and a complete JAR with packaged resources.
+
+- Declare exact runtime versions at build time and bundle JavaScript, CSS and
+  optional PNG/SVG icons under `web/`. Every declared resource has a SHA-256 hash.
+  Scripts execute in declared order after their resources finish loading.
+  The initial format uses classic browser scripts (for example IIFE/UMD bundles);
+  bundle module imports and other transitive dependencies during plugin build.
+- Upload validation checks the manifest, resource limits, paths, hashes and chart
+  entry points before inspection executes Java code. The installation review
+  lists runtime versions, packaged resources and customization controls.
+- OpenLAP serves only declared resources from the installed, verified artifact.
+  The private S3 bucket and complete JAR remain private. Browser resources are
+  deliberately public so external embeds can load them without credentials.
+- Customizations use native text, number, boolean, select and color controls in
+  Elements, Styles and Filters. Defaults, bounds, steps, choices and simple
+  visibility conditions are validated by the backend and reflected in all three
+  editors. Values use stable IDs in the existing `additionalParams` map.
+- New chart types receive their declared icon or a generic fallback. Category
+  controls use declared input roles and actual mappings rather than fixed output
+  column names. A new chart using the supported controls needs no frontend edit.
+
+Previews and copied iframe embeds use the same isolated renderer. Chart library
+versions stay inside their own frame; neither the OpenLAP HTML entry point nor
+another platform needs chart-library tags. Loading failures preserve selections
+and offer a retry. The rendering document accepts chart instructions only from
+its own origin or the trusted origins in `frontend.urls` (`WEBAPP_URL`). Public
+indicator/question pages remain embeddable by other platforms and supply their
+own child renderer. A receiving platform still needs to allow OpenLAP iframes.
+
+The two previously qualified historical C3 and ApexCharts binaries have explicit
+compatibility declarations, with locally packaged C3 0.7.18 / D3 5.16.0 and
+ApexCharts 8.8.1. Other JARs without a manifest report an undeclared runtime rather
+than guessing browser dependencies from their names or generated code. Existing
+Java methods and capability flags remain supported. Upgrades retain old artifacts
+for saved indicators instead of silently changing their renderer version.
+
+Deploy the backend runtime endpoints and assets to every replica before enabling
+the updated frontend or installing manifested plugins. Generated embed URLs use
+the servlet context and server port; a reverse proxy must supply the correct
+trusted external request scheme/host. No new cluster component or public S3
+bucket is required.
+
+The frontend checks include `npm run test:visualization-descriptor` and
+`npm run test:chart-runtime`. They verify native controls, pinned C3/Apex assets,
+multiple isolated runtimes, resource integrity, retry, SVG export, mobile
+containment, a script-free external host and rejection of untrusted parent
+messages. The saved-preview regression also retains its decimal-width baseline.
+
 ## Publication and recovery
 
 The primary Mongo database holds `plugin-installation` records with these states:

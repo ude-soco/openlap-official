@@ -47,7 +47,7 @@ export default function SourceIndicatorPreview({ source, type, selectedSources, 
         const response = await api.get(`v1/indicators/sources/${encodeURIComponent(sourceId)}/preview`, { signal: controller.signal });
         const result = response.data.data;
         if (!result?.indicatorCode) throw new Error("This indicator has no chart to preview.");
-        const preview = chartPreviewData(result.indicatorCode);
+        const preview = chartPreviewData(result.indicatorCode, result.visualizationTypeId);
         if (!cancelled) setChart({ id: sourceId, loading: false, value: { detail: result, preview }, error: "" });
       } catch (error) {
         if (!cancelled) setChart({ id: sourceId, loading: false, value: null,

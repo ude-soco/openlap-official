@@ -174,6 +174,7 @@ public class VisualizationTypeServiceImpl implements VisualizationTypeService {
       visualizationTypeResponse.setChartConfiguration(visType.getChartConfiguration());
       visualizationTypeResponse.setChartInputs(
           visualizationTypeConfiguration.getInput().getColumnsConfigurationData());
+      visualizationTypeResponse.setVisualizationDescriptor(visType.getVisualizationDescriptor());
       return visualizationTypeResponse;
     } catch (Exception e) {
       throw new ServiceException("Error in generating vis type response.", e);

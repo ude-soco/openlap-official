@@ -32,6 +32,9 @@ public class VisType {
 
   private String installationId;
 
+  /** Optional static v1 plugin descriptor; old JARs retain ChartConfiguration. */
+  private java.util.Map<String, Object> visualizationDescriptor;
+
   /** Treats a missing/null flag (legacy documents) as enabled. */
   public boolean isEnabled() {
     return enabled == null || enabled;

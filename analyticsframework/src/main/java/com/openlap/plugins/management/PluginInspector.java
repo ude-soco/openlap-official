@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openlap.dataset.OpenLAPColumnDataType;
 import com.openlap.infrastructure.exception.ValidationException;
 import com.openlap.plugins.PluginJarFiles;
+import com.openlap.plugins.visualization.VisualizationManifest;
 import com.openlap.plugins.artifacts.PluginKind;
 import com.openlap.template.AnalyticsMethod;
 import com.openlap.template.VisualizationCodeGenerator;
@@ -75,6 +76,10 @@ public final class PluginInspector {
       if (kind == PluginKind.VISUALIZATION && result.getLibraryClass() == null) {
         throw invalid("A visualization JAR needs one VisualizationLibraryInfo implementation and at least one chart type.");
       }
+      if (kind == PluginKind.VISUALIZATION) {
+        VisualizationManifest manifest = VisualizationManifest.read(jar, result.getClasses());
+        if (manifest != null) result.setVisualizationManifest(manifest.document());
+      }
       return result;
     } catch (IOException | NotFoundException e) {
       throw invalid("Plugin classes or their dependencies could not be resolved. Check the supported template and public no-argument constructors.");
@@ -126,6 +131,21 @@ public final class PluginInspector {
           chart.getDataTransformer().getConstructor();
           entry.append("chartConfiguration", chartConfiguration(chart.getConfiguration()))
               .append("inputs", plain(chart.getInput().getColumnsConfigurationData()));
+          if (result.getVisualizationManifest() != null) {
+            Document manifest = result.getVisualizationManifest();
+            Document descriptor = ((List<Document>) manifest.get("charts")).stream()
+                .filter(value -> name.equals(value.getString("implementingClass"))).findFirst().orElseThrow();
+            descriptor = new Document(descriptor).append("schemaVersion", 1)
+                .append("pluginId", manifest.getString("pluginId"))
+                .append("pluginVersion", manifest.getString("pluginVersion"));
+            if (descriptor.get("inputRoles") instanceof java.util.Map) {
+              java.util.Set<String> inputs = chart.getInput().getColumnsConfigurationData().stream()
+                  .map(com.openlap.dataset.OpenLAPColumnConfigData::getId).collect(Collectors.toSet());
+              if (!inputs.containsAll(((java.util.Map<?, ?>) descriptor.get("inputRoles")).values()))
+                throw invalid("Chart input roles must refer to declared input ports.");
+            }
+            entry.append("visualizationDescriptor", descriptor);
+          }
         }
         result.getEntries().add(entry);
       }

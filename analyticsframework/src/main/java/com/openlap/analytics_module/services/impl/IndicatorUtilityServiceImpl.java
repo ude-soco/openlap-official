@@ -384,8 +384,13 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
             visType.getId(), visualizationMappings);
     if (validationResult.isValid()) {
       try {
+        Map<String, Object> checkedParams =
+            com.openlap.plugins.visualization.VisualizationCustomization.validate(
+                visType.getVisualizationDescriptor() == null ? null
+                    : new org.bson.Document(visType.getVisualizationDescriptor()),
+                (Map<String, Object>) visualizationParams);
         var inputs = com.openlap.visualization_methods.compatibility.LegacyC3Strings.prepare(
-            visualizationCodeGenerator, analyzedDataSet, (Map<String, Object>) visualizationParams);
+            visualizationCodeGenerator, analyzedDataSet, checkedParams);
         inputs = com.openlap.visualization_methods.compatibility.LegacyApexScatter.prepare(
             visualizationCodeGenerator, inputs.data(), inputs.parameters());
         indicatorCode =

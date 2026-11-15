@@ -1,0 +1,37 @@
+[
+  {
+    "file": "c3-0.7.18.min.js",
+    "source": "npm:c3@0.7.18",
+    "sha256": "0a6e160aa357214fad25ae71e915a19fa318223642f48f512a46761df6c58bb3"
+  },
+  {
+    "file": "c3-0.7.18.min.css",
+    "source": "npm:c3@0.7.18",
+    "sha256": "ea478cdfeb03505c2e881fad5d1abf1d5f2da90625bdaaebb285a4c79ddd4a06"
+  },
+  {
+    "file": "c3-LICENSE",
+    "source": "npm:c3@0.7.18",
+    "sha256": "9a17f5090854c8ba377392573c9a9f6c1778437a42d6378b2346f04df63ae924"
+  },
+  {
+    "file": "d3-5.16.0.min.js",
+    "source": "npm:d3@5.16.0",
+    "sha256": "5dbe924b3847df010f0b8572dd6ef42ea87d6370eeff72b13ea236247412a53c"
+  },
+  {
+    "file": "d3-LICENSE",
+    "source": "npm:d3@5.16.0",
+    "sha256": "7a3cb0e5055874e67db9aa2d5fe26de23204fa994ffbad198901ffe9c812a717"
+  },
+  {
+    "file": "apexcharts-8.8.1.min.js",
+    "source": "npm:apexcharts@8.8.1",
+    "sha256": "db4a86c86da615c3850749ce9f40f2ac36e8982f768708ef3f891c17857fd11d"
+  },
+  {
+    "file": "apexcharts-LICENSE.md",
+    "source": "npm:apexcharts@8.8.1",
+    "sha256": "93c2382614506a657f2002d134504e3cf561fa46bc9e34717fa1c9642f384dfa"
+  }
+]

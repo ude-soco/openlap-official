@@ -19,4 +19,5 @@ public class VisualizationTypeResponse {
   private ChartConfiguration chartConfiguration;
   // * TODO: Visualization input
   private List<OpenLAPColumnConfigData> chartInputs;
+  private java.util.Map<String, Object> visualizationDescriptor;
 }

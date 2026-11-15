@@ -4,8 +4,8 @@ on:
   push:
     tags:       [ v*.*.* ]
     branches:   [ main ]
+  # Stacked feature MRs need the same build checks before their base reaches main.
   pull_request:
-    branches:   [ main ]
 
 jobs:
   maven-wrapper:

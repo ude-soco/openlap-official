@@ -13,6 +13,7 @@ import { useSnackbar } from "notistack";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager";
 import { useNavigationGuard } from "../../../setup/routes-manager/navigation-guard-context.js";
 import { activatePlugin, configurePluginReplacement, getPluginUpload, inspectPlugin, listPluginUploads, retirePreviousPlugin, transitionPluginReview, uploadPlugin } from "../utils/plugin-apis.js";
+import PluginRuntimeReview from "./plugin-runtime-review";
 
 const labels = {
   UPLOADED: "Ready for inspection", INSPECTING: "Inspection in progress",
@@ -228,6 +229,7 @@ const PluginUploadControl = ({ kind, onActivated, replacementTarget, disabled = 
               <Typography variant="body2" color="text.secondary">{reviewedLibrary.creator} · {reviewedLibrary.description}</Typography>
               {reviewedLibrary.enabled === false && <Alert severity="info">This library starts disabled, preserving its previous status.</Alert>}
             </Box>}
+            {!analytics && inspected && <PluginRuntimeReview manifest={inspected.visualizationManifest} entries={reviewedEntries} />}
             <List disablePadding aria-label="Discovered plugin entries">
               {reviewedEntries.map((entry) => <ListItem key={entry.implementingClass} divider alignItems="flex-start" disableGutters>
                 <ListItemText primary={entry.name} secondary={<>

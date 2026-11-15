@@ -19,13 +19,17 @@ import SectionCard from "../../../../common/components/section-card/section-card
 import CustomTooltip from "../../../../common/components/custom-tooltip/custom-tooltip";
 import ChartPreview from "../components/chart-preview";
 import { defaultParams } from "../basic-indicator/components/visualization/utils/visualization-data";
+import {
+  getMappedCategoryValues,
+  getVisualizationDefaults,
+  getVisualizationDescriptor,
+} from "../basic-indicator/components/visualization/utils/visualization-descriptor";
 import { getChartCompatibility } from "../basic-indicator/components/visualization/utils/chart-compatibility";
 import ChartTypeOptions from "../basic-indicator/components/visualization/components/chart-type-options";
 import ChartGuidance from "../basic-indicator/components/visualization/components/chart-guidance";
 import ReadinessSummary from "../basic-indicator/components/visualization/components/readiness-summary";
 import ChartCustomizationControls from "../basic-indicator/components/visualization/components/customization/chart-customization-controls";
 import {
-  datasetColumns,
   datasetRows,
   defaultMappings,
   mappingsReady,
@@ -50,13 +54,15 @@ export default function ComplexVisualizationStep({
   busy,
   previewChart,
   previewCurrent,
+  rendererReady,
+  onRendererStatus,
   preview,
   setSaveOpen,
   id,
 }) {
   const [customize, setCustomize] = useState(false);
   const customizeButton = useRef(null);
-  const params = { ...defaultParams, ...configuration.visualization.params };
+  const params = getVisualizationDefaults(selectedType, defaultParams, configuration.visualization.params);
   const canPreview = Boolean(
     datasetRows(chartDataset) > 0 &&
       selectedType?.chartInputs?.length &&
@@ -103,7 +109,7 @@ export default function ComplexVisualizationStep({
     },
     {
       label: "Chart selected and configured",
-      done: previewCurrent,
+      done: previewCurrent && rendererReady,
     },
   ];
 
@@ -230,7 +236,8 @@ export default function ComplexVisualizationStep({
                   ...previous.visualization,
                   typeId: chart.id,
                   mapping: defaultMappings(chart.chartInputs, chartDataset),
-                  params: { ...defaultParams, ...previous.visualization.params },
+                  params: getVisualizationDefaults(chart, defaultParams,
+                    previous.visualization.typeId === chart.id ? previous.visualization.params : {}),
                 },
               }))
             }
@@ -309,7 +316,7 @@ export default function ComplexVisualizationStep({
                     </Stack>
                   </Stack>
                 ) : previewCurrent ? (
-                  <ChartPreview previewData={preview} responsive />
+                  <ChartPreview previewData={preview} visualizationTypeId={configuration.visualization.typeId} onStatusChange={onRendererStatus} responsive />
                 ) : (
                   <Stack sx={{ gap: 2, alignItems: "center", justifyContent: "center", minHeight: 360 }}>
                     {canPreview && <CircularProgress aria-label="Generating chart preview" />}
@@ -329,7 +336,8 @@ export default function ComplexVisualizationStep({
                     setState={updateParams}
                     chartId={selectedType.id}
                     chartConfiguration={selectedType.chartConfiguration || {}}
-                    categories={datasetColumns(chartDataset).find((column) => column.configurationData.type === "Text")?.data || []}
+                    visualizationDescriptor={getVisualizationDescriptor(selectedType)}
+                    categories={getMappedCategoryValues(selectedType, configuration.visualization.mapping, chartDataset)}
                     onClose={closeCustomization}
                   />
                 </Box>
@@ -347,7 +355,7 @@ export default function ComplexVisualizationStep({
             size="large"
             variant="contained"
             aria-label={id ? "Review changes" : "Save indicator"}
-            disabled={!previewCurrent || Boolean(busy)}
+            disabled={!previewCurrent || !rendererReady || Boolean(busy)}
             onClick={() => setSaveOpen(true)}
           >
             {id ? "Review changes" : "Save Indicator"}
@@ -379,6 +387,8 @@ ComplexVisualizationStep.propTypes = {
   busy: PropTypes.string,
   previewChart: PropTypes.func,
   previewCurrent: PropTypes.bool,
+  rendererReady: PropTypes.bool,
+  onRendererStatus: PropTypes.func,
   preview: PropTypes.object,
   setSaveOpen: PropTypes.func,
   id: PropTypes.string,

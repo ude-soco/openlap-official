@@ -149,7 +149,20 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
       String jarFile,
       List<VisLibrary> existingLibraries,
       List<VisType> existingVisualizationTypes) {
-    List<String> classNames = Utils.getClassNamesFromJar(jarFile, visualizerClassDirectory);
+    com.openlap.plugins.visualization.VisualizationManifest manifest =
+        com.openlap.plugins.visualization.VisualizationManifest.read(Paths.get(jarFile), null);
+    List<String> classNames;
+    if (manifest != null) {
+      com.openlap.plugins.management.PluginInspection discovery = new com.openlap.plugins.management.PluginInspector()
+          .discover(com.openlap.plugins.artifacts.PluginKind.VISUALIZATION, Paths.get(jarFile));
+      // Manifest plugins have explicit entry points. Associate their library
+      // before their charts, independent of package names or archive ordering.
+      classNames = new ArrayList<>();
+      classNames.add(discovery.getLibraryClass());
+      classNames.addAll(discovery.getClasses());
+    } else {
+      classNames = Utils.getClassNamesFromJar(jarFile, visualizerClassDirectory);
+    }
 
     VisualizerClassPathLoader classPathLoader = new VisualizerClassPathLoader(jarFile);
     VisLibrary visualizationLibrary = null;
@@ -171,6 +184,13 @@ public class VisualizationMethodUtilityServiceImpl implements VisualizationMetho
         if (visualizationType != null
             && !isTypeAlreadyAdded(existingVisualizationTypes, className)) {
           VisType newVizType = createNewVisType(visualizationType, className, visualizationLibrary);
+          if (manifest != null) {
+            org.bson.Document descriptor = manifest.chart(className);
+            descriptor.append("schemaVersion", 1)
+                .append("pluginId", manifest.document().getString("pluginId"))
+                .append("pluginVersion", manifest.document().getString("pluginVersion"));
+            newVizType.setVisualizationDescriptor(descriptor);
+          }
           newTypes.add(newVizType);
         }
       } catch (Exception e) {

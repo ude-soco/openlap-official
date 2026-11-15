@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OpenLAP chart</title>
+  <style>html,body{margin:0;width:100%;background:white}#root{min-width:0;overflow:hidden}#openlap-chart{min-height:320px;width:100%}#openlap-error{padding:16px;font:14px system-ui;color:#b3261e}svg{max-width:100%}</style>
+  <script defer th:src="@{/v1/code/runtime.js}"></script>
+</head>
+<body data-openlap-renderer="true" th:attr="data-parent-origins=${parentOrigins}"><div id="root"><div id="openlap-chart"></div></div><div id="openlap-error" role="alert" hidden></div></body>
+</html>

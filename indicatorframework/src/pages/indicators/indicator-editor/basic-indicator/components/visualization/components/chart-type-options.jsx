@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -13,12 +13,15 @@ import {
 import RecommendRoundedIcon from "@mui/icons-material/RecommendRounded";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import InsertChartOutlinedIcon from "@mui/icons-material/InsertChartOutlined";
 import { visualizationImages } from "../utils/visualization-data";
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
 import {
   buildRequirementText,
   categorizeCharts,
 } from "../utils/chart-compatibility";
+import { getVisualizationIconUrl } from "../utils/visualization-descriptor";
+import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
 
 const STATUS_ARIA = {
   recommended: "recommended for your data",
@@ -51,6 +54,18 @@ const StatusChip = ({ status }) => {
 };
 StatusChip.propTypes = { status: PropTypes.string };
 
+const ChartIcon = ({ iconUrl, svg }) => {
+  const [failedUrl, setFailedUrl] = useState("");
+  if (iconUrl && failedUrl !== iconUrl) return (
+    <Box component="img" src={iconUrl} alt="" onError={() => setFailedUrl(iconUrl)}
+      sx={{ width: 56, height: 56, objectFit: "contain" }} />
+  );
+  return svg ? <Box aria-hidden sx={{ "& svg": { width: 56, height: 56 } }}
+    dangerouslySetInnerHTML={{ __html: svg }} />
+    : <InsertChartOutlinedIcon color="primary" sx={{ width: 56, height: 56 }} aria-hidden />;
+};
+ChartIcon.propTypes = { iconUrl: PropTypes.string, svg: PropTypes.string };
+
 const ChartTypeOptions = ({
   types,
   analyzedData,
@@ -63,6 +78,8 @@ const ChartTypeOptions = ({
   // "Requires additional data" is collapsed by default, but the header + a short
   // explanation stay visible so it's discoverable.
   const [showNeedsData, setShowNeedsData] = useState(false);
+  const auth = useContext(AuthContext);
+  const apiBase = auth?.api?.defaults?.baseURL || import.meta.env.VITE_BACKEND_URL || "/api/";
 
   const groups = categorizeCharts(types, analyzedData);
   if (getUnavailableReason) {
@@ -86,7 +103,7 @@ const ChartTypeOptions = ({
 
   const renderChartCard = ({ type, compat, unavailableReason }) => {
     const svg = visualizationImages[type.imageCode];
-    if (!svg) return null;
+    const iconUrl = getVisualizationIconUrl(type, apiBase, window.location.href);
     const selected = selectedTypeId === type.id;
     const incompatible = compat.status === "needs-data";
     const requirementText = incompatible
@@ -119,11 +136,7 @@ const ChartTypeOptions = ({
           <Stack
             sx={{ gap: 1, alignItems: "center", height: "100%", width: "100%" }}
           >
-            <Box
-              aria-hidden
-              sx={{ "& svg": { width: 56, height: 56 } }}
-              dangerouslySetInnerHTML={{ __html: svg }}
-            />
+            <ChartIcon iconUrl={iconUrl} svg={svg} />
             {/* Reserve ~2 lines so icons stay aligned regardless of name length. */}
             <Typography
               variant="body2"
