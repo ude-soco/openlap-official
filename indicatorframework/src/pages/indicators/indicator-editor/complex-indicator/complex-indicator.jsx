@@ -11,6 +11,7 @@ import { useSnackbar } from "notistack";
 import {
   Alert,
   Button,
+  Chip,
   Collapse,
   LinearProgress,
   Stack,
@@ -21,6 +22,9 @@ import PageHeader from "../../../../common/components/page-header/page-header";
 import WorkflowSection from "../../../../common/components/workflow-section/workflow-section";
 import WorkflowStepper from "../../../../common/components/workflow-stepper/workflow-stepper";
 import WorkflowStepHeader from "../../../../common/components/workflow-step-header/workflow-step-header";
+import { ToggleEditButton } from "../../../../common/components/toggle-edit-button/toggle-edit-button";
+import ToggleSummaryButton from "../../../../common/components/toggle-summary-button/toggle-summary-button";
+import TipPopover from "../../../../common/components/tip-popover/tip-popover";
 
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager";
 import { useNavigationGuard } from "../../../../setup/routes-manager/navigation-guard-context";
@@ -47,6 +51,12 @@ const messageOf = (error, fallback) =>
 const TYPE_LABELS = {
   COMPOSITE: "Composite indicator",
   MULTI_LEVEL: "Multilevel analysis indicator",
+};
+const STEP_TIPS = {
+  sources: "Choose at least two of your saved Basic indicators. Composite sources must use the same installed analytics method; their filters and parameters may differ.",
+  combine: "Match each source by a shared key and choose the numeric measures to keep. Composite includes all keys and identifies filled zeros; Multilevel keeps only shared keys.",
+  analysis: "Map the combined numeric columns to an installed method, review its parameters, and preview the results before choosing a chart.",
+  visualization: "Choose a chart suited to your results, review its input mappings, and customize the live preview before saving.",
 };
 
 function chartPreviewData(code) {
@@ -87,7 +97,19 @@ export default function ComplexIndicator({ type }) {
   const [recoveryStatus, setRecoveryStatus] = useState("");
   const [recoveryCandidate, setRecoveryCandidate] = useState(null);
   const [resetOpen, setResetOpen] = useState(false);
-  const [current, setCurrent] = useState("sources");
+  const [workflow, setWorkflow] = useState({
+    current: "sources",
+    panels: { sources: true },
+  });
+  const current = workflow.current;
+  const setCurrent = useCallback((step) => {
+    setWorkflow((previous) => ({
+      current: step,
+      panels: { ...previous.panels, [previous.current]: false, [step]: true },
+    }));
+  }, []);
+  const [summaryVisible, setSummaryVisible] = useState({});
+  const [tip, setTip] = useState({ step: "", anchor: null });
   const [sourcesConfirmed, setSourcesConfirmed] = useState(false);
   const [catalog, setCatalog] = useState({ content: [], totalPages: 0 });
   const [sourcePage, setSourcePage] = useState(0);
@@ -212,7 +234,7 @@ export default function ComplexIndicator({ type }) {
       cancelled = true;
       generation.current += 1;
     };
-  }, [api, id, type, key]);
+  }, [api, id, type, key, setCurrent]);
 
   useEffect(() => {
     if (!loaded || recoveryCandidate) return undefined;
@@ -574,7 +596,8 @@ export default function ComplexIndicator({ type }) {
     baseline.current = JSON.stringify(fresh);
     sessionStorage.removeItem(key);
     change(fresh, "sources");
-    setCurrent("sources");
+    setWorkflow({ current: "sources", panels: { sources: true } });
+    setSummaryVisible({});
     setRemovedSource(null);
     setResetOpen(false);
   };
@@ -620,7 +643,7 @@ export default function ComplexIndicator({ type }) {
   const status = (step) =>
     step.locked
       ? "locked"
-      : current === step.key
+      : workflow.panels[step.key]
         ? "active"
         : step.completed
           ? "completed"
@@ -628,6 +651,9 @@ export default function ComplexIndicator({ type }) {
   const section = (stepKey, body) => {
     const index = steps.findIndex((step) => step.key === stepKey);
     const step = steps[index];
+    if (step.locked && stepKey !== steps.find((entry) => entry.locked)?.key) return null;
+    const expanded = !step.locked && Boolean(workflow.panels[stepKey]);
+    const contentId = `complex-${type.toLowerCase()}-${stepKey}-content`;
     return (
       <WorkflowSection
         status={status(step)}
@@ -644,29 +670,52 @@ export default function ComplexIndicator({ type }) {
           stepNumber={index + 1}
           title={step.label}
           locked={step.locked}
+          helper={!step.locked && (
+            <TipPopover
+              tipAnchor={tip.step === stepKey ? tip.anchor : null}
+              toggleTipAnchor={(anchor) => setTip({ step: stepKey, anchor })}
+              description={STEP_TIPS[stepKey]}
+            />
+          )}
+          summaryToggle={!step.locked && !expanded && (
+            <ToggleSummaryButton
+              showSelections={summaryVisible[stepKey] !== false}
+              toggleShowSelection={() => setSummaryVisible((previous) => ({
+                ...previous,
+                [stepKey]: previous[stepKey] === false,
+              }))}
+            />
+          )}
           editToggle={
-            !step.locked &&
-            (current === step.key ? (
-              <Typography variant="caption" color="primary">
-                Current step
-              </Typography>
-            ) : (
-              <Button
-                onClick={() => setCurrent(step.key)}
-                aria-expanded={false}
-              >
-                {step.completed ? "Review" : "Open"}
-              </Button>
-            ))
+            !step.locked && (
+              <ToggleEditButton
+                openPanel={expanded}
+                controls={contentId}
+                togglePanel={() => setWorkflow((previous) => ({
+                  current: previous.panels[stepKey] ? previous.current : stepKey,
+                  panels: { ...previous.panels, [stepKey]: !previous.panels[stepKey] },
+                }))}
+              />
+            )
           }
         />
-        {current !== step.key && !step.locked && (
-          <Typography variant="body2" color="text.secondary">
-            {step.summary || "Ready to configure"}
-          </Typography>
-        )}
-        <Collapse in={current === step.key && !step.locked} unmountOnExit>
-          <Stack sx={{ gap: 2, pt: 1 }}>{body}</Stack>
+        <Collapse in={!expanded && !step.locked && summaryVisible[stepKey] !== false} unmountOnExit>
+          <Stack sx={{ gap: 1 }}>
+            <Typography variant="body2">Selection summary</Typography>
+            {stepKey === "sources" ? (
+              <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>
+                {configuration.sources.map((source) => <Chip key={source.id} label={source.name} />)}
+                {!configuration.sources.length && <Typography variant="body2" color="text.secondary">No indicators selected.</Typography>}
+              </Stack>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                {step.summary || "Ready to configure"}
+              </Typography>
+            )}
+          </Stack>
+        </Collapse>
+        <Collapse id={contentId} in={expanded} timeout={{ enter: 500, exit: 250 }} unmountOnExit>
+          <Stack sx={{ gap: 2, py: 2 }}>{body}</Stack>
         </Collapse>
       </WorkflowSection>
     );
@@ -723,7 +772,11 @@ export default function ComplexIndicator({ type }) {
       <PageHeader
         title={`${id ? "Edit " : "Create "}${title.toLowerCase()}`}
         actions={
-          !id && configuration.sources.length > 0 ? (
+          <Stack sx={{ gap: 1, alignItems: { xs: "flex-start", sm: "flex-end" } }}>
+            <Typography variant="caption" color="text.secondary" role="status">
+              {recoveryStatus}
+            </Typography>
+          {!id && configuration.sources.length > 0 && (
             <Button
               variant="outlined"
               disabled={Boolean(busy)}
@@ -731,9 +784,19 @@ export default function ComplexIndicator({ type }) {
             >
               Start over
             </Button>
-          ) : null
+          )}
+          </Stack>
         }
         breadcrumbs={[
+          {
+            label: "Home",
+            to: "/",
+            onClick: (event) => {
+              event.preventDefault();
+              if (navigation) navigation.guardedNavigate("/");
+              else navigate("/");
+            },
+          },
           {
             label: "My Indicators",
             to: "/indicator",
@@ -759,9 +822,6 @@ export default function ComplexIndicator({ type }) {
             : "Combine Basic indicators using the same analytics method and compare their results in one chart."
         }
       />
-      <Typography variant="caption" color="text.secondary" role="status">
-        {recoveryStatus}
-      </Typography>
       <WorkflowStepper
         steps={steps}
         current={current}
@@ -772,6 +832,7 @@ export default function ComplexIndicator({ type }) {
         message={catalogError}
         retry={() => setCatalogRetry((value) => value + 1)}
       />
+      <Stack sx={{ gap: 2 }}>
       {section(
         "sources",
         <ComplexSourcesStep
@@ -852,6 +913,7 @@ export default function ComplexIndicator({ type }) {
           id={id}
         />,
       )}
+      </Stack>
       <ComplexDialogs
         resetOpen={resetOpen}
         setResetOpen={setResetOpen}
