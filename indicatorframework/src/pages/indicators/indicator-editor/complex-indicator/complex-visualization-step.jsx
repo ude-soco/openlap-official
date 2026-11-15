@@ -1,40 +1,36 @@
 import PropTypes from "prop-types";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Alert,
   Box,
   Button,
-  ButtonBase,
-  Chip,
   CircularProgress,
+  Divider,
   Grid,
   LinearProgress,
   MenuItem,
-  Paper,
+  Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import PaletteIcon from "@mui/icons-material/Palette";
 import SectionCard from "../../../../common/components/section-card/section-card";
+import CustomTooltip from "../../../../common/components/custom-tooltip/custom-tooltip";
 import ChartPreview from "../components/chart-preview";
-import {
-  defaultParams,
-  visualizationImages,
-} from "../basic-indicator/components/visualization/utils/visualization-data";
+import { defaultParams } from "../basic-indicator/components/visualization/utils/visualization-data";
 import { getChartCompatibility } from "../basic-indicator/components/visualization/utils/chart-compatibility";
+import ChartTypeOptions from "../basic-indicator/components/visualization/components/chart-type-options";
+import ChartGuidance from "../basic-indicator/components/visualization/components/chart-guidance";
+import ReadinessSummary from "../basic-indicator/components/visualization/components/readiness-summary";
+import ChartCustomizationControls from "../basic-indicator/components/visualization/components/customization/chart-customization-controls";
 import {
   datasetColumns,
+  datasetRows,
   defaultMappings,
   mappingsReady,
+  sourcesReady,
 } from "./complex-model";
-import {
-  ChartCustomization,
-  ColumnMappings,
-  Failure,
-} from "./complex-controls";
+import { ColumnMappings, Failure } from "./complex-controls";
 
 export default function ComplexVisualizationStep({
   libraryId,
@@ -56,21 +52,72 @@ export default function ComplexVisualizationStep({
   setSaveOpen,
   id,
 }) {
-  const [showAllCharts, setShowAllCharts] = useState(false);
-  const chartOptions = types.map((chart) => ({
-    chart,
-    disabled:
-      getChartCompatibility(chart, chartDataset?.columns || {}).status ===
-        "needs-data" || !supportsSeries(chart),
-  }));
-  const unavailableCount = chartOptions.filter(
-    (option) => option.disabled,
-  ).length;
+  const [customize, setCustomize] = useState(false);
+  const customizeButton = useRef(null);
+  const params = { ...defaultParams, ...configuration.visualization.params };
+  const canPreview = Boolean(
+    selectedType &&
+      supportsSeries(selectedType) &&
+      mappingsReady(
+        selectedType.chartInputs,
+        configuration.visualization.mapping,
+        chartDataset,
+      ),
+  );
+  const hasCompatibleChart = types.some(
+    (chart) =>
+      supportsSeries(chart) &&
+      getChartCompatibility(chart, chartDataset?.columns || {}).status !==
+        "needs-data",
+  );
+  const updateParams = (updater) => {
+    const next = typeof updater === "function" ? updater(params) : updater;
+    // The shared Basic controls mark local edits; only chart options belong in
+    // the complex indicator's persisted visualization parameters.
+    const chartParams = { ...next };
+    delete chartParams.edited;
+    change((previous) => ({
+      ...previous,
+      visualization: { ...previous.visualization, params: chartParams },
+    }));
+  };
+  const closeCustomization = () => {
+    setCustomize(false);
+    requestAnimationFrame(() => customizeButton.current?.focus());
+  };
+  const previewAction = (
+    <Button
+      variant="contained"
+      disabled={!canPreview || Boolean(busy)}
+      onClick={previewChart}
+    >
+      Generate chart preview
+    </Button>
+  );
+  const readinessItems = [
+    {
+      label: "Basic indicators selected",
+      done: configuration.sources.length >= 2,
+    },
+    {
+      label: "Matching columns and measures configured",
+      done: sourcesReady(configuration.sources),
+    },
+    {
+      label: isMulti ? "Analysis preview generated" : "Combined data preview generated",
+      done: datasetRows(chartDataset) > 0,
+    },
+    {
+      label: "Chart selected and configured",
+      done: previewCurrent,
+    },
+  ];
+
   return (
     <>
       <SectionCard
         title="Visualization library"
-        helper="Choose an installed chart library, then a chart suited to the resulting data."
+        helper="The library that renders your chart. The default works for most indicators."
       >
         <TextField
           fullWidth
@@ -97,159 +144,92 @@ export default function ComplexVisualizationStep({
         </TextField>
       </SectionCard>
       {!isMulti && (
-        <TextField
-          select
-          label="Compare measures"
-          value={configuration.visualization.dataMode}
-          onChange={(event) =>
-            change((previous) => ({
-              ...previous,
-              visualization: {
-                ...previous.visualization,
-                dataMode: event.target.value,
-                typeId: "",
-                mapping: { mapping: [] },
-              },
-            }))
-          }
-          helperText="Compare all measures uses a series label for each source. Individual columns support charts such as scatter plots."
-        >
-          <MenuItem value="combined">All measures by source</MenuItem>
-          <MenuItem value="individual">Individual measure columns</MenuItem>
-        </TextField>
-      )}
-      {chartLoading && <LinearProgress aria-label="Loading chart types" />}
-      {libraryId && !chartLoading && (
         <SectionCard
-          title="Chart"
-          helper="Compatibility checks column types. Choose a chart that answers your question."
-          action={
-            unavailableCount > 0 && (
-              <Button
-                size="small"
-                onClick={() => setShowAllCharts((value) => !value)}
-              >
-                {showAllCharts ? "Show compatible charts" : "Show all charts"}
-              </Button>
-            )
-          }
+          title="Comparison data"
+          helper="Choose whether to compare all source measures or map individual columns."
         >
-          {unavailableCount > 0 && (
-            <Typography variant="body2" color="text.secondary">
-              {unavailableCount} charts need other columns or mappings.
-              {!isMulti &&
-                configuration.visualization.dataMode === "combined" &&
-                " Comparing all measures requires a chart with separate category and series inputs."}
-            </Typography>
-          )}
-          <Grid container spacing={2}>
-            {chartOptions
-              .filter((option) => showAllCharts || !option.disabled)
-              .map(({ chart, disabled }) => {
-                return (
-                  <Grid size={{ xs: 6, sm: 4, lg: 3 }} key={chart.id}>
-                    <Paper
-                      variant="outlined"
-                      sx={{
-                        borderColor:
-                          chart.id === selectedType?.id
-                            ? "primary.main"
-                            : "divider",
-                        borderWidth: chart.id === selectedType?.id ? 2 : 1,
-                        height: "100%",
-                      }}
-                    >
-                      <ButtonBase
-                        disabled={disabled}
-                        onClick={() =>
-                          change((previous) => ({
-                            ...previous,
-                            visualization: {
-                              ...previous.visualization,
-                              typeId: chart.id,
-                              mapping: defaultMappings(
-                                chart.chartInputs,
-                                chartDataset,
-                              ),
-                              params: {
-                                ...defaultParams,
-                                ...previous.visualization.params,
-                              },
-                            },
-                          }))
-                        }
-                        aria-pressed={chart.id === selectedType?.id}
-                        aria-label={`Select ${chart.name}`}
-                        sx={{
-                          p: 2,
-                          width: "100%",
-                          minHeight: 176,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 1,
-                        }}
-                      >
-                        {visualizationImages[chart.imageCode] && (
-                          <Box
-                            aria-hidden
-                            sx={{ "& svg": { width: 48, height: 48 } }}
-                            dangerouslySetInnerHTML={{
-                              __html: visualizationImages[chart.imageCode],
-                            }}
-                          />
-                        )}
-                        <Typography
-                          align="center"
-                          sx={{
-                            minHeight: 40,
-                            display: "flex",
-                            alignItems: "center",
-                          }}
-                        >
-                          {chart.name}
-                        </Typography>
-                        <Chip
-                          size="small"
-                          label={disabled ? "Needs other data" : "Compatible"}
-                          color={disabled ? "default" : "success"}
-                        />
-                      </ButtonBase>
-                    </Paper>
-                  </Grid>
-                );
-              })}
-          </Grid>
-          {!chartOptions.some((option) => !option.disabled) &&
-            types.length > 0 && (
-              <Alert severity="info">
-                No chart has the required inputs for this data view. Choose
-                another library
-                {isMulti
-                  ? " or review the analysis output columns."
-                  : configuration.visualization.dataMode === "combined"
-                    ? " or use individual measure columns."
-                    : " or compare all measures by source."}
-              </Alert>
-            )}
-          {!types.length && (
+          <TextField
+            fullWidth
+            select
+            label="Compare measures"
+            value={configuration.visualization.dataMode}
+            onChange={(event) =>
+              change((previous) => ({
+                ...previous,
+                visualization: {
+                  ...previous.visualization,
+                  dataMode: event.target.value,
+                  typeId: "",
+                  mapping: { mapping: [] },
+                },
+              }))
+            }
+            helperText="All measures uses a separate series label for each source. Individual columns support charts such as scatter plots."
+          >
+            <MenuItem value="combined">All measures by source</MenuItem>
+            <MenuItem value="individual">Individual measure columns</MenuItem>
+          </TextField>
+        </SectionCard>
+      )}
+      {chartLoading && (
+        <SectionCard title="Chart" helper="Loading available charts…">
+          <LinearProgress aria-label="Loading chart types" />
+        </SectionCard>
+      )}
+      {libraryId && !chartLoading && (
+        <>
+          <ChartTypeOptions
+            types={types}
+            analyzedData={chartDataset?.columns || {}}
+            selectedTypeId={selectedType?.id}
+            disableUnavailable
+            getUnavailableReason={(chart) =>
+              supportsSeries(chart)
+                ? ""
+                : "Requires separate category and series inputs to compare all sources."
+            }
+            requirementsHelper={
+              !isMulti && configuration.visualization.dataMode === "combined"
+                ? "These charts need other columns or separate category and series inputs. Use individual measure columns when a chart has no series input."
+                : undefined
+            }
+            onSelect={(chart) =>
+              change((previous) => ({
+                ...previous,
+                visualization: {
+                  ...previous.visualization,
+                  typeId: chart.id,
+                  mapping: defaultMappings(chart.chartInputs, chartDataset),
+                  params: { ...defaultParams, ...previous.visualization.params },
+                },
+              }))
+            }
+          />
+          {!hasCompatibleChart && types.length > 0 && (
             <Alert severity="info">
-              No chart types are available in this library.
+              No chart has the required inputs for this data view. Choose another
+              library
+              {isMulti
+                ? " or review the analysis output columns."
+                : configuration.visualization.dataMode === "combined"
+                  ? " or use individual measure columns."
+                  : " or compare all measures by source."}
             </Alert>
           )}
-        </SectionCard>
+          {!types.length && (
+            <Alert severity="info">No chart types are available in this library.</Alert>
+          )}
+        </>
       )}
       {selectedType && (
         <>
-          {!isMulti &&
-            configuration.visualization.dataMode === "combined" &&
-            (selectedType.chartInputs || []).filter(
-              (input) => input.type === "Text",
-            ).length < 2 && (
-              <Alert severity="warning">
-                This chart has no separate series input. For comparing all
-                sources, choose a grouped chart with a series/group field.
-              </Alert>
-            )}
+          <ChartGuidance chartType={selectedType} analyzedData={chartDataset?.columns || {}} />
+          {!supportsSeries(selectedType) && (
+            <Alert severity="warning">
+              This chart has no separate series input. For comparing all sources,
+              choose a grouped chart with a series/group field.
+            </Alert>
+          )}
           <ColumnMappings
             inputs={selectedType.chartInputs || []}
             dataset={chartDataset}
@@ -260,86 +240,93 @@ export default function ComplexVisualizationStep({
                 visualization: { ...previous.visualization, mapping },
               }))
             }
+            columns={2}
             title="Configure chart"
-            helper="Review the suggested columns. Mapping labels identify their source."
+            helper={`Map each input of ${selectedType.name} to a column from your analysed data.`}
           />
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography>Customize chart</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <ChartCustomization
-                params={{
-                  ...defaultParams,
-                  ...configuration.visualization.params,
-                }}
-                onChange={(params) =>
-                  change((previous) => ({
-                    ...previous,
-                    visualization: { ...previous.visualization, params },
-                  }))
-                }
-                chartConfiguration={selectedType.chartConfiguration || {}}
-                categories={
-                  datasetColumns(chartDataset).find(
-                    (column) => column.configurationData.type === "Text",
-                  )?.data || []
-                }
-              />
-            </AccordionDetails>
-          </Accordion>
+          <Grid container spacing={3} sx={{ alignItems: "flex-start" }}>
+            <Grid size={{ xs: 12, lg: customize ? "grow" : 12 }} sx={{ minWidth: 0 }}>
+              <SectionCard
+                title="Live preview"
+                helper="Generate a preview to review the current chart inputs and options."
+                action={!customize && (
+                  <Button
+                    ref={customizeButton}
+                    startIcon={<PaletteIcon />}
+                    variant="contained"
+                    onClick={() => setCustomize(true)}
+                  >
+                    Customize chart
+                  </Button>
+                )}
+              >
+                <Failure
+                  message={operationError.step === "visualization" ? operationError.message : ""}
+                />
+                {busy === "visualization" ? (
+                  <Stack sx={{ gap: 1.5, alignItems: "center", justifyContent: "center", minHeight: 360 }}>
+                    <CircularProgress aria-label="Generating chart preview" />
+                    <Typography variant="body2" color="text.secondary">Generating preview…</Typography>
+                  </Stack>
+                ) : previewCurrent ? (
+                  <>
+                    <ChartPreview previewData={preview} responsive />
+                    <Stack sx={{ alignItems: "center", pt: 1 }}>{previewAction}</Stack>
+                  </>
+                ) : (
+                  <Stack sx={{ gap: 2, alignItems: "center", justifyContent: "center", minHeight: 360 }}>
+                    <Typography variant="body2" color="text.secondary" align="center">
+                      Preview the current sources, mappings and chart options before saving.
+                    </Typography>
+                    {previewAction}
+                  </Stack>
+                )}
+              </SectionCard>
+            </Grid>
+            {customize && (
+              <Grid size={{ xs: 12, lg: "auto" }}>
+                <Box component="section" aria-label="Chart customization" sx={{ width: { xs: "100%", lg: 340 } }}>
+                  <ChartCustomizationControls
+                    state={params}
+                    setState={updateParams}
+                    chartId={selectedType.id}
+                    chartConfiguration={selectedType.chartConfiguration || {}}
+                    categories={datasetColumns(chartDataset).find((column) => column.configurationData.type === "Text")?.data || []}
+                    onClose={closeCustomization}
+                  />
+                </Box>
+              </Grid>
+            )}
+          </Grid>
         </>
       )}
-      <Failure
-        message={
-          operationError.step === "visualization" ? operationError.message : ""
-        }
-        retry={
-          operationError.step === "visualization" && !selectedType
-            ? () => setCatalogRetry((value) => value + 1)
-            : undefined
-        }
-      />
-      <Button
-        variant="outlined"
-        disabled={
-          !selectedType ||
-          !supportsSeries(selectedType) ||
-          !mappingsReady(
-            selectedType.chartInputs,
-            configuration.visualization.mapping,
-            chartDataset,
-          ) ||
-          Boolean(busy)
-        }
-        onClick={previewChart}
-      >
-        {busy === "visualization" ? (
-          <CircularProgress size={20} />
-        ) : (
-          "Generate chart preview"
-        )}
-      </Button>
-      {previewCurrent && (
-        <SectionCard
-          title="Chart preview"
-          helper="This preview uses the current sources and configuration."
-        >
-          <ChartPreview previewData={preview} responsive />
-        </SectionCard>
+      {!selectedType && (
+        <Failure
+          message={operationError.step === "visualization" ? operationError.message : ""}
+          retry={operationError.step === "visualization" ? () => setCatalogRetry((value) => value + 1) : undefined}
+        />
       )}
-      <Alert severity={previewCurrent ? "success" : "info"}>
-        {previewCurrent
-          ? "Chart preview is ready. Review your indicator and save it."
-          : "Generate a chart preview before saving. Changes to earlier steps require a new preview."}
-      </Alert>
-      <Button
-        variant="contained"
-        disabled={!previewCurrent || Boolean(busy)}
-        onClick={() => setSaveOpen(true)}
-      >
-        {id ? "Review changes" : "Save indicator"}
-      </Button>
+      <ReadinessSummary items={readinessItems} />
+      <Divider sx={{ mt: 1 }} />
+      <Grid container spacing={1} sx={{ justifyContent: "center", alignItems: "center", pt: 2 }}>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <Button
+            fullWidth
+            size="large"
+            variant="contained"
+            aria-label={id ? "Review changes" : "Save indicator"}
+            disabled={!previewCurrent || Boolean(busy)}
+            onClick={() => setSaveOpen(true)}
+          >
+            {id ? "Review changes" : "Save Indicator"}
+          </Button>
+        </Grid>
+        {!previewCurrent && (
+          <Grid size="auto">
+            <CustomTooltip type="help" message="The Save button is disabled until:<br/>● Every required chart input is mapped.<br/>● A preview has been generated successfully." />
+          </Grid>
+        )}
+      </Grid>
     </>
   );
 }

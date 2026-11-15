@@ -6,11 +6,12 @@ import {
   Button,
   FormControl,
   FormHelperText,
+  Grid,
   InputLabel,
   MenuItem,
+  Paper,
   Select,
   Stack,
-  Tab,
   Table,
   TableBody,
   TableCell,
@@ -18,15 +19,13 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  Tabs,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
 import SectionCard from "../../../../common/components/section-card/section-card";
-import { ElementsBar } from "../basic-indicator/components/visualization/components/customization/components/elements-bar";
-import { StylesBar } from "../basic-indicator/components/visualization/components/customization/components/styles";
-import { FiltersBar } from "../basic-indicator/components/visualization/components/customization/components/filter";
+import CustomTooltip from "../../../../common/components/custom-tooltip/custom-tooltip";
+import { DataTypes } from "../../../indicator-specification-cards/creator/utils/data/config";
 import { datasetColumns, datasetRows, withMapping } from "./complex-model";
 
 export function Failure({ message, retry }) {
@@ -47,7 +46,7 @@ export function Failure({ message, retry }) {
 }
 Failure.propTypes = { message: PropTypes.string, retry: PropTypes.func };
 
-export function ResultTable({ dataset, title = "Data preview" }) {
+export function ResultTable({ dataset, title = "Data preview", framed = true }) {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(5);
   const columns = datasetColumns(dataset).sort((a, b) => {
@@ -64,40 +63,53 @@ export function ResultTable({ dataset, title = "Data preview" }) {
       (cell) => `${cell.rowIndex}:${cell.columnId}`,
     ),
   );
-  return (
-    <SectionCard
-      title={title}
-      helper={`${rowCount} rows · ${columns.length} columns`}
-    >
+  const content = (
+    <Stack sx={{ gap: 2, minWidth: 0 }}>
+      {!framed && (
+        <Typography variant="caption" color="text.secondary">
+          {rowCount} rows · {columns.length} columns
+        </Typography>
+      )}
       {!rowCount ? (
         <Alert severity="info">
           No matching rows. Review the source filters or matching columns.
         </Alert>
       ) : (
-        <>
-          <TableContainer sx={{ maxWidth: "100%", overflowX: "auto" }}>
+          <TableContainer
+            component={Paper}
+            variant="outlined"
+            sx={(theme) => ({
+              maxWidth: "100%",
+              overflowX: "auto",
+              borderRadius: `${theme.custom.radii.card}px`,
+            })}
+          >
             <Table size="small" aria-label={title}>
               <TableHead>
                 <TableRow>
-                  {columns.map(({ configurationData: column }) => (
+                  {columns.map(({ configurationData: column }) => {
+                    const typeName = column.type === "Text" ? "Categorical"
+                      : column.type === "Numeric" ? "Numerical" : column.type;
+                    const description = DataTypes[typeName.toLowerCase()]?.description;
+                    return (
                     <TableCell
                       key={column.id}
+                      component="th"
+                      scope="col"
                       sx={{ fontWeight: 600, whiteSpace: "nowrap" }}
                     >
-                      {column.title || column.id}
-                      <Typography
-                        variant="caption"
-                        component="div"
-                        color="text.secondary"
-                      >
-                        {column.type === "Text"
-                          ? "Categorical"
-                          : column.type === "Numeric"
-                            ? "Numerical"
-                            : column.type}
-                      </Typography>
+                      <Box sx={{ display: "inline-flex", alignItems: "center" }}>
+                        {column.title || column.id} ({typeName})
+                        {description && (
+                          <CustomTooltip
+                            type="description"
+                            message={`What is <b>${typeName}</b> data type?<br/>${description}`}
+                          />
+                        )}
+                      </Box>
                     </TableCell>
-                  ))}
+                    );
+                  })}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -106,7 +118,7 @@ export function ResultTable({ dataset, title = "Data preview" }) {
                   (_, offset) => {
                     const index = safePage * size + offset;
                     return (
-                      <TableRow key={index}>
+                      <TableRow key={index} hover>
                         {columns.map(({ configurationData: column, data }) => (
                           <TableCell key={column.id}>
                             {filled.has(`${index}:${column.id}`) ? (
@@ -124,7 +136,6 @@ export function ResultTable({ dataset, title = "Data preview" }) {
                 )}
               </TableBody>
             </Table>
-          </TableContainer>
           <TablePagination
             component="div"
             count={rowCount}
@@ -137,7 +148,7 @@ export function ResultTable({ dataset, title = "Data preview" }) {
               setPage(0);
             }}
           />
-        </>
+          </TableContainer>
       )}
       {filled.size > 0 && (
         <Typography variant="caption" color="text.secondary">
@@ -145,10 +156,15 @@ export function ResultTable({ dataset, title = "Data preview" }) {
           Other zeros are measured values.
         </Typography>
       )}
-    </SectionCard>
+    </Stack>
   );
+  return framed ? (
+    <SectionCard title={title} helper={`${rowCount} rows · ${columns.length} columns`}>
+      {content}
+    </SectionCard>
+  ) : content;
 }
-ResultTable.propTypes = { dataset: PropTypes.object, title: PropTypes.string };
+ResultTable.propTypes = { dataset: PropTypes.object, title: PropTypes.string, framed: PropTypes.bool };
 
 export function ColumnMappings({
   inputs,
@@ -157,18 +173,20 @@ export function ColumnMappings({
   onChange,
   title,
   helper,
+  columns: layoutColumns = 1,
 }) {
   const columns = datasetColumns(dataset);
   return (
     <SectionCard title={title} helper={helper}>
-      <Stack sx={{ gap: 2 }}>
+      <Grid container spacing={2}>
         {inputs.map((input) => {
           const options = columns.filter(
             (column) => column.configurationData.type === input.type,
           );
           const id = `${title.replaceAll(" ", "-")}-${input.id}`;
           return (
-            <FormControl fullWidth key={input.id}>
+            <Grid size={{ xs: 12, md: layoutColumns === 2 ? 6 : 12 }} key={input.id}>
+            <FormControl fullWidth>
               <InputLabel id={`${id}-label`} required={Boolean(input.required)}>
                 {input.title || input.id} (
                 {input.type === "Text" ? "Categorical" : "Numerical"})
@@ -213,6 +231,7 @@ export function ColumnMappings({
                   : input.description}
               </FormHelperText>
             </FormControl>
+            </Grid>
           );
         })}
         {!inputs.length && (
@@ -220,7 +239,7 @@ export function ColumnMappings({
             This method declares no input mappings.
           </Typography>
         )}
-      </Stack>
+      </Grid>
     </SectionCard>
   );
 }
@@ -231,6 +250,7 @@ ColumnMappings.propTypes = {
   onChange: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
   helper: PropTypes.string,
+  columns: PropTypes.oneOf([1, 2]),
 };
 
 export function MethodParameters({ params, onChange }) {
@@ -242,7 +262,7 @@ export function MethodParameters({ params, onChange }) {
   return (
     <SectionCard
       title="Method parameters"
-      helper="Review the method's declared defaults. Data is not normalized automatically."
+      helper="Parameters come with sensible defaults — adjust them only if needed."
     >
       <Stack sx={{ gap: 2 }}>
         {params.map((param) =>
@@ -289,90 +309,4 @@ export function MethodParameters({ params, onChange }) {
 MethodParameters.propTypes = {
   params: PropTypes.array.isRequired,
   onChange: PropTypes.func.isRequired,
-};
-
-// The existing customization controls are presentational and can be reused
-// without mounting another indicator type's state/context.
-export function ChartCustomization({
-  params,
-  onChange,
-  chartConfiguration,
-  categories,
-}) {
-  const [tab, setTab] = useState(0);
-  const setState = (updater) =>
-    onChange(typeof updater === "function" ? updater(params) : updater);
-  const canFilter =
-    chartConfiguration.categoriesFilteringAvailable ||
-    chartConfiguration.sortingOrderChangeable;
-  return (
-    <SectionCard
-      title="Customize chart"
-      helper="Use the same elements, styles and filters as the Basic editor."
-    >
-      <Tabs
-        value={tab}
-        onChange={(_, next) => setTab(next)}
-        aria-label="Chart customization"
-        variant="scrollable"
-      >
-        <Tab
-          label="Elements"
-          id="complex-customize-0"
-          aria-controls="complex-customize-panel-0"
-        />
-        <Tab
-          label="Styles"
-          id="complex-customize-1"
-          aria-controls="complex-customize-panel-1"
-        />
-        {canFilter && (
-          <Tab
-            label="Filters"
-            id="complex-customize-2"
-            aria-controls="complex-customize-panel-2"
-          />
-        )}
-      </Tabs>
-      {[0, 1, ...(canFilter ? [2] : [])].map((index) => (
-        <Box
-          key={index}
-          role="tabpanel"
-          id={`complex-customize-panel-${index}`}
-          aria-labelledby={`complex-customize-${index}`}
-          hidden={tab !== index}
-          sx={{ p: 1 }}
-        >
-          {tab === index &&
-            (index === 0 ? (
-              <ElementsBar
-                state={params}
-                setState={setState}
-                chartConfiguration={chartConfiguration}
-              />
-            ) : index === 1 ? (
-              <StylesBar
-                categories={categories}
-                state={params}
-                setState={setState}
-                chartConfiguration={chartConfiguration}
-              />
-            ) : (
-              <FiltersBar
-                categories={categories}
-                state={params}
-                setState={setState}
-                chartConfiguration={chartConfiguration}
-              />
-            ))}
-        </Box>
-      ))}
-    </SectionCard>
-  );
-}
-ChartCustomization.propTypes = {
-  params: PropTypes.object.isRequired,
-  onChange: PropTypes.func.isRequired,
-  chartConfiguration: PropTypes.object.isRequired,
-  categories: PropTypes.array,
 };
