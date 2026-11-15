@@ -125,14 +125,14 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
       sortFields={SORT_FIELDS} sortBy={query.sortBy} sortDirection={query.sortDirection}
       onSortField={(sortBy) => setQuery((previous) => ({ ...previous, page: 0, sortBy, sortDirection: "asc" }))}
       onSortDirection={(sortDirection) => setQuery((previous) => ({ ...previous, page: 0, sortDirection }))}>
-        <TextField size="small" label="Search indicators" placeholder="Search by name" value={search} sx={{ flex: "1 1 220px", minWidth: 180 }} onChange={(event) => setSearch(event.target.value)}
+        <TextField size="small" label="Search indicators" placeholder="Search by name" value={search} sx={{ flex: "1 1 180px", minWidth: 180 }} onChange={(event) => setSearch(event.target.value)}
           slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }} />
-        <TextField select size="small" label="Indicator type" value={query.indicatorType} sx={{ flex: "1 1 180px", minWidth: 160, [WIDE]: { maxWidth: 180 } }}
+        <TextField select size="small" label="Indicator type" value={query.indicatorType} sx={{ flex: "1 1 160px", minWidth: 160, [WIDE]: { maxWidth: 180 } }}
           onChange={(event) => setQuery((previous) => ({ ...previous, page: 0, indicatorType: event.target.value }))}>
           <MenuItem value="">All types</MenuItem>{Object.entries(TYPES).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
         </TextField>
         <TextField select size="small" label="Origin" value={query.origin}
-          sx={{ flex: "0 1 160px", minWidth: 140 }}
+          sx={{ flex: "0 1 140px", minWidth: 140 }}
           onChange={(event) => setQuery((previous) => ({ ...previous, page: 0, origin: event.target.value }))}>
           <MenuItem value="">All origins</MenuItem><MenuItem value="OWN">Created by me</MenuItem>
           <MenuItem value="COMMUNITY">Community copies</MenuItem>
@@ -147,7 +147,7 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
       onSizeChange={(size) => setQuery((previous) => ({ ...previous, page: 0, size }))}
       emptyState={!loading && !rows.length && !error && <Box sx={{ p: 4, textAlign: "center" }}>
         <Typography sx={{ fontWeight: 600 }}>{filtered ? "No matching indicators" : draftsOnly ? "No drafts yet" : "No indicators yet"}</Typography>
-        <Typography variant="body2" color="text.secondary">{filtered ? "Try another name or indicator type." : "Start an indicator and your unfinished work will appear here after its first save."}</Typography>
+        <Typography variant="body2" color="text.secondary">{filtered ? "Try another name, indicator type or origin." : "Start an indicator and your unfinished work will appear here after its first save."}</Typography>
         <Button sx={{ mt: 2 }} variant="contained" onClick={() => navigate("/indicator/editor")}>Create an indicator</Button>
       </Box>}
       header={<TableRow>

@@ -7,7 +7,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import { AuthContext } from "../../../setup/auth-context-manager/auth-context-manager.jsx";
 import PageHeader from "../page-header/page-header.jsx";
 import { WorkspaceDashboard, WorkspaceTable } from "../workspace-dashboard/workspace-dashboard.jsx";

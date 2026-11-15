@@ -84,6 +84,7 @@ export default function MyIscTable({ onStats, draftsOnly = false, onDraftsOnlyCh
     title: "Delete indicator?", confirm: "Delete indicator",
     description: `This permanently deletes the saved ISC “${nameOf(removeTarget)}”.`,
   };
+  const filtered = Boolean(query.search || query.origin);
 
   return <WorkspaceDashboard>
     <WorkspaceToolbar label="ISC controls" onCreate={onCreate} sortFields={SORT_FIELDS} sortBy={query.sortBy}
@@ -109,8 +110,8 @@ export default function MyIscTable({ onStats, draftsOnly = false, onDraftsOnlyCh
       onPageChange={(page) => setQuery((previous) => ({ ...previous, page }))}
       onSizeChange={(size) => setQuery((previous) => ({ ...previous, page: 0, size }))}
       emptyState={!loading && !error && !rows.length && <Box sx={{ p: 4, textAlign: "center" }}>
-        <Typography sx={{ fontWeight: 600 }}>{query.search ? "No matching ISCs" : draftsOnly ? "No drafts yet" : "No ISCs yet"}</Typography>
-        <Typography variant="body2" color="text.secondary">{query.search ? "Try another name." : "Create an ISC to prototype an indicator."}</Typography>
+        <Typography sx={{ fontWeight: 600 }}>{filtered ? "No matching ISCs" : draftsOnly ? "No drafts yet" : "No ISCs yet"}</Typography>
+        <Typography variant="body2" color="text.secondary">{filtered ? "Try another name or origin." : "Create an ISC to prototype an indicator."}</Typography>
         <Button sx={{ mt: 2 }} variant="contained" onClick={onCreate}>Create an ISC</Button>
       </Box>}
       header={<TableRow>
