@@ -57,7 +57,8 @@ export default function ComplexVisualizationStep({
   const customizeButton = useRef(null);
   const params = { ...defaultParams, ...configuration.visualization.params };
   const canPreview = Boolean(
-    selectedType &&
+    datasetRows(chartDataset) > 0 &&
+      selectedType &&
       supportsSeries(selectedType) &&
       mappingsReady(
         selectedType.chartInputs,
@@ -86,15 +87,8 @@ export default function ComplexVisualizationStep({
     setCustomize(false);
     requestAnimationFrame(() => customizeButton.current?.focus());
   };
-  const previewAction = (
-    <Button
-      variant="contained"
-      disabled={!canPreview || Boolean(busy)}
-      onClick={previewChart}
-    >
-      Generate chart preview
-    </Button>
-  );
+  const previewError = operationError.step === "visualization"
+    ? operationError.message : "";
   const readinessItems = [
     {
       label: "Basic indicators selected",
@@ -282,7 +276,7 @@ export default function ComplexVisualizationStep({
             <Grid size={{ xs: 12, lg: customize ? "grow" : 12 }} sx={{ minWidth: 0 }}>
               <SectionCard
                 title="Live preview"
-                helper="Generate a preview to review the current chart inputs and options."
+                helper="Updates live as you adjust the chart inputs and options."
                 action={!customize && (
                   <Button
                     ref={customizeButton}
@@ -294,25 +288,33 @@ export default function ComplexVisualizationStep({
                   </Button>
                 )}
               >
-                <Failure
-                  message={operationError.step === "visualization" ? operationError.message : ""}
-                />
                 {busy === "visualization" ? (
                   <Stack sx={{ gap: 1.5, alignItems: "center", justifyContent: "center", minHeight: 360 }}>
                     <CircularProgress aria-label="Generating chart preview" />
                     <Typography variant="body2" color="text.secondary">Generating preview…</Typography>
                   </Stack>
+                ) : previewError ? (
+                  <Stack sx={{ gap: 2 }}>
+                    <Failure message={previewError} />
+                    <Stack sx={{ alignItems: "center" }}>
+                      <Button
+                        variant="contained"
+                        disabled={!canPreview || Boolean(busy)}
+                        onClick={previewChart}
+                      >
+                        Retry preview
+                      </Button>
+                    </Stack>
+                  </Stack>
                 ) : previewCurrent ? (
-                  <>
-                    <ChartPreview previewData={preview} responsive />
-                    <Stack sx={{ alignItems: "center", pt: 1 }}>{previewAction}</Stack>
-                  </>
+                  <ChartPreview previewData={preview} responsive />
                 ) : (
                   <Stack sx={{ gap: 2, alignItems: "center", justifyContent: "center", minHeight: 360 }}>
+                    {canPreview && <CircularProgress aria-label="Generating chart preview" />}
                     <Typography variant="body2" color="text.secondary" align="center">
-                      Preview the current sources, mappings and chart options before saving.
+                      {canPreview ? "Generating preview…"
+                        : "Map each required chart input to a compatible column to generate the preview automatically."}
                     </Typography>
-                    {previewAction}
                   </Stack>
                 )}
               </SectionCard>
