@@ -40,7 +40,9 @@ confirm that an environment has finished updating.
 - **Design indicators:** use Indicator Specification Cards to connect learning goals,
   questions, data requirements, and visualization choices.
 - **Build analytics:** select an xAPI dataset, filter activities, choose an analytics method,
-  and preview or save an indicator. Combine indicators for broader analyses.
+  and preview or save an indicator. Combine indicators for broader analyses. Keep
+  unfinished work as private drafts alongside saved indicators in My Indicators;
+  use **Drafts only** to focus on work in progress.
 - **Administer the platform:** manage users, plugin catalogs, and audit logs. Configured
   S3 storage enables plugin upload, version, and recovery workflows.
 - **Publish homepage content:** edit news and publications with rich text, private drafts,

@@ -1,9 +1,9 @@
 # Indicator drafts
 
 Basic, Composite and Multilevel editors share private, persistent drafts. A
-draft can be incomplete. It appears under **My Indicators → Drafts** after the
-first meaningful edit has been saved to the server. Opening an empty new editor
-does not create a draft.
+draft can be incomplete. It appears alongside saved indicators in the single
+**My Indicators** table, with a **Draft** status, after the first meaningful edit
+has been saved to the server. Opening an empty new editor does not create a draft.
 
 ## Saving and resuming
 
@@ -12,11 +12,16 @@ does not create a draft.
 - **Draft saved** means the server acknowledged the current configuration.
   **Save draft** saves immediately; **Save draft and exit** waits for the latest
   changes before leaving. Failed saves retain the editor and provide retry.
-- Continue from the Drafts table or reopen the draft's address in another
+- Choose **Continue** on a Draft row or reopen the draft's address in another
   authenticated browser. The server checks ownership on every operation.
-- Search, filter by indicator type, sort, rename or discard from the same table.
-  Discard requires confirmation. Starting another indicator preserves existing
-  drafts.
+- **My Indicators** shows saved indicators and drafts together. Select the
+  **Drafts only** checkbox to focus on unfinished work; clear it to see both.
+  Search, indicator-type filters, sorting and pagination apply across the full
+  server list. Draft rows offer rename and confirmed discard actions.
+  Starting another indicator preserves existing drafts.
+
+Existing `/indicator?view=drafts` links remain valid: they open the same table
+with **Drafts only** selected.
 
 Editing a saved indicator opens or resumes a separate editing draft. Draft
 autosaves do not change the saved indicator, its embeds or the source definitions
@@ -75,6 +80,7 @@ also capture the saved source's definition fingerprint.
 
 | Operation | Endpoint, relative to `/api/v1/indicators` |
 | --- | --- |
+| List own saved indicators and active drafts | `GET /my/workspace` |
 | Create | `POST /drafts` with a stable client request UUID |
 | List own active drafts | `GET /drafts` |
 | Resume | `GET /drafts/{id}` |
@@ -85,8 +91,17 @@ also capture the saved source's definition fingerprint.
 | Discard | `DELETE /drafts/{id}?revision=…` |
 
 Responses use the existing `ApiSuccess.data` envelope and `Cache-Control:
-no-store`. Lists support pagination, name search, indicator type and sorting by
-name/type/creation/update time. Unknown or other users' draft IDs are unavailable.
+no-store`. The unified workspace list supports `page`, `size`, `search`,
+`indicatorType`, `draftsOnly`, `sortBy` and `sortDirection`. It defaults to saved
+indicators and active drafts together; `draftsOnly=true` selects only drafts.
+Supported workspace sort fields are `name`, `indicatorType`, `updatedAt` and
+`status`. The server filters, counts, orders and paginates saved indicators and
+drafts together.
+
+Workspace rows contain display metadata, including a `kind`/`status` of `SAVED`
+or `DRAFT`. The existing
+`GET /drafts` endpoint remains available with its draft-specific filters and
+sorting. Unknown or other users' draft IDs are unavailable.
 
 The shared frontend session serializes autosaves and coalesces pending edits.
 An uncertain create/update is retried with the same mutation identity before
@@ -109,8 +124,8 @@ without remounting the editor or resetting its current step.
 
 Backend lifecycle, ownership, conditional writes, retry recovery and validation
 are covered by the backend test suite. Frontend checks include the shared queue,
-storage failures, conflicts, sign out, draft-list actions, mobile layouts and
-the existing Basic/Complex analysis/chart workflows:
+storage failures, conflicts, sign out, unified-list status/filter/actions,
+mobile layouts and the existing Basic/Complex analysis/chart workflows:
 
 Browser checks require a separate Playwright/WebKit installation, as prepared by
 the JavaScript CI workflow. Set `NODE_PATH` to that installation when running the
