@@ -36,12 +36,14 @@ import {
   datasetRows,
   defaultMappings,
   fallbackConfiguration,
+  mappingsReady,
   newComplexConfiguration,
   previewRequest,
   readComplexConfiguration,
   recoveryKey,
   saveRequest,
   sourceSelection,
+  sourcesReady,
 } from "./complex-model";
 import { Failure } from "./complex-controls";
 
@@ -129,6 +131,10 @@ export default function ComplexIndicator({ type }) {
   const [analyzed, setAnalyzed] = useState(null);
   const [preview, setPreview] = useState(null);
   const [previewFingerprint, setPreviewFingerprint] = useState("");
+  const [previewError, setPreviewError] = useState("");
+  // Reselecting a chart may invalidate a preview without changing its payload.
+  const [previewRevision, setPreviewRevision] = useState(0);
+  const [previewRetry, setPreviewRetry] = useState(0);
   const [busy, setBusy] = useState("");
   const [operationError, setOperationError] = useState({
     step: "",
@@ -170,6 +176,12 @@ export default function ComplexIndicator({ type }) {
     configuration.visualization.dataMode !== "combined" ||
     (chart?.chartInputs || []).filter((input) => input.type === "Text")
       .length >= 2;
+  const autoPreviewReady = Boolean(
+    loaded && !recoveryCandidate && !chartLoading && libraryId &&
+      selectedType?.chartInputs?.length && sourcesReady(configuration.sources) &&
+      datasetRows(chartDataset) > 0 && supportsSeries(selectedType) &&
+      mappingsReady(selectedType.chartInputs, configuration.visualization.mapping, chartDataset),
+  );
   const dirty =
     loaded &&
     configuration.sources.length > 0 &&
@@ -432,6 +444,8 @@ export default function ComplexIndicator({ type }) {
     setBusy("");
     setPreview(null);
     setPreviewFingerprint("");
+    setPreviewError("");
+    setPreviewRevision((previous) => previous + 1);
     setOperationError({ step: "", message: "" });
     if (from === "sources" || from === "combine") {
       setMerged(null);
@@ -547,21 +561,52 @@ export default function ComplexIndicator({ type }) {
         setPreview(null);
       },
     );
-  const previewChart = () => {
-    const fingerprint = currentPreviewFingerprint;
-    run(
-      "visualization",
-      () =>
-        api.post(
+  const previewChart = useCallback(() => setPreviewRetry((previous) => previous + 1), []);
+
+  useEffect(() => {
+    if (!autoPreviewReady) {
+      setPreview(null);
+      setPreviewFingerprint("");
+      return undefined;
+    }
+    const request = ++generation.current;
+    const controller = new AbortController();
+    let cancelled = false;
+    setBusy("visualization");
+    setPreview(null);
+    setPreviewFingerprint("");
+    setPreviewError("");
+    setOperationError((previous) => previous.step === "visualization"
+      ? { step: "", message: "" }
+      : previous);
+
+    const load = async () => {
+      try {
+        const response = await api.post(
           `v1/indicators/${endpoint}/preview`,
-          previewRequest(configuration),
-        ),
-      (response) => {
+          JSON.parse(currentPreviewFingerprint),
+          { signal: controller.signal },
+        );
+        if (cancelled || request !== generation.current) return;
         setPreview(chartPreviewData(apiData(response)));
-        setPreviewFingerprint(fingerprint);
-      },
-    );
-  };
+        setPreviewFingerprint(currentPreviewFingerprint);
+      } catch (error) {
+        if (!cancelled && request === generation.current) {
+          setPreviewError(messageOf(error, "Could not generate the chart preview. Review the inputs and retry."));
+        }
+      } finally {
+        if (!cancelled && request === generation.current) setBusy("");
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+      controller.abort();
+      if (request === generation.current) {
+        setBusy((previous) => previous === "visualization" ? "" : previous);
+      }
+    };
+  }, [api, endpoint, currentPreviewFingerprint, chartDataset, autoPreviewReady, previewRevision, previewRetry]);
   const save = () =>
     run(
       "save",
@@ -921,7 +966,7 @@ export default function ComplexIndicator({ type }) {
           chartDataset={chartDataset}
           supportsSeries={supportsSeries}
           selectedType={selectedType}
-          operationError={operationError}
+          operationError={previewError ? { step: "visualization", message: previewError } : operationError}
           setCatalogRetry={setCatalogRetry}
           busy={busy}
           previewChart={previewChart}

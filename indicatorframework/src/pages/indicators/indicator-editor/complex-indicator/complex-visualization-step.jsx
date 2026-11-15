@@ -58,7 +58,7 @@ export default function ComplexVisualizationStep({
   const params = { ...defaultParams, ...configuration.visualization.params };
   const canPreview = Boolean(
     datasetRows(chartDataset) > 0 &&
-      selectedType &&
+      selectedType?.chartInputs?.length &&
       supportsSeries(selectedType) &&
       mappingsReady(
         selectedType.chartInputs,

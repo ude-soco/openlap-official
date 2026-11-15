@@ -32,6 +32,11 @@ their selected matching columns and measures are compatible.
 5. Map the resulting columns to a compatible chart, preview it and save. Reopen
    the saved indicator from **My Indicators** to preview or edit its configuration.
 
+The chart preview generates automatically once a visualization type is selected
+and its required inputs are mapped. Changing chart inputs or customization
+options refreshes it automatically. If generation fails, use **Retry preview**;
+saving remains unavailable until the current preview succeeds.
+
 For Composite charts, **Combined series** provides matching-key, source-label and
 measure columns in a long table suitable for grouped line/area charts. The normal
 combined table retains separate numeric columns for reviewing values or mapping
