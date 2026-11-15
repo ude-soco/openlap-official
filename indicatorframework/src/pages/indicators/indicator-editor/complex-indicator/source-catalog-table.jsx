@@ -61,7 +61,9 @@ export default function SourceCatalogTable({
         width: "100%",
         maxWidth: "100%",
         maxHeight: { xs: 480, md: 560 },
-        overflow: "auto",
+        overflowX: "hidden",
+        overflowY: "auto",
+        overscrollBehaviorX: "none",
         borderRadius: `${theme.custom.radii.card}px`,
       })}
     >
@@ -94,7 +96,7 @@ export default function SourceCatalogTable({
               sx={{ display: { xs: "none", md: "table-cell" }, width: 128, fontWeight: 600 }}>
               {sortLabel("createdOn", "Last saved", "Sort by date")}
             </TableCell>
-            <TableCell align="center" sx={{ width: { xs: 56, sm: 80 }, px: 0.5, fontWeight: 600 }}>
+            <TableCell align="center" sx={{ width: { xs: 64, sm: 80 }, px: 0.5, fontWeight: 600 }}>
               Preview
             </TableCell>
           </TableRow>

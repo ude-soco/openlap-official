@@ -153,7 +153,7 @@ export default function ComplexSourcesStep({
             setPageSize(Number(event.target.value));
             setSourcePage(0);
           }}
-          sx={{ maxWidth: "100%", "& .MuiTablePagination-toolbar": { px: 0, flexWrap: "wrap", justifyContent: "flex-end" }, "& .MuiTablePagination-spacer": { display: "none" } }}
+          sx={{ maxWidth: "100%", overflowX: "hidden", overscrollBehaviorX: "none", "& .MuiTablePagination-toolbar": { px: 0, flexWrap: "wrap", justifyContent: "flex-end" }, "& .MuiTablePagination-spacer": { display: "none" } }}
         />
         {empty && !hasFilters && (
           <Alert severity="info">

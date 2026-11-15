@@ -38,7 +38,7 @@ const WorkflowStepper = ({ steps, current, onStepSelect, ariaLabel = "ISC creati
       alternativeLabel={!isMobile}
       orientation={isMobile ? "vertical" : "horizontal"}
       aria-label={ariaLabel}
-      sx={{ width: "100%" }}
+      sx={{ width: "100%", minWidth: 0 }}
     >
       {steps.map((step) => {
         const isCurrent = step.key === current;
@@ -51,6 +51,7 @@ const WorkflowStepper = ({ steps, current, onStepSelect, ariaLabel = "ISC creati
           <Typography
             variant="caption"
             color={step.locked ? "text.disabled" : "text.secondary"}
+            sx={{ overflowWrap: "anywhere" }}
           >
             {optionalText}
           </Typography>
@@ -66,6 +67,7 @@ const WorkflowStepper = ({ steps, current, onStepSelect, ariaLabel = "ISC creati
             completed={step.completed && !isCurrent}
             active={isCurrent}
             disabled={step.locked}
+            sx={{ minWidth: 0 }}
           >
             {clickable ? (
               <StepButton
@@ -73,6 +75,7 @@ const WorkflowStepper = ({ steps, current, onStepSelect, ariaLabel = "ISC creati
                 icon={lockIcon}
                 optional={optionalNode}
                 aria-current={isCurrent ? "step" : undefined}
+                sx={{ m: 0, p: 0, width: "100%", minWidth: 0, minHeight: 44, boxSizing: "border-box" }}
               >
                 {step.label}
               </StepButton>
