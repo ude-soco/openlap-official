@@ -154,17 +154,20 @@ const SidebarNav = ({ onItemClick }) => {
             <List component="div" disablePadding>
               {menu.items.map((item) => {
                 const active = location.pathname === item.navigate;
+                const itemDisabled = disabled || roles.some((role) => item.disabledRoles?.includes(role));
                 return (
+                  <Tooltip key={item.navigate} placement="right" arrow
+                    title={itemDisabled && !disabled ? "Connect an LRS in Manage LRS to use this feature." : undefined}>
+                    <Box>
                   <ListItemButton
-                    key={item.navigate}
                     onClick={() => handleNavigate(item.navigate)}
-                    disabled={disabled}
+                    disabled={itemDisabled}
                     selected={active}
                     aria-current={active ? "page" : undefined}
                     sx={(theme) => ({ ...itemSx(theme), pl: 3 })}
                   >
                     <ListItemIcon>
-                      {disabled ? <LockIcon /> : item.icon}
+                      {itemDisabled ? <LockIcon /> : item.icon}
                     </ListItemIcon>
                     <ListItemText
                       primary={item.primary}
@@ -176,6 +179,8 @@ const SidebarNav = ({ onItemClick }) => {
                       }}
                     />
                   </ListItemButton>
+                    </Box>
+                  </Tooltip>
                 );
               })}
             </List>
