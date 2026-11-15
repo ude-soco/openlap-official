@@ -11,6 +11,8 @@ public interface IndicatorDraftStore {
 
   Document findActiveEdit(String owner, String sourceId);
 
+  void visitLegacy(String owner, java.util.function.Consumer<Document> visitor);
+
   boolean insert(Document document);
 
   boolean replace(String owner, Document previous, Document replacement);

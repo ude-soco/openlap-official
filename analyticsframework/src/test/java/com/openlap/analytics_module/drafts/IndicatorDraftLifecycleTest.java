@@ -502,6 +502,27 @@ public class IndicatorDraftLifecycleTest {
   }
 
   @Test
+  public void workspaceMigrationVisitsOnlyTheCurrentOwnersUnmigratedSessions() {
+    store.rows.put(
+        "legacy-own",
+        new Document("_id", "legacy-own")
+            .append("ownerIdForTest", owner)
+            .append("indicatorType", "BASIC")
+            .append("session", config("Recovered title").toString()));
+    store.rows.put(
+        "legacy-other",
+        new Document("_id", "legacy-other")
+            .append("ownerIdForTest", "other")
+            .append("indicatorType", "BASIC")
+            .append("session", config("Private title").toString()));
+    service.migrateLegacyForOwner(request);
+    assertThat(store.rows.get("legacy-own"))
+        .containsEntry("ownerId", owner)
+        .containsEntry("name", "Recovered title");
+    assertThat(store.rows.get("legacy-other")).doesNotContainKeys("ownerId", "configuration");
+  }
+
+  @Test
   public void invalidRequestIdsSortColumnsAndOversizedSearchesFailBeforePersistence() {
     assertThatThrownBy(() -> create("not-a-uuid", "Draft")).isInstanceOf(ValidationException.class);
     assertThatThrownBy(() -> service.list(request, 0, 10, "", null, "createdBy.$id", "asc"))
@@ -533,6 +554,16 @@ public class IndicatorDraftLifecycleTest {
           .findFirst()
           .map(Document::new)
           .orElse(null);
+    }
+
+    @Override
+    public synchronized void visitLegacy(
+        String owner, java.util.function.Consumer<Document> visitor) {
+      rows.values().stream()
+          .filter(doc -> owned(doc, owner) && !doc.containsKey("ownerId"))
+          .map(Document::new)
+          .toList()
+          .forEach(visitor);
     }
 
     @Override

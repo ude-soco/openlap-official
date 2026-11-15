@@ -66,6 +66,16 @@ public class MongoIndicatorDraftStore implements IndicatorDraftStore {
   }
 
   @Override
+  public void visitLegacy(String owner, java.util.function.Consumer<Document> visitor) {
+    Document filter = owner(owner);
+    filter.put("ownerId", new Document("$exists", false));
+    // Stream old sessions rather than retaining all of an owner's potentially large snapshots.
+    try (var cursor = rows().find(filter).batchSize(10).iterator()) {
+      while (cursor.hasNext()) visitor.accept(cursor.next());
+    }
+  }
+
+  @Override
   public boolean insert(Document document) {
     indexes();
     plugins.beforeSave(document, COLLECTION);

@@ -84,4 +84,29 @@ public class MongoIndicatorDraftStoreTest {
     verify(rows, times(1))
         .createIndex(eq(new Document("activeSourceKey", 1)), any(IndexOptions.class));
   }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void legacyMigrationStreamsOnlyUnmigratedOwnedRowsAndClosesItsCursor() {
+    String owner = "0123456789abcdef01234567";
+    FindIterable<Document> found = mock(FindIterable.class);
+    MongoCursor<Document> cursor = mock(MongoCursor.class);
+    when(rows.find(any(Document.class))).thenReturn(found);
+    when(found.batchSize(10)).thenReturn(found);
+    when(found.iterator()).thenReturn(cursor);
+    when(cursor.hasNext()).thenReturn(true, false);
+    Document legacy = new Document("_id", "legacy");
+    when(cursor.next()).thenReturn(legacy);
+    java.util.List<Document> visited = new java.util.ArrayList<>();
+    store.visitLegacy(owner, visited::add);
+    assertThat(visited).containsExactly(legacy);
+    verify(cursor).close();
+    ArgumentCaptor<Document> filter = ArgumentCaptor.forClass(Document.class);
+    verify(rows).find(filter.capture());
+    assertThat(filter.getValue()).containsEntry("ownerId", new Document("$exists", false));
+    assertThat(filter.getValue().getList("$or", Document.class))
+        .contains(
+            new Document("ownerId", new Document("$exists", false))
+                .append("createdBy.$id", new org.bson.types.ObjectId(owner)));
+  }
 }

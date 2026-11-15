@@ -142,6 +142,12 @@ public class IndicatorDraftService {
     return response(required(owner(request), id));
   }
 
+  /** One-time owner-scoped migration before combined metadata search/count/pagination. */
+  public void migrateLegacyForOwner(HttpServletRequest request) {
+    String owner = owner(request);
+    store.visitLegacy(owner, legacy -> migrate(owner, legacy));
+  }
+
   public Page<IndicatorDraftResponse> list(
       HttpServletRequest request,
       int page,

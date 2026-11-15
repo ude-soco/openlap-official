@@ -88,6 +88,7 @@ import org.springframework.web.cors.CorsConfiguration;
       com.openlap.content.PublicContentController.class,
       com.openlap.plugins.visualization.VisualizationRuntimeController.class,
       com.openlap.analytics_module.drafts.IndicatorDraftController.class,
+      com.openlap.analytics_module.workspace.IndicatorWorkspaceController.class,
       SecurityAuthorizationMockMvcTest.CsrfProtectedController.class
     })
 @ImportAutoConfiguration(Jackson2AutoConfiguration.class)
@@ -127,6 +128,7 @@ public class SecurityAuthorizationMockMvcTest {
   @MockitoBean private com.openlap.plugins.management.PluginArtifactCleanup pluginArtifactCleanup;
   @MockitoBean private com.openlap.plugins.visualization.VisualizationRuntimeService visualizationRuntimeService;
   @MockitoBean private com.openlap.analytics_module.drafts.IndicatorDraftService indicatorDraftService;
+  @MockitoBean private com.openlap.analytics_module.workspace.IndicatorWorkspaceService indicatorWorkspaceService;
   @MockitoBean private AnalyticsTechniqueService analyticsTechniqueService;
   @MockitoBean private VisualizationLibraryService visualizationLibraryService;
   @MockitoBean private VisualizationTypeService visualizationTypeService;
@@ -166,6 +168,21 @@ public class SecurityAuthorizationMockMvcTest {
     given(tokenService.verifyToken(any())).willReturn(new TokenRequest("admin@example.test",new String[]{"ROLE_SUPER_ADMIN"},"tok",null));
     mockMvc.perform(get("/v1/indicators/drafts").header(AUTHORIZATION,"Bearer valid-token"))
         .andExpect(status().isForbidden());
+  }
+
+  @Test
+  public void unifiedWorkspaceIsPrivateUserOnlyAndNeverCached() throws Exception {
+    mockMvc.perform(get("/v1/indicators/my/workspace")).andExpect(status().isForbidden());
+    org.mockito.Mockito.verifyNoInteractions(indicatorWorkspaceService);
+    given(tokenService.verifyToken(any())).willReturn(new TokenRequest("user@example.test",new String[]{"ROLE_USER"},"tok",null));
+    given(indicatorWorkspaceService.list(any(),org.mockito.ArgumentMatchers.eq(0),org.mockito.ArgumentMatchers.eq(10),
+        org.mockito.ArgumentMatchers.eq(""),org.mockito.ArgumentMatchers.isNull(),org.mockito.ArgumentMatchers.eq(false),
+        org.mockito.ArgumentMatchers.eq("updatedAt"),org.mockito.ArgumentMatchers.eq("desc")))
+        .willReturn(org.springframework.data.domain.Page.empty());
+    mockMvc.perform(get("/v1/indicators/my/workspace").header(AUTHORIZATION,"Bearer valid-token"))
+        .andExpect(status().isOk()).andExpect(header().string("Cache-Control","no-store"));
+    given(tokenService.verifyToken(any())).willReturn(new TokenRequest("admin@example.test",new String[]{"ROLE_SUPER_ADMIN"},"tok",null));
+    mockMvc.perform(get("/v1/indicators/my/workspace").header(AUTHORIZATION,"Bearer valid-token")).andExpect(status().isForbidden());
   }
 
   @Test
