@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { Alert, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack } from "@mui/material";
+import { Alert, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack, Typography } from "@mui/material";
 import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import PageHeader from "../../../common/components/page-header/page-header.jsx";
@@ -48,11 +48,14 @@ export default function IscDashboard() {
       subtitle="Create, review, and manage your indicator prototypes."
       actions={<Chip icon={<InsightsOutlinedIcon />} variant="outlined"
         label={`${stats.total} ${draftsOnly ? "draft" : "ISC"}${stats.total === 1 ? "" : "s"}`} />} />
-    {recovery && <Alert severity="info" variant="outlined" action={<Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>
-      <Button color="inherit" onClick={() => setRecoveryAction("discard")}>Discard recovery</Button>
-      <Button color="inherit" onClick={continueRecovery}>Continue recovery</Button>
-    </Stack>}>
-      {recovery.name ? `Local recovery available for “${recovery.name}”.` : "A local recovery copy is available in this browser."}
+    {recovery && <Alert severity="info" variant="outlined" sx={{ "& .MuiAlert-message": { minWidth: 0, width: "100%", overflowWrap: "anywhere" } }}>
+      <Stack sx={{ gap: 1 }}>
+        <Typography variant="body2">{recovery.name ? `Local recovery available for “${recovery.name}”.` : "A local recovery copy is available in this browser."}</Typography>
+        <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>
+          <Button size="small" color="inherit" sx={{ whiteSpace: "nowrap" }} onClick={() => setRecoveryAction("discard")}>Discard recovery</Button>
+          <Button size="small" color="inherit" sx={{ whiteSpace: "nowrap" }} onClick={continueRecovery}>Continue recovery</Button>
+        </Stack>
+      </Stack>
     </Alert>}
     {recoveryError && <Alert severity="warning">{recoveryError}</Alert>}
     <MyIscTable onStats={setStats} onCreate={createNew} draftsOnly={draftsOnly} onDraftsOnlyChange={(checked) => setParams((previous) => {
