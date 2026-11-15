@@ -36,8 +36,10 @@ public final class VisualizationManifest {
       if (!(parsed instanceof Map)) throw invalid("The visualization manifest must be an object.");
       Document document = Document.parse(JSON.writeValueAsString(parsed));
       fields(document, "schemaVersion", "pluginId", "pluginVersion", "assets", "runtimes", "charts");
-      if (!(document.get("schemaVersion") instanceof Number) || document.getInteger("schemaVersion", -1) != 1)
+      if (!(document.get("schemaVersion") instanceof Number) ||
+          ((Number)document.get("schemaVersion")).doubleValue() != 1.0)
         throw invalid("Unsupported visualization manifest version.");
+      document.put("schemaVersion", 1);
       id(document, "pluginId"); text(document, "pluginVersion", 100, true);
       List<Document> assets = objects(document, "assets", 64, true);
       List<Document> runtimes = objects(document, "runtimes", 16, true);
@@ -101,6 +103,7 @@ public final class VisualizationManifest {
   }
 
   private static void validateCustomizations(Document chart) {
+    if (!(chart.get("customizations") instanceof List<?>)) throw invalid("Every chart must declare a customizations array, which may be empty.");
     List<Document> controls = objects(chart, "customizations", 64, false);
     Set<String> ids = new HashSet<>();
     for (Document control : controls) {
@@ -121,7 +124,9 @@ public final class VisualizationManifest {
         for (Document option : objects(control, "options", 100, true)) {
           fields(option, "value", "label"); text(option, "label", 300, true);
           Object value = option.get("value");
-          if (!scalar(value) || !values.add(value)) throw invalid("Select options need unique scalar values.");
+          Object identity = value instanceof Number
+              ? (((Number)value).doubleValue() == 0 ? 0.0 : ((Number)value).doubleValue()) : value;
+          if (!scalar(value) || !values.add(identity)) throw invalid("Select options need unique scalar values.");
         }
       } else if (control.containsKey("options")) throw invalid("Only select controls declare options.");
       if (control.containsKey("defaultValue")) VisualizationCustomization.validateValue(control, control.get("defaultValue"));
@@ -186,7 +191,7 @@ public final class VisualizationManifest {
     return (List<?>) value;
   }
   private static List<Document> objects(Document source, String key, int max, boolean required) { List<Document> result = new ArrayList<>(); for (Object value : list(source,key,max,required)) result.add(object(value)); return result; }
-  private static String id(Document source, String key) { String value = text(source,key,200,true); if (!value.matches("[A-Za-z][A-Za-z0-9._-]{0,199}")) throw invalid("Manifest identifiers must be stable letters, numbers, dots, underscores or hyphens."); return value; }
+  private static String id(Document source, String key) { String value = text(source,key,100,true); if (!value.matches("[A-Za-z][A-Za-z0-9._-]{0,99}") || Set.of("constructor", "prototype", "__proto__").contains(value)) throw invalid("Manifest identifiers must be stable, non-reserved letters, numbers, dots, underscores or hyphens."); return value; }
   private static String text(Document source, String key, int maximum, boolean required) { Object value = source.get(key); if (value == null && !required) return ""; if (!(value instanceof String) || ((String)value).length() > maximum || required && ((String)value).isBlank() || ((String)value).indexOf('\0') >= 0) throw invalid("Invalid manifest field: " + key + "."); return (String)value; }
   private static void fields(Document source, String... names) { Set<String> allowed = Set.of(names); if (!allowed.containsAll(source.keySet())) throw invalid("The visualization manifest contains unknown fields."); }
   static ValidationException invalid(String message) { return new ValidationException("INVALID_VISUALIZATION_MANIFEST", message); }

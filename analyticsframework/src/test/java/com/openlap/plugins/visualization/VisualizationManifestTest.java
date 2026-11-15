@@ -10,6 +10,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class VisualizationManifestTest {
+  @Test void publicSchemaAndRuntimeUseTheSameIdentifierAndEmptyControlContract() throws Exception {
+    Document data = manifest();
+    assertThat(VisualizationManifest.read(jar(data), null)).isNotNull();
+    Document chart = (Document) ((List<?>) data.get("charts")).get(0);
+    chart.remove("customizations");
+    assertThatThrownBy(() -> VisualizationManifest.read(jar(data), null)).hasMessageContaining("customizations array");
+    chart.put("customizations", List.of());
+    data.put("pluginId", "a".repeat(101));
+    assertThatThrownBy(() -> VisualizationManifest.read(jar(data), null)).hasMessageContaining("pluginId");
+    data.put("pluginId", "constructor");
+    assertThatThrownBy(() -> VisualizationManifest.read(jar(data), null)).hasMessageContaining("non-reserved");
+  }
   @TempDir Path folder;
   static final byte[] SCRIPT = "window.ExampleCharts = {};".getBytes(StandardCharsets.UTF_8);
   static Document manifest() {
@@ -38,6 +50,26 @@ class VisualizationManifestTest {
     Document data=manifest();data.put("schemaVersion",2);
     assertThatThrownBy(() -> VisualizationManifest.read(jar(data),null)).hasMessageContaining("version");
     assertThatThrownBy(() -> VisualizationManifest.read(jar(manifest()),List.of("example.OtherChart"))).hasMessageContaining("exactly match");
+  }
+  @Test void schemaVersionAcceptsTheJsonSchemaIntegerFormOnePointZero() throws Exception {
+    Document data=manifest();data.put("schemaVersion",1.0);
+    assertThat(VisualizationManifest.read(jar(data),null).document().get("schemaVersion")).isEqualTo(1);
+    data.put("schemaVersion",1.1);
+    assertThatThrownBy(() -> VisualizationManifest.read(jar(data),null)).hasMessageContaining("version");
+  }
+  @Test void numericChoiceDuplicatesMatchJavascriptNumbersWhileOtherScalarTypesRemainDistinct() throws Exception {
+    for (List<Object> values : List.of(List.<Object>of(1,1.0),List.<Object>of(0,-0.0))) {
+      Document data=manifest();Document chart=(Document)((List<?>)data.get("charts")).get(0);
+      List<Document> options=values.stream().map(value -> new Document("value",value).append("label",String.valueOf(value))).toList();
+      chart.put("customizations",List.of(new Document("id","choice").append("label","Choice").append("type","select").append("group","elements").append("options",options)));
+      assertThatThrownBy(() -> VisualizationManifest.read(jar(data),null)).hasMessageContaining("unique scalar");
+    }
+    Document data=manifest();Document chart=(Document)((List<?>)data.get("charts")).get(0);
+    chart.put("customizations",List.of(new Document("id","choice").append("label","Choice").append("type","select").append("group","elements").append("options",List.of(
+        new Document("value",false).append("label","Boolean false"),
+        new Document("value","false").append("label","String false"),
+        new Document("value",0).append("label","Numeric zero")))));
+    assertThat(VisualizationManifest.read(jar(data),null)).isNotNull();
   }
   @Test void rejectsMissingAndModifiedAssets() throws Exception {
     assertThatThrownBy(() -> VisualizationManifest.read(jar(manifest().toJson(),Map.of()),null)).hasMessageContaining("missing");

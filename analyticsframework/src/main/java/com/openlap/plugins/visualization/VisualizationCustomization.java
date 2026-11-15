@@ -41,7 +41,7 @@ public final class VisualizationCustomization {
 
   private static boolean equalValue(Object left, Object right) {
     return Objects.equals(left,right) || left instanceof Number && right instanceof Number &&
-        Double.compare(((Number)left).doubleValue(),((Number)right).doubleValue()) == 0;
+        ((Number)left).doubleValue() == ((Number)right).doubleValue();
   }
 
   static void validateValue(Document control, Object value) {
@@ -61,7 +61,7 @@ public final class VisualizationCustomization {
         }
         break;
       case "color": valid = value instanceof String && ((String)value).matches("#[a-fA-F0-9]{6}"); break;
-      case "select": valid = ((List<?>)control.getOrDefault("options", List.of())).stream().map(item -> (Map<?,?>)item).anyMatch(option -> Objects.equals(option.get("value"),value) || option.get("value") instanceof Number && value instanceof Number && Double.compare(((Number)option.get("value")).doubleValue(),((Number)value).doubleValue()) == 0); break;
+      case "select": valid = ((List<?>)control.getOrDefault("options", List.of())).stream().map(item -> (Map<?,?>)item).anyMatch(option -> equalValue(option.get("value"),value)); break;
       default: valid = value instanceof String && ((String)value).length() <= 10000 && ((String)value).indexOf('\0') < 0;
     }
     if (!valid) throw VisualizationManifest.invalid("Invalid value for chart customization: " + control.getString("label") + ".");

@@ -44,4 +44,9 @@ class VisualizationCustomizationTest {
     assertThatThrownBy(() -> VisualizationCustomization.validate(descriptor,Map.of("size",1.2))).hasMessageContaining("Invalid value");
     assertThatThrownBy(() -> VisualizationCustomization.validate(descriptor,Map.of("fill","#12345678"))).hasMessageContaining("Invalid value");
   }
+  @Test void numericZeroAndNegativeZeroAreEqualForChoicesAndVisibility() {
+    Document mode=control("mode","select",0).append("options",List.of(new Document("value",0).append("label","Zero")));
+    Document title=control("title","text","Visible").append("visibleWhen",new Document("id","mode").append("equals",0));
+    assertThat(VisualizationCustomization.validate(descriptor(mode,title),Map.of("mode",-0.0))).containsEntry("title","Visible");
+  }
 }
