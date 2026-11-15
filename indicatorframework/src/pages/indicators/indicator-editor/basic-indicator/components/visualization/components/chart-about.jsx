@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import { Box, Stack, Typography } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { getChartMetadata } from "../utils/visualization-data";
+import { getVisualizationDescription } from "../utils/visualization-descriptor";
 
 const FieldLabel = ({ children }) => (
   <Typography
@@ -23,7 +24,7 @@ FieldLabel.propTypes = { children: PropTypes.node };
  */
 const ChartAbout = ({ chartType }) => {
   if (!chartType?.id) return null;
-  const meta = getChartMetadata(chartType.imageCode);
+  const meta = getVisualizationDescription(chartType, getChartMetadata(chartType.imageCode));
 
   return (
     <Box>

@@ -13,12 +13,14 @@ import {
 import RecommendRoundedIcon from "@mui/icons-material/RecommendRounded";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import InsertChartOutlinedIcon from "@mui/icons-material/InsertChartOutlined";
 import { visualizationImages } from "../utils/visualization-data";
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
 import {
   buildRequirementText,
   categorizeCharts,
 } from "../utils/chart-compatibility";
+import { getVisualizationDescriptor } from "../utils/visualization-descriptor";
 
 const STATUS_ARIA = {
   recommended: "recommended for your data",
@@ -50,6 +52,18 @@ const StatusChip = ({ status }) => {
   );
 };
 StatusChip.propTypes = { status: PropTypes.string };
+
+const ChartIcon = ({ iconUrl, svg }) => {
+  const [failedUrl, setFailedUrl] = useState("");
+  if (iconUrl && failedUrl !== iconUrl) return (
+    <Box component="img" src={iconUrl} alt="" onError={() => setFailedUrl(iconUrl)}
+      sx={{ width: 56, height: 56, objectFit: "contain" }} />
+  );
+  return svg ? <Box aria-hidden sx={{ "& svg": { width: 56, height: 56 } }}
+    dangerouslySetInnerHTML={{ __html: svg }} />
+    : <InsertChartOutlinedIcon color="primary" sx={{ width: 56, height: 56 }} aria-hidden />;
+};
+ChartIcon.propTypes = { iconUrl: PropTypes.string, svg: PropTypes.string };
 
 const ChartTypeOptions = ({
   types,
@@ -86,7 +100,9 @@ const ChartTypeOptions = ({
 
   const renderChartCard = ({ type, compat, unavailableReason }) => {
     const svg = visualizationImages[type.imageCode];
-    if (!svg) return null;
+    const declaredIcon = getVisualizationDescriptor(type)?.iconUrl;
+    const iconUrl = typeof declaredIcon === "string" && /^(https?:\/\/|\/(?!\/))/.test(declaredIcon)
+      ? declaredIcon : "";
     const selected = selectedTypeId === type.id;
     const incompatible = compat.status === "needs-data";
     const requirementText = incompatible
@@ -119,11 +135,7 @@ const ChartTypeOptions = ({
           <Stack
             sx={{ gap: 1, alignItems: "center", height: "100%", width: "100%" }}
           >
-            <Box
-              aria-hidden
-              sx={{ "& svg": { width: 56, height: 56 } }}
-              dangerouslySetInnerHTML={{ __html: svg }}
-            />
+            <ChartIcon iconUrl={iconUrl} svg={svg} />
             {/* Reserve ~2 lines so icons stay aligned regardless of name length. */}
             <Typography
               variant="body2"
