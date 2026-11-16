@@ -9,7 +9,7 @@ export default function useAdaptationPreview({ api, draft, stage, fingerprint, r
   const retry = useCallback(() => setAttempt((value) => value + 1), []);
   const current = result?.fingerprint === fingerprint && result?.upstream === upstream && result?.attempt === attempt;
   useEffect(() => {
-    if (!ready) return undefined;
+    if (!ready) { setResult(null); return undefined; }
     let cancelled = false;
     const controller = new AbortController();
     const identity = { fingerprint, upstream, attempt };

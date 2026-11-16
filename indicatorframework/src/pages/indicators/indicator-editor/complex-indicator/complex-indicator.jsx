@@ -46,6 +46,7 @@ import {
   datasetRows,
   defaultMappings,
   mappingsReady,
+  MAX_SOURCES,
   parametersReady,
   newComplexConfiguration,
   previewRequest,
@@ -486,11 +487,12 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
   }, [api, isAdaptation, sourceMethodFingerprint, catalogRetry]);
 
   const addAdaptationSource = () => {
+    if (configuration.sources.length >= MAX_SOURCES) return;
     const slotId = `source-${crypto.randomUUID()}`;
     const name = `Source ${configuration.sources.length + 1}`;
     const basic = serializeBasicDraft(emptyBasicState());
     basic.indicator.indicatorName = name;
-    change((previous) => ({ ...previous,
+    change((previous) => previous.sources.length >= MAX_SOURCES ? previous : ({ ...previous,
       sourceDrafts: { ...previous.sourceDrafts, [slotId]: basic },
       sources: [...previous.sources, { id: slotId, name, label: name, analyticsMethod: { id: "", name: "" }, outputs: [], keyColumnId: "", measureColumnIds: [] }],
     }), "sources");
@@ -899,8 +901,8 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
         <ComplexAdaptationSources configuration={configuration} onEdit={setEditingSource}
           onAdd={addAdaptationSource} onRemove={requestRemove} removedSource={removedSource}
           onUndo={() => {
-            if (!removedSource) return;
-            change((previous) => ({ ...previous,
+            if (!removedSource || configuration.sources.length >= MAX_SOURCES) return;
+            change((previous) => previous.sources.length >= MAX_SOURCES ? previous : ({ ...previous,
               sourceDrafts: { ...previous.sourceDrafts, [removedSource.source.id]: removedSource.draft },
               sources: [...previous.sources.slice(0, removedSource.index), removedSource.source, ...previous.sources.slice(removedSource.index)],
             }), "sources");

@@ -2,7 +2,15 @@ import PropTypes from "prop-types";
 import { Alert, Button, Chip, Divider, Grid, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useMediaQuery } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SectionCard from "../../../../common/components/section-card/section-card";
-import { adaptationSourceReady } from "./complex-model.js";
+import { adaptationSourceReady, MAX_SOURCES } from "./complex-model.js";
+
+const sourceStatus = (configuration) => {
+  if (!adaptationSourceReady(configuration)) return { label: "Needs your selections", color: "warning" };
+  const visualization = configuration.visualization;
+  if (!visualization?.selectedLibrary?.id || !visualization.selectedType?.id || !visualization.mapping?.mapping?.length)
+    return { label: "Review source chart", color: "warning" };
+  return { label: "Configured", color: "success" };
+};
 
 export default function ComplexAdaptationSources({ configuration, onEdit, onAdd, onRemove, removedSource, onUndo, onContinue }) {
   const { sources, sourceDrafts } = configuration;
@@ -12,17 +20,17 @@ export default function ComplexAdaptationSources({ configuration, onEdit, onAdd,
   const ready = sources.length >= 2 && sameMethod && sources.every((source) => adaptationSourceReady(sourceDrafts[source.id]) && source.outputs.length);
   return <>
     <SectionCard title="Adapt your source indicators" helper="Configure each source with your own data. These sources stay in this private draft until the whole indicator is saved."
-      action={<Button variant="contained" startIcon={<AddIcon />} disabled={sources.length >= 10} onClick={onAdd}>Add source</Button>}>
+      action={<Button variant="contained" startIcon={<AddIcon />} disabled={sources.length >= MAX_SOURCES} onClick={onAdd}>Add source</Button>}>
       {!sameMethod && <Alert severity="warning">Composite sources must use the same analytics method. Open a source to change its method.</Alert>}
       {compact ? <Stack component="ul" aria-label="Source indicators to adapt" sx={{ listStyle: "none", p: 0, m: 0, gap: 2 }}>
         {sources.map((source, index) => {
-          const ready = adaptationSourceReady(sourceDrafts[source.id]);
+          const status = sourceStatus(sourceDrafts[source.id]);
           const titleId = `adaptation-source-${source.id}`;
           return <Stack component="li" key={source.id} sx={{ gap: 1.5, minWidth: 0, pb: 2,
             borderBottom: 1, borderColor: "divider", "&:last-child": { pb: 0, borderBottom: 0 } }}>
             <Stack sx={{ gap: 1, alignItems: "flex-start", minWidth: 0 }}>
               <Typography component="h3" id={titleId} variant="subtitle2" sx={{ overflowWrap: "anywhere" }}>{source.name || `Source ${index + 1}`}</Typography>
-              <Chip size="small" variant="outlined" color={ready ? "success" : "warning"} label={ready ? "Configured" : "Needs your selections"} />
+              <Chip size="small" variant="outlined" {...status} />
             </Stack>
             <Stack sx={{ gap: 0.5, minWidth: 0 }}><Typography variant="caption" color="text.secondary">Analytics method</Typography>
               <Typography variant="body2" sx={{ overflowWrap: "anywhere" }}>{source.analyticsMethod?.name || "Choose a method"}</Typography></Stack>
@@ -37,8 +45,7 @@ export default function ComplexAdaptationSources({ configuration, onEdit, onAdd,
           <TableHead><TableRow><TableCell>Source</TableCell><TableCell>Analytics method</TableCell><TableCell sx={{ width: "24%" }} align="right">Actions</TableCell></TableRow></TableHead>
           <TableBody>{sources.map((source, index) => <TableRow key={source.id} hover>
             <TableCell><Stack sx={{ gap: 1, alignItems: "flex-start" }}><Typography variant="subtitle2">{source.name || `Source ${index + 1}`}</Typography>
-              <Chip size="small" variant="outlined" color={adaptationSourceReady(sourceDrafts[source.id]) ? "success" : "warning"}
-                label={adaptationSourceReady(sourceDrafts[source.id]) ? "Configured" : "Needs your selections"} /></Stack></TableCell>
+              <Chip size="small" variant="outlined" {...sourceStatus(sourceDrafts[source.id])} /></Stack></TableCell>
             <TableCell>{source.analyticsMethod?.name || "Choose a method"}</TableCell>
             <TableCell align="right"><Stack sx={{ alignItems: "flex-end", gap: 0.5 }}><Button onClick={() => onEdit(source.id)}>Edit source</Button>
               <Button color="error" size="small" onClick={() => onRemove(source)}>Remove</Button></Stack></TableCell>
@@ -46,7 +53,7 @@ export default function ComplexAdaptationSources({ configuration, onEdit, onAdd,
         </Table>
       </TableContainer>}
       {!sources.length && <Typography color="text.secondary">Add at least two sources to combine.</Typography>}
-      {removedSource && <Alert severity="info" action={<Button color="inherit" onClick={onUndo}>Undo</Button>}>Source removed from this draft.</Alert>}
+      {removedSource && <Alert severity="info" action={<Button color="inherit" disabled={sources.length >= MAX_SOURCES} onClick={onUndo}>Undo</Button>}>Source removed from this draft.{sources.length >= MAX_SOURCES && " Remove another source to make room before undoing."}</Alert>}
     </SectionCard>
     <Divider />
     <Grid container sx={{ justifyContent: "center" }}><Grid size={{ xs: 12, sm: 6 }}><Button fullWidth variant="contained" disabled={!ready} onClick={onContinue}>Next</Button></Grid></Grid>
