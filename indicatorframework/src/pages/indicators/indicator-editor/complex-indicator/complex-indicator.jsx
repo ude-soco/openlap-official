@@ -228,8 +228,10 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     !isMulti && configuration.visualization.dataMode === "combined"
       ? merged?.chartData
       : resultDataset;
+  // Renaming does not change the plotted data. Completion obtains a fresh proof
+  // after flushing the latest name and configuration.
   const currentPreviewFingerprint = JSON.stringify(
-    isAdaptation ? draftConfiguration : previewRequest(configuration),
+    isAdaptation ? { ...draftConfiguration, name: undefined } : previewRequest(configuration),
   );
   const previewCurrent = Boolean(
     preview && previewFingerprint === currentPreviewFingerprint,
