@@ -823,7 +823,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
   return (
     <Stack sx={{ gap: 3, width: "100%", minWidth: 0 }}>
       <PageHeader
-        title={`${id ? "Edit " : "Create "}${title.toLowerCase()}`}
+        title={`${isAdaptation ? "Adapt " : id ? "Edit " : "Create "}${title.toLowerCase()}`}
 
         breadcrumbs={[
           {
@@ -852,7 +852,9 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
           },
         ]}
         subtitle={
-          isMulti
+          isAdaptation
+            ? `Adapt “${adaptation.reference?.name || "Community indicator"}” using your own data. Compare the community reference at each step.`
+            : isMulti
             ? "Combine shared results from your Basic indicators, apply another analysis, and visualize the outcome."
             : "Combine Basic indicators using the same analytics method and compare their results in one chart."
         }
