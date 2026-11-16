@@ -1,3 +1,4 @@
+import CommunityComparison from "../../../../../../common/components/community-adaptation/community-comparison.jsx";
 import { useContext, useEffect } from "react";
 import { AuthContext } from "../../../../../../setup/auth-context-manager/auth-context-manager";
 import { BasicContext } from "../../basic-indicator";
@@ -33,7 +34,7 @@ const EMPTY_COLUMNS = {};
 
 export default function Analysis() {
   const { api } = useContext(AuthContext);
-  const { dataset, filters, lockedStep, setLockedStep, analysis, setAnalysis, setVisualization, referencesValid } =
+  const { dataset, filters, lockedStep, setLockedStep, analysis, setAnalysis, setVisualization, referencesValid, comparisonReference, configuration } =
     useContext(BasicContext);
   const indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
   const analysisRef = buildAnalysisRef(analysis);
@@ -93,6 +94,7 @@ export default function Analysis() {
           unmountOnExit
         >
           <Stack sx={{ gap: 2, py: 2 }}>
+            <CommunityComparison step="analysis" reference={comparisonReference} configuration={configuration}>
             <AnalysisSelection />
 
             {methodSelected && analysis.inputs.length === 0 && (
@@ -105,7 +107,6 @@ export default function Analysis() {
             )}
 
             {analysis.inputs.length !== 0 && (
-              <>
                 <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
                   <Grid
                     size={{
@@ -122,7 +123,10 @@ export default function Analysis() {
                     </Grid>
                   )}
                 </Grid>
-
+            )}
+            </CommunityComparison>
+            {analysis.inputs.length !== 0 && (
+              <>
                 <SectionCard
                   title="Preview results"
                   helper="The preview updates automatically when the required inputs and parameters are valid."

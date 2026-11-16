@@ -19,6 +19,7 @@
     "test:indicator-drafts": "node scripts/test-indicator-drafts.cjs",
     "test:isc-dashboard": "node scripts/test-isc-dashboard.cjs",
     "test:community-pools": "node scripts/test-community-pools.cjs",
+    "test:community-adaptation": "node scripts/test-community-adaptation.cjs",
     "test:draft-foundation": "node src/pages/indicators/indicator-editor/drafts/test-draft-foundation.cjs",
     "test:visualization-descriptor": "node scripts/test-visualization-descriptor.cjs",
     "test:chart-runtime": "node scripts/test-chart-runtime.cjs"

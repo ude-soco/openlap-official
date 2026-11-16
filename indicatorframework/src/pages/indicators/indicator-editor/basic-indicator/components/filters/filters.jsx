@@ -1,3 +1,4 @@
+import CommunityComparison from "../../../../../../common/components/community-adaptation/community-comparison.jsx";
 import { Button, Collapse, Divider, Grid, Stack } from "@mui/material";
 import { useContext } from "react";
 import { BasicContext } from "../../basic-indicator";
@@ -9,7 +10,7 @@ import WorkflowSection from "../../../../../../common/components/workflow-sectio
 import { getStepStatus } from "../../utils/basic-workflow-ui.js";
 
 export default function Filters() {
-  const { lockedStep, setLockedStep, filters } = useContext(BasicContext);
+  const { lockedStep, setLockedStep, filters, comparisonReference, configuration } = useContext(BasicContext);
 
   const handleCheckDisabled = () => {
     return filters.selectedActivities.length === 0;
@@ -37,6 +38,7 @@ export default function Filters() {
             unmountOnExit
           >
             <Stack sx={{ gap: 2, py: 2 }}>
+              <CommunityComparison step="filters" reference={comparisonReference} configuration={configuration}>
               <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
                 <Grid size={{ xs: 12, lg: 6 }} sx={{ display: "flex" }}>
                   <DateFilter />
@@ -46,6 +48,7 @@ export default function Filters() {
                 </Grid>
               </Grid>
               <ActivityFilters />
+              </CommunityComparison>
               <Divider />
               <Grid container sx={{ justifyContent: "center" }}>
                 <Grid size={{ xs: 12, sm: 6 }}>

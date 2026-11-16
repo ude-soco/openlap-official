@@ -13,6 +13,8 @@ export const requestCommunityDetail = async (api, kind, id, signal) =>
   dataOf(await api.get(pathFor(kind, id), { signal }));
 export const requestCommunityPreview = async (api, id, connections = {}, signal) =>
   dataOf(await api.post(`${pathFor("indicators", id)}/preview`, { connections }, { signal }));
+export const requestCommunityAdaptation = async (api, id, clientRequestId) =>
+  dataOf(await api.post(`${pathFor("indicators", id)}/adaptations`, { clientRequestId }));
 export const requestCommunityCopy = async (api, kind, id, receiptId, version) =>
   dataOf(await api.post(`${pathFor(kind, id)}/copy`, kind === "indicators" ? { receiptId } : { version }));
 

@@ -1,8 +1,9 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent,
   DialogTitle, IconButton, LinearProgress, MenuItem, Paper, Stack, TextField, Typography, useMediaQuery } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ReplayIcon from "@mui/icons-material/Replay";
@@ -13,7 +14,7 @@ import ChartPreview from "../../../pages/indicators/indicator-editor/components/
 import parseChartCode from "../../../pages/indicators/indicator-editor/components/utils/parse-chart-code.jsx";
 import CommunityIscPreview from "./community-isc-preview.jsx";
 import { canSaveCommunityPreview, communityError, communityTypeName, requestCommunityCopy,
-  requestCommunityDetail, requestCommunityPreview } from "./community-pool-api.js";
+  requestCommunityDetail, requestCommunityPreview, requestCommunityAdaptation } from "./community-pool-api.js";
 import CommunityCopyBadge from "./community-copy-badge.jsx";
 
 const previewMessages = {
@@ -59,6 +60,10 @@ export default function CommunityPoolDetail({ kind, row, onClose, onSaved }) {
   const navigate = useNavigate();
   const fullScreen = useMediaQuery((theme) => theme.breakpoints.down("sm"));
   const isc = kind === "isc";
+  const adaptationRequestId = useRef(crypto.randomUUID());
+  const adaptationBusy = useRef(false);
+  const [adapting, setAdapting] = useState(false);
+  const [adaptError, setAdaptError] = useState("");
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -71,6 +76,8 @@ export default function CommunityPoolDetail({ kind, row, onClose, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [copiedId, setCopiedId] = useState(row.copiedId || "");
+
+  useEffect(() => { adaptationRequestId.current = crypto.randomUUID(); setAdaptError(""); }, [row.id]);
 
   useEffect(() => {
     let current = true; const controller = new AbortController();
@@ -122,16 +129,26 @@ export default function CommunityPoolDetail({ kind, row, onClose, onSaved }) {
       if (!isc) { setPreview(null); setChartReady(false); }
     } finally { setSaving(false); }
   };
+  const adapt = async () => {
+    if (adaptationBusy.current) return;
+    adaptationBusy.current = true; setAdapting(true); setAdaptError("");
+    try {
+      const draft = await requestCommunityAdaptation(api, row.id, adaptationRequestId.current);
+      if (!draft?.id) throw new Error("The server did not confirm a draft.");
+      navigate(`/indicator/editor/drafts/${encodeURIComponent(draft.id)}`);
+    } catch (failure) { setAdaptError(communityError(failure, "Could not start your adaptation. Please try again.")); }
+    finally { adaptationBusy.current = false; setAdapting(false); }
+  };
   const chartType = preview?.visualizationTypeId || detail?.visualizationTypeId;
   const requirements = detail?.requirements || {};
   const columns = detail?.columns || detail?.dataset?.columns || detail?.inputs || [];
   const statusMessage = preview?.message || previewMessages[preview?.status] || "This indicator cannot currently be generated with your data.";
 
-  return <Dialog open fullWidth maxWidth="lg" fullScreen={fullScreen} onClose={saving ? undefined : onClose}
+  return <Dialog open fullWidth maxWidth="lg" fullScreen={fullScreen} onClose={saving || adapting ? undefined : onClose}
     aria-labelledby="community-detail-title" scroll="paper">
     <DialogTitle component="div" sx={{ display: "flex", alignItems: "flex-start", gap: 2, pr: 1 }}>
       <Box component="h2" id="community-detail-title" sx={{ flex: 1, minWidth: 0, m: 0, font: "inherit", overflowWrap: "anywhere" }}>{detail?.name || row.name || "Community indicator"}</Box>
-      <IconButton disabled={saving} aria-label="Close community indicator" onClick={onClose} sx={{ mt: -0.5 }}><CloseIcon /></IconButton>
+      <IconButton disabled={saving || adapting} aria-label="Close community indicator" onClick={onClose} sx={{ mt: -0.5 }}><CloseIcon /></IconButton>
     </DialogTitle>
     <DialogContent dividers sx={{ minWidth: 0, overflowX: "hidden", px: { xs: 2, sm: 3 } }}>
       {loading && <Stack role="status" sx={{ gap: 2 }}><LinearProgress /><Typography>Loading community indicator…</Typography></Stack>}
@@ -206,11 +223,15 @@ export default function CommunityPoolDetail({ kind, row, onClose, onSaved }) {
         {copiedId && <Alert severity="success">Saved to {isc ? "My ISCs" : "My Indicators"} as a community copy.</Alert>}
         {saveError && <Alert severity="error" action={isc && <Button color="inherit" onClick={() => setLoadRun((value) => value + 1)}>Reload details</Button>}>{saveError}</Alert>}
       </Stack>}
+      {adaptError && <Alert severity="error" sx={{ mt: 2 }}>{adaptError}</Alert>}
     </DialogContent>
     <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: 2, gap: 1, flexWrap: "wrap" }}>
-      <Button disabled={saving} onClick={onClose}>Close</Button>
-      {copiedId ? <Button variant="contained" startIcon={<OpenInNewIcon />} onClick={() => navigate(`${isc ? "/isc" : "/indicator"}/${encodeURIComponent(copiedId)}`)}>
-        Open in {isc ? "My ISCs" : "My Indicators"}</Button> : <Button variant="contained" disabled={!allowed || saving}
+      <Button disabled={saving || adapting} onClick={onClose}>Close</Button>
+      {!isc && <Button variant="outlined" disabled={adapting || saving} startIcon={adapting ? <CircularProgress size={18} color="inherit" /> : <EditOutlinedIcon />} onClick={adapt}>
+        {adapting ? "Opening adaptation…" : "Adapt to my data"}
+      </Button>}
+      {copiedId ? <Button variant="contained" disabled={adapting || saving} startIcon={<OpenInNewIcon />} onClick={() => navigate(`${isc ? "/isc" : "/indicator"}/${encodeURIComponent(copiedId)}`)}>
+        Open in {isc ? "My ISCs" : "My Indicators"}</Button> : <Button variant="contained" disabled={!allowed || saving || adapting}
         startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveAltIcon />} onClick={save}>
         {saving ? "Saving…" : `Save to ${isc ? "My ISCs" : "My Indicators"}`}
       </Button>}

@@ -80,3 +80,30 @@ test("partial versioned Basic documents retain completed choices and receive saf
   assert.equal(restored.filters.selectedUserFilter, "ONLY_ME");
   assert.deepEqual(restored.dataset.selectedLRSList, []);
 });
+
+test("adaptation hydration clears unavailable private choices and forces only-my-data", async () => {
+  const state = emptyBasicState();
+  state.dataset.selectedLRSList = [{ lrsId: "not-viewer-owned", uniqueIdentifier: "other", lrsTitle: "Foreign" }];
+  state.analysis.selectedAnalyticsMethod.method = { id: "gone-method", name: "Unavailable" };
+  state.visualization.selectedLibrary = { id: "gone-library", name: "Unavailable" };
+  state.visualization.selectedType = { id: "gone-chart", name: "Unavailable" };
+  state.filters.selectedUserFilter = "INCLUDE_ALL";
+  state.filters.selectedActivities = [{ id: "slot", selectedActivityType: { id: "pdf", name: "Pdf" }, selectedActionList: [{ id: "accessed" }], selectedActivityList: [{ id: "creator-item" }] }];
+  const result = await refreshBasicReferences({ get: async () => ({ data: { data: [] } }) }, serializeBasicDraft(state), { adaptation: true });
+  assert.deepEqual(result.state.dataset.selectedLRSList, []);
+  assert.equal(result.state.filters.selectedUserFilter, "ONLY_ME");
+  assert.equal(result.state.analysis.selectedAnalyticsMethod.method.id, "");
+  assert.equal(result.state.visualization.selectedType.id, "");
+  assert.deepEqual(result.state.filters.selectedActivities[0].selectedActionList, []);
+});
+test("adaptation hydration never replaces accessed with clicked and drops stale activities", async () => {
+  const state = emptyBasicState();
+  state.dataset.selectedLRSList = [{ lrsId: "viewer", uniqueIdentifier: "own" }];
+  state.filters.selectedActivities = [{ id: "slot", selectedActivityType: { id: "pdf", name: "Pdf" }, selectedActionList: [{ id: "accessed", name: "Accessed" }], selectedActivityList: [{ id: "private-item", name: "Private" }] }];
+  const api = { get: async (path) => ({ data: { data: path.endsWith("/lrs") ? [{ lrsId: "viewer", uniqueIdentifier: "own" }] : [] } }),
+    post: async (path) => ({ data: { data: path.endsWith("activity-types") ? [{ id: "pdf", name: "PDF" }] : [{ id: "clicked", name: "Clicked" }] } }) };
+  const result = await refreshBasicReferences(api, serializeBasicDraft(state), { adaptation: true });
+  assert.equal(result.state.filters.selectedActivities[0].selectedActivityType.id, "pdf");
+  assert.deepEqual(result.state.filters.selectedActivities[0].selectedActionList, []);
+  assert.deepEqual(result.state.filters.selectedActivities[0].selectedActivityList, []);
+});

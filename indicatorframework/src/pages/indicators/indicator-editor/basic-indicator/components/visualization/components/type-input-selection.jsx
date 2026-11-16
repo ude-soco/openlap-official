@@ -11,14 +11,21 @@ import {
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
 
 const TypeInputSelection = () => {
-  const { analysis, visualization, setVisualization } =
+  const { analysis, visualization, setVisualization, personalOnly } =
     useContext(BasicContext);
 
   useEffect(() => {
     const newMappings = [...visualization.mapping.mapping]; // copy existing mappings
 
     const updatedInputs = visualization.inputs.map((input) => {
-      // Already has a selection? Just return it.
+      // An adapted source must never retain a column that its own analysis no
+      // longer produces. Leave an unavailable original unmapped for review.
+      if (personalOnly && input.selectedInput && !Object.values(analysis.analyzedData).some((column) =>
+        column.configurationData?.id === input.selectedInput.id && column.configurationData?.type === input.type)) {
+        const index = newMappings.findIndex((entry) => entry.inputPort.id === input.id);
+        if (index >= 0) newMappings.splice(index, 1);
+        return { ...input, selectedInput: undefined };
+      }
       if (input.selectedInput) return input;
 
       // Find a matching analyzedData item
@@ -57,7 +64,9 @@ const TypeInputSelection = () => {
       inputs: updatedInputs,
       mapping: { ...p.mapping, mapping: newMappings },
     }));
-  }, [visualization.selectedType.id, analysis.analyzedData]);
+  // Existing selections are initialized once per chart/data result, not per editor render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visualization.selectedType.id, analysis.analyzedData, personalOnly]);
 
   const handleSelectInput = (value, input) => {
     // Deep copy each input object
