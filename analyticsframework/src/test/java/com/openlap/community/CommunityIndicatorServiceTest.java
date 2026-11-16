@@ -314,6 +314,8 @@ class CommunityIndicatorServiceTest {
     assertThat(projection.keySet()).contains("_id", "createdBy", "communityCopyPending")
         .doesNotContain("indicatorQuery", "configurationRequest", "analyticsTechniqueReference");
     assertThat(pipeline.toString()).contains("$lookup", "receiptId", "_copyClaims", "$size=0", "$limit=50");
+    // Adaptations have their own durable draft claim and resume protocol.
+    assertThat(pipeline.get(0).toString()).contains("$not", "^adaptation:");
   }
 
   Document orphanRow() {
