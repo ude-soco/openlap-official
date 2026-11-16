@@ -6,6 +6,7 @@ import { createIndicatorDraftApi } from "./drafts/indicator-draft-api.js";
 import { refreshBasicReferences, restoreBasicState } from "./basic-indicator/utils/basic-draft-model.js";
 import { editorRoute } from "./utils/indicator-draft-routes.js";
 import { readDraftRecovery } from "./drafts/indicator-draft-storage.js";
+import RoleTypes from "../../account-manager/utils/enums/role-types.js";
 import ClosedDraftRecovery from "./drafts/closed-draft-recovery.jsx";
 
 const BasicIndicator = lazy(() => import("./basic-indicator/basic-indicator.jsx"));
@@ -19,6 +20,7 @@ export default function IndicatorDraftWorkspace() {
   const { api, user } = useContext(AuthContext);
   const params = useParams();
   const navigate = useNavigate();
+  const withoutLrs = !user?.roles?.includes(RoleTypes.user);
   const route = editorRoute(params["*"] || "");
   const identity = route.identity;
   const [workspace, setWorkspace] = useState(null);
@@ -31,6 +33,7 @@ export default function IndicatorDraftWorkspace() {
 
   useEffect(() => {
     const run = ++generation.current;
+    if (withoutLrs && route.mode !== "draft") { setError("Connect your LRS to create a new indicator. Community adaptations can be saved and continued before connecting data."); return undefined; }
     if (route.mode === "choose" || route.mode === "unknown") {
       setWorkspace(null);
       setError("");
@@ -54,6 +57,7 @@ export default function IndicatorDraftWorkspace() {
         const transport = createIndicatorDraftApi(api);
         const draft = route.mode === "edit" ? await transport.edit(route.id) : await transport.get(route.id);
         if (run !== generation.current) return;
+        if (withoutLrs && !draft.adaptation) throw new Error("Connect your LRS to continue this indicator. Your draft is kept safely.");
         if (["COMPLETED", "DISCARDED"].includes(draft.status)) {
           const recovered = readDraftRecovery({ owner: user?.sub,
             environment: `${globalThis.location?.origin || "local"}|${api.defaults?.baseURL || ""}`,
@@ -72,7 +76,7 @@ export default function IndicatorDraftWorkspace() {
             : draft.recoverable === false ? "This older draft cannot be safely restored. You can discard it from My Indicators." : "This draft is no longer available.");
         const refreshed = draft.indicatorType === "BASIC"
           ? draft.completionPending ? { state: restoreBasicState(draft.configuration), warnings: [] }
-            : await refreshBasicReferences(api, draft.configuration) : null;
+            : await refreshBasicReferences(api, draft.configuration, { adaptation: Boolean(draft.adaptation) }) : null;
         if (run !== generation.current) return;
         const draftIdentity = `draft:${draft.id}`;
         setWorkspace({ key: `${user?.sub}:${draft.id}:${retry}`, owner: user?.sub, identities: [identity, draftIdentity],
@@ -86,7 +90,7 @@ export default function IndicatorDraftWorkspace() {
     return () => { generation.current += 1; };
   // Route snapshots are reduced to a stable identity to avoid reloading on renders.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [api, identity, retry, navigate, user?.sub]);
+  }, [api, identity, retry, navigate, user?.sub, withoutLrs]);
 
   const onDraftCreated = useCallback((draft) => {
     setWorkspace((previous) => previous ? { ...previous, initialDraft: draft,
@@ -94,6 +98,7 @@ export default function IndicatorDraftWorkspace() {
     navigate(`/indicator/editor/drafts/${encodeURIComponent(draft.id)}`, { replace: true });
   }, [navigate, identity]);
 
+  if (withoutLrs && route.mode !== "draft") return <Alert severity="info" action={<Button color="inherit" onClick={() => navigate("/manage-lrs")}>Manage LRS</Button>}>Connect your LRS to create a new indicator. You can open community adaptations before connecting data.</Alert>;
   if (route.mode === "choose") return <Suspense fallback={<CircularProgress aria-label="Loading editor" />}><IndicatorEditor /></Suspense>;
   if (route.mode === "unknown") return <Alert severity="error">This indicator editor address is not available.</Alert>;
   if (closedRecovery?.identity === identity && closedRecovery.owner === user?.sub) return <ClosedDraftRecovery

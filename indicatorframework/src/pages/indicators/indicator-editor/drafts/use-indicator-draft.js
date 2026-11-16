@@ -14,7 +14,7 @@ export default function useIndicatorDraft({
   const session = useMemo(() => {
     let created;
     created = createIndicatorDraftSession({
-      transport: createIndicatorDraftApi(api), owner, environment: environmentId,
+      transport: createIndicatorDraftApi(api, { initialDraft: initial.current.initialDraft }), owner, environment: environmentId,
       indicatorType, ...{
         initialDraft: initial.current.initialDraft,
         initialValue: { name: initial.current.name, configuration: initial.current.configuration },

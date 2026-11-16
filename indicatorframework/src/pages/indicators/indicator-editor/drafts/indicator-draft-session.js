@@ -347,8 +347,9 @@ export function createIndicatorDraftSession({
     await flush();
     if (!draft) throw blocked("Add an indicator configuration before saving.");
     if (typeof indicator !== "function" && fingerprint(current) !== started) throw blocked("Your configuration changed while saving. Review the latest preview and save again.");
-    const request = { revision: draft.revision,
+    let request = { revision: draft.revision,
       indicator: typeof indicator === "function" ? indicator(copy(current)) : indicator };
+    if (transport.prepareComplete) request = await transport.prepareComplete(draft.id, request);
     pendingTerminal = { kind: "complete", id: draft.id, revision: draft.revision,
       request: copy(request), value: copy(current) };
     retain();
