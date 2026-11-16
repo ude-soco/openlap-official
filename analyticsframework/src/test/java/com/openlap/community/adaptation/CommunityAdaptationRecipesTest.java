@@ -49,6 +49,31 @@ public class CommunityAdaptationRecipesTest {
     verifyNoInteractions(statements, indicators);
   }
 
+  @Test public void semanticSelectorIdsWithPrivateActorSegmentsRemainUnresolved() {
+    var source = source();
+    source.setIndicatorQuery("{\"lrsStores\":[{\"lrsId\":\"private-store\",\"uniqueIdentifier\":\"ab\"}],\"activityTypes\":[\"https://example.org/ab/material\"]}");
+    var prepared = recipes.prepare(source, new User(), pool);
+    assertThat(prepared.adaptation().toString()).doesNotContain("https://example.org/ab/material", "private-store");
+    assertThat(prepared.adaptation().path("reference").path("filters").path("activityTypes").get(0).path("id").asText()).isEmpty();
+  }
+
+  @Test public void numericParameterValuesCannotExposeKnownActorIdentifiers() {
+    var source = source();
+    source.setIndicatorQuery("{\"lrsStores\":[{\"lrsId\":\"private-store\",\"uniqueIdentifier\":\"777777\"}]}");
+    source.getAnalyticsTechniqueReference().setAdditionalParams("[{\"id\":\"threshold\",\"value\":777777}]");
+    var prepared = recipes.prepare(source, new User(), pool);
+    assertThat(prepared.adaptation().toString()).doesNotContain("777777", "private-store");
+    assertThat(prepared.adaptation().path("reference").path("analysis").path("params").get(0).path("value").isNull()).isTrue();
+  }
+
+  @Test public void encodedContactInformationIsNotPublishedAsASemanticSelector() {
+    var source = source();
+    source.setIndicatorQuery("{\"activityTypes\":[\"https://example.org/alice%2540example.com/material\"]}");
+    var prepared = recipes.prepare(source, new User(), pool);
+    assertThat(prepared.adaptation().toString()).doesNotContain("alice%2540example.com");
+    assertThat(prepared.adaptation().path("reference").path("filters").path("activityTypes").get(0).path("id").asText()).isEmpty();
+  }
+
   @Test public void differentLrsPrefillsOnlyTheViewersExactChoicesAndLeavesDifferentVerbUnresolved() {
     var viewer = new User(); viewer.setLrsConsumerList(List.of(new LrsConsumer(new ObjectId(), "viewer-store", "viewer-actor")));
     when(statements.findUniqueActivityTypes(any())).thenReturn(List.of(Map.of("id", "https://example.org/material", "name", "Material")));

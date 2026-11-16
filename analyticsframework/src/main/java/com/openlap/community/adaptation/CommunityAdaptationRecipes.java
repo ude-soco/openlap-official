@@ -287,11 +287,11 @@ public class CommunityAdaptationRecipes {
       return result;
     }
     if (value.isArray()) { ArrayNode result = mapper.createArrayNode(); value.forEach(item -> result.add(safeStyleKeys(item, privateValues))); return result; }
-    return value;
+    return value.isValueNode() && isPrivate(value.asText(), privateValues) ? NullNode.instance : value;
   }
 
   private JsonNode parameterValue(JsonNode value, Indicator source, Set<String> privateValues, int depth) {
-    if (value == null || depth > 6) return NullNode.instance;
+    if (value == null || depth > 6 || value.isValueNode() && isPrivate(value.asText(), privateValues)) return NullNode.instance;
     if (value.isNumber()) return Double.isFinite(value.asDouble()) && Math.abs(value.asDouble()) < 1e12 ? value : NullNode.instance;
     if (value.isBoolean() || value.isNull()) return value;
     if (value.isTextual()) { String clean = label(value.asText(), source, privateValues, ""); return clean.isEmpty() ? NullNode.instance : new TextNode(clean); }
@@ -326,7 +326,10 @@ public class CommunityAdaptationRecipes {
   private void addPrivate(Set<String> values, String value) { if (value != null && !value.isBlank()) values.add(value.toLowerCase(Locale.ROOT)); }
   private boolean isPrivate(String value, Set<String> values) {
     String lower = value.toLowerCase(Locale.ROOT);
-    for (String needle : values) if (lower.equals(needle) || needle.length() > 2 && lower.contains(needle)) return true;
+    for (String needle : values) {
+      if (lower.equals(needle) || needle.length() > 2 && lower.contains(needle)) return true;
+      if (needle.length() <= 2 && java.util.regex.Pattern.compile("(?<![a-z0-9])" + java.util.regex.Pattern.quote(needle) + "(?![a-z0-9])").matcher(lower).find()) return true;
+    }
     return false;
   }
   private String label(String raw, Indicator source, Set<String> values, String fallback) {
@@ -337,8 +340,12 @@ public class CommunityAdaptationRecipes {
     if (raw == null || raw.isBlank() || raw.length() > 500) return "";
     String value = raw;
     for (var alias : aliases.entrySet()) value = value.replace("source_" + alias.getKey() + "__", "source_" + alias.getValue() + "__");
-    if (isPrivate(value, values) || !value.matches("[A-Za-z0-9_:/#.?%+\\-=\\[\\] -]{1,500}")
-        || value.contains("@") || value.contains("..") || value.contains("?")) return "";
+    String decoded = value;
+    try {
+      for (int i = 0; i < 2; i++) decoded = java.net.URLDecoder.decode(decoded, java.nio.charset.StandardCharsets.UTF_8);
+    } catch (IllegalArgumentException malformedEscape) { return ""; }
+    if (isPrivate(value, values) || isPrivate(decoded, values) || !value.matches("[A-Za-z0-9_:/#.?%+\\-=\\[\\] -]{1,500}")
+        || decoded.contains("@") || decoded.contains("%") || value.contains("..") || value.contains("?")) return "";
     return value;
   }
   private String catalogId(String raw) { return raw != null && raw.matches("[A-Za-z0-9_-]{1,200}") ? raw : ""; }
