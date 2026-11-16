@@ -193,7 +193,8 @@ class IndicatorAdaptationLifecycleTest {
       int count = mockingDetails(execution).getInvocations().size();
       return graph(call.getArgument(3), count >= 3 ? "changed" : "bindings1", "plugins1");
     });
-    assertThatThrownBy(() -> lifecycle.complete(request, current.get(), completion())).isInstanceOf(ValidationException.class);
+    assertThatThrownBy(() -> lifecycle.complete(request, current.get(), completion()))
+        .isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class).extracting("code").isEqualTo("ADAPTATION_SAVE_PENDING");
     assertThat(current.get().getString("status")).isEqualTo("COMPLETING");
     assertThat(saved.values()).allSatisfy(row -> assertThat(row.getString("communityCopyPending")).startsWith("adaptation:"));
   }

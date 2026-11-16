@@ -318,6 +318,13 @@ class CommunityIndicatorServiceTest {
     assertThat(pipeline.get(0).toString()).contains("$not", "^adaptation:");
   }
 
+  @Test void exactCopyCleanupNeverTouchesAnAdaptationOwnedByADurableDraft() {
+    Document row = orphanRow();
+    row.put("communityCopyPending", "adaptation:draft-one");
+    service.cleanupOrphan(row);
+    verifyNoInteractions(receipts, references, mongo);
+  }
+
   Document orphanRow() {
     return new Document("_id", new ObjectId()).append("createdBy", new com.mongodb.DBRef("openlap-users", new ObjectId(viewer.getId())))
         .append("communitySourceId", pool).append("communitySourceVersion", "version")

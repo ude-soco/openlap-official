@@ -105,26 +105,33 @@ public class IndicatorAdaptationLifecycle implements IndicatorDraftAdaptationLif
       current = claim;
     }
 
-    Map<String, String> ids = targetIds(current);
-    var result = execution.execute(request, current, "visualization", ids);
-    requireClaim(current, result);
-    execution.remapForPublication(result, ids);
-    var origin = current.get("adaptation", Document.class);
-    String pending = pending(current);
-    for (int index = 0; index < result.leaves().size(); index++) {
-      Indicator leaf = result.leaves().get(index);
-      provenance(leaf, origin, true, pending);
-      Document childClaim = childClaim(current, index, leaf.getId());
-      targets.publish(owner, childClaim, leaf, completionHash);
+    try {
+      Map<String, String> ids = targetIds(current);
+      var result = execution.execute(request, current, "visualization", ids);
+      requireClaim(current, result);
+      execution.remapForPublication(result, ids);
+      var origin = current.get("adaptation", Document.class);
+      String pending = pending(current);
+      for (int index = 0; index < result.leaves().size(); index++) {
+        Indicator leaf = result.leaves().get(index);
+        provenance(leaf, origin, true, pending);
+        Document childClaim = childClaim(current, index, leaf.getId());
+        targets.publish(owner, childClaim, leaf, completionHash);
+      }
+      provenance(result.root(), origin, false, pending);
+      targets.publish(owner, current, result.root(), completionHash);
+      // Revalidate the personal graph after writes but before any row is exposed. A changed profile
+      // or plugin can leave a resumable hidden graph, never a partially visible saved indicator.
+      var latest = execution.execute(request, current, "visualization", ids);
+      requireClaim(current, latest);
+      makeVisible(owner, current, completionHash);
+      return terminal(owner, current, completionHash);
+    } catch (ValidationException error) {
+      // Once a claim exists, 400 would incorrectly tell the draft client that no write started.
+      // Keep its durable terminal request and make it resume the same graph after repair.
+      throw new ConflictException("ADAPTATION_SAVE_PENDING",
+          "This save is unfinished. Check your learner connections and selected plugins, then resume the save. Your draft and hidden sources are preserved.");
     }
-    provenance(result.root(), origin, false, pending);
-    targets.publish(owner, current, result.root(), completionHash);
-    // Revalidate the personal graph after writes but before any row is exposed. A changed profile
-    // or plugin can leave a resumable hidden graph, never a partially visible saved indicator.
-    var latest = execution.execute(request, current, "visualization", ids);
-    requireClaim(current, latest);
-    makeVisible(owner, current, completionHash);
-    return terminal(owner, current, completionHash);
   }
 
   @Override
