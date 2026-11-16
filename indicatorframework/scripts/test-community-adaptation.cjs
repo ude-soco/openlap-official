@@ -20,7 +20,9 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     visualization: { library: { id: "c3", name: "C3", available: false }, chart: { id: "bar", name: "Bar Chart", available: false }, mapping: { mapping: [] }, params: { height: 500 } } };
   let draft = { id: "adaptation-draft", name: "My adapted indicator", indicatorType: "BASIC", schemaVersion: 1, revision: 0, status: "DRAFT", recoverable: true,
     configuration: serializeBasicDraft(state), adaptation: { schemaVersion: 1, poolId: "community-basic", sourceVersion: "v1", reference }, sourceIndicatorId: null };
+  const drafts = new Map([[draft.id, draft]]);
   const calls = [], errors = [];
+  let stage = "starting browser";
   let connected = false;
   const longLrs = { id: "own", lrsId: "own", uniqueIdentifier: "viewer", lrsTitle: "A connected learning record store with a long descriptive title" };
   const token = "e30." + Buffer.from(JSON.stringify({ sub: "adaptation.viewer@example.test", roles: ["ROLE_USER_WITHOUT_LRS"], exp: Math.floor(Date.now() / 1000) + 3600 })).toString("base64url") + ".fixture";
@@ -43,9 +45,17 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     if (path === "v1/community/indicators/community-basic") return send({ id: "community-basic", name: reference.name, type: "BASIC", version: "v1", method: "Count items" });
     if (path.endsWith("/preview")) return send({ status: "NO_CONNECTION" });
     if (path === "v1/community/indicators/community-basic/adaptations") { assert.match(body.clientRequestId, /^[0-9a-f-]{36}$/); return send(draft); }
-    if (path === "v1/indicators/drafts/adaptation-draft") {
-      if (method === "PUT") { assert.equal(body.revision, draft.revision); draft = { ...draft, ...body, revision: draft.revision + 1 }; }
-      return send(draft);
+    const draftMatch = path.match(/^v1\/indicators\/drafts\/([^/]+)$/);
+    if (draftMatch) {
+      const id = draftMatch[1], stored = drafts.get(id);
+      assert.ok(stored, "Only a fixture-owned draft can be requested");
+      if (method === "PUT") {
+        assert.equal(body.revision, stored.revision);
+        const acknowledged = { ...stored, ...body, revision: stored.revision + 1 };
+        drafts.set(id, acknowledged);
+        if (id === draft.id) draft = acknowledged;
+      }
+      return send(drafts.get(id));
     }
     if (path === "v1/analytics/methods/outputs/count") return send([]);
     if (path === "v1/users/my/lrs") return send(connected ? [longLrs] : []);
@@ -53,13 +63,16 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     errors.push(`Unexpected API ${method} ${path}`); return send({}, 500);
   });
   const page = await context.newPage(); page.setDefaultTimeout(12000);
+  page.on("crash", () => errors.push("Browser page crashed"));
+  page.on("close", () => errors.push("Browser page closed"));
   try {
     page.on("pageerror", (error) => errors.push(error.message));
-    console.log("Opening local Indicator Pool…");
+    stage = "opening community pool"; console.log("Opening local Indicator Pool…");
     await page.goto(new URL("indicator/pool", base).href);
     await page.getByRole("button", { name: `View ${reference.name}`, exact: true }).click();
     await page.getByText("Connect your LRS in Manage LRS before previewing this indicator.", { exact: true }).waitFor();
     assert.equal(await page.getByRole("button", { name: "Adapt to my data", exact: true }).isEnabled(), true, "Incompatibility/no LRS never blocks creating an adaptation");
+    stage = "starting private adaptation";
     await page.getByRole("button", { name: "Adapt to my data", exact: true }).dblclick();
     await page.waitForURL("**/indicator/editor/drafts/adaptation-draft");
     await page.getByRole("heading", { name: "Adapt a Basic Indicator", exact: true }).waitFor();
@@ -76,21 +89,44 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     await noOverflow();
     if (process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR) { await fs.mkdir(process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR, { recursive: true });
       await page.screenshot({ path: path.join(process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR, "basic-adaptation-desktop.png"), fullPage: true }); }
+    stage = "autosaving and reloading Basic adaptation";
     const name = page.getByRole("textbox", { name: "Indicator name", exact: true });
-    if (await name.count()) { await name.fill("My adapted indicator after reload"); await until(() => calls.some((call) => call.method === "PUT"), "Adaptation autosaves without executing a plugin"); }
+    await name.fill("My adapted indicator after reload");
+    await until(() => draft.name === "My adapted indicator after reload" && calls.some((call) =>
+      call.method === "PUT" && call.body?.name === "My adapted indicator after reload"), "The exact renamed value reaches the server");
+    await page.getByText("Draft saved", { exact: true }).waitFor();
     await page.reload(); await page.getByRole("heading", { name: "Adapt a Basic Indicator", exact: true }).waitFor();
     await until(() => page.getByRole("heading", { name: "Community reference", exact: true }).count().then((count) => count === 4), "Frozen reference survives reload");
-    await page.setViewportSize({ width: 390, height: 844 }); await noOverflow();
-    connected = true; draft.configuration.dataset.selectedLRSList = [longLrs];
-    await page.reload(); await page.getByRole("heading", { name: "Adapt a Basic Indicator", exact: true }).waitFor();
+    stage = "checking narrow Basic adaptation";
+    await page.setViewportSize({ width: 390, height: 844 });
+    await until(() => page.getByRole("button", { name: /^Community reference/ }).evaluateAll((buttons) =>
+      buttons.length === 4 && buttons.every((button) => button.getAttribute("aria-expanded") === "false")), "References adapt to the narrow layout");
+    // Assert the settled responsive layout before the next document navigation,
+    // rather than measuring controls while their Collapse transitions run.
+    await page.evaluate(async () => {
+      await new Promise(requestAnimationFrame); await new Promise(requestAnimationFrame);
+      await Promise.all(document.getAnimations().filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
+        .map((animation) => animation.finished.catch(() => {})));
+    });
+    await noOverflow(); await page.getByText("Draft saved", { exact: true }).waitFor();
+    connected = true;
+    const connectedDraft = { ...draft, id: "adaptation-connected", revision: 0,
+      configuration: { ...draft.configuration, dataset: { selectedLRSList: [longLrs] } } };
+    drafts.set(connectedDraft.id, connectedDraft);
+    await page.goto(new URL(`indicator/editor/drafts/${connectedDraft.id}`, base).href);
+    await page.getByRole("heading", { name: "Adapt a Basic Indicator", exact: true }).waitFor();
     await page.getByText(longLrs.lrsTitle, { exact: true }).waitFor(); await noOverflow();
     if (process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR, "basic-adaptation-mobile.png"), fullPage: true });
+    stage = "checking responsive complex source controls";
     const complex = newComplexConfiguration("COMPOSITE");
     complex.sources = ["source-one", "source-two"].map((id, index) => ({ id, name: `Source ${index + 1}`, outputs: [],
       analyticsMethod: { id: "count", name: "Count N most occurring or least occurring items" }, keyColumnId: "", measureColumnIds: [] }));
     complex.sourceDrafts = Object.fromEntries(complex.sources.map((source) => [source.id, serializeBasicDraft(emptyBasicState())]));
-    draft = { ...draft, indicatorType: "COMPOSITE", configuration: complex };
-    await page.reload(); await page.getByRole("list", { name: "Source indicators to adapt", exact: true }).waitFor();
+    await page.getByText("Draft saved", { exact: true }).waitFor();
+    const compositeDraft = { ...draft, id: "adaptation-composite", revision: 0, indicatorType: "COMPOSITE", configuration: { ...complex, name: draft.name } };
+    drafts.set(compositeDraft.id, compositeDraft);
+    await page.goto(new URL(`indicator/editor/drafts/${compositeDraft.id}`, base).href);
+    await page.getByRole("list", { name: "Source indicators to adapt", exact: true }).waitFor();
     assert.equal(await page.getByText("Needs your selections", { exact: true }).count(), 2, "Source status remains fully readable on mobile");
     assert.equal(await page.getByRole("button", { name: "Edit source", exact: true }).evaluateAll((buttons) => buttons.every((button) => button.clientWidth >= 80 && button.clientHeight <= 60)), true, "Mobile source actions fit on a readable line");
     await noOverflow();
@@ -100,6 +136,17 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     assert.equal(calls.some((call) => /analyze|adaptation-preview|\/complete$/.test(call.path)), false, "Opening and autosaving a partial adaptation does not execute plugins");
     assert.deepEqual(errors, []);
     console.log("Community adaptation passed: incompatible/no-LRS entry, idempotent start, contextual reference, personal scope, reload and responsive layout.");
-  } catch (failure) { console.error("Fixture page:", page.url(), await page.locator("body").innerText()); console.error("Fixture errors:", errors); throw failure; }
-  finally { await context.close(); await browser.close(); }
+  } catch (failure) {
+    // A closed/crashed page must not replace the actual failed assertion with a
+    // second diagnostic error. Print the original before best-effort details.
+    console.error(`Community adaptation failed while ${stage}:`, failure);
+    console.error("Fixture requests:", calls.map(({ path, method }) => ({ path, method })));
+    console.error("Fixture errors:", errors);
+    if (!page.isClosed()) {
+      const body = await page.locator("body").innerText({ timeout: 2000 }).catch(() => "Page body unavailable");
+      console.error("Fixture page:", page.url(), body);
+    }
+    throw failure;
+  }
+  finally { await context.close().catch(() => {}); await browser.close().catch(() => {}); }
 })().catch((failure) => { console.error(failure); process.exitCode = 1; });
