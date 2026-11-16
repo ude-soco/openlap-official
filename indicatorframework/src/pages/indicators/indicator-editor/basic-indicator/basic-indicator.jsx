@@ -180,7 +180,7 @@ export default function BasicIndicator({ initialDraft = null, initialState = nul
             {referenceWarnings.join(" ")}
           </Alert>}
           {hydrating ? <CircularProgress aria-label="Refreshing saved selections" /> : <>
-          <WorkflowStepper steps={workflowSteps} current={currentStep} />
+          <WorkflowStepper steps={workflowSteps} current={currentStep} ariaLabel="Basic indicator creation progress" />
           <Stack sx={{ gap: 2 }} inert={draft.finalizing || undefined}>
             {isStepRevealed(lockedStep, "dataset") && <Dataset />}
             {isStepRevealed(lockedStep, "filters") && <Filters />}
@@ -241,7 +241,7 @@ export function EmbeddedBasicIndicator({ configuration: initialConfiguration, re
       configuration, comparisonReference: reference, personalOnly: true, sourceMode: true, onSourceDone: leave,
       referencesValid: true, handleResetIfDatasetEmpty: reset }}>
       {warnings.length > 0 && <Alert severity="info">Review the selections that are unavailable in your data. The original choices remain in the community reference.</Alert>}
-      <WorkflowStepper steps={getWorkflowSteps(state.lockedStep, state)} current={getCurrentStep(state.lockedStep)} />
+      <WorkflowStepper steps={getWorkflowSteps(state.lockedStep, state)} current={getCurrentStep(state.lockedStep)} ariaLabel="Basic indicator creation progress" />
       <Stack sx={{ gap: 2, minWidth: 0 }}>
         {isStepRevealed(state.lockedStep, "dataset") && <Dataset />}
         {isStepRevealed(state.lockedStep, "filters") && <Filters />}

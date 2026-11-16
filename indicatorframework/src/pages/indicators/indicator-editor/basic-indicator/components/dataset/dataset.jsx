@@ -146,8 +146,9 @@ export default function Dataset() {
                 <Stack sx={{ gap: 2 }}>
                   <Typography>Source of data</Typography>
                   {personalOnly && !dataset.myLRSList.length && <Alert severity="info" action={<Button color="inherit" href="/manage-lrs" target="_blank" rel="noopener noreferrer">Manage LRS</Button>}>Connect an LRS to preview your data. This adaptation is kept as a private draft.</Alert>}
-                  <Stack sx={{ gap: 2, alignItems: "center" }} direction="row">
+                  <Stack sx={{ gap: 2, alignItems: "center", minWidth: 0 }} direction="row">
                     <Autocomplete
+                      sx={{ minWidth: 0, flex: 1 }}
                       autoFocus
                       disablePortal
                       disableClearable

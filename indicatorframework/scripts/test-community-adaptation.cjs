@@ -11,6 +11,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function until(check, label) { const end = Date.now() + 12000; while (!await check()) { assert.ok(Date.now() < end, label); await wait(25); } }
 (async () => {
   const { emptyBasicState, serializeBasicDraft } = await import("../src/pages/indicators/indicator-editor/basic-indicator/utils/basic-draft-model.js");
+  const { newComplexConfiguration } = await import("../src/pages/indicators/indicator-editor/complex-indicator/complex-model.js");
   const state = emptyBasicState(new Date("2026-11-15T12:00:00Z"));
   for (const item of Object.values(state.lockedStep)) { item.locked = false; item.openPanel = true; }
   const reference = { name: "Community material accesses", type: "BASIC", dataset: { sourceCount: 1, outputs: [{ id: "activities", name: "Activities", type: "Text" }] },
@@ -20,6 +21,8 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
   let draft = { id: "adaptation-draft", name: "My adapted indicator", indicatorType: "BASIC", schemaVersion: 1, revision: 0, status: "DRAFT", recoverable: true,
     configuration: serializeBasicDraft(state), adaptation: { schemaVersion: 1, poolId: "community-basic", sourceVersion: "v1", reference }, sourceIndicatorId: null };
   const calls = [], errors = [];
+  let connected = false;
+  const longLrs = { id: "own", lrsId: "own", uniqueIdentifier: "viewer", lrsTitle: "A connected learning record store with a long descriptive title" };
   const token = "e30." + Buffer.from(JSON.stringify({ sub: "adaptation.viewer@example.test", roles: ["ROLE_USER_WITHOUT_LRS"], exp: Math.floor(Date.now() / 1000) + 3600 })).toString("base64url") + ".fixture";
   console.log("Launching local synthetic WebKit fixture…");
   const browser = await webkit.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}) });
@@ -44,7 +47,9 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
       if (method === "PUT") { assert.equal(body.revision, draft.revision); draft = { ...draft, ...body, revision: draft.revision + 1 }; }
       return send(draft);
     }
-    if (["v1/users/my/lrs", "v1/analytics/methods", "v1/visualizations/libraries"].includes(path)) return send([]);
+    if (path === "v1/analytics/methods/outputs/count") return send([]);
+    if (path === "v1/users/my/lrs") return send(connected ? [longLrs] : []);
+    if (["v1/statements/activity-types", "v1/analytics/methods", "v1/visualizations/libraries"].includes(path)) return send([]);
     errors.push(`Unexpected API ${method} ${path}`); return send({}, 500);
   });
   const page = await context.newPage(); page.setDefaultTimeout(12000);
@@ -64,7 +69,10 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     assert.equal(await page.getByRole("radio", { name: "Use only my data", exact: true }).isChecked(), true);
     assert.equal(await page.getByText("Accessed", { exact: true }).count() > 0, true, "Unavailable original remains in the reference");
     assert.equal(await page.getByRole("button", { name: "Manage LRS", exact: true }).count(), 1);
-    const noOverflow = async () => assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, "No horizontal editor overflow");
+    const noOverflow = async () => {
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, "No horizontal editor overflow");
+      assert.equal(await page.locator("section").evaluateAll((sections) => sections.filter((section) => section.scrollWidth > section.clientWidth + 1).length), 0, "No horizontal scrolling inside workflow sections");
+    };
     await noOverflow();
     if (process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR) { await fs.mkdir(process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR, { recursive: true });
       await page.screenshot({ path: path.join(process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR, "basic-adaptation-desktop.png"), fullPage: true }); }
@@ -73,7 +81,22 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     await page.reload(); await page.getByRole("heading", { name: "Adapt a Basic Indicator", exact: true }).waitFor();
     await until(() => page.getByRole("heading", { name: "Community reference", exact: true }).count().then((count) => count === 4), "Frozen reference survives reload");
     await page.setViewportSize({ width: 390, height: 844 }); await noOverflow();
+    connected = true; draft.configuration.dataset.selectedLRSList = [longLrs];
+    await page.reload(); await page.getByRole("heading", { name: "Adapt a Basic Indicator", exact: true }).waitFor();
+    await page.getByText(longLrs.lrsTitle, { exact: true }).waitFor(); await noOverflow();
     if (process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR, "basic-adaptation-mobile.png"), fullPage: true });
+    const complex = newComplexConfiguration("COMPOSITE");
+    complex.sources = ["source-one", "source-two"].map((id, index) => ({ id, name: `Source ${index + 1}`, outputs: [],
+      analyticsMethod: { id: "count", name: "Count N most occurring or least occurring items" }, keyColumnId: "", measureColumnIds: [] }));
+    complex.sourceDrafts = Object.fromEntries(complex.sources.map((source) => [source.id, serializeBasicDraft(emptyBasicState())]));
+    draft = { ...draft, indicatorType: "COMPOSITE", configuration: complex };
+    await page.reload(); await page.getByRole("list", { name: "Source indicators to adapt", exact: true }).waitFor();
+    assert.equal(await page.getByText("Needs your selections", { exact: true }).count(), 2, "Source status remains fully readable on mobile");
+    assert.equal(await page.getByRole("button", { name: "Edit source", exact: true }).evaluateAll((buttons) => buttons.every((button) => button.clientWidth >= 80 && button.clientHeight <= 60)), true, "Mobile source actions fit on a readable line");
+    await noOverflow();
+    if (process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR, "complex-adaptation-sources-mobile.png"), fullPage: true });
+    await page.setViewportSize({ width: 1680, height: 1000 });
+    await page.getByRole("table", { name: "Source indicators to adapt", exact: true }).waitFor(); await noOverflow();
     assert.equal(calls.some((call) => /analyze|adaptation-preview|\/complete$/.test(call.path)), false, "Opening and autosaving a partial adaptation does not execute plugins");
     assert.deepEqual(errors, []);
     console.log("Community adaptation passed: incompatible/no-LRS entry, idempotent start, contextual reference, personal scope, reload and responsive layout.");
