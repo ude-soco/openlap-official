@@ -266,10 +266,10 @@ const AppRoutes = () => {
                   }
                 />
                 <Route path="/indicator/editor/*" element={
-                  <PrivateRoute component={<IndicatorDraftWorkspace />} allowedRoles={[RoleTypes.user]} />
+                  <PrivateRoute component={<IndicatorDraftWorkspace />} allowedRoles={[RoleTypes.user, RoleTypes.userWithoutLRS]} />
                 } />
                 <Route path="/indicator/drafts/:draftId" element={
-                  <PrivateRoute component={<IndicatorDraftAlias />} allowedRoles={[RoleTypes.user]} />
+                  <PrivateRoute component={<IndicatorDraftAlias />} allowedRoles={[RoleTypes.user, RoleTypes.userWithoutLRS]} />
                 } />
                 <Route path="/indicator">
                   <Route
@@ -277,7 +277,7 @@ const AppRoutes = () => {
                     element={
                       <PrivateRoute
                         component={<IndicatorEditorDashboard />}
-                        allowedRoles={[RoleTypes.user]}
+                        allowedRoles={[RoleTypes.user, RoleTypes.userWithoutLRS]}
                       />
                     }
                   />

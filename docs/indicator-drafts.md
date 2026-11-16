@@ -122,6 +122,32 @@ without remounting the editor or resetting its current step.
 
 ## Verification and rollout
 
+### Adapting a community indicator
+
+Indicator Pool details offer **Adapt to my data**, including when the original
+indicator cannot run with the viewer's connections. This starts an independent,
+private Basic, Composite or Multilevel draft. Each editor step shows editable
+**Your selections** beside a read-only **Community reference**. The reference is
+a frozen, anonymous recipe, so later edits or removal of the original do not
+change an existing adaptation. Missing choices remain unresolved; the system
+does not assume that differently named actions mean the same thing.
+
+Adaptations use registered connections belonging to the viewer and **Use only my
+data**. An LRS can be connected later, but a completed indicator requires a
+successful preview using the current choices. Saving flushes the draft, obtains
+a fresh, revision-bound preview receipt and validates the current data bindings
+and plugins again. Autosaving incomplete selections does not execute a plugin.
+
+Complex adaptations keep each source's editable Basic configuration inside the
+same private draft. **Edit source** opens the four familiar Basic steps with that
+source's community reference. Sources can be added or removed, and Composite
+sources must use the same installed analytics method. Supporting saved sources
+are published with the complete graph and stay out of the dashboard. Completed
+variants carry an **Adapted from community** badge; multiple independent variants
+are allowed. ISC workflows are unchanged.
+
+### Running the checks
+
 Backend lifecycle, ownership, conditional writes, retry recovery and validation
 are covered by the backend test suite. Frontend checks include the shared queue,
 storage failures, conflicts, sign out, unified-list status/filter/actions,
@@ -137,6 +163,7 @@ npm test
 npm run test:draft-foundation
 # With an isolated Vite server; all API responses are local test fixtures:
 OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:indicator-drafts
+OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:community-adaptation
 ```
 
 Use a manifest-capable OpenLAP backend and upgrade all backend writers before

@@ -6,6 +6,11 @@ import ComplexDialogs from "./complex-dialogs";
 import SourceIndicatorPreview from "./complex-source-preview";
 import chartPreviewData from "./complex-preview-data";
 import useDataPreview from "../utils/use-data-preview";
+import useAdaptationPreview from "./use-adaptation-preview.js";
+import ComplexAdaptationSources from "./complex-adaptation-sources.jsx";
+import { EmbeddedBasicIndicator } from "../basic-indicator/basic-indicator.jsx";
+import { emptyBasicState, serializeBasicDraft } from "../basic-indicator/utils/basic-draft-model.js";
+import CommunityComparison from "../../../../common/components/community-adaptation/community-comparison.jsx";
 import { getCustomizationErrors, getVisualizationDescriptor } from "../basic-indicator/components/visualization/utils/visualization-descriptor";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
@@ -35,6 +40,7 @@ import useDraftNavigation from "../drafts/use-draft-navigation.jsx";
 
 import {
   analysisRequest,
+  adaptationSourceReady,
   canSelectSource,
   compositionRequest,
   datasetRows,
@@ -72,6 +78,10 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const isMulti = type === "MULTI_LEVEL";
+  const adaptation = initialDraft?.adaptation || null;
+  const isAdaptation = Boolean(adaptation);
+  const [editingSource, setEditingSource] = useState(null);
+  const [sourceRestore, setSourceRestore] = useState(0);
   const title = TYPE_LABELS[type];
   const key = recoveryKey(type, user?.sub, id);
   const [configuration, setConfiguration] = useState(() => {
@@ -89,8 +99,8 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
   const [importingRecovery, setImportingRecovery] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [workflow, setWorkflow] = useState({
-    current: initialDraft && configuration.sources.length >= 2 ? "combine" : "sources",
-    panels: initialDraft && configuration.sources.length >= 2 ? { combine: true } : { sources: true },
+    current: !isAdaptation && initialDraft && configuration.sources.length >= 2 ? "combine" : "sources",
+    panels: !isAdaptation && initialDraft && configuration.sources.length >= 2 ? { combine: true } : { sources: true },
   });
   const current = workflow.current;
   const setCurrent = useCallback((step) => {
@@ -101,7 +111,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
   }, []);
   const [summaryVisible, setSummaryVisible] = useState({});
   const [tip, setTip] = useState({ step: "", anchor: null });
-  const [sourcesConfirmed, setSourcesConfirmed] = useState(Boolean(initialDraft && configuration.sources.length >= 2));
+  const [sourcesConfirmed, setSourcesConfirmed] = useState(Boolean(!isAdaptation && initialDraft && configuration.sources.length >= 2));
   const [catalog, setCatalog] = useState({ content: [], totalPages: 0, totalElements: 0 });
   const [sourcePage, setSourcePage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -148,12 +158,14 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     if (!restored) throw new Error("This draft uses an unsupported indicator configuration.");
     generation.current += 1;
     setConfiguration({ ...restored, name: name || restored.name });
-    setSourcesConfirmed(restored.sources.length >= 2);
-    setWorkflow({ current: restored.sources.length >= 2 ? "combine" : "sources",
-      panels: restored.sources.length >= 2 ? { combine: true } : { sources: true } });
+    setSourcesConfirmed(!isAdaptation && restored.sources.length >= 2);
+    setWorkflow({ current: !isAdaptation && restored.sources.length >= 2 ? "combine" : "sources",
+      panels: !isAdaptation && restored.sources.length >= 2 ? { combine: true } : { sources: true } });
+    setSourceRestore((value) => value + 1);
+    setEditingSource(null);
     setPreview(null);
     setPreviewFingerprint("");
-  }, [type]);
+  }, [type, isAdaptation]);
   const draft = useIndicatorDraft({
     api, owner: user?.sub,
     indicatorType: type, name: configuration.name, configuration: draftConfiguration,
@@ -162,6 +174,8 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     onCompleted: () => { draftNavigation.release(); navigate("/indicator"); },
   });
   const draftNavigation = useDraftNavigation(draft);
+  const draftSession = useRef(draft);
+  draftSession.current = draft;
 
   const endpoint = isMulti ? "multilevel" : "composite";
   const methodId = configuration.analysis.methodId;
@@ -170,28 +184,38 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
   const methodFilterId = !isMulti && compatibleOnly
     ? sourceMethodId
     : "";
-  const combinePreview = useDataPreview({
+  const combineReady = Boolean(loaded && !draft.finalizing && sourcesConfirmed && sourcesReady(configuration.sources) &&
+    (!isAdaptation || configuration.sources.every((source) => adaptationSourceReady(configuration.sourceDrafts?.[source.id]))));
+  const normalCombinePreview = useDataPreview({
     api,
     path: `v1/indicators/${endpoint}/merge`,
     fingerprint: JSON.stringify(compositionRequest(configuration)),
-    ready: Boolean(loaded && !draft.finalizing && sourcesConfirmed &&
-      sourcesReady(configuration.sources)),
+    ready: !isAdaptation && combineReady,
   });
-  const merged = isMulti ? combinePreview.data?.mergedData : combinePreview.data;
+  const adaptedCombinePreview = useAdaptationPreview({ api, draft, stage: "combine",
+    fingerprint: JSON.stringify({ sources: draftConfiguration.sources, sourceDrafts: draftConfiguration.sourceDrafts }),
+    ready: isAdaptation && combineReady });
+  const combinePreview = isAdaptation ? adaptedCombinePreview : normalCombinePreview;
+  const merged = isMulti && !isAdaptation ? combinePreview.data?.mergedData : combinePreview.data;
   const mergedRef = useRef(merged);
   mergedRef.current = merged;
-  const analysisPreview = useDataPreview({
+  const analysisReady = Boolean(isMulti && loaded && !draft.finalizing &&
+    datasetRows(merged) > 0 && methodId && !methodLoading &&
+    methodContractId === methodId && methodInputs.length &&
+    configuration.analysis.mapping.mapping.length > 0 &&
+    mappingsReady(methodInputs, configuration.analysis.mapping, merged) &&
+    parametersReady(configuration.analysis.params));
+  const normalAnalysisPreview = useDataPreview({
     api,
     path: "v1/indicators/multilevel/analyze",
     fingerprint: JSON.stringify(analysisRequest(configuration)),
     upstream: merged,
-    ready: Boolean(isMulti && loaded && !draft.finalizing &&
-      datasetRows(merged) > 0 && methodId && !methodLoading &&
-      methodContractId === methodId && methodInputs.length &&
-      configuration.analysis.mapping.mapping.length > 0 &&
-      mappingsReady(methodInputs, configuration.analysis.mapping, merged) &&
-      parametersReady(configuration.analysis.params)),
+    ready: !isAdaptation && analysisReady,
   });
+  const adaptedAnalysisPreview = useAdaptationPreview({ api, draft, stage: "analysis",
+    fingerprint: JSON.stringify({ sources: draftConfiguration.sources, sourceDrafts: draftConfiguration.sourceDrafts, analysis: draftConfiguration.analysis }),
+    upstream: merged, ready: isAdaptation && analysisReady });
+  const analysisPreview = isAdaptation ? adaptedAnalysisPreview : normalAnalysisPreview;
   const analyzed = analysisPreview.data;
   const busy = combinePreview.loading ? "combine"
     : analysisPreview.loading ? "analysis" : operationBusy;
@@ -204,7 +228,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
       ? merged?.chartData
       : resultDataset;
   const currentPreviewFingerprint = JSON.stringify(
-    previewRequest(configuration),
+    isAdaptation ? draftConfiguration : previewRequest(configuration),
   );
   const previewCurrent = Boolean(
     preview && previewFingerprint === currentPreviewFingerprint,
@@ -235,6 +259,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
   }, [sourceMethodId]);
 
   useEffect(() => {
+    if (isAdaptation) { setSourcesLoading(false); return undefined; }
     let cancelled = false;
     const controller = new AbortController();
     setSourcesLoading(true);
@@ -269,7 +294,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
       clearTimeout(timer);
       controller.abort();
     };
-  }, [api, sourcePage, pageSize, sortBy, sortDirection, methodFilterId, search, catalogRetry]);
+  }, [api, sourcePage, pageSize, sortBy, sortDirection, methodFilterId, search, catalogRetry, isAdaptation]);
 
   useEffect(() => {
     let cancelled = false;
@@ -417,6 +442,61 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     );
   }, []);
 
+  const updateSourceDraft = useCallback((slotId, basic) => change((previous) => {
+    if (JSON.stringify(previous.sourceDrafts?.[slotId]) === JSON.stringify(basic)) return previous;
+    return { ...previous,
+      sourceDrafts: { ...previous.sourceDrafts, [slotId]: basic },
+      sources: previous.sources.map((source) => {
+        if (source.id !== slotId) return source;
+        const method = basic.analysis.selectedAnalyticsMethod.method;
+        const methodChanged = source.analyticsMethod?.id !== method.id;
+        return { ...source, name: basic.indicator.indicatorName.trim() || source.name, analyticsMethod: method,
+          ...(methodChanged ? { outputs: [], keyColumnId: "", measureColumnIds: [] } : {}) };
+      }),
+    };
+  }, "sources"), [change]);
+  const sourceMethodFingerprint = JSON.stringify(isAdaptation ? configuration.sources.map((source) =>
+    [source.id, source.analyticsMethod?.id || ""]) : []);
+  useEffect(() => {
+    if (!isAdaptation) return undefined;
+    let cancelled = false;
+    const selections = JSON.parse(sourceMethodFingerprint);
+    Promise.all(selections.map(async ([slotId, selectedMethod]) => {
+      if (!selectedMethod) return [slotId, []];
+      const output = await api.get(`v1/analytics/methods/outputs/${encodeURIComponent(selectedMethod)}`);
+      return [slotId, apiData(output) || []];
+    })).then((contracts) => {
+      if (cancelled) return;
+      const bySlot = new Map(contracts);
+      setConfiguration((previous) => {
+        const sources = previous.sources.map((source) => {
+          const outputs = bySlot.get(source.id) || [];
+          const keys = outputs.filter((port) => port.type === "Text");
+          return { ...source, outputs,
+            keyColumnId: outputs.some((port) => port.id === source.keyColumnId) ? source.keyColumnId : keys.length === 1 ? keys[0].id : "",
+            measureColumnIds: source.measureColumnIds.length
+              ? source.measureColumnIds.filter((id) => outputs.some((port) => port.id === id && port.type === "Numeric"))
+              : outputs.filter((port) => port.type === "Numeric").map((port) => port.id),
+          };
+        });
+        return JSON.stringify(sources) === JSON.stringify(previous.sources) ? previous : { ...previous, sources };
+      });
+    }).catch((error) => { if (!cancelled) setSourceError(messageOf(error, "Could not refresh source method outputs. Open each source and review its method.")); });
+    return () => { cancelled = true; };
+  }, [api, isAdaptation, sourceMethodFingerprint, catalogRetry]);
+
+  const addAdaptationSource = () => {
+    const slotId = `source-${crypto.randomUUID()}`;
+    const name = `Source ${configuration.sources.length + 1}`;
+    const basic = serializeBasicDraft(emptyBasicState());
+    basic.indicator.indicatorName = name;
+    change((previous) => ({ ...previous,
+      sourceDrafts: { ...previous.sourceDrafts, [slotId]: basic },
+      sources: [...previous.sources, { id: slotId, name, label: name, analyticsMethod: { id: "", name: "" }, outputs: [], keyColumnId: "", measureColumnIds: [] }],
+    }), "sources");
+    setEditingSource(slotId);
+  };
+
   const updateSource = (sourceId, update) =>
     change(
       (previous) => ({
@@ -440,6 +520,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
   const confirmRemove = () => {
     setRemovedSource({
       source: removeSource,
+      draft: configuration.sourceDrafts?.[removeSource.id],
       index: configuration.sources.findIndex(
         (source) => source.id === removeSource.id,
       ),
@@ -447,6 +528,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     change(
       (previous) => ({
         ...previous,
+        ...(isAdaptation ? { sourceDrafts: Object.fromEntries(Object.entries(previous.sourceDrafts).filter(([slot]) => slot !== removeSource.id)) } : {}),
         sources: previous.sources.filter(
           (source) => source.id !== removeSource.id,
         ),
@@ -463,10 +545,11 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
       setRemoveSource(source);
       return;
     }
-    setRemovedSource({ source, index: configuration.sources.indexOf(source) });
+    setRemovedSource({ source, draft: configuration.sourceDrafts?.[source.id], index: configuration.sources.indexOf(source) });
     change(
       (previous) => ({
         ...previous,
+        ...(isAdaptation ? { sourceDrafts: Object.fromEntries(Object.entries(previous.sourceDrafts).filter(([slot]) => slot !== source.id)) } : {}),
         sources: previous.sources.filter((item) => item.id !== source.id),
       }),
       "sources",
@@ -528,13 +611,16 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
 
     const load = async () => {
       try {
+        const saved = isAdaptation ? await draftSession.current.flush() : null;
+        if (cancelled) return;
         const response = await api.post(
-          `v1/indicators/${endpoint}/preview`,
-          JSON.parse(currentPreviewFingerprint),
-          { signal: controller.signal },
-        );
+          isAdaptation ? `v1/indicators/drafts/${encodeURIComponent(saved.id)}/adaptation-preview` : `v1/indicators/${endpoint}/preview`,
+          isAdaptation ? { revision: saved.revision, stage: "visualization" } : JSON.parse(currentPreviewFingerprint),
+          { signal: controller.signal });
         if (cancelled || request !== generation.current) return;
-        setPreview(chartPreviewData(apiData(response), configurationRef.current.visualization.typeId));
+        const result = apiData(response);
+        if (isAdaptation && result.status !== "READY") throw new Error(result.message || "Review your source selections before previewing.");
+        setPreview(chartPreviewData(isAdaptation ? result.previewCode : result, configurationRef.current.visualization.typeId));
         setPreviewFingerprint(currentPreviewFingerprint);
         setOperationError((previous) => previous.step === "visualization"
           ? { step: "", message: "" }
@@ -555,7 +641,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
         setBusy((previous) => previous === "visualization" ? "" : previous);
       }
     };
-  }, [api, endpoint, currentPreviewFingerprint, chartDataset, autoPreviewReady, previewRevision, previewRetry, catalogRetry]);
+  }, [api, endpoint, currentPreviewFingerprint, chartDataset, autoPreviewReady, previewRevision, previewRetry, catalogRetry, isAdaptation]);
   const save = () =>
     run(
       "save",
@@ -569,7 +655,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
       },
     );
 
-  const previewSourceData = (source) =>
+  const previewSourceData = (source) => isAdaptation ? setEditingSource(source.id) :
     run(
       "source",
       () =>
@@ -598,6 +684,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
   }, [draft.draftId, draft.dirty, draft.saving, draft.error, importingRecovery, key]);
   const resetCurrent = () => {
     const fresh = newComplexConfiguration(type);
+    if (isAdaptation) fresh.sourceDrafts = {};
     change(fresh, "sources");
     setWorkflow({ current: "sources", panels: { sources: true } });
     setSummaryVisible({});
@@ -718,7 +805,9 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
           </Stack>
         </Collapse>
         <Collapse id={contentId} in={expanded} timeout={{ enter: 500, exit: 250 }} unmountOnExit>
-          <Stack sx={{ gap: 2, py: 2 }}>{body}</Stack>
+          <Stack sx={{ gap: 2, py: 2, minWidth: 0 }}>
+            <CommunityComparison step={stepKey} reference={stepKey === "combine" ? adaptation?.reference : null} configuration={configuration}>{body}</CommunityComparison>
+          </Stack>
         </Collapse>
       </WorkflowSection>
     );
@@ -777,6 +866,13 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
         onDiscard={() => draftNavigation.requestDiscard()}
       />
       <Stack inert={draft.finalizing || undefined} sx={{ gap: 3 }}>
+      {editingSource && configuration.sourceDrafts?.[editingSource] ? <EmbeddedBasicIndicator
+        key={`${editingSource}:${sourceRestore}`}
+        configuration={configuration.sourceDrafts[editingSource]}
+        reference={adaptation?.reference?.sources?.find((source) => source.slotId === editingSource)?.reference}
+        onChange={(basic) => updateSourceDraft(editingSource, basic)}
+        onBack={() => { setEditingSource(null); setCurrent("sources"); }}
+      /> : <>
       {legacyRecovery && <Alert severity="info" action={<Button onClick={importLegacyRecovery}>Import local draft</Button>}>
         An older {title.toLowerCase()} is saved only in this tab. Import those selections into this private draft. Saved indicators stay unchanged.
       </Alert>}
@@ -796,7 +892,20 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
       <Stack sx={{ gap: 2 }}>
       {section(
         "sources",
-        <ComplexSourcesStep
+        isAdaptation ? <>
+        <Failure message={sourceError} retry={() => setCatalogRetry((value) => value + 1)} />
+        <ComplexAdaptationSources configuration={configuration} onEdit={setEditingSource}
+          onAdd={addAdaptationSource} onRemove={requestRemove} removedSource={removedSource}
+          onUndo={() => {
+            if (!removedSource) return;
+            change((previous) => ({ ...previous,
+              sourceDrafts: { ...previous.sourceDrafts, [removedSource.source.id]: removedSource.draft },
+              sources: [...previous.sources.slice(0, removedSource.index), removedSource.source, ...previous.sources.slice(removedSource.index)],
+            }), "sources");
+            setRemovedSource(null);
+          }}
+          onContinue={() => { setSourcesConfirmed(true); setCurrent("combine"); }} />
+        </> : <ComplexSourcesStep
           setCatalogRetry={setCatalogRetry}
           sourcesLoading={sourcesLoading}
           isMulti={isMulti}
@@ -837,6 +946,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
           updateSource={updateSource}
           busy={busy}
           previewSourceData={previewSourceData}
+          onEditSource={isAdaptation ? setEditingSource : undefined}
           operationError={combinePreview.error
             ? { step: "combine", message: combinePreview.error } : operationError}
           combine={combinePreview.retry}
@@ -848,6 +958,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
         section(
           "analysis",
           <ComplexAnalysisStep
+            reference={adaptation?.reference}
             methods={methods}
             methodId={methodId}
             change={change}
@@ -868,6 +979,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
       {section(
         "visualization",
         <ComplexVisualizationStep
+          reference={adaptation?.reference}
           libraryId={libraryId}
           change={change}
           libraries={libraries}
@@ -893,6 +1005,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
         />,
       )}
       </Stack>
+      </>}
       </Stack>
       <SourceIndicatorPreview
         source={catalogPreview}

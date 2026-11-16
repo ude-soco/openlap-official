@@ -1,3 +1,5 @@
+import { readBasicDraft } from "../basic-indicator/utils/basic-draft-model.js";
+
 export const CONFIG_VERSION = 1;
 export const COMPLEX_TYPES = ["COMPOSITE", "MULTI_LEVEL"];
 export const MAX_SOURCES = 10;
@@ -66,8 +68,23 @@ export function readComplexConfiguration(value, type) {
       )
     )
       return null;
+    let sourceDrafts;
+    if (data.sourceDrafts !== undefined) {
+      if (!data.sourceDrafts || typeof data.sourceDrafts !== "object" || Array.isArray(data.sourceDrafts)
+          || Object.keys(data.sourceDrafts).length !== data.sources.length) return null;
+      const drafts = [];
+      for (const source of data.sources) {
+        if (!/^source-[A-Za-z0-9-]{1,80}$/.test(source.id)) return null;
+        if (!Object.prototype.hasOwnProperty.call(data.sourceDrafts, source.id)) return null;
+        const basic = readBasicDraft(data.sourceDrafts[source.id]);
+        if (!basic) return null;
+        drafts.push([source.id, basic]);
+      }
+      sourceDrafts = Object.fromEntries(drafts);
+    }
     return {
       ...newComplexConfiguration(type),
+      ...(sourceDrafts ? { sourceDrafts } : {}),
       name: data.name,
       sources: data.sources.map(
         ({
@@ -175,6 +192,14 @@ export function sourcesReady(sources = []) {
       (source) => source.keyColumnId && source.measureColumnIds?.length,
     )
   );
+}
+
+export function adaptationSourceReady(configuration) {
+  return Boolean(configuration?.dataset?.selectedLRSList?.length &&
+    configuration.filters?.selectedActivities?.length && configuration.filters.selectedActivities.every((entry) =>
+      entry.selectedActivityType?.id && entry.selectedActionList?.length && entry.selectedActivityList?.length) &&
+    configuration.analysis?.selectedAnalyticsMethod?.method?.id &&
+    configuration.analysis.selectedAnalyticsMethod.mapping?.mapping?.length);
 }
 
 export function compositionRequest(configuration) {

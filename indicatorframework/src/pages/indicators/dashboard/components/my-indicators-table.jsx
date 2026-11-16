@@ -160,7 +160,7 @@ export default function MyIndicatorsTable({ onStats, draftsOnly = false, onDraft
           {!error && rows.map((item) => <TableRow key={keyOf(item)} hover>
             <TableCell><Stack sx={{ gap: 0.75 }}>
               <Typography sx={{ fontWeight: 600 }}>{item.name}</Typography>
-              {item.communityCopy && <CommunityCopyBadge />}
+              {item.communityCopy && <CommunityCopyBadge label={item.communityAdapted ? "Adapted from community" : "Community copy"} />}
               <Box sx={{ display: "block", [MEDIUM]: { display: "none" } }}>{status(item)}</Box>
               {item.kind === "DRAFT" && item.sourceIndicatorId && <Typography variant="caption" color="text.secondary">Editing saved indicator</Typography>}
               {item.recoverable === false && <Typography variant="caption" color="text.secondary">Older draft needs review</Typography>}
