@@ -62,12 +62,13 @@ public class MongoIndicatorDraftTargets implements IndicatorDraftTargets {
   public Document snapshot(String owner, String id) {
     Document found = mongo.getCollection(COLLECTION).find(identity(id)).first();
     requireOwner(found, owner);
+    requireSourceFinalized(found);
     Document snapshot = new Document("_id", found.get("_id"));
     DEFINITION.forEach(
         key -> {
           if (found.containsKey(key)) snapshot.put(key, found.get(key));
         });
-    for (String key : List.of("communitySourceId", "communitySourceVersion", "communityDependency"))
+    for (String key : List.of("communitySourceId", "communitySourceVersion", "communityAdapted", "communityDependency"))
       if (found.containsKey(key)) snapshot.put(key, found.get(key));
     return snapshot;
   }
@@ -79,6 +80,17 @@ public class MongoIndicatorDraftTargets implements IndicatorDraftTargets {
         || !owner.equals(creator.getId().toString()))
       throw new NotFoundException(
           "INDICATOR_NOT_FOUND", "This saved indicator is not available to edit.");
+  }
+
+  private void requireSourceFinalized(Document source) {
+    String completion = source.getString(COMPLETION_ID);
+    int suffix = completion == null ? -1 : completion.indexOf("/source/");
+    if (suffix < 1) return;
+    if (mongo.getCollection(IndicatorDraftStore.COLLECTION)
+        .find(new Document("_id", completion.substring(0, suffix)).append("status", "COMPLETING"))
+        .projection(new Document("_id", 1)).first() != null)
+      throw new ConflictException("DRAFT_FINALIZING",
+          "This source is part of an unfinished indicator save. Resume that save before editing or deleting it.");
   }
 
   private static Document definitionFilter(Document source) {
@@ -116,6 +128,9 @@ public class MongoIndicatorDraftTargets implements IndicatorDraftTargets {
   @Override
   public void updateSaved(String owner, Document expected, Indicator indicator) {
     requireOwner(expected, owner);
+    Document current = mongo.getCollection(COLLECTION).find(identity(expected.get("_id").toString())).first();
+    requireOwner(current, owner);
+    requireSourceFinalized(current);
     indicator.setId(expected.get("_id").toString());
     Document output = new Document();
     mongo.getConverter().write(indicator, output);
@@ -137,6 +152,9 @@ public class MongoIndicatorDraftTargets implements IndicatorDraftTargets {
   @Override
   public void deleteSaved(String owner, Document expected) {
     requireOwner(expected, owner);
+    Document current = mongo.getCollection(COLLECTION).find(identity(expected.get("_id").toString())).first();
+    requireOwner(current, owner);
+    requireSourceFinalized(current);
     // The caller holds the existing deletion gate, preventing a source writer from racing this CAS.
     // Publication creates its claim before its target. Once a target is visible, this protects the
     // gap between that write and its durable completion receipt (including a crashed publisher).

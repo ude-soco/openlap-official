@@ -105,6 +105,10 @@ public class SecurityConfig {
             RoleType.ROLE_USER_WITHOUT_LRS.toString(),
             RoleType.ROLE_SUPER_ADMIN.toString(),
             RoleType.ROLE_DATA_PROVIDER.toString())
+        // Private adaptation drafts can be authored before connecting an LRS. Execution and
+        // publication still validate every viewer-owned data binding in the draft service.
+        .requestMatchers("/v1/indicators/drafts", "/v1/indicators/drafts/**", "/v1/indicators/my/workspace")
+        .hasAnyAuthority(RoleType.ROLE_USER.toString(), RoleType.ROLE_USER_WITHOUT_LRS.toString())
         .requestMatchers("/v1/indicators/**", "/v1/questions/**", "/v1/statements/**")
         .hasAnyAuthority(RoleType.ROLE_USER.toString())
         // Harden the state-changing plugin endpoints that are exposed via GET (reload/populate): lock
@@ -117,6 +121,13 @@ public class SecurityConfig {
             "/v1/analytics/methods/populate/**",
             "/v1/visualizations/reload/**")
         .hasAnyAuthority(RoleType.ROLE_SUPER_ADMIN.toString())
+        .requestMatchers(HttpMethod.GET,
+            "/v1/analytics/methods", "/v1/analytics/methods/inputs/{id}",
+            "/v1/analytics/methods/outputs/{id}", "/v1/analytics/methods/input-params/{id}",
+            "/v1/analytics/methods/params/{id}", "/v1/visualizations/libraries",
+            "/v1/visualizations/libraries/{id}/types", "/v1/visualizations/types/{id}",
+            "/v1/visualizations/types/{id}/inputs")
+        .hasAnyAuthority(RoleType.ROLE_USER.toString(), RoleType.ROLE_USER_WITHOUT_LRS.toString(), RoleType.ROLE_SUPER_ADMIN.toString())
         .requestMatchers(
             HttpMethod.GET, "/v1/analytics/**", "/v1/visualizations/**", "/v1/analytics/goals/**")
         .hasAnyAuthority(RoleType.ROLE_USER.toString(), RoleType.ROLE_SUPER_ADMIN.toString())

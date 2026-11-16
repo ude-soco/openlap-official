@@ -306,6 +306,20 @@ public class MongoIndicatorDraftTargetsTest {
   }
 
   @Test
+  public void adaptationDependenciesCannotBeEditedOrDeletedUntilTheWholeGraphIsSaved() {
+    saved.set(original());
+    Document before = targets.snapshot(owner, target);
+    saved.get().put("_draftCompletionId", "draft-adaptation/source/source-1");
+    pendingClaim.set(new Document("_id", "draft-adaptation").append("status", "COMPLETING"));
+    assertThatThrownBy(() -> targets.snapshot(owner, target)).isInstanceOf(ConflictException.class)
+        .hasMessageContaining("unfinished indicator save");
+    assertThatThrownBy(() -> targets.updateSaved(owner, before, indicator())).isInstanceOf(ConflictException.class);
+    assertThatThrownBy(() -> targets.deleteSaved(owner, before)).isInstanceOf(ConflictException.class);
+    pendingClaim.set(null);
+    assertThat(targets.snapshot(owner, target)).containsEntry("name", original().getString("name"));
+  }
+
+  @Test
   public void deletionWaitsUntilAnAlreadyPublishedTargetHasItsCompletionReceipt() {
     saved.set(original());
     Document source = targets.snapshot(owner, target);

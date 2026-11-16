@@ -16,11 +16,19 @@ public record IndicatorWorkspaceRow(
     Boolean recoverable,
     boolean completionPending,
     boolean communityCopy,
-    boolean communityDependency) {
+    boolean communityDependency,
+    boolean communityAdapted) {
+  public IndicatorWorkspaceRow(String id, String kind, String status, String name,
+      String indicatorType, Instant createdAt, Instant updatedAt, Long revision,
+      String sourceIndicatorId, Boolean recoverable, boolean completionPending,
+      boolean communityCopy, boolean communityDependency) {
+    this(id, kind, status, name, indicatorType, createdAt, updatedAt, revision,
+        sourceIndicatorId, recoverable, completionPending, communityCopy, communityDependency, false);
+  }
   public IndicatorWorkspaceRow(String id, String kind, String status, String name,
       String indicatorType, Instant createdAt, Instant updatedAt, Long revision,
       String sourceIndicatorId, Boolean recoverable, boolean completionPending) {
     this(id, kind, status, name, indicatorType, createdAt, updatedAt, revision,
-        sourceIndicatorId, recoverable, completionPending, false, false);
+        sourceIndicatorId, recoverable, completionPending, false, false, false);
   }
 }

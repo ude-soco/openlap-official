@@ -31,4 +31,16 @@ public class PluginReferencesTest {
   @Test public void incompleteDraftSlicesRemainSupported() {
     assertThat(references.collect(new Document("session", "{\"analysis\":null}").append("visRef", "").append("dataset", "null"))).doesNotContain("null");
   }
+
+  @Test public void readonlyCommunityRecipeDoesNotPinUnusedPluginsButOwnedSourceDraftsDo() {
+    Document draft = new Document("ownerId", "viewer").append("communityAdapted", true)
+        .append("adaptation", new Document("reference", new Document("methodId", "old-method")))
+        .append("configuration", new Document("sourceDrafts", new Document("source-1",
+            new Document("methodId", "selected-method").append("params",
+                new Document("adaptation", new Document("reference", "parameter-plugin"))))));
+    assertThat(references.collect(draft)).contains("selected-method", "parameter-plugin").doesNotContain("old-method");
+    assertThat(draft.get("adaptation", Document.class).get("reference")).isNotNull();
+    draft.remove("communityAdapted");
+    assertThat(references.collect(draft)).contains("old-method");
+  }
 }

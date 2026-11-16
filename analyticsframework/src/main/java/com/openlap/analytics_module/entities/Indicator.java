@@ -39,6 +39,7 @@ public class Indicator {
   private String communityId;
   private String communitySourceId;
   private String communitySourceVersion;
+  private boolean communityAdapted;
   private boolean communityDependency;
   private String communityCopyPending;
 

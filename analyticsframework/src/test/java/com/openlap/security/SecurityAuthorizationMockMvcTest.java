@@ -160,6 +160,14 @@ public class SecurityAuthorizationMockMvcTest {
     mockMvc.perform(get("/v1/community/indicators").header(AUTHORIZATION, "Bearer valid-token"))
         .andExpect(status().isOk()).andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")));
     mockMvc.perform(get("/v1/indicators/my/workspace").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk());
+    mockMvc.perform(get("/v1/analytics/methods").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk());
+    mockMvc.perform(get("/v1/visualizations/libraries").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isOk());
+    mockMvc.perform(get("/v1/analytics/methods/reload").header(AUTHORIZATION, "Bearer valid-token"))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(get("/v1/visualizations/reload").header(AUTHORIZATION, "Bearer valid-token"))
         .andExpect(status().isForbidden());
   }
 

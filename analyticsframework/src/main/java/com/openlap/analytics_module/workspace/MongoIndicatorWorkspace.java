@@ -60,7 +60,10 @@ public class MongoIndicatorWorkspace {
             .append("name", fallback("$name", literal("Untitled indicator")))
             .append("indicatorType", 1)
             .append("communityCopy", new Document("$ne", Arrays.asList(
-                fallback(draft ? "$sourceSnapshot.communitySourceId" : "$communitySourceId", literal("")), literal(""))))
+                fallback(draft ? fallback("$communitySourceId", "$sourceSnapshot.communitySourceId") : "$communitySourceId", literal("")), literal(""))))
+            .append("communityAdapted", draft
+                ? fallback("$communityAdapted", fallback("$sourceSnapshot.communityAdapted", false))
+                : fallback("$communityAdapted", false))
             .append("communityDependency", draft ? literal(false) : fallback("$communityDependency", false))
             .append("createdAt", draft ? fallback("$createdAt", "$lastUpdated") : "$createdOn")
             .append(
@@ -146,7 +149,8 @@ public class MongoIndicatorWorkspace {
         row.getBoolean("recoverable"),
         Boolean.TRUE.equals(row.getBoolean("completionPending")),
         Boolean.TRUE.equals(row.getBoolean("communityCopy")),
-        Boolean.TRUE.equals(row.getBoolean("communityDependency")));
+        Boolean.TRUE.equals(row.getBoolean("communityDependency")),
+        Boolean.TRUE.equals(row.getBoolean("communityAdapted")));
   }
 
   private static Instant instant(Object value) {

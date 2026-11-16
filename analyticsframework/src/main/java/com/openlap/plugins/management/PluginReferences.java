@@ -32,7 +32,20 @@ public final class PluginReferences {
         && !document.containsKey("legacyRecovery") && !document.containsKey("sourceSnapshot")
         && !document.containsKey("completionPayload")) return Set.of();
     Set<String> values = new LinkedHashSet<>();
-    walk(document, null, 0, new int[] {0}, values, wanted);
+    // This immutable server snapshot explains the community design; it is never executed.
+    // Keep scanning all current choices (including nested source drafts) and completion payloads.
+    Document executable = document;
+    if (Boolean.TRUE.equals(document.get("communityAdapted"))
+        && document.get("ownerId") instanceof String
+        && document.get("adaptation") instanceof Map<?, ?> metadata) {
+      executable = new Document(document);
+      Document referenceMetadata = new Document();
+      metadata.forEach((key, value) -> {
+        if (!"reference".equals(String.valueOf(key))) referenceMetadata.put(String.valueOf(key), value);
+      });
+      executable.put("adaptation", referenceMetadata);
+    }
+    walk(executable, null, 0, new int[] {0}, values, wanted);
     return values;
   }
 
