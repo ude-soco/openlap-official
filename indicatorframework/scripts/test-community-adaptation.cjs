@@ -29,10 +29,8 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
   console.log("Launching local synthetic WebKit fixture…");
   const browser = await webkit.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}) });
   console.log("WebKit connected; preparing fixture…");
-  const context = await browser.newContext({ viewport: { width: 1680, height: 1000 } });
-  await context.routeWebSocket(/.*/, (socket) => socket.close());
-  await context.addInitScript((token) => localStorage.setItem("authTokens", JSON.stringify({ access_token: token, refresh_token: token })), token);
-  await context.route("**/*", async (route) => {
+  const contexts = [];
+  const routeRequest = async (route) => {
     const request = route.request(), url = new URL(request.url());
     if (url.origin !== base.origin) { errors.push(`Off-origin request ${url.origin}`); return route.abort(); }
     if (!url.pathname.startsWith("/api/")) return route.continue();
@@ -61,12 +59,23 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     if (path === "v1/users/my/lrs") return send(connected ? [longLrs] : []);
     if (["v1/statements/activity-types", "v1/analytics/methods", "v1/visualizations/libraries"].includes(path)) return send([]);
     errors.push(`Unexpected API ${method} ${path}`); return send({}, 500);
-  });
-  const page = await context.newPage(); page.setDefaultTimeout(12000);
-  page.on("crash", () => errors.push("Browser page crashed"));
-  page.on("close", () => errors.push("Browser page closed"));
+  };
+  const createContext = async (viewport) => {
+    const context = await browser.newContext({ viewport });
+    contexts.push(context);
+    await context.routeWebSocket(/.*/, (socket) => socket.close());
+    await context.addInitScript((token) => localStorage.setItem("authTokens", JSON.stringify({ access_token: token, refresh_token: token })), token);
+    await context.route("**/*", routeRequest);
+    context.on("page", (opened) => {
+      opened.setDefaultTimeout(12000);
+      opened.on("pageerror", (error) => errors.push(error.message));
+      opened.on("crash", () => errors.push(`Browser page crashed at ${opened.url()}`));
+    });
+    return context;
+  };
+  const desktop = { width: 1680, height: 1000 }, mobile = { width: 390, height: 844 };
+  let page = await (await createContext(desktop)).newPage();
   try {
-    page.on("pageerror", (error) => errors.push(error.message));
     stage = "opening community pool"; console.log("Opening local Indicator Pool…");
     await page.goto(new URL("indicator/pool", base).href);
     await page.getByRole("button", { name: `View ${reference.name}`, exact: true }).click();
@@ -98,16 +107,13 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     await page.reload(); await page.getByRole("heading", { name: "Adapt a Basic Indicator", exact: true }).waitFor();
     await until(() => page.getByRole("heading", { name: "Community reference", exact: true }).count().then((count) => count === 4), "Frozen reference survives reload");
     stage = "checking narrow Basic adaptation";
-    await page.setViewportSize({ width: 390, height: 844 });
+    // Separate device contexts keep storage/rendering isolated while sharing
+    // this account's authoritative server drafts. Each starts at its viewport.
+    page = await (await createContext(mobile)).newPage();
+    await page.goto(new URL(`indicator/editor/drafts/${draft.id}`, base).href);
+    await page.getByRole("heading", { name: "Adapt a Basic Indicator", exact: true }).waitFor();
     await until(() => page.getByRole("button", { name: /^Community reference/ }).evaluateAll((buttons) =>
-      buttons.length === 4 && buttons.every((button) => button.getAttribute("aria-expanded") === "false")), "References adapt to the narrow layout");
-    // Assert the settled responsive layout before the next document navigation,
-    // rather than measuring controls while their Collapse transitions run.
-    await page.evaluate(async () => {
-      await new Promise(requestAnimationFrame); await new Promise(requestAnimationFrame);
-      await Promise.all(document.getAnimations().filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
-        .map((animation) => animation.finished.catch(() => {})));
-    });
+      buttons.length === 4 && buttons.every((button) => button.getAttribute("aria-expanded") === "false")), "References start collapsed in the narrow layout");
     await noOverflow(); await page.getByText("Draft saved", { exact: true }).waitFor();
     connected = true;
     const connectedDraft = { ...draft, id: "adaptation-connected", revision: 0,
@@ -131,7 +137,8 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     assert.equal(await page.getByRole("button", { name: "Edit source", exact: true }).evaluateAll((buttons) => buttons.every((button) => button.clientWidth >= 80 && button.clientHeight <= 60)), true, "Mobile source actions fit on a readable line");
     await noOverflow();
     if (process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR, "complex-adaptation-sources-mobile.png"), fullPage: true });
-    await page.setViewportSize({ width: 1680, height: 1000 });
+    page = await (await createContext(desktop)).newPage();
+    await page.goto(new URL(`indicator/editor/drafts/${compositeDraft.id}`, base).href);
     await page.getByRole("table", { name: "Source indicators to adapt", exact: true }).waitFor(); await noOverflow();
     assert.equal(calls.some((call) => /analyze|adaptation-preview|\/complete$/.test(call.path)), false, "Opening and autosaving a partial adaptation does not execute plugins");
     assert.deepEqual(errors, []);
@@ -148,5 +155,8 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     }
     throw failure;
   }
-  finally { await context.close().catch(() => {}); await browser.close().catch(() => {}); }
+  finally {
+    for (const context of contexts) await context.close().catch(() => {});
+    await browser.close().catch(() => {});
+  }
 })().catch((failure) => { console.error(failure); process.exitCode = 1; });
