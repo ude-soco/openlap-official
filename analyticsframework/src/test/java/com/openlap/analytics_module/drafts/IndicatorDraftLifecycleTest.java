@@ -86,6 +86,47 @@ public class IndicatorDraftLifecycleTest {
             config("Saved").toString()));
   }
 
+  private JsonNode adaptationMetadata() {
+    return mapper.valueToTree(Map.of("schemaVersion", 1,
+        "poolId", "b5925a28-89a8-4813-98a1-d515c7500397", "sourceVersion", "a".repeat(64),
+        "reference", Map.of("name", "Community activity", "type", "BASIC")));
+  }
+
+  @Test
+  public void adaptationSnapshotIsPrivateImmutableAndIdempotentAfterTheOriginalIsGone() {
+    String key = UUID.randomUUID().toString();
+    JsonNode metadata = adaptationMetadata();
+    var draft = service.createAdaptation(request, key, IndicatorType.BASIC, "Adapted", config("Adapted"), metadata);
+    assertThat(draft.sourceIndicatorId()).isNull();
+    assertThat(draft.adaptation()).isEqualTo(metadata);
+    assertThat(service.findAdaptation(request, key, metadata.path("poolId").asText()).id()).isEqualTo(draft.id());
+    ((com.fasterxml.jackson.databind.node.ObjectNode) metadata.path("reference")).put("name", "Edited original");
+    var updated = service.update(request, draft.id(), change(0, "Own selection", null));
+    assertThat(updated.adaptation().path("reference").path("name").asText()).isEqualTo("Community activity");
+    assertThat(service.list(request, 0, 10, "", null, "updatedAt", "desc").getContent().get(0).adaptation()).isNull();
+    owner = "another-owner";
+    assertThatThrownBy(() -> service.requireAdaptation(request, draft.id())).isInstanceOf(NotFoundException.class);
+    verifyNoInteractions(definitions, targets);
+  }
+
+  @Test
+  public void closedAdaptationCanForkItsPrivateReferenceAndNormalCompletionCannotExecuteIt() {
+    var draft = service.createAdaptation(request, UUID.randomUUID().toString(), IndicatorType.BASIC,
+        "Adapted", config("Adapted"), adaptationMetadata());
+    assertThatThrownBy(() -> service.complete(request, draft.id(),
+        new IndicatorDraftRequests.Complete(draft.revision(), completeBody())))
+        .isInstanceOf(ValidationException.class).hasMessageContaining("Preview");
+    var closed = service.discard(request, draft.id(), 0);
+    assertThat(closed.adaptation()).isEqualTo(draft.adaptation());
+    assertThat(closed.configuration()).isNull();
+    var fork = service.create(request, new IndicatorDraftRequests.Create(UUID.randomUUID().toString(),
+        IndicatorType.BASIC, "Separate version", config("Separate version"), 1, closed.id()));
+    assertThat(fork.adaptation()).isEqualTo(draft.adaptation());
+    assertThat(fork.id()).isNotEqualTo(draft.id());
+    assertThat(fork.sourceIndicatorId()).isNull();
+    verifyNoInteractions(definitions, targets);
+  }
+
   @Test
   public void createHasAStableIdentityAcrossRetriesAndDoesNotReplaceInterveningEdits() {
     String key = UUID.randomUUID().toString();

@@ -13,7 +13,13 @@ public final class IndicatorDraftRequests {
       @NotNull IndicatorType indicatorType,
       @Size(max = 300) String name,
       @NotNull JsonNode configuration,
-      @NotNull Integer schemaVersion) {}
+      @NotNull Integer schemaVersion,
+      @Size(max = 200) String adaptationSourceDraftId) {
+    public Create(String clientRequestId, IndicatorType indicatorType, String name,
+        JsonNode configuration, Integer schemaVersion) {
+      this(clientRequestId, indicatorType, name, configuration, schemaVersion, null);
+    }
+  }
 
   public record Update(
       @NotNull @Min(0) Long revision,

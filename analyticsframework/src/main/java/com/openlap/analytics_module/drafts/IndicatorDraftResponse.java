@@ -18,4 +18,14 @@ public record IndicatorDraftResponse(
     String status,
     String savedIndicatorId,
     boolean recoverable,
-    boolean completionPending) {}
+    boolean completionPending,
+    JsonNode adaptation) {
+  public IndicatorDraftResponse(String id, IndicatorType indicatorType, String name,
+      JsonNode configuration, int schemaVersion, long revision, String sourceIndicatorId,
+      String sourceRevision, Instant createdAt, Instant updatedAt, String status,
+      String savedIndicatorId, boolean recoverable, boolean completionPending) {
+    this(id, indicatorType, name, configuration, schemaVersion, revision, sourceIndicatorId,
+        sourceRevision, createdAt, updatedAt, status, savedIndicatorId, recoverable,
+        completionPending, null);
+  }
+}

@@ -27,6 +27,20 @@ public class IndicatorDraftService {
   private final IndicatorDraftConfiguration configurations;
   private final ObjectMapper mapper;
   private final TokenService tokens;
+  private org.springframework.beans.factory.ObjectProvider<IndicatorDraftAdaptationLifecycle> adaptations;
+
+  @org.springframework.beans.factory.annotation.Autowired
+  public void configureAdaptations(org.springframework.beans.factory.ObjectProvider<IndicatorDraftAdaptationLifecycle> provider) {
+    adaptations = provider;
+  }
+
+  private IndicatorDraftAdaptationLifecycle adaptations() {
+    IndicatorDraftAdaptationLifecycle lifecycle = adaptations == null ? null : adaptations.getIfAvailable();
+    if (lifecycle == null) throw new ValidationException("ADAPTATION_PREVIEW_REQUIRED",
+        "Preview this adaptation with your data before saving it.");
+    return lifecycle;
+  }
+
 
   private String owner(HttpServletRequest request) {
     return tokens.getUserFromToken(request).getId();
@@ -127,15 +141,82 @@ public class IndicatorDraftService {
   public IndicatorDraftResponse create(
       HttpServletRequest request, IndicatorDraftRequests.Create body) {
     String owner = owner(request), requestId = uuid(body.clientRequestId());
-    JsonNode config =
-        configurations.validate(body.configuration(), body.indicatorType(), body.schemaVersion());
+    Document origin = body.adaptationSourceDraftId() == null ? null
+        : requireAdaptation(request, body.adaptationSourceDraftId());
+    JsonNode config = origin == null
+        ? configurations.validate(body.configuration(), body.indicatorType(), body.schemaVersion())
+        : configurations.validateAdaptation(body.configuration(), body.indicatorType(), body.schemaVersion());
+    if (origin != null && type(origin) != body.indicatorType())
+      throw new ValidationException("An adaptation must retain its indicator type.");
     String id = "draft-" + configurations.hash(mapper.valueToTree(List.of(owner, requestId)));
     Document existing = store.find(owner, id);
     if (existing != null) return response(existing);
     Document draft = fresh(owner, id, body.indicatorType(), body.name(), config);
     draft.put("clientRequestId", requestId);
+    if (origin != null) inheritAdaptation(draft, origin);
     if (!store.insert(draft)) draft = required(owner, id);
     return response(draft);
+  }
+
+  private void inheritAdaptation(Document draft, Document origin) {
+    draft.put("adaptation", Document.parse(mapper.valueToTree(origin.get("adaptation")).toString()));
+    for (String field : List.of("communitySourceId", "communitySourceVersion", "communityAdapted"))
+      if (origin.containsKey(field)) draft.put(field, origin.get(field));
+  }
+
+  /** Check retry identity before reading the original; a lost start acknowledgement survives deletion. */
+  public IndicatorDraftResponse findAdaptation(HttpServletRequest request, String clientRequestId, String poolId) {
+    String owner = owner(request), requestId = uuid(clientRequestId);
+    String id = adaptationId(owner, requestId);
+    Document existing = store.find(owner, id);
+    if (existing == null) return null;
+    if (!poolId.equals(existing.getString("communitySourceId"))) throw conflict();
+    return response(existing);
+  }
+
+  private String adaptationId(String owner, String requestId) {
+    return "draft-" + configurations.hash(mapper.valueToTree(List.of(owner, "community-adaptation", requestId)));
+  }
+
+  /** Called only by the server recipe exporter: browser requests cannot supply reference metadata. */
+  public IndicatorDraftResponse createAdaptation(HttpServletRequest request, String clientRequestId,
+      IndicatorType type, String name, JsonNode config, JsonNode adaptation) {
+    String owner = owner(request), requestId = uuid(clientRequestId);
+    if (adaptation == null || !adaptation.isObject() || adaptation.path("schemaVersion").asInt() != 1
+        || !adaptation.path("reference").isObject()
+        || !adaptation.path("sourceVersion").asText().matches("[0-9a-f]{64}")
+        || adaptation.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8).length > IndicatorDraftConfiguration.MAX_BYTES)
+      throw new ValidationException("Invalid community reference.");
+    String poolId = uuid(adaptation.path("poolId").asText());
+    JsonNode checked = configurations.validateAdaptation(config, type, 1);
+    String id = adaptationId(owner, requestId);
+    Document existing = store.find(owner, id);
+    if (existing != null) {
+      if (!poolId.equals(existing.getString("communitySourceId"))) throw conflict();
+      return response(existing);
+    }
+    Document draft = fresh(owner, id, type, name, checked);
+    draft.put("clientRequestId", requestId);
+    draft.put("adaptation", Document.parse(adaptation.toString()));
+    draft.put("communitySourceId", poolId);
+    draft.put("communitySourceVersion", adaptation.path("sourceVersion").asText());
+    draft.put("communityAdapted", true);
+    if (!store.insert(draft)) {
+      draft = required(owner, id);
+      if (!poolId.equals(draft.getString("communitySourceId"))) throw conflict();
+    }
+    return response(draft);
+  }
+
+  public Document requireAdaptation(HttpServletRequest request, String id) {
+    Document current = required(owner(request), id);
+    if (!(current.get("adaptation") instanceof Document))
+      throw new NotFoundException("ADAPTATION_NOT_FOUND", "This adaptation draft is not available.");
+    return current;
+  }
+
+  public IndicatorDraftResponse adaptationResponse(Document document) {
+    return response(document);
   }
 
   public IndicatorDraftResponse get(HttpServletRequest request, String id) {
@@ -186,8 +267,9 @@ public class IndicatorDraftService {
     String owner = owner(request);
     Document current = required(owner, id);
     requireActive(current);
-    JsonNode config =
-        configurations.validate(body.configuration(), type(current), body.schemaVersion());
+    JsonNode config = current.containsKey("adaptation")
+        ? configurations.validateAdaptation(body.configuration(), type(current), body.schemaVersion())
+        : configurations.validate(body.configuration(), type(current), body.schemaVersion());
     String requestId = body.clientRequestId() == null ? null : uuid(body.clientRequestId());
     String hash = configurations.hash(mapper.valueToTree(List.of(name(body.name()), config)));
     if (requestId != null && requestId.equals(current.getString("lastMutationId"))) {
@@ -264,6 +346,7 @@ public class IndicatorDraftService {
       HttpServletRequest request, String id, IndicatorDraftRequests.Complete body) {
     String owner = owner(request);
     Document current = required(owner, id);
+    if (current.containsKey("adaptation")) return adaptations().complete(request, current, body);
     if (body.indicator() == null
         || body.indicator().toString().length() > 2 * IndicatorDraftConfiguration.MAX_BYTES)
       throw new ValidationException("Invalid indicator definition.");
@@ -328,6 +411,7 @@ public class IndicatorDraftService {
   /** Resume the exact previously validated definition, independent of refreshed client catalogs. */
   public IndicatorDraftResponse resume(HttpServletRequest request, String id) {
     Document current = required(owner(request), id);
+    if (current.containsKey("adaptation")) return adaptations().resume(request, current);
     String status = current.getString("status");
     if ("COMPLETED".equals(status)) return response(current);
     if ("DISCARDED".equals(status))
@@ -418,7 +502,8 @@ public class IndicatorDraftService {
         "COMPLETING".equals(status) ? "DRAFT" : status,
         doc.getString("savedIndicatorId"),
         Boolean.TRUE.equals(doc.getBoolean("recoverable")),
-        "COMPLETING".equals(status));
+        "COMPLETING".equals(status),
+        includeConfiguration && doc.containsKey("adaptation") ? mapper.valueToTree(doc.get("adaptation")) : null);
   }
 
   private static boolean matchesCompletionRevision(Document draft, Long expected) {
