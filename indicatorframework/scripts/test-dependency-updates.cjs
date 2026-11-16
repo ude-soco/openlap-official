@@ -34,6 +34,7 @@ import DataTableManager from "/src/pages/indicator-specification-cards/creator/c
 import BarChart from "/src/pages/indicator-specification-cards/creator/components/finalize/components/bar-chart.jsx";
 import { ISCContext } from "/src/pages/indicator-specification-cards/creator/isc-context.js";
 import { CustomThemeContext } from "/src/setup/theme-manager/theme-context-manager.jsx";
+import ContentBodyEditor from "/src/pages/admin/components/content-body-editor.jsx";
 
 const categorical = { value: "Categorical", type: "string" };
 const numerical = { value: "Numerical", type: "number" };
@@ -136,9 +137,12 @@ function Fixture() {
   const [view, setView] = useState("grid");
   const [customize, setCustomize] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [body, setBody] = useState({ type: "doc", content: [{ type: "paragraph" }] });
+  const [editorDisabled, setEditorDisabled] = useState(false);
+  const [submits, setSubmits] = useState(0);
   const theme = useMemo(() => createTheme({ palette: { mode: darkMode ? "dark" : "light" } }), [darkMode]);
   window.__dependencyFixture = {
-    snapshot: () => ({ dataset, requirements, visRef, darkMode }),
+    snapshot: () => ({ dataset, requirements, visRef, darkMode, body, editorDisabled, submits }),
     chart: (id) => ApexCharts.getChartByID(id),
     parse: (input) => Papa.parse(input, { header: true, dynamicTyping: true }),
   };
@@ -157,6 +161,7 @@ function Fixture() {
           <button onClick={showAppChart}>Show app chart fixture</button>
           <button onClick={() => setView("wrapper")}>Show wrapper fixture</button>
           <button onClick={() => setView("bundle")}>Show chart bundle fixture</button>
+          <button onClick={() => setView("editor")}>Show content editor fixture</button>
           <button onClick={() => setDarkMode((v) => !v)}>Toggle dark mode</button>
         </nav>
         {view === "grid" && <section data-testid="dataset-grid"><DataTableManager /></section>}
@@ -165,6 +170,12 @@ function Fixture() {
         </section>}
         {view === "wrapper" && <StrictMode><WrapperCharts /></StrictMode>}
         {view === "bundle" && <BundleCharts />}
+        {view === "editor" && <section data-testid="content-editor">
+          <button onClick={() => setEditorDisabled((value) => !value)}>Toggle editor availability</button>
+          <form onSubmit={(event) => { event.preventDefault(); setSubmits((value) => value + 1); }}>
+            <ContentBodyEditor body={body} onChange={setBody} disabled={editorDisabled} />
+          </form>
+        </section>}
       </ISCContext.Provider>
     </CustomThemeContext.Provider>
   </ThemeProvider>;
@@ -345,6 +356,39 @@ async function csvChecks(page) {
   console.log("PASS: PapaParse delimiter consistency, quoted commas/newlines, BOM headers and dynamic typing");
 }
 
+async function editorChecks(page) {
+  await page.getByRole("button", { name: "Show content editor fixture", exact: true }).click();
+  const editor = page.getByRole("textbox", { name: /^News content/ });
+  await editor.fill("OpenLAP research");
+  await editor.press(process.platform === "darwin" ? "Meta+a" : "Control+a");
+  const toolbar = page.getByRole("toolbar", { name: "News content formatting", exact: true });
+  await toolbar.getByRole("button", { name: "Bold", exact: true }).click();
+  await editor.locator("strong").filter({ hasText: "OpenLAP research" }).waitFor();
+  await toolbar.getByRole("button", { name: "Insert or edit link", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Insert link", exact: true });
+  await dialog.getByRole("textbox", { name: /^Link URL/ }).fill("javascript:alert(1)");
+  await dialog.getByRole("button", { name: "Insert link", exact: true }).click();
+  await dialog.getByText("Enter a valid web URL, for example https://example.org/paper.", { exact: true }).waitFor();
+  await dialog.getByRole("textbox", { name: /^Link URL/ }).fill("example.test/research");
+  await dialog.getByRole("button", { name: "Insert link", exact: true }).click();
+  await editor.locator('a[href="https://example.test/research"] strong').waitFor();
+  await page.waitForFunction(() => {
+    const { body, submits } = window.__dependencyFixture.snapshot();
+    return submits === 0 && body.content[0].content[0].marks.some((mark) => mark.type === "link" && mark.attrs.href === "https://example.test/research");
+  });
+  await toolbar.getByRole("button", { name: "Remove link", exact: true }).click();
+  await page.waitForFunction(() => !document.querySelector('[data-testid="content-editor"] .tiptap a'));
+  await toolbar.getByRole("button", { name: "Undo", exact: true }).click();
+  await editor.locator('a[href="https://example.test/research"]').waitFor();
+  await toolbar.getByRole("button", { name: "Redo", exact: true }).click();
+  await page.waitForFunction(() => !document.querySelector('[data-testid="content-editor"] .tiptap a'));
+  await page.getByRole("button", { name: "Toggle editor availability", exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="content-editor"] [role="textbox"]').getAttribute("aria-readonly") === "true");
+  assert.equal(await toolbar.getByRole("button", { name: "Bold", exact: true }).isDisabled(), true);
+  assert.equal(await editor.getAttribute("contenteditable"), "false");
+  console.log("PASS: aligned Tiptap React/ProseMirror editor typing, formatting, safe inline links, parent-form isolation, undo/redo and readonly state");
+}
+
 (async () => {
   let browser, page, previewServer, outDir;
   let fixtureWritten = false, htmlWritten = false;
@@ -402,6 +446,7 @@ async function csvChecks(page) {
     await chartChecks(page);
     await gridChecks(page);
     await csvChecks(page);
+    await editorChecks(page);
     if (production) {
       assert.ok(requestedPaths.some((pathname) => /^\/assets\/.+\.js$/.test(pathname)), "Production fixture must load bundled JavaScript");
       assert.equal(requestedPaths.some((pathname) => /^\/(src|scripts|node_modules|@vite|@react-refresh)(\/|$)/.test(pathname)), false,

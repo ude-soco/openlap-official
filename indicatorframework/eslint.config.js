@@ -27,7 +27,10 @@ export default [
       ...js.configs.recommended.rules,
       ...react.configs.recommended.rules,
       ...react.configs['jsx-runtime'].rules,
-      ...reactHooks.configs.recommended.rules,
+      // Keep the existing Hooks checks when upgrading the plugin. Its v7
+      // recommended preset also opts into React Compiler migration rules.
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
       'react/jsx-no-target-blank': 'off',
       'react-refresh/only-export-components': [
         'warn',
