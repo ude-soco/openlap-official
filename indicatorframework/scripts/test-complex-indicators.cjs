@@ -8,6 +8,7 @@ const { webkit } = require("playwright");
 const assert = require("node:assert/strict");
 const workspacePage = require("./indicator-workspace-fixture.cjs");
 const chartRendererFixture = require("./chart-renderer-fixture.cjs");
+const editorNavigation = require("./editor-navigation-assertions.cjs");
 const base = new URL(
   process.env.OPENLAP_TEST_BASE_URL || "http://127.0.0.1:5181",
 );
@@ -314,7 +315,8 @@ let chartCatalogFailures = 0;
         return route.abort();
       }
       if (await chartRendererRoute(route)) return;
-      if (url.pathname === "/src/pages/indicators/dashboard/indicator-editor-dashboard.jsx"
+      if ((url.pathname === "/src/pages/indicators/dashboard/indicator-editor-dashboard.jsx"
+          || /^\/assets\/indicator-editor-dashboard-[^/]+\.js$/.test(url.pathname))
           && !delayedDashboardModule) {
         delayedDashboardModule = true;
         // Hold navigation beyond the recovery debounce while the old editor
@@ -785,6 +787,23 @@ let chartCatalogFailures = 0;
       assert.ok(Math.abs(saveBox.x + saveBox.width / 2 - sectionBox.x - sectionBox.width / 2) < 3,
         "Save footer is centered within the workflow frame");
     };
+    const checkEditorNavigation = async (type) => {
+      await editorNavigation.chooseStep(page, "Select indicators", "sources");
+      assert.equal(await checkbox("Deselect Access count").isChecked(), true, "Returning to sources preserves selected indicators");
+      await editorNavigation.chooseStep(page, "Combine data", "combine");
+      if (type === "MULTI_LEVEL") await editorNavigation.chooseStep(page, "Analysis", "analysis");
+      await editorNavigation.chooseStep(page, "Visualization", "visualization");
+      await page.getByText("Draft saved", { exact: true }).waitFor();
+      await page.waitForTimeout(1100);
+      const before = { writes: draftWrites.length, merge: mergeRequests.length, analysis: analysisRequests.length, charts: previews.length };
+      await editorNavigation.scrollToStep(page, "combine");
+      await editorNavigation.assertCurrent(page, "Combine data");
+      await page.waitForTimeout(1100);
+      assert.deepEqual({ writes: draftWrites.length, merge: mergeRequests.length, analysis: analysisRequests.length, charts: previews.length }, before,
+        `${type} scroll-only orientation neither saves nor executes data or chart previews`);
+      await editorNavigation.chooseStep(page, "Visualization", "visualization");
+      await editorNavigation.assertNoOverflow(page);
+    };
     const chartFrame = () => page.getByRole("region", { name: "Live preview", exact: true }).frameLocator('iframe[title="OpenLAP chart preview"]');
     const resultChart = () => chartFrame().getByRole("img", { name: "Synthetic result chart", exact: true });
     const sourceChart = (drawer, name) => drawer.frameLocator('iframe[title="OpenLAP chart preview"]').getByRole("img", { name, exact: true });
@@ -1237,6 +1256,7 @@ let chartCatalogFailures = 0;
     await button("Continue to visualization").click();
     await chooseLibrary();
     await generateChart("Grouped bar");
+    await checkEditorNavigation("COMPOSITE");
     await checkCatalogRecovery();
     await checkAutomaticUpdates("Grouped bar", "COMPOSITE");
     await checkVisualizationDesign("Grouped bar");
@@ -1370,6 +1390,7 @@ let chartCatalogFailures = 0;
     await button("Continue to visualization").click();
     await chooseLibrary();
     await generateChart("Scatter plot");
+    await checkEditorNavigation("MULTI_LEVEL");
     await checkAutomaticUpdates("Scatter plot", "MULTI_LEVEL");
     await checkVisualizationDesign("Scatter plot");
     await saveIndicator("Multilevel fixture");

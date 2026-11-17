@@ -178,6 +178,7 @@ npm run test:draft-foundation
 OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:indicator-drafts
 OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:community-adaptation
 OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:editor-navigation
+OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:adapted-source-navigation
 ```
 
 Use a manifest-capable OpenLAP backend and upgrade all backend writers before

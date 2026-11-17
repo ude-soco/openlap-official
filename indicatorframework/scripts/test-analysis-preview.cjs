@@ -4,6 +4,7 @@
 const { webkit } = require("playwright");
 const assert = require("node:assert/strict");
 const chartRendererFixture = require("./chart-renderer-fixture.cjs");
+const editorNavigation = require("./editor-navigation-assertions.cjs");
 const inertAssets = new Set([
   "https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.18/c3.min.css",
   "https://d3js.org/d3.v5.min.js",
@@ -164,6 +165,34 @@ async function fixture(browser, saved, options = {}) {
   const analysis = page.getByRole("region", { name: "Analysis step", exact: true });
   await analysis.getByRole("button", { name: "Next", exact: true }).waitFor();
   return { context, page, analysis, analysisRequests, chartRequests, draftRequests, draft, methodCatalogRequests, methodContractRequests, failures };
+}
+
+async function navigation(browser) {
+  const f = await fixture(browser, session(columns()));
+  try {
+    await until(() => f.analysisRequests.length === 1, "Navigation fixture's initial analysis starts");
+    await f.analysisRequests[0].respond({ data: { columns: columns("Navigation result") } });
+    await f.analysis.getByRole("cell", { name: "Navigation result", exact: true }).waitFor();
+    await editorNavigation.chooseStep(f.page, "Dataset", "dataset");
+    assert.equal(await f.page.getByPlaceholder("Search for Learning Record Stores (LRS)", { exact: true }).isVisible(), true);
+    await editorNavigation.chooseStep(f.page, "Filters", "filters");
+    assert.equal(await f.page.getByRole("radio", { name: "Use only my data", exact: true }).isChecked(), true);
+    await editorNavigation.chooseStep(f.page, "Analysis", "analysis");
+    assert.equal(await f.analysis.getByRole("combobox", { name: "Analytics method", exact: true }).inputValue(), "Fixture method");
+    await f.page.getByText("Draft saved", { exact: true }).waitFor();
+    await f.page.waitForTimeout(1100);
+    const configuration = structuredClone(f.draft.configuration), writes = f.draftRequests.length;
+    await editorNavigation.scrollToStep(f.page, "filters");
+    await editorNavigation.assertCurrent(f.page, "Filters");
+    await f.page.waitForTimeout(1100);
+    assert.equal(f.draftRequests.length, writes, "Scroll-only orientation does not autosave a Basic draft");
+    assert.deepEqual(f.draft.configuration, configuration, "Scroll-only orientation leaves the Basic configuration unchanged");
+    assert.equal(f.analysisRequests.length, 1, "Navigation does not rerun an unchanged Basic analysis");
+    assert.equal(f.chartRequests.length, 0, "Navigation does not execute an unselected chart");
+    await editorNavigation.assertNoOverflow(f.page);
+    assert.deepEqual(f.failures, []);
+    console.log("PASS: real Basic navigation opens/focuses retained sections; scrolling changes orientation without autosaving or executing previews");
+  } finally { await f.context.close(); }
 }
 
 async function recovery(browser) {
@@ -403,6 +432,7 @@ async function chartInvalidation(browser) {
   const browser = await webkit.launch({ headless: true,
     ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}) });
   try {
+    await navigation(browser);
     await recovery(browser);
     await incompleteInputs(browser);
     await parameterGating(browser);
