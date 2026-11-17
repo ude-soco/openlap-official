@@ -111,6 +111,8 @@ async function controlChecks(page) {
   await page.getByRole("option", { name: /Videos/ }).click();
   await activity.getByRole("progressbar").waitFor();
   await page.waitForFunction(() => window.__muiFixture.snapshot().filters.selectedActivities[0].selectedActivityType.id === "video");
+  assert.deepEqual(await page.evaluate(() => window.__muiFixture.snapshot().analysis.analyzedData), {},
+    "Changing the activity type invalidates the previous analysis");
   assert.equal(await activity.getByRole("button", { name: "Open", exact: true }).count(), 1, "Autocomplete popup adornment survives the loading spinner");
   assert.equal(await activity.getByRole("combobox", { name: "Activity type", exact: true }).inputValue(), "Videos");
 
@@ -228,7 +230,11 @@ async function customizationChecks(page) {
     page.on("pageerror", (error) => failures.push(error.message));
     await page.goto(new URL(htmlName, base).href);
     await controlChecks(page);
+    // Each scenario needs the original analyzed data. Filter controls correctly
+    // invalidate that data, so never reuse their mutated fixture for chart tests.
+    await page.reload();
     await customizationChecks(page);
+    await page.reload();
     await dateAndLayoutChecks(page);
     if (production) {
       assert.ok(requests.some((p) => /^\/assets\/.+\.js$/.test(p)), "Load the production bundle");
