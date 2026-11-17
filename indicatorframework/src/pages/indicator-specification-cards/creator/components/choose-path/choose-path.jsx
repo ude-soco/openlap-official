@@ -20,6 +20,7 @@ const ChoosePath = () => {
   return (
     <>
       <WorkflowSection
+        stepKey="path"
         status={status}
         ariaLabel="Step 2: Choose path"
         lockedHint="Complete Specify Requirements to choose how you want to start."

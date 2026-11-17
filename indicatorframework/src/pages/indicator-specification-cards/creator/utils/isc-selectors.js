@@ -4,7 +4,7 @@
 // derive the creator's stepper/completion view from the existing domain slices.
 // Individual steps still own their transition and validation rules.
 
-import { ISC_STEPS, ISC_STEP_ORDER, ISC_STEP_LABELS } from "./isc-constants.js";
+import { ISC_STEPS, ISC_STEP_ORDER, ISC_STEP_LABELS, LEGACY_STEP_CODE } from "./isc-constants.js";
 
 export const getStepOrder = () => [...ISC_STEP_ORDER];
 
@@ -75,15 +75,48 @@ export const isStepReachable = (domainState, step) => {
   );
 };
 
-// View-model for the WorkflowStepper. Combines the REAL runtime lock state
+const NAVIGATION_LABELS = {
+  [ISC_STEPS.REQUIREMENTS]: "Requirements",
+  [ISC_STEPS.PATH]: "Choose path",
+  [ISC_STEPS.VISUALIZATION]: "Visualization",
+  [ISC_STEPS.DATASET]: "Dataset",
+  [ISC_STEPS.FINALIZE]: "Finalize",
+};
+
+// Dataset-first and Visualization/Task-first paths place their middle sections
+// differently. Read those persisted codes without changing their meaning.
+export const getWorkflowStepOrder = (domainState) => {
+  const datasetFirst = domainState?.lockedStep?.dataset?.step === LEGACY_STEP_CODE.FIRST_MIDDLE ||
+    domainState?.lockedStep?.visualization?.step === LEGACY_STEP_CODE.SECOND_MIDDLE;
+  return [ISC_STEPS.REQUIREMENTS, ISC_STEPS.PATH,
+    ...(datasetFirst ? [ISC_STEPS.DATASET, ISC_STEPS.VISUALIZATION] : [ISC_STEPS.VISUALIZATION, ISC_STEPS.DATASET]),
+    ISC_STEPS.FINALIZE];
+};
+
+const lockedHint = (domainState, step) => {
+  if (step === ISC_STEPS.PATH) return "Complete Requirements and continue to choose a starting path.";
+  if (step === ISC_STEPS.FINALIZE) return "Complete Dataset and Visualization, then continue to Finalize.";
+  if (domainState?.lockedStep?.[step]?.step === LEGACY_STEP_CODE.NONE)
+    return `Choose a starting path to unlock ${NAVIGATION_LABELS[step]}.`;
+  if (step === ISC_STEPS.VISUALIZATION) return domainState?.lockedStep?.visualization?.step === LEGACY_STEP_CODE.SECOND_MIDDLE
+    ? "Complete Dataset and continue to unlock Visualization." : "Choose a starting path to unlock Visualization.";
+  if (step === ISC_STEPS.DATASET) return domainState?.lockedStep?.dataset?.step === LEGACY_STEP_CODE.SECOND_MIDDLE
+    ? "Choose a visualization and continue to unlock Dataset." : "Choose a starting path to unlock Dataset.";
+  return undefined;
+};
+
+// View-model for persistent navigation. Combines the REAL runtime lock state
 // (legacy `lockedStep.<phase>.locked` — the actual gate enforced by the UI) with
 // the derived completeness/summary selectors. Kept here as a pure function so the
 // stepper stays presentational and this stays testable.
 export const getWorkflowSteps = (domainState) =>
-  ISC_STEP_ORDER.map((step) => ({
+  getWorkflowStepOrder(domainState).map((step) => ({
     key: step,
-    label: getStepLabel(step),
-    locked: Boolean(domainState?.lockedStep?.[step]?.locked),
+    label: NAVIGATION_LABELS[step],
+    locked: domainState?.lockedStep?.[step]?.locked !== false ||
+      [ISC_STEPS.DATASET, ISC_STEPS.VISUALIZATION].includes(step) &&
+      ![LEGACY_STEP_CODE.FIRST_MIDDLE, LEGACY_STEP_CODE.SECOND_MIDDLE].includes(domainState?.lockedStep?.[step]?.step),
+    lockedHint: lockedHint(domainState, step),
     completed: isStepComplete(domainState, step),
     summary: getStepSummary(domainState, step),
   }));

@@ -7,7 +7,20 @@
 // serialization/persistence stays byte-compatible. They are a thin coordination
 // layer on top of `lockedStep`, not a replacement for it.
 
-import { ISC_STEP_ORDER } from "./isc-constants.js";
+import { ISC_STEP_ORDER, ISC_STEPS, LEGACY_STEP_CODE } from "./isc-constants.js";
+
+/**
+ * Reopen an explicitly unlocked, placed phase without changing any other
+ * panel, runtime gate or persisted step code. Unplaced middle phases do not
+ * have a section to navigate to until a starting path has been chosen.
+ */
+export const openIscStep = (lockedStep, stepKey) => {
+  const section = lockedStep?.[stepKey];
+  if (!ISC_STEP_ORDER.includes(stepKey) || section?.locked !== false || section.openPanel) return lockedStep;
+  if ([ISC_STEPS.DATASET, ISC_STEPS.VISUALIZATION].includes(stepKey) &&
+      ![LEGACY_STEP_CODE.FIRST_MIDDLE, LEGACY_STEP_CODE.SECOND_MIDDLE].includes(section.step)) return lockedStep;
+  return { ...lockedStep, [stepKey]: { ...section, openPanel: true } };
+};
 
 /**
  * Returns a new lockedStep where ONLY `stepKey` is expanded (its `openPanel`

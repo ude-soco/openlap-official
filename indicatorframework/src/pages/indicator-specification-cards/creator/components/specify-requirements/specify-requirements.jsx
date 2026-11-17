@@ -59,7 +59,7 @@ const SpecifyRequirements = () => {
 
   return (
     <>
-      <WorkflowSection status={status} ariaLabel="Step 1: Specify requirements">
+      <WorkflowSection stepKey="requirements" status={status} ariaLabel="Step 1: Specify requirements">
         <Stack sx={{ gap: 1 }}>
           <RequirementSummary />
           <Collapse

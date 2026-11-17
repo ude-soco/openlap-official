@@ -74,6 +74,7 @@ const Dataset = () => {
   return (
     <>
       <WorkflowSection
+        stepKey="dataset"
         status={status}
         ariaLabel="Choose dataset"
         lockedHint="Complete the previous step to build your dataset."

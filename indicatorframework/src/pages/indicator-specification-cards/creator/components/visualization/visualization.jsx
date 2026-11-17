@@ -73,6 +73,7 @@ const Visualization = () => {
   return (
     <>
       <WorkflowSection
+        stepKey="visualization"
         status={status}
         ariaLabel="Choose visualization"
         lockedHint="Complete the previous step to choose your visualization."

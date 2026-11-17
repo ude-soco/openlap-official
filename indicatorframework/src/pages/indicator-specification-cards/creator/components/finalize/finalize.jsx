@@ -43,6 +43,7 @@ const Finalize = () => {
   return (
     <>
       <WorkflowSection
+        stepKey="finalize"
         status={status}
         ariaLabel="Finalize indicator"
         lockedHint="Complete the previous steps to finalize your indicator."

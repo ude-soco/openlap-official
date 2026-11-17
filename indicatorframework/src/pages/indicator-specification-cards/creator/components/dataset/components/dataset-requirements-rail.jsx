@@ -209,7 +209,8 @@ const DatasetRequirementsRail = () => {
         p: 2,
         borderRadius: `${t.custom.radii.card}px`,
         position: { md: "sticky" },
-        top: { md: 16 },
+        top: { md: "var(--editor-sticky-content-top, 81px)" },
+        "@media (max-height: 360px)": { position: "static" },
       })}
     >
       <Stack sx={{ gap: 2 }}>

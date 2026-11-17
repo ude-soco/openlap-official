@@ -35,8 +35,8 @@ Editor previews continue to run only when their required selections are valid.
 
 ## Moving between editor steps
 
-Basic, Composite and Multilevel editors keep a compact step navigator beneath
-the application header while scrolling. Select an available step to open it and
+Basic, Composite and Multilevel editors and ISC Creator keep a compact step
+navigator beneath the application header while scrolling. Select an available step to open it and
 move focus to its section. The current highlight follows the section in view;
 completion icons continue to reflect the workflow's actual progress. Locked
 steps explain their prerequisites and cannot skip validation.
@@ -45,6 +45,10 @@ Narrow editor panels use a current-step menu. Community references sit below
 both sticky bars. Embedded Basic source editors use the same navigator, with
 only one navigator visible at a time. Scrolling changes neither selections nor
 saved progress; reopening a section preserves the other selections.
+
+ISC Creator uses the same navigation for Requirements, Choose path, Dataset,
+Visualization and Finalize. Dataset and Visualization follow the order of the
+chosen path; navigation preserves the stored workflow gates and selections.
 
 ## Recovery and conflicts
 
@@ -179,6 +183,7 @@ OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:indicator-drafts
 OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:community-adaptation
 OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:editor-navigation
 OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:adapted-source-navigation
+OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:isc-navigation
 ```
 
 Use a manifest-capable OpenLAP backend and upgrade all backend writers before
