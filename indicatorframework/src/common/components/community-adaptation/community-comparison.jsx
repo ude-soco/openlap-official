@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 import PropTypes from "prop-types";
-import { Accordion, AccordionDetails, AccordionSummary, Box, Paper, Stack, Typography, useMediaQuery } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Paper, Stack, Tooltip, Typography, useMediaQuery } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import ChangeCircleOutlinedIcon from "@mui/icons-material/ChangeCircleOutlined";
@@ -9,6 +9,8 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import { communityReferenceRows } from "./community-reference-model.js";
 
 const statuses = { same: [CheckCircleOutlineIcon, "Same as community", "success.main"], changed: [ChangeCircleOutlinedIcon, "Changed", "info.main"],
+  labelMatch: [CheckCircleOutlineIcon, "Matching label", "success.main", "The displayed names match. The community identifier is hidden for privacy, so confirm the meaning in your data."],
+  uncomparable: [InfoOutlinedIcon, "Not directly comparable", "text.secondary", "The community selection is not fully shared. Review the reference when choosing your own data."],
   needed: [InfoOutlinedIcon, "Needs selection", "text.secondary"], unavailable: [ErrorOutlineIcon, "Unavailable", "warning.main"],
   personal: [InfoOutlinedIcon, "Uses your own data", "info.main"], reference: [InfoOutlinedIcon, "Reference", "text.secondary"] };
 
@@ -35,10 +37,10 @@ export default function CommunityComparison({ step, reference, configuration, ch
               <Typography variant="caption" color="text.secondary">Read only · differences are allowed</Typography></Stack>
           </AccordionSummary>
           <AccordionDetails id={`${id}-reference`}><Stack sx={{ gap: 2 }}>
-            {rows.length ? rows.map((row) => { const [Icon, label, color] = statuses[row.status]; return <Stack key={row.key} sx={{ gap: 0.5, minWidth: 0 }}>
+            {rows.length ? rows.map((row) => { const [Icon, label, color, hint] = statuses[row.status]; return <Stack key={row.key} sx={{ gap: 0.5, minWidth: 0 }}>
               <Typography variant="caption" color="text.secondary">{row.label}</Typography>
               <Typography variant="body2" sx={{ overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}>{row.value || "Not specified"}</Typography>
-              <Stack direction="row" sx={{ alignItems: "center", gap: 0.5, color }}><Icon sx={{ fontSize: 16 }} /><Typography variant="caption">{label}</Typography></Stack>
+              <Tooltip title={hint || ""} describeChild><Stack component="span" tabIndex={hint ? 0 : undefined} direction="row" sx={{ alignItems: "center", gap: 0.5, color, width: "fit-content" }}><Icon sx={{ fontSize: 16 }} /><Typography variant="caption">{label}</Typography></Stack></Tooltip>
             </Stack>; }) : <Typography variant="body2" color="text.secondary">No community settings for this step.</Typography>}
           </Stack></AccordionDetails>
         </Accordion>

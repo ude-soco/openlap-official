@@ -15,6 +15,40 @@ export function comparisonStatus(expected, actual, unavailable = false) {
   return expected === actual ? "same" : "changed";
 }
 
+const normalizedLabel = (value) => text(value).normalize("NFC").trim().replace(/\s+/gu, " ").toLowerCase();
+const withheldLabels = new Set(["", "not shared", "not specified"]);
+const choices = (value) => {
+  const seen = new Set();
+  return list(value).map((entry) => ({
+    id: text(typeof entry === "object" ? entry?.id : entry),
+    label: normalizedLabel(typeof entry === "object" ? entry?.name || entry?.title : entry),
+  })).filter((entry) => {
+    const key = JSON.stringify(entry.id ? ["id", entry.id] : ["label", entry.label]);
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
+};
+
+function choiceComparisonStatus(expected, selected) {
+  const original = choices(expected);
+  const remaining = choices(selected).filter((entry) => entry.id);
+  if (!remaining.length) return "needed";
+  const hidden = [];
+  for (const entry of original) {
+    if (!entry.id) { hidden.push(entry); continue; }
+    // A known identifier must match exactly, even when labels look alike.
+    const index = remaining.findIndex((actual) => actual.id === entry.id);
+    if (index < 0) return "changed";
+    remaining.splice(index, 1);
+  }
+  if (!hidden.length) return remaining.length ? "changed" : "same";
+  // Privacy can withhold source identifiers. Compare only the visible labels
+  // in that case, and never claim this establishes identical query semantics.
+  if ([...hidden, ...remaining].some((entry) => withheldLabels.has(entry.label))) return "uncomparable";
+  const labelSet = (entries) => JSON.stringify(entries.map((entry) => entry.label).sort());
+  return labelSet(hidden) === labelSet(remaining) ? "labelMatch" : "changed";
+}
+
 // Reference values come only from the server's public, frozen recipe. This
 // presentation model deliberately never accepts rows, creator IDs or LRS IDs.
 export function communityReferenceRows(step, reference, configuration = {}) {
@@ -26,8 +60,10 @@ export function communityReferenceRows(step, reference, configuration = {}) {
     status: list(configuration.dataset?.selectedLRSList).length ? "personal" : "needed" },
     { key: "outputs", label: "Analysis output columns", value: labels(reference.dataset?.outputs), status: "reference" }];
   if (step === "filters") return [
-    row("types", "Activity types", labels(reference.filters?.activityTypes), ids(reference.filters?.activityTypes), ids(selections.map((entry) => entry.selectedActivityType).filter((entry) => entry?.id))),
-    row("actions", "Actions", labels(reference.filters?.actions), ids(reference.filters?.actions), ids(selections.flatMap((entry) => list(entry.selectedActionList)))),
+    { key: "types", label: "Activity types", value: labels(reference.filters?.activityTypes), status: choiceComparisonStatus(reference.filters?.activityTypes,
+      selections.map((entry) => entry.selectedActivityType).filter((entry) => entry?.id)) },
+    { key: "actions", label: "Actions", value: labels(reference.filters?.actions), status: choiceComparisonStatus(reference.filters?.actions,
+      selections.flatMap((entry) => list(entry.selectedActionList))) },
     row("activities", "Activities", labels(reference.filters?.activities), activityIds(reference.filters?.activities), activityIds(selections.flatMap((entry) => list(entry.selectedActivityList)))),
     row("time", "Timeframe", `${date(reference.filters?.timeframe?.from)} – ${date(reference.filters?.timeframe?.until)}`,
       `${date(reference.filters?.timeframe?.from)}|${date(reference.filters?.timeframe?.until)}`,
