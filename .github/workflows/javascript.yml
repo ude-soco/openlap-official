@@ -89,6 +89,7 @@ jobs:
           npm run test:public-routes
           npm run test:indicator-drafts
           npm run test:isc-dashboard
+          npm run test:isc-navigation
           npm run test:community-pools
           npm run test:community-adaptation
           npm run test:community-reference-layout
