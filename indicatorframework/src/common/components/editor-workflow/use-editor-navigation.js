@@ -38,6 +38,13 @@ export default function useEditorNavigation({ steps, current, onStepSelect, disa
       // MUI can activate a menu item while its keydown is still bubbling.
       // That same activation must not cancel the jump it has just requested.
       if (event && pending?.triggerEvent === event) return;
+      if (pending && event?.type === "keydown" && ["Enter", " "].includes(event.key)) {
+        // Some MUI versions dispatch a separate native click from keydown.
+        // Match the exact destination control instead of assuming event identity.
+        const control = event.target.closest?.("[aria-controls]");
+        const target = sections().find((element) => element.dataset.editorStep === pending.key);
+        if (target && control?.getAttribute("aria-controls") === target.id) return;
+      }
       pending = null;
       cancelAnimationFrame(jumpFrame);
       schedule();
@@ -47,7 +54,10 @@ export default function useEditorNavigation({ steps, current, onStepSelect, disa
       if (latest.current.disabled || latest.current.steps.find((step) => step.key === pending.key)?.locked) { cancelJump(); return; }
       const target = sections().find((element) => element.dataset.editorStep === pending.key);
       if (target) {
-        if (!pending.focused) { target.focus({ preventScroll: true }); pending.focused = true; }
+        // A closing MUI menu can briefly reclaim focus during its exit. Keep
+        // the requested section focused until layout settles; any subsequent
+        // keyboard, pointer or touch interaction cancels this reconciliation.
+        if (document.activeElement !== target) target.focus({ preventScroll: true });
         const top = Math.max(0, scrollY + target.getBoundingClientRect().top - offset());
         // Reconcile the anchor while accordion heights settle. Jumps are
         // instant (also with reduced motion) and stop on any user interaction.
@@ -65,7 +75,7 @@ export default function useEditorNavigation({ steps, current, onStepSelect, disa
       open?.(key);
       setViewed(key);
       setAnnouncement("");
-      pending = { key, triggerEvent, until: performance.now() + 750, focused: false };
+      pending = { key, triggerEvent, until: performance.now() + 750 };
       jumpFrame = requestAnimationFrame(align);
     };
     const observer = new ResizeObserver(measure);
