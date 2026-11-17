@@ -18,10 +18,14 @@ import com.openlap.dynamicparam.OpenLAPDynamicParam;
 import com.openlap.infrastructure.exception.ValidationException;
 import com.openlap.user.entities.User;
 import com.openlap.user.entities.utility_entities.LrsConsumer;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.time.LocalDateTime;
+import java.text.Normalizer;
+import java.time.*;
+import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +39,21 @@ public class CommunityIndicatorExecution {
   private final ComplexIndicatorMerger merger;
   private final ObjectMapper mapper;
   private final Gson gson = new Gson();
+  private static final Pattern FIELD_PATH = Pattern.compile("[A-Za-z_][A-Za-z0-9_-]*(?:\\.[A-Za-z0-9_-]+)*");
+  private static final Pattern LANGUAGE_FIELD = Pattern.compile(
+      "statement\\.(?:verb\\.display|object\\.definition\\.(?:name|description))\\.([A-Za-z]{2,8}(?:[-_][A-Za-z0-9]{1,8})*)");
+  private static final Set<String> KNOWN_LANGUAGE_TAGS = Arrays.stream(Locale.getAvailableLocales())
+      .map(locale -> locale.toLanguageTag().toLowerCase(Locale.ROOT)).collect(java.util.stream.Collectors.toUnmodifiableSet());
+  private static final Pattern ACTOR_FIELD = Pattern.compile(
+      "statement\\.(?:actor|authority|context\\.(?:instructor|team))\\.(?:objectType|name|mbox|mbox_sha1sum|mbox\\.sha1sum|openid|account\\.(?:name|homePage))");
+  private static final Set<String> STANDARD_FIELDS = Set.of(
+      "statement.id", "statement.timestamp", "statement.stored", "statement.version", "statement.verb.id",
+      "statement.object.id", "statement.object.objectType", "statement.object.definition.type",
+      "statement.object.definition.interactionType", "statement.object.definition.moreInfo",
+      "statement.result.score.raw", "statement.result.score.min", "statement.result.score.max", "statement.result.score.scaled",
+      "statement.result.success", "statement.result.completion", "statement.result.response", "statement.result.duration",
+      "statement.context.registration", "statement.context.revision", "statement.context.platform", "statement.context.language",
+      "statement.context.statement.id", "statement.context.statement.objectType");
 
   public record ConnectionOption(String id, String label) {}
   public record ConnectionChoice(String lrsId, String lrsTitle, List<ConnectionOption> options) {}
@@ -220,19 +239,102 @@ public class CommunityIndicatorExecution {
         || query.getActionOnActivities() == null || query.getActionOnActivities().isEmpty()
         || query.getActivities() == null || query.getActivities().isEmpty() || query.getOutputs() == null || query.getOutputs().isEmpty()
         || query.getDuration() == null || query.getDuration().getFrom() == null || query.getDuration().getUntil() == null) throw unavailable();
-    List<String> secrets = new ArrayList<>();
+    List<String> identifiers = new ArrayList<>();
     User author = source.getCreatedBy();
     if (author != null) {
-      secrets.add(author.getId()); secrets.add(author.getEmail()); secrets.add(author.getName());
-      if (author.getName() != null) secrets.addAll(Arrays.asList(author.getName().split("[^a-zA-Z0-9]+")));
+      identifiers.add(author.getId()); identifiers.add(author.getEmail());
     }
-    for (var original : query.getLrsStores()) if (original != null) secrets.add(original.getUniqueIdentifier());
-    Object selectors = Arrays.asList(query.getActivityTypes(), query.getActionOnActivities(), query.getActivities(), query.getOutputs(), query.getDuration().getFrom(), query.getDuration().getUntil());
-    String values = gson.toJson(selectors).toLowerCase(Locale.ROOT);
-    if (secrets.stream().filter(Objects::nonNull).anyMatch(secret -> secret.length() > 2 && values.contains(secret.toLowerCase(Locale.ROOT))))
-      throw failure("INCOMPATIBLE", "This indicator uses private selectors that cannot be reused anonymously.");
+    for (var original : query.getLrsStores()) if (original != null) identifiers.add(original.getUniqueIdentifier());
+    List<Pattern> privateIds = identifiers.stream().filter(value -> value != null && !value.isBlank())
+        .map(value -> identifierPattern(normalize(value.strip()))).toList();
+    Pattern privateName = fullNamePattern(author);
+    // Inspect values in their actual roles, not JSON keys or guessed name fragments.
+    // A normal namespace such as openlap-demo does not identify its creator.
+    for (String value : query.getActivityTypes()) requirePublicSelector(value, privateIds, privateName);
+    for (String value : query.getActionOnActivities()) requirePublicSelector(value, privateIds, privateName);
     if (query.getActivities().keySet().stream().anyMatch(key -> key == null || !key.startsWith("statement.object.definition.name.")
         || key.indexOf('$') >= 0 || key.indexOf(0) >= 0)) throw unavailable();
+    for (var entry : query.getActivities().entrySet()) {
+      requireFieldPath(entry.getKey(), privateIds, privateName);
+      if (entry.getValue() == null || entry.getValue().isEmpty()) throw unavailable();
+      for (String value : entry.getValue()) requirePublicSelector(value, privateIds, privateName);
+    }
+    for (String field : query.getOutputs()) requireFieldPath(field, privateIds, privateName);
+    // A year can equal a learner identifier without making an ISO date private.
+    requireDate(query.getDuration().getFrom()); requireDate(query.getDuration().getUntil());
+  }
+
+  private static String normalize(String value) {
+    return Normalizer.normalize(value, Normalizer.Form.NFC).toLowerCase(Locale.ROOT);
+  }
+
+  private static Pattern identifierPattern(String value) {
+    // Complete emails and long opaque IDs remain private inside a slug too.
+    // Short learner IDs must not reject an unrelated longer ID (123 vs 12345).
+    if (value.indexOf('@') >= 0 || value.length() >= 12) return Pattern.compile(Pattern.quote(value));
+    return Pattern.compile("(?<![\\p{L}\\p{N}])" + Pattern.quote(value) + "(?![\\p{L}\\p{N}])");
+  }
+
+  private static Pattern fullNamePattern(User author) {
+    if (author == null || author.getName() == null) return null;
+    var words = Arrays.stream(normalize(author.getName()).split("[^\\p{L}\\p{N}]+"))
+        .filter(word -> !word.isBlank()).toList();
+    // A single display-name word is not evidence that a public URI is personal.
+    if (words.size() < 2) return null;
+    return Pattern.compile("(?<![\\p{L}\\p{N}])" + String.join("[^\\p{L}\\p{N}]+", words.stream().map(Pattern::quote).toList())
+        + "(?![\\p{L}\\p{N}])");
+  }
+
+  private static void requirePublicSelector(String value, List<Pattern> privateIds, Pattern privateName) {
+    if (value == null || value.isBlank()) throw unavailable();
+    String candidate = value;
+    for (int layer = 0; layer <= 2; layer++) {
+      String normalized = normalize(candidate);
+      if (privateIds.stream().anyMatch(pattern -> pattern.matcher(normalized).find())
+          || privateName != null && privateName.matcher(normalized).find())
+        throw failure("INCOMPATIBLE", "This indicator uses private selectors that cannot be reused anonymously.");
+      if (layer == 2 || candidate.indexOf('%') < 0) break;
+      // Decode only for detection. Preserve literal '+' and '%' in ordinary text;
+      // the original selectors are never rewritten in the viewer's query.
+      String decoded = URLDecoder.decode(candidate.replace("+", "%2B").replaceAll("%(?![0-9a-fA-F]{2})", "%25"), StandardCharsets.UTF_8);
+      if (decoded.equals(candidate)) break;
+      candidate = decoded;
+    }
+  }
+
+  private static void requireFieldPath(String field, List<Pattern> privateIds, Pattern privateName) {
+    if (field == null || field.length() > 500 || !FIELD_PATH.matcher(field).matches()) throw unavailable();
+    // Canonical xAPI keys are schema, even if an actor happens to be called Name
+    // or has the identifier 'name'. Custom paths still cannot carry private IDs.
+    if (STANDARD_FIELDS.contains(field) || ACTOR_FIELD.matcher(field).matches()) return;
+    var language = LANGUAGE_FIELD.matcher(field);
+    if (language.matches()) {
+      String tag = language.group(1).replace('_', '-').toLowerCase(Locale.ROOT), prefix = tag;
+      while (!KNOWN_LANGUAGE_TAGS.contains(prefix) && prefix.contains("-"))
+        prefix = prefix.substring(0, prefix.lastIndexOf('-'));
+      // Only a recognized locale is schema. Private/custom variant suffixes
+      // are still checked, without treating the ordinary language 'en' as an ID.
+      String custom = KNOWN_LANGUAGE_TAGS.contains(prefix) ? language.group(1).substring(prefix.length()) : language.group(1);
+      if (!custom.isBlank()) requirePublicSelector(custom, privateIds, privateName);
+      return;
+    }
+    requirePublicSelector(field, privateIds, privateName);
+  }
+
+  private static void requireDate(String value) {
+    if (value == null || value.length() > 40 || !value.matches("[0-9TtZz:+. -]+")) throw invalidTimeframe();
+    try {
+      if (value.length() == 10) LocalDate.parse(value);
+      else {
+        String iso = value.replace(' ', 'T');
+        try { OffsetDateTime.parse(iso); }
+        catch (DateTimeParseException noOffset) { LocalDateTime.parse(iso); }
+      }
+    } catch (DateTimeParseException invalid) { throw invalidTimeframe(); }
+  }
+
+  private static ValidationException invalidTimeframe() {
+    return failure("INCOMPATIBLE", "This indicator has an invalid saved timeframe. Adapt it to choose valid dates.");
   }
 
   private Indicator copyBasic(Indicator source, User viewer, Map<String, LrsConsumer> bound, String id, String name) {

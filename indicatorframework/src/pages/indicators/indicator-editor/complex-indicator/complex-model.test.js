@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { emptyBasicState, serializeBasicDraft } from "../basic-indicator/utils/basic-draft-model.js";
 import {
   canSelectSource,
   compositionRequest,
@@ -58,6 +59,22 @@ const source = (id, method = "counts") => ({
   analyticsMethod: { id: method, name: method },
   outputs: [text, numeric],
   available: true,
+});
+
+test("adaptation sources persist only bounded Basic choices and reject partial keysets", () => {
+  const config = newComplexConfiguration("COMPOSITE");
+  config.sources = [sourceSelection(source("source-1")), sourceSelection(source("source-2"))];
+  const basic = emptyBasicState();
+  basic.analysis.analyzedData = { privateRows: ["secret"] };
+  config.sourceDrafts = { "source-1": serializeBasicDraft(basic), "source-2": serializeBasicDraft(basic) };
+  const restored = toComplexDraftConfiguration(config);
+  assert.equal(restored.sourceDrafts["source-1"].analysis.analyzedData, undefined);
+  assert.deepEqual(readComplexConfiguration(restored, "COMPOSITE"), restored);
+  delete config.sourceDrafts["source-2"];
+  assert.equal(readComplexConfiguration(config, "COMPOSITE"), null);
+  config.sources = [{ ...config.sources[0], id: "__proto__" }];
+  config.sourceDrafts = JSON.parse('{"__proto__":{"schemaVersion":1,"type":"BASIC"}}');
+  assert.equal(readComplexConfiguration(config, "COMPOSITE"), null);
 });
 const dataset = {
   columns: {

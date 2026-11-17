@@ -16,8 +16,16 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CommunityIndicatorController {
   private final CommunityIndicatorService service;
+  private final CommunityIndicatorExamplePreview examples;
   public record PreviewRequest(@Size(max = 20) Map<@Size(max = 100) String, @Size(max = 100) String> connections) {}
   public record CopyRequest(@NotBlank @Size(max = 100) String receiptId) {}
+
+  @GetMapping("/{poolId}/example-preview")
+  public ResponseEntity<?> examplePreview(@PathVariable String poolId) {
+    var result = examples.preview(poolId);
+    return ResponseEntity.ok().header("Cache-Control", "no-store, private").header("Pragma", "no-cache")
+        .body(new ApiSuccess(HttpStatus.OK, result.message(), result));
+  }
 
   @PostMapping("/{poolId}/preview")
   public ResponseEntity<?> preview(HttpServletRequest request, @PathVariable String poolId,

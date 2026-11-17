@@ -1,8 +1,9 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Autocomplete,
   Box,
+  Button,
   CircularProgress,
   Grid,
   Stack,
@@ -15,47 +16,40 @@ import { AuthContext } from "../../../../../../../../setup/auth-context-manager/
 
 export default function ActivityTypeSelection({ activity }) {
   const { api } = useContext(AuthContext);
-  const { dataset, filters, setFilters } = useContext(BasicContext);
-  const [loading, setLoading] = useState(false);
+  const { dataset, filters, setFilters, setAnalysis } = useContext(BasicContext);
+  const generation = useRef(0);
+  const scope = JSON.stringify([activity.id, dataset.selectedLRSList]);
+  const currentScope = useRef(scope);
+  currentScope.current = scope;
+  const [request, setRequest] = useState(null);
+  useEffect(() => () => { generation.current += 1; }, [scope]);
+  const sameSelection = request?.scope === scope && request.typeId === activity.selectedActivityType.id;
+  const loading = sameSelection && request.loading;
+  const failed = sameSelection && request.failed;
 
-  const handleSelectActivityType = (value) => {
-    const loadActionList = async () => {
-      setLoading(true);
-      try {
-        const actionList = await fetchActionOnActivitiesList(
-          api,
-          dataset.selectedLRSList,
-          value.id
-        );
-        return actionList;
-      } catch (error) {
-        console.error(`Failed to load the action on activity list`, error);
-        return [];
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadActionList().then((actionList) => {
+  const handleSelectActivityType = async (value, retry = false) => {
+    if (!retry && value.id === activity.selectedActivityType.id) return;
+    const run = ++generation.current;
+    const isCurrent = () => run === generation.current && scope === currentScope.current;
+    // Clear descendants immediately; an in-flight action lookup must not
+    // repopulate activities belonging to the previous activity type.
+    setFilters((p) => ({ ...p, selectedActivities: p.selectedActivities.map((a) =>
+      a.id === activity.id ? { ...a, selectedActivityType: value, actionList: [],
+        selectedActionList: [], activityList: [], selectedActivityList: [] } : a) }));
+    setAnalysis((p) => ({ ...p, analyzedData: {} }));
+    setRequest({ scope, typeId: value.id, loading: true, failed: false });
+    try {
+      const actionList = await fetchActionOnActivitiesList(api, dataset.selectedLRSList, value.id);
+      if (!isCurrent()) return;
       setFilters((p) => {
-        let updatedActivities;
-        updatedActivities = p.selectedActivities.map((a) =>
-          a.id === activity.id
-            ? {
-                ...a,
-                selectedActivityType: value,
-                actionList: actionList,
-                selectedActionList: [],
-                activityList: [],
-                selectedActivityList: [],
-              }
-            : a
-        );
-        return {
-          ...p,
-          selectedActivities: updatedActivities,
-        };
+        if (!isCurrent() || !p.selectedActivities.some((a) => a.id === activity.id && a.selectedActivityType.id === value.id)) return p;
+        return { ...p, selectedActivities: p.selectedActivities.map((a) =>
+          a.id === activity.id ? { ...a, actionList } : a) };
       });
-    });
+      setRequest({ scope, typeId: value.id, loading: false, failed: false });
+    } catch {
+      if (isCurrent()) setRequest({ scope, typeId: value.id, loading: false, failed: true });
+    }
   };
 
   const isSelected = activity.selectedActivityType.name !== "";
@@ -74,7 +68,9 @@ export default function ActivityTypeSelection({ activity }) {
         fullWidth
         loading={loading}
         options={filters.activityTypesList}
+        getOptionKey={(option) => option.id}
         getOptionLabel={(o) => o.name}
+        isOptionEqualToValue={(option, value) => option.id === value.id}
         value={activity.selectedActivityType || null}
         onChange={(event, value) => {
           if (value) handleSelectActivityType(value);
@@ -82,6 +78,7 @@ export default function ActivityTypeSelection({ activity }) {
         renderInput={(params) => (
           <TextField
             {...params}
+            error={Boolean(failed)}
             placeholder="Search for an activity type"
             slotProps={{
               ...params.slotProps,
@@ -103,8 +100,8 @@ export default function ActivityTypeSelection({ activity }) {
             }}
           />
         )}
-        renderOption={(props, option) => {
-          const { key, ...restProps } = props;
+        renderOption={(optionProps, option) => {
+          const { key, ...restProps } = optionProps;
           return (
             <li {...restProps} key={key}>
               <Grid container sx={{ py: 0.5 }}>
@@ -121,11 +118,14 @@ export default function ActivityTypeSelection({ activity }) {
           );
         }}
       />
-      <Typography variant="caption" color="text.secondary">
-        {isSelected
+      {failed ? <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
+        <Typography variant="caption" color="error" role="alert">Could not load actions. Try again.</Typography>
+        <Button size="small" onClick={() => handleSelectActivityType(activity.selectedActivityType, true)}>Retry</Button>
+      </Stack> : <Typography variant="caption" color="text.secondary" aria-live="polite">
+        {loading ? "Loading actions for the selected activity type…" : isSelected
           ? "Changing the type resets Action and Activities below."
           : "Choose the type of activity to filter by, e.g. materials or videos."}
-      </Typography>
+      </Typography>}
     </Stack>
   );
 }

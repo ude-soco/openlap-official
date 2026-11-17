@@ -136,7 +136,10 @@ public class CommunityPreviewStore {
   /** Only IDs/provenance are read. A late worker can insert after its abandoned claim was removed. */
   static List<Document> orphanPipeline(Date cutoff) {
     return List.of(
-        new Document("$match", new Document("communityCopyPending", new Document("$type", "string").append("$ne", ""))
+        // Adaptation rows are owned by a durable COMPLETING draft, not an exact-copy claim.
+        // Its resume protocol verifies the whole graph before exposing the parent.
+        new Document("$match", new Document("communityCopyPending", new Document("$type", "string").append("$ne", "")
+            .append("$not", new Document("$regex", "^adaptation:")))
             .append("createdOn", new Document("$lt", cutoff))),
         new Document("$project", new Document("_id", 1).append("createdBy", 1).append("createdOn", 1)
             .append("communitySourceId", 1).append("communitySourceVersion", 1)

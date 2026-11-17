@@ -157,7 +157,7 @@ export default function ActivityFilters() {
                   </Stack>
                   <Stack sx={{ gap: 3 }}>
                     <ActivityTypeSelection activity={activity} />
-                    <ActionSelection activity={activity} index={index} />
+                    <ActionSelection activity={activity} />
                     <ActivitySelection activity={activity} />
                   </Stack>
                 </Stack>

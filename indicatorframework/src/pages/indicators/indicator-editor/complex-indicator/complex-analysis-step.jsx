@@ -1,3 +1,4 @@
+import CommunityComparison from "../../../../common/components/community-adaptation/community-comparison.jsx";
 import PropTypes from "prop-types";
 import {
   Autocomplete,
@@ -20,6 +21,7 @@ import {
 } from "./complex-controls";
 
 export default function ComplexAnalysisStep({
+  reference,
   methods,
   methodId,
   change,
@@ -54,6 +56,7 @@ export default function ComplexAnalysisStep({
 
   return (
     <>
+      <CommunityComparison step="analysis" reference={reference} configuration={configuration}>
       <SectionCard
         title="Analytics method"
         helper="Choose the analysis to apply to your combined data."
@@ -168,6 +171,7 @@ export default function ComplexAnalysisStep({
           )}
         </Grid>
       )}
+      </CommunityComparison>
       <Failure
         message={!contractReady ? previewError : ""}
         retry={
@@ -248,6 +252,7 @@ export default function ComplexAnalysisStep({
   );
 }
 ComplexAnalysisStep.propTypes = {
+  reference: PropTypes.object,
   methods: PropTypes.array,
   methodId: PropTypes.string,
   change: PropTypes.func,

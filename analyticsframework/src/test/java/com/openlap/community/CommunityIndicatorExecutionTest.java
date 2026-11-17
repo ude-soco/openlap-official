@@ -24,6 +24,9 @@ import java.util.*;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 class CommunityIndicatorExecutionTest {
@@ -215,6 +218,189 @@ class CommunityIndicatorExecutionTest {
   @Test void privateActivitySelectorBlocksRatherThanSilentlyRedactingTheQuery() {
     var source = basic("Activity count");
     source.setIndicatorQuery(source.getIndicatorQuery().replace("Course activity", "creator-id activity"));
+    assertThatThrownBy(() -> execution.execute(source, viewer, Map.of(), Map.of()))
+        .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("INCOMPATIBLE");
+    verify(statements, never()).findStatements(any());
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+      "Demo Author,statement.object.definition.name.en",
+      "Name Researcher,statement.object.definition.name.en",
+      "Actor Researcher,statement.actor.account.name"
+  })
+  void commonNameFragmentsInPublicUrisAndSchemaFieldsDoNotBlockPersonalPreview(String displayName, String outputField) throws Exception {
+    creator.setName(displayName);
+    var source = basic("Learning activity");
+    var query = gson.fromJson(source.getIndicatorQuery(), StatementsRequest.class);
+    query.setActivityTypes(List.of("https://example.test/openlap-demo/activity-types/material"));
+    query.setActionOnActivities(List.of("https://example.test/openlap-demo/verbs/clicked"));
+    query.setOutputs(List.of(outputField));
+    source.setIndicatorQuery(gson.toJson(query));
+    source.getAnalyticsTechniqueReference().setQueryToAnalyticsTechniqueMapping(mapping(outputField, OpenLAPColumnDataType.Text, "items"));
+    when(statements.findStatements(any())).thenAnswer(invocation -> data(outputField, OpenLAPColumnDataType.Text, List.of("viewer activity")));
+
+    var graph = execution.execute(source, viewer, Map.of(), Map.of());
+
+    assertThat(graph.previewCode()).isEqualTo("viewer-only-chart");
+    var captured = ArgumentCaptor.forClass(StatementsRequest.class);
+    verify(statements).findStatements(captured.capture());
+    assertThat(captured.getValue().getActivityTypes()).containsExactly("https://example.test/openlap-demo/activity-types/material");
+    assertThat(captured.getValue().getActionOnActivities()).containsExactly("https://example.test/openlap-demo/verbs/clicked");
+    assertThat(captured.getValue().getOutputs()).containsExactly(outputField);
+    assertThat(captured.getValue().getLrsStores()).extracting(LrsStoresStatementRequest::getUniqueIdentifier).containsExactly("viewer-id");
+  }
+
+  @Test void numericLearnerIdentifierDoesNotTurnAValidYearIntoPrivateContent() {
+    var source = basic("Learning activity");
+    var query = gson.fromJson(source.getIndicatorQuery(), StatementsRequest.class);
+    query.getLrsStores().get(0).setUniqueIdentifier("2026");
+    source.setIndicatorQuery(gson.toJson(query));
+
+    var graph = execution.execute(source, viewer, Map.of(), Map.of());
+
+    assertThat(graph.previewCode()).isEqualTo("viewer-only-chart");
+    var copied = gson.fromJson(graph.root().getIndicatorQuery(), StatementsRequest.class);
+    assertThat(copied.getDuration().getFrom()).isEqualTo("2026-01-01");
+    assertThat(copied.getDuration().getUntil()).isEqualTo("2026-11-15");
+    assertThat(copied.getLrsStores()).extracting(LrsStoresStatementRequest::getUniqueIdentifier).containsExactly("viewer-id");
+  }
+
+  @Test void completeCreatorIdentifiersInActivityValuesStillBlockBeforeReadingData() {
+    for (String identifier : List.of(creator.getId(), creator.getEmail(), "creator-id", creator.getName())) {
+      var source = basic("Learning activity");
+      var query = gson.fromJson(source.getIndicatorQuery(), StatementsRequest.class);
+      query.setActivities(Map.of("statement.object.definition.name.en", new ArrayList<>(List.of("Work for " + identifier))));
+      source.setIndicatorQuery(gson.toJson(query));
+
+      assertThatThrownBy(() -> execution.execute(source, viewer, Map.of(), Map.of()))
+          .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("INCOMPATIBLE");
+    }
+    verify(statements, never()).findStatements(any());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "https://example.test/learners/Creator%20Person/material",
+      "https://example.test/learners/Creator%2520Person/material",
+      "https://example.test/learners/author%40example.test/material",
+      "https://example.test/learners/author%2540example.test/material",
+      "https://example.test/learners/creator-id/material"
+  })
+  void identifyingUriComponentsCannotBypassPrivacyThroughEncoding(String activityType) {
+    var source = basic("Learning activity");
+    var query = gson.fromJson(source.getIndicatorQuery(), StatementsRequest.class);
+    query.setActivityTypes(List.of(activityType));
+    source.setIndicatorQuery(gson.toJson(query));
+
+    assertThatThrownBy(() -> execution.execute(source, viewer, Map.of(), Map.of()))
+        .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("INCOMPATIBLE");
+    verify(statements, never()).findStatements(any());
+  }
+
+  @Test void learnerIdentifierMayCoincideWithACanonicalSchemaPathSegment() throws Exception {
+    var source = basic("Learning activity");
+    var query = gson.fromJson(source.getIndicatorQuery(), StatementsRequest.class);
+    query.getLrsStores().get(0).setUniqueIdentifier("name");
+    String field = "statement.actor.account.name";
+    query.setOutputs(List.of(field));
+    source.setIndicatorQuery(gson.toJson(query));
+    source.getAnalyticsTechniqueReference().setQueryToAnalyticsTechniqueMapping(mapping(field, OpenLAPColumnDataType.Text, "items"));
+    when(statements.findStatements(any())).thenAnswer(invocation -> data(field, OpenLAPColumnDataType.Text, List.of("viewer activity")));
+
+    var graph = execution.execute(source, viewer, Map.of(), Map.of());
+
+    assertThat(graph.previewCode()).isEqualTo("viewer-only-chart");
+    var copied = gson.fromJson(graph.root().getIndicatorQuery(), StatementsRequest.class);
+    assertThat(copied.getOutputs()).containsExactly(field);
+    assertThat(copied.getLrsStores()).extracting(LrsStoresStatementRequest::getUniqueIdentifier).containsExactly("viewer-id");
+  }
+
+  @Test void malformedOutputPathCannotCarryAnEmailIntoTheCopiedDefinition() {
+    var source = basic("Learning activity");
+    var query = gson.fromJson(source.getIndicatorQuery(), StatementsRequest.class);
+    query.setOutputs(List.of("statement.result.extensions." + creator.getEmail()));
+    source.setIndicatorQuery(gson.toJson(query));
+
+    assertThatThrownBy(() -> execution.execute(source, viewer, Map.of(), Map.of()))
+        .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("INCOMPATIBLE");
+    verify(statements, never()).findStatements(any());
+  }
+
+  @Test void customOutputFieldsStillCannotContainTheCreatorsIdentifier() {
+    var source = basic("Learning activity");
+    var query = gson.fromJson(source.getIndicatorQuery(), StatementsRequest.class);
+    query.setOutputs(List.of("statement.result.extensions." + creator.getId()));
+    source.setIndicatorQuery(gson.toJson(query));
+
+    assertThatThrownBy(() -> execution.execute(source, viewer, Map.of(), Map.of()))
+        .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("INCOMPATIBLE");
+    verify(statements, never()).findStatements(any());
+  }
+
+  @Test void aCustomLanguageSuffixCannotHideAnOriginalLearnerIdentifier() {
+    var source = basic("Learning activity");
+    var query = gson.fromJson(source.getIndicatorQuery(), StatementsRequest.class);
+    query.setActivities(Map.of("statement.object.definition.name.en-creator-id", new ArrayList<>(List.of("Course activity"))));
+    source.setIndicatorQuery(gson.toJson(query));
+
+    assertThatThrownBy(() -> execution.execute(source, viewer, Map.of(), Map.of()))
+        .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("INCOMPATIBLE");
+    verify(statements, never()).findStatements(any());
+  }
+
+  @Test void aCompleteCreatorObjectIdCannotHideInsideAConcatenatedUriSlug() {
+    var source = basic("Learning activity");
+    var query = gson.fromJson(source.getIndicatorQuery(), StatementsRequest.class);
+    query.setActivityTypes(List.of("https://example.test/courses/pre" + creator.getId() + "post/material"));
+    source.setIndicatorQuery(gson.toJson(query));
+
+    assertThatThrownBy(() -> execution.execute(source, viewer, Map.of(), Map.of()))
+        .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("INCOMPATIBLE");
+    verify(statements, never()).findStatements(any());
+  }
+
+  @Test void aLongOpaqueLearnerIdentifierCannotHideInsideAConcatenatedUriSlug() {
+    var source = basic("Learning activity");
+    var query = gson.fromJson(source.getIndicatorQuery(), StatementsRequest.class);
+    String identifier = "87654321-4321-4321-4321-123456789abc";
+    query.getLrsStores().get(0).setUniqueIdentifier(identifier);
+    query.setActionOnActivities(List.of("https://example.test/verbs/user" + identifier + "events"));
+    source.setIndicatorQuery(gson.toJson(query));
+
+    assertThatThrownBy(() -> execution.execute(source, viewer, Map.of(), Map.of()))
+        .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("INCOMPATIBLE");
+    verify(statements, never()).findStatements(any());
+  }
+
+  @Test void shortNumericIdentifierDoesNotMatchADifferentLongerPublicIdentifier() {
+    var source = basic("Learning activity");
+    var query = gson.fromJson(source.getIndicatorQuery(), StatementsRequest.class);
+    query.getLrsStores().get(0).setUniqueIdentifier("123");
+    query.setActivityTypes(List.of("https://example.test/courses/12345/material"));
+    source.setIndicatorQuery(gson.toJson(query));
+
+    var graph = execution.execute(source, viewer, Map.of(), Map.of());
+
+    assertThat(graph.previewCode()).isEqualTo("viewer-only-chart");
+    var copied = gson.fromJson(graph.root().getIndicatorQuery(), StatementsRequest.class);
+    assertThat(copied.getActivityTypes()).containsExactly("https://example.test/courses/12345/material");
+    assertThat(copied.getLrsStores()).extracting(LrsStoresStatementRequest::getUniqueIdentifier).containsExactly("viewer-id");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+      "https://example.test/learners/author+research@example.test/material",
+      "https://example.test/learners/author%2Bresearch%40example.test/material",
+      "https://example.test/learners/author%252Bresearch%2540example.test/material"
+  })
+  void literalPlusInAnEmailIdentifierIsPreservedDuringPrivacyDetection(String activityType) {
+    creator.setEmail("author+research@example.test");
+    var source = basic("Learning activity");
+    var query = gson.fromJson(source.getIndicatorQuery(), StatementsRequest.class);
+    query.setActivityTypes(List.of(activityType));
+    source.setIndicatorQuery(gson.toJson(query));
+
     assertThatThrownBy(() -> execution.execute(source, viewer, Map.of(), Map.of()))
         .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("INCOMPATIBLE");
     verify(statements, never()).findStatements(any());

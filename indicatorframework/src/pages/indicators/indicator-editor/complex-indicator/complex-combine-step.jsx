@@ -25,6 +25,7 @@ export default function ComplexCombineStep({
   combine,
   merged,
   setCurrent,
+  onEditSource,
 }) {
   const previewError =
     operationError.step === "combine" ? operationError.message : "";
@@ -52,7 +53,7 @@ export default function ComplexCombineStep({
               title={source.name}
               helper={`Analytics method: ${source.analyticsMethod?.name || "Unknown"}`}
               action={
-                <Button
+                onEditSource ? <Button size="small" onClick={() => onEditSource(source.id)}>Edit source</Button> : <Button
                   component={RouterLink}
                   to={`/indicator/${source.id}`}
                   target="_blank"
@@ -135,7 +136,7 @@ export default function ComplexCombineStep({
                   disabled={Boolean(busy)}
                   onClick={() => previewSourceData(source)}
                 >
-                  Preview source data
+                  {onEditSource ? "Review source data" : "Preview source data"}
                 </Button>
               </Stack>
             </SectionCard>
@@ -239,4 +240,5 @@ ComplexCombineStep.propTypes = {
   combine: PropTypes.func,
   merged: PropTypes.object,
   setCurrent: PropTypes.func,
+  onEditSource: PropTypes.func,
 };

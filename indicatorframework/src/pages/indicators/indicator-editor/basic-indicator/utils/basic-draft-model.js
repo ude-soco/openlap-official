@@ -1,3 +1,5 @@
+import { analyticsInputMenuList } from "../components/analysis/utils/analysis-data.js";
+
 // The persisted authoring document is deliberately independent of React state,
 // catalogs, analyzed rows and generated chart code.
 const object = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
@@ -95,9 +97,11 @@ export const basicDraftMeaningful = (configuration) => Boolean(
   configuration.visualization?.selectedLibrary?.id,
 );
 
-export async function refreshBasicReferences(api, raw) {
+export async function refreshBasicReferences(api, raw, { adaptation = false } = {}) {
   const state = restoreBasicState(raw);
   const warnings = [];
+  if (adaptation && !["ONLY_ME", "EXCLUDE_ME", "INCLUDE_ME"].includes(state.filters.selectedUserFilter))
+    state.filters.selectedUserFilter = "ONLY_ME";
   const data = async (method, path, body) => (await api[method](path, ...(body === undefined ? [] : [body]))).data.data;
   const attempt = async (label, operation) => {
     try { return await operation(); }
@@ -115,16 +119,25 @@ export async function refreshBasicReferences(api, raw) {
   if (stores) state.dataset.selectedLRSList = state.dataset.selectedLRSList.map((old) => {
     const current = stores.find((entry) => lrsKey(entry) === lrsKey(old));
     if (!current) warnings.push(`The Learning Record Store “${old.lrsTitle || old.lrsId}” is no longer available. Choose an available source.`);
-    return current || old;
-  });
+    return current || (adaptation ? null : old);
+  }).filter(Boolean);
   const selectedMethod = state.analysis.selectedAnalyticsMethod.method;
   if (selectedMethod.id) {
     const current = methods?.find((entry) => entry.id === selectedMethod.id);
     if (methods && !current) warnings.push(`The analytics method “${selectedMethod.name || selectedMethod.id}” is no longer available.`);
+    if (adaptation && methods && !current) {
+      state.analysis.selectedAnalyticsMethod = { method: { id: "", name: "" }, mapping: { mapping: [] } };
+      state.analysis.params = [];
+    }
     if (current) state.analysis.selectedAnalyticsMethod.method = current;
-    const contract = await attempt("the selected method's inputs and parameters", () =>
+    const contract = (!adaptation || current) && await attempt("the selected method's inputs and parameters", () =>
       data("get", `v1/analytics/methods/input-params/${encodeURIComponent(selectedMethod.id)}`));
     if (contract) {
+      if (adaptation) state.analysis.selectedAnalyticsMethod.mapping.mapping = state.analysis.selectedAnalyticsMethod.mapping.mapping.flatMap((entry) => {
+        const input = (contract.inputs || []).find((item) => item.id === entry.inputPort.id);
+        const output = analyticsInputMenuList.find((item) => item.id === entry.outputPort.id);
+        return input && output && input.type === output.type ? [{ inputPort: port(input), outputPort: port(output) }] : [];
+      });
       state.analysis.inputs = (contract.inputs || []).map((input) => ({ ...input,
         selectedInput: state.analysis.selectedAnalyticsMethod.mapping.mapping.find((entry) => entry.inputPort.id === input.id)?.outputPort,
       }));
@@ -134,7 +147,7 @@ export async function refreshBasicReferences(api, raw) {
       }));
       for (const [id, saved] of savedParams) if (!(contract.params || []).some((param) => param.id === id)) {
         warnings.push(`The saved parameter “${id}” is no longer advertised by this method. Review the method selection.`);
-        state.analysis.params.push({ ...saved, name: id, title: id, type: "Textbox", dataType: "STRING" });
+        if (!adaptation) state.analysis.params.push({ ...saved, name: id, title: id, type: "Textbox", dataType: "STRING" });
       }
     }
   }
@@ -142,15 +155,28 @@ export async function refreshBasicReferences(api, raw) {
   if (library.id) {
     const current = libraries?.find((entry) => entry.id === library.id);
     if (libraries && !current) warnings.push(`The visualization library “${library.name || library.id}” is no longer available.`);
+    if (adaptation && libraries && !current) {
+      state.visualization.selectedLibrary = { id: "", name: "" };
+      state.visualization.selectedType = { id: "", name: "", chartInputs: [] };
+      state.visualization.mapping = { mapping: [] };
+    }
     if (current) state.visualization.selectedLibrary = current;
-    const types = await attempt("the selected library's charts", () =>
+    const types = (!adaptation || current) && await attempt("the selected library's charts", () =>
       data("get", `v1/visualizations/libraries/${encodeURIComponent(library.id)}/types`));
     state.visualization.typeList = types || [];
     const typeId = state.visualization.selectedType.id;
     if (typeId) {
       const currentType = types?.find((entry) => entry.id === typeId);
       if (types && !currentType) warnings.push("The saved chart type is no longer available. Choose another chart.");
+      if (adaptation && types && !currentType) {
+        state.visualization.selectedType = { id: "", name: "", chartInputs: [] };
+        state.visualization.mapping = { mapping: [] };
+      }
       if (currentType) {
+        if (adaptation) state.visualization.mapping.mapping = state.visualization.mapping.mapping.flatMap((entry) => {
+          const input = (currentType.chartInputs || []).find((item) => item.id === entry.inputPort.id);
+          return input && input.type === entry.outputPort.type ? [{ inputPort: port(input), outputPort: entry.outputPort }] : [];
+        });
         state.visualization.selectedType = currentType;
         state.visualization.inputs = (currentType.chartInputs || []).map((input) => ({ ...input,
           selectedInput: state.visualization.mapping.mapping.find((entry) => entry.inputPort.id === input.id)?.outputPort,
@@ -163,14 +189,23 @@ export async function refreshBasicReferences(api, raw) {
     state.filters.activityTypesList = await attempt("activity types", () => data("post", "v1/statements/activity-types", { lrsStores })) || [];
     state.filters.selectedActivities = await Promise.all(state.filters.selectedActivities.map(async (activity) => {
       if (!activity.selectedActivityType.id) return activity;
+      const currentType = state.filters.activityTypesList.find((entry) => entry.id === activity.selectedActivityType.id);
+      if (adaptation && !currentType) return { ...activity, selectedActivityType: { id: "", name: "" }, selectedActionList: [], selectedActivityList: [], actionList: [], activityList: [] };
       const activityType = activity.selectedActivityType.id;
       const actionList = await attempt("actions", () => data("post", "v1/statements/actions", { lrsStores, activityTypes: [activityType] }));
+      const selectedActionList = adaptation ? activity.selectedActionList.filter((old) => (actionList || []).some((entry) => entry.id === old.id)) : activity.selectedActionList;
       let activityList = [];
-      if (activity.selectedActionList.length) activityList = await attempt("activities", () => data("post", "v1/statements/activities", {
-        lrsStores, activityTypes: [activityType], actionOnActivities: activity.selectedActionList.map((entry) => entry.id),
+      if (selectedActionList.length) activityList = await attempt("activities", () => data("post", "v1/statements/activities", {
+        lrsStores, activityTypes: [activityType], actionOnActivities: selectedActionList.map((entry) => entry.id),
       })) || [];
-      return { ...activity, actionList: actionList || [], activityList };
+      return { ...activity, selectedActionList,
+        selectedActivityList: adaptation ? activity.selectedActivityList.filter((old) => activityList.some((entry) => entry.id === old.id && entry.queryId === old.queryId)) : activity.selectedActivityList,
+        actionList: actionList || [], activityList };
     }));
+  }
+  if (adaptation && !state.dataset.selectedLRSList.length) {
+    state.filters.selectedActivities = state.filters.selectedActivities.map((entry) => ({ ...entry,
+      selectedActivityType: { id: "", name: "" }, selectedActionList: [], selectedActivityList: [], actionList: [], activityList: [] }));
   }
   return { state, warnings };
 }

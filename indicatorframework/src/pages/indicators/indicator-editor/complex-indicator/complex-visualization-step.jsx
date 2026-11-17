@@ -1,3 +1,4 @@
+import CommunityComparison from "../../../../common/components/community-adaptation/community-comparison.jsx";
 import PropTypes from "prop-types";
 import { useRef, useState } from "react";
 import {
@@ -38,6 +39,7 @@ import {
 import { ColumnMappings, Failure } from "./complex-controls";
 
 export default function ComplexVisualizationStep({
+  reference,
   libraryId,
   change,
   libraries,
@@ -116,6 +118,7 @@ export default function ComplexVisualizationStep({
 
   return (
     <>
+      <CommunityComparison step="visualization" reference={reference} configuration={configuration}>
       <SectionCard
         title="Visualization library"
         helper="The library that renders your chart. The default works for most indicators."
@@ -282,6 +285,11 @@ export default function ComplexVisualizationStep({
             title="Configure chart"
             helper={`Map each input of ${selectedType.name} to a column from your analysed data.`}
           />
+        </>
+      )}
+      </CommunityComparison>
+      {selectedType && (
+        <>
           <Grid container spacing={3} sx={{ alignItems: "flex-start" }}>
             <Grid size={{ xs: 12, lg: customize ? "grow" : 12 }} sx={{ minWidth: 0 }}>
               <SectionCard
@@ -372,6 +380,7 @@ export default function ComplexVisualizationStep({
   );
 }
 ComplexVisualizationStep.propTypes = {
+  reference: PropTypes.object,
   libraryId: PropTypes.string,
   change: PropTypes.func,
   libraries: PropTypes.array,

@@ -21,7 +21,7 @@ export default function ClosedDraftRecovery({ api, receipt, recovery, onOpen, on
     setBusy(true);
     setError("");
     try {
-      const created = await createIndicatorDraftApi(api).create(closedRecoveryRequest(recovery));
+      const created = await createIndicatorDraftApi(api, { initialDraft: receipt }).create(closedRecoveryRequest(recovery));
       if (!created?.id || !Number.isSafeInteger(created.revision)
         || !["DRAFT", "COMPLETED"].includes(created.status)
         || (created.status === "COMPLETED" && !created.savedIndicatorId)) {

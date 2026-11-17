@@ -1,3 +1,4 @@
+import CommunityComparison from "../../../../../../common/components/community-adaptation/community-comparison.jsx";
 import {
   Alert,
   Box,
@@ -49,7 +50,7 @@ export default function Visualization() {
     lockedStep,
     setVisualization,
     setIndicator,
-    draft, referencesValid,
+    draft, referencesValid, sourceMode, onSourceDone, comparisonReference, configuration,
   } = useContext(BasicContext);
   const [state, setState] = useState({
     nameIndicator: {
@@ -123,7 +124,7 @@ export default function Visualization() {
     // Invalidate in-flight charts when analysis changes, including reruns that
     // produce the same number of rows.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visualization.inputs, visualization.params, analysis.analyzedData, customizationsValid]);
+  }, [visualization.inputs, visualization.params, visualization.selectedType.id, visualization.selectedLibrary.id, analysis.analyzedData, customizationsValid, referencesValid, draft?.finalizing, draft?.conflict, draft?.recovery]);
 
   const handleLoadPreviewVisualization = async () => {
     let indicatorQuery = buildIndicatorQuery(dataset, filters, analysis);
@@ -232,6 +233,7 @@ export default function Visualization() {
           unmountOnExit
         >
           <Stack sx={{ gap: 2, py: 2 }}>
+            <CommunityComparison step="visualization" reference={comparisonReference} configuration={configuration}>
             <LibrarySelection />
 
             {visualization.selectedLibrary.id ? (
@@ -251,14 +253,13 @@ export default function Visualization() {
               />
             ) : undefined}
 
+            {configReady && <TypeInputSelection />}
             {configReady ? (
               <>
-                <TypeInputSelection />
-                <Grid container spacing={3} sx={{ alignItems: "flex-start" }}>
-                  <Grid
-                    size={{ xs: 12, lg: customize ? "grow" : 12 }}
-                    sx={{ minWidth: 0 }}
-                  >
+                <Box sx={{ minWidth: 0, containerType: "inline-size", containerName: "chartConfiguration" }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 3, alignItems: "start",
+                  "@container chartConfiguration (min-width: 1050px)": { gridTemplateColumns: customize ? "minmax(0, 1fr) 340px" : "minmax(0, 1fr)" } }}>
+                  <Box sx={{ minWidth: 0 }}>
                     <SectionCard
                       title="Live preview"
                       helper="Updates live as you adjust the chart inputs and options."
@@ -297,21 +298,21 @@ export default function Visualization() {
                         </Stack>
                       )}
                     </SectionCard>
-                  </Grid>
+                  </Box>
                   {customize && (
-                    <Grid size={{ xs: 12, lg: "auto" }}>
-                      <Box sx={{ width: { xs: "100%", lg: 340 } }}>
+                      <Box sx={{ minWidth: 0 }}>
                         <ChartCustomizationPanel
                           onClose={() => setCustomize(false)}
                         />
                       </Box>
-                    </Grid>
                   )}
-                </Grid>
+                </Box>
+                </Box>
               </>
             ) : undefined}
 
             <ReadinessSummary items={readinessItems} />
+            </CommunityComparison>
             <Divider sx={{ mt: 1 }} />
             <Grid
               container
@@ -324,9 +325,9 @@ export default function Visualization() {
                   size="large"
                   variant="contained"
                   disabled={handleCheckDisabled()}
-                  onClick={handleToggleNameIndicator}
+                  onClick={sourceMode ? onSourceDone : handleToggleNameIndicator}
                 >
-                  Save Indicator
+                  {sourceMode ? "Done editing source" : "Save Indicator"}
                 </Button>
               </Grid>
               {handleCheckDisabled() && (
@@ -340,7 +341,7 @@ export default function Visualization() {
             </Grid>
           </Stack>
         </Collapse>
-        <SaveIndicatorDialog
+        {!sourceMode && <SaveIndicatorDialog
           open={Boolean(state.openDialog && !(draft?.finalizing && !state.nameIndicator.loading))}
           onClose={handleToggleNameIndicator}
           onSave={handleSaveIndicator}
@@ -348,7 +349,7 @@ export default function Visualization() {
           isEdit={Boolean(draft?.sourceIndicatorId)}
           indicatorName={indicator.indicatorName}
           onChangeName={handleOnChangeNameIndicator}
-        />
+        />}
       </WorkflowSection>
     </>
   );

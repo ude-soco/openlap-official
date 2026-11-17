@@ -33,7 +33,7 @@ if(event.data.kind==='openlap:render'){document.body.innerHTML=event.data.html;p
 
 async function fixture(browser, roles = ["ROLE_USER"]) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
-  const calls = [], errors = [], listPlans = [], previewPlans = [], copyPlans = [], copies = new Map();
+  const calls = [], errors = [], listPlans = [], examplePlans = [], previewPlans = [], copyPlans = [], copies = new Map();
   await context.routeWebSocket(/.*/, (socket) => socket.close());
   await context.addInitScript((token) => localStorage.setItem("authTokens", JSON.stringify({ access_token: token, refresh_token: token })), tokenFor(roles));
   context.on("page", (page) => { page.on("pageerror", (error) => errors.push(error.message)); page.on("crash", () => errors.push("Page crashed")); });
@@ -64,10 +64,17 @@ async function fixture(browser, roles = ["ROLE_USER"]) {
     }
     const filters = endpoint.match(/^v1\/community\/(indicators|isc)\/filters$/);
     if (filters) return send({ data: { types: ["BASIC", "COMPOSITE", "MULTI_LEVEL"], methods: ["Count items", "Cluster items"], charts: ["Bar Chart", "Scatter Chart"], goals: ["Monitoring"] } });
-    const entry = endpoint.match(/^v1\/community\/(indicators|isc)\/([^/]+)(?:\/(preview|copy))?$/);
+    const entry = endpoint.match(/^v1\/community\/(indicators|isc)\/([^/]+)(?:\/(example-preview|preview|copy))?$/);
     if (entry) {
       const [, kind, id, action] = entry, row = [...indicators, ...specifications].find((item) => item.id === id);
       assert.ok(row, "Only fixture entries are requested");
+      if (action === "example-preview" && method === "GET") {
+        assert.equal(kind, "indicators", "ISC does not use the executable example endpoint");
+        const plan = examplePlans.shift() || {};
+        if (plan.hold) { plan.started = true; await plan.hold.promise; }
+        return send({ data: plan.result || { status: "READY", visualizationTypeId: "fixture-bar",
+          previewCode: encodeURIComponent(`<svg role="img" aria-label="Sample chart ${id}" width="300" height="280"><rect width="80" height="120" fill="#1976d2" /></svg>`) } });
+      }
       if (action === "preview" && method === "POST") {
         const plan = previewPlans.shift() || {};
         if (plan.hold) { plan.started = true; await plan.hold.promise; }
@@ -105,7 +112,7 @@ async function fixture(browser, roles = ["ROLE_USER"]) {
     return send({ message: "Unexpected fixture request." }, 500);
   });
   const page = await context.newPage();
-  return { context, page, calls, errors, listPlans, previewPlans, copyPlans, copies };
+  return { context, page, calls, errors, listPlans, examplePlans, previewPlans, copyPlans, copies };
 }
 
 async function choose(page, label, option) {
@@ -130,6 +137,20 @@ async function screenshot(page, name) {
     ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {}) });
   try {
     const f = await fixture(browser), { page } = f;
+    const sampleFrame = () => page.getByRole("region", { name: "Community indicator preview", exact: true }).frameLocator('iframe[title="OpenLAP chart preview"]');
+    const personalFrame = () => page.getByRole("region", { name: "Preview with my data", exact: true }).frameLocator('iframe[title="OpenLAP chart preview"]');
+    const openSample = async (name, id) => {
+      const before = f.calls.filter((call) => call.endpoint.endsWith("/preview")).length;
+      await page.getByRole("button", { name: `View ${name}`, exact: true }).click();
+      await sampleFrame().getByRole("img", { name: `Sample chart ${id}`, exact: true }).waitFor();
+      assert.equal(f.calls.filter((call) => call.endpoint.endsWith("/preview")).length, before,
+        "Opening an indicator renders only a sample and never starts a personal compatibility query");
+      assert.equal(await page.getByRole("button", { name: "Indicator details", exact: true }).getAttribute("aria-expanded"), "false", "Technical details start collapsed below the chart");
+      assert.equal(await page.getByRole("button", { name: "Save to My Indicators", exact: true }).count(), 0,
+        "A rendered sample never offers a save capability");
+      assert.equal(await page.getByRole("button", { name: "Try with my data", exact: true }).isEnabled(), true);
+    };
+    const tryPersonal = () => page.getByRole("button", { name: "Try with my data", exact: true }).click();
     await page.goto(new URL("indicator/pool", base).href);
     await page.getByRole("heading", { name: "Indicator Pool", exact: true }).waitFor();
     await until(() => page.getByRole("button", { name: "View Material views", exact: true }).count(), "Pool loaded");
@@ -150,11 +171,27 @@ async function screenshot(page, name) {
     await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("Material views");
     await until(async () => await page.getByRole("button", { name: "View Material views", exact: true }).count() === 1, "Search applied");
     const held = { hold: deferred() }; f.previewPlans.push(held);
-    await page.getByRole("button", { name: "View Material views", exact: true }).click();
-    await until(() => held.started, "Automatic preview started without a click");
+    await openSample("Material views", "basic");
+    const tryButton = page.getByRole("button", { name: "Try with my data", exact: true });
+    await tryButton.focus(); await tryButton.press("Enter");
+    await until(() => held.started, "Only explicit keyboard activation starts a personal preview");
     assert.equal(await page.getByRole("button", { name: "Save to My Indicators", exact: true }).isDisabled(), true);
+    assert.equal(await page.getByRole("region", { name: "Preview with my data", exact: true }).evaluate((section) => section === document.activeElement), true,
+      "The newly opened personal result region receives keyboard focus");
     held.hold.resolve();
     await page.getByText("Your data is compatible. Ready to save.", { exact: true }).waitFor();
+    await until(() => page.getByRole("region", { name: "Preview with my data", exact: true }).evaluate((section) => {
+      const content = section.closest(".MuiDialogContent-root").getBoundingClientRect();
+      const own = section.getBoundingClientRect();
+      return own.top >= content.top - 2 && own.bottom <= content.bottom + 2;
+    }), "The complete personal preview is visible instead of remaining below the sample").catch(async (failure) => {
+      console.error("Personal preview geometry", await page.getByRole("region", { name: "Preview with my data", exact: true }).evaluate((section) => {
+        const content = section.closest(".MuiDialogContent-root"), own = section.getBoundingClientRect(), bounds = content.getBoundingClientRect();
+        return { own: { top: own.top, bottom: own.bottom, height: own.height }, content: { top: bounds.top, bottom: bounds.bottom, height: bounds.height },
+          scrollTop: content.scrollTop, scrollHeight: content.scrollHeight, clientHeight: content.clientHeight };
+      }));
+      await screenshot(page, "personal-preview-scroll-failure.png"); throw failure;
+    });
     await page.getByRole("button", { name: "Save to My Indicators", exact: true }).click();
     await page.getByText("Saved to My Indicators as a community copy.", { exact: true }).waitFor();
     assert.equal(f.calls.filter((call) => call.endpoint.endsWith("basic/copy")).length, 1);
@@ -163,11 +200,26 @@ async function screenshot(page, name) {
 
     await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("");
     await until(async () => await page.getByRole("button", { name: "View Compare learning activities", exact: true }).count() === 1, "Search cleared");
+    f.examplePlans.push({ result: { status: "EXAMPLE_UNAVAILABLE", message: "This sample is temporarily unavailable." } });
     f.previewPlans.push({ result: { status: "NO_DATA", message: "No matching data for your user." } });
     await page.getByRole("button", { name: "View Compare learning activities", exact: true }).click();
+    await page.getByText("This sample is temporarily unavailable.", { exact: true }).waitFor();
+    assert.equal(await page.getByRole("button", { name: "Try with my data", exact: true }).isEnabled(), true, "A missing sample never blocks checking the viewer's data");
+    assert.equal(await page.getByRole("button", { name: "Adapt to my data", exact: true }).isEnabled(), true);
+    await page.getByRole("button", { name: "Retry sample preview", exact: true }).click();
+    await sampleFrame().getByRole("img", { name: "Sample chart composite", exact: true }).waitFor();
+    assert.equal(await page.getByRole("button", { name: "Save to My Indicators", exact: true }).count(), 0);
+    await tryPersonal();
     await page.getByText("No matching data for your user.", { exact: true }).waitFor();
+    await page.getByText("Adapt this indicator to choose selections that match your data.", { exact: true }).waitFor();
     assert.equal(await page.getByRole("button", { name: "Save to My Indicators", exact: true }).isDisabled(), true);
+    assert.equal(await page.getByRole("button", { name: "Adapt to my data", exact: true }).isEnabled(), true, "Incompatibility offers adaptation");
     await page.getByRole("button", { name: "Run preview again", exact: true }).click();
+    await page.getByText("Your data is compatible. Ready to save.", { exact: true }).waitFor();
+    const retryHeld = { hold: deferred() }; f.previewPlans.push(retryHeld);
+    await page.getByRole("button", { name: "Run preview again", exact: true }).click();
+    assert.equal(await page.getByRole("button", { name: "Save to My Indicators", exact: true }).isDisabled(), true, "Retry immediately invalidates the previous chart/receipt");
+    await until(() => retryHeld.started, "Retry started a fresh personal query"); retryHeld.hold.resolve();
     await page.getByText("Your data is compatible. Ready to save.", { exact: true }).waitFor();
     f.copyPlans.push({ fail: true });
     await page.getByRole("button", { name: "Save to My Indicators", exact: true }).click();
@@ -179,22 +231,23 @@ async function screenshot(page, name) {
     await page.getByText("Saved to My Indicators as a community copy.", { exact: true }).waitFor();
     await closeDetail(page);
     f.previewPlans.push({ result: { status: "MISSING_LRS", message: "One required connection is missing." } });
-    await page.getByRole("button", { name: "View Clusters of learning activities", exact: true }).click();
+    await openSample("Clusters of learning activities", "multi"); await tryPersonal();
     await page.getByText("One required connection is missing.", { exact: true }).waitFor();
     assert.equal(await page.getByRole("button", { name: "Save to My Indicators", exact: true }).isDisabled(), true);
     await page.getByRole("button", { name: "Manage LRS", exact: true }).waitFor();
     await closeDetail(page);
     f.previewPlans.push({ result: { status: "READY", version: "v2", receiptId: "wrong-version", previewCode: "unreviewed chart" } });
-    await page.getByRole("button", { name: "View Clusters of learning activities", exact: true }).click();
+    await openSample("Clusters of learning activities", "multi"); await tryPersonal();
     await page.getByText("This indicator changed while the preview was running. Reload its details before saving.", { exact: true }).waitFor();
     assert.equal(await page.getByRole("button", { name: "Save to My Indicators", exact: true }).isDisabled(), true);
     await page.getByRole("button", { name: "Reload details", exact: true }).click();
+    await page.getByRole("button", { name: "Try with my data", exact: true }).click();
     await page.getByText("Your data is compatible. Ready to save.", { exact: true }).waitFor();
     await closeDetail(page);
     f.previewPlans.push({ result: { status: "CHOOSE_CONNECTION", message: "Choose your connected identity.", choices: [
       { lrsId: "viewer-store", lrsTitle: "Your connected data source 1", options: [{ id: "identity-one", label: "My first identity" }, { id: "identity-two", label: "My second identity" }] },
     ] } });
-    await page.getByRole("button", { name: "View Clusters of learning activities", exact: true }).click();
+    await openSample("Clusters of learning activities", "multi"); await tryPersonal();
     await page.getByText("Choose your connected identity.", { exact: true }).waitFor();
     assert.equal(await page.getByRole("button", { name: "Save to My Indicators", exact: true }).isDisabled(), true);
     await choose(page, "Your connected data source 1", "My second identity");
@@ -202,25 +255,37 @@ async function screenshot(page, name) {
     assert.deepEqual(f.calls.filter((call) => call.endpoint === "v1/community/indicators/multi/preview").at(-1).body.connections,
       { "viewer-store": "identity-two" }, "Changing a registered identity automatically reruns the personal preview");
     await closeDetail(page);
-    const stale = { hold: deferred() }; f.previewPlans.push(stale);
+    const oldExample = { hold: deferred() }; f.examplePlans.push(oldExample);
+    const personalBefore = f.calls.filter((call) => call.endpoint.endsWith("/preview")).length;
     await page.getByRole("button", { name: "View Material views", exact: true }).click();
+    await until(() => oldExample.started, "A sample request can be held while closing its entry");
+    await closeDetail(page);
+    await openSample("Clusters of learning activities", "multi");
+    oldExample.hold.resolve();
+    assert.equal(await sampleFrame().getByRole("img", { name: "Sample chart multi", exact: true }).count(), 1,
+      "An older entry's sample cannot replace the current chart");
+    assert.equal(f.calls.filter((call) => call.endpoint.endsWith("/preview")).length, personalBefore,
+      "Switching sample entries never starts personal queries");
+    await closeDetail(page);
+    const stale = { hold: deferred() }; f.previewPlans.push(stale);
+    await openSample("Material views", "basic"); await tryPersonal();
     await until(() => stale.started, "Held preview started");
     await closeDetail(page);
-    await page.getByRole("button", { name: "View Clusters of learning activities", exact: true }).click();
+    await openSample("Clusters of learning activities", "multi"); await tryPersonal();
     await page.getByText("Your data is compatible. Ready to save.", { exact: true }).waitFor();
     stale.hold.resolve();
     assert.equal(await page.getByRole("dialog").getByRole("heading", { name: "Clusters of learning activities", exact: true }).count(), 1);
-    assert.equal(await page.frameLocator('iframe[title="OpenLAP chart preview"]').getByRole("img", { name: "Personal chart multi", exact: true }).count(), 1);
+    assert.equal(await personalFrame().getByRole("img", { name: "Personal chart multi", exact: true }).count(), 1);
     await screenshot(page, "indicator-community-preview.png");
     await closeDetail(page);
     await page.setViewportSize({ width: 390, height: 844 }); await noOverflow(page);
     await screenshot(page, "indicator-pool-mobile.png");
-    await page.getByRole("button", { name: "View Material views", exact: true }).click();
+    await openSample("Material views", "basic"); await screenshot(page, "indicator-community-sample-mobile.png"); await tryPersonal();
     await page.getByText("Your data is compatible. Ready to save.", { exact: true }).waitFor();
     assert.equal(await page.getByRole("dialog").evaluate((dialog) => dialog.scrollWidth <= dialog.clientWidth + 1), true);
     await screenshot(page, "indicator-community-mobile.png");
     await closeDetail(page);
-    console.log("PASS community catalog, personal Basic/Composite/Multilevel preview gate, expiry, stale preview and responsive layout");
+    console.log("PASS community catalog, sample-first chart, explicit personal Basic/Composite/Multilevel preview gate, expiry, stale preview and responsive layout");
 
     await page.goto(new URL("isc/pool", base).href);
     await page.getByRole("button", { name: "View Monitor learning materials", exact: true }).click();
@@ -266,6 +331,15 @@ async function screenshot(page, name) {
     await noLrs.page.getByRole("heading", { name: "Indicator Pool", exact: true }).waitFor();
     assert.equal(await noLrs.page.getByRole("button", { name: "Indicator Editor", exact: true }).isDisabled(), true);
     assert.equal(await noLrs.page.getByRole("button", { name: "Indicator Pool", exact: true }).isEnabled(), true);
+    await noLrs.page.getByRole("button", { name: "View Material views", exact: true }).click();
+    await noLrs.page.getByRole("region", { name: "Community indicator preview", exact: true })
+      .frameLocator('iframe[title="OpenLAP chart preview"]').getByRole("img", { name: "Sample chart basic", exact: true }).waitFor();
+    assert.equal(noLrs.calls.filter((call) => call.endpoint.endsWith("/preview")).length, 0, "A viewer without an LRS can inspect the sample chart without personal queries");
+    noLrs.previewPlans.push({ result: { status: "NO_CONNECTION", message: "Connect your LRS to preview your own data." } });
+    await noLrs.page.getByRole("button", { name: "Try with my data", exact: true }).click();
+    await noLrs.page.getByText("Connect your LRS to preview your own data.", { exact: true }).waitFor();
+    assert.equal(await noLrs.page.getByRole("button", { name: "Adapt to my data", exact: true }).isEnabled(), true);
+    assert.equal(await noLrs.page.getByRole("button", { name: "Save to My Indicators", exact: true }).isDisabled(), true);
     assert.deepEqual(noLrs.errors, []); await noLrs.context.close();
     console.log("PASS community browsing without an LRS while editor stays restricted");
   } finally { await browser.close(); }

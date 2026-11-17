@@ -71,13 +71,13 @@ export default function BasicIndicator({ initialDraft = null, initialState = nul
     applyState(restored);
     setHydrating(true);
     try {
-      const refreshed = await refreshBasicReferences(api, serializeBasicDraft(restored));
+      const refreshed = await refreshBasicReferences(api, serializeBasicDraft(restored), { adaptation: Boolean(initialDraft?.adaptation) });
       if (run !== refreshGeneration.current) return;
       warningReferences.current = referencesOf(refreshed.state);
       setReferenceWarnings(refreshed.warnings);
       applyState(refreshed.state);
     } finally { if (run === refreshGeneration.current) setHydrating(false); }
-  }, [api, applyState]);
+  }, [api, applyState, initialDraft?.adaptation]);
   const draft = useIndicatorDraft({ api, owner: user?.sub, indicatorType: "BASIC", configuration,
     name: indicator.indicatorName, initialDraft, meaningful: basicDraftMeaningful(configuration),
     onCreated: onDraftCreated, onApply: applyDraft,
@@ -156,18 +156,20 @@ export default function BasicIndicator({ initialDraft = null, initialState = nul
           setVisualization,
           setIndicator,
           handleResetIfDatasetEmpty,
+          comparisonReference: initialDraft?.adaptation?.reference, configuration, isCommunityAdaptation: Boolean(initialDraft?.adaptation),
           draft, draftNavigation, referencesValid: referencesValid && !draft.finalizing,
         }}
       >
         <Stack sx={{ gap: 3 }}>
           <PageHeader
-            title="Basic Indicator"
+            title={initialDraft?.adaptation ? "Adapt a Basic Indicator" : "Basic Indicator"}
             breadcrumbs={[
               { label: "Home", to: "/", onClick: (event) => { event.preventDefault(); draftNavigation.requestLeave("/"); } },
               { label: "My Indicators", to: "/indicator", onClick: (event) => { event.preventDefault(); draftNavigation.requestLeave("/indicator"); } },
               { label: "Create an indicator", to: "/indicator/editor", onClick: (event) => { event.preventDefault(); draftNavigation.requestLeave("/indicator/editor"); } },
             ]}
           />
+          {initialDraft?.adaptation && <Alert severity="info">Adapting “{initialDraft.adaptation.reference?.name || "Community indicator"}” using your own data. Compare the community reference at each step; your changes remain a private draft until you save the completed indicator.</Alert>}
           {!hydrating && <DraftHeader name={indicator.indicatorName} onNameChange={(name) => setIndicator((previous) => ({ ...previous, indicatorName: name }))}
             indicatorType="BASIC" draft={draft} onSaveAndExit={() => draftNavigation.saveAndExit()}
             onDiscard={() => draftNavigation.requestDiscard()} />}
@@ -178,7 +180,7 @@ export default function BasicIndicator({ initialDraft = null, initialState = nul
             {referenceWarnings.join(" ")}
           </Alert>}
           {hydrating ? <CircularProgress aria-label="Refreshing saved selections" /> : <>
-          <WorkflowStepper steps={workflowSteps} current={currentStep} />
+          <WorkflowStepper steps={workflowSteps} current={currentStep} ariaLabel="Basic indicator creation progress" />
           <Stack sx={{ gap: 2 }} inert={draft.finalizing || undefined}>
             {isStepRevealed(lockedStep, "dataset") && <Dataset />}
             {isStepRevealed(lockedStep, "filters") && <Filters />}
@@ -204,3 +206,50 @@ export default function BasicIndicator({ initialDraft = null, initialState = nul
 }
 
 BasicIndicator.propTypes = { initialDraft: PropTypes.object, initialState: PropTypes.object, onDraftCreated: PropTypes.func };
+
+
+// Embedded source editing shares the exact Basic controls, but the containing
+// complex draft owns persistence and completion. No child record is created.
+export function EmbeddedBasicIndicator({ configuration: initialConfiguration, reference, onChange, onBack }) {
+  const { api } = useContext(AuthContext);
+  const [state, setState] = useState(() => restoreBasicState(initialConfiguration));
+  const [hydrating, setHydrating] = useState(true);
+  const [warnings, setWarnings] = useState([]);
+  const callbacks = useRef({ onChange, onBack });
+  callbacks.current = { onChange, onBack };
+  const initial = useRef(initialConfiguration);
+  useEffect(() => {
+    let current = true;
+    refreshBasicReferences(api, initial.current, { adaptation: true }).then((result) => {
+      if (current) { setState(result.state); setWarnings(result.warnings); }
+    }).finally(() => { if (current) setHydrating(false); });
+    return () => { current = false; };
+  }, [api]);
+  const configuration = useMemo(() => serializeBasicDraft(state), [state]);
+  useEffect(() => { if (!hydrating) callbacks.current.onChange(configuration); }, [configuration, hydrating]);
+  const setters = useMemo(() => Object.fromEntries(["indicator", "dataset", "filters", "analysis", "visualization", "lockedStep"].map((key) => [
+    `set${key[0].toUpperCase()}${key.slice(1)}`, (value) => setState((previous) => ({ ...previous,
+      [key]: typeof value === "function" ? value(previous[key]) : value })),
+  ])), []);
+  const leave = () => { callbacks.current.onChange(configuration); callbacks.current.onBack(); };
+  const reset = () => setState((previous) => ({ ...emptyBasicState(), indicator: previous.indicator, dataset: previous.dataset }));
+  return <Stack sx={{ gap: 2, minWidth: 0 }}>
+    <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", gap: 1, flexWrap: "wrap" }}>
+      <Typography variant="h6">Edit source selections</Typography><Button variant="outlined" onClick={leave}>Back to sources</Button>
+    </Stack>
+    {hydrating ? <CircularProgress aria-label="Loading source selections" /> : <BasicContext.Provider value={{ ...state, ...setters,
+      configuration, comparisonReference: reference, isCommunityAdaptation: true, sourceMode: true, onSourceDone: leave,
+      referencesValid: true, handleResetIfDatasetEmpty: reset }}>
+      {warnings.length > 0 && <Alert severity="info">Review the selections that are unavailable in your data. The original choices remain in the community reference.</Alert>}
+      <WorkflowStepper steps={getWorkflowSteps(state.lockedStep, state)} current={getCurrentStep(state.lockedStep)} ariaLabel="Basic indicator creation progress" />
+      <Stack sx={{ gap: 2, minWidth: 0 }}>
+        {isStepRevealed(state.lockedStep, "dataset") && <Dataset />}
+        {isStepRevealed(state.lockedStep, "filters") && <Filters />}
+        {isStepRevealed(state.lockedStep, "analysis") && <Analysis />}
+        {isStepRevealed(state.lockedStep, "visualization") && <Visualization />}
+      </Stack>
+    </BasicContext.Provider>}
+  </Stack>;
+}
+EmbeddedBasicIndicator.propTypes = { configuration: PropTypes.object, reference: PropTypes.object,
+  onChange: PropTypes.func.isRequired, onBack: PropTypes.func.isRequired };

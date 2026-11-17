@@ -143,6 +143,38 @@ public class IndicatorDraftConfigurationTest {
   }
 
   @Test
+  public void privateAdaptationBundlesAreBoundedAndUnavailableInNormalDrafts() {
+    ObjectNode config = emptyComplex(IndicatorType.COMPOSITE);
+    String slot = "source-" + java.util.UUID.randomUUID();
+    ((ArrayNode) config.path("sources")).addObject().put("id", slot).putArray("outputs");
+    config.putObject("sourceDrafts").set(slot, basic());
+    assertThat(configurations.validateAdaptation(config, IndicatorType.COMPOSITE, 1)).isEqualTo(config);
+    assertThatThrownBy(() -> configurations.validate(config, IndicatorType.COMPOSITE, 1))
+        .isInstanceOf(ValidationException.class);
+    ((ObjectNode) config.path("sourceDrafts")).set("unmatched-slot", basic());
+    assertThatThrownBy(() -> configurations.validateAdaptation(config, IndicatorType.COMPOSITE, 1))
+        .isInstanceOf(ValidationException.class);
+    ((ObjectNode) config.path("sourceDrafts")).remove("unmatched-slot");
+    ((ObjectNode) config.path("sourceDrafts")).set(slot, emptyComplex(IndicatorType.COMPOSITE));
+    assertThatThrownBy(() -> configurations.validateAdaptation(config, IndicatorType.COMPOSITE, 1))
+        .isInstanceOf(ValidationException.class);
+  }
+
+  @Test
+  public void emptyAdaptationBundlesRemainEditableButUnsafeSlotsAreRejected() {
+    ObjectNode config = emptyComplex(IndicatorType.MULTI_LEVEL);
+    config.putObject("sourceDrafts");
+    assertThat(configurations.validateAdaptation(config, IndicatorType.MULTI_LEVEL, 1)).isEqualTo(config);
+    for (String slot : new String[] {"root", "__proto__", "constructor", "prototype", "$where", "nested.path"}) {
+      ObjectNode malformed = config.deepCopy();
+      ((ArrayNode) malformed.path("sources")).addObject().put("id", slot).putArray("outputs");
+      ((ObjectNode) malformed.path("sourceDrafts")).set(slot, basic());
+      assertThatThrownBy(() -> configurations.validateAdaptation(malformed, IndicatorType.MULTI_LEVEL, 1))
+          .isInstanceOf(ValidationException.class);
+    }
+  }
+
+  @Test
   public void idempotencyHashIgnoresObjectPropertyOrdering() throws Exception {
     assertThat(configurations.hash(mapper.readTree("{\"b\":1,\"a\":{\"d\":2,\"c\":3}}")))
         .isEqualTo(configurations.hash(mapper.readTree("{\"a\":{\"c\":3,\"d\":2},\"b\":1}")));

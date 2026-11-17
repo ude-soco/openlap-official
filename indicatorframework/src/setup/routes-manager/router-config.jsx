@@ -56,7 +56,7 @@ const menus = [
     items: [
       {
         primary: "My Indicators",
-        disabledRoles: [RoleTypes.userWithoutLRS],
+        disabledRoles: [],
         secondary: "List of my Indicators",
         navigate: "/indicator",
         icon: <DashboardIcon />,

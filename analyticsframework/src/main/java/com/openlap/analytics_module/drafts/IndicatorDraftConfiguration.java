@@ -34,6 +34,32 @@ public class IndicatorDraftConfiguration {
     return value.deepCopy();
   }
 
+  /** Only server-tagged adaptation drafts can contain private, unsaved Basic source recipes. */
+  public JsonNode validateAdaptation(JsonNode value, IndicatorType type, Integer version) {
+    if (type == IndicatorType.BASIC) return validate(value, type, version);
+    if (value == null || !value.isObject() || !value.path("sourceDrafts").isObject()
+        || value.toString().getBytes(StandardCharsets.UTF_8).length > MAX_BYTES) throw invalid();
+    bounded(value, 0, new int[] {0});
+    ObjectNode parent = ((ObjectNode) value).deepCopy();
+    JsonNode drafts = parent.remove("sourceDrafts");
+    JsonNode checked = validate(parent, type, version);
+    Set<String> sourceIds = new HashSet<>();
+    for (JsonNode source : checked.path("sources")) sourceIds.add(source.path("id").asText());
+    Set<String> draftIds = new HashSet<>();
+    var fields = drafts.fields();
+    while (fields.hasNext()) {
+      var entry = fields.next();
+      String slot = entry.getKey();
+      if (!slot.matches("[A-Za-z0-9][A-Za-z0-9_-]{0,99}")
+          || Set.of("root", "constructor", "prototype", "__proto__").contains(slot)) throw invalid();
+      draftIds.add(slot);
+      validate(entry.getValue(), IndicatorType.BASIC, 1);
+    }
+    if (!draftIds.equals(sourceIds) || draftIds.size() > 10) throw invalid();
+    ((ObjectNode) checked).set("sourceDrafts", drafts.deepCopy());
+    return checked;
+  }
+
   private static void requireComplexStructure(JsonNode value) {
     JsonNode sources = value.path("sources"),
         analysis = value.path("analysis"),

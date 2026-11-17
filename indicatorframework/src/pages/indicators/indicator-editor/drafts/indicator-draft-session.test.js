@@ -532,3 +532,52 @@ test("reconciling another writer's claimed save preserves this tab's different d
   assert.equal(f.session.getState().closedReceipt.savedIndicatorId, "indicator-1");
   assert.equal(readDraftRecovery({ ...ownerScope, draftId: "draft-1" }, f.storage).record.configuration.sources.length, 1);
 });
+
+test("adaptation proof is requested after flush and before the completion claim", async () => {
+  let f;
+  f = fixture({ initialDraft: saved(1), initialValue: value(1), transport: {
+    prepareComplete: async (id, request) => {
+      f.calls.push({ action: "prepare", id, request });
+      assert.equal(Boolean(f.session.getState().completionPending), false);
+      return { revision: request.revision, indicator: { adaptationReceiptId: "proof" } };
+    },
+  } });
+  f.session.update(value(2), true);
+  await f.session.complete(() => ({ ordinary: "not transmitted" }));
+  assert.deepEqual(f.calls.map((entry) => entry.action), ["update", "prepare", "complete"]);
+  assert.deepEqual(f.calls[2].body, { revision: 2, indicator: { adaptationReceiptId: "proof" } });
+});
+test("failed adaptation proof leaves a draft editable without a pending terminal retry", async () => {
+  const f = fixture({ initialDraft: saved(1), initialValue: value(1), transport: {
+    prepareComplete: async () => { throw new Error("No matching data"); },
+  } });
+  await assert.rejects(f.session.complete({}), /No matching data/);
+  assert.equal(Boolean(f.session.getState().completionPending), false);
+  f.session.update(value(2), true); await f.session.flush();
+  assert.equal(f.calls.at(-1).action, "update");
+});
+test("adaptation transport preserves server-owned provenance for separate recovery drafts", async () => {
+  const calls = [];
+  const api = { post: async (path, body) => { calls.push({ path, body }); return { data: { data: path.endsWith("adaptation-preview")
+    ? { status: "READY", revision: body.revision, receiptId: "proof" } : { id: "new", adaptation: { schemaVersion: 1 } } } }; } };
+  const transport = createIndicatorDraftApi(api, { initialDraft: { id: "original", adaptation: { schemaVersion: 1 } } });
+  const prepared = await transport.prepareComplete("original", { revision: 3, indicator: { unsafe: "ignored" } });
+  assert.deepEqual(prepared, { revision: 3, indicator: { adaptationReceiptId: "proof" } });
+  await transport.create({ configuration: {}, clientRequestId: "copy" });
+  assert.equal(calls[1].body.adaptationSourceDraftId, "original");
+  assert.equal(calls[1].body.adaptation, undefined);
+});
+test("uncertain adapted completion retries its original receipt without issuing another proof", async () => {
+  let f, proofs = 0, completions = 0;
+  f = fixture({ initialDraft: saved(1), initialValue: value(1), transport: {
+    prepareComplete: async (_id, request) => { proofs += 1; return { ...request, indicator: { adaptationReceiptId: "frozen-proof" } }; },
+    complete: async (_id, body) => { completions += 1; assert.equal(body.indicator.adaptationReceiptId, "frozen-proof");
+      if (completions === 1) throw new Error("Connection lost after server claim");
+      return { ...saved(1), status: "COMPLETED", savedIndicatorId: "completed-adaptation" };
+    },
+    get: async () => saved(1),
+  } });
+  await assert.rejects(f.session.complete({}), /Connection lost/);
+  await f.session.complete({});
+  assert.equal(proofs, 1); assert.equal(completions, 2);
+});

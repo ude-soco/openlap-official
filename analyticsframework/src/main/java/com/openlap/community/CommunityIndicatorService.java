@@ -189,6 +189,8 @@ public class CommunityIndicatorService {
         || row.getString("communitySourceVersion") == null || row.getString("communityCopyPending") == null) return;
     String viewer = owner.getId().toString(), poolId = row.getString("communitySourceId"),
         receiptId = row.getString("communityCopyPending"), id = row.get("_id").toString();
+    // These staged rows have a durable draft completion claim, not an exact-copy receipt.
+    if (receiptId.startsWith("adaptation:")) return;
     if (receipts.hasClaim(viewer, poolId, receiptId)) return;
     String gate = references.beginDelete(id);
     try {
