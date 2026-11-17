@@ -11,6 +11,8 @@ export const requestCommunityFilters = async (api, kind, signal) =>
   dataOf(await api.get(`${pathFor(kind)}/filters`, { signal }));
 export const requestCommunityDetail = async (api, kind, id, signal) =>
   dataOf(await api.get(pathFor(kind, id), { signal }));
+export const requestCommunityExample = async (api, id, signal) =>
+  dataOf(await api.get(`${pathFor("indicators", id)}/example-preview`, { signal }));
 export const requestCommunityPreview = async (api, id, connections = {}, signal) =>
   dataOf(await api.post(`${pathFor("indicators", id)}/preview`, { connections }, { signal }));
 export const requestCommunityAdaptation = async (api, id, clientRequestId) =>

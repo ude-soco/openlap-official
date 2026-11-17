@@ -47,6 +47,7 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     if (path === "v1/community/indicators/filters") return send({ types: ["BASIC"], methods: ["Count items"], charts: ["Bar Chart"] });
     if (path === "v1/community/indicators") return send({ content: [{ id: "community-basic", name: reference.name, type: "BASIC", method: "Count items", chart: "Bar Chart" }], totalElements: 1 });
     if (path === "v1/community/indicators/community-basic") return send({ id: "community-basic", name: reference.name, type: "BASIC", version: "v1", method: "Count items" });
+    if (path.endsWith("/example-preview")) return send({ status: "EXAMPLE_UNAVAILABLE", message: "Sample preview is unavailable." });
     if (path.endsWith("/preview")) return send({ status: "NO_CONNECTION" });
     if (path === "v1/community/indicators/community-basic/adaptations") { assert.match(body.clientRequestId, /^[0-9a-f-]{36}$/); return send(draft); }
     const draftMatch = path.match(/^v1\/indicators\/drafts\/([^/]+)$/);
@@ -100,6 +101,9 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     stage = "opening community pool"; console.log("Opening local Indicator Pool…");
     await page.goto(new URL("indicator/pool", base).href);
     await page.getByRole("button", { name: `View ${reference.name}`, exact: true }).click();
+    await page.getByText("Sample preview is unavailable.", { exact: true }).waitFor();
+    assert.equal(calls.filter((call) => call.path.endsWith("/preview")).length, 0, "Opening an entry never queries the viewer's data automatically");
+    await page.getByRole("button", { name: "Try with my data", exact: true }).click();
     await page.getByText("Connect your LRS in Manage LRS before previewing this indicator.", { exact: true }).waitFor();
     assert.equal(await page.getByRole("button", { name: "Adapt to my data", exact: true }).isEnabled(), true, "Incompatibility/no LRS never blocks creating an adaptation");
     stage = "starting private adaptation";
