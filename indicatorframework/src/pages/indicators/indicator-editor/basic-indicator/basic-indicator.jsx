@@ -8,11 +8,12 @@ import Analysis from "./components/analysis/analysis";
 import Visualization from "./components/visualization/visualization";
 import { AuthContext } from "../../../../setup/auth-context-manager/auth-context-manager";
 import PageHeader from "../../../../common/components/page-header/page-header";
-import WorkflowStepper from "../../../../common/components/workflow-stepper/workflow-stepper.jsx";
+import EditorWorkflow from "../../../../common/components/editor-workflow/editor-workflow.jsx";
 import {
   getCurrentStep,
   getWorkflowSteps,
   isStepRevealed,
+  openBasicStep,
 } from "./utils/basic-workflow-ui.js";
 
 import useIndicatorDraft from "../drafts/use-indicator-draft.js";
@@ -128,9 +129,11 @@ export default function BasicIndicator({ initialDraft = null, initialState = nul
     });
   };
 
-  // Informational workflow view, derived purely from the live state (no gating
-  // change). The stepper reflects progress; panel open/close stays owned by
-  // each step's existing toggles and "Next" buttons.
+  // Navigation opens an available section without changing completion or the
+  // selections in other sections. The navigator owns its scroll position.
+  const handleStepSelect = useCallback((key) => {
+    setLockedStep((previous) => openBasicStep(previous, key));
+  }, []);
   const workflowSteps = getWorkflowSteps(lockedStep, {
     dataset,
     filters,
@@ -180,13 +183,15 @@ export default function BasicIndicator({ initialDraft = null, initialState = nul
             {referenceWarnings.join(" ")}
           </Alert>}
           {hydrating ? <CircularProgress aria-label="Refreshing saved selections" /> : <>
-          <WorkflowStepper steps={workflowSteps} current={currentStep} ariaLabel="Basic indicator creation progress" />
+          <EditorWorkflow steps={workflowSteps} current={currentStep} onStepSelect={handleStepSelect}
+            disabled={draft.finalizing} ariaLabel="Basic indicator creation progress">
           <Stack sx={{ gap: 2 }} inert={draft.finalizing || undefined}>
             {isStepRevealed(lockedStep, "dataset") && <Dataset />}
             {isStepRevealed(lockedStep, "filters") && <Filters />}
             {isStepRevealed(lockedStep, "analysis") && <Analysis />}
             {isStepRevealed(lockedStep, "visualization") && <Visualization />}
           </Stack>
+          </EditorWorkflow>
           </>}
           {draftNavigation.dialog}
           <Dialog open={legacyOpen} onClose={() => setLegacyOpen(false)} aria-labelledby="legacy-basic-draft-title">
@@ -233,6 +238,10 @@ export function EmbeddedBasicIndicator({ configuration: initialConfiguration, re
   ])), []);
   const leave = () => { callbacks.current.onChange(configuration); callbacks.current.onBack(); };
   const reset = () => setState((previous) => ({ ...emptyBasicState(), indicator: previous.indicator, dataset: previous.dataset }));
+  const handleStepSelect = useCallback((key) => setState((previous) => {
+    const next = openBasicStep(previous.lockedStep, key);
+    return next === previous.lockedStep ? previous : { ...previous, lockedStep: next };
+  }), []);
   return <Stack sx={{ gap: 2, minWidth: 0 }}>
     <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", gap: 1, flexWrap: "wrap" }}>
       <Typography variant="h6">Edit source selections</Typography><Button variant="outlined" onClick={leave}>Back to sources</Button>
@@ -241,13 +250,15 @@ export function EmbeddedBasicIndicator({ configuration: initialConfiguration, re
       configuration, comparisonReference: reference, isCommunityAdaptation: true, sourceMode: true, onSourceDone: leave,
       referencesValid: true, handleResetIfDatasetEmpty: reset }}>
       {warnings.length > 0 && <Alert severity="info">Review the selections that are unavailable in your data. The original choices remain in the community reference.</Alert>}
-      <WorkflowStepper steps={getWorkflowSteps(state.lockedStep, state)} current={getCurrentStep(state.lockedStep)} ariaLabel="Basic indicator creation progress" />
+      <EditorWorkflow steps={getWorkflowSteps(state.lockedStep, state)} current={getCurrentStep(state.lockedStep)}
+        onStepSelect={handleStepSelect} focusOnMount="dataset" ariaLabel="Basic indicator creation progress">
       <Stack sx={{ gap: 2, minWidth: 0 }}>
         {isStepRevealed(state.lockedStep, "dataset") && <Dataset />}
         {isStepRevealed(state.lockedStep, "filters") && <Filters />}
         {isStepRevealed(state.lockedStep, "analysis") && <Analysis />}
         {isStepRevealed(state.lockedStep, "visualization") && <Visualization />}
       </Stack>
+      </EditorWorkflow>
     </BasicContext.Provider>}
   </Stack>;
 }

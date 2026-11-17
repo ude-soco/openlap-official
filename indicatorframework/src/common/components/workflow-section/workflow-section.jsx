@@ -1,7 +1,9 @@
+import { useContext } from "react";
 import PropTypes from "prop-types";
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import { EditorWorkflowContext } from "../editor-workflow/editor-workflow-context.js";
 
 /**
  * Consistent card frame for one ISC Creator workflow phase. See
@@ -29,8 +31,10 @@ const WorkflowSection = ({
   status = "available",
   lockedHint = "Complete the previous step to unlock this section.",
   ariaLabel,
+  stepKey,
   children,
 }) => {
+  const navigation = useContext(EditorWorkflowContext);
   const locked = status === "locked";
   const active = status === "active";
 
@@ -39,9 +43,14 @@ const WorkflowSection = ({
       component="section"
       variant="outlined"
       aria-label={ariaLabel}
+      id={navigation && stepKey ? `${navigation.id}-${stepKey}` : undefined}
+      data-editor-step={navigation ? stepKey : undefined}
+      tabIndex={navigation && stepKey ? -1 : undefined}
       aria-disabled={locked || undefined}
       sx={(theme) => ({
         position: "relative",
+        scrollMarginTop: "var(--editor-sticky-content-top, 81px)",
+        "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
         p: 2,
         borderRadius: `${theme.custom.radii.card}px`,
         transition: `border-color ${theme.custom.motion.duration.normal}ms ${theme.custom.motion.easing.standard}, box-shadow ${theme.custom.motion.duration.normal}ms ${theme.custom.motion.easing.standard}`,
@@ -74,6 +83,7 @@ WorkflowSection.propTypes = {
   status: PropTypes.oneOf(STATUSES),
   lockedHint: PropTypes.string,
   ariaLabel: PropTypes.string,
+  stepKey: PropTypes.string,
   children: PropTypes.node,
 };
 

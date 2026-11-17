@@ -1,11 +1,6 @@
-// Read-only workflow-UI helpers for the Basic Indicator wizard.
-//
-// These derive presentation state (which step is current, each step's
-// active/completed/locked status, and a short stepper summary) PURELY from the
-// existing `lockedStep` flags and the domain selections. They do NOT mutate
-// `lockedStep`, change its shape/step-codes, or alter the unlock conditions —
-// progression is still owned by each step's own "Next" button. This is a thin
-// view layer on top of the legacy state, mirroring the ISC Creator approach.
+// Presentation helpers for the Basic Indicator workflow. Completion and
+// availability follow the existing flags; navigation can only reopen a section
+// that the workflow has already unlocked.
 
 export const BASIC_STEP_ORDER = [
   "dataset",
@@ -19,6 +14,19 @@ const STEP_LABELS = {
   filters: "Filters",
   analysis: "Analysis",
   visualization: "Visualization",
+};
+
+const LOCKED_HINTS = {
+  filters: "Choose a dataset and continue to unlock Filters.",
+  analysis: "Complete Filters and continue to unlock Analysis.",
+  visualization: "Generate an analysis preview and continue to unlock Visualization.",
+};
+
+/** Open a known, unlocked section while preserving all other workflow state. */
+export const openBasicStep = (lockedStep, key) => {
+  const section = lockedStep?.[key];
+  if (!BASIC_STEP_ORDER.includes(key) || section?.locked !== false || section.openPanel) return lockedStep;
+  return { ...lockedStep, [key]: { ...section, openPanel: true } };
 };
 
 // The step whose `locked` flag flips when a given step's "Next" is pressed.
@@ -47,7 +55,7 @@ export const getStepStatus = (lockedStep, key) => {
   return "available";
 };
 
-/** Key of the step to mark current: the expanded one, else first unlocked. */
+/** Initial navigation hint; the editor navigator tracks the viewed section. */
 export const getCurrentStep = (lockedStep) =>
   BASIC_STEP_ORDER.find((key) => lockedStep?.[key]?.openPanel) ??
   BASIC_STEP_ORDER.find((key) => !isStepLocked(lockedStep, key)) ??
@@ -89,12 +97,13 @@ const stepSummary = (key, domain = {}) => {
   }
 };
 
-/** View-model array consumed by the shared WorkflowStepper. */
+/** View-model array consumed by the editor navigator. */
 export const getWorkflowSteps = (lockedStep, domain = {}) =>
   BASIC_STEP_ORDER.map((key) => ({
     key,
     label: STEP_LABELS[key],
     locked: isStepLocked(lockedStep, key),
     completed: isStepCompleted(lockedStep, key),
+    lockedHint: LOCKED_HINTS[key],
     summary: stepSummary(key, domain),
   }));

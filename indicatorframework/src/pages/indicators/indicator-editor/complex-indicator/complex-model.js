@@ -4,6 +4,12 @@ export const CONFIG_VERSION = 1;
 export const COMPLEX_TYPES = ["COMPOSITE", "MULTI_LEVEL"];
 export const MAX_SOURCES = 10;
 
+// Basic source panel visibility is authoring state. Keep it in the saved draft,
+// but exclude it when deciding whether analysis results need to be regenerated.
+// Every other field remains significant, including unknown future selections.
+export const sourceExecutionSelections = (sourceDraft) => sourceDraft &&
+  Object.fromEntries(Object.entries(sourceDraft).filter(([key]) => key !== "lockedStep"));
+
 export const newComplexConfiguration = (type) => ({
   schemaVersion: CONFIG_VERSION,
   type,
