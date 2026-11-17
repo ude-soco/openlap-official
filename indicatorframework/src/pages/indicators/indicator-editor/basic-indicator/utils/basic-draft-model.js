@@ -100,7 +100,8 @@ export const basicDraftMeaningful = (configuration) => Boolean(
 export async function refreshBasicReferences(api, raw, { adaptation = false } = {}) {
   const state = restoreBasicState(raw);
   const warnings = [];
-  if (adaptation) state.filters.selectedUserFilter = "ONLY_ME";
+  if (adaptation && !["ONLY_ME", "EXCLUDE_ME", "INCLUDE_ME"].includes(state.filters.selectedUserFilter))
+    state.filters.selectedUserFilter = "ONLY_ME";
   const data = async (method, path, body) => (await api[method](path, ...(body === undefined ? [] : [body]))).data.data;
   const attempt = async (label, operation) => {
     try { return await operation(); }

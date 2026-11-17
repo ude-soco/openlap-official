@@ -95,6 +95,8 @@ public class CommunityAdaptationRecipesTest {
     var prepared = recipes.prepare(root, new User(), pool);
     assertThat(prepared.configuration().path("sourceDrafts").size()).isEqualTo(2);
     assertThat(prepared.configuration().path("sources").get(0).path("id").asText()).isEqualTo("source-1");
+    assertThat(prepared.configuration().path("sourceDrafts")).allSatisfy(child ->
+        assertThat(child.path("filters").path("selectedUserFilter").asText()).isEqualTo("ONLY_ME"));
     assertThat(prepared.configuration().path("sourceDrafts").path("source-1").path("analysis").path("selectedAnalyticsMethod").path("method").path("id").asText()).isEmpty();
     assertThat(prepared.adaptation().path("reference").path("sources").get(1).path("reference").path("unavailable").asBoolean()).isTrue();
     assertThat(prepared.adaptation().toString()).doesNotContain(leaf.getId(), "Alice");

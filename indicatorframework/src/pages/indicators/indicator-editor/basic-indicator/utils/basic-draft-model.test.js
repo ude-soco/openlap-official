@@ -81,7 +81,7 @@ test("partial versioned Basic documents retain completed choices and receive saf
   assert.deepEqual(restored.dataset.selectedLRSList, []);
 });
 
-test("adaptation hydration clears unavailable private choices and forces only-my-data", async () => {
+test("adaptation hydration clears unavailable private choices and defaults an unrecognised scope to only-my-data", async () => {
   const state = emptyBasicState();
   state.dataset.selectedLRSList = [{ lrsId: "not-viewer-owned", uniqueIdentifier: "other", lrsTitle: "Foreign" }];
   state.analysis.selectedAnalyticsMethod.method = { id: "gone-method", name: "Unavailable" };
@@ -95,6 +95,19 @@ test("adaptation hydration clears unavailable private choices and forces only-my
   assert.equal(result.state.analysis.selectedAnalyticsMethod.method.id, "");
   assert.equal(result.state.visualization.selectedType.id, "");
   assert.deepEqual(result.state.filters.selectedActivities[0].selectedActionList, []);
+});
+test("adaptation hydration preserves every explicitly selected user scope through serialization and reload", async () => {
+  const api = { get: async () => ({ data: { data: [] } }) };
+  for (const scope of ["ONLY_ME", "EXCLUDE_ME", "INCLUDE_ME"]) {
+    const state = emptyBasicState();
+    state.filters.selectedUserFilter = scope;
+    const first = await refreshBasicReferences(api, serializeBasicDraft(state), { adaptation: true });
+    const resumed = await refreshBasicReferences(api, serializeBasicDraft(first.state), { adaptation: true });
+    assert.equal(first.state.filters.selectedUserFilter, scope);
+    assert.equal(resumed.state.filters.selectedUserFilter, scope);
+  }
+  const fresh = await refreshBasicReferences(api, serializeBasicDraft(emptyBasicState()), { adaptation: true });
+  assert.equal(fresh.state.filters.selectedUserFilter, "ONLY_ME", "Fresh adaptations still preselect only-my-data");
 });
 test("adaptation hydration never replaces accessed with clicked and drops stale activities", async () => {
   const state = emptyBasicState();

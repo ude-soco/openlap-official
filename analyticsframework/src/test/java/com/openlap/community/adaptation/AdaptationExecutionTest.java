@@ -29,6 +29,9 @@ import java.util.*;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 class AdaptationExecutionTest {
@@ -94,14 +97,79 @@ class AdaptationExecutionTest {
     assertThat(execution.execute(request, draft("BASIC", config), "analysis", Map.of()).root().getIndicatorQuery()).contains(alternate, "alternate-me");
   }
 
-  @Test void missingConnectionAndNonPersonalScopeFailBeforeReadingData() {
+  @ParameterizedTest
+  @EnumSource(UserQueryCondition.class)
+  void previewAndSavedBasicDefinitionHonorScopeWithinTheViewersConnections(UserQueryCondition scope) throws Exception {
+    ObjectNode config = basic();
+    ((ObjectNode) config.path("filters")).put("selectedUserFilter", scope.name());
+    var result = execution.execute(request, draft("BASIC", config), "visualization", Map.of());
+    var queries = ArgumentCaptor.forClass(StatementsRequest.class);
+    verify(statements).findStatements(queries.capture());
+    assertThat(queries.getValue().getUserQueryCondition()).isEqualTo(scope);
+    assertThat(queries.getValue().getLrsStores()).singleElement().satisfies(store -> {
+      assertThat(store.getLrsId()).isEqualTo(lrs);
+      assertThat(store.getUniqueIdentifier()).isEqualTo("my-learner");
+    });
+    assertThat(mapper.readTree(result.root().getIndicatorQuery()).path("userQueryCondition").asText()).isEqualTo(scope.name());
+    assertThat(mapper.readTree(result.root().getConfigurationRequest()).path("filters").path("selectedUserFilter").asText()).isEqualTo(scope.name());
+    assertThat(result.root().getCreatedBy()).isSameAs(viewer);
+  }
+
+  @ParameterizedTest
+  @EnumSource(UserQueryCondition.class)
+  void everyScopeStillRejectsSomeoneElsesLearnerConnectionBeforeReadingData(UserQueryCondition scope) {
     ObjectNode missing = basic();
+    ((ObjectNode) missing.path("filters")).put("selectedUserFilter", scope.name());
     ((ObjectNode) missing.path("dataset").path("selectedLRSList").get(0)).put("uniqueIdentifier", "someone-else");
     assertThatThrownBy(() -> execution.execute(request, draft("BASIC", missing), "analysis", Map.of()))
         .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("MISSING_LRS");
-    ObjectNode other = basic(); ((ObjectNode) other.path("filters")).put("selectedUserFilter", "INCLUDE_ME");
-    assertThatThrownBy(() -> execution.execute(request, draft("BASIC", other), "analysis", Map.of()))
-        .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("PERSONAL_DATA_REQUIRED");
+    verify(statements, never()).findStatements(any());
+  }
+
+  @Test void missingOrInvalidScopeFailsBeforeReadingData() {
+    for (JsonNode scope : List.of(mapper.valueToTree("ALL"), mapper.valueToTree(""),
+        mapper.valueToTree("only_me"), mapper.nullNode(), mapper.valueToTree(1), mapper.valueToTree(true))) {
+      ObjectNode config = basic();
+      ((ObjectNode) config.path("filters")).set("selectedUserFilter", scope);
+      assertThatThrownBy(() -> execution.execute(request, draft("BASIC", config), "analysis", Map.of()))
+          .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("INVALID_USER_SCOPE");
+    }
+    ObjectNode missing = basic();
+    ((ObjectNode) missing.path("filters")).remove("selectedUserFilter");
+    assertThatThrownBy(() -> execution.execute(request, draft("BASIC", missing), "analysis", Map.of()))
+        .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("INVALID_USER_SCOPE");
+    verify(statements, never()).findStatements(any());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"COMPOSITE", "MULTI_LEVEL"})
+  void complexSourcesKeepTheirOwnScopesThroughPreviewAndSavedDefinitions(String type) throws Exception {
+    ObjectNode config = complex(type);
+    ((ObjectNode) config.path("sourceDrafts").path("one").path("filters")).put("selectedUserFilter", "INCLUDE_ME");
+    ((ObjectNode) config.path("sourceDrafts").path("two").path("filters")).put("selectedUserFilter", "EXCLUDE_ME");
+    var result = execution.execute(request, draft(type, config), "visualization", Map.of());
+    var queries = ArgumentCaptor.forClass(StatementsRequest.class);
+    verify(statements, times(2)).findStatements(queries.capture());
+    assertThat(queries.getAllValues()).extracting(StatementsRequest::getUserQueryCondition)
+        .containsExactly(UserQueryCondition.INCLUDE_ME, UserQueryCondition.EXCLUDE_ME);
+    assertThat(queries.getAllValues()).allSatisfy(query -> assertThat(query.getLrsStores()).singleElement().satisfies(store -> {
+      assertThat(store.getLrsId()).isEqualTo(lrs);
+      assertThat(store.getUniqueIdentifier()).isEqualTo("my-learner");
+    }));
+    for (int index = 0; index < result.leaves().size(); index++) {
+      String scope = index == 0 ? "INCLUDE_ME" : "EXCLUDE_ME";
+      Indicator leaf = result.leaves().get(index);
+      assertThat(mapper.readTree(leaf.getIndicatorQuery()).path("userQueryCondition").asText()).isEqualTo(scope);
+      assertThat(mapper.readTree(leaf.getConfigurationRequest()).path("filters").path("selectedUserFilter").asText()).isEqualTo(scope);
+      assertThat(leaf.getCreatedBy()).isSameAs(viewer);
+    }
+  }
+
+  @Test void invalidScopeInLaterComplexSourcePreventsEverySourceFromReadingData() {
+    ObjectNode config = complex("COMPOSITE");
+    ((ObjectNode) config.path("sourceDrafts").path("two").path("filters")).put("selectedUserFilter", "UNRECOGNIZED");
+    assertThatThrownBy(() -> execution.execute(request, draft("COMPOSITE", config), "combine", Map.of()))
+        .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("INVALID_USER_SCOPE");
     verify(statements, never()).findStatements(any());
   }
 

@@ -11,7 +11,7 @@ import {
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
 
 const TypeInputSelection = () => {
-  const { analysis, visualization, setVisualization, personalOnly } =
+  const { analysis, visualization, setVisualization, isCommunityAdaptation } =
     useContext(BasicContext);
 
   useEffect(() => {
@@ -20,7 +20,7 @@ const TypeInputSelection = () => {
     const updatedInputs = visualization.inputs.map((input) => {
       // An adapted source must never retain a column that its own analysis no
       // longer produces. Leave an unavailable original unmapped for review.
-      if (personalOnly && input.selectedInput && !Object.values(analysis.analyzedData).some((column) =>
+      if (isCommunityAdaptation && input.selectedInput && !Object.values(analysis.analyzedData).some((column) =>
         column.configurationData?.id === input.selectedInput.id && column.configurationData?.type === input.type)) {
         const index = newMappings.findIndex((entry) => entry.inputPort.id === input.id);
         if (index >= 0) newMappings.splice(index, 1);
@@ -66,7 +66,7 @@ const TypeInputSelection = () => {
     }));
   // Existing selections are initialized once per chart/data result, not per editor render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visualization.selectedType.id, analysis.analyzedData, personalOnly]);
+  }, [visualization.selectedType.id, analysis.analyzedData, isCommunityAdaptation]);
 
   const handleSelectInput = (value, input) => {
     // Deep copy each input object

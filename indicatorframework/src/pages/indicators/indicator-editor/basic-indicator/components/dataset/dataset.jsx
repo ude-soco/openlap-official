@@ -24,7 +24,7 @@ import { getStepStatus } from "../../utils/basic-workflow-ui.js";
 export default function Dataset() {
   const { api } = useContext(AuthContext);
   const {
-    comparisonReference, configuration, personalOnly,
+    comparisonReference, configuration, isCommunityAdaptation,
     lockedStep,
     setLockedStep,
     dataset,
@@ -92,9 +92,10 @@ export default function Dataset() {
     const run = ++selectionRun.current;
     setDataset((p) => ({ ...p, selectedLRSList: selectedLRSList }));
     if (selectedLRSList.length !== 0) {
-      if (personalOnly) {
+      if (isCommunityAdaptation) {
         const refreshed = await refreshBasicReferences(api, { ...configuration, dataset: { selectedLRSList } }, { adaptation: true });
-        if (run === selectionRun.current) setFilters(refreshed.state.filters);
+        if (run === selectionRun.current) setFilters((previous) => ({ ...refreshed.state.filters,
+          selectedUserFilter: previous.selectedUserFilter }));
         return;
       }
       try {
@@ -145,7 +146,7 @@ export default function Dataset() {
               <Container maxWidth="lg">
                 <Stack sx={{ gap: 2 }}>
                   <Typography>Source of data</Typography>
-                  {personalOnly && !dataset.myLRSList.length && <Alert severity="info" action={<Button color="inherit" href="/manage-lrs" target="_blank" rel="noopener noreferrer">Manage LRS</Button>}>Connect an LRS to preview your data. This adaptation is kept as a private draft.</Alert>}
+                  {isCommunityAdaptation && !dataset.myLRSList.length && <Alert severity="info" action={<Button color="inherit" href="/manage-lrs" target="_blank" rel="noopener noreferrer">Manage LRS</Button>}>Connect an LRS to preview your data. This adaptation is kept as a private draft.</Alert>}
                   <Stack sx={{ gap: 2, alignItems: "center", minWidth: 0 }} direction="row">
                     <Autocomplete
                       sx={{ minWidth: 0, flex: 1 }}

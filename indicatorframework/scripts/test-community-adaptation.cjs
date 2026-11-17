@@ -26,6 +26,8 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
   let connected = false;
   let actionFilterFixture = false, holdActivities = false;
   const heldActivities = [];
+  let holdActivityTypes = false;
+  const heldActivityTypes = [];
   const actionOptions = ["clicked", "accessed", "annotated"].map((id) => ({ id, name: id[0].toUpperCase() + id.slice(1) }));
   const activityFor = (action) => ({ id: `${action}-material`, queryId: "statement.object.id", name: `${action[0].toUpperCase() + action.slice(1)} material` });
   const longLrs = { id: "own", lrsId: "own", uniqueIdentifier: "viewer", lrsTitle: "A connected learning record store with a long descriptive title" };
@@ -61,7 +63,11 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     }
     if (path === "v1/analytics/methods/outputs/count") return send([]);
     if (path === "v1/users/my/lrs") return send(connected ? [longLrs] : []);
-    if (actionFilterFixture && path === "v1/statements/activity-types") return send([{ id: "material", name: "Material" }, { id: "pdf", name: "PDF" }]);
+    if (actionFilterFixture && path === "v1/statements/activity-types") {
+      const reply = () => send([{ id: "material", name: "Material" }, { id: "pdf", name: "PDF" }]);
+      if (holdActivityTypes) { heldActivityTypes.push(reply); return; }
+      return reply();
+    }
     if (actionFilterFixture && path === "v1/statements/actions") return send(actionOptions);
     if (actionFilterFixture && path === "v1/statements/activities") {
       assert.equal(body.actionOnActivities.length, 1, "Activity lookup uses exactly the current action");
@@ -102,8 +108,11 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     await page.getByRole("heading", { name: "Adapt a Basic Indicator", exact: true }).waitFor();
     await until(() => page.getByRole("heading", { name: "Community reference", exact: true }).count().then((count) => count === 4), "Every opened Basic section has its own contextual reference");
     assert.equal(calls.filter((call) => call.path.endsWith("/adaptations")).length, 1, "Double activation creates one request");
-    assert.equal(await page.getByRole("radio", { name: "Use data of all users", exact: true }).isEnabled(), false);
+    assert.equal(await page.getByRole("radio", { name: "Use data of all users", exact: true }).isEnabled(), true);
+    assert.equal(await page.getByRole("radio", { name: "Use all except my data", exact: true }).isEnabled(), true);
     assert.equal(await page.getByRole("radio", { name: "Use only my data", exact: true }).isChecked(), true);
+    const scopeReference = () => page.locator('[data-community-reference="filters"]').getByText("Community data scope", { exact: true }).locator("..");
+    assert.equal(await scopeReference().getByText("Same as community", { exact: true }).count(), 1, "The scope reference compares the current choice");
     assert.equal(await page.getByText("Accessed", { exact: true }).count() > 0, true, "Unavailable original remains in the reference");
     assert.equal(await page.getByRole("button", { name: "Manage LRS", exact: true }).count(), 1);
     const noOverflow = async () => {
@@ -121,6 +130,20 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     await page.getByText("Draft saved", { exact: true }).waitFor();
     await page.reload(); await page.getByRole("heading", { name: "Adapt a Basic Indicator", exact: true }).waitFor();
     await until(() => page.getByRole("heading", { name: "Community reference", exact: true }).count().then((count) => count === 4), "Frozen reference survives reload");
+    stage = "selecting and reloading adaptation user scopes";
+    for (const [label, scope] of [["Use data of all users", "INCLUDE_ME"], ["Use all except my data", "EXCLUDE_ME"]]) {
+      await page.getByRole("radio", { name: label, exact: true }).click();
+      await until(() => Promise.resolve(draft.configuration.filters.selectedUserFilter === scope), "The selected user scope autosaves");
+      await page.getByText("Draft saved", { exact: true }).waitFor();
+      assert.equal(await scopeReference().getByText("Changed", { exact: true }).count(), 1, "Reference feedback reflects a different scope");
+      // Cold hydration in a new device context also avoids WebKit retaining
+      // several long editor documents across successive page.reload calls.
+      await page.context().close();
+      page = await (await createContext(desktop)).newPage();
+      await page.goto(new URL(`indicator/editor/drafts/${draft.id}`, base).href);
+      await page.getByRole("heading", { name: "Adapt a Basic Indicator", exact: true }).waitFor();
+      await until(() => page.getByRole("radio", { name: label, exact: true }).isChecked(), "Reload preserves the chosen scope instead of forcing only-my-data");
+    }
     stage = "checking narrow Basic adaptation";
     // Separate device contexts keep storage/rendering isolated while sharing
     // this account's authoritative server drafts. Each starts at its viewport.
@@ -240,11 +263,43 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     holdActivities = false;
     await noOverflow();
     console.log("Action selection passed: immediate replacement, dependent reset, independent rows, out-of-order lookups, retry and type-change protection.");
+    stage = "preserving a scope chosen during an LRS catalog refresh";
+    const lrsState = emptyBasicState();
+    for (const item of Object.values(lrsState.lockedStep)) { item.locked = false; item.openPanel = true; }
+    const lrsDraft = { ...draft, id: "adaptation-pending-lrs", revision: 0, configuration: serializeBasicDraft(lrsState) };
+    drafts.set(lrsDraft.id, lrsDraft);
+    await page.context().close();
+    page = await (await createContext(desktop)).newPage();
+    await page.goto(new URL(`indicator/editor/drafts/${lrsDraft.id}`, base).href);
+    const lrsInput = page.getByPlaceholder("Search for Learning Record Stores (LRS)", { exact: true });
+    await lrsInput.waitFor();
+    holdActivityTypes = true;
+    await lrsInput.click();
+    await page.getByRole("option", { name: longLrs.lrsTitle, exact: true }).click();
+    await until(() => Promise.resolve(heldActivityTypes.length === 1), "New LRS catalog lookup remains pending");
+    await page.keyboard.press("Escape");
+    await page.getByRole("radio", { name: "Use data of all users", exact: true }).click();
+    await until(() => Promise.resolve(drafts.get(lrsDraft.id).configuration.filters.selectedUserFilter === "INCLUDE_ME"), "A scope chosen during the lookup autosaves");
+    const refreshed = page.waitForResponse((response) => response.url().endsWith("/v1/statements/activity-types"));
+    await heldActivityTypes[0](); await refreshed;
+    holdActivityTypes = false;
+    await page.getByRole("button", { name: "Add filter", exact: true }).click();
+    await page.getByRole("combobox", { name: "Activity type", exact: true }).click();
+    await page.getByRole("option").filter({ hasText: /^Material/ }).waitFor();
+    await page.keyboard.press("Escape");
+    assert.equal(await page.getByRole("radio", { name: "Use data of all users", exact: true }).isChecked(), true,
+      "Completing the LRS refresh preserves a newer scope choice");
+    await page.getByText("Draft saved", { exact: true }).waitFor();
+    assert.equal(drafts.get(lrsDraft.id).configuration.filters.selectedUserFilter, "INCLUDE_ME", "Refresh cannot overwrite the persisted scope with its earlier snapshot");
     stage = "checking responsive complex source controls";
     const complex = newComplexConfiguration("COMPOSITE");
     complex.sources = ["source-one", "source-two"].map((id, index) => ({ id, name: `Source ${index + 1}`, outputs: [],
       analyticsMethod: { id: "count", name: "Count N most occurring or least occurring items" }, keyColumnId: "", measureColumnIds: [] }));
-    complex.sourceDrafts = Object.fromEntries(complex.sources.map((source) => [source.id, serializeBasicDraft(emptyBasicState())]));
+    complex.sourceDrafts = Object.fromEntries(complex.sources.map((source) => {
+      const basic = emptyBasicState();
+      for (const item of Object.values(basic.lockedStep)) { item.locked = false; item.openPanel = true; }
+      return [source.id, serializeBasicDraft(basic)];
+    }));
     await page.getByText("Draft saved", { exact: true }).waitFor();
     const compositeDraft = { ...draft, id: "adaptation-composite", revision: 0, indicatorType: "COMPOSITE", configuration: { ...complex, name: draft.name } };
     drafts.set(compositeDraft.id, compositeDraft);
@@ -258,9 +313,41 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     page = await (await createContext(desktop)).newPage();
     await page.goto(new URL(`indicator/editor/drafts/${compositeDraft.id}`, base).href);
     await page.getByRole("table", { name: "Source indicators to adapt", exact: true }).waitFor(); await noOverflow();
+    stage = "selecting and reloading embedded complex source scopes";
+    for (const type of ["COMPOSITE", "MULTI_LEVEL"]) {
+      const id = `adaptation-scope-${type.toLowerCase()}`;
+      const stored = { ...compositeDraft, id, revision: 0, indicatorType: type,
+        configuration: { ...structuredClone(complex), type } };
+      drafts.set(id, stored);
+      await page.context().close();
+      page = await (await createContext(desktop)).newPage();
+      await page.goto(new URL(`indicator/editor/drafts/${id}`, base).href);
+      await page.getByRole("table", { name: "Source indicators to adapt", exact: true }).waitFor();
+      await page.getByRole("button", { name: "Edit source", exact: true }).first().click();
+      await page.getByRole("heading", { name: "Edit source selections", exact: true }).waitFor();
+      await until(() => page.getByRole("radio", { name: "Use only my data", exact: true }).isChecked(), "New complex source defaults to only-my-data");
+      assert.equal(await page.getByRole("radio", { name: "Use all except my data", exact: true }).isEnabled(), true);
+      assert.equal(await page.getByRole("radio", { name: "Use data of all users", exact: true }).isEnabled(), true);
+      await page.getByRole("radio", { name: "Use data of all users", exact: true }).click();
+      await page.getByRole("button", { name: "Back to sources", exact: true }).click();
+      await until(() => Promise.resolve(drafts.get(id).configuration.sourceDrafts["source-one"].filters.selectedUserFilter === "INCLUDE_ME"),
+        "Complex source scope autosaves in its parent draft");
+      await page.getByText("Draft saved", { exact: true }).waitFor();
+      assert.equal(drafts.get(id).configuration.sourceDrafts["source-two"].filters.selectedUserFilter, "ONLY_ME", "Source scopes stay independent");
+      await page.context().close();
+      page = await (await createContext(desktop)).newPage();
+      await page.goto(new URL(`indicator/editor/drafts/${id}`, base).href);
+      await page.getByRole("table", { name: "Source indicators to adapt", exact: true }).waitFor();
+      await page.getByRole("button", { name: "Edit source", exact: true }).first().click();
+      await page.getByRole("heading", { name: "Edit source selections", exact: true }).waitFor();
+      await until(() => page.getByRole("radio", { name: "Use data of all users", exact: true }).isChecked(), "Embedded source hydration preserves its chosen scope");
+      await noOverflow();
+      await page.getByRole("button", { name: "Back to sources", exact: true }).click();
+      await page.getByText("Draft saved", { exact: true }).waitFor();
+    }
     assert.equal(calls.some((call) => /analyze|adaptation-preview|\/complete$/.test(call.path)), false, "Opening and autosaving a partial adaptation does not execute plugins");
     assert.deepEqual(errors, []);
-    console.log("Community adaptation passed: incompatible/no-LRS entry, idempotent start, contextual reference, personal scope, reload and responsive layout.");
+    console.log("Community adaptation passed: incompatible/no-LRS entry, idempotent start, contextual reference, editable user scopes, independent complex source scopes, reload and responsive layout.");
   } catch (failure) {
     // A closed/crashed page must not replace the actual failed assertion with a
     // second diagnostic error. Print the original before best-effort details.

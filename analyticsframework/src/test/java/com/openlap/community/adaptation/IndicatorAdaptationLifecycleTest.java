@@ -117,6 +117,36 @@ class IndicatorAdaptationLifecycleTest {
     verifyNoInteractions(execution, targets);
   }
 
+  @Test void changingAComplexSourcesScopeInvalidatesItsPreviousPreviewProof() {
+    Document childFilters = new Document("selectedUserFilter", "ONLY_ME");
+    current.get().get("configuration", Document.class).append("sourceDrafts",
+        new Document("one", new Document("filters", childFilters)));
+    var previous = lifecycle.preview(request, "draft-first", new AdaptationPreviewController.Request(0L, "visualization"));
+    childFilters.put("selectedUserFilter", "EXCLUDE_ME");
+    when(proofs.require(anyString(), eq(viewer.getId()), eq("draft-first"), eq(0L), anyString()))
+        .thenAnswer(call -> {
+          assertThat(call.<String>getArgument(4)).isNotEqualTo(previous.configurationHash());
+          throw AdaptationProofStore.invalid();
+        });
+    clearInvocations(execution, targets);
+    assertThatThrownBy(() -> lifecycle.complete(request, current.get(), completion()))
+        .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("ADAPTATION_PREVIEW_REQUIRED");
+    verifyNoInteractions(execution, targets);
+    assertThat(current.get().getString("status")).isEqualTo("DRAFT");
+  }
+
+  @Test void scopeChangedWhilePreviewRunsCannotIssueASaveProof() {
+    Document filters = new Document("selectedUserFilter", "ONLY_ME");
+    current.get().get("configuration", Document.class).append("filters", filters);
+    when(execution.execute(eq(request), any(), anyString(), anyMap())).thenAnswer(call -> {
+      filters.put("selectedUserFilter", "INCLUDE_ME");
+      return graph(call.getArgument(3), "bindings1", "plugins1");
+    });
+    assertThatThrownBy(() -> lifecycle.preview(request, "draft-first", new AdaptationPreviewController.Request(0L, "visualization")))
+        .isInstanceOf(com.openlap.infrastructure.exception.ConflictException.class).extracting("code").isEqualTo("ADAPTATION_CHANGED");
+    verify(proofs, never()).create(anyString(), anyString(), anyLong(), anyString(), any());
+  }
+
   @Test void stagesNeverIssueSaveProofUntilVisualizationHasSucceeded() {
     var combine = lifecycle.preview(request, "draft-first", new AdaptationPreviewController.Request(0L, "combine"));
     assertThat(combine.status()).isEqualTo("READY"); assertThat(combine.receiptId()).isNull();
@@ -130,6 +160,14 @@ class IndicatorAdaptationLifecycleTest {
     var value = lifecycle.preview(request, "draft-first", new AdaptationPreviewController.Request(0L, "analysis"));
     assertThat(value.status()).isEqualTo("INCOMPATIBLE");
     assertThat(value.message()).doesNotContain("original", "/private", ".jar");
+  }
+
+  @Test void invalidScopePreviewGivesActionableSafeFeedback() {
+    when(execution.execute(eq(request), any(), anyString(), anyMap()))
+        .thenThrow(new ValidationException("INVALID_USER_SCOPE", "Choose whose data to include in the analysis."));
+    var value = lifecycle.preview(request, "draft-first", new AdaptationPreviewController.Request(0L, "analysis"));
+    assertThat(value.status()).isEqualTo("INVALID_USER_SCOPE");
+    assertThat(value.message()).isEqualTo("Choose whose data to include in the analysis.");
   }
 
   @Test void savesCompleteOwnedGraphAndRetainsOnlySafeTerminalReference() {

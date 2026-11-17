@@ -63,7 +63,7 @@ public class IndicatorAdaptationLifecycle implements IndicatorDraftAdaptationLif
     } catch (OpenLapException error) {
       // Only errors authored by this boundary have contextual, safe messages; plugin/driver errors
       // can contain paths or raw selectors and must never become a community-detail response.
-      boolean safe = error instanceof ValidationException && Set.of("INCOMPLETE_ADAPTATION", "PERSONAL_DATA_REQUIRED", "MISSING_LRS", "NO_DATA", "PLUGIN_UNAVAILABLE").contains(error.getCode());
+      boolean safe = error instanceof ValidationException && Set.of("INCOMPLETE_ADAPTATION", "INVALID_USER_SCOPE", "MISSING_LRS", "NO_DATA", "PLUGIN_UNAVAILABLE").contains(error.getCode());
       return new Preview(safe ? error.getCode() : "INCOMPATIBLE", safe ? error.getMessage()
           : "Review the data selections and mappings for this step.", null, null, null, null, revision(current), hash);
     } catch (RuntimeException error) {
@@ -120,7 +120,7 @@ public class IndicatorAdaptationLifecycle implements IndicatorDraftAdaptationLif
       }
       provenance(result.root(), origin, false, pending);
       targets.publish(owner, current, result.root(), completionHash);
-      // Revalidate the personal graph after writes but before any row is exposed. A changed profile
+      // Revalidate the viewer-bound graph after writes but before any row is exposed. A changed profile
       // or plugin can leave a resumable hidden graph, never a partially visible saved indicator.
       var latest = execution.execute(request, current, "visualization", ids);
       requireClaim(current, latest);

@@ -156,7 +156,7 @@ export default function BasicIndicator({ initialDraft = null, initialState = nul
           setVisualization,
           setIndicator,
           handleResetIfDatasetEmpty,
-          comparisonReference: initialDraft?.adaptation?.reference, configuration, personalOnly: Boolean(initialDraft?.adaptation),
+          comparisonReference: initialDraft?.adaptation?.reference, configuration, isCommunityAdaptation: Boolean(initialDraft?.adaptation),
           draft, draftNavigation, referencesValid: referencesValid && !draft.finalizing,
         }}
       >
@@ -238,7 +238,7 @@ export function EmbeddedBasicIndicator({ configuration: initialConfiguration, re
       <Typography variant="h6">Edit source selections</Typography><Button variant="outlined" onClick={leave}>Back to sources</Button>
     </Stack>
     {hydrating ? <CircularProgress aria-label="Loading source selections" /> : <BasicContext.Provider value={{ ...state, ...setters,
-      configuration, comparisonReference: reference, personalOnly: true, sourceMode: true, onSourceDone: leave,
+      configuration, comparisonReference: reference, isCommunityAdaptation: true, sourceMode: true, onSourceDone: leave,
       referencesValid: true, handleResetIfDatasetEmpty: reset }}>
       {warnings.length > 0 && <Alert severity="info">Review the selections that are unavailable in your data. The original choices remain in the community reference.</Alert>}
       <WorkflowStepper steps={getWorkflowSteps(state.lockedStep, state)} current={getCurrentStep(state.lockedStep)} ariaLabel="Basic indicator creation progress" />

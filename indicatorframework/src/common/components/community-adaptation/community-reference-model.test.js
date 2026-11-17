@@ -24,6 +24,32 @@ test("zero parameter is a valid comparison and Basic/complex metadata both compa
   assert.equal(vis[0].status, "same"); assert.equal(vis[1].status, "same");
 });
 
+test("scope comparison follows the chosen scope without treating every adaptation as personal", () => {
+  const scopes = ["ONLY_ME", "EXCLUDE_ME", "INCLUDE_ME"];
+  for (const expected of scopes) {
+    for (const actual of scopes) {
+      const ref = { filters: { scope: expected } };
+      const config = { filters: { selectedUserFilter: actual } };
+      const row = communityReferenceRows("filters", ref, config).find((entry) => entry.key === "scope");
+      assert.equal(row.status, expected === actual ? "same" : "changed");
+    }
+  }
+  const alias = communityReferenceRows("filters", { filters: { scope: "INCLUDE_ALL" } },
+    { filters: { selectedUserFilter: "INCLUDE_ME" } }).find((entry) => entry.key === "scope");
+  assert.equal(alias.value, "All users");
+  assert.equal(alias.status, "same");
+  const missing = communityReferenceRows("filters", { filters: { scope: "ONLY_ME" } }, {}).find((entry) => entry.key === "scope");
+  assert.equal(missing.status, "needed");
+});
+
+test("dataset feedback describes the viewer's connected LRS independently of user scope", () => {
+  for (const selectedUserFilter of ["ONLY_ME", "EXCLUDE_ME", "INCLUDE_ME"]) {
+    const row = communityReferenceRows("dataset", { dataset: { sourceCount: 1 } },
+      { dataset: { selectedLRSList: [{ lrsId: "viewer-lrs" }] }, filters: { selectedUserFilter } })[0];
+    assert.equal(row.status, "connection");
+  }
+});
+
 const filterRows = (types, actions, selections) => communityReferenceRows("filters",
   { filters: { activityTypes: types, actions } }, { filters: { selectedActivities: selections } });
 const statusFor = (rows, key) => rows.find((row) => row.key === key).status;

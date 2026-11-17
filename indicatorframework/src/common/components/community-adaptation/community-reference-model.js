@@ -57,7 +57,7 @@ export function communityReferenceRows(step, reference, configuration = {}) {
     status: comparisonStatus(expected, actual, unavailable) });
   const selections = list(configuration.filters?.selectedActivities);
   if (step === "dataset") return [{ key: "sources", label: "Data sources", value: `${reference.dataset?.sourceCount || 0} connected source(s)`,
-    status: list(configuration.dataset?.selectedLRSList).length ? "personal" : "needed" },
+    status: list(configuration.dataset?.selectedLRSList).length ? "connection" : "needed" },
     { key: "outputs", label: "Analysis output columns", value: labels(reference.dataset?.outputs), status: "reference" }];
   if (step === "filters") return [
     { key: "types", label: "Activity types", value: labels(reference.filters?.activityTypes), status: choiceComparisonStatus(reference.filters?.activityTypes,
@@ -68,7 +68,8 @@ export function communityReferenceRows(step, reference, configuration = {}) {
     row("time", "Timeframe", `${date(reference.filters?.timeframe?.from)} – ${date(reference.filters?.timeframe?.until)}`,
       `${date(reference.filters?.timeframe?.from)}|${date(reference.filters?.timeframe?.until)}`,
       configuration.filters?.selectedTime ? `${date(configuration.filters.selectedTime.from)}|${date(configuration.filters.selectedTime.until)}` : ""),
-    { key: "scope", label: "Community data scope", value: ({ ONLY_ME: "Creator's own data", INCLUDE_ME: "All users", INCLUDE_ALL: "All users", EXCLUDE_ME: "Other users" })[reference.filters?.scope] || reference.filters?.scope || "Not specified", status: "personal" },
+    row("scope", "Community data scope", ({ ONLY_ME: "Creator's own data", INCLUDE_ME: "All users", INCLUDE_ALL: "All users", EXCLUDE_ME: "Other users" })[reference.filters?.scope] || reference.filters?.scope || "Not specified",
+      reference.filters?.scope === "INCLUDE_ALL" ? "INCLUDE_ME" : reference.filters?.scope, configuration.filters?.selectedUserFilter),
   ];
   if (step === "analysis") {
     const method = reference.analysis?.method;

@@ -12,7 +12,7 @@ const statuses = { same: [CheckCircleOutlineIcon, "Same as community", "success.
   labelMatch: [CheckCircleOutlineIcon, "Matching label", "success.main", "The displayed names match. The community identifier is hidden for privacy, so confirm the meaning in your data."],
   uncomparable: [InfoOutlinedIcon, "Not directly comparable", "text.secondary", "The community selection is not fully shared. Review the reference when choosing your own data."],
   needed: [InfoOutlinedIcon, "Needs selection", "text.secondary"], unavailable: [ErrorOutlineIcon, "Unavailable", "warning.main"],
-  personal: [InfoOutlinedIcon, "Uses your own data", "info.main"], reference: [InfoOutlinedIcon, "Reference", "text.secondary"] };
+  connection: [InfoOutlinedIcon, "Uses your connected LRS", "info.main"], reference: [InfoOutlinedIcon, "Reference", "text.secondary"] };
 const wideComparison = "@container communityComparison (min-width: 1000px)";
 
 // Container queries keep the comparison above fields on narrow editor panels,

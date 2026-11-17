@@ -10,7 +10,7 @@ import { BasicContext } from "../../../basic-indicator";
 import FilterSection from "./filter-section";
 
 export default function UserFilter() {
-  const { filters, setFilters, setAnalysis, personalOnly } = useContext(BasicContext);
+  const { filters, setFilters, setAnalysis } = useContext(BasicContext);
 
   const handleChangeUserFilter = (event) => {
     setFilters((p) => ({ ...p, selectedUserFilter: event.target.value }));
@@ -20,7 +20,7 @@ export default function UserFilter() {
   return (
     <FilterSection
       title="User scope"
-      helper={personalOnly ? "This adaptation uses only your registered identity." : "Choose whose data to include in the analysis."}
+      helper="Choose whose data to include in the analysis."
     >
       <FormControl>
         <RadioGroup
@@ -36,12 +36,12 @@ export default function UserFilter() {
           />
           <FormControlLabel
             value={Condition.exclude_me}
-            control={<Radio disabled={personalOnly} />}
+            control={<Radio />}
             label="Use all except my data"
           />
           <FormControlLabel
             value={Condition.all}
-            control={<Radio disabled={personalOnly} />}
+            control={<Radio />}
             label="Use data of all users"
           />
         </RadioGroup>

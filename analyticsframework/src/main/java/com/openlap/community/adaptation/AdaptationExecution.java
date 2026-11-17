@@ -66,7 +66,7 @@ public class AdaptationExecution {
       root = leaf.indicator(); data = leaf.data();
     } else {
       if (config.path("sources").size() < 2) throw incomplete("Configure at least two Basic sources.");
-      // Validate every personal binding and Composite method before reading even the first leaf.
+      // Validate every viewer binding and Composite method before reading even the first leaf.
       // A partially edited child must never make another child's query a fallback preview.
       String requiredMethod = null;
       for (JsonNode source : config.path("sources")) {
@@ -177,8 +177,14 @@ public class AdaptationExecution {
   }
 
   StatementsRequest query(JsonNode config, User viewer, Map<String, Object> bindings) {
-    if (!"ONLY_ME".equals(config.path("filters").path("selectedUserFilter").asText()))
-      throw new ValidationException("PERSONAL_DATA_REQUIRED", "Choose Use only my data for community adaptations.");
+    JsonNode selectedScope = config.path("filters").path("selectedUserFilter");
+    UserQueryCondition scope;
+    try {
+      if (!selectedScope.isTextual()) throw new IllegalArgumentException();
+      scope = UserQueryCondition.valueOf(selectedScope.textValue());
+    } catch (IllegalArgumentException error) {
+      throw new ValidationException("INVALID_USER_SCOPE", "Choose whose data to include in the analysis.");
+    }
     JsonNode selected = config.path("dataset").path("selectedLRSList");
     if (!selected.isArray() || selected.isEmpty() || selected.size() > 20)
       throw new ValidationException("MISSING_LRS", "Choose one of your registered Learning Record Stores.");
@@ -221,7 +227,7 @@ public class AdaptationExecution {
     }
     JsonNode time = config.path("filters").path("selectedTime");
     return new StatementsRequest(stores, new ArrayList<>(types), new ArrayList<>(actions), activities,
-        new StatementDuration(text(time.path("from")), text(time.path("until"))), outputs, UserQueryCondition.ONLY_ME);
+        new StatementDuration(text(time.path("from")), text(time.path("until"))), outputs, scope);
   }
 
   private AnalyticsTechniqueReference analysis(String id, JsonNode map, JsonNode params, Map<String, Object> plugins) {
