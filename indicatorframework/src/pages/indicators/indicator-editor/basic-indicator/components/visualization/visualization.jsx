@@ -254,14 +254,12 @@ export default function Visualization() {
             ) : undefined}
 
             {configReady && <TypeInputSelection />}
-            </CommunityComparison>
             {configReady ? (
               <>
-                <Grid container spacing={3} sx={{ alignItems: "flex-start" }}>
-                  <Grid
-                    size={{ xs: 12, lg: customize ? "grow" : 12 }}
-                    sx={{ minWidth: 0 }}
-                  >
+                <Box sx={{ minWidth: 0, containerType: "inline-size", containerName: "chartConfiguration" }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 3, alignItems: "start",
+                  "@container chartConfiguration (min-width: 1050px)": { gridTemplateColumns: customize ? "minmax(0, 1fr) 340px" : "minmax(0, 1fr)" } }}>
+                  <Box sx={{ minWidth: 0 }}>
                     <SectionCard
                       title="Live preview"
                       helper="Updates live as you adjust the chart inputs and options."
@@ -300,21 +298,21 @@ export default function Visualization() {
                         </Stack>
                       )}
                     </SectionCard>
-                  </Grid>
+                  </Box>
                   {customize && (
-                    <Grid size={{ xs: 12, lg: "auto" }}>
-                      <Box sx={{ width: { xs: "100%", lg: 340 } }}>
+                      <Box sx={{ minWidth: 0 }}>
                         <ChartCustomizationPanel
                           onClose={() => setCustomize(false)}
                         />
                       </Box>
-                    </Grid>
                   )}
-                </Grid>
+                </Box>
+                </Box>
               </>
             ) : undefined}
 
             <ReadinessSummary items={readinessItems} />
+            </CommunityComparison>
             <Divider sx={{ mt: 1 }} />
             <Grid
               container

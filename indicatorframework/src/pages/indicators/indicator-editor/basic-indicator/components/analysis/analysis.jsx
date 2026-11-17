@@ -124,7 +124,6 @@ export default function Analysis() {
                   )}
                 </Grid>
             )}
-            </CommunityComparison>
             {analysis.inputs.length !== 0 && (
               <>
                 <SectionCard
@@ -182,6 +181,7 @@ export default function Analysis() {
               </Typography>
             )}
 
+            </CommunityComparison>
             <Divider />
             <Grid container sx={{ justifyContent: "center" }}>
               <Grid size={{ xs: 12, sm: 6 }}>
