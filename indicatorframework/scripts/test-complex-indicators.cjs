@@ -793,7 +793,7 @@ let chartCatalogFailures = 0;
       await editorNavigation.chooseStep(page, "Combine data", "combine");
       if (type === "MULTI_LEVEL") await editorNavigation.chooseStep(page, "Analysis", "analysis");
       await editorNavigation.chooseStep(page, "Visualization", "visualization");
-      await page.getByText("Draft saved", { exact: true }).waitFor();
+      await page.getByRole("status").filter({ hasText: /^Draft saved/ }).waitFor();
       await page.waitForTimeout(1100);
       const before = { writes: draftWrites.length, merge: mergeRequests.length, analysis: analysisRequests.length, charts: previews.length };
       await editorNavigation.scrollToStep(page, "combine");
@@ -960,7 +960,7 @@ let chartCatalogFailures = 0;
       await table.scrollIntoViewIfNeeded();
       const geometry = await table.evaluate((element) => {
         const container = element.parentElement;
-        const stepper = document.querySelector("main .MuiStepper-root");
+        const navigation = document.querySelector("main [data-editor-navigation]");
         const style = getComputedStyle(container);
         const oldTop = container.scrollTop;
         container.scrollTop = container.scrollHeight;
@@ -993,7 +993,7 @@ let chartCatalogFailures = 0;
           container: { client: container.clientWidth, scroll: container.scrollWidth,
             overflowX: style.overflowX, overscrollX: style.overscrollBehaviorX,
             verticalRange: container.scrollHeight - container.clientHeight, verticalMovement, horizontalMovement },
-          stepper: stepper ? { client: stepper.clientWidth, scroll: stepper.scrollWidth } : null,
+          navigation: navigation ? { client: navigation.clientWidth, scroll: navigation.scrollWidth } : null,
           overflowingScrollers, rows };
       });
       assert.ok(geometry.documentWidth <= geometry.viewport + 1, label + ": editor stays within viewport");
@@ -1003,7 +1003,8 @@ let chartCatalogFailures = 0;
       assert.equal(geometry.container.horizontalMovement, 0, label + ": source table cannot move sideways");
       assert.equal(geometry.container.overflowX, "hidden", label + ": horizontal scrolling is explicitly disabled");
       assert.equal(geometry.container.overscrollX, "none", label + ": sideways elastic scrolling is disabled");
-      assert.ok(geometry.stepper.scroll <= geometry.stepper.client + 1, label + ": step controls fit their section");
+      assert.ok(geometry.navigation, label + ": editor navigation is present");
+      assert.ok(geometry.navigation.scroll <= geometry.navigation.client + 1, label + ": step controls fit their section");
       if (geometry.container.verticalRange > 1) {
         assert.ok(geometry.container.verticalMovement > 0, label + ": vertical source scrolling remains available");
       }

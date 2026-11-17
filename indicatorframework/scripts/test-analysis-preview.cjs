@@ -179,7 +179,7 @@ async function navigation(browser) {
     assert.equal(await f.page.getByRole("radio", { name: "Use only my data", exact: true }).isChecked(), true);
     await editorNavigation.chooseStep(f.page, "Analysis", "analysis");
     assert.equal(await f.analysis.getByRole("combobox", { name: "Analytics method", exact: true }).inputValue(), "Fixture method");
-    await f.page.getByText("Draft saved", { exact: true }).waitFor();
+    await f.page.getByRole("status").filter({ hasText: /^Draft saved/ }).waitFor();
     await f.page.waitForTimeout(1100);
     const configuration = structuredClone(f.draft.configuration), writes = f.draftRequests.length;
     await editorNavigation.scrollToStep(f.page, "filters");
