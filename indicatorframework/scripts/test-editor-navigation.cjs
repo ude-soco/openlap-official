@@ -11,7 +11,7 @@ assert.ok(["localhost", "127.0.0.1", "[::1]"].includes(base.hostname));
 assert.equal(base.username + base.password + base.search + base.hash, "");
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function openFixture(browser, viewport, { embedded = false, short = false, reducedMotion = "reduce" } = {}) {
+async function openFixture(browser, viewport, { embedded = false, short = false, fresh = false, reducedMotion = "reduce" } = {}) {
   const context = await browser.newContext({ viewport, reducedMotion });
   const errors = [];
   await context.addInitScript(() => {
@@ -38,6 +38,7 @@ async function openFixture(browser, viewport, { embedded = false, short = false,
     const url = new URL("scripts/fixtures/editor-navigation.html", base);
     if (embedded) url.searchParams.set("embedded", "1");
     if (short) url.searchParams.set("short", "1");
+    if (fresh) url.searchParams.set("fresh", "1");
     await page.goto(url.href);
     await navigator(page).waitFor();
   } catch (failure) {
@@ -64,6 +65,29 @@ async function coldShortEditor(browser) {
 
 async function selectionSnapshot(page) {
   return page.evaluate(() => { const { selections, calls } = window.__editorNavigationFixture.snapshot(); return { selections, calls }; });
+}
+
+async function freshClampedEditor(browser) {
+  const f = await openFixture(browser, { width: 1680, height: 1000 }, { fresh: true });
+  try {
+    const { page } = f;
+    const before = await selectionSnapshot(page);
+    assert.equal(await page.locator('[data-editor-step="filters"]').getAttribute("aria-disabled"), "true", "The next Filters section is only a locked placeholder");
+    await chooseStep(page, "Dataset", "dataset");
+    await pause(850);
+    const position = await page.evaluate(() => ({ y: scrollY, height: innerHeight, total: document.documentElement.scrollHeight }));
+    assert.ok(position.y > 0 && position.y + position.height >= position.total - 2,
+      `The Dataset anchor is clamped at the page bottom: ${JSON.stringify(position)}`);
+    await assertCurrent(page, "Dataset");
+    const after = await selectionSnapshot(page);
+    assert.deepEqual(after.selections, before.selections, "A clamped navigation jump preserves all editor selections");
+    assert.deepEqual(after.calls, ["dataset"], "Only the explicitly selected Dataset is opened");
+    assert.equal(await navigator(page).getByRole("button", { name: /^Filters/ }).getAttribute("aria-disabled"), "true", "Scroll position cannot unlock Filters");
+    assert.equal(await navigator(page).getByRole("button", { name: /^Filters/ }).getAttribute("aria-current"), null, "A locked placeholder never becomes the current editable step");
+    await assertNoOverflow(page);
+    assert.deepEqual(f.errors, []);
+    console.log("PASS a fresh Dataset jump clamped at the page bottom retains Dataset orientation and leaves the next Filters placeholder locked");
+  } finally { await f.context.close(); }
 }
 
 async function scrollOnly(page) {
@@ -236,6 +260,7 @@ async function scenario(browser, viewport, options = {}) {
   try {
     const only = process.env.OPENLAP_NAVIGATION_ONLY;
     if (!only || only === "short") await coldShortEditor(browser);
+    if (!only || only === "fresh") await freshClampedEditor(browser);
     for (const [name, viewport, options] of [
       ["desktop", { width: 1680, height: 1000 }],
       ["motion", { width: 1680, height: 600 }, { reducedMotion: "no-preference" }],

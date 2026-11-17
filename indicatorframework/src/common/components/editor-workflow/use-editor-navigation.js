@@ -23,7 +23,9 @@ export default function useEditorNavigation({ steps, current, onStepSelect, disa
     const updateViewed = () => {
       frame = 0;
       if (pending || disposed) return;
-      const entries = sections().map((element) => ({ key: element.dataset.editorStep, top: element.getBoundingClientRect().top }));
+      const entries = sections()
+        .filter((element) => latest.current.steps.some((step) => step.key === element.dataset.editorStep && !step.locked))
+        .map((element) => ({ key: element.dataset.editorStep, top: element.getBoundingClientRect().top }));
       const key = viewedStepAt(entries, offset(), scrollY > 0 && scrollY + innerHeight >= document.documentElement.scrollHeight - 2);
       if (key) setViewed((previous) => previous === key ? previous : key);
     };
