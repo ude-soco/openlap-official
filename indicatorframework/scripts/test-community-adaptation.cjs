@@ -24,6 +24,10 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
   const calls = [], errors = [];
   let stage = "starting browser";
   let connected = false;
+  let actionFilterFixture = false, holdActivities = false;
+  const heldActivities = [];
+  const actionOptions = ["clicked", "accessed", "annotated"].map((id) => ({ id, name: id[0].toUpperCase() + id.slice(1) }));
+  const activityFor = (action) => ({ id: `${action}-material`, queryId: "statement.object.id", name: `${action[0].toUpperCase() + action.slice(1)} material` });
   const longLrs = { id: "own", lrsId: "own", uniqueIdentifier: "viewer", lrsTitle: "A connected learning record store with a long descriptive title" };
   const token = "e30." + Buffer.from(JSON.stringify({ sub: "adaptation.viewer@example.test", roles: ["ROLE_USER_WITHOUT_LRS"], exp: Math.floor(Date.now() / 1000) + 3600 })).toString("base64url") + ".fixture";
   console.log("Launching local synthetic WebKit fixture…");
@@ -57,6 +61,17 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     }
     if (path === "v1/analytics/methods/outputs/count") return send([]);
     if (path === "v1/users/my/lrs") return send(connected ? [longLrs] : []);
+    if (actionFilterFixture && path === "v1/statements/activity-types") return send([{ id: "material", name: "Material" }, { id: "pdf", name: "PDF" }]);
+    if (actionFilterFixture && path === "v1/statements/actions") return send(actionOptions);
+    if (actionFilterFixture && path === "v1/statements/activities") {
+      assert.equal(body.actionOnActivities.length, 1, "Activity lookup uses exactly the current action");
+      const action = body.actionOnActivities[0];
+      if (holdActivities) {
+        heldActivities.push({ action, respond: () => send([activityFor(action)]), fail: () => send({}, 500) });
+        return;
+      }
+      return send([activityFor(action)]);
+    }
     if (["v1/statements/activity-types", "v1/analytics/methods", "v1/visualizations/libraries"].includes(path)) return send([]);
     errors.push(`Unexpected API ${method} ${path}`); return send({}, 500);
   };
@@ -123,6 +138,108 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     await page.getByRole("heading", { name: "Adapt a Basic Indicator", exact: true }).waitFor();
     await page.getByText(longLrs.lrsTitle, { exact: true }).waitFor(); await noOverflow();
     if (process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR) await page.screenshot({ path: path.join(process.env.OPENLAP_ADAPTATION_SCREENSHOT_DIR, "basic-adaptation-mobile.png"), fullPage: true });
+    stage = "replacing actions and rejecting stale activity lookups";
+    // An actual saved Basic editor with two filter rows catches the distinction
+    // between the filter-row index and its one selected action. All writes below
+    // remain intercepted by this in-memory draft service.
+    await page.getByText("Draft saved", { exact: true }).waitFor();
+    actionFilterFixture = true;
+    const filterState = emptyBasicState();
+    for (const item of Object.values(filterState.lockedStep)) { item.locked = false; item.openPanel = true; }
+    filterState.dataset.selectedLRSList = [longLrs];
+    filterState.filters.selectedActivities = ["clicked", "accessed"].map((action, index) => ({
+      id: `filter-${index + 1}`, selectedActivityType: { id: "material", name: "Material" },
+      selectedActionList: [actionOptions.find((option) => option.id === action)], selectedActivityList: [activityFor(action)],
+    }));
+    const filtersDraft = { ...draft, id: "adaptation-action-filters", revision: 0, configuration: serializeBasicDraft(filterState) };
+    drafts.set(filtersDraft.id, filtersDraft);
+    page = await (await createContext(desktop)).newPage();
+    await page.goto(new URL(`indicator/editor/drafts/${filtersDraft.id}`, base).href);
+    const actions = page.getByRole("combobox", { name: "Action", exact: true });
+    await until(async () => await actions.count() === 2 && await actions.nth(0).inputValue() === "Clicked" && await actions.nth(1).inputValue() === "Accessed",
+      "Every filter row renders its own selected action regardless of row index");
+    await page.getByText("Draft saved", { exact: true }).waitFor();
+    const rowOne = actions.nth(0).locator("xpath=ancestor::div[contains(@class,'MuiPaper-root')][1]");
+    const selectAction = async (label) => {
+      await actions.nth(0).scrollIntoViewIfNeeded();
+      await actions.nth(0).click();
+      await page.getByRole("option").filter({ hasText: new RegExp(`^${label}`) }).click();
+    };
+    await actions.nth(0).fill("Opened");
+    await page.getByText("No matching actions in your selected data.", { exact: true }).waitFor();
+    assert.equal(await page.getByRole("option").count(), 0, "Unadvertised actions cannot be selected by typing their label");
+    await page.keyboard.press("Escape"); await actions.nth(0).blur();
+    await until(() => actions.nth(0).inputValue().then((value) => value === "Clicked"), "Unavailable search leaves the selected action unchanged");
+    assert.deepEqual(drafts.get(filtersDraft.id).configuration.filters.selectedActivities[0].selectedActionList, [actionOptions[0]],
+      "An unavailable search does not change the persisted selection");
+    holdActivities = true;
+    await selectAction("Accessed");
+    await until(() => Promise.resolve(heldActivities.length === 1), "Replacement requests new action's activities");
+    assert.equal(await actions.nth(0).inputValue(), "Accessed", "Selection changes before activity lookup finishes");
+    assert.equal(await rowOne.getByRole("combobox", { name: "Activities", exact: true }).isEnabled(), false,
+      "Dependent activities are cleared while the new action is loading");
+    assert.equal(await rowOne.getByText("Clicked material", { exact: true }).count(), 0, "Old selected activities clear immediately");
+    await until(() => Promise.resolve(drafts.get(filtersDraft.id).configuration.filters.selectedActivities[0].selectedActionList.some((entry) => entry.id === "accessed")),
+      "The replacement action autosaves while its activity lookup is pending");
+    assert.deepEqual(drafts.get(filtersDraft.id).configuration.filters.selectedActivities[0].selectedActionList, [actionOptions[1]],
+      "Replacing an action replaces the previous value rather than appending it");
+    await selectAction("Clicked");
+    await until(() => Promise.resolve(heldActivities.length === 2), "Second lookup can supersede the pending first lookup");
+    await selectAction("Annotated");
+    await until(() => Promise.resolve(heldActivities.length === 3), "Third lookup can supersede both older lookups");
+    const newest = page.waitForResponse((response) => response.url().endsWith("/v1/statements/activities") && response.request().postDataJSON().actionOnActivities[0] === "annotated");
+    await heldActivities[2].respond(); await newest;
+    await until(() => rowOne.getByRole("combobox", { name: "Activities", exact: true }).isEnabled(), "Newest result enables dependent activities");
+    // Resolve the oldest response last, matching a slow network rather than
+    // assuming requests always complete in selection order.
+    for (const index of [1, 0]) {
+      const response = page.waitForResponse((entry) => entry.url().endsWith("/v1/statements/activities") && entry.request().postDataJSON().actionOnActivities[0] === heldActivities[index].action);
+      await heldActivities[index].respond(); await response;
+    }
+    await until(() => Promise.resolve(drafts.get(filtersDraft.id).configuration.filters.selectedActivities[0].selectedActionList[0]?.id === "annotated"),
+      "Autosave persists the replacement action");
+    await page.getByText("Draft saved", { exact: true }).waitFor();
+    assert.equal(await actions.nth(0).inputValue(), "Annotated", "Stale activity results never revert the current action");
+    assert.equal(await actions.nth(1).inputValue(), "Accessed", "Replacing one row leaves another row's action unchanged");
+    await rowOne.getByRole("combobox", { name: "Activities", exact: true }).click();
+    assert.equal(await page.getByRole("option", { name: "Annotated material", exact: true }).count(), 1, "Newest action owns available activities");
+    assert.equal(await page.getByRole("option", { name: /^(Clicked|Accessed) material$/ }).count(), 0, "Stale activity catalogs do not replace the newest catalog");
+    await page.keyboard.press("Escape");
+    const savedFilters = drafts.get(filtersDraft.id).configuration.filters.selectedActivities;
+    assert.deepEqual(savedFilters[0].selectedActionList, [actionOptions[2]], "Only one action is persisted per filter");
+    assert.deepEqual(savedFilters[0].selectedActivityList, [], "Previous activities remain cleared until the user chooses new ones");
+    assert.deepEqual(savedFilters[1].selectedActionList, [actionOptions[1]], "Other rows retain their action and activities");
+    assert.deepEqual(savedFilters[1].selectedActivityList, [activityFor("accessed")]);
+    await selectAction("Clicked");
+    await until(() => Promise.resolve(heldActivities.length === 4), "Failure fixture receives the newly selected action");
+    const failed = page.waitForResponse((entry) => entry.url().endsWith("/v1/statements/activities") && entry.status() === 500);
+    await heldActivities[3].fail(); await failed;
+    await rowOne.getByText("Could not load activities. Try again.", { exact: true }).waitFor();
+    assert.equal(await actions.nth(0).inputValue(), "Clicked", "A lookup failure preserves the user's chosen action");
+    assert.equal(await rowOne.getByRole("combobox", { name: "Activities", exact: true }).isEnabled(), false, "Failed lookup leaves no stale activities");
+    await rowOne.getByRole("button", { name: "Retry", exact: true }).click();
+    await until(() => Promise.resolve(heldActivities.length === 5), "Retry requests the current action's activities");
+    assert.equal(heldActivities[4].action, "clicked");
+    await heldActivities[4].respond();
+    await until(() => rowOne.getByRole("combobox", { name: "Activities", exact: true }).isEnabled(), "Retry restores dependent activity choices");
+    assert.equal(await rowOne.getByText("Could not load activities. Try again.", { exact: true }).count(), 0);
+    await selectAction("Accessed");
+    await until(() => Promise.resolve(heldActivities.length === 6), "Pending action lookup exists before changing the activity type");
+    const activityType = rowOne.getByRole("combobox", { name: "Activity type", exact: true });
+    await activityType.click();
+    await page.getByRole("option").filter({ hasText: /^PDF/ }).click();
+    await until(() => activityType.inputValue().then((value) => value === "PDF"), "Type replacement is immediate");
+    const staleType = page.waitForResponse((entry) => entry.url().endsWith("/v1/statements/activities") && entry.request().postDataJSON().actionOnActivities[0] === "accessed");
+    await heldActivities[5].respond(); await staleType;
+    await until(() => Promise.resolve(drafts.get(filtersDraft.id).configuration.filters.selectedActivities[0].selectedActivityType.id === "pdf"), "Autosave persists replacement activity type");
+    await page.getByText("Draft saved", { exact: true }).waitFor();
+    assert.equal(await actions.nth(0).inputValue(), "", "Changing activity type clears the action despite its stale response");
+    assert.equal(await rowOne.getByRole("combobox", { name: "Activities", exact: true }).isEnabled(), false, "Old action result cannot populate activities for a new type");
+    assert.deepEqual(drafts.get(filtersDraft.id).configuration.filters.selectedActivities[0].selectedActionList, []);
+    assert.equal(await actions.nth(1).inputValue(), "Accessed", "Type changes preserve other filter rows");
+    holdActivities = false;
+    await noOverflow();
+    console.log("Action selection passed: immediate replacement, dependent reset, independent rows, out-of-order lookups, retry and type-change protection.");
     stage = "checking responsive complex source controls";
     const complex = newComplexConfiguration("COMPOSITE");
     complex.sources = ["source-one", "source-two"].map((id, index) => ({ id, name: `Source ${index + 1}`, outputs: [],
@@ -131,6 +248,7 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
     await page.getByText("Draft saved", { exact: true }).waitFor();
     const compositeDraft = { ...draft, id: "adaptation-composite", revision: 0, indicatorType: "COMPOSITE", configuration: { ...complex, name: draft.name } };
     drafts.set(compositeDraft.id, compositeDraft);
+    page = await (await createContext(mobile)).newPage();
     await page.goto(new URL(`indicator/editor/drafts/${compositeDraft.id}`, base).href);
     await page.getByRole("list", { name: "Source indicators to adapt", exact: true }).waitFor();
     assert.equal(await page.getByText("Needs your selections", { exact: true }).count(), 2, "Source status remains fully readable on mobile");
