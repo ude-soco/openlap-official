@@ -46,9 +46,9 @@ both sticky bars. Embedded Basic source editors use the same navigator, with
 only one navigator visible at a time. Scrolling changes neither selections nor
 saved progress; reopening a section preserves the other selections.
 
-ISC Creator uses the same navigation for Requirements, Choose path, Dataset,
-Visualization and Finalize. Dataset and Visualization follow the order of the
-chosen path; navigation preserves the stored workflow gates and selections.
+ISC Creator initially shows Requirements, Choose path and Finalize. Dataset and
+Visualization appear only after a starting path is chosen, in that path's order.
+Navigation preserves the stored workflow gates and selections.
 
 ## Recovery and conflicts
 

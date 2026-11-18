@@ -4,7 +4,7 @@
 // derive the creator's stepper/completion view from the existing domain slices.
 // Individual steps still own their transition and validation rules.
 
-import { ISC_STEPS, ISC_STEP_ORDER, ISC_STEP_LABELS, LEGACY_STEP_CODE } from "./isc-constants.js";
+import { ISC_STEPS, ISC_STEP_ORDER, ISC_STEP_LABELS, ISC_PATHS, LEGACY_STEP_CODE } from "./isc-constants.js";
 
 export const getStepOrder = () => [...ISC_STEP_ORDER];
 
@@ -83,11 +83,17 @@ const NAVIGATION_LABELS = {
   [ISC_STEPS.FINALIZE]: "Finalize",
 };
 
-// Dataset-first and Visualization/Task-first paths place their middle sections
-// differently. Read those persisted codes without changing their meaning.
+// Do not suggest an order before the user explicitly chooses a starting path.
+// Afterwards, read the persisted placement without changing its meaning.
 export const getWorkflowStepOrder = (domainState) => {
+  const selectedPath = domainState?.requirements?.selectedPath;
+  if (!Object.values(ISC_PATHS).includes(selectedPath))
+    return [ISC_STEPS.REQUIREMENTS, ISC_STEPS.PATH, ISC_STEPS.FINALIZE];
+  const placed = [LEGACY_STEP_CODE.FIRST_MIDDLE, LEGACY_STEP_CODE.SECOND_MIDDLE];
   const datasetFirst = domainState?.lockedStep?.dataset?.step === LEGACY_STEP_CODE.FIRST_MIDDLE ||
-    domainState?.lockedStep?.visualization?.step === LEGACY_STEP_CODE.SECOND_MIDDLE;
+    domainState?.lockedStep?.visualization?.step === LEGACY_STEP_CODE.SECOND_MIDDLE ||
+    (!placed.includes(domainState?.lockedStep?.dataset?.step) &&
+      !placed.includes(domainState?.lockedStep?.visualization?.step) && selectedPath === ISC_PATHS.DATASET);
   return [ISC_STEPS.REQUIREMENTS, ISC_STEPS.PATH,
     ...(datasetFirst ? [ISC_STEPS.DATASET, ISC_STEPS.VISUALIZATION] : [ISC_STEPS.VISUALIZATION, ISC_STEPS.DATASET]),
     ISC_STEPS.FINALIZE];
@@ -95,7 +101,7 @@ export const getWorkflowStepOrder = (domainState) => {
 
 const lockedHint = (domainState, step) => {
   if (step === ISC_STEPS.PATH) return "Complete Requirements and continue to choose a starting path.";
-  if (step === ISC_STEPS.FINALIZE) return "Complete Dataset and Visualization, then continue to Finalize.";
+  if (step === ISC_STEPS.FINALIZE) return "Choose a starting path and complete its steps before finalizing.";
   if (domainState?.lockedStep?.[step]?.step === LEGACY_STEP_CODE.NONE)
     return `Choose a starting path to unlock ${NAVIGATION_LABELS[step]}.`;
   if (step === ISC_STEPS.VISUALIZATION) return domainState?.lockedStep?.visualization?.step === LEGACY_STEP_CODE.SECOND_MIDDLE
