@@ -177,8 +177,8 @@ publications can be created immediately, or imported through the optional
 [one-time content migration](docs/backend-reference.md#homepage-content-management).
 
 A fresh checkout contains **no learning records**. It includes a ready-to-install
-[analytics methods JAR](artifacts/analytics/OpenLAP-Analytics-1.0.0.jar) for numerical
-summaries, correlation and reproducible clustering. See the
+[analytics methods JAR](artifacts/analytics/OpenLAP-Analytics-1.1.0.jar) for event
+counts, descriptive statistics, correlation and clustering. See the
 [installation and testing guide](docs/analytics-methods.md) before using it.
 To create analytics, you also need:
 

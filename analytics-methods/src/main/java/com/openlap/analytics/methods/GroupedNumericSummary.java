@@ -13,7 +13,7 @@ public final class GroupedNumericSummary extends SummaryMethod {
   }
   @Override public String getAnalyticsMethodName() { return "Summarize numeric values by group"; }
   @Override public String getAnalyticsMethodDescription() {
-    return "Produce one summary row per distinct text group, suitable for matching Basic indicators by learner or activity. Count and excluded observations apply to each group. Rows without a group are excluded separately. Numerical summaries use the actual measurement values.";
+    return "Produce count, sum, mean, median, range, sample variance, sample standard deviation and quartiles per distinct text group, suitable for matching Basic indicators by learner or activity. Count and excluded observations apply to each group. Rows without a group are excluded separately. Numerical summaries use the actual measurement values.";
   }
   @Override protected void implementationExecution() {
     resetOutput();

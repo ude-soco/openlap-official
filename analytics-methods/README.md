@@ -1,6 +1,6 @@
 # OpenLAP analytics methods
 
-This standalone Java 17 plugin project implements five methods using the released
+This standalone Java 17 plugin project uses the released
 OpenLAP analytics-method template (1.2.0) and data-exchange formats (1.2.2).
 Its JAR contains the methods and a relocated copy of Apache Commons Math 3.6.1.
 OpenLAP's API classes stay outside the JAR so the application supplies one shared contract.
@@ -11,7 +11,7 @@ From the repository root, with Java 17 or 21 and Maven 3.6.3 or newer:
 ./analyticsframework/mvnw -f analytics-methods/pom.xml clean verify
 ```
 
-The result is `analytics-methods/target/OpenLAP-Analytics-1.0.0.jar`.
+The result is `analytics-methods/target/OpenLAP-Analytics-1.1.0.jar`.
 The fixed `project.build.outputTimestamp` makes rebuilding unchanged sources reproducible.
 Keep a manually installed copy outside this module's `target` directory.
 
@@ -19,6 +19,11 @@ Keep a manually installed copy outside this module's `target` directory.
 
 | Method | Required inputs | Output rows |
 | --- | --- | --- |
+| Count selected events | `event` (Text), mapped to statement ID in Basic Indicator | One total, including records whose statement ID is missing |
+| Count events by category | `category` (Text) | Event count and percentage per category, with optional ranking and limit |
+| Count distinct values | `value` (Text), optional `group` (Text) | Distinct observed values per group or across the selection |
+| Count events over time | `timestamp` (Text) | Event count per observed UTC day, ISO week, month or year |
+| Calculate percentage of true outcomes | `outcome` (TrueFalse), optional `group` (Text) | Known true/false counts, unknown count and percent true per group |
 | Summarize numeric values | `values` (Numeric) | One summary over actual numeric measurements |
 | Summarize numeric values by group | `values` (Numeric), `group` (Text) | One summary per exact group key, in first-observed order |
 | Pearson correlation | `x`, `y` (Numeric) | One coefficient for linear association |
@@ -30,11 +35,22 @@ prepare one row per learner and align both measurements by that learner's key.
 Event-level rows describe events; their number is not the number of independent learners.
 Multilevel indicators can join prepared Basic outputs by a unique learner or activity key.
 
-### Numerical summaries
+### Descriptive methods
 
-Summary outputs are `group` (Text) and Numeric `count`, `excluded_count`, `mean`,
-`median`, `minimum`, `maximum`, `standard_deviation`, `q1`, `q3`, `iqr`.
-The standard deviation uses the sample denominator `n - 1` and is `null` for one value.
+Category percentages use all events with a nonblank category as the denominator.
+The top or bottom limit changes which categories appear. It leaves the denominator
+intact. Distinct counting uses exact nonblank text values. Counts from different
+groups can overlap when a value occurs in more than one group. Time buckets use
+UTC and return the observed periods in chronological order.
+
+The outcome percentage divides recorded true outcomes by all recorded true or false
+outcomes. Its output is on the 0 to 100 scale. An unknown outcome is excluded and
+a group without known outcomes has an empty percentage.
+
+Summary outputs are `group` (Text) and Numeric `count`, `excluded_count`, `sum`,
+`mean`, `median`, `minimum`, `maximum`, `range`, `variance`,
+`standard_deviation`, `q1`, `q3`, `iqr`. Sample variance and standard deviation use
+the sample denominator `n - 1` and are `null` for one value.
 Quartiles use R-7 linear interpolation: position `1 + (n - 1)p`.
 The IQR is Q3 minus Q1. A group containing only missing measurements has count zero
 and `null` summary statistics. An entirely unusable selection is rejected.

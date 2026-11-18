@@ -36,10 +36,13 @@ public class AnalyticsMethodsTest {
     assertEquals(8, number(method, "count", 0), 0);
     assertEquals(1, number(method, "excluded_count", 0), 0);
     assertEquals(5, number(method, "mean", 0), 1e-12);
+    assertEquals(40, number(method, "sum", 0), 1e-12);
     assertEquals(4.5, number(method, "median", 0), 1e-12);
     assertEquals(Math.sqrt(32.0 / 7), number(method, "standard_deviation", 0), 1e-12);
+    assertEquals(32.0 / 7, number(method, "variance", 0), 1e-12);
     assertEquals(2, number(method, "minimum", 0), 0);
     assertEquals(9, number(method, "maximum", 0), 0);
+    assertEquals(7, number(method, "range", 0), 0);
     assertEquals(4, number(method, "q1", 0), 1e-12);
     assertEquals(5.5, number(method, "q3", 0), 1e-12);
     assertEquals(1.5, number(method, "iqr", 0), 1e-12);
@@ -58,10 +61,14 @@ public class AnalyticsMethodsTest {
     NumericSummary singleton = input(new NumericSummary(), "values", 8.25);
     singleton.execute();
     assertNull(values(singleton, "standard_deviation").get(0));
+    assertNull(values(singleton, "variance").get(0));
+    assertEquals(8.25, number(singleton, "sum", 0), 0);
+    assertEquals(0, number(singleton, "range", 0), 0);
     assertEquals(8.25, number(singleton, "median", 0), 0);
     NumericSummary constant = input(new NumericSummary(), "values", 2.5, 2.5, 2.5);
     constant.execute();
     assertEquals(0, number(constant, "standard_deviation", 0), 0);
+    assertEquals(0, number(constant, "variance", 0), 0);
   }
 
   @Test public void invalidOrEmptyNumericInputsAreNotSilentlyTreatedAsMissing() {
@@ -82,8 +89,21 @@ public class AnalyticsMethodsTest {
     assertEquals(Arrays.asList(0, 1, 1), values(method, "excluded_count"));
     assertEquals(Arrays.asList(1, 1, 1), values(method, "ungrouped_count"));
     assertEquals(3.5, number(method, "mean", 0), 0);
+    assertEquals(7, number(method, "sum", 0), 0);
+    assertEquals(2, number(method, "range", 0), 0);
+    assertEquals(2, number(method, "variance", 0), 0);
     assertEquals(8, number(method, "mean", 1), 0);
     assertNull(values(method, "mean").get(2));
+    assertNull(values(method, "sum").get(2));
+    assertNull(values(method, "range").get(2));
+    assertNull(values(method, "variance").get(1));
+    assertNull(values(method, "variance").get(2));
+  }
+
+  @Test public void sumRangeAndVarianceRejectOverflowInsteadOfReturningInfiniteStatistics() {
+    rejects(input(new NumericSummary(), "values", Double.MAX_VALUE, Double.MAX_VALUE), "range is too large");
+    rejects(input(new NumericSummary(), "values", -Double.MAX_VALUE, Double.MAX_VALUE), "range is too large");
+    rejects(input(new NumericSummary(), "values", 1e200, 2e200), "range is too large");
   }
 
   @Test public void mismatchedGroupedRowsAndNoUsableGroupsFailExplicitly() {

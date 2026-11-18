@@ -44,7 +44,7 @@ jobs:
       - name: Verify delivery checksum and source reproducibility
         run: |
           (cd artifacts/analytics && sha256sum --check SHA256SUMS)
-          cmp analytics-methods/target/OpenLAP-Analytics-1.0.0.jar artifacts/analytics/OpenLAP-Analytics-1.0.0.jar
+          cmp analytics-methods/target/OpenLAP-Analytics-1.1.0.jar artifacts/analytics/OpenLAP-Analytics-1.1.0.jar
       - name: Qualify admin inspection, manual discovery and saved indicators
         working-directory: analyticsframework
         run: ./mvnw -B -Dtest=AnalyticsReleaseQualification test

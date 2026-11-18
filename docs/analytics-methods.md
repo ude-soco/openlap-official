@@ -1,6 +1,6 @@
 # Analytics methods package
 
-The repository includes `artifacts/analytics/OpenLAP-Analytics-1.0.0.jar`, its
+The repository includes `artifacts/analytics/OpenLAP-Analytics-1.1.0.jar`, its
 SHA-256 checksum, and reproducible source in `analytics-methods/`. The JAR contains
 the calculations and its private numerical dependency. OpenLAP provides the
 plugin API; the JAR does not bundle another copy of that API.
@@ -16,15 +16,21 @@ inputs, and discover plugins outside the historical prototype package.
 
    ```bash
    (cd artifacts/analytics && shasum -a 256 -c SHA256SUMS)
-   cp artifacts/analytics/OpenLAP-Analytics-1.0.0.jar \
+   cp artifacts/analytics/OpenLAP-Analytics-1.1.0.jar \
      analyticsframework/jars/analytics_techniques/
    ```
 
-3. Restart the backend with your usual local database settings. In local storage
-   mode, startup discovers the five new methods. Existing methods and saved
-   indicators remain available. You still need a visualization plugin, learning
-   records and a USER account linked to your LRS.
-4. Open Indicator Editor and select one of the new method names below. The
+   For a local test setup that already registered version 1.0.0, keep its installed
+   filename. Back up the old file outside the plugin directory, then copy the
+   1.1.0 bytes to the same installed path while the backend is stopped. This keeps
+   the catalogue IDs used by saved indicators. Put only one version in the scan
+   directory. If your backend uses `DATA_DIR`, use its `jars/analytics_techniques/`
+   directory in place of the default path.
+
+3. Restart the backend with your usual local database settings. Local startup
+   discovers the ten methods in the package. You still need a visualization
+   plugin, learning records and a USER account linked to your LRS.
+4. Open Indicator Editor and select a method below. The
    analysis preview runs automatically after the required selections are ready.
 
 The delivered JAR stays outside the active plugin directory until you copy it.
@@ -38,17 +44,33 @@ methods**, then review and activate the uploaded package through the normal
 
 | Method | Required inputs | Useful first test |
 | --- | --- | --- |
+| Count selected events | The editor selects the event field automatically | Count the views or clicks matching your filters. |
+| Count events by category | Text category | Count events for each activity, action or recorded user. Use the rank and limit settings for a top-N list. |
+| Count distinct values | Text value, optional text group | Count distinct recorded accounts per activity, or count the activities each account used. |
+| Count events over time | Event or stored timestamp | Count events by day, week, month or year. Periods use UTC and weeks start on Monday. |
+| Calculate percentage of true outcomes | Completion or Success, optional text group | Compare the share of known outcomes marked true for each activity. |
 | Summarize numeric values | Numeric measurement | Choose **Raw score** to summarize assessment events. |
 | Summarize numeric values by group | Numeric measurement and text group | Choose **Raw score** and **Users (account name)** to calculate each learner's mean, median and spread. |
 | Pearson correlation | Two numeric measurements | Compare two aligned, prepared learner measurements through a Multilevel indicator. |
 | Spearman rank correlation | Two numeric measurements | Compare the rankings of two aligned learner measurements; tied values receive average ranks. |
 | Group observations using reproducible K-means++ | Two numeric features; optional observation label | Combine learner-level summaries in a Multilevel indicator, map its learner key as the label, then choose a cluster count. |
 
-Summary output includes count, excluded count, mean, median, minimum, maximum,
-sample standard deviation, quartiles and interquartile range. Quartiles use R-7
-interpolation. Standard deviation is undefined for one observation and appears
-as an empty cell (`—`), rather than a fabricated zero. In a grouped summary,
-groups with only missing measurements retain their count and empty statistics.
+For the local test data, choose **Stored timestamp** when trying the time method.
+That field records when the LRS received the event. Use **Event timestamp** for
+sources that record when the activity actually occurred.
+
+The event total counts matching records. Category counts exclude missing labels
+and report each category's share of all events with a category, even when only
+the top or bottom categories are shown. Distinct counts use exact text values.
+The time series includes observed periods. Success and completion percentages use
+recorded true or false outcomes as their denominator, with missing outcomes
+counted separately.
+
+Numeric summaries return count, excluded count, sum, mean, median, minimum,
+maximum, range, sample variance, sample standard deviation, quartiles and
+interquartile range. Quartiles use R-7 interpolation. Sample variance and standard
+deviation are undefined for one observation and appear as `—`. Groups with only
+missing measurements retain their counts and empty statistics.
 
 Correlation requires at least three complete pairs and variation in both inputs.
 It reports a coefficient from -1 to 1, analysed pairs and excluded pairs. It does
@@ -85,11 +107,9 @@ restrict the selection to one source when necessary, or use a consistent unique
 identifier. Grouping equal text labels does not establish that they identify the
 same person.
 
-If your statements contain clicks or views but no scores, first create activity
-counts using an existing method. You can combine counts by a shared activity key
-and apply the new correlation or clustering methods without inventing scores.
-Selecting **Raw score** cannot produce numerical measurements that the LRS never
-recorded.
+For clicks or views, use **Count events by category** or one of the other event
+count methods directly in Basic Indicator. Combine two Basic indicators by a
+shared activity or learner key to compare their counts with a Multilevel method.
 
 Missing measurements are excluded together for correlation and clustering;
 invalid nonnumeric or infinite measurements produce a validation error. Grouped
@@ -114,7 +134,7 @@ With the supported JDK installed, run from the repository root:
 ./analyticsframework/mvnw -f analytics-methods/pom.xml clean verify
 ```
 
-This builds `analytics-methods/target/OpenLAP-Analytics-1.0.0.jar`. The fixed build
+This builds `analytics-methods/target/OpenLAP-Analytics-1.1.0.jar`. The fixed build
 timestamp makes builds reproducible with the same compiler (the delivery uses
 JDK 21.0.11). The package tests check known
 statistical answers, missing data, tied ranks, decimal inputs, deterministic

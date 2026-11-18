@@ -57,7 +57,7 @@ public class AnalyticsReleaseQualification {
 
   @Before public void installDeliveredJarThroughLocalStartup() throws Exception {
     Path delivery = Path.of(System.getProperty("openlap.analytics.release.jar",
-        "../artifacts/analytics/OpenLAP-Analytics-1.0.0.jar")).toAbsolutePath();
+        "../artifacts/analytics/OpenLAP-Analytics-1.1.0.jar")).toAbsolutePath();
     assertThat(delivery).as("Build and stage the analytics delivery before release qualification").isRegularFile();
     Path folder = temporary.newFolder("plugins").toPath();
     jar = Files.copy(delivery, folder.resolve(delivery.getFileName()));
@@ -75,7 +75,7 @@ public class AnalyticsReleaseQualification {
     ReflectionTestUtils.setField(analytics, "analyticsMethodsJarsFolder", folder.toString());
     analytics.populateAnalyticsTechniques();
     analytics.populateAnalyticsTechniques();
-    assertThat(installed).hasSize(5);
+    assertThat(installed).hasSize(10);
     indicators = mock(IndicatorRepository.class);
     utility = new IndicatorUtilityServiceImpl(null, null, null, analytics, indicators, null);
     statements = mock(StatementService.class);
@@ -86,8 +86,13 @@ public class AnalyticsReleaseQualification {
 
   @Test public void shadedArchivePassesTheAdminInspectorWithoutBundlingThePluginApi() throws Exception {
     var inspection = new PluginInspector().inspect(PluginKind.ANALYTICS, jar);
-    assertThat(inspection.getEntries()).hasSize(5);
+    assertThat(inspection.getEntries()).hasSize(10);
     assertThat(inspection.getClasses()).containsExactly(
+        "com.openlap.analytics.methods.BooleanRate",
+        "com.openlap.analytics.methods.DistinctValueCount",
+        "com.openlap.analytics.methods.EventCount",
+        "com.openlap.analytics.methods.EventFrequency",
+        "com.openlap.analytics.methods.EventsOverTime",
         "com.openlap.analytics.methods.GroupedNumericSummary",
         "com.openlap.analytics.methods.NumericSummary",
         "com.openlap.analytics.methods.PearsonCorrelation",
@@ -101,6 +106,28 @@ public class AnalyticsReleaseQualification {
       assertThat(archive.getJarEntry("com/openlap/analytics/internal/math3/stat/descriptive/DescriptiveStatistics.class"))
           .isNotNull();
     }
+  }
+
+  @Test public void basicIndicatorsCountEventsWithoutScores() {
+    OpenLAPDataSet events = dataset(Map.of(
+        "statement.id", Arrays.asList("one", null, "three", "four"),
+        "statement.object.definition.name.en-US", List.of("Quiz", "Quiz", "Forum", "Quiz")));
+    when(statements.findStatements(any())).thenReturn(events);
+    String totalMethod = id("EventCount");
+    IndicatorAnalysisRequest total = new IndicatorAnalysisRequest();
+    total.setAnalyticsTechniqueId(totalMethod);
+    total.setAnalyticsTechniqueMapping(mapping(totalMethod, Map.of("event", "statement.id")));
+    assertThat(values(basic.analyzeIndicator(total), "event_count")).containsExactly(4);
+
+    String groupedMethod = id("EventFrequency");
+    IndicatorAnalysisRequest byActivity = new IndicatorAnalysisRequest();
+    byActivity.setAnalyticsTechniqueId(groupedMethod);
+    byActivity.setAnalyticsTechniqueMapping(mapping(groupedMethod,
+        Map.of("category", "statement.object.definition.name.en-US")));
+    OpenLAPDataSet result = basic.analyzeIndicator(byActivity);
+    assertThat(values(result, "category")).containsExactly("Quiz", "Forum");
+    assertThat(values(result, "event_count")).containsExactly(3, 1);
+    assertThat(values(result, "percentage")).containsExactly(75.0, 25.0);
   }
 
   @Test public void groupedDecimalPreviewAndStoredIndicatorExecuteTheSameRealPlugin() throws Exception {
@@ -117,6 +144,7 @@ public class AnalyticsReleaseQualification {
     OpenLAPDataSet preview = basic.analyzeIndicator(request);
     assertThat(values(preview, "group")).containsExactly("A", "B");
     assertThat(values(preview, "mean")).containsExactly(10.5, 25.5);
+    assertThat(values(preview, "sum")).containsExactly(10.5, 51.0);
     assertThat(values(preview, "count")).containsExactly(1, 2);
     assertThat(values(preview, "excluded_count")).containsExactly(1, 0);
     assertThat(values(preview, "standard_deviation").get(0)).isNull();
