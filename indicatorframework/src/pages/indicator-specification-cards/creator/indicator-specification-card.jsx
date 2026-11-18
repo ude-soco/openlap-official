@@ -9,11 +9,11 @@ import Visualization from "./components/visualization/visualization.jsx";
 import Dataset from "./components/dataset/dataset.jsx";
 import Finalize from "./components/finalize/finalize.jsx";
 import ISCWorkspace from "./components/isc-workspace/isc-workspace.jsx";
-import WorkflowStepper from "../../../common/components/workflow-stepper/workflow-stepper.jsx";
+import EditorWorkflow from "../../../common/components/editor-workflow/editor-workflow.jsx";
 import { DataTypes } from "./utils/data/config.js";
 import { LEGACY_STEP_CODE } from "./utils/isc-constants.js";
 import { getWorkflowSteps, getCurrentStep } from "./utils/isc-selectors.js";
-import { withOnlyStepExpanded } from "./utils/isc-workflow-ui.js";
+import { openIscStep } from "./utils/isc-workflow-ui.js";
 import { getDefaultVisRef } from "./utils/isc-workflow-reset.js";
 import {
   createDraft,
@@ -336,19 +336,15 @@ const IndicatorSpecificationCard = () => {
     runAutosave,
   ]);
 
-  // Derive the (informational) workflow-stepper view from the real runtime state
-  // (lockedStep + completeness selectors). Pure read — does not affect gating.
+  // Navigation follows the chosen path's actual section order. Viewing a
+  // section stays separate from completeness and the existing runtime gates.
   const domainState = { requirements, dataset, visRef, lockedStep };
   const workflowSteps = getWorkflowSteps(domainState);
   const currentStep = getCurrentStep(domainState);
 
-  // Stepper navigation: expand the chosen (unlocked) section and collapse the
-  // others — the one-active-section model, on top of the existing lockedStep.
-  const handleSelectStep = (stepKey) => {
-    setLockedStep((p) =>
-      p[stepKey]?.locked ? p : withOnlyStepExpanded(p, stepKey)
-    );
-  };
+  const handleSelectStep = useCallback((stepKey) => {
+    setLockedStep((previous) => openIscStep(previous, stepKey));
+  }, []);
 
   // ---- Leave-page protection for EDIT drafts (Phase 3) ----
   // Only edit drafts guard navigation (publishing merges into the saved source).
@@ -483,14 +479,9 @@ const IndicatorSpecificationCard = () => {
             { label: "Home", to: "/", onClick: guardCrumb("/") },
             { label: "My ISCs", to: "/isc", onClick: guardCrumb("/isc") },
           ]}
-          stepper={
-            <WorkflowStepper
-              steps={workflowSteps}
-              current={currentStep}
-              onStepSelect={handleSelectStep}
-            />
-          }
         >
+          <EditorWorkflow steps={workflowSteps} current={currentStep}
+            onStepSelect={handleSelectStep} disabled={leaving} ariaLabel="ISC creation progress">
           <Stack sx={{ gap: 2 }}>
             <SpecifyRequirements />
             <ChoosePath />
@@ -509,6 +500,7 @@ const IndicatorSpecificationCard = () => {
             {lockedStep.visualization.step !== LEGACY_STEP_CODE.NONE &&
               lockedStep.dataset.step !== LEGACY_STEP_CODE.NONE && <Finalize />}
           </Stack>
+          </EditorWorkflow>
         </ISCWorkspace>
       </ISCContext.Provider>
       <LeaveEditDialog

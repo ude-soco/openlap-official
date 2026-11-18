@@ -52,8 +52,9 @@ export default function CommunityComparison({ step, reference, configuration, ch
       </Box>
       <Paper ref={panelRef} data-community-reference={step} variant="outlined" sx={(theme) => ({
         minWidth: 0, alignSelf: "start", bgcolor: "background.default", overflow: "hidden", gridRow: 1,
-        // The desktop toolbar plus its border and the normal spacing gap.
-        "--community-reference-top": `calc(${theme.mixins.toolbar[theme.breakpoints.up("sm")]?.minHeight ?? 64}px + 1px + ${theme.spacing(2)})`,
+        // Editor navigation supplies its measured header + navigator clearance.
+        // Standalone comparisons retain their normal toolbar-only offset.
+        "--community-reference-top": `var(--editor-sticky-content-top, calc(${theme.mixins.toolbar[theme.breakpoints.up("sm")]?.minHeight ?? 64}px + 1px + ${theme.spacing(2)}))`,
         [wideComparison]: { gridRow: 1, gridColumn: 2, position: "sticky", top: "var(--community-reference-top)",
           maxHeight: `calc(100dvh - var(--community-reference-top) - ${theme.spacing(2)})`,
           "@media (max-height: 360px)": { position: "static", maxHeight: "none" } },

@@ -27,6 +27,7 @@ export default function Filters() {
   return (
     <>
       <WorkflowSection
+        stepKey="filters"
         status={getStepStatus(lockedStep, "filters")}
         lockedHint="Select a dataset to unlock Filters."
         ariaLabel="Filters step"

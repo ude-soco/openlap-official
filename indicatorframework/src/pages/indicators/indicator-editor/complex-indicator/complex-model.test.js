@@ -13,6 +13,7 @@ import {
   readComplexConfiguration,
   recoveryKey,
   saveRequest,
+  sourceExecutionSelections,
   sourceSelection,
   toComplexDraftConfiguration,
   withMapping,
@@ -75,6 +76,36 @@ test("adaptation sources persist only bounded Basic choices and reject partial k
   config.sources = [{ ...config.sources[0], id: "__proto__" }];
   config.sourceDrafts = JSON.parse('{"__proto__":{"schemaVersion":1,"type":"BASIC"}}');
   assert.equal(readComplexConfiguration(config, "COMPOSITE"), null);
+});
+
+test("source navigation preserves execution results while every data selection remains significant", () => {
+  const original = serializeBasicDraft(emptyBasicState(new Date("2026-01-01T00:00:00Z")));
+  const navigated = structuredClone(original);
+  navigated.lockedStep.dataset.openPanel = false;
+  navigated.lockedStep.filters.openPanel = true;
+  assert.deepEqual(sourceExecutionSelections(navigated), sourceExecutionSelections(original),
+    "Opening another source panel keeps the same execution selections");
+  assert.equal(original.lockedStep.dataset.openPanel, true, "Comparison leaves the source draft unchanged");
+  assert.equal(navigated.lockedStep.filters.openPanel, true, "Panel choices remain available for draft persistence");
+
+  const changes = {
+    LRS: (draft) => { draft.dataset.selectedLRSList = [{ lrsId: "different-lrs", uniqueIdentifier: "viewer" }]; },
+    filters: (draft) => { draft.filters.selectedUserFilter = "INCLUDE_ME"; },
+    timeframe: (draft) => { draft.filters.selectedTime.from = "2025-02-01T00:00:00Z"; },
+    activities: (draft) => { draft.filters.selectedActivities = [{ selectedActivityType: { id: "material" }, selectedActionList: [{ id: "clicked" }] }]; },
+    method: (draft) => { draft.analysis.selectedAnalyticsMethod.method.id = "other-method"; },
+    mapping: (draft) => { draft.analysis.selectedAnalyticsMethod.mapping.mapping = [{ inputPort: { id: "input" }, outputPort: { id: "activity" } }]; },
+    parameter: (draft) => { draft.analysis.params = [{ id: "count", value: "10" }]; },
+    chart: (draft) => { draft.visualization.selectedType.id = "other-chart"; },
+    customization: (draft) => { draft.visualization.params.width = 700; },
+    futureSelection: (draft) => { draft.futureInput = { value: "new selection" }; },
+  };
+  for (const [name, change] of Object.entries(changes)) {
+    const changed = structuredClone(navigated);
+    change(changed);
+    assert.notDeepEqual(sourceExecutionSelections(changed), sourceExecutionSelections(original),
+      `Changing ${name} invalidates the previous execution selections`);
+  }
 });
 const dataset = {
   columns: {

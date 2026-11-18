@@ -27,7 +27,7 @@ import {
 
 import PageHeader from "../../../../common/components/page-header/page-header";
 import WorkflowSection from "../../../../common/components/workflow-section/workflow-section";
-import WorkflowStepper from "../../../../common/components/workflow-stepper/workflow-stepper";
+import EditorWorkflow from "../../../../common/components/editor-workflow/editor-workflow.jsx";
 import WorkflowStepHeader from "../../../../common/components/workflow-step-header/workflow-step-header";
 import { ToggleEditButton } from "../../../../common/components/toggle-edit-button/toggle-edit-button";
 import ToggleSummaryButton from "../../../../common/components/toggle-summary-button/toggle-summary-button";
@@ -53,6 +53,7 @@ import {
   readComplexConfiguration,
   recoveryKey,
   saveRequest,
+  sourceExecutionSelections,
   sourceSelection,
   sourcesReady,
   toComplexDraftConfiguration,
@@ -82,6 +83,11 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
   const adaptation = initialDraft?.adaptation || null;
   const isAdaptation = Boolean(adaptation);
   const [editingSource, setEditingSource] = useState(null);
+  const [focusReturnedSources, setFocusReturnedSources] = useState(false);
+  const editSource = useCallback((sourceId) => {
+    setFocusReturnedSources(false);
+    setEditingSource(sourceId);
+  }, []);
   const [sourceRestore, setSourceRestore] = useState(0);
   const title = TYPE_LABELS[type];
   const key = recoveryKey(type, user?.sub, id);
@@ -163,6 +169,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     setWorkflow({ current: !isAdaptation && restored.sources.length >= 2 ? "combine" : "sources",
       panels: !isAdaptation && restored.sources.length >= 2 ? { combine: true } : { sources: true } });
     setSourceRestore((value) => value + 1);
+    setFocusReturnedSources(false);
     setEditingSource(null);
     setPreview(null);
     setPreviewFingerprint("");
@@ -187,6 +194,8 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     : "";
   const combineReady = Boolean(loaded && !draft.finalizing && sourcesConfirmed && sourcesReady(configuration.sources) &&
     (!isAdaptation || configuration.sources.every((source) => adaptationSourceReady(configuration.sourceDrafts?.[source.id]))));
+  const sourceSelections = Object.fromEntries(Object.entries(draftConfiguration.sourceDrafts || {})
+    .map(([slotId, basic]) => [slotId, sourceExecutionSelections(basic)]));
   const normalCombinePreview = useDataPreview({
     api,
     path: `v1/indicators/${endpoint}/merge`,
@@ -194,7 +203,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     ready: !isAdaptation && combineReady,
   });
   const adaptedCombinePreview = useAdaptationPreview({ api, draft, stage: "combine",
-    fingerprint: JSON.stringify({ sources: draftConfiguration.sources, sourceDrafts: draftConfiguration.sourceDrafts }),
+    fingerprint: JSON.stringify({ sources: draftConfiguration.sources, sourceDrafts: sourceSelections }),
     ready: isAdaptation && combineReady });
   const combinePreview = isAdaptation ? adaptedCombinePreview : normalCombinePreview;
   const merged = isMulti && !isAdaptation ? combinePreview.data?.mergedData : combinePreview.data;
@@ -214,7 +223,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     ready: !isAdaptation && analysisReady,
   });
   const adaptedAnalysisPreview = useAdaptationPreview({ api, draft, stage: "analysis",
-    fingerprint: JSON.stringify({ sources: draftConfiguration.sources, sourceDrafts: draftConfiguration.sourceDrafts, analysis: draftConfiguration.analysis }),
+    fingerprint: JSON.stringify({ sources: draftConfiguration.sources, sourceDrafts: sourceSelections, analysis: draftConfiguration.analysis }),
     upstream: merged, ready: isAdaptation && analysisReady });
   const analysisPreview = isAdaptation ? adaptedAnalysisPreview : normalAnalysisPreview;
   const analyzed = analysisPreview.data;
@@ -231,7 +240,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
   // Renaming does not change the plotted data. Completion obtains a fresh proof
   // after flushing the latest name and configuration.
   const currentPreviewFingerprint = JSON.stringify(
-    isAdaptation ? { ...draftConfiguration, name: undefined } : previewRequest(configuration),
+    isAdaptation ? { ...draftConfiguration, sourceDrafts: sourceSelections, name: undefined } : previewRequest(configuration),
   );
   const previewCurrent = Boolean(
     preview && previewFingerprint === currentPreviewFingerprint,
@@ -445,19 +454,28 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     );
   }, []);
 
-  const updateSourceDraft = useCallback((slotId, basic) => change((previous) => {
-    if (JSON.stringify(previous.sourceDrafts?.[slotId]) === JSON.stringify(basic)) return previous;
-    return { ...previous,
-      sourceDrafts: { ...previous.sourceDrafts, [slotId]: basic },
-      sources: previous.sources.map((source) => {
+  const updateSourceDraft = useCallback((slotId, basic) => {
+    const previous = configurationRef.current.sourceDrafts?.[slotId];
+    if (!previous || JSON.stringify(previous) === JSON.stringify(basic)) return;
+    if (JSON.stringify(sourceExecutionSelections(previous)) === JSON.stringify(sourceExecutionSelections(basic))) {
+      // Navigating a source preserves its editor panels without discarding the
+      // parent's combined data, analysis or chart preview.
+      setConfiguration((current) => ({ ...current,
+        sourceDrafts: { ...current.sourceDrafts, [slotId]: basic },
+      }));
+      return;
+    }
+    change((current) => ({ ...current,
+      sourceDrafts: { ...current.sourceDrafts, [slotId]: basic },
+      sources: current.sources.map((source) => {
         if (source.id !== slotId) return source;
         const method = basic.analysis.selectedAnalyticsMethod.method;
         const methodChanged = source.analyticsMethod?.id !== method.id;
         return { ...source, name: basic.indicator.indicatorName.trim() || source.name, analyticsMethod: method,
           ...(methodChanged ? { outputs: [], keyColumnId: "", measureColumnIds: [] } : {}) };
       }),
-    };
-  }, "sources"), [change]);
+    }), "sources");
+  }, [change]);
   const sourceMethodFingerprint = JSON.stringify(isAdaptation ? configuration.sources.map((source) =>
     [source.id, source.analyticsMethod?.id || ""]) : []);
   useEffect(() => {
@@ -498,7 +516,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
       sourceDrafts: { ...previous.sourceDrafts, [slotId]: basic },
       sources: [...previous.sources, { id: slotId, name, label: name, analyticsMethod: { id: "", name: "" }, outputs: [], keyColumnId: "", measureColumnIds: [] }],
     }), "sources");
-    setEditingSource(slotId);
+    editSource(slotId);
   };
 
   const updateSource = (sourceId, update) =>
@@ -659,7 +677,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
       },
     );
 
-  const previewSourceData = (source) => isAdaptation ? setEditingSource(source.id) :
+  const previewSourceData = (source) => isAdaptation ? editSource(source.id) :
     run(
       "source",
       () =>
@@ -708,6 +726,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
       key: "combine",
       label: "Combine data",
       locked: !sourcesConfirmed,
+      lockedHint: "Select at least two compatible Basic indicators and continue.",
       completed: datasetRows(merged) > 0,
       summary: datasetRows(merged)
         ? `${datasetRows(merged)} matching rows`
@@ -721,6 +740,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
             key: "analysis",
             label: "Analysis",
             locked: !datasetRows(merged),
+            lockedHint: "Generate combined data first.",
             completed: datasetRows(analyzed) > 0,
             summary: methods.find((method) => method.id === methodId)?.name,
           },
@@ -730,6 +750,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
       key: "visualization",
       label: "Visualization",
       locked: !datasetRows(resultDataset),
+      lockedHint: "Generate a nonempty result before choosing a visualization.",
       completed: previewCurrent && rendererReady,
       summary: selectedType?.name,
     },
@@ -750,14 +771,9 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     const contentId = `complex-${type.toLowerCase()}-${stepKey}-content`;
     return (
       <WorkflowSection
+        stepKey={stepKey}
         status={status(step)}
-        lockedHint={
-          stepKey === "combine"
-            ? "Select at least two compatible Basic indicators and continue."
-            : stepKey === "analysis"
-              ? "Generate combined data first."
-              : "Generate a nonempty result before choosing a visualization."
-        }
+        lockedHint={step.lockedHint}
         ariaLabel={`${step.label} step`}
       >
         <WorkflowStepHeader
@@ -877,7 +893,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
         configuration={configuration.sourceDrafts[editingSource]}
         reference={adaptation?.reference?.sources?.find((source) => source.slotId === editingSource)?.reference}
         onChange={(basic) => updateSourceDraft(editingSource, basic)}
-        onBack={() => { setEditingSource(null); setCurrent("sources"); }}
+        onBack={() => { setFocusReturnedSources(true); setEditingSource(null); setCurrent("sources"); }}
       /> : <>
       {legacyRecovery && <Alert severity="info" action={<Button onClick={importLegacyRecovery}>Import local draft</Button>}>
         An older {title.toLowerCase()} is saved only in this tab. Import those selections into this private draft. Saved indicators stay unchanged.
@@ -885,12 +901,14 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
       {!id && configuration.sources.length > 0 && <Stack direction="row" sx={{ justifyContent: "flex-end" }}>
         <Button variant="outlined" disabled={Boolean(busy) || draft.saving} onClick={() => setResetOpen(true)}>Start over</Button>
       </Stack>}
-      <WorkflowStepper
+      <EditorWorkflow
         steps={steps}
         current={current}
         onStepSelect={setCurrent}
+        disabled={draft.finalizing}
+        focusOnMount={focusReturnedSources ? "sources" : undefined}
         ariaLabel={`${title} creation progress`}
-      />
+      >
       <Failure
         message={catalogError}
         retry={() => setCatalogRetry((value) => value + 1)}
@@ -900,7 +918,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
         "sources",
         isAdaptation ? <>
         <Failure message={sourceError} retry={() => setCatalogRetry((value) => value + 1)} />
-        <ComplexAdaptationSources configuration={configuration} onEdit={setEditingSource}
+        <ComplexAdaptationSources configuration={configuration} onEdit={editSource}
           onAdd={addAdaptationSource} onRemove={requestRemove} removedSource={removedSource}
           onUndo={() => {
             if (!removedSource || configuration.sources.length >= MAX_SOURCES) return;
@@ -952,7 +970,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
           updateSource={updateSource}
           busy={busy}
           previewSourceData={previewSourceData}
-          onEditSource={isAdaptation ? setEditingSource : undefined}
+          onEditSource={isAdaptation ? editSource : undefined}
           operationError={combinePreview.error
             ? { step: "combine", message: combinePreview.error } : operationError}
           combine={combinePreview.retry}
@@ -1011,6 +1029,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
         />,
       )}
       </Stack>
+      </EditorWorkflow>
       </>}
       </Stack>
       <SourceIndicatorPreview

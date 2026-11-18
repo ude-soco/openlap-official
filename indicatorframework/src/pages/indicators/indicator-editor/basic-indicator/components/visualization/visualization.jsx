@@ -222,6 +222,7 @@ export default function Visualization() {
   return (
     <>
       <WorkflowSection
+        stepKey="visualization"
         status={getStepStatus(lockedStep, "visualization")}
         lockedHint="Complete Analysis to unlock Visualization."
         ariaLabel="Visualization step"

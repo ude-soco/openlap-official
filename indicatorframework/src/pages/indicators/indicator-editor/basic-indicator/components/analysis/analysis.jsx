@@ -83,6 +83,7 @@ export default function Analysis() {
   return (
     <>
       <WorkflowSection
+        stepKey="analysis"
         status={getStepStatus(lockedStep, "analysis")}
         lockedHint="Complete Filters to unlock Analysis."
         ariaLabel="Analysis step"

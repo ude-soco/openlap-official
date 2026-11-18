@@ -18,9 +18,12 @@
     "test:complex-indicators": "node scripts/test-complex-indicators.cjs",
     "test:indicator-drafts": "node scripts/test-indicator-drafts.cjs",
     "test:isc-dashboard": "node scripts/test-isc-dashboard.cjs",
+    "test:isc-navigation": "node scripts/test-isc-navigation.cjs",
     "test:community-pools": "node scripts/test-community-pools.cjs",
     "test:community-adaptation": "node scripts/test-community-adaptation.cjs",
     "test:community-reference-layout": "node scripts/test-community-reference-layout.cjs",
+    "test:editor-navigation": "node scripts/test-editor-navigation.cjs",
+    "test:adapted-source-navigation": "node scripts/test-adapted-source-navigation.cjs",
     "test:draft-foundation": "node src/pages/indicators/indicator-editor/drafts/test-draft-foundation.cjs",
     "test:visualization-descriptor": "node scripts/test-visualization-descriptor.cjs",
     "test:chart-runtime": "node scripts/test-chart-runtime.cjs"

@@ -33,6 +33,23 @@ Incomplete drafts are excluded from the Indicator Pool, public embeds and the
 Basic source picker. Autosave itself does not analyze data or execute chart code.
 Editor previews continue to run only when their required selections are valid.
 
+## Moving between editor steps
+
+Basic, Composite and Multilevel editors and ISC Creator keep a compact step
+navigator beneath the application header while scrolling. Select an available step to open it and
+move focus to its section. The current highlight follows the section in view;
+completion icons continue to reflect the workflow's actual progress. Locked
+steps explain their prerequisites and cannot skip validation.
+
+Narrow editor panels use a current-step menu. Community references sit below
+both sticky bars. Embedded Basic source editors use the same navigator, with
+only one navigator visible at a time. Scrolling changes neither selections nor
+saved progress; reopening a section preserves the other selections.
+
+ISC Creator initially shows Requirements, Choose path and Finalize. Dataset and
+Visualization appear only after a starting path is chosen, in that path's order.
+Navigation preserves the stored workflow gates and selections.
+
 ## Recovery and conflicts
 
 The server holds the authoritative draft. A bounded browser recovery copy stores
@@ -132,8 +149,8 @@ a frozen, anonymous recipe, so later edits or removal of the original do not
 change an existing adaptation. Missing choices remain unresolved; the system
 does not assume that differently named actions mean the same thing.
 
-Adaptations use registered connections belonging to the viewer and **Use only my
-data**. An LRS can be connected later, but a completed indicator requires a
+Adaptations use registered connections belonging to the viewer and default to
+**Use only my data**; the other user scopes remain available. An LRS can be connected later, but a completed indicator requires a
 successful preview using the current choices. Saving flushes the draft, obtains
 a fresh, revision-bound preview receipt and validates the current data bindings
 and plugins again. Autosaving incomplete selections does not execute a plugin.
@@ -164,6 +181,9 @@ npm run test:draft-foundation
 # With an isolated Vite server; all API responses are local test fixtures:
 OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:indicator-drafts
 OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:community-adaptation
+OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:editor-navigation
+OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:adapted-source-navigation
+OPENLAP_TEST_BASE_URL=http://127.0.0.1:5173 npm run test:isc-navigation
 ```
 
 Use a manifest-capable OpenLAP backend and upgrade all backend writers before

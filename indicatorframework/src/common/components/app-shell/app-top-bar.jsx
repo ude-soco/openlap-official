@@ -52,6 +52,7 @@ const AppTopBar = ({ drawerWidth, onMenuToggle }) => {
 
   return (
     <AppBar
+      data-app-header
       position="fixed"
       elevation={0}
       color="default"

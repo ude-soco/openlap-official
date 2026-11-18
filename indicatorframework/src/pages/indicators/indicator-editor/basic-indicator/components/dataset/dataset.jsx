@@ -132,6 +132,7 @@ export default function Dataset() {
   return (
     <>
       <WorkflowSection
+        stepKey="dataset"
         status={getStepStatus(lockedStep, "dataset")}
         ariaLabel="Dataset step"
       >
