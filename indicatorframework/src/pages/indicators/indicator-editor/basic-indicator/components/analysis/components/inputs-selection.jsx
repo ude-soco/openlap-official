@@ -9,12 +9,14 @@ import {
   Select,
   Stack,
   Tooltip,
+  Typography,
 } from "@mui/material";
-import { compatibleAnalysisInputs, withAnalysisInput } from "../utils/analysis-data";
+import { compatibleAnalysisInputs, isEventCountInput, withAnalysisInput } from "../utils/analysis-data";
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
 
 export default function InputsSelection() {
   const { analysis, setAnalysis } = useContext(BasicContext);
+  const countEvents = isEventCountInput(analysis.selectedAnalyticsMethod.method, analysis.inputs);
 
   const handleSelectInputs = (input, value) => {
     setAnalysis((previous) => withAnalysisInput(previous, input, value));
@@ -23,16 +25,18 @@ export default function InputsSelection() {
   return (
     <SectionCard
       title="Method inputs"
-      helper="Map each input the method needs to a column from your data."
+      helper={countEvents ? "Count the events matching your dataset and activity filters." : "Map each input the method needs to a column from your data."}
     >
       <Stack sx={{ gap: 2 }}>
-        {analysis.inputs.map((input, index) => {
+        {countEvents ? <Typography variant="body2" color="text.secondary">
+          Each matching event is counted once. No additional field selection is needed.
+        </Typography> : analysis.inputs.map((input, index) => {
           const selected = analysis.selectedAnalyticsMethod.mapping.mapping.find(
             (item) => item.inputPort.id === input.id,
           )?.outputPort;
           const requiredMissing =
             Boolean(input.required) && !selected;
-          const options = compatibleAnalysisInputs(input, selected);
+          const options = compatibleAnalysisInputs(input, selected, analysis.selectedAnalyticsMethod.method);
           const labelText = `${input.title} ${
             input.required ? "(Required)" : "(Optional)"
           }`;

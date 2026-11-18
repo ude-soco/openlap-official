@@ -28,6 +28,27 @@ export const analyticsInputMenuList = [
     options: [],
   },
   {
+    id: "statement.verb.id",
+    type: "Text",
+    required: true,
+    name: "Action identifier",
+    description: "The action's exact xAPI identifier. Use this field to count or group actions independently of their translated display labels.",
+  },
+  {
+    id: "statement.verb.display.en-US",
+    type: "Text",
+    required: true,
+    name: "Action label (English)",
+    description: "The English action label, when your statements record one. Use Action identifier when English labels are unavailable or inconsistent.",
+  },
+  {
+    id: "statement.object.id",
+    type: "Text",
+    required: true,
+    name: "Activity identifier",
+    description: "The activity's exact xAPI identifier. Use it when activity names may be shared by different activities.",
+  },
+  {
     id: "statement.context.platform",
     type: "Text",
     required: true,
@@ -94,10 +115,47 @@ export const analyticsInputMenuList = [
   })),
 ];
 
-// Raw xAPI values are converted by the backend only for the declared mapped
-// input type. Do not offer a categorical label as a numerical measurement.
-export function compatibleAnalysisInputs(input, selected) {
-  const options = analyticsInputMenuList.filter((column) => column.type === input.type);
+const selectedEvents = {
+  id: "statement.id",
+  type: "Text",
+  required: true,
+  name: "Selected events",
+  description: "Every event matching the selected dataset and filters contributes one row, including events with no recorded xAPI statement identifier.",
+};
+
+export function isEventCountInput(method, inputs = []) {
+  return method?.name === "Count selected events" && inputs.length === 1 &&
+    inputs[0].id === "event" && inputs[0].type === "Text" && inputs[0].required === true;
+}
+
+export function withAnalysisInputDefaults(analysis) {
+  if (!isEventCountInput(analysis.selectedAnalyticsMethod?.method, analysis.inputs) ||
+      analysis.selectedAnalyticsMethod.mapping.mapping.length || analysis.inputs[0].selectedInput?.id) return analysis;
+  return withAnalysisInput(analysis, analysis.inputs[0], selectedEvents);
+}
+
+export function currentAnalysisSource(method, inputs, input, saved) {
+  if (isEventCountInput(method, inputs) && input.id === "event" && saved?.id === selectedEvents.id && saved?.type === "Text")
+    return selectedEvents;
+  return analyticsInputMenuList.find((column) => column.id === saved?.id && column.type === input.type);
+}
+
+const scalarTextPorts = new Map([
+  ["Count events by category", ["category"]],
+  ["Count distinct values", ["value", "group"]],
+  ["Calculate percentage of true outcomes", ["group"]],
+  ["Summarize numeric values by group", ["group"]],
+  ["Group observations using reproducible K-means++", ["observation"]],
+]);
+const timestamps = new Set(["statement.timestamp", "statement.stored"]);
+
+// Raw xAPI values are converted by the backend for the declared mapped input type.
+export function compatibleAnalysisInputs(input, selected, method) {
+  const timeInput = method?.name === "Count events over time" && input.id === "timestamp" && input.type === "Text";
+  const scalarText = input.type === "Text" && scalarTextPorts.get(method?.name)?.includes(input.id);
+  const options = analyticsInputMenuList.filter((column) => column.type === input.type &&
+    (!timeInput || timestamps.has(column.id)) &&
+    (!scalarText || (!timestamps.has(column.id) && column.id !== "statement.verb.display")));
   // A previously saved custom field remains reviewable without adding arbitrary
   // fields to the catalog or silently replacing the user's mapping.
   if (selected?.id && selected.type === input.type &&

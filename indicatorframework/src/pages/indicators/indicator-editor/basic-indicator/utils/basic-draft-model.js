@@ -1,4 +1,4 @@
-import { analyticsInputMenuList } from "../components/analysis/utils/analysis-data.js";
+import { currentAnalysisSource, withAnalysisInputDefaults } from "../components/analysis/utils/analysis-data.js";
 
 // The persisted authoring document is deliberately independent of React state,
 // catalogs, analyzed rows and generated chart code.
@@ -135,12 +135,13 @@ export async function refreshBasicReferences(api, raw, { adaptation = false } = 
     if (contract) {
       if (adaptation) state.analysis.selectedAnalyticsMethod.mapping.mapping = state.analysis.selectedAnalyticsMethod.mapping.mapping.flatMap((entry) => {
         const input = (contract.inputs || []).find((item) => item.id === entry.inputPort.id);
-        const output = analyticsInputMenuList.find((item) => item.id === entry.outputPort.id);
+        const output = currentAnalysisSource(state.analysis.selectedAnalyticsMethod.method, contract.inputs || [], input || {}, entry.outputPort);
         return input && output && input.type === output.type ? [{ inputPort: port(input), outputPort: port(output) }] : [];
       });
       state.analysis.inputs = (contract.inputs || []).map((input) => ({ ...input,
         selectedInput: state.analysis.selectedAnalyticsMethod.mapping.mapping.find((entry) => entry.inputPort.id === input.id)?.outputPort,
       }));
+      state.analysis = withAnalysisInputDefaults(state.analysis);
       const savedParams = new Map(state.analysis.params.map((param) => [param.id, param]));
       state.analysis.params = (contract.params || []).map((param) => ({ ...param,
         value: savedParams.has(param.id) ? savedParams.get(param.id).value : param.defaultValue,

@@ -79,6 +79,25 @@ test("correlation and clustering source defaults keep their primary measurements
     ["item_count", "amount"], "Existing plugins retain their historical defaults");
 });
 
+test("event, distinct-value and known-outcome methods prefer their primary measurement over diagnostics", () => {
+  const frequency = [{ id: "category", type: "Text" }, { id: "excluded_count", type: "Numeric" },
+    { id: "event_count", type: "Numeric" }, { id: "percentage", type: "Numeric" }];
+  const distinct = [{ id: "category", type: "Text" }, { id: "excluded_count", type: "Numeric" },
+    { id: "ungrouped_count", type: "Numeric" }, { id: "distinct_count", type: "Numeric" }];
+  const rate = [{ id: "group", type: "Text" }, ...["count", "excluded_count", "true_count", "false_count", "percentage"]
+    .map((id) => ({ id, type: "Numeric" }))];
+  assert.deepEqual(defaultSourceMeasures(frequency), ["event_count"]);
+  assert.deepEqual(defaultSourceMeasures(distinct), ["distinct_count"]);
+  assert.deepEqual(defaultSourceMeasures(rate), ["percentage"]);
+  assert.deepEqual(defaultSourceMeasures([{ id: "period", type: "Text" }, { id: "event_count", type: "Numeric" },
+    { id: "excluded_count", type: "Numeric" }]), ["event_count"]);
+  for (const [outputs, expected] of [[frequency, "event_count"], [distinct, "distinct_count"], [rate, "percentage"]]) {
+    const first = preferredAnalysisColumns(outputs.map((configurationData) => ({ configurationData, data: [1] })), { type: "Numeric" })
+      .find((field) => field.configurationData.type === "Numeric");
+    assert.equal(first.configurationData.id, expected);
+  }
+});
+
 test("clustering chart grouping prefers cluster labels while categorical axes prefer observations", () => {
   const columns = [...Object.values(counts([3], [0])), column("observation", ["learner-1"], "Text"),
     column("cluster", ["Cluster 1"], "Text"), column("x", [1]), column("y", [2])];

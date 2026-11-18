@@ -51,7 +51,11 @@ export function analysisObservationMessage(dataset) {
 
 export function statisticalPrimaryMeasures(outputs = []) {
   const numeric = new Set(outputs.filter((column) => column.type === "Numeric").map((column) => column.id));
+  const text = new Set(outputs.filter((column) => column.type === "Text").map((column) => column.id));
+  if (numeric.has("event_count") && (text.has("category") || text.has("period"))) return ["event_count"];
+  if (numeric.has("distinct_count") && text.has("category")) return ["distinct_count"];
   if (!numeric.has("count") || !numeric.has("excluded_count")) return null;
+  if (numeric.has("percentage") && numeric.has("true_count") && numeric.has("false_count")) return ["percentage"];
   if (numeric.has("mean")) return ["mean"];
   if (numeric.has("correlation")) return ["correlation"];
   if (numeric.has("x") && numeric.has("y") && outputs.some((column) => column.id === "cluster")) return ["x", "y"];
@@ -81,8 +85,8 @@ export function sourceMeasureHelp(source) {
 // rather than a diagnostic row count. Legacy datasets retain their prior order.
 export function preferredAnalysisColumns(columns, input) {
   const ids = new Set(columns.map((column) => column.configurationData?.id));
-  if (!ids.has("count") || !ids.has("excluded_count")) return columns;
-  const measures = ["mean", "median", "correlation", "x", "y", "minimum", "maximum",
+  if (statisticalPrimaryMeasures(columns.map((column) => column.configurationData)) === null) return columns;
+  const measures = ["mean", "median", "correlation", "event_count", "distinct_count", "percentage", "x", "y", "sum", "range", "variance", "minimum", "maximum",
     "standard_deviation", "q1", "q3", "iqr"];
   const diagnosticIds = new Set(["count", "excluded_count", "ungrouped_count"]);
   const hint = `${input?.id} ${input?.title}`.replace(/([a-z])([A-Z])/g, "$1 $2");

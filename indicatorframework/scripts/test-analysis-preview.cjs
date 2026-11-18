@@ -26,6 +26,7 @@ const input = { id: "items", title: "Items", type: "Text", required: true };
 const output = { id: "statement.object.definition.name.en-US", type: "Text", name: "Activities" };
 const method = { id: "fixture-method", name: "Fixture method", description: "Synthetic analysis" };
 const alternateMethod = { id: "other-method", name: "Other method", description: "Synthetic alternative analysis" };
+const countEventsMethod = { id: "fixture-event-count", name: "Count selected events", description: "Counts every selected event once." };
 const source = { id: "fixture-source", lrsId: "fixture-source", lrsTitle: "Fixture source", uniqueIdentifier: "fixture-user" };
 const activityType = { id: "fixture-type", name: "Fixture type" };
 const action = { id: "fixture-action", name: "Fixture action" };
@@ -142,7 +143,10 @@ async function fixture(browser, saved, options = {}) {
     }
     const responses = {
       "v1/users/my/lrs": [source], "v1/users/my": { name: "Fixture user", email: "fixture@localhost", roles: ["ROLE_USER"] },
-      "v1/analytics/methods": [method, alternateMethod],
+      "v1/analytics/methods": [method, alternateMethod, countEventsMethod],
+      "v1/analytics/methods/input-params/fixture-event-count": {
+        inputs: [{ id: "event", title: "Selected events", type: "Text", required: true }], params: [],
+      },
       "v1/analytics/methods/input-params/fixture-method": {
         inputs: saved.analysis.inputs.map(({ selectedInput: _selectedInput, ...port }) => port),
         params: saved.analysis.params,
@@ -325,6 +329,35 @@ async function numericInputs(browser) {
   } finally { await f.context.close(); }
 }
 
+async function countEventsDefault(browser) {
+  const saved = session({});
+  saved.analysis.inputs = [];
+  saved.analysis.params = [];
+  saved.analysis.selectedAnalyticsMethod = { method: { id: "", name: "" }, mapping: { mapping: [] } };
+  const f = await fixture(browser, saved);
+  try {
+    const methodChoice = f.analysis.getByRole("combobox", { name: "Analytics method", exact: true });
+    await methodChoice.fill("every selected");
+    await f.page.getByRole("option", { name: /^Count selected events/ }).click();
+    await until(() => f.analysisRequests.length === 1, "Counting selected events previews immediately without an arbitrary field choice");
+    assert.deepEqual(f.analysisRequests[0].body.indicatorQuery.outputs, ["statement.id"]);
+    const mapping = f.analysisRequests[0].body.analyticsTechniqueMapping.mapping;
+    assert.equal(mapping[0].inputPort.id, "event");
+    assert.equal(mapping[0].outputPort.type, "Text");
+    await f.analysis.getByText("Each matching event is counted once. No additional field selection is needed.", { exact: true }).waitFor();
+    assert.equal(await f.analysis.getByRole("region", { name: "Method inputs", exact: true }).getByRole("combobox").count(), 0);
+    await f.analysisRequests[0].respond({ data: { columns: {
+      category: column("category", "Text", ["Selected events"]), event_count: column("event_count", "Numeric", [42]),
+    } } });
+    await f.analysis.getByRole("cell", { name: "42", exact: true }).waitFor();
+    assert.equal(await f.analysis.getByRole("button", { name: "Next", exact: true }).isEnabled(), true);
+    await f.page.waitForTimeout(700);
+    assert.equal(f.analysisRequests.length, 1, "The hidden default does not cause a preview loop");
+    assert.deepEqual(f.failures, []);
+    console.log("PASS: count-selected-events contract receives a hidden row mapping and previews automatically");
+  } finally { await f.context.close(); }
+}
+
 async function parameterGating(browser) {
   const saved = session({});
   saved.analysis.params[0].value = "";
@@ -495,6 +528,7 @@ async function chartInvalidation(browser) {
     await recovery(browser);
     await incompleteInputs(browser);
     await numericInputs(browser);
+    await countEventsDefault(browser);
     await parameterGating(browser);
     await filterChanges(browser);
     await catalogAndMethodRaces(browser);

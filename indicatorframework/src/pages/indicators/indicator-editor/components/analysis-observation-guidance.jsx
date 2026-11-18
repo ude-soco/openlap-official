@@ -3,10 +3,14 @@ import { Alert, Typography } from "@mui/material";
 import { analysisObservationMessage } from "../utils/analytics-results.js";
 
 export function AnalysisObservationGuidance({ inputs = [], combined = false }) {
-  if (!inputs.some((input) => input.type === "Numeric")) return null;
+  const numerical = inputs.some((input) => input.type === "Numeric");
+  const outcome = inputs.some((input) => input.type === "TrueFalse");
+  if (!numerical && !outcome) return null;
   return (
     <Alert severity="info">
-      {combined
+      {!numerical && outcome
+        ? "Success and completion are separate recorded outcomes. Rates use known true and false outcomes; missing outcomes are excluded. This does not automatically measure completion of all assigned activities."
+        : combined
         ? "Each row in the combined data is one observation. Match sources using the same learner or activity key before comparing their measures."
         : "Numerical inputs come from the matching xAPI statements. To compare learners, first prepare one row per learner using grouped summaries, then combine those results in Multilevel analysis."}
     </Alert>

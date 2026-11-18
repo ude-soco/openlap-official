@@ -78,6 +78,21 @@ test("numerical and boolean xAPI mappings survive draft serialization and adapta
   assert.deepEqual(result.warnings, []);
 });
 
+test("count-events drafts acquire or retain the hidden row marker while ordinary methods remain unmapped", async () => {
+  const state = emptyBasicState();
+  const method = { id: "event-method", name: "Count selected events" };
+  const inputs = [{ id: "event", type: "Text", required: true }];
+  state.analysis.selectedAnalyticsMethod.method = method;
+  const api = { get: async (path) => ({ data: { data: path === "v1/analytics/methods" ? [method]
+    : path === "v1/analytics/methods/input-params/event-method" ? { inputs, params: [] } : [] } }) };
+  const first = await refreshBasicReferences(api, serializeBasicDraft(state), { adaptation: true });
+  assert.equal(first.state.analysis.selectedAnalyticsMethod.mapping.mapping[0].outputPort.id, "statement.id");
+  const resumed = await refreshBasicReferences(api, serializeBasicDraft(first.state), { adaptation: true });
+  assert.equal(resumed.state.analysis.selectedAnalyticsMethod.mapping.mapping[0].outputPort.id, "statement.id");
+  assert.equal(resumed.state.analysis.inputs[0].selectedInput.name, "Selected events");
+  assert.deepEqual(resumed.warnings, []);
+});
+
 test("unavailable references preserve the saved choice and produce an actionable warning", async () => {
   const state = emptyBasicState();
   state.dataset.selectedLRSList = [{ lrsId: "gone", uniqueIdentifier: "scope", lrsTitle: "Old course" }];

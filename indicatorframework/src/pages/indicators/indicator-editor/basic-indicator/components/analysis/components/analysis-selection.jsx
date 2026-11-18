@@ -5,9 +5,12 @@ import {
   fetchAnalyticsMethods,
   fetchTechniqueInputsAndParams,
 } from "../utils/analysis-api";
-import { Alert, Autocomplete, Button, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Autocomplete, Button, createFilterOptions, Stack, TextField, Typography } from "@mui/material";
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
 import { AnalysisObservationGuidance } from "../../../../components/analysis-observation-guidance.jsx";
+import { withAnalysisInputDefaults } from "../utils/analysis-data.js";
+
+const filterMethods = createFilterOptions({ stringify: (method) => `${method.name} ${method.description || ""}` });
 
 export default function AnalysisSelection() {
   const { api } = useContext(AuthContext);
@@ -45,14 +48,14 @@ export default function AnalysisSelection() {
       .then((response) => {
         if (cancelled) return;
         setAnalysis((previous) => previous.selectedAnalyticsMethod.method.id !== methodId
-          ? previous : {
+          ? previous : withAnalysisInputDefaults({
             ...previous,
             inputs: response.inputs || [],
             params: (response.params || []).map((param) => ({
               ...param, value: previous.params.some((saved) => saved.id === param.id)
                 ? previous.params.find((saved) => saved.id === param.id).value : param.defaultValue,
             })),
-          });
+          }));
       })
       .catch(() => {
         if (!cancelled) setMethodError("Could not load method inputs and parameters. Your selection is preserved.");
@@ -92,6 +95,7 @@ export default function AnalysisSelection() {
           disablePortal
           fullWidth
           options={analysis.analyticsMethodList}
+          filterOptions={filterMethods}
           getOptionLabel={(o) => o.name}
           getOptionKey={(option) => option.id}
           isOptionEqualToValue={(option, value) => option.id === value.id}

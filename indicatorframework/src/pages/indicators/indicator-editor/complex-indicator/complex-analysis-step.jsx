@@ -4,6 +4,7 @@ import {
   Autocomplete,
   Button,
   CircularProgress,
+  createFilterOptions,
   Divider,
   Grid,
   LinearProgress,
@@ -20,6 +21,8 @@ import {
   MethodParameters,
   ResultTable,
 } from "./complex-controls";
+
+const filterMethods = createFilterOptions({ stringify: (method) => `${method.name} ${method.description || ""}` });
 
 export default function ComplexAnalysisStep({
   reference,
@@ -72,6 +75,7 @@ export default function ComplexAnalysisStep({
             disablePortal
             fullWidth
             options={methods}
+            filterOptions={filterMethods}
             getOptionKey={(option) => option.id}
             value={methods.find((method) => method.id === methodId) || null}
             isOptionEqualToValue={(option, value) => option.id === value.id}
