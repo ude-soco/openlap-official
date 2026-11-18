@@ -25,6 +25,9 @@ public final class AnalyticsInputPreparation {
   public static OpenLAPDataSet execute(AnalyticsMethod method, OpenLAPDataSet data,
       OpenLAPPortConfig mapping, Map<String, String> parameters) {
     Prepared prepared = prepare(data, method.getInput(), mapping);
+    if (method.getClass().getName().startsWith("com.openlap.AnalyticsMethods.Prototypes.")) {
+      prepared = legacyCompleteObservations(prepared);
+    }
     try {
       method.initialize(prepared.data(), prepared.mapping(), parameters);
       return method.execute();
@@ -35,6 +38,45 @@ public final class AnalyticsInputPreparation {
           "The analytics method could not use these inputs. Check parameter ranges and ensure "
               + "the selected columns contain enough complete observations with variation.");
     }
+  }
+
+  /**
+   * The historical prototype plugins predate missing-value contracts and assume nonnull inputs.
+   * Preserve their exclusion behavior without restoring the old independent-column compaction,
+   * which could associate one event's item with another event's learner. Modern plugins receive
+   * all rows and can report their own complete-case exclusions.
+   */
+  private static Prepared legacyCompleteObservations(Prepared prepared) {
+    Set<String> ids = new HashSet<>();
+    for (OpenLAPPortMapping mapping : prepared.mapping().getMapping()) {
+      ids.add(mapping.getOutputPort().getId());
+    }
+    if (ids.isEmpty()) return prepared;
+    int rows = prepared.data().getColumns().get(ids.iterator().next()).getData().size();
+    ArrayList<Integer> retained = new ArrayList<>();
+    for (int row = 0; row < rows; row++) {
+      boolean complete = true;
+      for (String id : ids) {
+        if (prepared.data().getColumns().get(id).getData().get(row) == null) {
+          complete = false;
+          break;
+        }
+      }
+      if (complete) retained.add(row);
+    }
+    if (retained.size() == rows) return prepared;
+    OpenLAPDataSet complete = new OpenLAPDataSet();
+    for (String id : ids) {
+      OpenLAPDataColumn original = prepared.data().getColumns().get(id);
+      OpenLAPColumnConfigData config = original.getConfigurationData();
+      OpenLAPDataColumn<Object> copy = new OpenLAPDataColumn<>(
+          id, config.getType(), config.isRequired(), config.getTitle(), config.getDescription());
+      ArrayList<Object> values = new ArrayList<>();
+      for (int row : retained) values.add(original.getData().get(row));
+      copy.setData(values);
+      complete.getColumns().put(id, copy);
+    }
+    return new Prepared(complete, prepared.mapping());
   }
 
   /**
