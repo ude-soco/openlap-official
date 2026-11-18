@@ -1,8 +1,10 @@
 package com.openlap.analytics_technique.services.impl;
 
 import com.openlap.plugins.management.PluginCatalogVisibility;
+import com.openlap.plugins.management.PluginInspector;
 
 import com.openlap.analytics_technique.dto.request.AnalyticsTechniqueRequest;
+import com.openlap.analytics_module.services.impl.AnalyticsInputPreparation;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueFileNameResponse;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueInputParamResponse;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueResponse;
@@ -55,9 +57,6 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Value("${analytics.jars.folder}")
   private String analyticsMethodsJarsFolder;
-
-  @Value("${analytics.class.directory}")
-  private String analyticsMethodsClassDirectory;
 
   private final AnalyticsTechniqueRepository analyticsTechniqueRepository;
   private final PluginArtifactResolver pluginArtifactResolver;
@@ -193,7 +192,9 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
     try (Stream<Path> paths = Files.walk(Paths.get(analyticsMethodsJarsFolder))) {
       List<String> jarFiles =
-          paths.filter(Files::isRegularFile).map(Path::toString).collect(Collectors.toList());
+          paths.filter(Files::isRegularFile)
+              .filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".jar"))
+              .sorted().map(Path::toString).collect(Collectors.toList());
 
       for (String jarFile : jarFiles) {
         processAnalyticsTechniqueJarFile(jarFile, existingAnalyticsMethods);
@@ -207,26 +208,22 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   private void processAnalyticsTechniqueJarFile(
       String jarFile, List<AnalyticsTechnique> existingAnalyticsMethods) {
-    List<String> classNames = Utils.getClassNamesFromJar(jarFile, analyticsMethodsClassDirectory);
-    AnalyticsMethodsClassPathLoader classPathLoader =
-        getFolderNameFromResourcesFromJarFile(jarFile);
+    // Discover by the supported contract, not the historical prototype package.
+    // This is the same static inspection used by the reviewed upload workflow.
+    List<String> classNames = new PluginInspector()
+        .discover(PluginKind.ANALYTICS, Paths.get(jarFile)).getClasses();
     List<AnalyticsTechnique> newMethods = new ArrayList<>();
-
-    for (String className : classNames) {
-      try {
-        // validation required
-        com.openlap.template.AnalyticsMethod method = classPathLoader.loadClass(className);
-        if (isClassAlreadyProcessed(className, existingAnalyticsMethods)) {
-          continue;
+    try (AnalyticsMethodsClassPathLoader classPathLoader =
+        getFolderNameFromResourcesFromJarFile(jarFile)) {
+      for (String className : classNames) {
+        if (!isClassAlreadyProcessed(className, existingAnalyticsMethods)) {
+          AnalyticsMethod method = classPathLoader.loadClass(className);
+          newMethods.add(addNewAnalyticsTechnique(method, jarFile, className));
         }
-        AnalyticsTechnique analyticsMethod = addNewAnalyticsTechnique(method, jarFile, className);
-        newMethods.add(analyticsMethod);
-      } catch (Exception e) {
-        // Log the exception instead of ignoring it
-        e.printStackTrace();
       }
     }
-    analyticsTechniqueRepository.saveAll(newMethods);
+    if (!newMethods.isEmpty()) analyticsTechniqueRepository.saveAll(newMethods);
+    existingAnalyticsMethods.addAll(newMethods);
   }
 
   private boolean isClassAlreadyProcessed(
@@ -294,7 +291,8 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     try {
       AnalyticsMethod method = loadAnalyticsMethodInstance(techniqueId);
       OpenLAPDataSetConfigValidationResult validationResult =
-          method.getInput().validateConfiguration(indicatorToAnalyticsTechniqueMapping);
+          method.getInput().validateConfiguration(AnalyticsInputPreparation.normalizeMapping(
+              method.getInput(), indicatorToAnalyticsTechniqueMapping));
       boolean resultValid = validationResult.isValid();
       log.info("Validated analytics technique input mapping with query is: {}.", resultValid);
       if (resultValid) {

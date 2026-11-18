@@ -274,7 +274,7 @@ public class StatementServiceImpl implements StatementService {
     List<String> outputs = statementsRequest.getOutputs();
     ProjectionOperation projectOperation = Aggregation.project().andExclude("_id");
 
-    Map<String, String> outputMappings = new HashMap<>();
+    Map<String, String> outputMappings = new LinkedHashMap<>();
     for (int i = 0; i < outputs.size(); i++) {
       String outputField = outputs.get(i);
       projectOperation = projectOperation.and(outputField).as("field" + (i + 1));
@@ -335,7 +335,10 @@ public class StatementServiceImpl implements StatementService {
     }
 
     Aggregation aggregation =
-        Aggregation.newAggregation(Aggregation.match(finalCriteria), projectOperation);
+        Aggregation.newAggregation(
+            Aggregation.match(finalCriteria),
+            Aggregation.sort(Sort.by("statement.timestamp", "statement.stored", "_id")),
+            projectOperation);
 
     // Executing the aggregation
     List<Document> mappedResults = getDocuments(aggregation);
@@ -346,13 +349,12 @@ public class StatementServiceImpl implements StatementService {
       fieldValuesMap.put(output, new ArrayList<>());
     }
 
-    // Populate the field values map
+    // Every requested column receives one value per statement, including a placeholder when a
+    // field is absent. Independently skipping missing fields would pair different events in a
+    // correlation, group summary or other analysis that consumes multiple columns.
     for (Document doc : mappedResults) {
-      for (Map.Entry<String, Object> entry : doc.entrySet()) {
-        String originalFieldName = outputMappings.get(entry.getKey());
-        if (originalFieldName != null && entry.getValue() != null) {
-          fieldValuesMap.get(originalFieldName).add(entry.getValue());
-        }
+      for (Map.Entry<String, String> output : outputMappings.entrySet()) {
+        fieldValuesMap.get(output.getValue()).add(doc.get(output.getKey()));
       }
     }
 

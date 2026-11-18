@@ -23,7 +23,6 @@ import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.dynamicparam.OpenLAPDynamicParam;
 import com.openlap.infrastructure.exception.DatabaseOperationException;
 import com.openlap.infrastructure.exception.ServiceException;
-import com.openlap.exceptions.AnalyticsMethodInitializationException;
 import com.openlap.template.AnalyticsMethod;
 import com.openlap.template.VisualizationCodeGenerator;
 import com.openlap.user.dto.request.TokenRequest;
@@ -331,8 +330,27 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
         analyticsTechniqueService.loadAnalyticsMethodInstance(foundAnalyticsTechniquesById.getId());
 
     // // Params
-    Map<String, String> transformedParams = new HashMap<>();
     List<OpenLAPDynamicParam> parameters = indicatorAnalysisTechnique.getAnalyticsTechniqueParams();
+    Map<String, String> transformedParams = transformAnalysisParameters(parameters);
+
+    // // Mapping
+    if (analyticsTechniqueService
+        .validateAnalyticsTechniqueMapping(
+            foundAnalyticsTechniquesById.getId(),
+            indicatorAnalysisTechnique.getAnalyticsTechniqueMapping())
+        .isValid()) {
+      analyzedDataSet = AnalyticsInputPreparation.execute(analyticsMethod, dataSet,
+          indicatorAnalysisTechnique.getAnalyticsTechniqueMapping(), transformedParams);
+    } else {
+      throw com.openlap.analytics_module.exceptions.indicator.ComplexIndicatorException.invalid(
+          "The analysis input mapping is invalid. Review the selected dataset columns.");
+    }
+    log.info("Data analysis completed.");
+    return analyzedDataSet;
+  }
+
+  static Map<String, String> transformAnalysisParameters(List<OpenLAPDynamicParam> parameters) {
+    Map<String, String> transformedParams = new HashMap<>();
     for (OpenLAPDynamicParam param : parameters == null ? List.<OpenLAPDynamicParam>of() : parameters) {
       Object value = param.getValue();
       if (value == null) continue;
@@ -350,25 +368,7 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       transformedParams.put(param.getId(), stringValue);
     }
 
-    // // Mapping
-    if (analyticsTechniqueService
-        .validateAnalyticsTechniqueMapping(
-            foundAnalyticsTechniquesById.getId(),
-            indicatorAnalysisTechnique.getAnalyticsTechniqueMapping())
-        .isValid()) {
-      try {
-        analyticsMethod.initialize(
-            dataSet, indicatorAnalysisTechnique.getAnalyticsTechniqueMapping(), transformedParams);
-        analyzedDataSet = analyticsMethod.execute();
-      } catch (AnalyticsMethodInitializationException e) {
-        throw new ServiceException("Could not initialize analytics method");
-      }
-    } else {
-      throw com.openlap.analytics_module.exceptions.indicator.ComplexIndicatorException.invalid(
-          "The analysis input mapping is invalid. Review the selected dataset columns.");
-    }
-    log.info("Data analysis completed.");
-    return analyzedDataSet;
+    return transformedParams;
   }
 
   @Override
