@@ -140,8 +140,7 @@ export default function Analysis() {
                     </Stack>
                   ) : preview.error ? (
                     <Alert severity="error">
-                      The analysis could not be run. Please check your inputs
-                      and filters, then try again.
+                      {preview.error}
                     </Alert>
                   ) : previewComplete ? (
                     <AnalyzedDataTable data={columns} />

@@ -10,6 +10,7 @@ import useAdaptationPreview from "./use-adaptation-preview.js";
 import ComplexAdaptationSources from "./complex-adaptation-sources.jsx";
 import { EmbeddedBasicIndicator } from "../basic-indicator/basic-indicator.jsx";
 import { emptyBasicState, serializeBasicDraft } from "../basic-indicator/utils/basic-draft-model.js";
+import { defaultSourceMeasures } from "../utils/analytics-results.js";
 import CommunityComparison from "../../../../common/components/community-adaptation/community-comparison.jsx";
 import { getCustomizationErrors, getVisualizationDescriptor } from "../basic-indicator/components/visualization/utils/visualization-descriptor";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -497,7 +498,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
             keyColumnId: outputs.some((port) => port.id === source.keyColumnId) ? source.keyColumnId : keys.length === 1 ? keys[0].id : "",
             measureColumnIds: source.measureColumnIds.length
               ? source.measureColumnIds.filter((id) => outputs.some((port) => port.id === id && port.type === "Numeric"))
-              : outputs.filter((port) => port.type === "Numeric").map((port) => port.id),
+              : defaultSourceMeasures(outputs),
           };
         });
         return JSON.stringify(sources) === JSON.stringify(previous.sources) ? previous : { ...previous, sources };

@@ -38,7 +38,7 @@ export default function AnalysisSummary() {
       case "method":
         return analysis.selectedAnalyticsMethod.method.name.length !== 0;
       case "inputs":
-        return analysis.inputs.some((obj) => "selectedInput" in obj);
+        return analysis.inputs.some((obj) => Boolean(obj.selectedInput));
       default:
         return false;
     }

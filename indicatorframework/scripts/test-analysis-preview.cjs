@@ -215,7 +215,7 @@ async function recovery(browser) {
     assert.equal(await f.analysis.getByRole("cell", { name: "Fixture result", exact: true }).count(), 0);
     assert.equal(await next.isDisabled(), true);
     await f.analysisRequests[1].respond({ code: "FIXTURE_UNAVAILABLE", message: "Synthetic failure" }, 503);
-    await f.analysis.getByRole("alert").filter({ hasText: "The analysis could not be run" }).waitFor();
+    await f.analysis.getByRole("alert").filter({ hasText: "Synthetic failure" }).waitFor();
     assert.equal(await next.isDisabled(), true);
     await f.page.waitForTimeout(700);
     assert.equal(f.analysisRequests.length, 2, "A failed automatic preview waits for an edit or explicit retry");
@@ -263,6 +263,65 @@ async function incompleteInputs(browser) {
     await f.analysis.getByRole("cell", { name: "Required inputs ready", exact: true }).waitFor();
     assert.deepEqual(f.failures, []);
     console.log("PASS: every required method input must be mapped before automatic execution");
+  } finally { await f.context.close(); }
+}
+
+async function numericInputs(browser) {
+  const saved = session({});
+  const values = { id: "values", title: "Values", type: "Numeric", required: true,
+    description: "The numerical measurements to summarise." };
+  const group = { id: "group", title: "Group", type: "Text", required: false };
+  saved.analysis.inputs = [values, group];
+  saved.analysis.params = [];
+  saved.analysis.selectedAnalyticsMethod.mapping.mapping = [];
+  const f = await fixture(browser, saved);
+  try {
+    await f.page.waitForTimeout(700);
+    assert.equal(f.analysisRequests.length, 0, "Numerical methods wait for the required measurement");
+    const inputs = f.analysis.getByRole("region", { name: "Method inputs", exact: true });
+    await inputs.getByRole("combobox").first().click();
+    assert.equal(await f.page.getByRole("option", { name: "Raw score", exact: true }).count(), 1);
+    assert.equal(await f.page.getByRole("option", { name: "Activities", exact: true }).count(), 0,
+      "Categorical activity labels are not offered as numerical observations");
+    await f.page.getByRole("option", { name: "Raw score", exact: true }).click();
+    await until(() => f.analysisRequests.length === 1, "Selecting the required numeric field automatically previews");
+    const mapping = f.analysisRequests[0].body.analyticsTechniqueMapping.mapping;
+    assert.equal(mapping[0].outputPort.id, "statement.result.score.raw");
+    assert.equal(mapping[0].outputPort.type, "Numeric");
+    await f.analysisRequests[0].respond({ data: { columns: {
+      group: column("group", "Text", ["All observations"]),
+      count: column("count", "Numeric", [1]),
+      excluded_count: column("excluded_count", "Numeric", [2]),
+      mean: column("mean", "Numeric", [7.5]),
+      standard_deviation: column("standard_deviation", "Numeric", [null]),
+    } } });
+    await f.analysis.getByRole("status").filter({ hasText: "1 observation analysed. 2 incomplete observations excluded." }).waitFor();
+    assert.equal(await f.analysis.getByRole("cell", { name: "—", exact: true }).count(), 1,
+      "An undefined statistic is not displayed as zero");
+    await editorNavigation.assertNoOverflow(f.page);
+    await inputs.getByRole("combobox").nth(1).click();
+    await f.page.getByRole("option", { name: "Users (account name)", exact: true }).click();
+    await until(() => f.analysisRequests.length === 2, "Optional grouping changes automatically refresh");
+    assert.equal(f.analysisRequests[1].body.analyticsTechniqueMapping.mapping.length, 2);
+    await f.analysisRequests[1].respond({ data: { columns: {
+      group: column("group", "Text", ["First group", "Second group"]),
+      count: column("count", "Numeric", [2, 1]),
+      excluded_count: column("excluded_count", "Numeric", [1, 0]),
+      ungrouped_count: column("ungrouped_count", "Numeric", [2, 2]),
+      mean: column("mean", "Numeric", [3, 5]),
+    } } });
+    await f.analysis.getByRole("status").filter({ hasText: "3 observations analysed across 2 groups. 1 incomplete observation excluded. 2 additional observations excluded" }).waitFor();
+    await inputs.getByRole("combobox").nth(1).click();
+    await f.page.getByRole("option", { name: "Not used", exact: true }).click();
+    await until(() => f.analysisRequests.length === 3, "Clearing optional input refreshes without losing numeric mapping");
+    assert.equal(f.analysisRequests[2].body.analyticsTechniqueMapping.mapping.length, 1);
+    assert.deepEqual(f.analysisRequests[2].body.indicatorQuery.outputs, ["statement.result.score.raw"]);
+    await f.analysisRequests[2].respond({ code: "INVALID_ANALYSIS_INPUT", message: "Choose at least three complete observations." }, 400);
+    await f.analysis.getByRole("alert").filter({ hasText: "Choose at least three complete observations." }).waitFor();
+    assert.equal(await f.analysis.getByRole("cell", { name: "First group", exact: true }).count(), 0);
+    assert.equal(await f.analysis.getByRole("button", { name: "Next", exact: true }).isDisabled(), true);
+    assert.deepEqual(f.failures, []);
+    console.log("PASS: typed numerical fields, automatic preview, optional clearing, observation diagnostics, undefined statistics and actionable errors");
   } finally { await f.context.close(); }
 }
 
@@ -435,6 +494,7 @@ async function chartInvalidation(browser) {
     await navigation(browser);
     await recovery(browser);
     await incompleteInputs(browser);
+    await numericInputs(browser);
     await parameterGating(browser);
     await filterChanges(browser);
     await catalogAndMethodRaces(browser);

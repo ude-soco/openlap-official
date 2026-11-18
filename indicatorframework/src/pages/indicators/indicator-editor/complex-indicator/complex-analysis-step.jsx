@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import SectionCard from "../../../../common/components/section-card/section-card";
+import { AnalysisObservationGuidance, AnalysisObservationSummary } from "../components/analysis-observation-guidance.jsx";
 import { datasetRows, mappingsReady, parametersReady } from "./complex-model";
 import {
   ColumnMappings,
@@ -53,6 +54,7 @@ export default function ComplexAnalysisStep({
     methods.filter((method) => method.name === option.name).length > 1
       ? `${option.name} · ${option.id.slice(-6)}`
       : option.name || "";
+  const selectedMethod = methods.find((method) => method.id === methodId);
 
   return (
     <>
@@ -120,6 +122,12 @@ export default function ComplexAnalysisStep({
               );
             }}
           />
+          {selectedMethod?.description && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
+              {selectedMethod.description}
+            </Typography>
+          )}
+          <AnalysisObservationGuidance inputs={methodInputs} combined />
         </Stack>
       </SectionCard>
       {methodLoading && (
@@ -195,11 +203,14 @@ export default function ComplexAnalysisStep({
           ) : previewError ? (
             <Failure message={previewError} />
           ) : analyzed ? (
+            <>
+            <AnalysisObservationSummary dataset={analyzed} />
             <ResultTable
               dataset={analyzed}
               title="Analysis data preview"
               framed={false}
             />
+            </>
           ) : (
             <Stack sx={{ alignItems: "center", py: 3, textAlign: "center" }}>
               <Typography variant="body2" color="text.secondary">

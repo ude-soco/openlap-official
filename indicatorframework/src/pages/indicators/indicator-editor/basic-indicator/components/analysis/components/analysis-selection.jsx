@@ -7,6 +7,7 @@ import {
 } from "../utils/analysis-api";
 import { Alert, Autocomplete, Button, Stack, TextField, Typography } from "@mui/material";
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
+import { AnalysisObservationGuidance } from "../../../../components/analysis-observation-guidance.jsx";
 
 export default function AnalysisSelection() {
   const { api } = useContext(AuthContext);
@@ -14,6 +15,8 @@ export default function AnalysisSelection() {
   const methodId = analysis.selectedAnalyticsMethod.method.id;
   const [methodError, setMethodError] = useState("");
   const [retry, setRetry] = useState(0);
+  const selectedMethod = analysis.analyticsMethodList.find((method) => method.id === methodId) ||
+    analysis.selectedAnalyticsMethod.method;
 
   useEffect(() => {
     let cancelled = false;
@@ -90,7 +93,9 @@ export default function AnalysisSelection() {
           fullWidth
           options={analysis.analyticsMethodList}
           getOptionLabel={(o) => o.name}
-          value={analysis.selectedAnalyticsMethod.method || null}
+          getOptionKey={(option) => option.id}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
+          value={selectedMethod?.id ? selectedMethod : null}
           onChange={(event, value) => handleSelectAnalyticsMethod(value)}
           renderInput={(params) => (
             <TextField
@@ -123,6 +128,12 @@ export default function AnalysisSelection() {
             );
           }}
         />
+        {selectedMethod?.description && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
+            {selectedMethod.description}
+          </Typography>
+        )}
+        <AnalysisObservationGuidance inputs={analysis.inputs} />
         {methodError && (
           <Alert severity="error" action={
             <Button color="inherit" size="small" onClick={() => setRetry((previous) => previous + 1)}>

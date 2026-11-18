@@ -14,6 +14,7 @@ import {
 import SectionCard from "../../../../common/components/section-card/section-card";
 import { datasetRows, sourcesReady } from "./complex-model";
 import { Failure, ResultTable } from "./complex-controls";
+import { sourceMeasureHelp } from "../utils/analytics-results.js";
 
 export default function ComplexCombineStep({
   isMulti,
@@ -97,7 +98,7 @@ export default function ComplexCombineStep({
                       measureColumnIds: event.target.value,
                     })
                   }
-                  helperText="Choose numerical measures to include."
+                  helperText={sourceMeasureHelp(source)}
                 >
                   {source.outputs
                     .filter(

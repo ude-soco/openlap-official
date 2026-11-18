@@ -10,32 +10,14 @@ import {
   Stack,
   Tooltip,
 } from "@mui/material";
-import { analyticsInputMenuList } from "../utils/analysis-data";
+import { compatibleAnalysisInputs, withAnalysisInput } from "../utils/analysis-data";
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
 
 export default function InputsSelection() {
   const { analysis, setAnalysis } = useContext(BasicContext);
 
   const handleSelectInputs = (input, value) => {
-    const tempInputMappings = { inputPort: input, outputPort: value };
-    setAnalysis((p) => ({
-        ...p,
-        inputs: p.inputs.map((item) => item.id === input.id
-          ? { ...item, selectedInput: value } : item),
-        selectedAnalyticsMethod: {
-          ...p.selectedAnalyticsMethod,
-          mapping: {
-            ...p.selectedAnalyticsMethod.mapping,
-            mapping: [
-              ...p.selectedAnalyticsMethod.mapping.mapping.filter(
-                (item) => item.inputPort.id !== input.id,
-              ),
-              tempInputMappings,
-            ],
-          },
-        },
-        analyzedData: {},
-    }));
+    setAnalysis((previous) => withAnalysisInput(previous, input, value));
   };
 
   return (
@@ -50,6 +32,7 @@ export default function InputsSelection() {
           )?.outputPort;
           const requiredMissing =
             Boolean(input.required) && !selected;
+          const options = compatibleAnalysisInputs(input, selected);
           const labelText = `${input.title} ${
             input.required ? "(Required)" : "(Optional)"
           }`;
@@ -62,23 +45,26 @@ export default function InputsSelection() {
                 label={labelText}
                 value={selected?.id || ""}
                 onChange={(event) => {
-                  const selectedMenu = analyticsInputMenuList.find(
+                  const selectedMenu = options.find(
                     (menu) => menu.id === event.target.value
                   );
                   handleSelectInputs(input, selectedMenu);
                 }}
               >
-                {analyticsInputMenuList.map((menu) => (
+                <MenuItem value="">
+                  <em>{input.required ? "Select a field" : "Not used"}</em>
+                </MenuItem>
+                {options.map((menu) => (
                   <MenuItem value={menu.id} key={menu.id}>
-                    <Tooltip arrow title={menu.description} placement="right">
+                    <Tooltip describeChild arrow title={menu.description} placement="right">
                       <Box sx={{ width: "100%" }}>{menu.name}</Box>
                     </Tooltip>
                   </MenuItem>
                 ))}
               </Select>
-              {input.description && (
-                <FormHelperText>{input.description}</FormHelperText>
-              )}
+              <FormHelperText>{!options.length
+                ? "No compatible field is available for this input type."
+                : input.description || `Choose a ${input.type === "Numeric" ? "numerical" : input.type === "TrueFalse" ? "true/false" : "categorical"} field.`}</FormHelperText>
             </FormControl>
           );
         })}
