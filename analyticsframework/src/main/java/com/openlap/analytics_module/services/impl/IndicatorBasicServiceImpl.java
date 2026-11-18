@@ -26,7 +26,6 @@ import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.dynamicparam.OpenLAPDynamicParam;
 import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.infrastructure.exception.ValidationException;
-import com.openlap.exceptions.AnalyticsMethodInitializationException;
 import com.openlap.template.AnalyticsMethod;
 import com.openlap.user.entities.User;
 import com.openlap.user.entities.utility_entities.LrsConsumer;
@@ -63,6 +62,8 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
           indicatorAnalysisRequest.getAnalyticsTechniqueParams());
       return indicatorUtilityService.getAnalyzedDataSetMethod(
           indicatorAnalysisTechnique, statements);
+    } catch (com.openlap.infrastructure.exception.OpenLapException e) {
+      throw e;
     } catch (Exception e) {
       throw new ServiceException("Could not analyze indicator", e);
     }
@@ -124,39 +125,15 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
             analyticsTechniqueReference.getAdditionalParams(),
             new TypeToken<List<OpenLAPDynamicParam>>() {}.getType());
 
-    Map<String, String> transformedParams = getTransformedParams(paramList);
+    Map<String, String> transformedParams = IndicatorUtilityServiceImpl.transformAnalysisParameters(paramList);
 
     AnalyticsMethod analyticsMethod =
         analyticsTechniqueService.loadAnalyticsMethodInstance(analyticsTechnique.getId());
-    try {
-      analyticsMethod.initialize(statements, analyticsTechniquePortMapping, transformedParams);
-      analyzedDataSet = analyticsMethod.execute();
-      //      indicatorAnalysisCacheRepository.save(
-      //          new IndicatorAnalysisCache(
-      //              foundIndicator.getId(), gson.toJson(analyzedDataSet), LocalDateTime.now()));
-    } catch (AnalyticsMethodInitializationException e) {
-      throw new ServiceException("Could not initialize analytics method");
-    }
+    analyzedDataSet = AnalyticsInputPreparation.execute(
+        analyticsMethod, statements, analyticsTechniquePortMapping, transformedParams);
     log.info("Data analysis of indicator with id '{}' completed.", indicatorId);
 
     return analyzedDataSet;
-  }
-
-  private static Map<String, String> getTransformedParams(List<OpenLAPDynamicParam> paramList) {
-    Map<String, String> transformedParams = new HashMap<>();
-    for (OpenLAPDynamicParam param : paramList) {
-      Object value = param.getValue();
-      String stringValue;
-      if (value instanceof Double) {
-        // Convert Double to Integer and then to String
-        stringValue = Integer.toString(((Double) value).intValue());
-      } else {
-        // Directly convert to String for non-Double values
-        stringValue = value.toString();
-      }
-      transformedParams.put(param.getId(), stringValue);
-    }
-    return transformedParams;
   }
 
   @Override

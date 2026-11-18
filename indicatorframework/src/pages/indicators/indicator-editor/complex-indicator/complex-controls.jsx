@@ -27,6 +27,7 @@ import SectionCard from "../../../../common/components/section-card/section-card
 import CustomTooltip from "../../../../common/components/custom-tooltip/custom-tooltip";
 import { DataTypes } from "../../../indicator-specification-cards/creator/utils/data/config";
 import { datasetColumns, datasetRows, withMapping } from "./complex-model";
+import { analysisColumnHelp } from "../utils/analytics-results.js";
 
 export function Failure({ message, retry }) {
   return message ? (
@@ -100,10 +101,10 @@ export function ResultTable({ dataset, title = "Data preview", framed = true }) 
                     >
                       <Box sx={{ display: "inline-flex", alignItems: "center" }}>
                         {column.title || column.id} ({typeName})
-                        {description && (
+                        {(description || column.description) && (
                           <CustomTooltip
                             type="description"
-                            message={`What is <b>${typeName}</b> data type?<br/>${description}`}
+                            message={analysisColumnHelp(column, description ? `What is <b>${typeName}</b> data type?<br/>${description}` : "")}
                           />
                         )}
                       </Box>

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.gson.JsonParseException;
+import com.google.gson.Gson;
 import com.openlap.analytics_module.entities.Indicator;
 import com.openlap.analytics_module.entities.IndicatorCache;
 import com.openlap.analytics_module.entities.utility_entities.AnalyticsTechniqueReference;
@@ -96,14 +97,18 @@ public class IndicatorJsonCompatibilityTest {
     technique.setId("technique");
     indicator.setIndicatorQuery("{}");
     indicator.setAnalyticsTechniqueReference(new AnalyticsTechniqueReference("""
-        [{"id":"limit","value":10},{"id":"enabled","value":false},
+        [{"id":"limit","value":10},{"id":"fraction","value":0.125},{"id":"enabled","value":false},
         {"id":"title","value":"Grüße"}]
         """, MAPPING, technique));
     when(caches.findById("indicator")).thenReturn(Optional.empty());
-    OpenLAPDataSet input = new OpenLAPDataSet();
+    OpenLAPDataSet input = new Gson().fromJson(DATASET, OpenLAPDataSet.class);
     OpenLAPDataSet output = new OpenLAPDataSet();
     when(statements.findStatements(any())).thenReturn(input);
     AnalyticsMethod plugin = mock(AnalyticsMethod.class);
+    OpenLAPDataSet contract = new OpenLAPDataSet();
+    contract.getColumns().put("labels", new com.openlap.dataset.OpenLAPDataColumn<>(
+        "labels", OpenLAPColumnDataType.Text, true, "Labels", ""));
+    when(plugin.getInput()).thenReturn(contract);
     when(analytics.loadAnalyticsMethodInstance("technique")).thenReturn(plugin);
     when(plugin.execute()).thenReturn(output);
 
@@ -111,7 +116,7 @@ public class IndicatorJsonCompatibilityTest {
 
     ArgumentCaptor<OpenLAPPortConfig> mapping = ArgumentCaptor.forClass(OpenLAPPortConfig.class);
     verify(plugin).initialize(same(input), mapping.capture(),
-        eq(Map.of("limit", "10", "enabled", "false", "title", "Grüße")));
+        eq(Map.of("limit", "10", "fraction", "0.125", "enabled", "false", "title", "Grüße")));
     assertMapping(mapping.getValue());
   }
 

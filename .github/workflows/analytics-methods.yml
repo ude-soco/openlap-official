@@ -1,0 +1,50 @@
+name: Analytics methods release checks
+
+on:
+  pull_request:
+    paths:
+      - analytics-methods/**
+      - artifacts/analytics/**
+      - analyticsframework/**
+      - .github/workflows/analytics-methods.yml
+  push:
+    branches: [main]
+    paths:
+      - analytics-methods/**
+      - artifacts/analytics/**
+      - analyticsframework/**
+      - .github/workflows/analytics-methods.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: analytics-methods-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: Qualify analytics JAR and reproducible delivery
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '21.0.11'
+          cache: maven
+          cache-dependency-path: |
+            analytics-methods/pom.xml
+            analyticsframework/pom.xml
+      - name: Check known-answer numerical tests and build the shaded JAR
+        run: ./analyticsframework/mvnw -B -f analytics-methods/pom.xml clean verify
+      - name: Verify delivery checksum and source reproducibility
+        run: |
+          (cd artifacts/analytics && sha256sum --check SHA256SUMS)
+          cmp analytics-methods/target/OpenLAP-Analytics-1.1.0.jar artifacts/analytics/OpenLAP-Analytics-1.1.0.jar
+      - name: Qualify admin inspection, manual discovery and saved indicators
+        working-directory: analyticsframework
+        run: ./mvnw -B -Dtest=AnalyticsReleaseQualification test

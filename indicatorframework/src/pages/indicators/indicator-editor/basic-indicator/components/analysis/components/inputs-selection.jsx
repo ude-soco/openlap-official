@@ -9,47 +9,34 @@ import {
   Select,
   Stack,
   Tooltip,
+  Typography,
 } from "@mui/material";
-import { analyticsInputMenuList } from "../utils/analysis-data";
+import { compatibleAnalysisInputs, isEventCountInput, withAnalysisInput } from "../utils/analysis-data";
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
 
 export default function InputsSelection() {
   const { analysis, setAnalysis } = useContext(BasicContext);
+  const countEvents = isEventCountInput(analysis.selectedAnalyticsMethod.method, analysis.inputs);
 
   const handleSelectInputs = (input, value) => {
-    const tempInputMappings = { inputPort: input, outputPort: value };
-    setAnalysis((p) => ({
-        ...p,
-        inputs: p.inputs.map((item) => item.id === input.id
-          ? { ...item, selectedInput: value } : item),
-        selectedAnalyticsMethod: {
-          ...p.selectedAnalyticsMethod,
-          mapping: {
-            ...p.selectedAnalyticsMethod.mapping,
-            mapping: [
-              ...p.selectedAnalyticsMethod.mapping.mapping.filter(
-                (item) => item.inputPort.id !== input.id,
-              ),
-              tempInputMappings,
-            ],
-          },
-        },
-        analyzedData: {},
-    }));
+    setAnalysis((previous) => withAnalysisInput(previous, input, value));
   };
 
   return (
     <SectionCard
       title="Method inputs"
-      helper="Map each input the method needs to a column from your data."
+      helper={countEvents ? "Count the events matching your dataset and activity filters." : "Map each input the method needs to a column from your data."}
     >
       <Stack sx={{ gap: 2 }}>
-        {analysis.inputs.map((input, index) => {
+        {countEvents ? <Typography variant="body2" color="text.secondary">
+          Each matching event is counted once. No additional field selection is needed.
+        </Typography> : analysis.inputs.map((input, index) => {
           const selected = analysis.selectedAnalyticsMethod.mapping.mapping.find(
             (item) => item.inputPort.id === input.id,
           )?.outputPort;
           const requiredMissing =
             Boolean(input.required) && !selected;
+          const options = compatibleAnalysisInputs(input, selected, analysis.selectedAnalyticsMethod.method);
           const labelText = `${input.title} ${
             input.required ? "(Required)" : "(Optional)"
           }`;
@@ -62,23 +49,26 @@ export default function InputsSelection() {
                 label={labelText}
                 value={selected?.id || ""}
                 onChange={(event) => {
-                  const selectedMenu = analyticsInputMenuList.find(
+                  const selectedMenu = options.find(
                     (menu) => menu.id === event.target.value
                   );
                   handleSelectInputs(input, selectedMenu);
                 }}
               >
-                {analyticsInputMenuList.map((menu) => (
+                <MenuItem value="">
+                  <em>{input.required ? "Select a field" : "Not used"}</em>
+                </MenuItem>
+                {options.map((menu) => (
                   <MenuItem value={menu.id} key={menu.id}>
-                    <Tooltip arrow title={menu.description} placement="right">
+                    <Tooltip describeChild arrow title={menu.description} placement="right">
                       <Box sx={{ width: "100%" }}>{menu.name}</Box>
                     </Tooltip>
                   </MenuItem>
                 ))}
               </Select>
-              {input.description && (
-                <FormHelperText>{input.description}</FormHelperText>
-              )}
+              <FormHelperText>{!options.length
+                ? "No compatible field is available for this input type."
+                : input.description || `Choose a ${input.type === "Numeric" ? "numerical" : input.type === "TrueFalse" ? "true/false" : "categorical"} field.`}</FormHelperText>
             </FormControl>
           );
         })}

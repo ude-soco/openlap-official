@@ -10,6 +10,7 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  Stack,
 } from "@mui/material";
 import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded";
 import { BasicContext } from "../../../basic-indicator";
@@ -17,6 +18,8 @@ import CustomTooltip from "../../../../../../../common/components/custom-tooltip
 import EmptyState from "../../../../../../../common/components/empty-state/empty-state";
 import { DataTypes } from "../../../../../../indicator-specification-cards/creator/utils/data/config";
 import { getAnalyzedRowCount } from "../../../utils/analyzed-data.js";
+import { AnalysisObservationSummary } from "../../../../components/analysis-observation-guidance.jsx";
+import { analysisColumnHelp } from "../../../../utils/analytics-results.js";
 
 const AnalyzedDataTable = ({ data }) => {
   const {
@@ -38,14 +41,18 @@ const AnalyzedDataTable = ({ data }) => {
     )})`,
     data: analyzedData[key].data,
     type: formatTypeName(analyzedData[key].configurationData.type),
+    configuration: analyzedData[key].configurationData,
   }));
 
   const handleTooltipDescription = (type) => {
+    const description = DataTypes[type.toLowerCase()]?.description;
+    if (!description) return `Values of type <b>${type}</b>.`;
     return `What is <b>${type}</b> data type?<br/>
-    ${DataTypes[type.toLowerCase()].description}`;
+    ${description}`;
   };
 
   const numRows = getAnalyzedRowCount(analyzedData);
+  const safePage = Math.min(page, Math.max(0, Math.ceil(numRows / rowsPerPage) - 1));
 
   // Friendly empty result: the method ran but produced no rows.
   if (numRows === 0) {
@@ -60,8 +67,8 @@ const AnalyzedDataTable = ({ data }) => {
 
   // Calculate the rows to display based on the current page and rows per page
   const displayedRows = [...Array(numRows).keys()].slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
+    safePage * rowsPerPage,
+    safePage * rowsPerPage + rowsPerPage
   );
 
   const handleChangePage = (event, newPage) => {
@@ -74,6 +81,8 @@ const AnalyzedDataTable = ({ data }) => {
   };
 
   return (
+    <Stack sx={{ minWidth: 0 }}>
+    <AnalysisObservationSummary dataset={analyzedData} />
     <TableContainer
       component={Paper}
       variant="outlined"
@@ -93,7 +102,7 @@ const AnalyzedDataTable = ({ data }) => {
                   {column.title}
                   <CustomTooltip
                     type="description"
-                    message={handleTooltipDescription(column.type)}
+                    message={analysisColumnHelp(column.configuration, handleTooltipDescription(column.type))}
                   />
                 </Box>
               </TableCell>
@@ -104,7 +113,7 @@ const AnalyzedDataTable = ({ data }) => {
           {displayedRows.map((rowIndex) => (
             <TableRow key={rowIndex} hover>
               {columns.map((column, colIndex) => (
-                <TableCell key={colIndex}>{column.data[rowIndex]}</TableCell>
+                <TableCell key={colIndex}>{column.data[rowIndex] == null ? "—" : String(column.data[rowIndex])}</TableCell>
               ))}
             </TableRow>
           ))}
@@ -115,11 +124,12 @@ const AnalyzedDataTable = ({ data }) => {
         component="div"
         count={numRows}
         rowsPerPage={rowsPerPage}
-        page={page}
+        page={safePage}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
     </TableContainer>
+    </Stack>
   );
 };
 

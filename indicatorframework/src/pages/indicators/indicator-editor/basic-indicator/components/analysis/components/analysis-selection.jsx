@@ -5,8 +5,12 @@ import {
   fetchAnalyticsMethods,
   fetchTechniqueInputsAndParams,
 } from "../utils/analysis-api";
-import { Alert, Autocomplete, Button, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Autocomplete, Button, createFilterOptions, Stack, TextField, Typography } from "@mui/material";
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
+import { AnalysisObservationGuidance } from "../../../../components/analysis-observation-guidance.jsx";
+import { withAnalysisInputDefaults } from "../utils/analysis-data.js";
+
+const filterMethods = createFilterOptions({ stringify: (method) => `${method.name} ${method.description || ""}` });
 
 export default function AnalysisSelection() {
   const { api } = useContext(AuthContext);
@@ -14,6 +18,8 @@ export default function AnalysisSelection() {
   const methodId = analysis.selectedAnalyticsMethod.method.id;
   const [methodError, setMethodError] = useState("");
   const [retry, setRetry] = useState(0);
+  const selectedMethod = analysis.analyticsMethodList.find((method) => method.id === methodId) ||
+    analysis.selectedAnalyticsMethod.method;
 
   useEffect(() => {
     let cancelled = false;
@@ -42,14 +48,14 @@ export default function AnalysisSelection() {
       .then((response) => {
         if (cancelled) return;
         setAnalysis((previous) => previous.selectedAnalyticsMethod.method.id !== methodId
-          ? previous : {
+          ? previous : withAnalysisInputDefaults({
             ...previous,
             inputs: response.inputs || [],
             params: (response.params || []).map((param) => ({
               ...param, value: previous.params.some((saved) => saved.id === param.id)
                 ? previous.params.find((saved) => saved.id === param.id).value : param.defaultValue,
             })),
-          });
+          }));
       })
       .catch(() => {
         if (!cancelled) setMethodError("Could not load method inputs and parameters. Your selection is preserved.");
@@ -89,8 +95,11 @@ export default function AnalysisSelection() {
           disablePortal
           fullWidth
           options={analysis.analyticsMethodList}
+          filterOptions={filterMethods}
           getOptionLabel={(o) => o.name}
-          value={analysis.selectedAnalyticsMethod.method || null}
+          getOptionKey={(option) => option.id}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
+          value={selectedMethod?.id ? selectedMethod : null}
           onChange={(event, value) => handleSelectAnalyticsMethod(value)}
           renderInput={(params) => (
             <TextField
@@ -123,6 +132,12 @@ export default function AnalysisSelection() {
             );
           }}
         />
+        {selectedMethod?.description && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
+            {selectedMethod.description}
+          </Typography>
+        )}
+        <AnalysisObservationGuidance inputs={analysis.inputs} />
         {methodError && (
           <Alert severity="error" action={
             <Button color="inherit" size="small" onClick={() => setRetry((previous) => previous + 1)}>

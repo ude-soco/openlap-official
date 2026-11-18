@@ -9,6 +9,7 @@ import {
   Select,
 } from "@mui/material";
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
+import { preferredAnalysisColumns } from "../../../../utils/analytics-results.js";
 
 const TypeInputSelection = () => {
   const { analysis, visualization, setVisualization, isCommunityAdaptation } =
@@ -29,7 +30,7 @@ const TypeInputSelection = () => {
       if (input.selectedInput) return input;
 
       // Find a matching analyzedData item
-      const filteredInputs = Object.values(analysis.analyzedData).filter(
+      const filteredInputs = preferredAnalysisColumns(Object.values(analysis.analyzedData), input).filter(
         (value) => input.type === value.configurationData.type
       );
 
@@ -120,7 +121,7 @@ const TypeInputSelection = () => {
     >
       <Grid container spacing={2}>
         {visualization.inputs.map((input) => {
-          const filteredInputs = Object.values(analysis.analyzedData).filter(
+          const filteredInputs = preferredAnalysisColumns(Object.values(analysis.analyzedData), input).filter(
             (value) => input.type === value.configurationData.type
           );
           const labelId = `vis-input-label-${input.id}`;

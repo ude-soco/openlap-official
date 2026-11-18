@@ -61,6 +61,38 @@ test("resuming fetches current contracts, preserves edited false/zero/blank valu
   assert.equal(result.state.visualization.inputs[0].selectedInput.id, "names");
 });
 
+test("numerical and boolean xAPI mappings survive draft serialization and adaptation reference refresh", async () => {
+  const state = emptyBasicState();
+  state.analysis.selectedAnalyticsMethod.method = { id: "typed-method", name: "Typed method" };
+  const inputs = [{ id: "values", type: "Numeric", required: true }, { id: "completed", type: "TrueFalse", required: false }];
+  const outputs = [{ id: "statement.result.score.raw", type: "Numeric", name: "Raw score" },
+    { id: "statement.result.completion", type: "TrueFalse", name: "Completion" }];
+  state.analysis.selectedAnalyticsMethod.mapping.mapping = inputs.map((inputPort, index) => ({ inputPort, outputPort: outputs[index] }));
+  const api = { get: async (path) => ({ data: { data: path === "v1/analytics/methods"
+    ? [{ id: "typed-method", name: "Typed method" }]
+    : path === "v1/analytics/methods/input-params/typed-method" ? { inputs, params: [] } : [] } }) };
+  const result = await refreshBasicReferences(api, serializeBasicDraft(state), { adaptation: true });
+  assert.deepEqual(result.state.analysis.selectedAnalyticsMethod.mapping.mapping.map((entry) =>
+    [entry.outputPort.id, entry.outputPort.type]), outputs.map((entry) => [entry.id, entry.type]));
+  assert.deepEqual(result.state.analysis.inputs.map((input) => input.selectedInput.type), ["Numeric", "TrueFalse"]);
+  assert.deepEqual(result.warnings, []);
+});
+
+test("count-events drafts acquire or retain the hidden row marker while ordinary methods remain unmapped", async () => {
+  const state = emptyBasicState();
+  const method = { id: "event-method", name: "Count selected events" };
+  const inputs = [{ id: "event", type: "Text", required: true }];
+  state.analysis.selectedAnalyticsMethod.method = method;
+  const api = { get: async (path) => ({ data: { data: path === "v1/analytics/methods" ? [method]
+    : path === "v1/analytics/methods/input-params/event-method" ? { inputs, params: [] } : [] } }) };
+  const first = await refreshBasicReferences(api, serializeBasicDraft(state), { adaptation: true });
+  assert.equal(first.state.analysis.selectedAnalyticsMethod.mapping.mapping[0].outputPort.id, "statement.id");
+  const resumed = await refreshBasicReferences(api, serializeBasicDraft(first.state), { adaptation: true });
+  assert.equal(resumed.state.analysis.selectedAnalyticsMethod.mapping.mapping[0].outputPort.id, "statement.id");
+  assert.equal(resumed.state.analysis.inputs[0].selectedInput.name, "Selected events");
+  assert.deepEqual(resumed.warnings, []);
+});
+
 test("unavailable references preserve the saved choice and produce an actionable warning", async () => {
   const state = emptyBasicState();
   state.dataset.selectedLRSList = [{ lrsId: "gone", uniqueIdentifier: "scope", lrsTitle: "Old course" }];
