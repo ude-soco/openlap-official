@@ -41,6 +41,15 @@ updates:
   - "docker"
   - "indicatorframework"
 
+- package-ecosystem: "maven"
+  directory: "/analytics-methods"
+  schedule:
+    interval: "weekly"
+  labels:
+  - "dependencies"
+  - "java"
+  - "analyticsframework"
+
 - package-ecosystem: "npm"
   directory: "/indicatorframework"
   schedule:
