@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # Official Python 3.12.16; runtime uses only its standard library.
-FROM python@sha256:e064671ca452259bab50e8e2c7bd896e39e9a343bb06ca25234adf6fe18d0fc7
+FROM python@sha256:46837ed3105db0029b6d656816185c6258e3b39690532fb782428e0a5fd76182
 WORKDIR /opt/plugin-inputs
 
 # Build from an isolated context produced by prepare-plugin-recovery.py.
