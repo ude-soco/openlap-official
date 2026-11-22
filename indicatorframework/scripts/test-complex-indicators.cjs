@@ -387,11 +387,15 @@ let chartCatalogFailures = 0;
       }
       if (path === "v1/analytics/methods")
         return send([
+          { id: "summary", name: "Summarize numeric values", recommendedFor: ["BASIC", "MULTI_LEVEL"] },
           {
             id: "kmeans",
             name: "K-Means clusters",
             description: "Two numeric features",
+            metadata: { outputHints: { attribute_2: { format: "PERCENTAGE" } } },
           },
+          { id: "event-count", name: "Count selected events", recommendedFor: ["BASIC"] },
+          { id: "pearson", name: "Pearson correlation", recommendedFor: ["MULTI_LEVEL"] },
         ]);
       if (path === "v1/analytics/methods/input-params/kmeans") {
         if (failMethodContract) {
@@ -1367,6 +1371,17 @@ let chartCatalogFailures = 0;
     await page
       .getByRole("combobox", { name: "Analytics method", exact: true })
       .click();
+    const methodOptions = page.getByRole("listbox").getByRole("option");
+    const expectedMethods = ["Count selected events", "K-Means clusters", "Pearson correlation", "Summarize numeric values"];
+    await methodOptions.first().waitFor();
+    assert.equal(await methodOptions.count(), expectedMethods.length);
+    for (const [index, name] of expectedMethods.entries()) {
+      assert.equal(await methodOptions.nth(index).getByText(name, { exact: true }).count(), 1, `Sorted method at position ${index + 1}`);
+    }
+    await methodOptions.nth(0).getByText("Recommended for Basic Indicator", { exact: true }).waitFor();
+    assert.equal(await methodOptions.nth(1).getByText(/^Recommended for/).count(), 0);
+    await methodOptions.nth(2).getByText("Recommended for Multilevel analysis", { exact: true }).waitFor();
+    await methodOptions.nth(3).getByText("Recommended for Basic Indicator and Multilevel analysis", { exact: true }).waitFor();
     await page
       .getByRole("option", { name: /^K-Means clusters(?:\s|$)/ })
       .click();
@@ -1390,6 +1405,7 @@ let chartCatalogFailures = 0;
       .waitFor();
     assert.equal(analysisRequests.length, 1,
       "Multilevel valid preselected method inputs and defaults run the first analysis automatically");
+    await previewResults().getByRole("cell", { name: /^43\s*%$/ }).first().waitFor();
     await checkAutomaticAnalysis();
     await button("Continue to visualization").click();
     await chooseLibrary();

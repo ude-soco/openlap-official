@@ -19,13 +19,15 @@ import EmptyState from "../../../../../../../common/components/empty-state/empty
 import { DataTypes } from "../../../../../../indicator-specification-cards/creator/utils/data/config";
 import { getAnalyzedRowCount } from "../../../utils/analyzed-data.js";
 import { AnalysisObservationSummary } from "../../../../components/analysis-observation-guidance.jsx";
-import { analysisColumnHelp } from "../../../../utils/analytics-results.js";
+import { analysisColumnHelp, analysisResultPresentation, formatAnalysisValue } from "../../../../utils/analytics-results.js";
 
 const AnalyzedDataTable = ({ data }) => {
   const {
     analysis,
   } = useContext(BasicContext);
   const analyzedData = data || analysis.analyzedData;
+  const outputHints = analysis.selectedAnalyticsMethod.method?.metadata?.outputHints;
+  const { hiddenColumns, columnTitles, message } = analysisResultPresentation(analyzedData, outputHints, analysis.selectedAnalyticsMethod.mapping);
   const [page, setPage] = useState(0); // Current page
   const [rowsPerPage, setRowsPerPage] = useState(5); // Rows per page
 
@@ -35,14 +37,15 @@ const AnalyzedDataTable = ({ data }) => {
     return type;
   };
 
-  const columns = Object.keys(analyzedData).map((key) => ({
-    title: `${analyzedData[key].configurationData.title} (${formatTypeName(
-      analyzedData[key].configurationData.type
-    )})`,
-    data: analyzedData[key].data,
-    type: formatTypeName(analyzedData[key].configurationData.type),
-    configuration: analyzedData[key].configurationData,
-  }));
+  const columns = Object.values(analyzedData)
+    .filter(({ configurationData }) => !hiddenColumns.includes(configurationData.id))
+    .map(({ configurationData, data }) => ({
+      title: `${columnTitles[configurationData.id] || configurationData.title} (${formatTypeName(configurationData.type)})`,
+      data,
+      type: formatTypeName(configurationData.type),
+      configuration: configurationData,
+      hint: outputHints?.[configurationData.id],
+    }));
 
   const handleTooltipDescription = (type) => {
     const description = DataTypes[type.toLowerCase()]?.description;
@@ -82,7 +85,7 @@ const AnalyzedDataTable = ({ data }) => {
 
   return (
     <Stack sx={{ minWidth: 0 }}>
-    <AnalysisObservationSummary dataset={analyzedData} />
+    <AnalysisObservationSummary message={message} />
     <TableContainer
       component={Paper}
       variant="outlined"
@@ -113,7 +116,7 @@ const AnalyzedDataTable = ({ data }) => {
           {displayedRows.map((rowIndex) => (
             <TableRow key={rowIndex} hover>
               {columns.map((column, colIndex) => (
-                <TableCell key={colIndex}>{column.data[rowIndex] == null ? "—" : String(column.data[rowIndex])}</TableCell>
+                <TableCell key={colIndex}>{formatAnalysisValue(column.data[rowIndex], column.hint)}</TableCell>
               ))}
             </TableRow>
           ))}

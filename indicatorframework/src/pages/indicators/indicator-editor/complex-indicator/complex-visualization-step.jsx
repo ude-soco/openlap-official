@@ -37,6 +37,12 @@ import {
   sourcesReady,
 } from "./complex-model";
 import { ColumnMappings, Failure } from "./complex-controls";
+import { chartInputRole } from "../utils/analytics-results.js";
+
+const portForRole = (chart, role) => chart?.chartInputs?.find((input) =>
+  chartInputRole(input, getVisualizationDescriptor(chart)?.inputRoles) === role);
+const isGroupedScatter = (chart) => chart?.imageCode === "ScatterPlot" &&
+  ["X", "Y", "CLUSTER"].every((role) => portForRole(chart, role));
 
 export default function ComplexVisualizationStep({
   reference,
@@ -48,6 +54,8 @@ export default function ComplexVisualizationStep({
   chartLoading,
   types,
   chartDataset,
+  resultPresentation,
+  outputHints,
   supportsSeries,
   selectedType,
   operationError,
@@ -66,6 +74,15 @@ export default function ComplexVisualizationStep({
   const [customize, setCustomize] = useState(false);
   const customizeButton = useRef(null);
   const params = getVisualizationDefaults(selectedType, defaultParams, configuration.visualization.params);
+  const clustering = resultPresentation?.groupedScatter;
+  const scatter = clustering && libraryId && !chartLoading && types.find(isGroupedScatter);
+  const c3 = clustering && libraries.find((library) => library.name === "C3.js");
+  const scatterSelected = clustering && isGroupedScatter(selectedType);
+  const mappedTitle = (inputId) => {
+    const column = configuration.visualization.mapping.mapping.find(({ inputPort }) => inputPort.id === inputId)?.outputPort;
+    return column && (resultPresentation?.columnTitles[column.id] || chartDataset?.columns?.[column.id]?.configurationData?.title || column.title || column.id);
+  };
+  const scatterAxes = scatterSelected && ["X", "Y", "CLUSTER"].map((role) => mappedTitle(portForRole(selectedType, role).id));
   const canPreview = Boolean(
     datasetRows(chartDataset) > 0 &&
       selectedType?.chartInputs?.length &&
@@ -82,6 +99,29 @@ export default function ComplexVisualizationStep({
       getChartCompatibility(chart, chartDataset?.columns || {}).status !==
         "needs-data",
   );
+  const selectLibrary = (library) => {
+    if (!library) return;
+    change((previous) => ({
+      ...previous,
+      visualization: {
+        ...previous.visualization,
+        libraryId: library.id,
+        typeId: "",
+        mapping: { mapping: [] },
+      },
+    }));
+  };
+  const selectChart = (chart) =>
+    change((previous) => ({
+      ...previous,
+      visualization: {
+        ...previous.visualization,
+        typeId: chart.id,
+        mapping: defaultMappings(chart.chartInputs, chartDataset, outputHints, getVisualizationDescriptor(chart)?.inputRoles),
+        params: getVisualizationDefaults(chart, defaultParams,
+          previous.visualization.typeId === chart.id ? previous.visualization.params : {}),
+      },
+    }));
   const updateParams = (updater) => {
     const next = typeof updater === "function" ? updater(params) : updater;
     // The shared Basic controls mark local edits; only chart options belong in
@@ -119,6 +159,20 @@ export default function ComplexVisualizationStep({
   return (
     <>
       <CommunityComparison step="visualization" reference={reference} configuration={configuration}>
+      {clustering && !scatterSelected && !chartLoading && (
+        <Alert
+          severity="info"
+          action={scatter ? (
+            <Button size="small" onClick={() => selectChart(scatter)}>Use Scatter Plot</Button>
+          ) : c3 && c3.id !== libraryId ? (
+            <Button size="small" onClick={() => selectLibrary(c3)}>Choose C3.js</Button>
+          ) : undefined}
+        >
+          {scatter
+            ? "Use a scatter plot to compare the two measures and color points by cluster."
+            : "Choose a library with a grouped scatter plot to see the clusters."}
+        </Alert>
+      )}
       <SectionCard
         title="Visualization library"
         helper="The library that renders your chart. The default works for most indicators."
@@ -135,18 +189,7 @@ export default function ComplexVisualizationStep({
             getOptionLabel={(library) => library.name || ""}
             isOptionEqualToValue={(option, value) => option.id === value.id}
             value={libraries.find((library) => library.id === libraryId) || null}
-            onChange={(_, library) => {
-              if (!library) return;
-              change((previous) => ({
-                ...previous,
-                visualization: {
-                  ...previous.visualization,
-                  libraryId: library.id,
-                  typeId: "",
-                  mapping: { mapping: [] },
-                },
-              }));
-            }}
+            onChange={(_, library) => selectLibrary(library)}
             renderInput={(inputParams) => (
               <TextField
                 {...inputParams}
@@ -233,18 +276,7 @@ export default function ComplexVisualizationStep({
                 ? "These charts need other columns or separate category and series inputs. Use individual measure columns when a chart has no series input."
                 : undefined
             }
-            onSelect={(chart) =>
-              change((previous) => ({
-                ...previous,
-                visualization: {
-                  ...previous.visualization,
-                  typeId: chart.id,
-                  mapping: defaultMappings(chart.chartInputs, chartDataset),
-                  params: getVisualizationDefaults(chart, defaultParams,
-                    previous.visualization.typeId === chart.id ? previous.visualization.params : {}),
-                },
-              }))
-            }
+            onSelect={selectChart}
           />
           {!hasCompatibleChart && types.length > 0 && (
             <Alert severity="info">
@@ -274,6 +306,7 @@ export default function ComplexVisualizationStep({
           <ColumnMappings
             inputs={selectedType.chartInputs || []}
             dataset={chartDataset}
+            columnTitles={resultPresentation?.columnTitles}
             mapping={configuration.visualization.mapping}
             onChange={(mapping) =>
               change((previous) => ({
@@ -306,6 +339,13 @@ export default function ComplexVisualizationStep({
                   </Button>
                 )}
               >
+                {scatterAxes && scatterAxes.every(Boolean) && (
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                    Each point represents one row. The horizontal axis shows <strong>{scatterAxes[0]}</strong>,
+                    the vertical axis shows <strong>{scatterAxes[1]}</strong>, and color shows <strong>{scatterAxes[2]}</strong>.
+                    Points with the same two values overlap.
+                  </Typography>
+                )}
                 {busy === "visualization" ? (
                   <Stack sx={{ gap: 1.5, alignItems: "center", justifyContent: "center", minHeight: 360 }}>
                     <CircularProgress aria-label="Generating chart preview" />
@@ -389,6 +429,8 @@ ComplexVisualizationStep.propTypes = {
   chartLoading: PropTypes.bool,
   types: PropTypes.array,
   chartDataset: PropTypes.object,
+  resultPresentation: PropTypes.object,
+  outputHints: PropTypes.object,
   supportsSeries: PropTypes.func,
   selectedType: PropTypes.object,
   operationError: PropTypes.object,

@@ -1,6 +1,5 @@
 import PropTypes from "prop-types";
 import { Alert, Typography } from "@mui/material";
-import { analysisObservationMessage } from "../utils/analytics-results.js";
 
 export function AnalysisObservationGuidance({ inputs = [], combined = false }) {
   const numerical = inputs.some((input) => input.type === "Numeric");
@@ -9,21 +8,20 @@ export function AnalysisObservationGuidance({ inputs = [], combined = false }) {
   return (
     <Alert severity="info">
       {!numerical && outcome
-        ? "Success and completion are separate recorded outcomes. Rates use known true and false outcomes; missing outcomes are excluded. This does not automatically measure completion of all assigned activities."
+        ? "Success and completion are separate recorded outcomes. The rate uses events with a recorded true or false outcome."
         : combined
-        ? "Each row in the combined data is one observation. Match sources using the same learner or activity key before comparing their measures."
-        : "Numerical inputs come from the matching xAPI statements. To compare learners, first prepare one row per learner using grouped summaries, then combine those results in Multilevel analysis."}
+        ? "Each row in the combined data is one observation. To compare measures across activities, match sources by the same activity identifier."
+        : "Each matching xAPI statement can contribute one measurement. Group by activity identifier for a separate summary per activity."}
     </Alert>
   );
 }
 AnalysisObservationGuidance.propTypes = { inputs: PropTypes.array, combined: PropTypes.bool };
 
-export function AnalysisObservationSummary({ dataset }) {
-  const message = analysisObservationMessage(dataset);
+export function AnalysisObservationSummary({ message }) {
   return message ? (
     <Typography variant="body2" color="text.secondary" role="status" aria-live="polite" sx={{ mb: 1.5 }}>
       {message}
     </Typography>
   ) : null;
 }
-AnalysisObservationSummary.propTypes = { dataset: PropTypes.object };
+AnalysisObservationSummary.propTypes = { message: PropTypes.string };

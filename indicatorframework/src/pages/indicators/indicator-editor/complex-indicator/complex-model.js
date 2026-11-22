@@ -167,7 +167,7 @@ export function sourceSelection(source) {
     filterSummary:
       source.filterSummary || sourceFilterSummary(source.indicatorQuery),
     keyColumnId: text.length === 1 ? text[0].id : "",
-    measureColumnIds: defaultSourceMeasures(outputs, source.analyzedDataset),
+    measureColumnIds: defaultSourceMeasures(outputs, source.analyzedDataset, source.analyticsMethod?.metadata?.outputHints),
   };
 }
 
@@ -232,12 +232,12 @@ export const datasetRows = (dataset) =>
     ...datasetColumns(dataset).map((column) => column.data?.length || 0),
   );
 
-export function defaultMappings(inputs = [], dataset) {
+export function defaultMappings(inputs = [], dataset, outputHints, chartRoles) {
   const used = new Set();
   const columns = datasetColumns(dataset);
   return {
     mapping: inputs.flatMap((inputPort) => {
-      const candidates = preferredAnalysisColumns(columns, inputPort).filter(
+      const candidates = preferredAnalysisColumns(columns, inputPort, outputHints, chartRoles).filter(
         (column) => column.configurationData.type === inputPort.type,
       );
       const selected =

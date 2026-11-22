@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analysisColumnHelp, analysisObservationCounts, analysisObservationMessage, defaultSourceMeasures,
+import { analysisColumnHelp, analysisResultPresentation, defaultSourceMeasures, formatAnalysisValue,
   preferredAnalysisColumns, sourceMeasureHelp } from "./analytics-results.js";
 
 const column = (id, data, type = "Numeric") => ({ configurationData: { id, type }, data });
-const counts = (included, excluded) => ({ count: column("count", included), excluded_count: column("excluded_count", excluded) });
+const mapped = (input, source, title = "Old label") =>
+  ({ inputPort: { id: input }, outputPort: { id: source, title } });
 
 test("result column definitions stay readable without interpreting plugin text as HTML", () => {
   const help = analysisColumnHelp({ description: 'Sample SD: undefined for n < 2. <img src="x" onerror="alert(1)">' }, "Numerical values");
@@ -14,99 +15,98 @@ test("result column definitions stay readable without interpreting plugin text a
   assert.ok(help.endsWith("<br/><br/>Numerical values"));
 });
 
-test("statistical result summaries distinguish observations from the number of output rows", () => {
-  const dataset = { columns: { ...counts([40], [3]), mean: column("mean", [7.5]) } };
-  assert.deepEqual(analysisObservationCounts(dataset), { included: 40, excluded: 3, ungrouped: 0 });
-  assert.match(analysisObservationMessage(dataset), /40 observations analysed.*3 incomplete observations excluded/);
-  assert.equal(analysisObservationCounts({ count: column("count", [40]) }), null, "legacy count results are not a statistical exclusion report");
+test("diagnostic hints sum per-group counts and show the global omitted-group count once", () => {
+  const dataset = { columns: {
+    used: column("used", [4, 6]),
+    blank: column("blank", [1, 2]),
+    no_section: column("no_section", [3, 3]),
+  } };
+  const hints = {
+    used: { diagnostic: { kind: "INCLUDED", aggregation: "SUM" } },
+    blank: { diagnostic: { kind: "EXCLUDED", aggregation: "SUM", input: "score", summaryOnly: true } },
+    no_section: { diagnostic: { kind: "UNGROUPED", aggregation: "ONCE" } },
+  };
+  const presented = analysisResultPresentation(dataset, hints,
+    { mapping: [mapped("score", "test_score", "Raw score")] });
+  assert.deepEqual(presented.hiddenColumns, ["blank"]);
+  assert.equal(presented.message,
+    "10 observations analysed across 2 groups. 3 observations were skipped because Raw score was missing or unusable. 3 observations skipped because their group was missing.");
+  assert.equal(analysisResultPresentation(dataset).message, "", "Legacy columns remain uninterpreted");
 });
 
-test("grouped summaries total per-group counts but read the global ungrouped count once", () => {
-  const dataset = { ...counts([4, 6], [1, 2]), ungrouped_count: column("ungrouped_count", [3, 3]) };
-  assert.deepEqual(analysisObservationCounts(dataset), { included: 10, excluded: 3, ungrouped: 3, groups: 2 });
-  assert.match(analysisObservationMessage(dataset), /10 observations analysed across 2 groups/);
-  assert.match(analysisObservationMessage(dataset), /3 additional observations excluded because their group is missing/);
-});
-
-test("cluster result rows never multiply their repeated global counters", () => {
-  const dataset = { ...counts([3, 3, 3], [2, 2, 2]),
-    observation: column("observation", ["a", "b", "c"], "Text"),
-    cluster: column("cluster", ["1", "1", "2"], "Text") };
-  assert.deepEqual(analysisObservationCounts(dataset), { included: 3, excluded: 2, ungrouped: 0 });
-  dataset.count.data[1] = 4;
-  assert.equal(analysisObservationCounts(dataset), null, "contradictory global counters are not presented as a reliable summary");
-});
-
-test("invalid or unknown counters are not presented as analysed sample sizes", () => {
-  for (const value of [counts([Number.NaN], [0]), counts([-1], [0]), counts([2], [1.5]), counts([3, 4], [0, 0])]) {
-    assert.equal(analysisObservationCounts(value), null);
+test("invalid diagnostic counts remain visible instead of producing misleading notes", () => {
+  const hints = { skipped: { diagnostic: { kind: "EXCLUDED", aggregation: "ONCE", summaryOnly: true } } };
+  for (const values of [[1, 2], [Number.NaN], [-1], [1.5], []]) {
+    const result = analysisResultPresentation({ skipped: column("skipped", values) }, hints);
+    assert.deepEqual(result.hiddenColumns, []);
+    assert.equal(result.message, "");
   }
+  const result = analysisResultPresentation({ skipped: column("skipped", [0, 0]) }, hints);
+  assert.deepEqual(result.hiddenColumns, ["skipped"]);
+  assert.equal(result.message, "");
 });
 
-test("statistical chart suggestions start with measures and preserve all diagnostic choices", () => {
-  const columns = Object.values({ ...counts([10], [0]), median: column("median", [5]), mean: column("mean", [4]) });
-  const reordered = preferredAnalysisColumns(columns, { type: "Numeric" });
-  assert.deepEqual(reordered.map((field) => field.configurationData.id), ["mean", "median", "count", "excluded_count"]);
-  assert.equal(reordered.length, columns.length);
-  assert.equal(columns[0].configurationData.id, "count", "the original dataset order is unchanged");
-  const legacy = [column("item_count", [10])];
-  assert.equal(preferredAnalysisColumns(legacy), legacy, "legacy methods retain their defaults");
+test("declared scatter roles and current input labels describe outputs with arbitrary IDs", () => {
+  const dataset = { columns: {
+    name: column("name", ["A", "B"], "Text"),
+    cohort: column("cohort", ["First", "Second"], "Text"),
+    interest: column("interest", [2, 4]),
+    volume: column("volume", [1, 8]),
+  } };
+  const hints = {
+    interest: { role: "Y", labelFromInput: "first_measure" },
+    volume: { role: "X", labelFromInput: "second_measure" },
+    name: { role: "LABEL" },
+    cohort: { role: "CLUSTER" },
+  };
+  const combined = { columns: {
+    annotations: { configurationData: { title: "Material annotations" } },
+    clicks: { configurationData: { title: "Material clicks" } },
+  } };
+  const result = analysisResultPresentation(dataset, hints,
+    { mapping: [mapped("first_measure", "annotations"), mapped("second_measure", "clicks")] }, combined);
+  assert.deepEqual(result.columnTitles, { interest: "Material annotations", volume: "Material clicks" });
+  assert.deepEqual(result.columnOrder, ["name", "volume", "interest", "cohort"]);
+  assert.equal(result.groupedScatter, true);
+  assert.equal(analysisResultPresentation(dataset).groupedScatter, false);
 });
 
-test("numeric scatter chart axes can prefer their corresponding cluster measurements", () => {
-  const columns = [...Object.values(counts([3], [0])), column("x", [1]), column("y", [2])];
-  assert.equal(preferredAnalysisColumns(columns, { id: "x_axis", title: "X-Axis" })[0].configurationData.id, "x");
-  assert.equal(preferredAnalysisColumns(columns, { id: "y_axis", title: "Y-Axis" })[0].configurationData.id, "y");
+test("only columns with the percentage format display percent symbols", () => {
+  const percent = new Intl.NumberFormat(undefined, { style: "percent", maximumFractionDigits: 2 });
+  assert.equal(formatAnalysisValue(100 / 3, { format: "PERCENTAGE" }), percent.format(1 / 3));
+  assert.equal(formatAnalysisValue(20), "20");
+  assert.equal(formatAnalysisValue(null, { format: "PERCENTAGE" }), "—");
 });
 
-test("statistical source defaults exclude diagnostics and undefined secondary statistics", () => {
-  const result = { ...counts([1], [0]), mean: column("mean", [7]),
-    standard_deviation: column("standard_deviation", [null]), median: column("median", [7]) };
+test("chart suggestions prioritize hinted axes and grouping without relying on output IDs", () => {
+  const columns = [column("wide", [4]), column("tight", [5]), column("used", [1]),
+    column("resource", ["Item"], "Text"), column("bucket", ["Cluster 1"], "Text")];
+  const hints = {
+    wide: { primary: true, role: "X" },
+    tight: { primary: true, role: "Y" },
+    resource: { role: "LABEL" },
+    bucket: { role: "CLUSTER" },
+    used: { diagnostic: { kind: "INCLUDED" } },
+  };
+  const first = (input, role) => preferredAnalysisColumns(columns, input, hints, role)
+    .find((entry) => entry.configurationData.type === input.type)?.configurationData.id;
+  assert.equal(first({ id: "xAxisStrings", type: "Numeric" }), "wide");
+  assert.equal(first({ id: "yAxisValues", type: "Numeric" }), "tight");
+  assert.equal(first({ id: "unknown", type: "Text" }, { series: "unknown" }), "bucket");
+  assert.equal(first({ id: "xAxisStrings", type: "Text" }), "resource");
+  assert.equal(preferredAnalysisColumns(columns), columns, "Metadata-free methods retain generic order");
+  assert.equal(preferredAnalysisColumns(columns, { type: "Numeric" }, hints).at(-1).configurationData.id, "used");
+});
+
+test("source defaults respect nominated primary outputs even when their data is unavailable", () => {
+  const result = { used: column("used", [1]), average: column("average", [7]), median: column("median", [6]) };
   const outputs = Object.values(result).map((field) => field.configurationData);
-  assert.deepEqual(defaultSourceMeasures(outputs), ["mean"]);
-  assert.deepEqual(defaultSourceMeasures(outputs, result), ["mean"], "A one-observation group's undefined sampleSD does not invalidate mean defaults");
-  result.mean.data = [null];
-  assert.deepEqual(defaultSourceMeasures(outputs, result), [], "An undefined primary mean never silently changes the question to a count or median");
-  assert.match(sourceMeasureHelp({ outputs, measureColumnIds: [] }), /Choose a complete numerical measure/);
-});
-
-test("correlation and clustering source defaults keep their primary measurements only", () => {
-  const diagnostics = Object.values(counts([3], [0])).map((field) => field.configurationData);
-  assert.deepEqual(defaultSourceMeasures([...diagnostics, { id: "correlation", type: "Numeric" }]), ["correlation"]);
-  assert.deepEqual(defaultSourceMeasures([...diagnostics, { id: "observation", type: "Text" },
-    { id: "cluster", type: "Text" }, { id: "x", type: "Numeric" }, { id: "y", type: "Numeric" }]), ["x", "y"]);
-  assert.deepEqual(defaultSourceMeasures([{ id: "item_count", type: "Numeric" }, { id: "amount", type: "Numeric" }]),
-    ["item_count", "amount"], "Existing plugins retain their historical defaults");
-});
-
-test("event, distinct-value and known-outcome methods prefer their primary measurement over diagnostics", () => {
-  const frequency = [{ id: "category", type: "Text" }, { id: "excluded_count", type: "Numeric" },
-    { id: "event_count", type: "Numeric" }, { id: "percentage", type: "Numeric" }];
-  const distinct = [{ id: "category", type: "Text" }, { id: "excluded_count", type: "Numeric" },
-    { id: "ungrouped_count", type: "Numeric" }, { id: "distinct_count", type: "Numeric" }];
-  const rate = [{ id: "group", type: "Text" }, ...["count", "excluded_count", "true_count", "false_count", "percentage"]
-    .map((id) => ({ id, type: "Numeric" }))];
-  assert.deepEqual(defaultSourceMeasures(frequency), ["event_count"]);
-  assert.deepEqual(defaultSourceMeasures(distinct), ["distinct_count"]);
-  assert.deepEqual(defaultSourceMeasures(rate), ["percentage"]);
-  assert.deepEqual(defaultSourceMeasures([{ id: "period", type: "Text" }, { id: "event_count", type: "Numeric" },
-    { id: "excluded_count", type: "Numeric" }]), ["event_count"]);
-  for (const [outputs, expected] of [[frequency, "event_count"], [distinct, "distinct_count"], [rate, "percentage"]]) {
-    const first = preferredAnalysisColumns(outputs.map((configurationData) => ({ configurationData, data: [1] })), { type: "Numeric" })
-      .find((field) => field.configurationData.type === "Numeric");
-    assert.equal(first.configurationData.id, expected);
-  }
-});
-
-test("clustering chart grouping prefers cluster labels while categorical axes prefer observations", () => {
-  const columns = [...Object.values(counts([3], [0])), column("observation", ["learner-1"], "Text"),
-    column("cluster", ["Cluster 1"], "Text"), column("x", [1]), column("y", [2])];
-  for (const title of ["Group", "Series", "Cluster", "Color", "Colour"]) {
-    const selected = preferredAnalysisColumns(columns, { id: "categorical", title, type: "Text" })
-      .find((field) => field.configurationData.type === "Text");
-    assert.equal(selected.configurationData.id, "cluster");
-  }
-  const selected = preferredAnalysisColumns(columns, { id: "x_axis", title: "X-Axis", type: "Text" })
-    .find((field) => field.configurationData.type === "Text");
-  assert.equal(selected.configurationData.id, "observation");
+  const hints = { average: { primary: true }, used: { diagnostic: { kind: "INCLUDED" } } };
+  assert.deepEqual(defaultSourceMeasures(outputs, undefined, hints), ["average"]);
+  assert.deepEqual(defaultSourceMeasures(outputs, result, hints), ["average"]);
+  result.average.data = [null];
+  assert.deepEqual(defaultSourceMeasures(outputs, result, hints), [], "An undefined primary value never silently changes the question");
+  assert.deepEqual(defaultSourceMeasures(outputs), ["used", "average", "median"], "Legacy methods retain all numerical choices");
+  assert.match(sourceMeasureHelp({ outputs, analyticsMethod: { metadata: { outputHints: hints } }, measureColumnIds: [] }),
+    /Choose a complete numerical measure/);
 });

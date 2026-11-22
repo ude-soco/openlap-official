@@ -1,19 +1,17 @@
 import CommunityComparison from "../../../../common/components/community-adaptation/community-comparison.jsx";
 import PropTypes from "prop-types";
 import {
-  Autocomplete,
   Button,
   CircularProgress,
-  createFilterOptions,
   Divider,
   Grid,
   LinearProgress,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import SectionCard from "../../../../common/components/section-card/section-card";
 import { AnalysisObservationGuidance, AnalysisObservationSummary } from "../components/analysis-observation-guidance.jsx";
+import AnalyticsMethodPicker from "../components/analytics-method-picker.jsx";
 import { datasetRows, mappingsReady, parametersReady } from "./complex-model";
 import {
   ColumnMappings,
@@ -22,12 +20,11 @@ import {
   ResultTable,
 } from "./complex-controls";
 
-const filterMethods = createFilterOptions({ stringify: (method) => `${method.name} ${method.description || ""}` });
-
 export default function ComplexAnalysisStep({
   reference,
   methods,
   methodId,
+  selectedMethod,
   change,
   methodLoading,
   methodInputs,
@@ -39,6 +36,7 @@ export default function ComplexAnalysisStep({
   busy,
   analyze,
   analyzed,
+  resultPresentation,
   setCurrent,
 }) {
   const contractReady =
@@ -57,7 +55,6 @@ export default function ComplexAnalysisStep({
     methods.filter((method) => method.name === option.name).length > 1
       ? `${option.name} · ${option.id.slice(-6)}`
       : option.name || "";
-  const selectedMethod = methods.find((method) => method.id === methodId);
 
   return (
     <>
@@ -67,20 +64,11 @@ export default function ComplexAnalysisStep({
         helper="Choose the analysis to apply to your combined data."
       >
         <Stack sx={{ gap: 0.75 }}>
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-            Analytics method
-          </Typography>
-          <Autocomplete
-            disableClearable
-            disablePortal
-            fullWidth
-            options={methods}
-            filterOptions={filterMethods}
-            getOptionKey={(option) => option.id}
-            value={methods.find((method) => method.id === methodId) || null}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
+          <AnalyticsMethodPicker
+            methods={methods}
+            value={selectedMethod || null}
             getOptionLabel={methodLabel}
-            onChange={(_, method) =>
+            onChange={(method) =>
               change(
                 (previous) => ({
                   ...previous,
@@ -93,44 +81,7 @@ export default function ComplexAnalysisStep({
                 "analysis",
               )
             }
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Search for an analytics method"
-                slotProps={{
-                  ...params.slotProps,
-                  htmlInput: {
-                    ...params.slotProps.htmlInput,
-                    "aria-label": "Analytics method",
-                  },
-                }}
-              />
-            )}
-            renderOption={(attributes, option) => {
-              const { key, ...restProps } = attributes;
-              return (
-                <li key={key} {...restProps}>
-                  <Stack sx={{ py: 0.5 }}>
-                    <Typography>{methodLabel(option)}</Typography>
-                    {option.description && (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ fontStyle: "italic" }}
-                      >
-                        {option.description}
-                      </Typography>
-                    )}
-                  </Stack>
-                </li>
-              );
-            }}
           />
-          {selectedMethod?.description && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
-              {selectedMethod.description}
-            </Typography>
-          )}
           <AnalysisObservationGuidance inputs={methodInputs} combined />
         </Stack>
       </SectionCard>
@@ -208,12 +159,14 @@ export default function ComplexAnalysisStep({
             <Failure message={previewError} />
           ) : analyzed ? (
             <>
-            <AnalysisObservationSummary dataset={analyzed} />
-            <ResultTable
-              dataset={analyzed}
-              title="Analysis data preview"
-              framed={false}
-            />
+              <AnalysisObservationSummary message={resultPresentation?.message} />
+              <ResultTable
+                dataset={analyzed}
+                presentation={resultPresentation}
+                outputHints={selectedMethod?.metadata?.outputHints}
+                title="Analysis data preview"
+                framed={false}
+              />
             </>
           ) : (
             <Stack sx={{ alignItems: "center", py: 3, textAlign: "center" }}>
@@ -253,13 +206,13 @@ export default function ComplexAnalysisStep({
             fullWidth
             variant="contained"
             size="medium"
-            aria-label="Continue to visualization"
+            aria-label={resultPresentation?.groupedScatter ? undefined : "Continue to visualization"}
             disabled={
               !datasetRows(analyzed) || Boolean(previewError) || Boolean(busy)
             }
             onClick={() => setCurrent("visualization")}
           >
-            Next
+            {resultPresentation?.groupedScatter ? "Choose chart" : "Next"}
           </Button>
         </Grid>
       </Grid>
@@ -270,6 +223,7 @@ ComplexAnalysisStep.propTypes = {
   reference: PropTypes.object,
   methods: PropTypes.array,
   methodId: PropTypes.string,
+  selectedMethod: PropTypes.object,
   change: PropTypes.func,
   methodLoading: PropTypes.bool,
   methodInputs: PropTypes.array,
@@ -281,5 +235,6 @@ ComplexAnalysisStep.propTypes = {
   busy: PropTypes.string,
   analyze: PropTypes.func,
   analyzed: PropTypes.object,
+  resultPresentation: PropTypes.object,
   setCurrent: PropTypes.func,
 };
