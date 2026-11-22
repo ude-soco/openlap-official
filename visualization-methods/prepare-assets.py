@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare the checksummed manifest and browser resources for either plugin JAR."""
+"""Prepare the checksummed manifest and browser resources for a plugin JAR."""
 
 import argparse
 import base64
@@ -8,6 +8,7 @@ import io
 import json
 import os
 from pathlib import Path
+import subprocess
 import tarfile
 from tempfile import NamedTemporaryFile
 from urllib.request import urlopen
@@ -19,6 +20,8 @@ ICONS = ROOT / "indicatorframework/src/assets/images/indicator-editor-visualizat
 VENDOR = ROOT / "analyticsframework/src/main/resources/openlap-chart-runtime/vendor"
 APEX_VERSION = "4.7.0"
 APEX_INTEGRITY = "iZSrrBGvVlL+nt2B1NpqfDuBZ9jX61X9I2+XV0hlYXHtTwhwLTHDKGXjNXAgFBDLuvSYCB/rq2nPWVPRv2DrGA=="
+PLOTLY_VERSION = "4.3.0"
+PLOTLY_INTEGRITY = "WNbx44cL+Z0dqTxMHeTJNKg/M7ldoTe3QcuknbnDba57IP/CXQiccIM0eyPT2glxvqQKrLzdyo5+mmDz16BXgA=="
 CHARTS = (
     ("bar", "Bar", "bar_graph.svg", "Compare one numerical measure across categories."),
     ("line", "Line", "multi_line_graph.svg", "Show a numerical trend across categories in the order of the data."),
@@ -34,17 +37,17 @@ GROUPED = {"grouped-area", "stacked-area", "multi-line"}
 SLICES = {"pie", "donut"}
 
 
-def apex_package():
+def npm_package(package_name, version, integrity, *files):
     cache = MODULE / ".cache"
-    archive = cache / f"apexcharts-{APEX_VERSION}.tgz"
+    archive = cache / f"{package_name}-{version}.tgz"
     if archive.exists():
         content = archive.read_bytes()
     else:
-        url = f"https://registry.npmjs.org/apexcharts/-/apexcharts-{APEX_VERSION}.tgz"
+        url = f"https://registry.npmjs.org/{package_name}/-/{archive.name}"
         with urlopen(url, timeout=30) as response:
             content = response.read()
-    if base64.b64encode(hashlib.sha512(content).digest()).decode("ascii") != APEX_INTEGRITY:
-        raise ValueError(f"ApexCharts {APEX_VERSION} does not match its pinned npm integrity.")
+    if base64.b64encode(hashlib.sha512(content).digest()).decode("ascii") != integrity:
+        raise ValueError(f"{package_name} {version} does not match its pinned npm integrity.")
     if not archive.exists():
         cache.mkdir(exist_ok=True)
         with NamedTemporaryFile(dir=cache, delete=False) as temporary:
@@ -53,8 +56,17 @@ def apex_package():
     with tarfile.open(fileobj=io.BytesIO(content), mode="r:gz") as package:
         return {
             name: package.extractfile("package/" + name).read()
-            for name in ("dist/apexcharts.min.js", "LICENSE")
+            for name in files
         }
+
+
+def build_recharts(output):
+    browser = MODULE / "recharts" / "browser"
+    package = json.loads((browser / "package.json").read_text(encoding="utf-8"))
+    subprocess.run(["npm", "ci", "--include=dev", "--ignore-scripts", "--no-audit", "--no-fund"],
+                   cwd=browser, check=True)
+    subprocess.run(["node", "build.mjs", str(output.resolve())], cwd=browser, check=True)
+    return package["dependencies"]["recharts"]
 
 
 def control(identifier, label, kind, default, group, **details):
@@ -107,14 +119,25 @@ def prepare(library, output, version):
         for filename in ("c3-LICENSE", "d3-LICENSE"):
             write("META-INF/licenses/" + filename, (VENDOR / filename).read_bytes())
         renderer = "c3-renderer.js"
-    else:
+    elif library == "apexcharts":
         engine_version = APEX_VERSION
-        apex = apex_package()
+        apex = npm_package("apexcharts", APEX_VERSION, APEX_INTEGRITY, "dist/apexcharts.min.js", "LICENSE")
         asset("apexcharts", f"apexcharts-{APEX_VERSION}.min.js", "script", apex["dist/apexcharts.min.js"])
         write("META-INF/licenses/apexcharts-LICENSE", apex["LICENSE"])
         renderer = "apex-renderer.js"
+    elif library == "plotly":
+        engine_version = PLOTLY_VERSION
+        plotly = npm_package("plotly.js-basic-dist-min", PLOTLY_VERSION, PLOTLY_INTEGRITY,
+                             "plotly-basic.min.js", "LICENSE")
+        asset("plotly", f"plotly-basic-{PLOTLY_VERSION}.min.js", "script", plotly["plotly-basic.min.js"])
+        write("META-INF/licenses/plotly-LICENSE", plotly["LICENSE"])
+        renderer = "plotly-renderer.js"
+    else:
+        engine_version = build_recharts(output)
+        renderer = "recharts-renderer.js"
 
-    renderer_source = MODULE / library / "src/main/resources/web" / renderer
+    renderer_source = (output / "web" if library == "recharts"
+                       else MODULE / library / "src/main/resources/web") / renderer
     asset("renderer", renderer, "script", renderer_source.read_bytes(), generated=False)
     runtime = {"id": library, "version": engine_version, "assets": [entry["id"] for entry in assets]}
     charts = []
@@ -151,7 +174,7 @@ def prepare(library, output, version):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("library", choices=("c3", "apexcharts"))
+    parser.add_argument("library", choices=("c3", "apexcharts", "plotly", "recharts"))
     parser.add_argument("output", type=Path)
     parser.add_argument("version")
     arguments = parser.parse_args()

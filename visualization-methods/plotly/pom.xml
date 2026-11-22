@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.openlap.visualizations</groupId><artifactId>bundled-visualizations</artifactId><version>1.0.0</version>
+  </parent>
+  <artifactId>openlap-visualization-plotly</artifactId>
+  <properties><visualization.library>plotly</visualization.library></properties>
+  <dependencies>
+    <dependency>
+      <groupId>org.openlap.visualizations</groupId><artifactId>visualization-common</artifactId><version>${project.version}</version>
+    </dependency>
+  </dependencies>
+  <build>
+    <finalName>OpenLAP-Plotly-${project.version}</finalName>
+    <plugins>
+      <plugin><groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId></plugin>
+      <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-shade-plugin</artifactId></plugin>
+    </plugins>
+  </build>
+</project>

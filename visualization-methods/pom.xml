@@ -11,6 +11,8 @@
     <module>common</module>
     <module>c3</module>
     <module>apexcharts</module>
+    <module>plotly</module>
+    <module>recharts</module>
   </modules>
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
