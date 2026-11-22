@@ -28,7 +28,12 @@ class BundledVisualizationQualification {
       "grouped-area", "stacked-area", "multi-line");
 
   @ParameterizedTest
-  @CsvSource({"c3, C3, C3.js, OpenLAPC3", "apexcharts, ApexCharts, ApexCharts, OpenLAPApex"})
+  @CsvSource({
+      "c3, C3, C3.js, OpenLAPC3",
+      "apexcharts, ApexCharts, ApexCharts, OpenLAPApex",
+      "plotly, Plotly, Plotly.js, OpenLAPPlotly",
+      "recharts, Recharts, Recharts, OpenLAPRecharts"
+  })
   void qualifiesAllChartsAndTheSharedRuntime(String module, String delivery, String library, String renderer)
       throws Exception {
     Path path = Path.of("../visualization-methods", module, "target", "OpenLAP-" + delivery + "-1.0.0.jar");

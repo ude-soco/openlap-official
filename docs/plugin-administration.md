@@ -78,7 +78,7 @@ preserves the existing Java plugin contract. It identifies the plugin version,
 ordered runtime dependencies, chart implementations, input roles and typed
 customization controls. The [visualization template and working two-chart example](https://github.com/ude-soco/openlap-official-visualization-template)
 provide the schema, build instructions and a complete JAR with packaged resources.
-OpenLAP also provides [source builds for C3.js and ApexCharts](../visualization-methods/README.md),
+OpenLAP also provides [source builds for C3.js, ApexCharts, Plotly.js, and Recharts](../visualization-methods/README.md),
 each with nine chart types and its own bundled runtime.
 
 - Declare exact runtime versions at build time and bundle JavaScript, CSS and

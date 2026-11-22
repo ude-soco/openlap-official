@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   package:
-    name: Qualify both bundled visualization JARs
+    name: Qualify the bundled visualization JARs
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -39,16 +39,18 @@ jobs:
           cache-dependency-path: |
             visualization-methods/**/pom.xml
             analyticsframework/pom.xml
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: indicatorframework/.nvmrc
+          cache: npm
+          cache-dependency-path: visualization-methods/recharts/browser/package-lock.json
       - name: Compare two clean builds
         run: |
           ./analyticsframework/mvnw -B -f visualization-methods/pom.xml clean verify
-          c3=(visualization-methods/c3/target/OpenLAP-C3-*.jar)
-          apex=(visualization-methods/apexcharts/target/OpenLAP-ApexCharts-*.jar)
-          cp "${c3[0]}" "$RUNNER_TEMP/OpenLAP-C3.jar"
-          cp "${apex[0]}" "$RUNNER_TEMP/OpenLAP-ApexCharts.jar"
+          archives=(visualization-methods/{c3,apexcharts,plotly,recharts}/target/OpenLAP-*.jar)
+          for archive in "${archives[@]}"; do cp "$archive" "$RUNNER_TEMP/"; done
           ./analyticsframework/mvnw -B -f visualization-methods/pom.xml clean verify
-          cmp "$RUNNER_TEMP/OpenLAP-C3.jar" "${c3[0]}"
-          cmp "$RUNNER_TEMP/OpenLAP-ApexCharts.jar" "${apex[0]}"
+          for archive in "${archives[@]}"; do cmp "$RUNNER_TEMP/${archive##*/}" "$archive"; done
       - name: Qualify chart generation and manifest inspection
         working-directory: analyticsframework
         run: ./mvnw -B -Dtest=BundledVisualizationQualification,VisualizationManifestInspectionTest test
