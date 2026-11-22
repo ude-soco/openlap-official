@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "methods": [
+    {
+      "className": "com.openlap.analytics.methods.BooleanRate",
+      "recommendedFor": ["BASIC"],
+      "inputRoles": {"outcome": "OUTCOME", "group": "CATEGORY"},
+      "outputHints": {
+        "percentage": {"primary": true, "format": "PERCENTAGE"},
+        "count": {"diagnostic": {"kind": "INCLUDED", "aggregation": "SUM"}},
+        "excluded_count": {"diagnostic": {"kind": "EXCLUDED", "aggregation": "SUM", "input": "outcome", "summaryOnly": true}},
+        "ungrouped_count": {"diagnostic": {"kind": "UNGROUPED", "aggregation": "ONCE", "input": "group", "summaryOnly": true}}
+      }
+    },
+    {
+      "className": "com.openlap.analytics.methods.DistinctValueCount",
+      "recommendedFor": ["BASIC"],
+      "inputRoles": {"value": "CATEGORY", "group": "CATEGORY"},
+      "outputHints": {
+        "distinct_count": {"primary": true},
+        "excluded_count": {"diagnostic": {"kind": "EXCLUDED", "aggregation": "SUM", "input": "value", "summaryOnly": true}},
+        "ungrouped_count": {"diagnostic": {"kind": "UNGROUPED", "aggregation": "ONCE", "input": "group", "summaryOnly": true}}
+      }
+    },
+    {
+      "className": "com.openlap.analytics.methods.EventCount",
+      "recommendedFor": ["BASIC"],
+      "inputRoles": {"event": "EVENTS"},
+      "outputHints": {"event_count": {"primary": true}}
+    },
+    {
+      "className": "com.openlap.analytics.methods.EventFrequency",
+      "recommendedFor": ["BASIC"],
+      "inputRoles": {"category": "CATEGORY"},
+      "outputHints": {
+        "event_count": {"primary": true},
+        "percentage": {"format": "PERCENTAGE"},
+        "excluded_count": {"diagnostic": {"kind": "EXCLUDED", "aggregation": "ONCE", "input": "category", "summaryOnly": true}}
+      }
+    },
+    {
+      "className": "com.openlap.analytics.methods.EventsOverTime",
+      "recommendedFor": ["BASIC"],
+      "inputRoles": {"timestamp": "TIMESTAMP"},
+      "outputHints": {
+        "event_count": {"primary": true},
+        "excluded_count": {"diagnostic": {"kind": "EXCLUDED", "aggregation": "ONCE", "input": "timestamp", "summaryOnly": true}}
+      }
+    },
+    {
+      "className": "com.openlap.analytics.methods.GroupedNumericSummary",
+      "recommendedFor": ["BASIC"],
+      "inputRoles": {"values": "SCORE", "group": "CATEGORY"},
+      "outputHints": {
+        "mean": {"primary": true},
+        "count": {"diagnostic": {"kind": "INCLUDED", "aggregation": "SUM"}},
+        "excluded_count": {"diagnostic": {"kind": "EXCLUDED", "aggregation": "SUM", "input": "values", "summaryOnly": true}},
+        "ungrouped_count": {"diagnostic": {"kind": "UNGROUPED", "aggregation": "ONCE", "input": "group", "summaryOnly": true}}
+      }
+    },
+    {
+      "className": "com.openlap.analytics.methods.NumericSummary",
+      "recommendedFor": ["BASIC", "MULTI_LEVEL"],
+      "inputRoles": {"values": "SCORE"},
+      "outputHints": {
+        "mean": {"primary": true},
+        "count": {"diagnostic": {"kind": "INCLUDED", "aggregation": "ONCE"}},
+        "excluded_count": {"diagnostic": {"kind": "EXCLUDED", "aggregation": "ONCE", "input": "values", "summaryOnly": true}}
+      }
+    },
+    {
+      "className": "com.openlap.analytics.methods.ReproducibleKMeans",
+      "recommendedFor": ["MULTI_LEVEL"],
+      "inputRoles": {"observation": "CATEGORY"},
+      "outputHints": {
+        "observation": {"role": "LABEL", "labelFromInput": "observation"},
+        "x": {"primary": true, "role": "X", "labelFromInput": "x"},
+        "y": {"primary": true, "role": "Y", "labelFromInput": "y"},
+        "cluster": {"role": "CLUSTER"},
+        "count": {"diagnostic": {"kind": "INCLUDED", "aggregation": "ONCE", "summaryOnly": true}},
+        "excluded_count": {"diagnostic": {"kind": "EXCLUDED", "aggregation": "ONCE", "summaryOnly": true}}
+      }
+    }
+  ]
+}

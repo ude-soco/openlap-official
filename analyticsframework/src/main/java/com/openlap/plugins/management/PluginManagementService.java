@@ -314,6 +314,7 @@ public class PluginManagementService {
           .append("enabled", true).append("name", entry.getString("name")).append("implementingClass", className);
       if (kind == PluginKind.ANALYTICS) {
         for (String field : Arrays.asList("creator", "description", "type", "outputs")) row.append(field, entry.get(field));
+        if (entry.get("analyticsMetadata") != null) row.append("analyticsMetadata", entry.get("analyticsMetadata"));
         row.append("fileName", operation.getString("filename")).append("artifactId", operation.getString("artifactId"));
       } else {
         row.append("visualizationLib", new DBRef("visualization-library", libraryId))

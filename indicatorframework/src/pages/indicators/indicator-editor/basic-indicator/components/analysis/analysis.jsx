@@ -29,6 +29,7 @@ import { getStepStatus } from "../../utils/basic-workflow-ui.js";
 import { getAnalyzedRowCount } from "../../utils/analyzed-data.js";
 import useDataPreview from "../../../utils/use-data-preview";
 import { basicAnalysisReady } from "../../../utils/analysis-readiness.js";
+import { buildMethodAvailabilityQuery } from "./utils/method-availability.js";
 
 const EMPTY_COLUMNS = {};
 
@@ -45,6 +46,17 @@ export default function Analysis() {
     path: "v1/indicators/basic/analyze",
     fingerprint: selectionKey,
     ready,
+  });
+  const hasDataRecommendations = analysis.analyticsMethodList.some((method) =>
+    method.basicInputRequirement || method.metadata?.requiredInputRoles?.length);
+  const dataQuery = hasDataRecommendations && referencesValid !== false && !lockedStep.analysis.locked
+    ? buildMethodAvailabilityQuery(dataset, filters)
+    : null;
+  const availability = useDataPreview({
+    api,
+    path: "v1/indicators/basic/input-availability",
+    fingerprint: JSON.stringify(dataQuery),
+    ready: Boolean(dataQuery),
   });
   const columns = preview.data?.columns || EMPTY_COLUMNS;
 
@@ -96,7 +108,7 @@ export default function Analysis() {
         >
           <Stack sx={{ gap: 2, py: 2 }}>
             <CommunityComparison step="analysis" reference={comparisonReference} configuration={configuration}>
-            <AnalysisSelection />
+            <AnalysisSelection availability={hasDataRecommendations ? availability : null} />
 
             {methodSelected && analysis.inputs.length === 0 && (
               <SectionCard
@@ -140,8 +152,7 @@ export default function Analysis() {
                     </Stack>
                   ) : preview.error ? (
                     <Alert severity="error">
-                      The analysis could not be run. Please check your inputs
-                      and filters, then try again.
+                      {preview.error}
                     </Alert>
                   ) : previewComplete ? (
                     <AnalyzedDataTable data={columns} />

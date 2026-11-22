@@ -1,0 +1,103 @@
+# OpenLAP analytics methods
+
+This standalone Java 17 plugin project uses the released
+OpenLAP analytics-method template (1.2.0) and data-exchange formats (1.2.2).
+Its JAR contains the methods and a relocated copy of Apache Commons Math 3.6.1.
+OpenLAP's API classes stay outside the JAR so the application supplies one shared contract.
+
+From the repository root, with Java 17 or 21 and Maven 3.6.3 or newer:
+
+```sh
+./analyticsframework/mvnw -f analytics-methods/pom.xml clean verify
+```
+
+The build writes `analytics-methods/target/OpenLAP-Analytics-1.3.0.jar` locally.
+The fixed `project.build.outputTimestamp` makes rebuilding unchanged sources reproducible.
+Keep a manually installed copy outside this module's `target` directory.
+
+The package includes an optional [analytics manifest](src/main/resources/META-INF/openlap/analytics.json).
+It declares editor recommendations, input roles, and result presentation hints
+for each method. The Java implementation defines the calculation, column
+contracts, and parameters.
+
+## Method contracts
+
+| Method | Required inputs | Output rows |
+| --- | --- | --- |
+| Count selected events | `event` (Text), mapped to statement ID in Basic Indicator | One total, including records whose statement ID is missing |
+| Count events by category | `category` (Text) | Event count and percentage per category, with optional ranking and limit |
+| Count distinct values | `value` (Text), optional `group` (Text) | Distinct observed values per group or across the selection |
+| Count events over time | `timestamp` (Text) | Event count per observed UTC day, ISO week, month or year |
+| Calculate completion or success rate | `outcome` (TrueFalse), optional `group` (Text) | Known true/false counts, unknown count and percent true per group |
+| Summarize numeric values | `values` (Numeric) | One summary over actual numeric measurements |
+| Summarize numeric values by group | `values` (Numeric), `group` (Text) | One summary per exact group key, in first-observed order |
+| Group observations using reproducible K-means++ | `x`, `y` (Numeric), optional `observation` (Text) | One assignment per complete input row, in original input order |
+
+Select the unit of observation before analysing. For a relationship across
+activities, prepare one row per activity and align both measurements by the
+activity identifier. For example, join each quiz's mean score to its completion
+rate in a Multilevel indicator. Basic Indicator excludes learner identifiers
+from method inputs. **User scope** filters still select whose events contribute
+to the results.
+
+### Descriptive methods
+
+Category percentages use all events with a nonblank category as the denominator.
+The top or bottom limit changes which categories appear. It leaves the denominator
+intact. Distinct counting uses exact nonblank text values. Counts from different
+groups can overlap when a value occurs in more than one group. Time buckets use
+UTC and return the observed periods in chronological order.
+
+The outcome percentage divides recorded true outcomes by all recorded true or false
+outcomes. Its output is on the 0 to 100 scale. An unknown outcome is excluded and
+a group without known outcomes has an empty percentage.
+
+Summary outputs are `group` (Text) and Numeric `count`, `excluded_count`, `sum`,
+`mean`, `median`, `minimum`, `maximum`, `range`, `variance`,
+`standard_deviation`, `q1`, `q3`, `iqr`. Sample variance and standard deviation use
+the sample denominator `n - 1` and are `null` for one value.
+Quartiles use R-7 linear interpolation: position `1 + (n - 1)p`.
+The IQR is Q3 minus Q1. A group containing only missing measurements has count zero
+and `null` summary statistics. An entirely unusable selection is rejected.
+
+For grouped summaries, `count` and `excluded_count` apply to each group.
+`ungrouped_count` reports rows lacking a group identifier across the whole dataset;
+it repeats on each group row and must be read once, not summed.
+Group keys are preserved exactly. Empty or whitespace-only group keys are missing.
+
+### Reproducible K-means++
+
+Parameters are `clusters` (2-20, default 3), `seed` (0-2147483647, default 42),
+`max_iterations` (1-1000, default 300), and `scaling` (`Standardize` or `None`, default
+`Standardize`). Standardization uses population standard deviation and maps a constant
+feature to zero. Without scaling, distances depend on the original feature units.
+At least as many distinct complete feature pairs as clusters are required.
+
+The method supports at most 10,000 complete observations. Input exclusions never
+shift the remaining feature rows or their labels. Duplicate coordinates remain separate
+observations. Cluster labels are ordered lexicographically by their centres in the
+analysis feature space. Results are reproducible for identical data, row order, seed
+and parameters; cluster numbers do not have an inherent attainment meaning.
+
+Outputs are `observation`, `cluster` (Text), `x`, `y`, `count`, `excluded_count` (Numeric).
+Features retain their original units. The two counts describe the whole dataset and
+repeat on every output row: read them once and never sum them.
+Labels default to original input row numbers when no observation label is supplied.
+The iteration limit may stop calculation before convergence, so the result is exploratory.
+
+## Validation and limitations
+
+All methods reject malformed, nonfinite or incorrectly typed numeric values instead of
+silently treating them as missing. Only `null` represents a missing numeric observation.
+Summary previews are limited to 100,000 input rows. No input list is
+modified. Numerical overflow causes an explicit validation failure, never NaN/Infinity
+in the returned dataset. These methods do not infer data quality, representative sampling,
+causation, statistical significance or learner ability.
+
+Tests use known-answer numeric fixtures, missing paired values, decimal features,
+duplicate points, shuffled cluster membership, invalid parameters and output-contract
+checks.
+
+Apache Commons Math documentation:
+- https://commons.apache.org/proper/commons-math/userguide/stat.html
+- https://commons.apache.org/proper/commons-math/userguide/ml.html

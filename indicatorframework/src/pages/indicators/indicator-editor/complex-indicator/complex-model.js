@@ -1,4 +1,5 @@
 import { readBasicDraft } from "../basic-indicator/utils/basic-draft-model.js";
+import { defaultSourceMeasures, preferredAnalysisColumns } from "../utils/analytics-results.js";
 
 export const CONFIG_VERSION = 1;
 export const COMPLEX_TYPES = ["COMPOSITE", "MULTI_LEVEL"];
@@ -166,9 +167,7 @@ export function sourceSelection(source) {
     filterSummary:
       source.filterSummary || sourceFilterSummary(source.indicatorQuery),
     keyColumnId: text.length === 1 ? text[0].id : "",
-    measureColumnIds: outputs
-      .filter((column) => column.type === "Numeric")
-      .map((column) => column.id),
+    measureColumnIds: defaultSourceMeasures(outputs, source.analyzedDataset, source.analyticsMethod?.metadata?.outputHints),
   };
 }
 
@@ -233,12 +232,12 @@ export const datasetRows = (dataset) =>
     ...datasetColumns(dataset).map((column) => column.data?.length || 0),
   );
 
-export function defaultMappings(inputs = [], dataset) {
+export function defaultMappings(inputs = [], dataset, outputHints, chartRoles) {
   const used = new Set();
   const columns = datasetColumns(dataset);
   return {
     mapping: inputs.flatMap((inputPort) => {
-      const candidates = columns.filter(
+      const candidates = preferredAnalysisColumns(columns, inputPort, outputHints, chartRoles).filter(
         (column) => column.configurationData.type === inputPort.type,
       );
       const selected =

@@ -27,6 +27,7 @@ import SectionCard from "../../../../common/components/section-card/section-card
 import CustomTooltip from "../../../../common/components/custom-tooltip/custom-tooltip";
 import { DataTypes } from "../../../indicator-specification-cards/creator/utils/data/config";
 import { datasetColumns, datasetRows, withMapping } from "./complex-model";
+import { analysisColumnHelp, formatAnalysisValue } from "../utils/analytics-results.js";
 
 export function Failure({ message, retry }) {
   return message ? (
@@ -46,16 +47,14 @@ export function Failure({ message, retry }) {
 }
 Failure.propTypes = { message: PropTypes.string, retry: PropTypes.func };
 
-export function ResultTable({ dataset, title = "Data preview", framed = true }) {
+export function ResultTable({ dataset, title = "Data preview", framed = true, presentation, outputHints }) {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(5);
-  const columns = datasetColumns(dataset).sort((a, b) => {
-    const order = dataset?.columnOrder || [];
-    return (
-      order.indexOf(a.configurationData.id) -
-      order.indexOf(b.configurationData.id)
-    );
-  });
+  const order = [...(presentation?.columnOrder || []), ...(dataset?.columnOrder || [])];
+  const rank = ({ configurationData: { id } }) => order.includes(id) ? order.indexOf(id) : order.length;
+  const columns = datasetColumns(dataset)
+    .filter(({ configurationData: { id } }) => !presentation?.hiddenColumns.includes(id))
+    .sort((left, right) => rank(left) - rank(right));
   const rowCount = datasetRows(dataset);
   const safePage = Math.min(page, Math.max(0, Math.ceil(rowCount / size) - 1));
   const filled = new Set(
@@ -99,11 +98,11 @@ export function ResultTable({ dataset, title = "Data preview", framed = true }) 
                       sx={{ fontWeight: 600, whiteSpace: "nowrap" }}
                     >
                       <Box sx={{ display: "inline-flex", alignItems: "center" }}>
-                        {column.title || column.id} ({typeName})
-                        {description && (
+                        {presentation?.columnTitles[column.id] || column.title || column.id} ({typeName})
+                        {(description || column.description) && (
                           <CustomTooltip
                             type="description"
-                            message={`What is <b>${typeName}</b> data type?<br/>${description}`}
+                            message={analysisColumnHelp(column, description ? `What is <b>${typeName}</b> data type?<br/>${description}` : "")}
                           />
                         )}
                       </Box>
@@ -126,7 +125,7 @@ export function ResultTable({ dataset, title = "Data preview", framed = true }) 
                                 <span>{String(data?.[index] ?? "")} *</span>
                               </Tooltip>
                             ) : (
-                              String(data?.[index] ?? "—")
+                              formatAnalysisValue(data?.[index], outputHints?.[column.id])
                             )}
                           </TableCell>
                         ))}
@@ -164,7 +163,8 @@ export function ResultTable({ dataset, title = "Data preview", framed = true }) 
     </SectionCard>
   ) : content;
 }
-ResultTable.propTypes = { dataset: PropTypes.object, title: PropTypes.string, framed: PropTypes.bool };
+ResultTable.propTypes = { dataset: PropTypes.object, title: PropTypes.string, framed: PropTypes.bool,
+  presentation: PropTypes.object, outputHints: PropTypes.object };
 
 export function ColumnMappings({
   inputs,
@@ -173,6 +173,7 @@ export function ColumnMappings({
   onChange,
   title,
   helper,
+  columnTitles = {},
   columns: layoutColumns = 1,
 }) {
   const columns = datasetColumns(dataset);
@@ -220,7 +221,7 @@ export function ColumnMappings({
                     key={column.configurationData.id}
                     value={column.configurationData.id}
                   >
-                    {column.configurationData.title ||
+                    {columnTitles[column.configurationData.id] || column.configurationData.title ||
                       column.configurationData.id}
                   </MenuItem>
                 ))}
@@ -250,6 +251,7 @@ ColumnMappings.propTypes = {
   onChange: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
   helper: PropTypes.string,
+  columnTitles: PropTypes.object,
   columns: PropTypes.oneOf([1, 2]),
 };
 

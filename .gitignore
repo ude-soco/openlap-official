@@ -38,6 +38,10 @@ bower_components
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
 
+# Local Java build and delivery artifacts
+*.jar
+/artifacts/
+
 # Dependency directories
 node_modules/
 jspm_packages/

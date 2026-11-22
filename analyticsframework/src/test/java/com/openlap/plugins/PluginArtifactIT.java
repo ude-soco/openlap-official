@@ -589,18 +589,48 @@ public class PluginArtifactIT {
   }
 
   @Test
+  public void localManifestRefreshPreservesCatalogIdsAndAdministratorFields() throws Exception {
+    Path directory = temporary.newFolder("local-analytics").toPath();
+    String suffix = "LocalMetadata";
+    Path plugin = ManagedPluginFixture.create(directory, suffix, false, "legacy");
+    var repository = new MongoRepositoryFactory(mongo).getRepository(AnalyticsTechniqueRepository.class);
+    var service = new AnalyticsTechniqueServiceImpl(repository, PluginArtifactResolver.local(), PluginCatalogVisibility.legacyOnly());
+    org.springframework.test.util.ReflectionTestUtils.setField(service, "analyticsMethodsJarsFolder", directory.toString());
+    try {
+      service.populateAnalyticsTechniques();
+      Document original = mongo.getCollection("analytics-technique")
+          .find(new Document("implementingClass", "managedfixture.ManagedAnalytics" + suffix)).first();
+      assertThat(original).isNotNull();
+      Document id = new Document("_id", original.get("_id"));
+      mongo.getCollection("analytics-technique").updateOne(id,
+          new Document("$set", new Document("name", "Local administrator name").append("managementVersion", 4L)));
+      Path updated = ManagedPluginFixture.withAnalyticsManifest(
+          ManagedPluginFixture.create(temporary.newFolder("updated-local").toPath(), suffix, false, "manifest"),
+          suffix, "MULTI_LEVEL");
+      Files.copy(updated, plugin, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+      service.populateAnalyticsTechniques();
+      var installed = mongo.getCollection("analytics-technique").find(id).first();
+      assertThat(installed.getString("name")).isEqualTo("Local administrator name");
+      assertThat(installed.getLong("managementVersion")).isEqualTo(4L);
+      assertThat(installed.get("analyticsMetadata", Document.class)).containsEntry("recommendedFor", List.of("MULTI_LEVEL"));
+    } finally { service.closePluginLoaders(); }
+  }
+
+  @Test
   public void replacementMappingsHandleRemovedAndReintroducedEntriesExplicitly() throws Exception {
     String suffix = "Mapping" + UUID.randomUUID().toString().replace("-", "");
     PluginManagementService service = management(mongo);
     com.openlap.plugins.management.PluginCatalogKind kind = com.openlap.plugins.management.PluginCatalogKind.ANALYTICS_METHOD;
-    Path originalJar = ManagedPluginFixture.create(source, suffix, false, "v1", true);
+    Path originalJar = ManagedPluginFixture.withAnalyticsManifest(
+        ManagedPluginFixture.create(source, suffix, false, "v1", true), suffix, "BASIC");
     Map<String, Object> original = upload(service, originalJar, PluginKind.ANALYTICS);
     String originalOp = (String) original.get("id");
     original = service.inspect(originalOp, version(original), true); service.activate(originalOp, version(original));
     List<Document> oldRows = new ArrayList<>(); mongo.getCollection(kind.collection).find(new Document("installationId", originalOp)).into(oldRows);
     Document oldMain = oldRows.stream().filter(row -> !row.getString("implementingClass").endsWith("Extra")).findFirst().get();
     String mainId = oldMain.getString("_id");
-    Path nextJar = ManagedPluginFixture.create(source, suffix, false, "v2", false);
+    Path nextJar = ManagedPluginFixture.withAnalyticsManifest(
+        ManagedPluginFixture.create(source, suffix, false, "v2", false), suffix, "MULTI_LEVEL");
     Map<String, Object> next = service.upload(PluginKind.ANALYTICS, new MockMultipartFile("file", "v2.jar", "application/java-archive", Files.readAllBytes(nextJar)), "admin", kind, mainId);
     String nextOp = (String) next.get("id"); next = service.inspect(nextOp, version(next), true);
     Map<String, Object> plan = mapping(next);
@@ -613,6 +643,8 @@ public class PluginArtifactIT {
     next = service.configureReplacement(nextOp, version(next), plan); service.activate(nextOp, version(next));
     assertThat(mongo.getCollection(kind.collection).countDocuments(new Document("installationId", nextOp))).isEqualTo(1);
     Document second = mongo.getCollection(kind.collection).find(new Document("installationId", nextOp)).first();
+    assertThat(oldMain.get("analyticsMetadata", Document.class)).containsEntry("recommendedFor", List.of("BASIC"));
+    assertThat(second.get("analyticsMetadata", Document.class)).containsEntry("recommendedFor", List.of("MULTI_LEVEL"));
     new com.openlap.plugins.management.PluginCatalogEditor(mongo).setEnabled(kind, second.getString("_id"), false);
     Path thirdJar = ManagedPluginFixture.create(source, suffix, false, "v3", true);
     Map<String, Object> third = service.upload(PluginKind.ANALYTICS, new MockMultipartFile("file", "v3.jar", "application/java-archive", Files.readAllBytes(thirdJar)), "admin", kind, second.getString("_id"));

@@ -53,6 +53,10 @@ public class CommunityIndicatorService {
       return new Preview("READY", "Preview generated using only your data. You can save your own copy.",
           graph.previewCode(), receiptId, graph.version(), graph.root().getVisualizationTechniqueReference().getVisType().getId(), List.of());
     } catch (OpenLapException error) {
+      if ("PRIVATE_ANALYSIS_INPUT".equals(error.getCode())) {
+        return new Preview("INCOMPATIBLE", "This indicator uses a learner identity field. Adapt it to choose a different analysis input.",
+            null, null, null, null, List.of());
+      }
       if (Set.of("NO_CONNECTION", "MISSING_LRS", "NO_DATA", "PLUGIN_UNAVAILABLE", "INCOMPATIBLE", "CHOOSE_CONNECTION").contains(error.getCode()))
         return new Preview(error.getCode(), error.getMessage(), null, null, null, null,
             "CHOOSE_CONNECTION".equals(error.getCode()) ? execution.connectionChoices(source, viewer) : List.of());

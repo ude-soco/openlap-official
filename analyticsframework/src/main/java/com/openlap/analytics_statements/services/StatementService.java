@@ -1,5 +1,6 @@
 package com.openlap.analytics_statements.services;
 
+import com.openlap.analytics_statements.dtos.StatementInputAvailability;
 import com.openlap.analytics_statements.dtos.request.*;
 import com.openlap.dataset.OpenLAPDataSet;
 import java.util.List;
@@ -16,6 +17,8 @@ public interface StatementService {
   List<Object> findUniqueActivities(ActivitiesRequest activitiesRequest);
 
   OpenLAPDataSet findStatements(StatementsRequest statementsRequest);
+
+  StatementInputAvailability findInputAvailability(StatementsRequest statementsRequest);
 
   Boolean validateLrsUser(@Valid LrsConsumerRequest lrsConsumerRequest);
 }

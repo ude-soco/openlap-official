@@ -81,7 +81,8 @@ public class ComplexIndicatorMerger {
       for (String measure : input.measures()) {
         String id = measureId(source.indicatorId(), measure);
         OpenLAPDataColumn<?> column = source.data().getColumns().get(measure);
-        String measureTitle = label + " · " + title(column.getConfigurationData());
+        String measureTitle = intersection && input.measures().size() == 1
+            ? label : label + " · " + title(column.getConfigurationData());
         if (!intersection && !seriesLabels.add(measureTitle)) {
           throw invalid("Use different series labels for the selected source measures. "
               + "Identical labels would combine separate results in the chart.");

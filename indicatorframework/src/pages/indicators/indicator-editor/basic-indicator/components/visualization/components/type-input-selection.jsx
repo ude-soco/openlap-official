@@ -9,10 +9,14 @@ import {
   Select,
 } from "@mui/material";
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
+import { preferredAnalysisColumns } from "../../../../utils/analytics-results.js";
+import { getVisualizationDescriptor } from "../utils/visualization-descriptor.js";
 
 const TypeInputSelection = () => {
   const { analysis, visualization, setVisualization, isCommunityAdaptation } =
     useContext(BasicContext);
+  const outputHints = analysis.selectedAnalyticsMethod.method?.metadata?.outputHints;
+  const chartRoles = getVisualizationDescriptor(visualization.selectedType)?.inputRoles;
 
   useEffect(() => {
     const newMappings = [...visualization.mapping.mapping]; // copy existing mappings
@@ -29,7 +33,7 @@ const TypeInputSelection = () => {
       if (input.selectedInput) return input;
 
       // Find a matching analyzedData item
-      const filteredInputs = Object.values(analysis.analyzedData).filter(
+      const filteredInputs = preferredAnalysisColumns(Object.values(analysis.analyzedData), input, outputHints, chartRoles).filter(
         (value) => input.type === value.configurationData.type
       );
 
@@ -66,7 +70,7 @@ const TypeInputSelection = () => {
     }));
   // Existing selections are initialized once per chart/data result, not per editor render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visualization.selectedType.id, analysis.analyzedData, isCommunityAdaptation]);
+  }, [visualization.selectedType.id, analysis.analyzedData, isCommunityAdaptation, outputHints, chartRoles]);
 
   const handleSelectInput = (value, input) => {
     // Deep copy each input object
@@ -120,7 +124,7 @@ const TypeInputSelection = () => {
     >
       <Grid container spacing={2}>
         {visualization.inputs.map((input) => {
-          const filteredInputs = Object.values(analysis.analyzedData).filter(
+          const filteredInputs = preferredAnalysisColumns(Object.values(analysis.analyzedData), input, outputHints, chartRoles).filter(
             (value) => input.type === value.configurationData.type
           );
           const labelId = `vis-input-label-${input.id}`;

@@ -264,7 +264,7 @@ public final class LegacyC3RenderProbe {
           boolean escaped = scenario.equals("escaped");
           OpenLAPDataSet input = snapshotInput(chart, escaped);
           if (escaped) settings.put("chartTitle", "probe-title " + UNSAFE_TEXT);
-          LegacyC3Strings.Inputs prepared = LegacyC3Strings.prepare(chart, input, settings);
+          LegacyC3Strings.Inputs prepared = LegacyC3Strings.prepare(chart, input, mapping, settings);
           String code = chart.generateVisualizationCode(prepared.data(), mapping, prepared.parameters());
           code = LegacyC3Scatter.repair(chart, code, input, mapping, settings);
           result.put("assertions", scenario.equals("clustered") ? assertClusters(code)

@@ -195,7 +195,12 @@ async function scenario(browser, viewport, options = {}) {
     const menu = navigator(page).locator('button[aria-haspopup="menu"]');
     if (viewport.width <= 1024 || options.embedded) {
       assert.equal(await menu.count(), 1, "Narrow editor containers use one compact step menu");
-      await menu.focus(); await page.keyboard.press("Enter");
+      await menu.focus();
+      assert.ok(await menu.evaluate(async (element) => {
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        return element === document.activeElement;
+      }), "The focused step menu keeps focus while the previous navigation settles");
+      await page.keyboard.press("Enter");
       const item = page.getByRole("menuitem", { name: /^Filters/ });
       await item.focus(); await page.keyboard.press("Enter");
       await assertLanding(page, "Filters", "filters");

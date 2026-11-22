@@ -3,8 +3,11 @@ package com.openlap.analytics_module.services;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import com.openlap.analytics_module.services.impl.IndicatorBasicServiceImpl;
+import com.openlap.analytics_statements.dtos.StatementInputAvailability;
 import com.openlap.analytics_statements.dtos.request.LrsStoresStatementRequest;
+import com.openlap.analytics_statements.dtos.request.StatementsRequest;
 import com.openlap.analytics_statements.exception.LrsNotFoundException;
+import com.openlap.analytics_statements.services.StatementService;
 import com.openlap.user.entities.User;
 import com.openlap.user.entities.utility_entities.LrsConsumer;
 import com.openlap.user.services.TokenService;
@@ -36,5 +39,25 @@ public class IndicatorRequestOwnershipTest {
         .isInstanceOf(LrsNotFoundException.class);
     assertThatThrownBy(() -> service.validateUserRequest(request, Arrays.asList((LrsStoresStatementRequest) null)))
         .isInstanceOf(LrsNotFoundException.class);
+  }
+
+  @Test public void inputAvailabilityValidatesOwnershipBeforeReadingTheStatements() {
+    var request = new MockHttpServletRequest();
+    var tokens = mock(TokenService.class);
+    var owner = new User();
+    owner.setLrsConsumerList(List.of(new LrsConsumer(new ObjectId(), "first", "me-first")));
+    when(tokens.getUserFromToken(request)).thenReturn(owner);
+    var statements = mock(StatementService.class);
+    var service = new IndicatorBasicServiceImpl(null, statements, null, tokens, null);
+    var query = new StatementsRequest();
+    query.setLrsStores(List.of(new LrsStoresStatementRequest("first", "someone-else")));
+
+    assertThatThrownBy(() -> service.inputAvailability(request, query)).isInstanceOf(LrsNotFoundException.class);
+    verifyNoInteractions(statements);
+
+    query.setLrsStores(List.of(new LrsStoresStatementRequest("first", "me-first")));
+    var availability = new StatementInputAvailability(0, true, List.of(), List.of(), List.of());
+    when(statements.findInputAvailability(query)).thenReturn(availability);
+    assertThat(service.inputAvailability(request, query)).isSameAs(availability);
   }
 }

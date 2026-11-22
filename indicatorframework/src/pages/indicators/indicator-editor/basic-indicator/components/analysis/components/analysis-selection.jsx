@@ -1,19 +1,26 @@
 import { useContext, useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import { AuthContext } from "../../../../../../../setup/auth-context-manager/auth-context-manager";
 import { BasicContext } from "../../../basic-indicator";
 import {
   fetchAnalyticsMethods,
   fetchTechniqueInputsAndParams,
 } from "../utils/analysis-api";
-import { Alert, Autocomplete, Button, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Button, Stack, Typography } from "@mui/material";
 import SectionCard from "../../../../../../../common/components/section-card/section-card";
+import { AnalysisObservationGuidance } from "../../../../components/analysis-observation-guidance.jsx";
+import AnalyticsMethodPicker from "../../../../components/analytics-method-picker.jsx";
+import { withAnalysisInputDefaults } from "../utils/analysis-data.js";
+import { methodDataRecommendation } from "../utils/method-availability.js";
 
-export default function AnalysisSelection() {
+export default function AnalysisSelection({ availability }) {
   const { api } = useContext(AuthContext);
   const { analysis, setAnalysis } = useContext(BasicContext);
   const methodId = analysis.selectedAnalyticsMethod.method.id;
   const [methodError, setMethodError] = useState("");
   const [retry, setRetry] = useState(0);
+  const selectedMethod = analysis.analyticsMethodList.find((method) => method.id === methodId) ||
+    analysis.selectedAnalyticsMethod.method;
 
   useEffect(() => {
     let cancelled = false;
@@ -21,10 +28,15 @@ export default function AnalysisSelection() {
       try {
         const analyticsMethodList = await fetchAnalyticsMethods(api);
         if (cancelled) return;
-        setAnalysis((p) => ({
-          ...p,
-          analyticsMethodList: analyticsMethodList || [],
-        }));
+        setAnalysis((previous) => {
+          const selected = previous.selectedAnalyticsMethod;
+          const method = analyticsMethodList?.find((entry) => entry.id === selected.method.id);
+          return withAnalysisInputDefaults({
+            ...previous,
+            analyticsMethodList: analyticsMethodList || [],
+            selectedAnalyticsMethod: method ? { ...selected, method } : selected,
+          });
+        });
       } catch (error) {
         console.error("Failed to fetch analysis methods:", error);
       }
@@ -42,14 +54,14 @@ export default function AnalysisSelection() {
       .then((response) => {
         if (cancelled) return;
         setAnalysis((previous) => previous.selectedAnalyticsMethod.method.id !== methodId
-          ? previous : {
+          ? previous : withAnalysisInputDefaults({
             ...previous,
             inputs: response.inputs || [],
             params: (response.params || []).map((param) => ({
               ...param, value: previous.params.some((saved) => saved.id === param.id)
                 ? previous.params.find((saved) => saved.id === param.id).value : param.defaultValue,
             })),
-          });
+          }));
       })
       .catch(() => {
         if (!cancelled) setMethodError("Could not load method inputs and parameters. Your selection is preserved.");
@@ -81,48 +93,36 @@ export default function AnalysisSelection() {
       helper="Choose the analysis to apply to your filtered data."
     >
       <Stack sx={{ gap: 0.75 }}>
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-          Analytics method
-        </Typography>
-        <Autocomplete
-          disableClearable
-          disablePortal
-          fullWidth
-          options={analysis.analyticsMethodList}
-          getOptionLabel={(o) => o.name}
-          value={analysis.selectedAnalyticsMethod.method || null}
-          onChange={(event, value) => handleSelectAnalyticsMethod(value)}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              placeholder="Search for an analytics method"
-              slotProps={{
-                ...params.slotProps,
-                htmlInput: {
-                  ...params.slotProps.htmlInput,
-                  "aria-label": "Analytics method",
-                },
-              }}
-            />
-          )}
-          renderOption={(attributes, option) => {
-            const { key, ...restProps } = attributes;
-            return (
-              <li key={key} {...restProps}>
-                <Stack sx={{ py: 0.5 }}>
-                  <Typography>{option.name}</Typography>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    sx={{ fontStyle: "italic" }}
-                  >
-                    {option.description}
-                  </Typography>
-                </Stack>
-              </li>
-            );
-          }}
+        {availability?.loading && (
+          <Typography variant="body2" color="text.secondary" role="status">
+            Checking which method inputs are available with your filters…
+          </Typography>
+        )}
+        {availability?.error && (
+          <Alert severity="info" action={
+            <Button color="inherit" size="small" onClick={availability.retry}>Retry data check</Button>
+          }>
+            Could not check data for method recommendations.
+          </Alert>
+        )}
+        {availability?.data?.complete === false && (
+          <Typography variant="body2" color="text.secondary" role="status">
+            Recommendations use a sample of {availability.data.checkedStatements.toLocaleString()} matching statements.
+            Other matching statements may contain more fields.
+          </Typography>
+        )}
+        {availability && !availability.loading && !availability.error && !availability.data && (
+          <Typography variant="body2" color="text.secondary">
+            Complete your dataset and filters to get recommendations for your data.
+          </Typography>
+        )}
+        <AnalyticsMethodPicker
+          methods={analysis.analyticsMethodList}
+          value={selectedMethod?.id ? selectedMethod : null}
+          onChange={handleSelectAnalyticsMethod}
+          recommendForData={(method) => methodDataRecommendation(method.basicInputRequirement, availability?.data, method.metadata?.requiredInputRoles)}
         />
+        <AnalysisObservationGuidance inputs={analysis.inputs} />
         {methodError && (
           <Alert severity="error" action={
             <Button color="inherit" size="small" onClick={() => setRetry((previous) => previous + 1)}>
@@ -136,3 +136,12 @@ export default function AnalysisSelection() {
     </SectionCard>
   );
 }
+
+AnalysisSelection.propTypes = {
+  availability: PropTypes.shape({
+    data: PropTypes.object,
+    loading: PropTypes.bool,
+    error: PropTypes.string,
+    retry: PropTypes.func,
+  }),
+};

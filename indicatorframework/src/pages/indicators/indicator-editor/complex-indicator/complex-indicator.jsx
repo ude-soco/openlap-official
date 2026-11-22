@@ -10,6 +10,7 @@ import useAdaptationPreview from "./use-adaptation-preview.js";
 import ComplexAdaptationSources from "./complex-adaptation-sources.jsx";
 import { EmbeddedBasicIndicator } from "../basic-indicator/basic-indicator.jsx";
 import { emptyBasicState, serializeBasicDraft } from "../basic-indicator/utils/basic-draft-model.js";
+import { analysisResultPresentation, defaultSourceMeasures } from "../utils/analytics-results.js";
 import CommunityComparison from "../../../../common/components/community-adaptation/community-comparison.jsx";
 import { getCustomizationErrors, getVisualizationDescriptor } from "../basic-indicator/components/visualization/utils/visualization-descriptor";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -63,6 +64,7 @@ import { Failure } from "./complex-controls";
 const apiData = (response) => response.data.data;
 const messageOf = (error, fallback) =>
   error?.response?.data?.message || error?.message || fallback;
+const EMPTY_METHODS = [];
 const TYPE_LABELS = {
   COMPOSITE: "Composite indicator",
   MULTI_LEVEL: "Multilevel analysis indicator",
@@ -129,7 +131,8 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
   const [sourceError, setSourceError] = useState("");
   const [sourcesLoading, setSourcesLoading] = useState(true);
   const [catalogRetry, setCatalogRetry] = useState(0);
-  const [methods, setMethods] = useState([]);
+  const [methodCatalog, setMethodCatalog] = useState(null);
+  const [unlistedMethod, setUnlistedMethod] = useState(null);
   const [libraries, setLibraries] = useState([]);
   const [types, setTypes] = useState([]);
   const [methodInputs, setMethodInputs] = useState([]);
@@ -187,6 +190,11 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
 
   const endpoint = isMulti ? "multilevel" : "composite";
   const methodId = configuration.analysis.methodId;
+  const methodCatalogReady = methodCatalog?.api === api && methodCatalog.retry === catalogRetry;
+  const methods = methodCatalog?.methods || EMPTY_METHODS;
+  const listedMethod = methods.find((method) => method.id === methodId);
+  const selectedMethod = listedMethod || (unlistedMethod?.id === methodId ? unlistedMethod : null);
+  const outputHints = selectedMethod?.metadata?.outputHints;
   const libraryId = configuration.visualization.libraryId;
   const sourceMethodId = configuration.sources[0]?.analyticsMethod?.id || "";
   const methodFilterId = !isMulti && compatibleOnly
@@ -227,6 +235,8 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     upstream: merged, ready: isAdaptation && analysisReady });
   const analysisPreview = isAdaptation ? adaptedAnalysisPreview : normalAnalysisPreview;
   const analyzed = analysisPreview.data;
+  const resultPresentation = useMemo(() => analysisResultPresentation(analyzed, outputHints,
+    configuration.analysis.mapping, merged), [analyzed, outputHints, configuration.analysis.mapping, merged]);
   const busy = combinePreview.loading ? "combine"
     : analysisPreview.loading ? "analysis" : operationBusy;
   const selectedType = types.find(
@@ -311,17 +321,16 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
   useEffect(() => {
     let cancelled = false;
     Promise.allSettled([
-      isMulti
+      isMulti || isAdaptation
         ? api.get("v1/analytics/methods")
         : Promise.resolve({ data: { data: [] } }),
       api.get("v1/visualizations/libraries"),
     ]).then(([methodResult, libraryResult]) => {
       if (cancelled) return;
       const errors = [];
-      if (methodResult.status === "fulfilled")
-        setMethods(apiData(methodResult.value) || []);
-      else {
-        setMethods([]);
+      setMethodCatalog({ api, retry: catalogRetry,
+        methods: methodResult.status === "fulfilled" ? apiData(methodResult.value) || [] : [] });
+      if (methodResult.status === "rejected") {
         errors.push(
           messageOf(methodResult.reason, "Could not load analytics methods."),
         );
@@ -342,7 +351,20 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
     return () => {
       cancelled = true;
     };
-  }, [api, catalogRetry, isMulti]);
+  }, [api, catalogRetry, isMulti, isAdaptation]);
+
+  useEffect(() => {
+    if (!isMulti || !methodCatalogReady || !methodId || listedMethod) return undefined;
+    const controller = new AbortController();
+    api.get(`v1/analytics/methods/${encodeURIComponent(methodId)}`, { signal: controller.signal })
+      .then((response) => {
+        if (!controller.signal.aborted) setUnlistedMethod(apiData(response));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setUnlistedMethod(null);
+      });
+    return () => controller.abort();
+  }, [api, catalogRetry, isMulti, listedMethod, methodCatalogReady, methodId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -471,7 +493,8 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
         if (source.id !== slotId) return source;
         const method = basic.analysis.selectedAnalyticsMethod.method;
         const methodChanged = source.analyticsMethod?.id !== method.id;
-        return { ...source, name: basic.indicator.indicatorName.trim() || source.name, analyticsMethod: method,
+        return { ...source, name: basic.indicator.indicatorName.trim() || source.name,
+          analyticsMethod: methodChanged ? method : source.analyticsMethod,
           ...(methodChanged ? { outputs: [], keyColumnId: "", measureColumnIds: [] } : {}) };
       }),
     }), "sources");
@@ -479,32 +502,33 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
   const sourceMethodFingerprint = JSON.stringify(isAdaptation ? configuration.sources.map((source) =>
     [source.id, source.analyticsMethod?.id || ""]) : []);
   useEffect(() => {
-    if (!isAdaptation) return undefined;
+    if (!isAdaptation || !methodCatalogReady) return undefined;
     let cancelled = false;
-    const selections = JSON.parse(sourceMethodFingerprint);
-    Promise.all(selections.map(async ([slotId, selectedMethod]) => {
-      if (!selectedMethod) return [slotId, []];
-      const output = await api.get(`v1/analytics/methods/outputs/${encodeURIComponent(selectedMethod)}`);
-      return [slotId, apiData(output) || []];
-    })).then((contracts) => {
+    const methodIds = new Set(JSON.parse(sourceMethodFingerprint).map(([, method]) => method).filter(Boolean));
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
+    Promise.all([...methodIds].map(async (methodId) => [methodId, apiData(
+      await api.get(`v1/analytics/methods/outputs/${encodeURIComponent(methodId)}`, options)) || []])).then((contracts) => {
       if (cancelled) return;
-      const bySlot = new Map(contracts);
+      const byMethod = new Map(contracts);
+      const descriptors = new Map((methods || []).map((method) => [method.id, method]));
       setConfiguration((previous) => {
         const sources = previous.sources.map((source) => {
-          const outputs = bySlot.get(source.id) || [];
+          const outputs = byMethod.get(source.analyticsMethod?.id) || [];
+          const method = descriptors.get(source.analyticsMethod?.id) || source.analyticsMethod;
           const keys = outputs.filter((port) => port.type === "Text");
-          return { ...source, outputs,
+          return { ...source, outputs, analyticsMethod: method,
             keyColumnId: outputs.some((port) => port.id === source.keyColumnId) ? source.keyColumnId : keys.length === 1 ? keys[0].id : "",
             measureColumnIds: source.measureColumnIds.length
               ? source.measureColumnIds.filter((id) => outputs.some((port) => port.id === id && port.type === "Numeric"))
-              : outputs.filter((port) => port.type === "Numeric").map((port) => port.id),
+              : defaultSourceMeasures(outputs, undefined, method?.metadata?.outputHints),
           };
         });
         return JSON.stringify(sources) === JSON.stringify(previous.sources) ? previous : { ...previous, sources };
       });
     }).catch((error) => { if (!cancelled) setSourceError(messageOf(error, "Could not refresh source method outputs. Open each source and review its method.")); });
-    return () => { cancelled = true; };
-  }, [api, isAdaptation, sourceMethodFingerprint, catalogRetry]);
+    return () => { cancelled = true; controller.abort(); };
+  }, [api, isAdaptation, sourceMethodFingerprint, methodCatalogReady, methods]);
 
   const addAdaptationSource = () => {
     if (configuration.sources.length >= MAX_SOURCES) return;
@@ -742,7 +766,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
             locked: !datasetRows(merged),
             lockedHint: "Generate combined data first.",
             completed: datasetRows(analyzed) > 0,
-            summary: methods.find((method) => method.id === methodId)?.name,
+            summary: selectedMethod?.name,
           },
         ]
       : []),
@@ -985,6 +1009,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
             reference={adaptation?.reference}
             methods={methods}
             methodId={methodId}
+            selectedMethod={selectedMethod}
             change={change}
             methodLoading={methodLoading}
             methodInputs={methodInputs}
@@ -997,6 +1022,7 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
             busy={busy}
             analyze={analysisPreview.retry}
             analyzed={analyzed}
+            resultPresentation={resultPresentation}
             setCurrent={setCurrent}
           />,
         )}
@@ -1012,6 +1038,8 @@ export default function ComplexIndicator({ type, initialDraft = null, onDraftCre
           chartLoading={chartLoading}
           types={types}
           chartDataset={chartDataset}
+          resultPresentation={resultPresentation}
+          outputHints={outputHints}
           supportsSeries={supportsSeries}
           selectedType={selectedType}
           operationError={operationError}

@@ -1,5 +1,7 @@
 package com.openlap.plugins.management;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.openlap.plugins.analytics.AnalyticsManifest;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -14,5 +16,6 @@ public class PluginInspection {
   private String libraryClass;
   private Document library;
   private Document visualizationManifest;
+  @JsonIgnore private AnalyticsManifest analyticsManifest;
   private List<Document> entries = new ArrayList<>();
 }

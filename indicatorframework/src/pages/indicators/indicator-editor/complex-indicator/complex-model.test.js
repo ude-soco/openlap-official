@@ -62,6 +62,17 @@ const source = (id, method = "counts") => ({
   available: true,
 });
 
+test("selecting a statistical Basic source defaults to its primary measure instead of every statistic", () => {
+  const numericPorts = ["count", "excluded_count", "mean", "median", "standard_deviation", "q1", "q3", "iqr"]
+    .map((id) => ({ id, type: "Numeric" }));
+  const summary = { ...source("summary", "numeric-summary"), outputs: [{ id: "group", type: "Text" }, ...numericPorts] };
+  summary.analyticsMethod.metadata = { outputHints: { mean: { primary: true } } };
+  const selected = sourceSelection(summary);
+  assert.equal(selected.keyColumnId, "group");
+  assert.deepEqual(selected.measureColumnIds, ["mean"]);
+  assert.deepEqual(sourceSelection(source("legacy")).measureColumnIds, ["count"]);
+});
+
 test("adaptation sources persist only bounded Basic choices and reject partial keysets", () => {
   const config = newComplexConfiguration("COMPOSITE");
   config.sources = [sourceSelection(source("source-1")), sourceSelection(source("source-2"))];

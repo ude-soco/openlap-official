@@ -240,7 +240,7 @@ public final class LegacyApexRenderProbe {
           if (scenario.equals("repeated-x")) settings.put("chartTitle", UNSAFE_TEXT);
           if (scenario.equals("filtered")) settings.put("hiddenCategoriesIndexes", "[1]");
           OpenLAPDataSet source = snapshot(chart, scenario);
-          LegacyC3Strings.Inputs input = LegacyApexScatter.prepare(chart, source, settings);
+          LegacyC3Strings.Inputs input = LegacyApexScatter.prepare(chart, source, mapping, settings);
           String code = chart.generateVisualizationCode(input.data(), mapping, input.parameters());
           code = LegacyApexScatter.repair(chart, code, source, mapping, settings);
           if (Boolean.getBoolean("probe.include-output")) result.put("generatedCode", code);

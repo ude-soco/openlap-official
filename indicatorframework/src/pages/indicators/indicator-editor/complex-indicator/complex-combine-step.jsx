@@ -14,6 +14,7 @@ import {
 import SectionCard from "../../../../common/components/section-card/section-card";
 import { datasetRows, sourcesReady } from "./complex-model";
 import { Failure, ResultTable } from "./complex-controls";
+import { sourceMeasureHelp } from "../utils/analytics-results.js";
 
 export default function ComplexCombineStep({
   isMulti,
@@ -39,8 +40,10 @@ export default function ComplexCombineStep({
           : "All matching values from every selected indicator are included. Absent numeric measures are filled with zero and marked in the preview."}
       </Alert>
       <Grid container spacing={2} sx={{ alignItems: "stretch", minWidth: 0 }}>
-        {configuration.sources.map((source) => (
-          <Grid
+        {configuration.sources.map((source) => {
+          const multipleMeasures = source.measureColumnIds.length > 1;
+          const nameLabel = multipleMeasures ? "Column name prefix" : "Column name";
+          return <Grid
             key={source.id}
             size={{ xs: 12, lg: 6 }}
             sx={{
@@ -97,7 +100,7 @@ export default function ComplexCombineStep({
                       measureColumnIds: event.target.value,
                     })
                   }
-                  helperText="Choose numerical measures to include."
+                  helperText={sourceMeasureHelp(source)}
                 >
                   {source.outputs
                     .filter(
@@ -113,13 +116,20 @@ export default function ComplexCombineStep({
                 </TextField>
                 <TextField
                   fullWidth
-                  label={`Series label for ${source.name}`}
+                  label={isMulti ? nameLabel : `Series label for ${source.name}`}
                   value={source.label}
                   onChange={(event) =>
                     updateSource(source.id, { label: event.target.value })
                   }
-                  slotProps={{ htmlInput: { maxLength: 150 } }}
-                  helperText="Use a short chart label. The original source name remains visible in this review."
+                  slotProps={{ htmlInput: {
+                    maxLength: 150,
+                    ...(isMulti && { "aria-label": `${nameLabel} for ${source.name}` }),
+                  } }}
+                  helperText={isMulti
+                    ? multipleMeasures
+                      ? "This prefix is added to each selected measure’s name."
+                      : "Use a short name for this measure in the preview and chart setup."
+                    : "Use a short chart label. The original source name remains visible in this review."}
                 />
               </Stack>
               {source.filterSummary && (
@@ -140,8 +150,8 @@ export default function ComplexCombineStep({
                 </Button>
               </Stack>
             </SectionCard>
-          </Grid>
-        ))}
+          </Grid>;
+        })}
       </Grid>
       <Failure
         message={
@@ -152,7 +162,7 @@ export default function ComplexCombineStep({
       />
       <SectionCard
         title="Preview results"
-        helper="The preview updates automatically when the matching columns, measures, or series labels change."
+        helper={`The preview updates automatically when the matching columns, measures, or ${isMulti ? "column names" : "series labels"} change.`}
       >
         {previewLoading ? (
           <Stack sx={{ gap: 1.5, alignItems: "center", py: 3 }}>

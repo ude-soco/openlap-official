@@ -56,10 +56,13 @@ export default function useEditorNavigation({ steps, current, onStepSelect, disa
       if (latest.current.disabled || latest.current.steps.find((step) => step.key === pending.key)?.locked) { cancelJump(); return; }
       const target = sections().find((element) => element.dataset.editorStep === pending.key);
       if (target) {
-        // A closing MUI menu can briefly reclaim focus during its exit. Keep
-        // the requested section focused until layout settles; any subsequent
-        // keyboard, pointer or touch interaction cancels this reconciliation.
-        if (document.activeElement !== target) target.focus({ preventScroll: true });
+        // A closing menu may briefly block the initial focus. Once the section
+        // has received focus, let a newly focused control take over immediately.
+        if (pending.focused && !target.contains(document.activeElement)) { cancelJump(); return; }
+        if (!pending.focused) {
+          target.focus({ preventScroll: true });
+          pending.focused = document.activeElement === target;
+        }
         const top = Math.max(0, scrollY + target.getBoundingClientRect().top - offset());
         // Reconcile the anchor while accordion heights settle. Jumps are
         // instant (also with reduced motion) and stop on any user interaction.
@@ -77,7 +80,7 @@ export default function useEditorNavigation({ steps, current, onStepSelect, disa
       open?.(key);
       setViewed(key);
       setAnnouncement("");
-      pending = { key, triggerEvent, until: performance.now() + 750 };
+      pending = { key, triggerEvent, focused: false, until: performance.now() + 750 };
       jumpFrame = requestAnimationFrame(align);
     };
     const observer = new ResizeObserver(measure);

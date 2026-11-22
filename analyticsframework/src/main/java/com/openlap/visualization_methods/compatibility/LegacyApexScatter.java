@@ -25,9 +25,9 @@ public final class LegacyApexScatter {
   private LegacyApexScatter() {}
 
   public static LegacyC3Strings.Inputs prepare(VisualizationCodeGenerator generator,
-      OpenLAPDataSet data, Map<String, Object> parameters) {
+      OpenLAPDataSet data, OpenLAPPortConfig mapping, Map<String, Object> parameters) {
     // This exact generator also uses raw JS literal concatenation; no other Apex class is changed.
-    return supports(generator) ? LegacyC3Strings.copyForLegacy(data, parameters)
+    return supports(generator) ? LegacyC3Strings.copyForLegacy(data, mapping, parameters)
         : new LegacyC3Strings.Inputs(data, parameters);
   }
 

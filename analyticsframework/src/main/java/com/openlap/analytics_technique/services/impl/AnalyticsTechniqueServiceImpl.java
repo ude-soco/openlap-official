@@ -1,11 +1,15 @@
 package com.openlap.analytics_technique.services.impl;
 
 import com.openlap.plugins.management.PluginCatalogVisibility;
+import com.openlap.plugins.management.PluginInspector;
 
+import com.openlap.analytics_module.entities.utility_entities.IndicatorType;
 import com.openlap.analytics_technique.dto.request.AnalyticsTechniqueRequest;
+import com.openlap.analytics_module.services.impl.AnalyticsInputPreparation;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueFileNameResponse;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueInputParamResponse;
 import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueResponse;
+import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueResponse.BasicInputRequirement;
 import com.openlap.analytics_technique.entities.AnalyticsTechnique;
 import com.openlap.analytics_technique.exceptions.AnalyticsMethodClassLoaderException;
 import com.openlap.analytics_technique.exceptions.AnalyticsTechniqueNotFoundException;
@@ -37,6 +41,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.bson.Document;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.openlap.visualization_methods.exceptions.VisualizationClassLoaderException;
@@ -53,11 +58,13 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService {
 
+  private static final String SHIPPED_METHOD_PACKAGE = "com.openlap.analytics.methods.";
+  private static final Set<String> RETIRED_EDITOR_METHODS = Set.of(
+      SHIPPED_METHOD_PACKAGE + "PearsonCorrelation",
+      SHIPPED_METHOD_PACKAGE + "SpearmanCorrelation");
+
   @Value("${analytics.jars.folder}")
   private String analyticsMethodsJarsFolder;
-
-  @Value("${analytics.class.directory}")
-  private String analyticsMethodsClassDirectory;
 
   private final AnalyticsTechniqueRepository analyticsTechniqueRepository;
   private final PluginArtifactResolver pluginArtifactResolver;
@@ -118,6 +125,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
               analyticsTechnique.getOutputs(),
               true,
               null,
+              null,
               null));
       log.info("Successfully created analytics technique {}", analyticsTechnique);
     } catch (Exception e) {
@@ -128,9 +136,18 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   @Override
   public AnalyticsTechniqueResponse getAnalyticsTechniquesById(String techniqueId) {
-    AnalyticsTechnique foundTechnique = fetchAnalyticsTechniqueMethod(techniqueId);
+    return catalogResponse(fetchAnalyticsTechniqueMethod(techniqueId));
+  }
+
+  private static AnalyticsTechniqueResponse catalogResponse(AnalyticsTechnique technique) {
+    Document metadata = technique.getAnalyticsMetadata();
+    if (metadata == null) return new AnalyticsTechniqueResponse(technique.getId(), technique.getName(), technique.getDescription());
+    List<IndicatorType> recommendedFor = metadata.getList("recommendedFor", String.class, List.of())
+        .stream().map(IndicatorType::valueOf).toList();
+    String requirement = metadata.getString("basicInputRequirement");
     return new AnalyticsTechniqueResponse(
-        foundTechnique.getId(), foundTechnique.getName(), foundTechnique.getDescription());
+        technique.getId(), technique.getName(), technique.getDescription(), recommendedFor,
+        requirement == null ? null : BasicInputRequirement.valueOf(requirement), metadata);
   }
 
   @Override
@@ -158,15 +175,12 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
   public List<AnalyticsTechniqueResponse> getAllAnalyticsTechniques() {
     List<AnalyticsTechniqueResponse> analyticsTechniqueResponses = new ArrayList<>();
     for (AnalyticsTechnique analyticsTechnique : fetchAllAnalyticsTechniquesMethod()) {
-      // Editor list: hide soft-disabled methods from new indicator selection.
-      if (!analyticsTechnique.isEnabled()) {
+      // Keep installed methods executable by ID even when they are unavailable for selection.
+      if (!analyticsTechnique.isEnabled() || RETIRED_EDITOR_METHODS.contains(
+          Objects.toString(analyticsTechnique.getImplementingClass(), ""))) {
         continue;
       }
-      analyticsTechniqueResponses.add(
-          new AnalyticsTechniqueResponse(
-              analyticsTechnique.getId(),
-              analyticsTechnique.getName(),
-              analyticsTechnique.getDescription()));
+      analyticsTechniqueResponses.add(catalogResponse(analyticsTechnique));
     }
     return analyticsTechniqueResponses;
   }
@@ -193,7 +207,9 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
     try (Stream<Path> paths = Files.walk(Paths.get(analyticsMethodsJarsFolder))) {
       List<String> jarFiles =
-          paths.filter(Files::isRegularFile).map(Path::toString).collect(Collectors.toList());
+          paths.filter(Files::isRegularFile)
+              .filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".jar"))
+              .sorted().map(Path::toString).collect(Collectors.toList());
 
       for (String jarFile : jarFiles) {
         processAnalyticsTechniqueJarFile(jarFile, existingAnalyticsMethods);
@@ -207,32 +223,47 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
 
   private void processAnalyticsTechniqueJarFile(
       String jarFile, List<AnalyticsTechnique> existingAnalyticsMethods) {
-    List<String> classNames = Utils.getClassNamesFromJar(jarFile, analyticsMethodsClassDirectory);
-    AnalyticsMethodsClassPathLoader classPathLoader =
-        getFolderNameFromResourcesFromJarFile(jarFile);
+    Path installedPath = PluginJarFiles.installedPath(analyticsMethodsJarsFolder, jarFile);
+    var inspection = new PluginInspector().discover(PluginKind.ANALYTICS, installedPath);
+    var manifest = inspection.getAnalyticsManifest();
     List<AnalyticsTechnique> newMethods = new ArrayList<>();
-
-    for (String className : classNames) {
-      try {
-        // validation required
-        com.openlap.template.AnalyticsMethod method = classPathLoader.loadClass(className);
-        if (isClassAlreadyProcessed(className, existingAnalyticsMethods)) {
+    Map<AnalyticsTechnique, Document> metadataUpdates = new LinkedHashMap<>();
+    try (AnalyticsMethodsClassPathLoader classPathLoader =
+        getFolderNameFromResourcesFromJarFile(installedPath.toString())) {
+      for (String className : inspection.getClasses()) {
+        var existing = existingAnalyticsMethods.stream()
+            .filter(method -> className.equals(method.getImplementingClass())).toList();
+        if (existing.isEmpty()) {
+          AnalyticsMethod method = classPathLoader.loadClass(className);
+          var technique = addNewAnalyticsTechnique(method, jarFile, className);
+          technique.setAnalyticsMetadata(manifest.metadata(className, method));
+          newMethods.add(technique);
           continue;
         }
-        AnalyticsTechnique analyticsMethod = addNewAnalyticsTechnique(method, jarFile, className);
-        newMethods.add(analyticsMethod);
-      } catch (Exception e) {
-        // Log the exception instead of ignoring it
-        e.printStackTrace();
+        if (loaderCache.containsKey(installedPath.toString())) continue; // A running binary remains paired with its existing metadata until restart.
+        for (AnalyticsTechnique method : existing) {
+          if (!isSameLocalInstallation(method, installedPath)) continue;
+          Document metadata = manifest.hasMetadata(className)
+              ? manifest.metadata(className, classPathLoader.loadClass(className)) : null;
+          if (!Objects.equals(metadata, method.getAnalyticsMetadata())) metadataUpdates.put(method, metadata);
+        }
       }
     }
-    analyticsTechniqueRepository.saveAll(newMethods);
+    if (!newMethods.isEmpty()) analyticsTechniqueRepository.saveAll(newMethods);
+    existingAnalyticsMethods.addAll(newMethods);
+    metadataUpdates.forEach((method, metadata) -> {
+      analyticsTechniqueRepository.refreshLocalMetadata(method.getId(), method.getFileName(), method.getImplementingClass(), metadata);
+      method.setAnalyticsMetadata(metadata);
+    });
   }
 
-  private boolean isClassAlreadyProcessed(
-      String className, List<AnalyticsTechnique> existingAnalyticsMethods) {
-    return existingAnalyticsMethods.stream()
-        .anyMatch(c -> c.getImplementingClass().equals(className));
+  private boolean isSameLocalInstallation(AnalyticsTechnique method, Path installedPath) {
+    if (method.getArtifactId() != null || method.getInstallationId() != null || method.getFileName() == null) return false;
+    try {
+      return installedPath.equals(PluginJarFiles.installedPath(analyticsMethodsJarsFolder, method.getFileName()));
+    } catch (ServiceException unavailable) {
+      return false;
+    }
   }
 
   private AnalyticsTechnique addNewAnalyticsTechnique(
@@ -248,6 +279,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
             className,
             null,
             true,
+            null,
             null,
             null);
 
@@ -294,7 +326,8 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     try {
       AnalyticsMethod method = loadAnalyticsMethodInstance(techniqueId);
       OpenLAPDataSetConfigValidationResult validationResult =
-          method.getInput().validateConfiguration(indicatorToAnalyticsTechniqueMapping);
+          method.getInput().validateConfiguration(AnalyticsInputPreparation.normalizeMapping(
+              method.getInput(), indicatorToAnalyticsTechniqueMapping));
       boolean resultValid = validationResult.isValid();
       log.info("Validated analytics technique input mapping with query is: {}.", resultValid);
       if (resultValid) {
@@ -367,11 +400,7 @@ public class AnalyticsTechniqueServiceImpl implements AnalyticsTechniqueService 
     List<AnalyticsTechniqueResponse> responses = new ArrayList<>();
     for (AnalyticsTechnique analyticsTechnique : allByFileName) {
       if (!pluginVisibility.isVisible(analyticsTechnique.getInstallationId(), "analytics-technique", analyticsTechnique.getId())) continue;
-      responses.add(
-          new AnalyticsTechniqueResponse(
-              analyticsTechnique.getId(),
-              analyticsTechnique.getName(),
-              analyticsTechnique.getDescription()));
+      responses.add(catalogResponse(analyticsTechnique));
     }
     return responses;
   }

@@ -6,15 +6,15 @@ import com.openlap.analytics_module.dto.requests.indicator.IndicatorAnalysisRequ
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorBasicPreviewRequest;
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorBasicRequest;
 import com.openlap.analytics_module.entities.Indicator;
-import com.openlap.analytics_module.entities.IndicatorAnalysisCache;
 import com.openlap.analytics_module.entities.IndicatorCache;
 import com.openlap.analytics_module.entities.utility_entities.AnalyticsTechniqueReference;
 import com.openlap.analytics_module.entities.utility_entities.IndicatorAnalysisTechnique;
 import com.openlap.analytics_module.entities.utility_entities.IndicatorReference;
-import com.openlap.analytics_module.repositories.IndicatorAnalysisCacheRepository;
 import com.openlap.analytics_module.repositories.IndicatorCacheRepository;
+import com.openlap.analytics_module.services.BasicAnalysisFields;
 import com.openlap.analytics_module.services.IndicatorBasicService;
 import com.openlap.analytics_module.services.IndicatorUtilityService;
+import com.openlap.analytics_statements.dtos.StatementInputAvailability;
 import com.openlap.analytics_statements.dtos.request.LrsStoresStatementRequest;
 import com.openlap.analytics_statements.dtos.request.StatementsRequest;
 import com.openlap.analytics_statements.exception.LrsNotFoundException;
@@ -26,10 +26,8 @@ import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.dynamicparam.OpenLAPDynamicParam;
 import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.infrastructure.exception.ValidationException;
-import com.openlap.exceptions.AnalyticsMethodInitializationException;
 import com.openlap.template.AnalyticsMethod;
 import com.openlap.user.entities.User;
-import com.openlap.user.entities.utility_entities.LrsConsumer;
 import com.openlap.user.services.TokenService;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -50,8 +48,16 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
   private final IndicatorCacheRepository indicatorCacheRepository;
 
   @Override
+  public StatementInputAvailability inputAvailability(HttpServletRequest request, StatementsRequest query) {
+    validateUserRequest(request, query.getLrsStores());
+    return statementService.findInputAvailability(query);
+  }
+
+  @Override
   public OpenLAPDataSet analyzeIndicator(IndicatorAnalysisRequest indicatorAnalysisRequest) {
     try {
+      BasicAnalysisFields.requireAllowed(indicatorAnalysisRequest.getIndicatorQuery(),
+          indicatorAnalysisRequest.getAnalyticsTechniqueMapping());
       OpenLAPDataSet statements =
           statementService.findStatements(indicatorAnalysisRequest.getIndicatorQuery());
       IndicatorAnalysisTechnique indicatorAnalysisTechnique = new IndicatorAnalysisTechnique();
@@ -63,6 +69,8 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
           indicatorAnalysisRequest.getAnalyticsTechniqueParams());
       return indicatorUtilityService.getAnalyzedDataSetMethod(
           indicatorAnalysisTechnique, statements);
+    } catch (com.openlap.infrastructure.exception.OpenLapException e) {
+      throw e;
     } catch (Exception e) {
       throw new ServiceException("Could not analyze indicator", e);
     }
@@ -90,6 +98,12 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
     log.info("Attempting to analyze the data of a basic indicator with id '{}'...", indicatorId);
     Indicator foundIndicator = indicatorUtilityService.fetchIndicatorMethod(indicatorId);
     Gson gson = new Gson();
+    StatementsRequest statementsRequest = gson.fromJson(foundIndicator.getIndicatorQuery(), StatementsRequest.class);
+    AnalyticsTechniqueReference analyticsTechniqueReference = foundIndicator.getAnalyticsTechniqueReference();
+    OpenLAPPortConfig analyticsTechniquePortMapping = analyticsTechniqueReference == null ? null
+        : gson.fromJson(analyticsTechniqueReference.getQueryToAnalyticsTechniqueMapping(), OpenLAPPortConfig.class);
+    BasicAnalysisFields.requireAllowed(statementsRequest, analyticsTechniquePortMapping);
+
     Optional<IndicatorCache> indicatorCache = indicatorCacheRepository.findById(indicatorId);
     LocalDateTime indicatorCreatedOn = foundIndicator.getCreatedOn();
     // * This is checking, whether the indicator has been updated in the meantime. If yes, the new
@@ -105,58 +119,26 @@ public class IndicatorBasicServiceImpl implements IndicatorBasicService {
       }
     }
     // Query statement
-    String queryJson = foundIndicator.getIndicatorQuery();
-    StatementsRequest statementsRequest = gson.fromJson(queryJson, StatementsRequest.class);
     OpenLAPDataSet statements = statementService.findStatements(statementsRequest);
 
     // Analytics Method
     OpenLAPDataSet analyzedDataSet;
-    AnalyticsTechniqueReference analyticsTechniqueReference =
-        foundIndicator.getAnalyticsTechniqueReference();
     AnalyticsTechnique analyticsTechnique = analyticsTechniqueReference.getAnalyticsTechnique();
-    OpenLAPPortConfig analyticsTechniquePortMapping =
-        gson.fromJson(
-            analyticsTechniqueReference.getQueryToAnalyticsTechniqueMapping(),
-            OpenLAPPortConfig.class);
 
     List<OpenLAPDynamicParam> paramList =
         gson.fromJson(
             analyticsTechniqueReference.getAdditionalParams(),
             new TypeToken<List<OpenLAPDynamicParam>>() {}.getType());
 
-    Map<String, String> transformedParams = getTransformedParams(paramList);
+    Map<String, String> transformedParams = IndicatorUtilityServiceImpl.transformAnalysisParameters(paramList);
 
     AnalyticsMethod analyticsMethod =
         analyticsTechniqueService.loadAnalyticsMethodInstance(analyticsTechnique.getId());
-    try {
-      analyticsMethod.initialize(statements, analyticsTechniquePortMapping, transformedParams);
-      analyzedDataSet = analyticsMethod.execute();
-      //      indicatorAnalysisCacheRepository.save(
-      //          new IndicatorAnalysisCache(
-      //              foundIndicator.getId(), gson.toJson(analyzedDataSet), LocalDateTime.now()));
-    } catch (AnalyticsMethodInitializationException e) {
-      throw new ServiceException("Could not initialize analytics method");
-    }
+    analyzedDataSet = AnalyticsInputPreparation.execute(
+        analyticsMethod, statements, analyticsTechniquePortMapping, transformedParams);
     log.info("Data analysis of indicator with id '{}' completed.", indicatorId);
 
     return analyzedDataSet;
-  }
-
-  private static Map<String, String> getTransformedParams(List<OpenLAPDynamicParam> paramList) {
-    Map<String, String> transformedParams = new HashMap<>();
-    for (OpenLAPDynamicParam param : paramList) {
-      Object value = param.getValue();
-      String stringValue;
-      if (value instanceof Double) {
-        // Convert Double to Integer and then to String
-        stringValue = Integer.toString(((Double) value).intValue());
-      } else {
-        // Directly convert to String for non-Double values
-        stringValue = value.toString();
-      }
-      transformedParams.put(param.getId(), stringValue);
-    }
-    return transformedParams;
   }
 
   @Override
