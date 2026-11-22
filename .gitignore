@@ -40,7 +40,7 @@ build/Release
 
 # Local Java build and delivery artifacts
 *.jar
-/artifacts/analytics/
+/artifacts/
 
 # Dependency directories
 node_modules/
