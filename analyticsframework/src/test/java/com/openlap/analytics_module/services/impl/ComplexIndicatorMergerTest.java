@@ -52,6 +52,8 @@ class ComplexIndicatorMergerTest {
     assertThat(result.getRowCount()).isEqualTo(6);
     assertThat(data(result, "source_access__count")).containsExactly(860, 600, 553, 400, 320, 126);
     assertThat(data(result, "source_annotations__total")).containsExactly(43, 40, 35, 32, 22, 15);
+    assertThat(result.getColumns().get("source_access__count").getConfigurationData().getTitle()).isEqualTo("Access");
+    assertThat(result.getColumns().get("source_annotations__total").getConfigurationData().getTitle()).isEqualTo("Annotations");
     assertThat(result.getSources().get(1).excludedRows()).isEqualTo(1);
     assertThat(result.getFilledCells()).isEmpty();
     assertThat(result.getChartData()).isNull();
@@ -71,6 +73,11 @@ class ComplexIndicatorMergerTest {
     assertThat(data(result, "source_a__count")).containsExactly(1.25, 0.0, 0);
     assertThat(data(result, "source_b__total")).containsExactly(4.125, 0, 5.5);
     assertThat(result.getFilledCells()).doesNotContain(new ComplexIndicatorMergeResult.FilledCell(1, "source_a__count", "a"));
+
+    var intersection = merger.merge(List.of(first, second), true);
+    assertThat(intersection.getColumns().get("source_a__average").getConfigurationData().getTitle()).isEqualTo("First · average");
+    assertThat(intersection.getColumns().get("source_a__count").getConfigurationData().getTitle()).isEqualTo("First · count");
+    assertThat(intersection.getColumns().get("source_b__total").getConfigurationData().getTitle()).isEqualTo("Second");
   }
 
   @Test

@@ -664,7 +664,10 @@ let chartCatalogFailures = 0;
       const results = previewResults();
       const next = button(type === "COMPOSITE" ? "Continue to visualization" : "Continue to analysis");
       const measures = page.getByRole("combobox", { name: "Measures from Access count", exact: true });
-      const label = page.getByRole("textbox", { name: "Series label for Access count", exact: true });
+      const label = page.getByRole("textbox", {
+        name: type === "MULTI_LEVEL" ? "Column name for Access count" : "Series label for Access count",
+        exact: true,
+      });
       let before = mergeRequests.length;
       await measures.click();
       await page.getByRole("option", { name: "Count", exact: true }).click();
