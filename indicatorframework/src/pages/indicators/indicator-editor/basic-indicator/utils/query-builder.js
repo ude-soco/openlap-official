@@ -16,7 +16,7 @@ function buildActivities(filters) {
   return result;
 }
 
-export function buildIndicatorQuery(dataset, filters, analysis) {
+export function buildStatementSelection(dataset, filters) {
   return {
     lrsStores: dataset.selectedLRSList,
     activityTypes: filters.selectedActivities.map(
@@ -30,10 +30,16 @@ export function buildIndicatorQuery(dataset, filters, analysis) {
       from: filters.selectedTime.from,
       until: filters.selectedTime.until,
     },
+    userQueryCondition: filters.selectedUserFilter,
+  };
+}
+
+export function buildIndicatorQuery(dataset, filters, analysis) {
+  return {
+    ...buildStatementSelection(dataset, filters),
     outputs: analysis.selectedAnalyticsMethod.mapping.mapping.map(
       (map) => map.outputPort.id
     ),
-    userQueryCondition: filters.selectedUserFilter,
   };
 }
 

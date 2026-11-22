@@ -78,9 +78,43 @@ test("numerical and boolean xAPI mappings survive draft serialization and adapta
   assert.deepEqual(result.warnings, []);
 });
 
+test("resuming a Basic draft clears identity mappings and reopens Analysis for review", async () => {
+  const state = emptyBasicState();
+  const method = { id: "grouped-summary", name: "Summarize numeric values by group" };
+  const values = { id: "values", type: "Numeric", required: true };
+  const group = { id: "group", type: "Text", required: true };
+  const score = { id: "statement.result.score.raw", type: "Numeric", name: "Raw score" };
+  state.analysis.selectedAnalyticsMethod = { method, mapping: { mapping: [
+    { inputPort: values, outputPort: score },
+    { inputPort: group, outputPort: { id: "statement.actor.account.name", type: "Text" } },
+  ] } };
+  state.analysis.analyzedData = { group: ["Old learner"] };
+  state.visualization.previewData = { displayCode: ["Old chart"] };
+  state.lockedStep.analysis = { locked: false, openPanel: false, step: "3" };
+  state.lockedStep.visualization = { locked: false, openPanel: true, step: "4" };
+  const raw = serializeBasicDraft(state);
+  const restored = restoreBasicState(raw);
+  assert.equal(restored.analysis.selectedAnalyticsMethod.mapping.mapping.length, 1);
+  assert.deepEqual(restored.analysis.analyzedData, {});
+  assert.deepEqual(restored.visualization.previewData.displayCode, []);
+  assert.equal(restored.lockedStep.analysis.openPanel, true);
+  assert.equal(restored.lockedStep.visualization.locked, true);
+  assert.equal(restored.lockedStep.visualization.openPanel, false);
+  assert.match(restored.inputWarning, /Learner identity fields.*Review Method inputs/);
+  const api = { get: async (path) => ({ data: { data: path === "v1/analytics/methods" ? [method]
+    : path === "v1/analytics/methods/input-params/grouped-summary" ? { inputs: [values, group], params: [] } : [] } }) };
+  for (const adaptation of [false, true]) {
+    const result = await refreshBasicReferences(api, raw, { adaptation });
+    assert.deepEqual(result.state.analysis.inputs.map(({ selectedInput }) => selectedInput?.id), [score.id, undefined]);
+    assert.match(result.state.inputWarning, /Learner identity fields/);
+    assert.deepEqual(result.warnings, [], "Removing an input does not block remapping");
+    assert.equal(JSON.stringify(serializeBasicDraft(result.state)).includes("statement.actor.account.name"), false);
+  }
+});
+
 test("count-events drafts acquire or retain the hidden row marker while ordinary methods remain unmapped", async () => {
   const state = emptyBasicState();
-  const method = { id: "event-method", name: "Count selected events" };
+  const method = { id: "event-method", name: "Count selected events", metadata: { inputRoles: { event: "EVENTS" } } };
   const inputs = [{ id: "event", type: "Text", required: true }];
   state.analysis.selectedAnalyticsMethod.method = method;
   const api = { get: async (path) => ({ data: { data: path === "v1/analytics/methods" ? [method]
@@ -91,6 +125,7 @@ test("count-events drafts acquire or retain the hidden row marker while ordinary
   assert.equal(resumed.state.analysis.selectedAnalyticsMethod.mapping.mapping[0].outputPort.id, "statement.id");
   assert.equal(resumed.state.analysis.inputs[0].selectedInput.name, "Selected events");
   assert.deepEqual(resumed.warnings, []);
+  assert.equal(serializeBasicDraft(resumed.state).analysis.selectedAnalyticsMethod.method.metadata, undefined);
 });
 
 test("unavailable references preserve the saved choice and produce an actionable warning", async () => {

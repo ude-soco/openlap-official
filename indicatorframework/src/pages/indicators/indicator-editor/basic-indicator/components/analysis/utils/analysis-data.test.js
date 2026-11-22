@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyticsInputMenuList, compatibleAnalysisInputs, currentAnalysisSource, isEventCountInput,
+import { analyticsInputMenuList, compatibleAnalysisInputs, currentAnalysisSource, isEventInput, isIdentityAnalysisField,
   withAnalysisInput, withAnalysisInputDefaults } from "./analysis-data.js";
 
 test("numeric and boolean methods receive compatible xAPI measurements rather than text labels", () => {
@@ -19,19 +19,20 @@ test("numeric and boolean methods receive compatible xAPI measurements rather th
   assert.equal(new Set(analyticsInputMenuList.map((field) => field.id)).size, analyticsInputMenuList.length);
 });
 
-const eventContract = [{ id: "event", type: "Text", required: true }];
+const eventContract = [{ id: "rows", type: "Text", required: true }];
+const withRoles = (inputRoles) => ({ id: "third-party", name: "Renamed method", metadata: { inputRoles } });
 const eventAnalysis = () => ({ inputs: eventContract, params: [], analyzedData: {},
-  selectedAnalyticsMethod: { method: { id: "event-method", name: "Count selected events" }, mapping: { mapping: [] } } });
+  selectedAnalyticsMethod: { method: withRoles({ rows: "EVENTS" }), mapping: { mapping: [] } } });
 
-test("only the agreed count-events method and contract receive the hidden event-row default", () => {
+test("declared required event inputs receive an event marker regardless of plugin or port name", () => {
   const original = eventAnalysis();
   const selected = withAnalysisInputDefaults(original);
   assert.equal(selected.selectedAnalyticsMethod.mapping.mapping[0].outputPort.id, "statement.id");
-  assert.equal(selected.selectedAnalyticsMethod.mapping.mapping[0].inputPort.id, "event");
+  assert.equal(selected.selectedAnalyticsMethod.mapping.mapping[0].inputPort.id, "rows");
   assert.equal(original.selectedAnalyticsMethod.mapping.mapping.length, 0);
-  assert.equal(isEventCountInput({ name: "Count events" }, eventContract), false, "No undocumented aliases");
+  assert.equal(isEventInput({ name: "Count selected events" }, eventContract[0]), false);
   for (const update of [
-    (value) => { value.selectedAnalyticsMethod.method.name = "Count events by category"; },
+    (value) => { value.selectedAnalyticsMethod.method = withRoles({ rows: "CATEGORY" }); },
     (value) => { value.inputs = [{ ...eventContract[0], id: "category" }]; },
     (value) => { value.inputs = [{ ...eventContract[0], type: "Numeric" }]; },
     (value) => { value.inputs = [{ ...eventContract[0], required: false }]; },
@@ -42,31 +43,34 @@ test("only the agreed count-events method and contract receive the hidden event-
   }
 });
 
-test("count-events defaults preserve saved mappings and the hidden source survives reference refresh", () => {
+test("event defaults fill individual unmapped ports while preserving saved choices", () => {
   const saved = withAnalysisInput(eventAnalysis(), eventContract[0], { id: "statement.object.id", type: "Text" });
   assert.equal(withAnalysisInputDefaults(saved), saved);
   const marker = { id: "statement.id", type: "Text" };
-  assert.equal(currentAnalysisSource({ name: "Count selected events" }, eventContract, eventContract[0], marker).id, marker.id);
-  assert.equal(currentAnalysisSource({ name: "Count distinct values" }, eventContract, eventContract[0], marker), undefined);
+  assert.equal(currentAnalysisSource(eventContract[0], marker).id, marker.id);
+  assert.equal(currentAnalysisSource({ ...eventContract[0], type: "Numeric" }, marker), undefined);
+  const additional = { id: "alternateRows", type: "Text", required: true };
+  saved.inputs = [...saved.inputs, additional];
+  saved.selectedAnalyticsMethod.method = withRoles({ rows: "EVENTS", alternateRows: "EVENTS" });
+  assert.deepEqual(withAnalysisInputDefaults(saved).selectedAnalyticsMethod.mapping.mapping.map(({ outputPort }) => outputPort.id),
+    ["statement.object.id", "statement.id"]);
 });
 
-test("new text analytics offer scalar categories and timestamps appropriate to their declared purpose", () => {
-  const timestamps = compatibleAnalysisInputs({ id: "timestamp", type: "Text" }, undefined, { name: "Count events over time" });
-  assert.deepEqual(timestamps.map((field) => field.id), ["statement.timestamp", "statement.stored"]);
-  for (const [name, id] of [["Count events by category", "category"], ["Count distinct values", "value"],
-    ["Count distinct values", "group"], ["Calculate percentage of true outcomes", "group"],
-    ["Summarize numeric values by group", "group"], ["Group observations using reproducible K-means++", "observation"]]) {
-    const options = compatibleAnalysisInputs({ id, type: "Text" }, undefined, { name });
-    assert.equal(options.some((field) => field.id === "statement.verb.display"), false, name);
-    assert.equal(options.some((field) => ["statement.timestamp", "statement.stored"].includes(field.id)), false, name);
-    assert.equal(options.some((field) => field.id === "statement.verb.display.en-US"), true, name);
-    assert.equal(options.some((field) => field.id === "statement.verb.id"), true, name);
-  }
-  const legacy = compatibleAnalysisInputs({ id: "items", type: "Text" }, undefined, { name: "Legacy method" });
-  assert.equal(legacy.some((field) => field.id === "statement.verb.display"), true);
-  assert.equal(legacy.some((field) => field.id === "statement.timestamp"), true);
+test("declared timestamp and category roles filter text inputs without treating every port alike", () => {
+  const time = { id: "session_start", type: "Text" };
+  const category = { id: "resource_name", type: "Text" };
+  const method = withRoles({ session_start: "TIMESTAMP", resource_name: "CATEGORY" });
+  assert.deepEqual(compatibleAnalysisInputs(time, undefined, method).map(({ id }) => id),
+    ["statement.timestamp", "statement.stored"]);
+  const choices = compatibleAnalysisInputs(category, undefined, method);
+  assert.ok(choices.some(({ id }) => id === "statement.verb.display.en-US"));
+  assert.ok(choices.some(({ id }) => id === "statement.verb.id"));
+  assert.ok(!choices.some(({ id }) => ["statement.verb.display", "statement.timestamp", "statement.stored"].includes(id)));
+  const legacy = compatibleAnalysisInputs(time, undefined, { name: "Count events over time" });
+  assert.ok(legacy.some(({ id }) => id === "statement.verb.display"));
+  assert.ok(legacy.some(({ id }) => id === "statement.timestamp"));
   const saved = { id: "statement.result.extensions.customTime", name: "Existing timestamp", type: "Text" };
-  assert.equal(compatibleAnalysisInputs({ id: "timestamp", type: "Text" }, saved, { name: "Count events over time" }).at(-1).id, saved.id);
+  assert.equal(compatibleAnalysisInputs(time, saved, method).at(-1).id, saved.id);
 });
 
 test("an existing custom field stays visible with its original type and a usable label", () => {
@@ -77,19 +81,42 @@ test("an existing custom field stays visible with its original type and a usable
   assert.equal(compatibleAnalysisInputs({ type: "Text" }, selected).some((field) => field.id === selected.id), false);
 });
 
+test("picker and mapping reject old xAPI identity fields, including nested and whole-object paths", () => {
+  const input = { id: "group", type: "Text" };
+  const method = { name: "Count distinct values" };
+  for (const path of [
+    "statement", "statement.actor", "statement.actor.account.name", "statement.actor.mbox", "actor.openid",
+    "statement.authority", "statement.object", "statement.object.object.actor.mbox", "statement.object.name",
+    "statement.object.mbox.sha1sum", "statement.object.mbox_sha1sum", "statement.object.member.0.account.name",
+    "statement.context", "statement.object.context.instructor.account.name", "statement.context.team",
+    "statement.context.contextAgents.0.agent.account.name", "statement.context.contextGroups", "$statement", "$$ROOT", "$actor",
+  ]) {
+    const previousSelection = { id: path, type: input.type, name: "Saved field" };
+    assert.equal(isIdentityAnalysisField(path), true, path);
+    assert.ok(!compatibleAnalysisInputs(input, previousSelection, method).some((field) => field.id === path), path);
+    const analysis = eventAnalysis();
+    assert.equal(withAnalysisInput(analysis, input, previousSelection), analysis, path);
+  }
+  assert.ok(analyticsInputMenuList.every((field) => !isIdentityAnalysisField(field.id)));
+  for (const path of [
+    "statement.object.id", "statement.object.definition.name.en-US", "statement.context.platform", "statement.timestamp",
+    "statement.id", "statement.result.extensions.score",
+  ]) assert.equal(isIdentityAnalysisField(path), false, path);
+});
+
 test("changing and clearing one optional input preserves the required mapping and invalidates old results", () => {
   const required = { id: "values", type: "Numeric", required: true };
   const optional = { id: "group", type: "Text", required: false };
   const score = analyticsInputMenuList.find((field) => field.id === "statement.result.score.raw");
-  const users = analyticsInputMenuList.find((field) => field.id === "statement.actor.account.name");
+  const activities = analyticsInputMenuList.find((field) => field.id === "statement.object.definition.name.en-US");
   const original = {
     inputs: [required, optional],
     selectedAnalyticsMethod: { method: { id: "summary" }, mapping: { mapping: [{ inputPort: required, outputPort: score }] } },
     analyzedData: { previous: [1] },
   };
-  const selected = withAnalysisInput(original, optional, users);
+  const selected = withAnalysisInput(original, optional, activities);
   assert.equal(selected.selectedAnalyticsMethod.mapping.mapping.length, 2);
-  assert.equal(selected.inputs[1].selectedInput, users);
+  assert.equal(selected.inputs[1].selectedInput, activities);
   const cleared = withAnalysisInput(selected, optional, undefined);
   assert.deepEqual(cleared.selectedAnalyticsMethod.mapping.mapping, original.selectedAnalyticsMethod.mapping.mapping);
   assert.equal(cleared.inputs[1].selectedInput, undefined);

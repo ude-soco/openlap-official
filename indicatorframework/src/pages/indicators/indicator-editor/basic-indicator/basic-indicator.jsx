@@ -47,6 +47,7 @@ export default function BasicIndicator({ initialDraft = null, initialState = nul
   const [lockedStep, setLockedStep] = useState(first.current.lockedStep);
   const [hydrating, setHydrating] = useState(false);
   const [referenceWarnings, setReferenceWarnings] = useState(initialState?.warnings || []);
+  const [inputWarning, setInputWarning] = useState(first.current.inputWarning || "");
   const refreshGeneration = useRef(0);
   useEffect(() => () => { refreshGeneration.current += 1; }, []);
   const legacyPending = useRef(false);
@@ -64,6 +65,7 @@ export default function BasicIndicator({ initialDraft = null, initialState = nul
   const applyState = useCallback((next) => {
     setIndicator(next.indicator); setDataset(next.dataset); setFilters(next.filters);
     setAnalysis(next.analysis); setVisualization(next.visualization); setLockedStep(next.lockedStep);
+    setInputWarning(next.inputWarning || "");
   }, []);
   const applyDraft = useCallback(async ({ name, configuration: saved }) => {
     const run = ++refreshGeneration.current;
@@ -72,8 +74,9 @@ export default function BasicIndicator({ initialDraft = null, initialState = nul
     applyState(restored);
     setHydrating(true);
     try {
-      const refreshed = await refreshBasicReferences(api, serializeBasicDraft(restored), { adaptation: Boolean(initialDraft?.adaptation) });
+      const refreshed = await refreshBasicReferences(api, saved, { adaptation: Boolean(initialDraft?.adaptation) });
       if (run !== refreshGeneration.current) return;
+      refreshed.state.indicator.indicatorName = restored.indicator.indicatorName;
       warningReferences.current = referencesOf(refreshed.state);
       setReferenceWarnings(refreshed.warnings);
       applyState(refreshed.state);
@@ -182,6 +185,7 @@ export default function BasicIndicator({ initialDraft = null, initialState = nul
           {referenceWarnings.length > 0 && !referencesValid && <Alert severity="warning" action={<Button color="inherit" onClick={() => applyDraft({ name: indicator.indicatorName, configuration })}>Refresh selections</Button>}>
             {referenceWarnings.join(" ")}
           </Alert>}
+          {inputWarning && <Alert severity="warning">{inputWarning}</Alert>}
           {hydrating ? <CircularProgress aria-label="Refreshing saved selections" /> : <>
           <EditorWorkflow steps={workflowSteps} current={currentStep} onStepSelect={handleStepSelect}
             disabled={draft.finalizing} ariaLabel="Basic indicator creation progress">
@@ -250,6 +254,7 @@ export function EmbeddedBasicIndicator({ configuration: initialConfiguration, re
       configuration, comparisonReference: reference, isCommunityAdaptation: true, sourceMode: true, onSourceDone: leave,
       referencesValid: true, handleResetIfDatasetEmpty: reset }}>
       {warnings.length > 0 && <Alert severity="info">Review the selections that are unavailable in your data. The original choices remain in the community reference.</Alert>}
+      {state.inputWarning && <Alert severity="warning">{state.inputWarning}</Alert>}
       <EditorWorkflow steps={getWorkflowSteps(state.lockedStep, state)} current={getCurrentStep(state.lockedStep)}
         onStepSelect={handleStepSelect} focusOnMount="dataset" ariaLabel="Basic indicator creation progress">
       <Stack sx={{ gap: 2, minWidth: 0 }}>

@@ -57,27 +57,6 @@ export const analyticsInputMenuList = [
       'Selected list of sources specified in Dataset such as "Moodle" etc.',
   },
   {
-    id: "statement.actor.account.name",
-    type: "Text",
-    required: true,
-    name: "Users (account name)",
-    description: "Account names of the users included by the User Filter. Use this optional input for methods that count distinct users per activity.",
-  },
-  {
-    id: "statement.actor.mbox",
-    type: "Text",
-    required: true,
-    name: "Users (email identifier)",
-    description: "The xAPI email identifier of each actor. Choose the identity field your Learning Record Store actually records.",
-  },
-  {
-    id: "statement.actor.openid",
-    type: "Text",
-    required: true,
-    name: "Users (OpenID)",
-    description: "The OpenID identifier of each actor, when present in your xAPI statements.",
-  },
-  {
     id: "statement.timestamp",
     type: "Text",
     required: true,
@@ -115,6 +94,25 @@ export const analyticsInputMenuList = [
   })),
 ];
 
+const agentFields = new Set(["account", "name", "mbox", "mbox_sha1sum", "openid", "member"]);
+const contextAgentFields = new Set(["instructor", "team", "contextagents", "contextgroups"]);
+
+export function isIdentityAnalysisField(path) {
+  if (typeof path !== "string") return false;
+  const segments = path.trim().toLowerCase().split(".");
+  if (segments.some((segment) => segment.startsWith("$"))) return true;
+  const start = segments[0] === "statement" ? 1 : 0;
+  // An object can be an Agent, Group or SubStatement. Follow nested objects
+  // while keeping Activity fields such as object.definition.name available.
+  let index = start;
+  while (segments[index] === "object") index++;
+  const parent = segments[index];
+  const child = segments[index + 1];
+  return (!parent && index > 0) || parent === "actor" || parent === "authority" ||
+    (index > start && agentFields.has(parent)) ||
+    (parent === "context" && (!child || contextAgentFields.has(child)));
+}
+
 const selectedEvents = {
   id: "statement.id",
   type: "Text",
@@ -123,42 +121,44 @@ const selectedEvents = {
   description: "Every event matching the selected dataset and filters contributes one row, including events with no recorded xAPI statement identifier.",
 };
 
-export function isEventCountInput(method, inputs = []) {
-  return method?.name === "Count selected events" && inputs.length === 1 &&
-    inputs[0].id === "event" && inputs[0].type === "Text" && inputs[0].required === true;
+const timestamps = new Set(["statement.timestamp", "statement.stored"]);
+export const fieldsForInputRole = {
+  EVENTS: [selectedEvents],
+  CATEGORY: analyticsInputMenuList.filter(({ id, type }) =>
+    type === "Text" && !timestamps.has(id) && id !== "statement.verb.display"),
+  TIMESTAMP: analyticsInputMenuList.filter(({ id }) => timestamps.has(id)),
+  SCORE: analyticsInputMenuList.filter(({ type }) => type === "Numeric"),
+  OUTCOME: analyticsInputMenuList.filter(({ type }) => type === "TrueFalse"),
+};
+
+export function isEventInput(method, input) {
+  return method?.metadata?.inputRoles?.[input.id] === "EVENTS" && input.type === "Text";
 }
 
 export function withAnalysisInputDefaults(analysis) {
-  if (!isEventCountInput(analysis.selectedAnalyticsMethod?.method, analysis.inputs) ||
-      analysis.selectedAnalyticsMethod.mapping.mapping.length || analysis.inputs[0].selectedInput?.id) return analysis;
-  return withAnalysisInput(analysis, analysis.inputs[0], selectedEvents);
+  const { method, mapping } = analysis.selectedAnalyticsMethod;
+  return analysis.inputs.reduce((current, input) =>
+    isEventInput(method, input) && input.required && !input.selectedInput?.id &&
+      !mapping.mapping.some((entry) => entry.inputPort.id === input.id)
+      ? withAnalysisInput(current, input, selectedEvents) : current, analysis);
 }
 
-export function currentAnalysisSource(method, inputs, input, saved) {
-  if (isEventCountInput(method, inputs) && input.id === "event" && saved?.id === selectedEvents.id && saved?.type === "Text")
+export function currentAnalysisSource(input, saved) {
+  // An existing event-marker mapping remains valid after switching the catalog
+  // to a manifest-free build of the same plugin.
+  if (input.type === "Text" && saved?.id === selectedEvents.id && saved?.type === "Text")
     return selectedEvents;
   return analyticsInputMenuList.find((column) => column.id === saved?.id && column.type === input.type);
 }
 
-const scalarTextPorts = new Map([
-  ["Count events by category", ["category"]],
-  ["Count distinct values", ["value", "group"]],
-  ["Calculate percentage of true outcomes", ["group"]],
-  ["Summarize numeric values by group", ["group"]],
-  ["Group observations using reproducible K-means++", ["observation"]],
-]);
-const timestamps = new Set(["statement.timestamp", "statement.stored"]);
-
 // Raw xAPI values are converted by the backend for the declared mapped input type.
 export function compatibleAnalysisInputs(input, selected, method) {
-  const timeInput = method?.name === "Count events over time" && input.id === "timestamp" && input.type === "Text";
-  const scalarText = input.type === "Text" && scalarTextPorts.get(method?.name)?.includes(input.id);
-  const options = analyticsInputMenuList.filter((column) => column.type === input.type &&
-    (!timeInput || timestamps.has(column.id)) &&
-    (!scalarText || (!timestamps.has(column.id) && column.id !== "statement.verb.display")));
+  const role = method?.metadata?.inputRoles?.[input.id];
+  const fields = Object.hasOwn(fieldsForInputRole, role) ? fieldsForInputRole[role] : analyticsInputMenuList;
+  const options = fields.filter((column) => column.type === input.type);
   // A previously saved custom field remains reviewable without adding arbitrary
   // fields to the catalog or silently replacing the user's mapping.
-  if (selected?.id && selected.type === input.type &&
+  if (selected?.id && !isIdentityAnalysisField(selected.id) && selected.type === input.type &&
       !options.some((column) => column.id === selected.id)) {
     return [...options, {
       ...selected,
@@ -170,6 +170,7 @@ export function compatibleAnalysisInputs(input, selected, method) {
 }
 
 export function withAnalysisInput(analysis, input, output) {
+  if (isIdentityAnalysisField(output?.id)) return analysis;
   return {
     ...analysis,
     inputs: analysis.inputs.map((item) => item.id === input.id

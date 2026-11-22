@@ -1,4 +1,4 @@
-import { currentAnalysisSource, withAnalysisInputDefaults } from "../components/analysis/utils/analysis-data.js";
+import { currentAnalysisSource, isIdentityAnalysisField, withAnalysisInputDefaults } from "../components/analysis/utils/analysis-data.js";
 
 // The persisted authoring document is deliberately independent of React state,
 // catalogs, analyzed rows and generated chart code.
@@ -77,17 +77,28 @@ export function restoreBasicState(raw) {
   const defaults = emptyBasicState();
   const saved = readBasicDraft(raw);
   if (!saved) return defaults;
+  const method = saved.analysis.selectedAnalyticsMethod;
+  const allowedMappings = method.mapping.mapping.filter((entry) => !isIdentityAnalysisField(entry.outputPort.id));
+  const removedIdentity = allowedMappings.length !== method.mapping.mapping.length;
+  const lockedStep = { ...defaults.lockedStep, ...saved.lockedStep };
+  if (removedIdentity) {
+    lockedStep.analysis = { ...lockedStep.analysis, openPanel: !lockedStep.analysis.locked };
+    lockedStep.visualization = { ...lockedStep.visualization, locked: true, openPanel: false };
+    lockedStep.finalize = { ...lockedStep.finalize, locked: true, openPanel: false };
+  }
   return {
+    ...(removedIdentity && { inputWarning: "Learner identity fields were removed from this draft. Review Method inputs before saving." }),
     indicator: { ...defaults.indicator, ...saved.indicator },
     dataset: { ...defaults.dataset, ...saved.dataset },
     filters: { ...defaults.filters, ...saved.filters, selectedTime: { ...defaults.filters.selectedTime, ...saved.filters.selectedTime },
       selectedActivities: saved.filters.selectedActivities.map((entry) => ({
         ...entry, actionList: [], activityList: [],
       })) },
-    analysis: { ...defaults.analysis, ...saved.analysis },
+    analysis: { ...defaults.analysis, ...saved.analysis,
+      selectedAnalyticsMethod: { ...method, mapping: { mapping: allowedMappings } } },
     visualization: { ...defaults.visualization, ...saved.visualization,
       selectedType: { ...defaults.visualization.selectedType, ...saved.visualization.selectedType } },
-    lockedStep: { ...defaults.lockedStep, ...saved.lockedStep },
+    lockedStep,
   };
 }
 
@@ -135,7 +146,7 @@ export async function refreshBasicReferences(api, raw, { adaptation = false } = 
     if (contract) {
       if (adaptation) state.analysis.selectedAnalyticsMethod.mapping.mapping = state.analysis.selectedAnalyticsMethod.mapping.mapping.flatMap((entry) => {
         const input = (contract.inputs || []).find((item) => item.id === entry.inputPort.id);
-        const output = currentAnalysisSource(state.analysis.selectedAnalyticsMethod.method, contract.inputs || [], input || {}, entry.outputPort);
+        const output = currentAnalysisSource(input || {}, entry.outputPort);
         return input && output && input.type === output.type ? [{ inputPort: port(input), outputPort: port(output) }] : [];
       });
       state.analysis.inputs = (contract.inputs || []).map((input) => ({ ...input,
