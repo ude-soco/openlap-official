@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken;
 import com.openlap.analytics_module.entities.Indicator;
 import com.openlap.analytics_module.entities.utility_entities.*;
 import com.openlap.analytics_module.repositories.IndicatorRepository;
+import com.openlap.analytics_module.services.BasicAnalysisFields;
 import com.openlap.analytics_module.services.ComplexIndicatorSourceGuard;
 import com.openlap.analytics_module.services.IndicatorUtilityService;
 import com.openlap.analytics_module.services.impl.ComplexIndicatorDataService;
@@ -44,8 +45,6 @@ public class CommunityIndicatorExecution {
       "statement\\.(?:verb\\.display|object\\.definition\\.(?:name|description))\\.([A-Za-z]{2,8}(?:[-_][A-Za-z0-9]{1,8})*)");
   private static final Set<String> KNOWN_LANGUAGE_TAGS = Arrays.stream(Locale.getAvailableLocales())
       .map(locale -> locale.toLanguageTag().toLowerCase(Locale.ROOT)).collect(java.util.stream.Collectors.toUnmodifiableSet());
-  private static final Pattern ACTOR_FIELD = Pattern.compile(
-      "statement\\.(?:actor|authority|context\\.(?:instructor|team))\\.(?:objectType|name|mbox|mbox_sha1sum|mbox\\.sha1sum|openid|account\\.(?:name|homePage))");
   private static final Set<String> STANDARD_FIELDS = Set.of(
       "statement.id", "statement.timestamp", "statement.stored", "statement.version", "statement.verb.id",
       "statement.object.id", "statement.object.objectType", "statement.object.definition.type",
@@ -239,6 +238,7 @@ public class CommunityIndicatorExecution {
         || query.getActionOnActivities() == null || query.getActionOnActivities().isEmpty()
         || query.getActivities() == null || query.getActivities().isEmpty() || query.getOutputs() == null || query.getOutputs().isEmpty()
         || query.getDuration() == null || query.getDuration().getFrom() == null || query.getDuration().getUntil() == null) throw unavailable();
+    BasicAnalysisFields.requireAllowed(source);
     List<String> identifiers = new ArrayList<>();
     User author = source.getCreatedBy();
     if (author != null) {
@@ -306,7 +306,7 @@ public class CommunityIndicatorExecution {
     if (field == null || field.length() > 500 || !FIELD_PATH.matcher(field).matches()) throw unavailable();
     // Canonical xAPI keys are schema, even if an actor happens to be called Name
     // or has the identifier 'name'. Custom paths still cannot carry private IDs.
-    if (STANDARD_FIELDS.contains(field) || ACTOR_FIELD.matcher(field).matches()) return;
+    if (STANDARD_FIELDS.contains(field)) return;
     var language = LANGUAGE_FIELD.matcher(field);
     if (language.matches()) {
       String tag = language.group(1).replace('_', '-').toLowerCase(Locale.ROOT), prefix = tag;

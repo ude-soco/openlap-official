@@ -8,6 +8,7 @@ import com.openlap.analytics_statements.entities.LrsStore;
 import com.openlap.analytics_statements.entities.utility_entities.*;
 import com.openlap.analytics_statements.services.LrsService;
 import java.util.*;
+import java.util.stream.Stream;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.junit.Test;
@@ -30,6 +31,8 @@ public class StatementLearnerScopeTest {
     when(lrs.getLrsStore(SECOND)).thenReturn(second);
     when(mongo.aggregate(any(Aggregation.class), eq("statements"), eq(Document.class)))
         .thenReturn(new AggregationResults<>(List.of(), new Document()));
+    when(mongo.aggregateStream(any(Aggregation.class), eq("statements"), eq(Document.class)))
+        .thenReturn(Stream.empty());
     var service = new StatementServiceImpl(mongo, lrs);
     ReflectionTestUtils.setField(service, "collection", "statements");
     List<LrsStoresStatementRequest> stores = new ArrayList<>(List.of(
@@ -40,9 +43,15 @@ public class StatementLearnerScopeTest {
         Map.of("statement.object.definition.name.en", new ArrayList<>(List.of("Material"))),
         new StatementDuration("2020-01-01", "2030-01-01"), List.of("statement.object.id"), condition);
     service.findStatements(query);
+    var profile = service.findInputAvailability(query);
+    assertThat(profile.checkedStatements()).isZero();
+    assertThat(profile.complete()).isTrue();
     ArgumentCaptor<Aggregation> pipeline = ArgumentCaptor.forClass(Aggregation.class);
     verify(mongo).aggregate(pipeline.capture(), eq("statements"), eq(Document.class));
-    return Document.parse(pipeline.getValue().toPipeline(Aggregation.DEFAULT_CONTEXT).get(0).get("$match", Document.class).toJson());
+    var analysisMatch = pipeline.getValue().toPipeline(Aggregation.DEFAULT_CONTEXT).get(0);
+    verify(mongo).aggregateStream(pipeline.capture(), eq("statements"), eq(Document.class));
+    assertThat(pipeline.getValue().toPipeline(Aggregation.DEFAULT_CONTEXT).get(0)).isEqualTo(analysisMatch);
+    return Document.parse(analysisMatch.get("$match", Document.class).toJson());
   }
 
   @Test public void ownDataPairsEachIdentityWithItsSpecificStoreAndIdentifierType() {

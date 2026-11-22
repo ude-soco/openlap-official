@@ -9,6 +9,7 @@ import com.openlap.analytics_module.entities.utility_entities.*;
 import com.openlap.analytics_module.exceptions.indicator.IndicatorManipulationNotAllowed;
 import com.openlap.analytics_module.exceptions.indicator.IndicatorNotFoundException;
 import com.openlap.analytics_module.repositories.IndicatorRepository;
+import com.openlap.analytics_module.services.BasicAnalysisFields;
 import com.openlap.analytics_module.services.IndicatorUtilityService;
 import com.openlap.analytics_module.services.ComplexIndicatorSourceGuard;
 import com.openlap.analytics_statements.dtos.request.StatementsRequest;
@@ -195,6 +196,8 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
       indicator.setCreatedBy(tokenService.getUserFromToken(request));
 
       if (indicatorReference.getIndicatorType() == IndicatorType.BASIC) {
+        BasicAnalysisFields.requireAllowed(indicatorReference.getIndicatorQuery(),
+            indicatorReference.getAnalyticsTechniqueMapping());
         // TODO: Extract platform information and add it to an attribute
         indicator.setIndicatorQuery(gson.toJson(indicatorReference.getIndicatorQuery()));
         //        uniquePlatforms.addAll(indicatorReference.getIndicatorQuery().getPlatforms());

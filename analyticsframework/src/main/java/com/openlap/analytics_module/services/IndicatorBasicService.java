@@ -3,7 +3,9 @@ package com.openlap.analytics_module.services;
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorAnalysisRequest;
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorBasicPreviewRequest;
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorBasicRequest;
+import com.openlap.analytics_statements.dtos.StatementInputAvailability;
 import com.openlap.analytics_statements.dtos.request.LrsStoresStatementRequest;
+import com.openlap.analytics_statements.dtos.request.StatementsRequest;
 import com.openlap.dataset.OpenLAPDataSet;
 import com.openlap.user.entities.User;
 
@@ -12,6 +14,8 @@ import jakarta.servlet.http.HttpServletRequest;
 
 public interface IndicatorBasicService {
   OpenLAPDataSet analyzeIndicator(IndicatorAnalysisRequest indicatorAnalysisRequest);
+
+  StatementInputAvailability inputAvailability(HttpServletRequest request, StatementsRequest query);
 
   void validateUserRequest(HttpServletRequest request, List<LrsStoresStatementRequest> lrsStores);
 

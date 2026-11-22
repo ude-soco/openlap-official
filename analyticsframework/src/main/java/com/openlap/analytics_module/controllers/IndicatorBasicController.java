@@ -4,6 +4,7 @@ import com.openlap.analytics_module.dto.requests.indicator.IndicatorAnalysisRequ
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorBasicPreviewRequest;
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorBasicRequest;
 import com.openlap.analytics_module.services.IndicatorBasicService;
+import com.openlap.analytics_statements.dtos.request.StatementsRequest;
 import com.openlap.response.ApiSuccess;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -19,6 +20,13 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class IndicatorBasicController {
   private final IndicatorBasicService indicatorBasicService;
+
+  @PostMapping("/input-availability")
+  public ResponseEntity<?> inputAvailability(
+      HttpServletRequest request, @RequestBody @Valid StatementsRequest query) {
+    return ResponseEntity.ok(new ApiSuccess(HttpStatus.OK, "Analysis input availability.",
+        indicatorBasicService.inputAvailability(request, query)));
+  }
 
   @PostMapping("/analyze")
   public ResponseEntity<?> analyzeIndicatorBeforeSaving(

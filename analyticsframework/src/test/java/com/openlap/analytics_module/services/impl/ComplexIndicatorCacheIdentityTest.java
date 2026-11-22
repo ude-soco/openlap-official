@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import com.openlap.analytics_module.entities.Indicator;
 import com.openlap.analytics_module.entities.utility_entities.*;
 import com.openlap.analytics_technique.entities.AnalyticsTechnique;
+import com.openlap.infrastructure.exception.ValidationException;
 import com.openlap.user.entities.User;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -36,5 +37,15 @@ public class ComplexIndicatorCacheIdentityTest {
     Indicator one = basic("one");
     assertThat(IndicatorServiceImpl.indicatorFingerprint(one, true))
         .isNotEqualTo(IndicatorServiceImpl.indicatorFingerprint(one, false));
+  }
+
+  @Test public void aPrivateBasicSourceCannotReuseASavedCompositeChart() {
+    Indicator one = basic("one"), two = basic("two"), parent = basic("parent");
+    parent.setIndicatorType(IndicatorType.COMPOSITE);
+    parent.setIndicators(List.of(new IndicatorsToMerge(one, "key"), new IndicatorsToMerge(two, "key")));
+    two.setIndicatorQuery("{\"outputs\":[\"statement.actor.account.name\"]}");
+
+    assertThatThrownBy(() -> IndicatorServiceImpl.indicatorFingerprint(parent, true))
+        .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("PRIVATE_ANALYSIS_INPUT");
   }
 }

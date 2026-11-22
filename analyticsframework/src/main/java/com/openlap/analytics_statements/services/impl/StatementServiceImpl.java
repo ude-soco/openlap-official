@@ -1,6 +1,8 @@
 package com.openlap.analytics_statements.services.impl;
 
+import com.openlap.analytics_module.services.BasicAnalysisFields;
 import com.openlap.analytics_statements.dtos.OpenLapDataConverter;
+import com.openlap.analytics_statements.dtos.StatementInputAvailability;
 import com.openlap.analytics_statements.dtos.request.*;
 import com.openlap.analytics_statements.entities.LrsStore;
 import com.openlap.analytics_statements.entities.utility_entities.UserQueryCondition;
@@ -12,9 +14,11 @@ import com.openlap.infrastructure.exception.ServiceException;
 import com.openlap.exceptions.OpenLAPDataColumnException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -23,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationOptions;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -270,17 +275,32 @@ public class StatementServiceImpl implements StatementService {
   }
 
   @Override
-  public OpenLAPDataSet findStatements(StatementsRequest statementsRequest) {
-    List<String> outputs = statementsRequest.getOutputs();
-    ProjectionOperation projectOperation = Aggregation.project().andExclude("_id");
-
-    Map<String, String> outputMappings = new LinkedHashMap<>();
-    for (int i = 0; i < outputs.size(); i++) {
-      String outputField = outputs.get(i);
-      projectOperation = projectOperation.and(outputField).as("field" + (i + 1));
-      outputMappings.put("field" + (i + 1), outputs.get(i));
+  public StatementInputAvailability findInputAvailability(StatementsRequest query) {
+    StatementInputAvailabilityProfile.validate(query);
+    Map<String, String> aliases = outputAliases(query.getOutputs());
+    Aggregation aggregation = Aggregation.newAggregation(
+        Aggregation.match(statementMatch(query)),
+        Aggregation.limit(StatementInputAvailabilityProfile.MAX_STATEMENTS + 1L),
+        projectFields(aliases))
+        .withOptions(AggregationOptions.builder().cursorBatchSize(32).maxTime(Duration.ofSeconds(4)).build());
+    try (Stream<Document> rows = mongoTemplate.aggregateStream(aggregation, collection, Document.class)) {
+      return StatementInputAvailabilityProfile.inspect(rows.iterator(), aliases);
     }
+  }
 
+  private static Map<String, String> outputAliases(List<String> outputs) {
+    Map<String, String> aliases = new LinkedHashMap<>();
+    for (int i = 0; i < outputs.size(); i++) aliases.put("field" + (i + 1), outputs.get(i));
+    return aliases;
+  }
+
+  private static ProjectionOperation projectFields(Map<String, String> aliases) {
+    ProjectionOperation projection = Aggregation.project().andExclude("_id");
+    for (var entry : aliases.entrySet()) projection = projection.and(entry.getValue()).as(entry.getKey());
+    return projection;
+  }
+
+  private Criteria statementMatch(StatementsRequest statementsRequest) {
     // Match criteria for the main fields
     Criteria matchCriteria =
         Criteria.where("lrs_id")
@@ -327,18 +347,22 @@ public class StatementServiceImpl implements StatementService {
     Criteria orCriteria = new Criteria().orOperator(orCriteriaList.toArray(new Criteria[0]));
 
     // Combine the main match criteria with the OR criteria using AND operator
-    Criteria finalCriteria;
     if (!orUserCriteriaList.isEmpty()) {
-      finalCriteria = new Criteria().andOperator(matchCriteria, orCriteria, orUserCriteria);
-    } else {
-      finalCriteria = new Criteria().andOperator(matchCriteria, orCriteria);
+      return new Criteria().andOperator(matchCriteria, orCriteria, orUserCriteria);
     }
+    return new Criteria().andOperator(matchCriteria, orCriteria);
+  }
 
+  @Override
+  public OpenLAPDataSet findStatements(StatementsRequest statementsRequest) {
+    BasicAnalysisFields.requireAllowed(statementsRequest, null);
+    List<String> outputs = statementsRequest.getOutputs();
+    Map<String, String> outputMappings = outputAliases(outputs);
     Aggregation aggregation =
         Aggregation.newAggregation(
-            Aggregation.match(finalCriteria),
+            Aggregation.match(statementMatch(statementsRequest)),
             Aggregation.sort(Sort.by("statement.timestamp", "statement.stored", "_id")),
-            projectOperation);
+            projectFields(outputMappings));
 
     // Executing the aggregation
     List<Document> mappedResults = getDocuments(aggregation);

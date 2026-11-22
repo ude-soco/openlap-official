@@ -227,7 +227,7 @@ class CommunityIndicatorExecutionTest {
   @CsvSource({
       "Demo Author,statement.object.definition.name.en",
       "Name Researcher,statement.object.definition.name.en",
-      "Actor Researcher,statement.actor.account.name"
+      "Action Researcher,statement.verb.id"
   })
   void commonNameFragmentsInPublicUrisAndSchemaFieldsDoNotBlockPersonalPreview(String displayName, String outputField) throws Exception {
     creator.setName(displayName);
@@ -302,7 +302,7 @@ class CommunityIndicatorExecutionTest {
     var source = basic("Learning activity");
     var query = gson.fromJson(source.getIndicatorQuery(), StatementsRequest.class);
     query.getLrsStores().get(0).setUniqueIdentifier("name");
-    String field = "statement.actor.account.name";
+    String field = "statement.object.definition.name.en-US";
     query.setOutputs(List.of(field));
     source.setIndicatorQuery(gson.toJson(query));
     source.getAnalyticsTechniqueReference().setQueryToAnalyticsTechniqueMapping(mapping(field, OpenLAPColumnDataType.Text, "items"));
@@ -314,6 +314,19 @@ class CommunityIndicatorExecutionTest {
     var copied = gson.fromJson(graph.root().getIndicatorQuery(), StatementsRequest.class);
     assertThat(copied.getOutputs()).containsExactly(field);
     assertThat(copied.getLrsStores()).extracting(LrsStoresStatementRequest::getUniqueIdentifier).containsExactly("viewer-id");
+  }
+
+  @Test void actorInputsCannotBeReusedForCommunityPreviews() {
+    var source = basic("Learning activity");
+    var query = gson.fromJson(source.getIndicatorQuery(), StatementsRequest.class);
+    String field = "statement.actor.account.name";
+    query.setOutputs(List.of(field));
+    source.setIndicatorQuery(gson.toJson(query));
+    source.getAnalyticsTechniqueReference().setQueryToAnalyticsTechniqueMapping(mapping(field, OpenLAPColumnDataType.Text, "items"));
+
+    assertThatThrownBy(() -> execution.execute(source, viewer, Map.of(), Map.of()))
+        .isInstanceOf(ValidationException.class).extracting("code").isEqualTo("PRIVATE_ANALYSIS_INPUT");
+    verify(statements, never()).findStatements(any());
   }
 
   @Test void malformedOutputPathCannotCarryAnEmailIntoTheCopiedDefinition() {

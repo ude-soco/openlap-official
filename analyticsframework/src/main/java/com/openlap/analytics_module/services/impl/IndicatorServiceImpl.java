@@ -179,6 +179,9 @@ public class IndicatorServiceImpl implements IndicatorService {
     indicatorFullDetailResponse.setCreatedBy(foundIndicator.getCreatedBy().getName());
     if (includeCode) {
       indicatorFullDetailResponse.setIndicatorCode(generateIndicatorCode(foundIndicator.getId(), true));
+    } else {
+      // Old configurations may include analyzed rows even when chart code is omitted.
+      requireAllowedStoredInputs(foundIndicator);
     }
     //    indicatorFullDetailResponse.setPlatforms(foundIndicator.getPlatforms());
     indicatorFullDetailResponse.setConfiguration(foundIndicator.getConfigurationRequest());
@@ -309,6 +312,7 @@ public class IndicatorServiceImpl implements IndicatorService {
         || !createdBy.getId().equals(foundIndicator.getCreatedBy().getId())) {
       throw new IndicatorManipulationNotAllowed("You can copy only your own indicators. Use the pool duplication workflow for shared indicators.");
     }
+    requireAllowedStoredInputs(foundIndicator);
     String indicatorName =
         indicatorUtilityService.fetchUserIndicatorForCopyMethod(
             createdBy.getId(), foundIndicator.getName());
@@ -911,6 +915,7 @@ public class IndicatorServiceImpl implements IndicatorService {
 
   /** Source definitions and URI mode are part of a saved chart's identity. */
   static String indicatorFingerprint(Indicator indicator, Boolean uriCode) {
+    requireAllowedStoredInputs(indicator);
     Map<String, Object> identity = new LinkedHashMap<>();
     // Bump this when a renderer adapter changes the generated HTML contract.
     identity.put("format", "indicator-render-v2");
@@ -941,6 +946,20 @@ public class IndicatorServiceImpl implements IndicatorService {
       return java.util.HexFormat.of().formatHex(digest);
     } catch (java.security.NoSuchAlgorithmException impossible) {
       throw new IllegalStateException(impossible);
+    }
+  }
+
+  private static void requireAllowedStoredInputs(Indicator indicator) {
+    if (indicator.getIndicatorType() == IndicatorType.BASIC) {
+      BasicAnalysisFields.requireAllowed(indicator);
+    }
+    if (indicator.getIndicators() != null) {
+      for (IndicatorsToMerge entry : indicator.getIndicators()) {
+        Indicator source = entry == null ? null : entry.getIndicator();
+        if (source != null && source.getIndicatorType() == IndicatorType.BASIC) {
+          BasicAnalysisFields.requireAllowed(source);
+        }
+      }
     }
   }
 
