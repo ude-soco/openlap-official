@@ -1,0 +1,54 @@
+name: Visualization plugin checks
+
+on:
+  pull_request:
+    paths:
+      - visualization-methods/**
+      - analyticsframework/**
+      - indicatorframework/src/assets/images/indicator-editor-visualization/**
+      - .github/workflows/visualization-methods.yml
+  push:
+    branches: [main]
+    paths:
+      - visualization-methods/**
+      - analyticsframework/**
+      - indicatorframework/src/assets/images/indicator-editor-visualization/**
+      - .github/workflows/visualization-methods.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visualization-methods-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: Qualify both bundled visualization JARs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '21.0.11'
+          cache: maven
+          cache-dependency-path: |
+            visualization-methods/**/pom.xml
+            analyticsframework/pom.xml
+      - name: Compare two clean builds
+        run: |
+          ./analyticsframework/mvnw -B -f visualization-methods/pom.xml clean verify
+          c3=(visualization-methods/c3/target/OpenLAP-C3-*.jar)
+          apex=(visualization-methods/apexcharts/target/OpenLAP-ApexCharts-*.jar)
+          cp "${c3[0]}" "$RUNNER_TEMP/OpenLAP-C3.jar"
+          cp "${apex[0]}" "$RUNNER_TEMP/OpenLAP-ApexCharts.jar"
+          ./analyticsframework/mvnw -B -f visualization-methods/pom.xml clean verify
+          cmp "$RUNNER_TEMP/OpenLAP-C3.jar" "${c3[0]}"
+          cmp "$RUNNER_TEMP/OpenLAP-ApexCharts.jar" "${apex[0]}"
+      - name: Qualify chart generation and manifest inspection
+        working-directory: analyticsframework
+        run: ./mvnw -B -Dtest=BundledVisualizationQualification,VisualizationManifestInspectionTest test
