@@ -2,10 +2,12 @@ package com.openlap.plugins;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.openlap.analytics_module.dto.requests.indicator.IndicatorAnalysisRequest;
 import com.openlap.analytics_module.entities.Indicator;
@@ -18,6 +20,7 @@ import com.openlap.analytics_module.services.impl.IndicatorBasicServiceImpl;
 import com.openlap.analytics_module.services.impl.IndicatorUtilityServiceImpl;
 import com.openlap.analytics_statements.services.StatementService;
 import com.openlap.analytics_technique.entities.AnalyticsTechnique;
+import com.openlap.analytics_technique.dto.response.AnalyticsTechniqueResponse.BasicInputRequirement;
 import com.openlap.analytics_technique.repositories.AnalyticsTechniqueRepository;
 import com.openlap.analytics_technique.services.impl.AnalyticsTechniqueServiceImpl;
 import com.openlap.dataset.*;
@@ -49,6 +52,7 @@ public class AnalyticsReleaseQualification {
   private IndicatorBasicServiceImpl basic;
   private StatementService statements;
   private IndicatorRepository indicators;
+  private Path pluginFolder;
   private Path jar;
 
   @After public void closeLoaders() {
@@ -57,10 +61,10 @@ public class AnalyticsReleaseQualification {
 
   @Before public void installDeliveredJarThroughLocalStartup() throws Exception {
     Path delivery = Path.of(System.getProperty("openlap.analytics.release.jar",
-        "../artifacts/analytics/OpenLAP-Analytics-1.1.0.jar")).toAbsolutePath();
-    assertThat(delivery).as("Build and stage the analytics delivery before release qualification").isRegularFile();
-    Path folder = temporary.newFolder("plugins").toPath();
-    jar = Files.copy(delivery, folder.resolve(delivery.getFileName()));
+        "../analytics-methods/target/OpenLAP-Analytics-1.3.0.jar")).toAbsolutePath();
+    assertThat(delivery).as("Build analytics-methods before release qualification").isRegularFile();
+    pluginFolder = temporary.newFolder("plugins").toPath();
+    jar = Files.copy(delivery, pluginFolder.resolve(delivery.getFileName()));
     AnalyticsTechniqueRepository catalog = mock(AnalyticsTechniqueRepository.class);
     when(catalog.findAll()).thenAnswer(call -> new ArrayList<>(installed));
     when(catalog.findById(any())).thenAnswer(call -> installed.stream()
@@ -72,10 +76,10 @@ public class AnalyticsReleaseQualification {
     });
     analytics = new AnalyticsTechniqueServiceImpl(catalog,
         PluginArtifactResolver.local(), PluginCatalogVisibility.legacyOnly());
-    ReflectionTestUtils.setField(analytics, "analyticsMethodsJarsFolder", folder.toString());
+    ReflectionTestUtils.setField(analytics, "analyticsMethodsJarsFolder", pluginFolder.toString());
     analytics.populateAnalyticsTechniques();
     analytics.populateAnalyticsTechniques();
-    assertThat(installed).hasSize(10);
+    assertThat(installed).hasSize(8);
     indicators = mock(IndicatorRepository.class);
     utility = new IndicatorUtilityServiceImpl(null, null, null, analytics, indicators, null);
     statements = mock(StatementService.class);
@@ -86,7 +90,17 @@ public class AnalyticsReleaseQualification {
 
   @Test public void shadedArchivePassesTheAdminInspectorWithoutBundlingThePluginApi() throws Exception {
     var inspection = new PluginInspector().inspect(PluginKind.ANALYTICS, jar);
-    assertThat(inspection.getEntries()).hasSize(10);
+    assertThat(inspection.getEntries()).hasSize(8);
+    assertThat(analytics.getAllAnalyticsTechniques()).extracting(method -> method.getName())
+        .containsExactlyInAnyOrder(
+            "Calculate completion or success rate",
+            "Count distinct values",
+            "Count events by category",
+            "Count events over time",
+            "Count selected events",
+            "Group observations using reproducible K-means++",
+            "Summarize numeric values",
+            "Summarize numeric values by group");
     assertThat(inspection.getClasses()).containsExactly(
         "com.openlap.analytics.methods.BooleanRate",
         "com.openlap.analytics.methods.DistinctValueCount",
@@ -95,13 +109,13 @@ public class AnalyticsReleaseQualification {
         "com.openlap.analytics.methods.EventsOverTime",
         "com.openlap.analytics.methods.GroupedNumericSummary",
         "com.openlap.analytics.methods.NumericSummary",
-        "com.openlap.analytics.methods.PearsonCorrelation",
-        "com.openlap.analytics.methods.ReproducibleKMeans",
-        "com.openlap.analytics.methods.SpearmanCorrelation");
+        "com.openlap.analytics.methods.ReproducibleKMeans");
     try (JarFile archive = new JarFile(jar.toFile())) {
       assertThat(archive.stream().map(entry -> entry.getName()))
           .noneMatch(name -> name.startsWith("com/openlap/template/")
               || name.startsWith("com/openlap/dataset/") || name.startsWith("org/apache/commons/math3/"));
+      assertThat(archive.getJarEntry("com/openlap/analytics/methods/CorrelationMethod.class")).isNull();
+      assertThat(archive.getJarEntry("META-INF/openlap/analytics.json")).isNotNull();
       assertThat(archive.getJarEntry("META-INF/LICENSE.txt")).isNotNull();
       assertThat(archive.getJarEntry("com/openlap/analytics/internal/math3/stat/descriptive/DescriptiveStatistics.class"))
           .isNotNull();
@@ -128,6 +142,70 @@ public class AnalyticsReleaseQualification {
     assertThat(values(result, "category")).containsExactly("Quiz", "Forum");
     assertThat(values(result, "event_count")).containsExactly(3, 1);
     assertThat(values(result, "percentage")).containsExactly(75.0, 25.0);
+  }
+
+  @Test public void editorRecommendationsFollowTheManifestAndSurviveDisplayNameChanges() {
+    var mapper = new ObjectMapper();
+    List<IndicatorType> basicTypes = List.of(IndicatorType.BASIC);
+    List<IndicatorType> multiLevelTypes = List.of(IndicatorType.MULTI_LEVEL);
+    Map<String, List<IndicatorType>> expected = Map.of(
+        id("EventCount"), basicTypes,
+        id("EventFrequency"), basicTypes,
+        id("DistinctValueCount"), basicTypes,
+        id("EventsOverTime"), basicTypes,
+        id("BooleanRate"), basicTypes,
+        id("GroupedNumericSummary"), basicTypes,
+        id("NumericSummary"), List.of(IndicatorType.BASIC, IndicatorType.MULTI_LEVEL),
+        id("ReproducibleKMeans"), multiLevelTypes);
+    Map<String, BasicInputRequirement> basicInputs = Map.of(
+        id("EventCount"), BasicInputRequirement.EVENTS,
+        id("EventFrequency"), BasicInputRequirement.CATEGORY,
+        id("DistinctValueCount"), BasicInputRequirement.CATEGORY,
+        id("EventsOverTime"), BasicInputRequirement.TIMESTAMP,
+        id("BooleanRate"), BasicInputRequirement.OUTCOME,
+        id("NumericSummary"), BasicInputRequirement.SCORE,
+        id("GroupedNumericSummary"), BasicInputRequirement.SCORE_AND_CATEGORY);
+
+    assertThat(analytics.getAllAnalyticsTechniques()).hasSize(expected.size()).allSatisfy(method -> {
+      assertThat(method.getRecommendedFor()).containsExactlyElementsOf(expected.get(method.getId()));
+      assertThat(method.getBasicInputRequirement()).isEqualTo(basicInputs.get(method.getId()));
+      assertThat(mapper.valueToTree(method).path("metadata").isObject()).isTrue();
+      assertThat(analytics.getAnalyticsTechniquesById(method.getId()).getRecommendedFor())
+          .isEqualTo(method.getRecommendedFor());
+    });
+
+    String builtInId = id("ReproducibleKMeans");
+    var clustering = mapper.valueToTree(analytics.getAnalyticsTechniquesById(builtInId)).path("metadata");
+    assertThat(clustering.path("outputHints").path("x").path("labelFromInput").asText()).isEqualTo("x");
+    assertThat(clustering.path("outputHints").path("cluster").path("role").asText()).isEqualTo("CLUSTER");
+    installed.stream().filter(method -> method.getId().equals(builtInId)).findFirst().orElseThrow()
+        .setName("Renamed clustering");
+    assertThat(analytics.getAnalyticsTechniquesById(builtInId).getRecommendedFor())
+        .isEqualTo(multiLevelTypes);
+
+    AnalyticsTechnique custom = new AnalyticsTechnique();
+    custom.setId("custom-method");
+    custom.setName("Pearson correlation");
+    custom.setImplementingClass("com.example.custom.PearsonCorrelation");
+    custom.setEnabled(true);
+    installed.add(custom);
+    var unclassified = analytics.getAnalyticsTechniquesById(custom.getId());
+    assertThat(unclassified.getRecommendedFor()).isEmpty();
+    assertThat(mapper.valueToTree(unclassified).has("recommendedFor")).isFalse();
+    assertThat(mapper.valueToTree(unclassified).has("basicInputRequirement")).isFalse();
+    assertThat(mapper.valueToTree(unclassified).has("metadata")).isFalse();
+    assertThat(analytics.getAllAnalyticsTechniques()).contains(unclassified);
+
+    for (String retired : List.of("PearsonCorrelation", "SpearmanCorrelation")) {
+      var prior = new AnalyticsTechnique();
+      prior.setId(retired);
+      prior.setName("Renamed " + retired);
+      prior.setImplementingClass("com.openlap.analytics.methods." + retired);
+      prior.setEnabled(true);
+      installed.add(prior);
+      assertThat(analytics.getAnalyticsTechniquesById(retired).getRecommendedFor()).isEmpty();
+      assertThat(analytics.getAllAnalyticsTechniques()).noneMatch(entry -> entry.getId().equals(retired));
+    }
   }
 
   @Test public void groupedDecimalPreviewAndStoredIndicatorExecuteTheSameRealPlugin() throws Exception {
@@ -161,8 +239,20 @@ public class AnalyticsReleaseQualification {
     assertThat(values(cached, "standard_deviation").get(0)).isNull();
   }
 
-  @Test public void correlationExcludesWholePairsAndReportsSafeValidationErrors() {
+  @Test public void previouslyInstalledCorrelationsStayExecutableAndOutOfTheEditor() throws Exception {
+    String legacyPath = System.getProperty("openlap.analytics.legacy.jar");
+    assumeTrue("Supply a local 1.1.0 JAR to exercise the retired implementations", legacyPath != null);
+    Path legacy = Path.of(legacyPath);
+    Files.copy(legacy, pluginFolder.resolve(legacy.getFileName()));
+    analytics.populateAnalyticsTechniques();
+    assertThat(installed).hasSize(10);
+    assertThat(analytics.getAllAnalyticsTechniques()).hasSize(8);
+
     String method = id("PearsonCorrelation");
+    assertThat(analytics.getAnalyticsTechniquesById(method).getRecommendedFor()).isEmpty();
+    installed.stream().filter(entry -> entry.getId().equals(method)).findFirst().orElseThrow()
+        .setName("Renamed correlation");
+    assertThat(analytics.getAllAnalyticsTechniques()).noneMatch(entry -> entry.getId().equals(method));
     OpenLAPPortConfig mapping = mapping(method, Map.of("x", "first", "y", "second"));
     OpenLAPDataSet result = analyze(method, mapping, dataset(Map.of(
         "first", Arrays.asList("1", null, "2", "3", "4"),
@@ -173,6 +263,11 @@ public class AnalyticsReleaseQualification {
     assertThatThrownBy(() -> analyze(method, mapping, dataset(Map.of(
         "first", List.of(1, 1, 1), "second", List.of(1, 2, 3))), List.of()))
         .isInstanceOf(ValidationException.class);
+
+    String spearman = id("SpearmanCorrelation");
+    OpenLAPDataSet ranked = analyze(spearman, mapping(spearman, Map.of("x", "first", "y", "second")),
+        dataset(Map.of("first", List.of(1, 2, 3), "second", List.of(10, 20, 50))), List.of());
+    assertThat(((Number) values(ranked, "correlation").get(0)).doubleValue()).isEqualTo(1.0);
   }
 
   @Test public void clusteringKeepsDecimalPointsLabelsAndAssignmentsTogether() {

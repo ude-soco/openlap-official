@@ -4,14 +4,12 @@ on:
   pull_request:
     paths:
       - analytics-methods/**
-      - artifacts/analytics/**
       - analyticsframework/**
       - .github/workflows/analytics-methods.yml
   push:
     branches: [main]
     paths:
       - analytics-methods/**
-      - artifacts/analytics/**
       - analyticsframework/**
       - .github/workflows/analytics-methods.yml
 
@@ -24,7 +22,7 @@ concurrency:
 
 jobs:
   package:
-    name: Qualify analytics JAR and reproducible delivery
+    name: Qualify reproducible analytics build
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -41,10 +39,13 @@ jobs:
             analyticsframework/pom.xml
       - name: Check known-answer numerical tests and build the shaded JAR
         run: ./analyticsframework/mvnw -B -f analytics-methods/pom.xml clean verify
-      - name: Verify delivery checksum and source reproducibility
+      - name: Compare two clean builds
         run: |
-          (cd artifacts/analytics && sha256sum --check SHA256SUMS)
-          cmp analytics-methods/target/OpenLAP-Analytics-1.1.0.jar artifacts/analytics/OpenLAP-Analytics-1.1.0.jar
+          archive=analytics-methods/target/OpenLAP-Analytics-1.3.0.jar
+          first_build=$(mktemp "$RUNNER_TEMP/openlap-analytics.XXXXXX")
+          cp "$archive" "$first_build"
+          ./analyticsframework/mvnw -B -f analytics-methods/pom.xml -DskipTests clean package
+          cmp "$first_build" "$archive"
       - name: Qualify admin inspection, manual discovery and saved indicators
         working-directory: analyticsframework
-        run: ./mvnw -B -Dtest=AnalyticsReleaseQualification test
+        run: ./mvnw -B -Dtest=AnalyticsReleaseQualification,AnalyticsTechniqueDiscoveryTest test

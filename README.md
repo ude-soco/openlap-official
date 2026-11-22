@@ -176,10 +176,9 @@ Explore **Administration → Admin Dashboard** and **Content Management**. News 
 publications can be created immediately, or imported through the optional
 [one-time content migration](docs/backend-reference.md#homepage-content-management).
 
-A fresh checkout contains **no learning records**. It includes a ready-to-install
-[analytics methods JAR](artifacts/analytics/OpenLAP-Analytics-1.1.0.jar) for event
-counts, descriptive statistics, correlation and clustering. See the
-[installation and testing guide](docs/analytics-methods.md) before using it.
+A fresh checkout contains **no learning records**. Build the analytics methods
+JAR from `analytics-methods/` for event counts, descriptive statistics and
+clustering. [Build and installation guide](docs/analytics-methods.md)
 To create analytics, you also need:
 
 1. Learning Locker store metadata and xAPI statements in the secondary database.

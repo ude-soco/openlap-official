@@ -115,43 +115,6 @@ public class AnalyticsMethodsTest {
     rejects(missing, "No grouped");
   }
 
-  @Test public void pearsonMatchesHandCalculatedCoefficient() {
-    PearsonCorrelation method = input(new PearsonCorrelation(), "x", 1, 2, 3, 4);
-    input(method, "y", 2, 1, 4, 3);
-    method.execute();
-    assertEquals(.6, number(method, "correlation", 0), 1e-12);
-    assertEquals(4, number(method, "count", 0), 0);
-  }
-
-  @Test public void completeCaseExclusionPreservesPairsAndCountsEachRowOnce() {
-    PearsonCorrelation method = input(new PearsonCorrelation(), "x", 1, null, 3, 4, 5);
-    input(method, "y", 2, 999, 6, null, 10);
-    method.execute();
-    assertEquals(1, number(method, "correlation", 0), 1e-12);
-    assertEquals(3, number(method, "count", 0), 0);
-    assertEquals(2, number(method, "excluded_count", 0), 0);
-  }
-
-  @Test public void spearmanUsesAverageTiedRanks() {
-    SpearmanCorrelation method = input(new SpearmanCorrelation(), "x", 1, 2, 2, 3);
-    input(method, "y", 1, 2, 3, 4);
-    method.execute();
-    assertEquals(3 / Math.sqrt(10), number(method, "correlation", 0), 1e-12);
-  }
-
-  @Test public void correlationHandlesDescendingValuesAndRejectsInsufficientOrConstantMeasurements() {
-    PearsonCorrelation negative = input(new PearsonCorrelation(), "x", 1.5, 2.5, 3.5);
-    input(negative, "y", -3, -5, -7);
-    negative.execute();
-    assertEquals(-1, number(negative, "correlation", 0), 1e-12);
-    PearsonCorrelation shortInput = input(new PearsonCorrelation(), "x", 1, 2);
-    input(shortInput, "y", 2, 3); rejects(shortInput, "three complete");
-    SpearmanCorrelation constant = input(new SpearmanCorrelation(), "x", 1, 1, 1);
-    input(constant, "y", 2, 3, 4); rejects(constant, "no variation");
-    PearsonCorrelation mismatch = input(new PearsonCorrelation(), "x", 1, 2, 3);
-    input(mismatch, "y", 2, 3); rejects(mismatch, "same observations");
-  }
-
   private static ReproducibleKMeans clusters() {
     ReproducibleKMeans method = input(new ReproducibleKMeans(), "x", 10.2, .1, 10.1, .2, null);
     input(method, "y", 100.2, .3, 100.1, .4, 300);
@@ -226,9 +189,7 @@ public class AnalyticsMethodsTest {
 
   @Test public void allRegisteredMethodsDeclareCompleteContractsAndReturnRectangularFiniteOutputs() {
     List<AnalyticalMethod> methods = List.of(input(new NumericSummary(), "values", 1, 2, 3),
-        input(input(new GroupedNumericSummary(), "values", 1, 2, 3), "group", "A", "A", "B"),
-        input(input(new PearsonCorrelation(), "x", 1, 2, 3), "y", 2, 1, 4),
-        input(input(new SpearmanCorrelation(), "x", 1, 2, 3), "y", 2, 1, 4), clusters());
+        input(input(new GroupedNumericSummary(), "values", 1, 2, 3), "group", "A", "A", "B"), clusters());
     for (AnalyticalMethod method : methods) {
       assertNotNull(method.getParams()); assertFalse(method.hasPMML());
       assertFalse(method.getInputPorts().isEmpty()); assertFalse(method.getOutputPorts().isEmpty());

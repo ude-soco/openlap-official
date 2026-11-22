@@ -7,10 +7,29 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import javax.tools.ToolProvider;
 
 final class ManagedPluginFixture {
+  static Path withAnalyticsManifest(Path original, String suffix, String indicatorType) throws Exception {
+    Path target = original.resolveSibling("manifest-" + original.getFileName());
+    try (var source = new JarFile(original.toFile());
+         var output = new JarOutputStream(Files.newOutputStream(target))) {
+      for (var entries = source.entries(); entries.hasMoreElements();) {
+        var entry = entries.nextElement();
+        output.putNextEntry(new JarEntry(entry.getName()));
+        try (var bytes = source.getInputStream(entry)) { bytes.transferTo(output); }
+        output.closeEntry();
+      }
+      output.putNextEntry(new JarEntry(com.openlap.plugins.analytics.AnalyticsManifest.RESOURCE));
+      output.write(("{\"schemaVersion\":1,\"methods\":[{\"className\":\"managedfixture.ManagedAnalytics" + suffix
+          + "\",\"recommendedFor\":[\"" + indicatorType + "\"]}]}").getBytes(StandardCharsets.UTF_8));
+      output.closeEntry();
+    }
+    return target;
+  }
+
   static Path create(Path folder, String suffix, boolean broken) throws Exception {
     return create(folder, suffix, broken, suffix);
   }

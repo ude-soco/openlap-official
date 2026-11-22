@@ -11,9 +11,14 @@ From the repository root, with Java 17 or 21 and Maven 3.6.3 or newer:
 ./analyticsframework/mvnw -f analytics-methods/pom.xml clean verify
 ```
 
-The result is `analytics-methods/target/OpenLAP-Analytics-1.1.0.jar`.
+The build writes `analytics-methods/target/OpenLAP-Analytics-1.3.0.jar` locally.
 The fixed `project.build.outputTimestamp` makes rebuilding unchanged sources reproducible.
 Keep a manually installed copy outside this module's `target` directory.
+
+The package includes an optional [analytics manifest](src/main/resources/META-INF/openlap/analytics.json).
+It declares editor recommendations, input roles, and result presentation hints
+for each method. The Java implementation defines the calculation, column
+contracts, and parameters.
 
 ## Method contracts
 
@@ -23,17 +28,17 @@ Keep a manually installed copy outside this module's `target` directory.
 | Count events by category | `category` (Text) | Event count and percentage per category, with optional ranking and limit |
 | Count distinct values | `value` (Text), optional `group` (Text) | Distinct observed values per group or across the selection |
 | Count events over time | `timestamp` (Text) | Event count per observed UTC day, ISO week, month or year |
-| Calculate percentage of true outcomes | `outcome` (TrueFalse), optional `group` (Text) | Known true/false counts, unknown count and percent true per group |
+| Calculate completion or success rate | `outcome` (TrueFalse), optional `group` (Text) | Known true/false counts, unknown count and percent true per group |
 | Summarize numeric values | `values` (Numeric) | One summary over actual numeric measurements |
 | Summarize numeric values by group | `values` (Numeric), `group` (Text) | One summary per exact group key, in first-observed order |
-| Pearson correlation | `x`, `y` (Numeric) | One coefficient for linear association |
-| Spearman rank correlation | `x`, `y` (Numeric) | One coefficient for monotonic association, with average tied ranks |
 | Group observations using reproducible K-means++ | `x`, `y` (Numeric), optional `observation` (Text) | One assignment per complete input row, in original input order |
 
-Select the unit of observation before analysing. For a learner-level relationship,
-prepare one row per learner and align both measurements by that learner's key.
-Event-level rows describe events; their number is not the number of independent learners.
-Multilevel indicators can join prepared Basic outputs by a unique learner or activity key.
+Select the unit of observation before analysing. For a relationship across
+activities, prepare one row per activity and align both measurements by the
+activity identifier. For example, join each quiz's mean score to its completion
+rate in a Multilevel indicator. Basic Indicator excludes learner identifiers
+from method inputs. **User scope** filters still select whose events contribute
+to the results.
 
 ### Descriptive methods
 
@@ -60,15 +65,6 @@ For grouped summaries, `count` and `excluded_count` apply to each group.
 it repeats on each group row and must be read once, not summed.
 Group keys are preserved exactly. Empty or whitespace-only group keys are missing.
 
-### Correlation
-
-Both columns must be aligned and equal in length. A missing value in either column
-excludes the complete pair. At least three complete pairs and variation in both
-measurements are required. Outputs are `comparison` (Text), `correlation`, `count`
-and `excluded_count` (Numeric). The three-pair minimum is a preview policy, not a
-claim that three pairs provide reliable inference. No p-values or causal conclusions
-are produced. Pearson measures linear association; Spearman measures rank association.
-
 ### Reproducible K-means++
 
 Parameters are `clusters` (2-20, default 3), `seed` (0-2147483647, default 42),
@@ -93,15 +89,14 @@ The iteration limit may stop calculation before convergence, so the result is ex
 
 All methods reject malformed, nonfinite or incorrectly typed numeric values instead of
 silently treating them as missing. Only `null` represents a missing numeric observation.
-Summary and correlation previews are limited to 100,000 input rows. No input list is
+Summary previews are limited to 100,000 input rows. No input list is
 modified. Numerical overflow causes an explicit validation failure, never NaN/Infinity
 in the returned dataset. These methods do not infer data quality, representative sampling,
 causation, statistical significance or learner ability.
 
-Tests use known-answer numeric fixtures, hand-calculated correlation, tied ranks,
-missing paired values, decimal features, duplicate points, shuffled cluster membership,
-invalid parameters and output-contract checks. The package does not change or remove
-existing legacy analytics methods.
+Tests use known-answer numeric fixtures, missing paired values, decimal features,
+duplicate points, shuffled cluster membership, invalid parameters and output-contract
+checks.
 
 Apache Commons Math documentation:
 - https://commons.apache.org/proper/commons-math/userguide/stat.html

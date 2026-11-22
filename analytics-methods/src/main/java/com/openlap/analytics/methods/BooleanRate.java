@@ -12,7 +12,7 @@ public final class BooleanRate extends AnalyticalMethod {
     input("outcome", OpenLAPColumnDataType.TrueFalse, true, "True/false outcome",
         "A recorded true/false result such as xAPI completion or success. Missing outcomes are unknown and excluded from the percentage denominator.");
     input("group", OpenLAPColumnDataType.Text, false, "Group",
-        "Optional aligned learner, activity or other text group. Without this input, all selected events form one group. Use keys unique within your selected dataset.");
+        "Optional text group key aligned with each outcome, such as the activity identifier. Leave this blank for one rate across all selected events.");
     output("group", OpenLAPColumnDataType.Text, "Group", "The group whose known outcomes form the percentage denominator.");
     output("true_count", OpenLAPColumnDataType.Numeric, "True outcomes", "Number of explicitly recorded true outcomes in this group.");
     output("false_count", OpenLAPColumnDataType.Numeric, "False outcomes", "Number of explicitly recorded false outcomes in this group. Unknown outcomes are never counted as false.");
@@ -24,10 +24,10 @@ public final class BooleanRate extends AnalyticalMethod {
         "Rows excluded because the selected group is missing. This whole-dataset count repeats on each group row; do not sum it. Zero when grouping is not selected.");
   }
 
-  @Override public String getAnalyticsMethodName() { return "Calculate percentage of true outcomes"; }
+  @Override public String getAnalyticsMethodName() { return "Calculate completion or success rate"; }
 
   @Override public String getAnalyticsMethodDescription() {
-    return "Count true, false and unknown recorded outcomes and calculate percentage true among known outcomes. Useful for recorded completion or success results, optionally grouped by learner or activity. Each input row is one event or prepared observation. Missing outcomes never become false; an unknown denominator produces an empty percentage.";
+    return "Calculate the percentage of recorded completion or success outcomes marked true, optionally for each activity. Each input row is one event or prepared observation. Count true, false and unknown outcomes separately. The percentage is empty when no outcomes are known.";
   }
 
   @Override protected void implementationExecution() {

@@ -38,6 +38,16 @@ public class PluginInspectorTest {
     assertThat(inspected.getEntries().get(0)).containsKeys("chartConfiguration", "inputs");
   }
 
+  @Test public void inspectedAnalyticsManifestAppearsOnlyOnItsDescribedEntry() throws Exception {
+    Path jar = ManagedPluginFixture.withAnalyticsManifest(
+        ManagedPluginFixture.create(temporary.getRoot().toPath(), "Advice", false, "Advice", true), "Advice", "BASIC");
+    var entries = inspector.inspect(PluginKind.ANALYTICS, jar).getEntries();
+    assertThat(entries).hasSize(2);
+    assertThat(entries.get(0).get("analyticsMetadata", org.bson.Document.class))
+        .containsEntry("recommendedFor", java.util.List.of("BASIC"));
+    assertThat(entries.get(1)).doesNotContainKey("analyticsMetadata");
+  }
+
   @Test public void metadataFailureRejectsTheWholeReviewAndRedactsPluginExceptions() throws Exception {
     Path jar = ManagedPluginFixture.create(temporary.getRoot().toPath(), "Broken", true);
     assertThatThrownBy(() -> inspector.inspect(PluginKind.ANALYTICS, jar)).isInstanceOf(ValidationException.class)

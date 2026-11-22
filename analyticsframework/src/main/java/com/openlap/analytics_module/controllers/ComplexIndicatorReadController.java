@@ -91,7 +91,9 @@ public class ComplexIndicatorReadController {
     row.put("outputs", List.of());
     try {
       var method = source.getAnalyticsTechniqueReference().getAnalyticsTechnique();
-      row.put("analyticsMethod", Map.of("id", method.getId(), "name", method.getName()));
+      Map<String, Object> summary = new LinkedHashMap<>(Map.of("id", method.getId(), "name", method.getName()));
+      if (method.getAnalyticsMetadata() != null) summary.put("metadata", method.getAnalyticsMetadata());
+      row.put("analyticsMethod", summary);
       Optional<List<OpenLAPColumnConfigData>> ports = outputs.computeIfAbsent(method.getId(), id -> {
         try {
           return Optional.of(analytics.getAnalyticsTechniqueOutputs(id));

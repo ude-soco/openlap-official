@@ -46,6 +46,9 @@ public class AnalyticsTechnique {
   /** New entries remain invisible until their complete installation is ACTIVE. */
   private String installationId;
 
+  /** Optional validated JAR advice. Executable input and output contracts remain in the plugin. */
+  private org.bson.Document analyticsMetadata;
+
   /** Treats a missing/null flag (legacy documents) as enabled. */
   public boolean isEnabled() {
     return enabled == null || enabled;

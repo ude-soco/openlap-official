@@ -8,7 +8,7 @@ import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 abstract class SummaryMethod extends AnalyticalMethod {
   SummaryMethod() {
     super("descriptive");
-    input("values", OpenLAPColumnDataType.Numeric, true, "Numeric measurement", "A numeric measurement for each observation, such as a score or a prepared learner count. Empty measurements are excluded.");
+    input("values", OpenLAPColumnDataType.Numeric, true, "Numeric measurement", "A numeric measurement for each observation, such as a quiz score or a prepared activity count. Empty measurements are excluded.");
     output("group", OpenLAPColumnDataType.Text, "Group", "The group of observations summarized by this row.");
     output("count", OpenLAPColumnDataType.Numeric, "Analysed observations", "Number of nonmissing numeric measurements in this summary row.");
     output("excluded_count", OpenLAPColumnDataType.Numeric, "Excluded observations", "Number of missing numeric measurements excluded from this summary row.");

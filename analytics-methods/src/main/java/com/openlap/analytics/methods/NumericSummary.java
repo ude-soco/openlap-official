@@ -8,7 +8,7 @@ public final class NumericSummary extends SummaryMethod {
   public NumericSummary() { super(); }
   @Override public String getAnalyticsMethodName() { return "Summarize numeric values"; }
   @Override public String getAnalyticsMethodDescription() {
-    return "Summarize a numerical measurement with count, sum, mean, median, range, sample variance, sample standard deviation and quartiles. One input row is one observation; aggregate events by learner first when you want learner-level statistics. Missing values are excluded and counted.";
+    return "Summarize a numerical measurement with count, sum, mean, median, range, sample variance, sample standard deviation and quartiles. One input row is one observation, such as a quiz attempt. Missing values are excluded and counted.";
   }
   @Override protected void implementationExecution() {
     resetOutput();

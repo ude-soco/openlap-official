@@ -12,7 +12,7 @@ public final class DistinctValueCount extends AnalyticalMethod {
   public DistinctValueCount() {
     super("descriptive");
     input("value", OpenLAPColumnDataType.Text, true, "Values to count",
-        "Text values to count distinctly, such as learner identifiers or activity labels. Identity is case-sensitive and preserved exactly; blank values are excluded.");
+        "Text values to count distinctly, such as activity identifiers or action labels. Values are compared exactly, including case. Blank values are excluded.");
     input("group", OpenLAPColumnDataType.Text, false, "Group (optional)",
         "An optional aligned activity or other group key. Without this input, count distinct values over the complete selection.");
     output("category", OpenLAPColumnDataType.Text, "Group", "Exact group key, or All observations when no grouping input is supplied.");
@@ -26,7 +26,7 @@ public final class DistinctValueCount extends AnalyticalMethod {
   @Override public String getAnalyticsMethodName() { return "Count distinct values"; }
 
   @Override public String getAnalyticsMethodDescription() {
-    return "Count exact distinct text values across the selection or within each optional group. Repeated events from the same identifier count once per group. Missing values are excluded; missing group keys are counted separately. Select a learner identifier to count distinct observed learners, rather than events.";
+    return "Count exact distinct text values across the selection or within each optional group. Repeated values count once per group. For example, count distinct activity identifiers for each action. Missing values are excluded, and missing group keys are counted separately.";
   }
 
   @Override protected void implementationExecution() {

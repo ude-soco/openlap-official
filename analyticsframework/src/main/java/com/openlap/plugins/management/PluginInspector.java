@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openlap.dataset.OpenLAPColumnDataType;
 import com.openlap.infrastructure.exception.ValidationException;
 import com.openlap.plugins.PluginJarFiles;
+import com.openlap.plugins.analytics.AnalyticsManifest;
 import com.openlap.plugins.visualization.VisualizationManifest;
 import com.openlap.plugins.artifacts.PluginKind;
 import com.openlap.template.AnalyticsMethod;
@@ -79,6 +80,8 @@ public final class PluginInspector {
       if (kind == PluginKind.VISUALIZATION) {
         VisualizationManifest manifest = VisualizationManifest.read(jar, result.getClasses());
         if (manifest != null) result.setVisualizationManifest(manifest.document());
+      } else if (kind == PluginKind.ANALYTICS) {
+        result.setAnalyticsManifest(AnalyticsManifest.read(archive, result.getClasses()));
       }
       return result;
     } catch (IOException | NotFoundException e) {
@@ -114,6 +117,8 @@ public final class PluginInspector {
               .map(port -> text(port.getId(), 300, true)).collect(Collectors.joining(",")));
           entry.append("inputs", plain(method.getInputPorts())).append("parameters", plain(method.getParams()))
               .append("outputPorts", plain(method.getOutputPorts()));
+          Document metadata = result.getAnalyticsManifest().metadata(name, method);
+          if (metadata != null) entry.append("analyticsMetadata", metadata);
         } else {
           VisualizationCodeGenerator chart = instance(loader, name, VisualizationCodeGenerator.class);
           entry.append("name", text(chart.getName(), 300, true));

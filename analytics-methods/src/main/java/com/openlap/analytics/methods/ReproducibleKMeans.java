@@ -21,9 +21,9 @@ public final class ReproducibleKMeans extends AnalyticalMethod {
 
   public ReproducibleKMeans() {
     super("clustering");
-    input("x", OpenLAPColumnDataType.Numeric, true, "First numeric feature", "First prepared feature for each observation. Use one row per learner for learner profiles.");
+    input("x", OpenLAPColumnDataType.Numeric, true, "First numeric feature", "First prepared feature for each observation. Prepare one row per activity when clustering activities.");
     input("y", OpenLAPColumnDataType.Numeric, true, "Second numeric feature", "Second feature for the same observation. Rows missing either feature are excluded together.");
-    input("observation", OpenLAPColumnDataType.Text, false, "Observation label", "Optional aligned learner or activity label. Without a label, the original row number identifies each observation.");
+    input("observation", OpenLAPColumnDataType.Text, false, "Observation label", "Optional aligned label, such as an activity identifier. Without a label, the original row number identifies each observation.");
     output("observation", OpenLAPColumnDataType.Text, "Observation", "Original observation label, or original input row number. Output preserves the order of complete input rows.");
     output("cluster", OpenLAPColumnDataType.Text, "Cluster", "Cluster label ordered by cluster centre, for repeatable interpretation. Clusters are exploratory groups, not attainment judgments.");
     output("x", OpenLAPColumnDataType.Numeric, "First feature", "First feature in its original units.");
