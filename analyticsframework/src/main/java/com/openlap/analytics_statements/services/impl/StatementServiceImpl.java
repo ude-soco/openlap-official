@@ -290,7 +290,9 @@ public class StatementServiceImpl implements StatementService {
 
   private static Map<String, String> outputAliases(List<String> outputs) {
     Map<String, String> aliases = new LinkedHashMap<>();
-    for (int i = 0; i < outputs.size(); i++) aliases.put("field" + (i + 1), outputs.get(i));
+    for (String output : new LinkedHashSet<>(outputs)) {
+      aliases.put("field" + (aliases.size() + 1), output);
+    }
     return aliases;
   }
 
@@ -356,20 +358,20 @@ public class StatementServiceImpl implements StatementService {
   @Override
   public OpenLAPDataSet findStatements(StatementsRequest statementsRequest) {
     BasicAnalysisFields.requireAllowed(statementsRequest, null);
-    List<String> outputs = statementsRequest.getOutputs();
-    Map<String, String> outputMappings = outputAliases(outputs);
+    Map<String, String> outputMappings = outputAliases(statementsRequest.getOutputs());
     Aggregation aggregation =
         Aggregation.newAggregation(
             Aggregation.match(statementMatch(statementsRequest)),
             Aggregation.sort(Sort.by("statement.timestamp", "statement.stored", "_id")),
-            projectFields(outputMappings));
+            projectFields(outputMappings))
+            .withOptions(AggregationOptions.builder().allowDiskUse(true).build());
 
     // Executing the aggregation
     List<Document> mappedResults = getDocuments(aggregation);
 
     // Initialize a map to hold the lists of values for each field
     Map<String, ArrayList<Object>> fieldValuesMap = new HashMap<>();
-    for (String output : outputs) {
+    for (String output : outputMappings.values()) {
       fieldValuesMap.put(output, new ArrayList<>());
     }
 

@@ -29,7 +29,7 @@ public class StatementObservationAlignmentTest {
         new StatementDuration("2020-01-01", "2030-01-01"), outputs, UserQueryCondition.INCLUDE_ME);
   }
 
-  @Test public void missingFieldsRetainTheirEventPositionAndLegacyTextMetadata() {
+  @Test public void repeatedAndMissingFieldsRetainTheirEventPositionAndLegacyTextMetadata() {
     MongoTemplate mongo = mock(MongoTemplate.class);
     when(mongo.aggregate(any(Aggregation.class), eq("statements"), eq(Document.class)))
         .thenReturn(new AggregationResults<>(List.of(
@@ -40,11 +40,7 @@ public class StatementObservationAlignmentTest {
     var service = new StatementServiceImpl(mongo, mock(LrsService.class));
     ReflectionTestUtils.setField(service, "collection", "statements");
     List<String> outputs = List.of("statement.object.definition.name.en", "statement.result.score.raw", "statement.result.success");
-    var query = new StatementsRequest(
-        List.of(new LrsStoresStatementRequest("000000000000000000000001", "viewer")),
-        List.of("type"), List.of("action"),
-        Map.of("statement.object.definition.name.en", new ArrayList<>(List.of("Quiz"))),
-        new StatementDuration("2020-01-01", "2030-01-01"), outputs, UserQueryCondition.INCLUDE_ME);
+    var query = inputQuery(List.of(outputs.get(0), outputs.get(1), outputs.get(0), outputs.get(2)));
 
     var data = service.findStatements(query);
 
@@ -55,9 +51,13 @@ public class StatementObservationAlignmentTest {
         assertThat(column.getType()).isEqualTo(OpenLAPColumnDataType.Text));
     ArgumentCaptor<Aggregation> pipeline = ArgumentCaptor.forClass(Aggregation.class);
     verify(mongo).aggregate(pipeline.capture(), eq("statements"), eq(Document.class));
-    assertThat(pipeline.getValue().toPipeline(Aggregation.DEFAULT_CONTEXT).get(1))
-        .isEqualTo(new Document("$sort", new Document("statement.timestamp", 1)
-            .append("statement.stored", 1).append("_id", 1)));
+    assertThat(pipeline.getValue().toPipeline(Aggregation.DEFAULT_CONTEXT)).containsSubsequence(
+        new Document("$sort", new Document("statement.timestamp", 1)
+            .append("statement.stored", 1).append("_id", 1)),
+        new Document("$project", new Document("_id", 0)
+            .append("field1", "$" + outputs.get(0)).append("field2", "$" + outputs.get(1))
+            .append("field3", "$" + outputs.get(2))));
+    assertThat(pipeline.getValue().getOptions().isAllowDiskUse()).isTrue();
   }
 
   @Test public void learnerIdentifiersAreRejectedBeforeProjectingAnalysisRows() {
