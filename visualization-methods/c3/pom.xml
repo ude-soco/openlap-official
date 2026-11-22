@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.openlap.visualizations</groupId><artifactId>bundled-visualizations</artifactId><version>1.1.0</version>
+    <groupId>org.openlap.visualizations</groupId><artifactId>bundled-visualizations</artifactId><version>1.2.0</version>
   </parent>
   <artifactId>openlap-visualization-c3</artifactId>
   <properties><visualization.library>c3</visualization.library></properties>

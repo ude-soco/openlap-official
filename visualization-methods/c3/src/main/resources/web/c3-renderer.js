@@ -110,7 +110,7 @@
     const previous = charts.get(target);
     if (previous) {
       previous.observer?.disconnect();
-      previous.removeBackgrounds?.();
+      previous.clearValueLabelStyles?.();
       previous.chart.destroy();
       charts.delete(target);
     }
@@ -134,7 +134,7 @@
     target.appendChild(heading);
   }
 
-  function addLegend(legend, getChart, names, colors) {
+  function addLegend(legend, getChart, names, colors, useSeriesColors) {
     for (const [id, name] of Object.entries(names)) {
       const item = document.createElement("button");
       item.type = "button";
@@ -147,6 +147,7 @@
       tile.style.backgroundColor = colors[id];
       const label = document.createElement("span");
       label.style.overflowWrap = "anywhere";
+      if (useSeriesColors) label.style.color = colors[id];
       label.textContent = name;
       item.append(tile, label);
       item.addEventListener("click", () => {
@@ -205,7 +206,7 @@
     }
   }
 
-  function drawScatterLabels(plot, colors) {
+  function drawScatterLabels(plot) {
     // C3's native data labels are limited to bar and line-based series.
     plot.querySelectorAll(".openlap-c3-scatter-value").forEach(label => label.remove());
     for (const circle of plot.querySelectorAll(".c3-circles circle.c3-circle")) {
@@ -216,7 +217,6 @@
       label.setAttribute("x", circle.getAttribute("cx"));
       label.setAttribute("y", Number(circle.getAttribute("cy")) - 7);
       label.setAttribute("text-anchor", "middle");
-      label.setAttribute("fill", colors[point.id]);
       label.setAttribute("pointer-events", "none");
       label.textContent = Number(point.value.toPrecision(8));
       circle.parentElement.appendChild(label);
@@ -250,21 +250,42 @@
     const { plot, legend } = chartLayout(target, options);
     const height = options.height ?? 420;
     const barPosition = kind === "bar" && options.showValues && options.valuesPosition;
+    const showXAxis = options.showXAxis !== false;
+    const showYAxis = options.showYAxis !== false;
+    const showXAxisTitle = options.showXAxisTitle ?? showXAxis;
+    const showYAxisTitle = options.showYAxisTitle ?? showYAxis;
+    const colorNativeLegend = options.showLegend && !legend && options.useSeriesColors;
+    const onRendered = () => {
+      if (barPosition) positionBarLabels(plot, barPosition);
+      if (scatter && options.showValues) drawScatterLabels(plot);
+      if (colorNativeLegend) {
+        for (const label of plot.querySelectorAll(".c3-legend-item text")) {
+          label.style.fill = colors[label.__data__];
+        }
+      }
+    };
     // Fill the legend before C3 measures its adjoining plot.
-    if (legend) addLegend(legend, () => chart, data.names, colors);
+    if (legend) addLegend(legend, () => chart, data.names, colors, options.useSeriesColors);
     const chart = window.c3.generate({
       bindto: plot,
       size: { height },
       data: { ...data, colors, type: types.get(kind), order: null, labels: !circular && Boolean(options.showValues) },
       axis: {
         x: {
-          show: !circular && options.showXAxis !== false,
+          show: !circular && (showXAxis || showXAxisTitle),
           type: scatter ? "indexed" : "category",
           categories,
-          label: options.xAxisLabel,
-          tick: scatter ? undefined : { multiline: false, rotate: -35, culling: { max: 12 } },
+          label: showXAxisTitle ? options.xAxisLabel : undefined,
+          tick: {
+            ...(scatter ? {} : { multiline: false, rotate: -35, culling: { max: 12 } }),
+            format: showXAxis ? undefined : () => "",
+          },
         },
-        y: { show: !circular && options.showYAxis !== false, label: options.yAxisLabel },
+        y: {
+          show: !circular && (showYAxis || showYAxisTitle),
+          label: showYAxisTitle ? options.yAxisLabel : undefined,
+          tick: { format: showYAxis ? undefined : () => "" },
+        },
       },
       grid: { y: { show: !circular && options.showGrid } },
       legend: {
@@ -277,13 +298,12 @@
       tooltip: { grouped: !scatter, contents: tooltip(data.names, categories, points) },
       transition: { duration: 0 },
       resize: { auto: typeof ResizeObserver === "undefined" },
-      onrendered: barPosition ? () => positionBarLabels(plot, barPosition)
-        : scatter && options.showValues ? () => drawScatterLabels(plot, colors) : undefined,
+      onrendered: onRendered,
     });
     plot.querySelector("svg")?.setAttribute("aria-label", options.chartTitle || `${kind} chart`);
-    const removeBackgrounds = options.showValues && options.showValuesBackground
-      ? window.OpenLAPChartOptions.valueBackgrounds(plot, circular ? ".c3-chart-arcs .c3-chart-arc text"
-        : scatter ? ".openlap-c3-scatter-value" : ".c3-chart-texts text.c3-text")
+    const clearValueLabelStyles = options.showValues
+      ? window.OpenLAPChartOptions.styleValueLabels(plot, circular ? ".c3-chart-arcs .c3-chart-arc text"
+        : scatter ? ".openlap-c3-scatter-value" : ".c3-chart-texts text.c3-text", options)
       : undefined;
 
     let observer;
@@ -302,7 +322,7 @@
       });
       observer.observe(plot);
     }
-    charts.set(target, { chart, observer, removeBackgrounds });
+    charts.set(target, { chart, observer, clearValueLabelStyles });
     return chart;
   }
 

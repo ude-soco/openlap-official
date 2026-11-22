@@ -35,10 +35,10 @@ The build writes one JAR to each library's `target/` directory.
 
 | Directory | JAR |
 | --- | --- |
-| `c3/target/` | `OpenLAP-C3-1.1.0.jar` |
-| `apexcharts/target/` | `OpenLAP-ApexCharts-1.1.0.jar` |
-| `plotly/target/` | `OpenLAP-Plotly-1.1.0.jar` |
-| `recharts/target/` | `OpenLAP-Recharts-1.1.0.jar` |
+| `c3/target/` | `OpenLAP-C3-1.2.0.jar` |
+| `apexcharts/target/` | `OpenLAP-ApexCharts-1.2.0.jar` |
+| `plotly/target/` | `OpenLAP-Plotly-1.2.0.jar` |
+| `recharts/target/` | `OpenLAP-Recharts-1.2.0.jar` |
 
 Keep local copies in the repository's ignored `artifacts/visualizations/` folder.
 
@@ -49,9 +49,10 @@ the backend. In the Indicator Editor, choose the new library in **Visualization*
 The bundled libraries have distinct names and chart IDs, so they can be installed
 alongside historical plugins used by existing saved indicators.
 
-Version 1.1.0 uses the current OpenLAP backend and frontend for category filters
-and data colors. Use **Upload new version** to add the updated JAR to an existing
-managed library. Saved charts continue to resolve their original plugin versions.
+Version 1.2.0 uses the ISC Creator's **Elements**, **Style**, and **Filters** layout.
+It adds independent axis-title controls, legend text colors and data label colors.
+Use **Upload new version** to add the updated JAR to an existing managed library.
+Saved charts continue to resolve their original plugin versions.
 
 ## Chart implementations
 

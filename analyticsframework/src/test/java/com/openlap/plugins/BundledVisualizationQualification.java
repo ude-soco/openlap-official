@@ -39,7 +39,7 @@ class BundledVisualizationQualification {
   })
   void qualifiesAllChartsAndTheSharedRuntime(String module, String delivery, String library, String renderer)
       throws Exception {
-    Path path = Path.of("../visualization-methods", module, "target", "OpenLAP-" + delivery + "-1.1.0.jar");
+    Path path = Path.of("../visualization-methods", module, "target", "OpenLAP-" + delivery + "-1.2.0.jar");
     assertThat(path).as("Build visualization-methods before qualifying the plugins").isRegularFile();
     var plugin = new PluginInspector().inspect(PluginKind.VISUALIZATION, path);
     assertThat(plugin.getLibrary().getString("name")).isEqualTo(library + " (bundled)");
@@ -75,16 +75,20 @@ class BundledVisualizationQualification {
       assertThat(generate(scatter, Map.of("x", List.of(2, 2), "y", List.of(3, 5)), Map.of()))
           .contains("[{\"x\":2.0,\"y\":3.0},{\"x\":2.0,\"y\":5.0}]");
       var bar = chart(plugin.getEntries(), "bar");
-      var customization = VisualizationCustomization.validate(descriptor(bar), Map.of(
-          "sortingOrder", "asc", "hiddenCategories", List.of("Private category"),
-          "chartSubtitle", "<Subtitle>", "titlePosition", "right", "legendPosition", "left",
-          "showXAxis", false, "showValues", true, "showValuesBackground", true, "valuesPosition", "center"));
+      var customization = VisualizationCustomization.validate(descriptor(bar), Map.ofEntries(
+          Map.entry("sortingOrder", "asc"), Map.entry("hiddenCategories", List.of("Private category")),
+          Map.entry("chartSubtitle", "<Subtitle>"), Map.entry("titlePosition", "right"), Map.entry("legendPosition", "left"),
+          Map.entry("showXAxis", false), Map.entry("showYAxisTitle", false), Map.entry("useSeriesColors", true),
+          Map.entry("showValuesBackground", true), Map.entry("valuesPosition", "center"),
+          Map.entry("dataLabelsColor", "#123456"), Map.entry("dataLabelsForeColor", "#faeebc")));
       assertThat(generate(instance(loader, bar), Map.of("category", List.of("High", "Private category", "Low", "Tie"),
           "value", List.of(8, 5, 2, 2)), customization))
           .containsSubsequence("\"category\":\"Low\"", "\"category\":\"Tie\"", "\"category\":\"High\"")
           .contains("\"chartSubtitle\":\"\\u003cSubtitle\\u003e\"", "\"titlePosition\":\"right\"",
               "\"legendPosition\":\"left\"", "\"showXAxis\":false", "\"showValuesBackground\":true",
-              "\"valuesPosition\":\"center\"")
+              "\"valuesPosition\":\"center\"", "\"showValues\":true", "\"showXAxisTitle\":true", "\"showYAxisTitle\":false",
+              "\"xAxisLabel\":\"Category\"", "\"yAxisLabel\":\"Value\"", "\"useSeriesColors\":true",
+              "\"dataLabelsColor\":\"#123456\"", "\"dataLabelsForeColor\":\"#faeebc\"")
           .doesNotContain("Private category");
       var grouped = instance(loader, chart(plugin.getEntries(), "grouped-area"));
       assertThatThrownBy(() -> generate(grouped, Map.of("category", List.of("A", "A"),
@@ -97,12 +101,16 @@ class BundledVisualizationQualification {
   }
 
   private static void assertControls(Document descriptor, String kind) {
+    assertThat(descriptor.getString("customizationLayout")).isEqualTo("isc");
+    assertThat(descriptor.getList("seriesPalette", String.class)).startsWith("#1976d2");
     var controls = descriptor.getList("customizations", Document.class).stream()
         .collect(Collectors.toMap(control -> control.getString("id"), control -> control));
-    assertThat(controls).containsKeys("chartSubtitle", "titlePosition", "legendPosition", "showValuesBackground", "seriesColor");
+    assertThat(controls).containsKeys("chartSubtitle", "titlePosition", "legendPosition", "showValuesBackground",
+        "seriesColor", "useSeriesColors", "dataLabelsColor", "dataLabelsForeColor");
+    assertThat(controls.get("titlePosition").getString("defaultValue")).isEqualTo("left");
     boolean radial = Set.of("pie", "donut").contains(kind);
-    if (radial) assertThat(controls).doesNotContainKeys("showXAxis", "showYAxis");
-    else assertThat(controls).containsKeys("showXAxis", "showYAxis");
+    if (radial) assertThat(controls).doesNotContainKeys("showXAxis", "showYAxis", "showXAxisTitle", "showYAxisTitle");
+    else assertThat(controls).containsKeys("showXAxis", "showYAxis", "showXAxisTitle", "showYAxisTitle");
     if (kind.equals("bar")) assertThat(controls).containsKeys("valuesPosition", "sortingOrder", "hiddenCategories");
     else assertThat(controls).doesNotContainKeys("valuesPosition", "sortingOrder", "hiddenCategories");
     if (radial || Set.of("scatter", "multi-line", "grouped-area", "stacked-area").contains(kind)) {

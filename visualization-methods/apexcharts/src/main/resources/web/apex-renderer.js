@@ -45,7 +45,7 @@
     };
   }
 
-  function categoryData(rows, kind) {
+  function categoryData(rows, kind, measureName) {
     const radial = kind === "pie" || kind === "donut";
     const isGrouped = grouped.has(kind);
     const labels = isGrouped ? [...new Set(rows.map((row) => row.category))] : rows.map((row) => row.category);
@@ -53,7 +53,7 @@
     // paths never receive unescaped names from the analysis results.
     const categories = labels.map((_, index) => `category-${index + 1}`);
     const labelById = new Map(categories.map((id, index) => [id, labels[index]]));
-    let names = ["Value"];
+    let names = [measureName];
     let values = [rows.map((row) => row.value)];
     if (isGrouped) {
       const groups = new Map();
@@ -99,16 +99,16 @@
     if (typeof window.ApexCharts !== "function") throw new Error("ApexCharts could not be loaded.");
 
     const radial = type === "pie" || type === "donut";
-    const model = kind === "scatter" ? scatterData(rows) : categoryData(rows, kind);
+    const model = kind === "scatter" ? scatterData(rows) : categoryData(rows, kind, options.yAxisLabel || "Value");
     const color = window.OpenLAPChartOptions.colorScale(options, palette);
     const showXAxis = options.showXAxis !== false;
+    const showXAxisTitle = options.showXAxisTitle ?? showXAxis;
     const titlePosition = options.titlePosition || "center";
+    const labelColors = window.OpenLAPChartOptions.valueLabelColors(options);
     const xaxis = {
       type: kind === "scatter" ? "numeric" : "category",
-      title: { text: showXAxis ? options.xAxisLabel || undefined : undefined },
+      title: { text: showXAxisTitle ? options.xAxisLabel || undefined : undefined },
       tooltip: { enabled: false },
-      axisBorder: { show: showXAxis },
-      axisTicks: { show: showXAxis },
       labels: {
         show: showXAxis,
         showDuplicates: true,
@@ -135,16 +135,17 @@
         show: options.showLegend,
         position: options.legendPosition || "bottom",
         showForSingleSeries: true,
+        labels: { useSeriesColors: Boolean(options.useSeriesColors) },
         formatter: (_, { seriesIndex }) => escapeHtml(model.names[seriesIndex] ?? ""),
       },
       dataLabels: {
         enabled: options.showValues,
+        style: { colors: [labelColors.background ?? labelColors.text] },
         background: {
           enabled: Boolean(options.showValuesBackground),
-          backgroundColor: "#ffffff",
-          foreColor: "#212121",
-          borderColor: "#c5c5c5",
-          opacity: 0.95,
+          backgroundColor: labelColors.background,
+          foreColor: labelColors.text,
+          borderWidth: 0,
         },
         formatter: radial ? (_, { seriesIndex }) => formatNumber(model.series[seriesIndex]) : formatNumber,
       },
@@ -165,10 +166,10 @@
       setup.labels = model.categories;
     } else {
       const showYAxis = options.showYAxis !== false;
+      const showYAxisTitle = options.showYAxisTitle ?? showYAxis;
       setup.xaxis = xaxis;
       setup.yaxis = {
-        show: showYAxis,
-        title: { text: showYAxis ? options.yAxisLabel || undefined : undefined },
+        title: { text: showYAxisTitle ? options.yAxisLabel || undefined : undefined },
         labels: { show: showYAxis, formatter: formatNumber },
       };
       if (kind === "bar" && options.valuesPosition) {

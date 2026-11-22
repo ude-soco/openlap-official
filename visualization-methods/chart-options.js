@@ -13,14 +13,21 @@
     return (key, index) => overrides.get(key) ?? colors[index % colors.length];
   }
 
-  function valueBackgrounds(target, selector) {
+  function valueLabelColors(options) {
+    const color = hexColor(options.dataLabelsColor) ? options.dataLabelsColor : "#000000";
+    const foreColor = hexColor(options.dataLabelsForeColor) ? options.dataLabelsForeColor : "#ffffff";
+    return options.showValuesBackground ? { text: foreColor, background: color } : { text: color, background: null };
+  }
+
+  function styleValueLabels(target, selector, options) {
+    const colors = valueLabelColors(options);
     const decorations = new Map();
     let frame;
     const watch = { subtree: true, childList: true, characterData: true, attributes: true,
       attributeFilter: ["transform", "x", "y", "font-size", "visibility"] };
     const clear = () => {
       for (const [label, { background, fill }] of decorations) {
-        background.remove();
+        background?.remove();
         label.style.fill = fill;
       }
       decorations.clear();
@@ -31,20 +38,24 @@
       clear();
       if (!target.isConnected) return;
       for (const label of target.querySelectorAll(selector)) {
-        if (!label.textContent.trim() || typeof label.getBBox !== "function") continue;
-        const { x, y, width, height } = label.getBBox();
-        if (!(width > 0 && height > 0)) continue;
-        const background = document.createElementNS(svgNamespace, "rect");
-        for (const [attribute, value] of Object.entries({ x: x - 3, y: y - 2,
-          width: width + 6, height: height + 4, rx: 3, fill: "#ffffff", "fill-opacity": 0.92,
-          "pointer-events": "none", "aria-hidden": "true", "data-openlap-value-background": "" })) {
-          background.setAttribute(attribute, value);
+        if (!label.textContent.trim()) continue;
+        let background;
+        if (colors.background && typeof label.getBBox === "function") {
+          const { x, y, width, height } = label.getBBox();
+          if (width > 0 && height > 0) {
+            background = document.createElementNS(svgNamespace, "rect");
+            for (const [attribute, value] of Object.entries({ x: x - 3, y: y - 2,
+              width: width + 6, height: height + 4, rx: 3, fill: colors.background,
+              "pointer-events": "none", "aria-hidden": "true", "data-openlap-value-background": "" })) {
+              background.setAttribute(attribute, value);
+            }
+            const transform = label.getAttribute("transform");
+            if (transform) background.setAttribute("transform", transform);
+            label.before(background);
+          }
         }
-        const transform = label.getAttribute("transform");
-        if (transform) background.setAttribute("transform", transform);
         decorations.set(label, { background, fill: label.style.fill });
-        label.style.fill = "#263238";
-        label.before(background);
+        label.style.fill = colors.text;
       }
       observer.observe(target, watch);
     };
@@ -63,5 +74,9 @@
     };
   }
 
-  window.OpenLAPChartOptions = Object.freeze({ colorScale, valueBackgrounds });
+  function valueBackgrounds(target, selector, options = {}) {
+    return styleValueLabels(target, selector, { ...options, showValuesBackground: true });
+  }
+
+  window.OpenLAPChartOptions = Object.freeze({ colorScale, styleValueLabels, valueBackgrounds, valueLabelColors });
 }());

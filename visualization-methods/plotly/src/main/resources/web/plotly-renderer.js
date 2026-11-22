@@ -22,7 +22,7 @@
     return `rgba(${components.join(",")},${opacity})`;
   }
 
-  function scatterTraces(rows, options, colorFor) {
+  function scatterTraces(rows, options, colorFor, textfont) {
     const groups = new Map();
     const hasGroups = rows.some(row => row.series != null);
     for (const row of rows) {
@@ -39,6 +39,7 @@
       marker: { color: colorFor(group, index), size: 8 },
       text: options.showValues ? points.map(point => formatNumber(point.y)) : undefined,
       textposition: "top center",
+      textfont,
       customdata: points.map(point => [point.label ? plainText(point.label) + "<br>" : ""]),
       hovertemplate: "%{customdata[0]}X: %{x}<br>Y: %{y}<extra></extra>",
     }));
@@ -59,7 +60,7 @@
     return { labels, series: [...groups].map(([name, values]) => [name, labels.map(label => values.get(label) ?? null)]) };
   }
 
-  function categoryTrace(name, values, labels, kind, options, color) {
+  function categoryTrace(name, values, labels, kind, options, color, textfont) {
     const escapedName = plainText(name);
     const bar = kind === "bar";
     const stacked = kind === "stacked-area";
@@ -79,9 +80,12 @@
       fillcolor: area ? translucent(color, kind === "grouped-area" ? 0.24 : 0.42) : undefined,
       connectgaps: bar ? undefined : false,
       text: options.showValues ? values.map(formatNumber) : undefined,
+      textfont,
       ...(bar ? {
         textposition: options.showValues ? barLabelPosition ? "inside" : "auto" : "none",
         insidetextanchor: barLabelPosition,
+        insidetextfont: textfont,
+        outsidetextfont: textfont,
       } : { textposition: "top center" }),
       customdata: labels.map(label => [plainText(label), escapedName]),
       // Plotly needs a zero baseline where a stacked series has no observation.
@@ -91,7 +95,7 @@
     };
   }
 
-  function pieTrace(rows, kind, options, colorFor) {
+  function pieTrace(rows, kind, options, colorFor, textfont) {
     const values = rows.map(row => row.value);
     const total = values.reduce((sum, value) => sum + value, 0);
     if (!Number.isFinite(total) || total <= 0 || values.some(value => value < 0)) {
@@ -119,13 +123,16 @@
       marker: { colors: rows.map((row, index) => colorFor(row.category, index)) },
       hole: kind === "donut" ? 0.48 : 0,
       textinfo: options.showValues ? "value" : "none",
+      textfont,
+      insidetextfont: textfont,
+      outsidetextfont: textfont,
       hovertemplate: "%{hovertext}<br>Value: %{value}<extra></extra>",
     };
   }
 
-  function axis(title, showGrid, enabled) {
-    return { title: { text: plainText(title || "") }, showgrid: showGrid,
-      visible: enabled !== false, automargin: true, zeroline: false };
+  function axis(title, showGrid, showLabels, showTitle) {
+    return { title: { text: showTitle === false ? "" : plainText(title || "") }, showgrid: showGrid,
+      showticklabels: showLabels !== false, automargin: true, zeroline: false };
   }
 
   function legend(position) {
@@ -136,6 +143,16 @@
       right: { orientation: "v", x: 1.04, xanchor: "left", y: 0.5, yanchor: "middle" },
     };
     return { ...(boxes[position] ?? boxes.bottom), traceorder: "normal" };
+  }
+
+  function colorLegendLabels(target) {
+    // Plotly has one legend font color. Use each rendered mark's color for its own label.
+    for (const label of target.querySelectorAll(".legend .traces .legendtext")) {
+      const mark = label.parentElement.querySelector(".legendsymbols path");
+      const line = label.parentElement.querySelector(".legendlines path");
+      const color = mark?.style.fill || line?.style.stroke;
+      if (color) label.style.fill = color;
+    }
   }
 
   function heading(options) {
@@ -181,6 +198,7 @@
     const colors = [firstColor, ...palette.filter(color => color !== firstColor)];
     const colorFor = window.OpenLAPChartOptions?.colorScale(options, palette)
       ?? ((_, index) => colors[index % colors.length]);
+    const textfont = { color: window.OpenLAPChartOptions.valueLabelColors(options).text };
     const height = options.height ?? 420;
     const legendPosition = options.legendPosition || "bottom";
     const titleMargin = options.chartTitle && options.chartSubtitle ? 72
@@ -199,12 +217,12 @@
     };
     let traces;
     if (radial) {
-      traces = [pieTrace(rows, kind, options, colorFor)];
+      traces = [pieTrace(rows, kind, options, colorFor, textfont)];
     } else {
-      layout.xaxis = axis(options.xAxisLabel, options.showGrid, options.showXAxis);
-      layout.yaxis = axis(options.yAxisLabel, options.showGrid, options.showYAxis);
+      layout.xaxis = axis(options.xAxisLabel, options.showGrid, options.showXAxis, options.showXAxisTitle);
+      layout.yaxis = axis(options.yAxisLabel, options.showGrid, options.showYAxis, options.showYAxisTitle);
       if (scatter) {
-        traces = scatterTraces(rows, options, colorFor);
+        traces = scatterTraces(rows, options, colorFor, textfont);
       } else {
         const { labels, series } = categories(rows, kind, options.yAxisLabel || "Value");
         const tickStride = Math.max(1, Math.ceil(labels.length / 12));
@@ -215,7 +233,7 @@
           tickangle: ticks.length > 6 ? -35 : "auto",
         });
         traces = series.map(([name, values], index) => categoryTrace(name, values, labels, kind,
-          options, colorFor(grouped.has(kind) ? name : null, index)));
+          options, colorFor(grouped.has(kind) ? name : null, index), textfont));
       }
     }
 
@@ -230,9 +248,13 @@
       responsive: typeof ResizeObserver === "undefined",
     });
     if (charts.get(target) !== state) return;
+    if (options.showLegend && options.useSeriesColors) {
+      colorLegendLabels(target);
+      target.on("plotly_afterplot", () => colorLegendLabels(target));
+    }
     if (options.showValues && options.showValuesBackground) {
-      state.clearBackgrounds = window.OpenLAPChartOptions?.valueBackgrounds(target,
-        ".barlayer text.bartext, .scatterlayer .textpoint text, .pielayer .slicetext text");
+      state.clearBackgrounds = window.OpenLAPChartOptions.valueBackgrounds(target,
+        ".barlayer text.bartext, .scatterlayer .textpoint text, .pielayer .slicetext text", options);
     }
     if (typeof ResizeObserver !== "undefined") {
       let width = target.clientWidth;

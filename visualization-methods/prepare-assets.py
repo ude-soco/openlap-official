@@ -35,6 +35,12 @@ CHARTS = (
 )
 GROUPED = {"grouped-area", "stacked-area", "multi-line"}
 SLICES = {"pie", "donut"}
+PALETTES = {
+    "c3": ["#1976d2", "#b2458b", "#168370", "#b85417", "#6253b4", "#7c6417", "#55744a", "#b64550"],
+    "apexcharts": ["#1976d2", "#e66b19", "#368747", "#8054a6", "#c73e57", "#008883", "#ab7400", "#686cc3"],
+    "plotly": ["#1976d2", "#c35b26", "#17816b", "#8c52aa", "#bd455f", "#76641f", "#5368b3"],
+}
+PALETTES["recharts"] = PALETTES["c3"]
 
 
 def npm_package(package_name, version, integrity, *files):
@@ -82,33 +88,34 @@ def customizations(kind):
     controls = [
         control("chartTitle", "Chart title", "text", "", "elements"),
         control("chartSubtitle", "Chart subtitle", "text", "", "elements"),
-        choice("titlePosition", "Title and subtitle alignment", "center", "elements",
+        choice("titlePosition", "Title and Subtitle Position", "left", "elements",
                [("left", "Left"), ("center", "Center"), ("right", "Right")]),
         control("showLegend", "Show legend", "boolean", True, "elements"),
-        choice("legendPosition", "Legend position", "bottom", "elements",
-               [("top", "Top"), ("right", "Right"), ("bottom", "Bottom"), ("left", "Left")],
-               visibleWhen={"id": "showLegend", "equals": True}),
-        control("showValues", "Show values", "boolean", False, "elements"),
-        control("showValuesBackground", "Value label background", "boolean", False, "elements",
-                visibleWhen={"id": "showValues", "equals": True}),
+        choice("legendPosition", "Legend Position", "bottom", "elements",
+               [("top", "Top"), ("right", "Right"), ("bottom", "Bottom"), ("left", "Left")]),
+        control("showValues", "Show labels", "boolean", True, "elements"),
+        control("showValuesBackground", "Show labels background", "boolean", False, "elements"),
     ]
     if kind == "bar":
-        controls.append(choice("valuesPosition", "Value label position", "top", "elements",
-                               [("top", "Top"), ("center", "Center"), ("bottom", "Bottom")],
-                               visibleWhen={"id": "showValues", "equals": True}))
+        controls.append(choice("valuesPosition", "Labels Position", "center", "elements",
+                               [("top", "Top"), ("center", "Center"), ("bottom", "Bottom")]))
     if kind not in SLICES:
         controls.extend((
             control("showXAxis", "Show X-axis", "boolean", True, "elements"),
-            control("xAxisLabel", "X-axis label", "text", "", "elements",
-                    visibleWhen={"id": "showXAxis", "equals": True}),
             control("showYAxis", "Show Y-axis", "boolean", True, "elements"),
-            control("yAxisLabel", "Y-axis label", "text", "", "elements",
-                    visibleWhen={"id": "showYAxis", "equals": True}),
+            control("showXAxisTitle", "Show X-axis title", "boolean", True, "elements"),
+            control("showYAxisTitle", "Show Y-axis title", "boolean", True, "elements"),
+            control("xAxisLabel", "X-axis title", "text", "", "elements"),
+            control("yAxisLabel", "Y-axis title", "text", "", "elements"),
             control("showGrid", "Show grid lines", "boolean", True, "styles"),
         ))
     controls.extend((
         control("seriesColor", "Primary color", "color", "#1976d2", "styles",
                 help="Color of the first series or slice."),
+        control("useSeriesColors", "Use series colors", "boolean", False, "styles"),
+        control("dataLabelsColor", "Data labels color", "color", "#000000", "styles"),
+        control("dataLabelsForeColor", "Data labels fore color (when background activated)",
+                "color", "#ffffff", "styles"),
         control("height", "Chart height", "number", 420, "styles", min=320, max=800, step=20,
                 help="Height of the chart in pixels. Its width follows the available space."),
     ))
@@ -184,6 +191,8 @@ def prepare(library, output, version):
             "runtimeId": library,
             "description": description,
             "inputRoles": roles,
+            "customizationLayout": "isc",
+            "seriesPalette": PALETTES[library],
             "customizations": customizations(key),
         }
         if icon:

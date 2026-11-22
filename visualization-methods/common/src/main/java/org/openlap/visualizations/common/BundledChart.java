@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.openlap.dataset.OpenLAPColumnDataType;
 import com.openlap.dataset.OpenLAPDataColumnFactory;
 import com.openlap.dataset.OpenLAPDataSet;
+import com.openlap.dataset.OpenLAPPortConfig;
+import com.openlap.exceptions.DataSetValidationException;
 import com.openlap.exceptions.OpenLAPDataColumnException;
 import com.openlap.exceptions.VisualizationCodeGenerationException;
 import com.openlap.template.DataTransformer;
@@ -75,6 +77,32 @@ public abstract class BundledChart extends VisualizationCodeGenerator {
   }
 
   @Override
+  public final String generateVisualizationCode(OpenLAPDataSet data, OpenLAPPortConfig ports, Map<String, Object> options)
+      throws DataSetValidationException, IllegalAccessException, InstantiationException {
+    var resolved = new LinkedHashMap<>(options == null ? Map.<String, Object>of() : options);
+    if (!kind().usesSlices() && ports != null && ports.getMapping() != null) {
+      boolean scatter = kind() == ChartKind.SCATTER;
+      setDefaultAxisTitle(data, ports, resolved, scatter ? "x" : "category", "xAxisLabel");
+      setDefaultAxisTitle(data, ports, resolved, scatter ? "y" : "value", "yAxisLabel");
+    }
+    return super.generateVisualizationCode(data, ports, resolved);
+  }
+
+  private static void setDefaultAxisTitle(OpenLAPDataSet data, OpenLAPPortConfig ports,
+      Map<String, Object> options, String inputId, String option) {
+    if (!text(options, option, "").isBlank()) return;
+    for (var port : ports.getMapping()) {
+      if (port == null || port.getInputPort() == null || port.getOutputPort() == null
+          || !inputId.equals(port.getInputPort().getId())) continue;
+      var column = data.getColumns().get(port.getOutputPort().getId());
+      if (column == null || column.getConfigurationData() == null) return;
+      String title = column.getConfigurationData().getTitle();
+      if (title != null && !title.isBlank()) options.put(option, title);
+      return;
+    }
+  }
+
+  @Override
   public final String visualizationCode(DataTransformer transformer, Map<String, Object> options) {
     var supplied = options == null ? Map.<String, Object>of() : options;
     List<?> rows = ((ChartRows) transformer).rows();
@@ -113,24 +141,25 @@ public abstract class BundledChart extends VisualizationCodeGenerator {
     var result = new LinkedHashMap<String, Object>();
     result.put("chartTitle", text(options, "chartTitle", ""));
     result.put("chartSubtitle", text(options, "chartSubtitle", ""));
-    result.put("titlePosition", choice(options, "titlePosition", "center", "left", "right"));
+    result.put("titlePosition", choice(options, "titlePosition", "left", "center", "right"));
     result.put("showLegend", flag(options, "showLegend", true));
     result.put("legendPosition", choice(options, "legendPosition", "bottom", "top", "left", "right"));
-    result.put("showValues", flag(options, "showValues", false));
+    result.put("useSeriesColors", flag(options, "useSeriesColors", false));
+    result.put("showValues", flag(options, "showValues", true));
     result.put("showValuesBackground", flag(options, "showValuesBackground", false));
-    if (kind() == ChartKind.BAR) result.put("valuesPosition", choice(options, "valuesPosition", "top", "center", "bottom"));
+    result.put("dataLabelsColor", color(options, "dataLabelsColor", "#000000"));
+    result.put("dataLabelsForeColor", color(options, "dataLabelsForeColor", "#ffffff"));
+    if (kind() == ChartKind.BAR) result.put("valuesPosition", choice(options, "valuesPosition", "center", "top", "bottom"));
     if (!kind().usesSlices()) {
       result.put("showXAxis", flag(options, "showXAxis", true));
-      result.put("xAxisLabel", text(options, "xAxisLabel", ""));
       result.put("showYAxis", flag(options, "showYAxis", true));
+      result.put("showXAxisTitle", flag(options, "showXAxisTitle", true));
+      result.put("showYAxisTitle", flag(options, "showYAxisTitle", true));
+      result.put("xAxisLabel", text(options, "xAxisLabel", ""));
       result.put("yAxisLabel", text(options, "yAxisLabel", ""));
       result.put("showGrid", flag(options, "showGrid", true));
     }
-    String color = text(options, "seriesColor", "#1976d2");
-    if (!color.matches("#[a-fA-F0-9]{6}")) {
-      throw new VisualizationCodeGenerationException("Choose a six-digit hexadecimal color.");
-    }
-    result.put("seriesColor", color);
+    result.put("seriesColor", color(options, "seriesColor", "#1976d2"));
     if (kind().usesSlices() || kind().usesSeries() || kind() == ChartKind.SCATTER) {
       result.put("seriesColors", entries(options, "seriesColors"));
     }
@@ -159,6 +188,12 @@ public abstract class BundledChart extends VisualizationCodeGenerator {
     Object value = options.getOrDefault(key, fallback);
     if (value instanceof String text && text.length() <= 10_000 && text.indexOf('\0') < 0) return text;
     throw new VisualizationCodeGenerationException("Choose a valid text value for " + key + ".");
+  }
+
+  private static String color(Map<String, Object> options, String key, String fallback) {
+    String value = text(options, key, fallback);
+    if (value.matches("#[a-fA-F0-9]{6}")) return value;
+    throw new VisualizationCodeGenerationException("Choose a six-digit hexadecimal color for " + key + ".");
   }
 
   private static boolean flag(Map<String, Object> options, String key, boolean fallback) {

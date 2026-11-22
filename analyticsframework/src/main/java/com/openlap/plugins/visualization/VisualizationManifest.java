@@ -79,7 +79,8 @@ public final class VisualizationManifest {
       }
       Set<String> chartIds = new HashSet<>(); Set<String> chartClasses = new HashSet<>();
       for (Document chart : charts) {
-        fields(chart, "id", "implementingClass", "runtimeId", "description", "iconAssetId", "inputRoles", "customizations");
+        fields(chart, "id", "implementingClass", "runtimeId", "description", "iconAssetId", "inputRoles",
+            "customizationLayout", "seriesPalette", "customizations");
         if (!chartIds.add(id(chart, "id"))) throw invalid("Chart identifiers must be unique.");
         String type = text(chart, "implementingClass", 512, true);
         if (!type.matches("[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)+") || !chartClasses.add(type))
@@ -92,6 +93,14 @@ public final class VisualizationManifest {
         if (chart.containsKey("inputRoles")) {
           Document roles = object(chart.get("inputRoles")); fields(roles, "category", "series");
           roles.forEach((role, value) -> { if (!(value instanceof String) || ((String) value).length() > 300 || ((String) value).isBlank()) throw invalid("Input roles must reference input port identifiers."); });
+        }
+        if (chart.containsKey("customizationLayout") && !"isc".equals(chart.get("customizationLayout")))
+          throw invalid("Unsupported chart customization layout.");
+        if (chart.containsKey("seriesPalette")) {
+          for (Object color : list(chart, "seriesPalette", 32, true)) {
+            if (!(color instanceof String hex) || !hex.matches("#[a-fA-F0-9]{6}"))
+              throw invalid("Series palettes must contain six-digit hexadecimal colors.");
+          }
         }
         validateCustomizations(chart);
       }

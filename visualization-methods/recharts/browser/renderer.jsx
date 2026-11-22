@@ -28,18 +28,17 @@ const names = new Map([
 ]);
 const palette = ["#b2458b", "#168370", "#b85417", "#6253b4", "#7c6417", "#55744a", "#b64550"];
 const roots = new WeakMap();
-const valueBackground = { fill: "#fff", stroke: "#c7c7c7", rx: 3 };
 const barLabelPosition = { top: "top", center: "center", bottom: "insideBottom" };
 
 function formatNumber(value) {
   return Number.isFinite(value) ? String(Number(value.toPrecision(8))) : "";
 }
 
-function categoricalData(rows, kind) {
+function categoricalData(rows, kind, measureName) {
   if (!grouped.has(kind)) {
     return {
       data: rows.map((row, position) => ({ ...row, position })),
-      series: [{ key: "value", name: "Value" }],
+      series: [{ key: "value", name: measureName }],
     };
   }
 
@@ -108,10 +107,11 @@ function ChartLegend({ options }) {
   const position = options.legendPosition || "bottom";
   const side = position === "left" || position === "right";
   return <Legend position={position} offset={8} itemSorter={null}
+    labelStyle={options.useSeriesColors ? undefined : { color: "#303b48" }}
     wrapperStyle={{ maxWidth: side ? "42%" : "100%", overflowWrap: "anywhere" }} />;
 }
 
-function sliceChart(kind, rows, colorFor, options) {
+function sliceChart(kind, rows, colorFor, options, valueStyle) {
   const data = rows.map((row, index) => ({ ...row, fill: colorFor(row.category, index) }));
   return (
     <PieChart accessibilityLayer>
@@ -119,39 +119,35 @@ function sliceChart(kind, rows, colorFor, options) {
       {options.showLegend && <ChartLegend options={options} />}
       <Pie data={data} dataKey="value" nameKey="category" outerRadius="80%"
         innerRadius={kind === "donut" ? "45%" : 0} isAnimationActive={false}
-        label={options.showValues ? { position: "outside", dataKey: "value", formatter: formatNumber,
-          background: options.showValuesBackground ? valueBackground : false } : false} />
+        label={options.showValues ? { position: "outside", dataKey: "value", formatter: formatNumber, ...valueStyle } : false} />
     </PieChart>
   );
 }
 
-function scatterChart(rows, colorFor, options) {
+function scatterChart(rows, colorFor, options, valueStyle, { xTitle, yTitle }) {
   const data = scatterData(rows);
   return (
     <ScatterChart accessibilityLayer margin={{ top: 20, right: 20, bottom: 12, left: 12 }}>
       {options.showGrid && <CartesianGrid vertical={false} />}
       <XAxis type="number" dataKey="x" tickFormatter={formatNumber} tickMargin={8}
-        hide={options.showXAxis === false}
-        height={options.xAxisLabel ? 50 : 32}
-        label={{ value: options.xAxisLabel, position: "insideBottom", offset: 0 }} />
+        tick={options.showXAxis !== false} height={xTitle ? 50 : 32}
+        label={xTitle && { value: xTitle, position: "insideBottom", offset: 0 }} />
       <YAxis type="number" dataKey="y" tickFormatter={formatNumber} tickMargin={8}
-        hide={options.showYAxis === false}
-        width={options.yAxisLabel ? 64 : 48}
-        label={{ value: options.yAxisLabel, angle: -90, position: "insideLeft" }} />
+        tick={options.showYAxis !== false} width={yTitle ? 64 : 48}
+        label={yTitle && { value: yTitle, angle: -90, position: "insideLeft" }} />
       <Tooltip content={<ChartTooltip kind="scatter" />} />
       {options.showLegend && <ChartLegend options={options} />}
       {data.map(({ key, name, points }, index) => (
         <Scatter key={index} name={name} data={points} fill={colorFor(key, index)} isAnimationActive={false}>
-          {options.showValues && <LabelList dataKey="y" position="top" formatter={formatNumber}
-            background={options.showValuesBackground ? valueBackground : false} />}
+          {options.showValues && <LabelList dataKey="y" position="top" formatter={formatNumber} {...valueStyle} />}
         </Scatter>
       ))}
     </ScatterChart>
   );
 }
 
-function categoryChart(kind, rows, colorFor, options) {
-  const { data, series } = categoricalData(rows, kind);
+function categoryChart(kind, rows, colorFor, options, valueStyle, { xTitle, yTitle }) {
+  const { data, series } = categoricalData(rows, kind, options.yAxisLabel || "Value");
   const area = kind === "area" || kind === "grouped-area" || kind === "stacked-area";
   const Series = kind === "bar" ? Bar : area ? Area : Line;
   const nameOf = (position) => data[position]?.category || "";
@@ -160,12 +156,11 @@ function categoryChart(kind, rows, colorFor, options) {
       margin={{ top: 22, right: 20, bottom: 16, left: 12 }}>
       {options.showGrid && <CartesianGrid vertical={false} />}
       <XAxis type="category" dataKey="position" tickFormatter={nameOf} tickMargin={8}
-        hide={options.showXAxis === false}
-        height={options.xAxisLabel ? 60 : 44} textAnchor="end" angle={-22} minTickGap={10}
-        label={{ value: options.xAxisLabel, position: "insideBottom", offset: 0 }} />
-      <YAxis type="number" tickFormatter={formatNumber} tickMargin={8} width={options.yAxisLabel ? 64 : 48}
-        hide={options.showYAxis === false}
-        label={{ value: options.yAxisLabel, angle: -90, position: "insideLeft" }} />
+        tick={options.showXAxis !== false} height={xTitle ? 60 : 44} textAnchor="end" angle={-22} minTickGap={10}
+        label={xTitle && { value: xTitle, position: "insideBottom", offset: 0 }} />
+      <YAxis type="number" tickFormatter={formatNumber} tickMargin={8}
+        tick={options.showYAxis !== false} width={yTitle ? 64 : 48}
+        label={yTitle && { value: yTitle, angle: -90, position: "insideLeft" }} />
       <Tooltip content={<ChartTooltip kind={kind} />} />
       {options.showLegend && <ChartLegend options={options} />}
       {series.map(({ key, name }, index) => {
@@ -179,7 +174,7 @@ function categoryChart(kind, rows, colorFor, options) {
             strokeWidth={kind === "bar" ? 0 : 2} connectNulls={false} isAnimationActive={false} {...styling}>
             {options.showValues && <LabelList dataKey={key}
               position={(kind === "bar" && barLabelPosition[options.valuesPosition]) || "top"}
-              formatter={formatNumber} background={options.showValuesBackground ? valueBackground : false} />}
+              formatter={formatNumber} {...valueStyle} />}
           </Series>
         );
       })}
@@ -192,8 +187,15 @@ function Chart({ kind, rows, options }) {
   const colors = [primary, ...palette.filter((color) => color !== primary)];
   const colorFor = window.OpenLAPChartOptions?.colorScale(options, palette)
     ?? ((_, index) => colors[index % colors.length]);
-  const chart = radial.has(kind) ? sliceChart(kind, rows, colorFor, options)
-    : kind === "scatter" ? scatterChart(rows, colorFor, options) : categoryChart(kind, rows, colorFor, options);
+  const { text, background } = window.OpenLAPChartOptions.valueLabelColors(options);
+  const valueStyle = { fill: text, background: options.showValuesBackground ? { fill: background, rx: 3 } : false };
+  const axisTitles = {
+    xTitle: options.showXAxisTitle !== false && options.xAxisLabel,
+    yTitle: options.showYAxisTitle !== false && options.yAxisLabel,
+  };
+  const chart = radial.has(kind) ? sliceChart(kind, rows, colorFor, options, valueStyle)
+    : kind === "scatter" ? scatterChart(rows, colorFor, options, valueStyle, axisTitles)
+    : categoryChart(kind, rows, colorFor, options, valueStyle, axisTitles);
   return (
     <div role="group" aria-label={options.chartTitle || names.get(kind)} style={{ width: "100%", minWidth: 0 }}>
       {(options.chartTitle || options.chartSubtitle) && (
