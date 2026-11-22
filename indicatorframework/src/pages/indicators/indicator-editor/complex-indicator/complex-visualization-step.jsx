@@ -22,6 +22,7 @@ import ChartPreview from "../components/chart-preview";
 import { defaultParams } from "../basic-indicator/components/visualization/utils/visualization-data";
 import {
   getMappedCategoryValues,
+  getMappedCustomizationValues,
   getVisualizationDefaults,
   getVisualizationDescriptor,
 } from "../basic-indicator/components/visualization/utils/visualization-descriptor";
@@ -387,6 +388,7 @@ export default function ComplexVisualizationStep({
                     chartConfiguration={selectedType.chartConfiguration || {}}
                     visualizationDescriptor={getVisualizationDescriptor(selectedType)}
                     categories={getMappedCategoryValues(selectedType, configuration.visualization.mapping, chartDataset)}
+                    series={getMappedCustomizationValues(selectedType, configuration.visualization.mapping, chartDataset, "series")}
                     onClose={closeCustomization}
                   />
                 </Box>

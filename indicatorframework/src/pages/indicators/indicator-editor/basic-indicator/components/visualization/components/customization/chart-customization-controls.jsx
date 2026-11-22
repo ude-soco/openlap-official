@@ -26,6 +26,7 @@ const ChartCustomizationControls = ({
   setState,
   chartConfiguration,
   categories,
+  series,
   chartId,
   onClose,
   visualizationDescriptor,
@@ -85,7 +86,8 @@ const ChartCustomizationControls = ({
             {descriptor ? tabs.map((tab) => (
               <TabPanel key={tab.value} value={tab.value}>
                 <Box sx={{ height: HEIGHT, overflowY: "auto", px: 1 }}>
-                  <DescriptorFields descriptor={descriptor} group={tab.group} state={state} setState={setState} />
+                  <DescriptorFields descriptor={descriptor} group={tab.group} state={state} setState={setState}
+                    categories={categories} series={series} />
                 </Box>
               </TabPanel>
             )) : <>
@@ -132,6 +134,7 @@ ChartCustomizationControls.propTypes = {
   setState: PropTypes.func.isRequired,
   chartConfiguration: PropTypes.object.isRequired,
   categories: PropTypes.array,
+  series: PropTypes.array,
   chartId: PropTypes.string,
   onClose: PropTypes.func,
   visualizationDescriptor: PropTypes.object,

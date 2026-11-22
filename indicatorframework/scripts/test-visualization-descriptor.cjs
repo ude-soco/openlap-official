@@ -29,6 +29,7 @@ import { getVisualizationDefaults } from "/src/pages/indicators/indicator-editor
 import { defaultParams } from "/src/pages/indicators/indicator-editor/basic-indicator/components/visualization/utils/visualization-data.js";
 const descriptor = {
   schemaVersion: 1, id: "new-chart", runtimeId: "native", description: "A new reusable chart.",
+  inputRoles: { category: "labels", series: "groups" },
   customizations: [
     { id: "caption", label: "Chart caption", type: "text", group: "elements", defaultValue: "Plugin default" },
     { id: "showLabels", label: "Show values", type: "boolean", group: "elements", defaultValue: true },
@@ -39,9 +40,12 @@ const descriptor = {
     { id: "typedChoice", label: "Typed choice", type: "select", group: "styles", defaultValue: false, options: [
       { value: false, label: "Boolean false" }, { value: "false", label: "Text false" }, { value: 0, label: "Zero" } ] },
     { id: "limit", label: "Number of values", type: "number", group: "filters", min: 1, max: 20, step: 1, defaultValue: 10 },
+    { id: "hiddenCategories", label: "Visible categories", type: "categoryFilter", group: "filters", defaultValue: [] },
+    { id: "seriesColors", label: "Series colors", type: "seriesColors", source: "series", group: "styles", defaultValue: [] },
   ],
 };
-const inputs = [{ id: "labels", type: "Text", required: true }, { id: "values", type: "Numeric", required: true }];
+const inputs = [{ id: "labels", type: "Text", required: true }, { id: "values", type: "Numeric", required: true },
+  { id: "groups", type: "Text", required: false }];
 const newChart = { id: "new", name: "New reusable chart", imageCode: "UnknownPluginChart", chartInputs: inputs,
   chartConfiguration: {}, visualizationDescriptor: descriptor };
 const legacyChart = { id: "legacy", name: "Existing bar chart", imageCode: "Bar", chartInputs: inputs,
@@ -56,8 +60,13 @@ const runtimeManifest = { schemaVersion: 1, pluginId: "org.openlap.fixture", plu
   charts: [{ ...descriptor, implementingClass: "org.openlap.fixture.Bar", iconAssetId: "chart-icon" },
     { id: "line", implementingClass: "org.openlap.fixture.Line", runtimeId: "native", customizations: [] }],
 };
-const columns = { category: { configurationData: { id: "category", type: "Text" }, data: ["Alpha"] },
-  amount: { configurationData: { id: "amount", type: "Numeric" }, data: [4] } };
+const columns = { category: { configurationData: { id: "category", type: "Text" }, data: ["Alpha", "Beta", "Alpha", "Gamma"] },
+  series: { configurationData: { id: "series", type: "Text" }, data: ["Group A", "Group B", "Group B", "Group A"] },
+  amount: { configurationData: { id: "amount", type: "Numeric" }, data: [4, 3, 2, 1] } };
+const mapping = { mapping: [
+  { inputPort: { id: "labels" }, outputPort: { id: "category" } },
+  { inputPort: { id: "groups" }, outputPort: { id: "series" } },
+] };
 function Fixture() {
   const [visualization, setVisualization] = useState({ selectedType: legacyChart,
     params: getVisualizationDefaults(legacyChart, defaultParams), mapping: { mapping: [] } });
@@ -73,7 +82,7 @@ function Fixture() {
     <Stack component="main" sx={{ gap: 3, p: 2, maxWidth: 1100, mx: "auto" }}>
       <ChartTypeOptions types={[legacyChart, declaredNew, brokenIconChart]} analyzedData={columns} selectedTypeId={visualization.selectedType.id}
         onSelect={(chart) => setVisualization({ selectedType: chart,
-          params: getVisualizationDefaults(chart, defaultParams), mapping: { mapping: [] } })} />
+          params: getVisualizationDefaults(chart, defaultParams), mapping })} />
       <button onClick={() => setOpen((value) => !value)}>{open ? "Close panel" : "Reopen panel"}</button>
       <BasicContext.Provider value={{ visualization, setVisualization, analysis: { analyzedData: columns } }}>
         {open && <Stack data-testid="customization" sx={{ width: { xs: "100%", md: 340 } }}><ChartCustomizationPanel /></Stack>}
@@ -170,7 +179,34 @@ async function waitForServer(child) {
     await panel.getByRole("combobox", { name: "Typed choice", exact: true }).click();
     await page.getByRole("option", { name: "Zero", exact: true }).click();
     await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.typedChoice === 0);
+    const group = panel.getByRole("combobox", { name: "Series", exact: true });
+    await group.click();
+    await page.getByRole("option", { name: "Group B", exact: true }).click();
+    const color = panel.getByRole("textbox", { name: "Color", exact: true });
+    await color.fill("#15ab90");
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.seriesColors
+      .some(({ key, color }) => key === "Group B" && color === "#15ab90"));
+    await group.click();
+    await page.getByRole("option", { name: "Group A", exact: true }).click();
+    await color.fill("#9f8621");
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.seriesColors.length === 2);
+    await panel.getByRole("button", { name: "Reset color", exact: true }).click();
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.seriesColors.length === 1 &&
+      window.__descriptorFixture.snapshot().params.seriesColors[0].key === "Group B");
     await panel.getByRole("tab", { name: "FILTERS", exact: true }).click();
+    await panel.getByText("3 of 3 included", { exact: true }).waitFor();
+    const categories = panel.getByRole("combobox", { name: "Visible categories", exact: true });
+    await categories.click();
+    await categories.fill("Beta");
+    await page.getByRole("option", { name: "Beta", exact: true }).click();
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.hiddenCategories.join() === "Beta");
+    await categories.fill("Alpha");
+    await page.getByRole("option", { name: "Alpha", exact: true }).click();
+    await categories.fill("Gamma");
+    const lastCategory = page.getByRole("option", { name: "Gamma", exact: true });
+    await lastCategory.waitFor();
+    assert.equal(await lastCategory.getAttribute("aria-disabled"), "true");
+    await categories.press("Escape");
     const limit = panel.getByRole("spinbutton", { name: "Number of values", exact: true });
     assert.equal(await limit.inputValue(), "10");
     await limit.fill("");
@@ -189,6 +225,15 @@ async function waitForServer(child) {
     assert.equal(await panel.getByRole("switch", { name: "Show values", exact: true }).isChecked(), false);
     await panel.getByRole("tab", { name: "FILTERS", exact: true }).click();
     assert.equal(await limit.inputValue(), "8", "Reopening controls preserves edited values instead of reapplying defaults");
+    await panel.getByText("1 of 3 included", { exact: true }).waitFor();
+    await panel.getByRole("button", { name: "Show all categories", exact: true }).click();
+    await panel.getByText("3 of 3 included", { exact: true }).waitFor();
+    await panel.getByRole("tab", { name: "STYLES", exact: true }).click();
+    await group.click();
+    await page.getByRole("option", { name: "Group B", exact: true }).click();
+    assert.equal(await color.inputValue(), "#15ab90", "A color is stored with its series name across panel toggles");
+    await panel.getByRole("button", { name: "Reset all colors", exact: true }).click();
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.seriesColors.length === 0);
     await page.evaluate(() => window.__descriptorFixture.unsupported());
     await panel.getByRole("tab", { name: "ELEMENTS", exact: true }).click();
     await panel.getByRole("alert").filter({ hasText: "Some customization controls require a newer OpenLAP version." }).waitFor();

@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.*;
 import com.google.gson.JsonParser;
 import com.openlap.analytics_module.entities.Indicator;
 import com.openlap.analytics_module.entities.utility_entities.IndicatorType;
+import com.openlap.analytics_module.entities.utility_entities.VisualizationTechniqueReference;
 import com.openlap.user.entities.User;
 import com.openlap.user.entities.utility_entities.LrsConsumer;
+import com.openlap.visualization_methods.entities.VisType;
 import java.util.List;
 import org.bson.Document;
 import org.junit.Test;
@@ -59,6 +61,19 @@ public class CommunitySanitizerTest {
     String json = CommunitySanitizer.json(sanitized);
     assertThat(json).contains("#ff8800", "400", "bottom", "enabled");
     assertThat(json).doesNotContain("Alice", "private", "formatter", "annotations", "title", "https", "function");
+  }
+  @Test public void dataDrivenCustomizationsAreOmittedEvenWithHarmlessFieldNamesAndLabelValues() {
+    var chart = new VisType();
+    chart.setVisualizationDescriptor(new Document("customizations", List.of(
+        new Document("id", "visibility").append("type", "categoryFilter"),
+        new Document("id", "palette").append("type", "seriesColors"))));
+    var indicator = new Indicator();
+    indicator.setVisualizationTechniqueReference(new VisualizationTechniqueReference("""
+        {"visibility":["left"],"palette":[{"key":"right","color":"#123456"}],"showLegend":true}
+        """, "{}", null, chart));
+
+    assertThat(CommunitySanitizer.json(CommunitySanitizer.visualizationParams(indicator)))
+        .isEqualTo("{\"showLegend\":true}");
   }
   @Test public void compositeMethodFiltersUseTheSourcesCommonAnalyticsMethod() {
     var method = new com.openlap.analytics_technique.entities.AnalyticsTechnique();

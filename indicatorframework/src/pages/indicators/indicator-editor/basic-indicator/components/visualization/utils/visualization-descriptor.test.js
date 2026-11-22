@@ -5,10 +5,12 @@ import {
   getCustomizationErrors,
   getCustomizationFields,
   getMappedCategoryValues,
+  getMappedCustomizationValues,
   getVisualizationDefaults,
   getVisualizationDescription,
   getVisualizationDescriptor,
   getVisualizationIconUrl,
+  uniqueCustomizationLabels,
 } from "./visualization-descriptor.js";
 
 const descriptor = {
@@ -90,6 +92,44 @@ test("category data follows its declared input role and actual mapping", () => {
   assert.deepEqual(getMappedCategoryValues(chart, mapping, dataset), ["Selected category"]);
   assert.deepEqual(getMappedCategoryValues(chart, { mapping: [] }, dataset), []);
   assert.deepEqual(getMappedCategoryValues({}, {}, dataset.columns), ["not the category"]);
+});
+
+test("data-driven controls follow named mappings and preserve exact data labels", () => {
+  const dataChart = { ...chart, visualizationDescriptor: { ...descriptor, inputRoles: {
+    category: "labels", series: "group",
+  } } };
+  const dataset = { columns: { measures: { data: [4, 9] }, names: { data: ["Material", "Material"] },
+    groupNames: { data: [" Cohort A", "Cohort A", " Cohort A", "__proto__", "", null, 22] } } };
+  const mapping = { mapping: [
+    { inputPort: { id: "group" }, outputPort: { id: "groupNames" } },
+    { inputPort: { id: "labels" }, outputPort: { id: "names" } },
+  ] };
+  assert.deepEqual(uniqueCustomizationLabels(getMappedCategoryValues(dataChart, mapping, dataset)), ["Material"]);
+  assert.deepEqual(uniqueCustomizationLabels(getMappedCustomizationValues(dataChart, mapping, dataset, "series")),
+    [" Cohort A", "Cohort A", "__proto__"]);
+  assert.deepEqual(getMappedCustomizationValues(chart, mapping, dataset, "series"), []);
+});
+
+test("category filters and individual colors validate bounded, unique, typed labels", () => {
+  const dynamicDescriptor = { ...descriptor, customizations: [
+    { id: "hiddenCategories", type: "categoryFilter", group: "filters", defaultValue: [] },
+    { id: "seriesColors", type: "seriesColors", source: "series", group: "styles", defaultValue: [] },
+    { id: "unknownSource", type: "seriesColors", source: "input", group: "styles" },
+  ] };
+  const defaults = getVisualizationDefaults({ visualizationDescriptor: dynamicDescriptor });
+  assert.deepEqual(defaults, { hiddenCategories: [], seriesColors: [] });
+  assert.deepEqual(getCustomizationErrors(dynamicDescriptor, {
+    hiddenCategories: ["Constructor", "__proto__"], seriesColors: [{ key: "Group", color: "#1976d2" }],
+  }), {});
+  for (const value of ["hidden", [1], ["", "B"], ["A", "A"], ["A\0B"], ["a".repeat(10_001)],
+    Array.from({ length: 2_001 }, (_, index) => String(index))]) {
+    assert.ok(getCustomizationErrors(dynamicDescriptor, { hiddenCategories: value }).hiddenCategories);
+  }
+  for (const value of [{ Group: "#1976d2" }, [{ key: "A", color: "red" }], [{ color: "#1976d2" }],
+    [{ key: "A", color: "#1976d2", extra: true }],
+    [{ key: "A", color: "#1976d2" }, { key: "A", color: "#000000" }]]) {
+    assert.ok(getCustomizationErrors(dynamicDescriptor, { seriesColors: value }).seriesColors);
+  }
 });
 
 test("plugin description contributes guidance without discarding legacy optional guidance", () => {

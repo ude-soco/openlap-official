@@ -1,12 +1,13 @@
 import PropTypes from "prop-types";
 import { Alert, FormControlLabel, InputAdornment, MenuItem, Stack, Switch, TextField, Typography } from "@mui/material";
+import { CategoryFilterField, SeriesColorsField } from "./data-customization-fields";
 import {
   customizationVisible,
   getCustomizationErrors,
   getCustomizationFields,
 } from "../../../utils/visualization-descriptor";
 
-export default function DescriptorFields({ descriptor, group, state, setState }) {
+export default function DescriptorFields({ descriptor, group, state, setState, categories, series }) {
   const fields = getCustomizationFields(descriptor);
   const unsupported = descriptor.customizations.length - fields.length;
   const visible = fields.filter((field) => field.group === group && customizationVisible(field, state));
@@ -22,54 +23,68 @@ export default function DescriptorFields({ descriptor, group, state, setState })
         <Alert severity="info">Some customization controls require a newer OpenLAP version.</Alert>
       )}
       {!visible.length && <Typography variant="body2" color="text.secondary">No options apply to the current settings.</Typography>}
-      {visible.map((field) => field.type === "boolean" ? (
-        <Stack key={field.id} sx={{ gap: 0.25 }}>
-          <FormControlLabel
-            control={<Switch checked={state[field.id] === true} onChange={(_, value) => update(field, value)} />}
+      {visible.map((field) => {
+        if (field.type === "categoryFilter" || field.type === "seriesColors") {
+          const Control = field.type === "categoryFilter" ? CategoryFilterField : SeriesColorsField;
+          const choices = field.type === "seriesColors" && field.source === "series" ? series : categories;
+          return (
+            <Control key={field.id} field={field} choices={choices}
+              value={state[field.id] ?? field.defaultValue} error={errors[field.id]}
+              update={(value) => update(field, value)} primaryColor={state.seriesColor} />
+          );
+        }
+        if (field.type === "boolean") {
+          return (
+            <Stack key={field.id} sx={{ gap: 0.25 }}>
+              <FormControlLabel
+                control={<Switch checked={state[field.id] === true} onChange={(_, value) => update(field, value)} />}
+                label={field.label || field.id}
+              />
+              {field.help && <Typography variant="caption" color="text.secondary">{field.help}</Typography>}
+            </Stack>
+          );
+        }
+        return (
+          <TextField
+            key={field.id}
+            fullWidth
             label={field.label || field.id}
-          />
-          {field.help && <Typography variant="caption" color="text.secondary">{field.help}</Typography>}
-        </Stack>
-      ) : (
-        <TextField
-          key={field.id}
-          fullWidth
-          label={field.label || field.id}
-          value={field.type === "select" ? choiceValue(field) : state[field.id] ?? ""}
-          select={field.type === "select"}
-          type={field.type === "number" ? "number" : "text"}
-          error={Boolean(errors[field.id])}
-          helperText={errors[field.id] || field.help}
-          slotProps={{
-            input: field.type === "color" ? { startAdornment: (
-              <InputAdornment position="start">
-                <input
-                  type="color"
-                  aria-label={`${field.label || field.id} color picker`}
-                  value={/^#[0-9a-f]{6}$/i.test(state[field.id] || "") ? state[field.id] : "#1976d2"}
-                  style={{ width: 32, height: 32, padding: 0, border: 0, background: "transparent", cursor: "pointer" }}
-                  onChange={(event) => update(field, event.target.value)}
-                />
-              </InputAdornment>
-            ) } : undefined,
-            htmlInput: {
-              ...(field.type === "number" ? { min: field.min, max: field.max, step: field.step ?? "any" } : {}),
-              ...(field.type === "color" ? { spellCheck: false, maxLength: 7 } : {}),
-            },
-          }}
-          onChange={(event) => {
-            const value = event.target.value;
-            if (field.type === "select") {
-              const option = field.options?.[Number(value)];
-              if (option) update(field, option.value);
-            } else update(field, field.type === "number" && value !== "" ? Number(value) : value);
-          }}
-        >
-          {field.type === "select" && (field.options || []).map((option, index) => (
-            <MenuItem key={index} value={String(index)}>{option.label || String(option.value)}</MenuItem>
-          ))}
-        </TextField>
-      ))}
+            value={field.type === "select" ? choiceValue(field) : state[field.id] ?? ""}
+            select={field.type === "select"}
+            type={field.type === "number" ? "number" : "text"}
+            error={Boolean(errors[field.id])}
+            helperText={errors[field.id] || field.help}
+            slotProps={{
+              input: field.type === "color" ? { startAdornment: (
+                <InputAdornment position="start">
+                  <input
+                    type="color"
+                    aria-label={`${field.label || field.id} color picker`}
+                    value={/^#[0-9a-f]{6}$/i.test(state[field.id] || "") ? state[field.id] : "#1976d2"}
+                    style={{ width: 32, height: 32, padding: 0, border: 0, background: "transparent", cursor: "pointer" }}
+                    onChange={(event) => update(field, event.target.value)}
+                  />
+                </InputAdornment>
+              ) } : undefined,
+              htmlInput: {
+                ...(field.type === "number" ? { min: field.min, max: field.max, step: field.step ?? "any" } : {}),
+                ...(field.type === "color" ? { spellCheck: false, maxLength: 7 } : {}),
+              },
+            }}
+            onChange={(event) => {
+              const value = event.target.value;
+              if (field.type === "select") {
+                const option = field.options?.[Number(value)];
+                if (option) update(field, option.value);
+              } else update(field, field.type === "number" && value !== "" ? Number(value) : value);
+            }}
+          >
+            {field.type === "select" && (field.options || []).map((option, index) => (
+              <MenuItem key={index} value={String(index)}>{option.label || String(option.value)}</MenuItem>
+            ))}
+          </TextField>
+        );
+      })}
     </Stack>
   );
 }
@@ -78,4 +93,6 @@ DescriptorFields.propTypes = {
   group: PropTypes.string.isRequired,
   state: PropTypes.object.isRequired,
   setState: PropTypes.func.isRequired,
+  categories: PropTypes.array,
+  series: PropTypes.array,
 };

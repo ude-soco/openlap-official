@@ -107,11 +107,19 @@ public final class VisualizationManifest {
     List<Document> controls = objects(chart, "customizations", 64, false);
     Set<String> ids = new HashSet<>();
     for (Document control : controls) {
-      fields(control, "id", "label", "type", "defaultValue", "options", "min", "max", "step", "help", "group", "visibleWhen");
+      fields(control, "id", "label", "type", "defaultValue", "options", "min", "max", "step", "help", "group", "visibleWhen", "source");
       if (!ids.add(id(control, "id"))) throw invalid("Customization identifiers must be unique.");
       text(control, "label", 300, true); text(control, "help", 2000, false);
-      String type = text(control, "type", 10, true);
-      if (!Set.of("text", "number", "boolean", "select", "color").contains(type)) throw invalid("Unsupported customization control.");
+      String type = text(control, "type", 16, true);
+      if (!Set.of("text", "number", "boolean", "select", "color", "categoryFilter", "seriesColors").contains(type))
+        throw invalid("Unsupported customization control.");
+      if (type.equals("seriesColors") || type.equals("categoryFilter")) {
+        String role = type.equals("seriesColors") ? text(control, "source", 12, true) : "category";
+        if (!Set.of("category", "series").contains(role) || !(chart.get("inputRoles") instanceof Map<?, ?> roles)
+            || !roles.containsKey(role)) throw invalid("Data-driven controls must reference a declared input role.");
+      }
+      if (control.containsKey("source") && !type.equals("seriesColors"))
+        throw invalid("Only data color controls declare a source role.");
       if (!Set.of("elements", "styles", "filters").contains(text(control, "group", 10, true))) throw invalid("Choose an Elements, Styles or Filters group.");
       for (String key : List.of("min", "max", "step")) if (control.containsKey(key) &&
           (!(control.get(key) instanceof Number) || !Double.isFinite(((Number) control.get(key)).doubleValue()))) throw invalid("Customization bounds must be finite numbers.");
