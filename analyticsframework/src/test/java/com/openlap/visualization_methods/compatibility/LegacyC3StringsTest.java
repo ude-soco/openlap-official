@@ -7,6 +7,8 @@ import com.google.gson.Gson;
 import com.openlap.dataset.OpenLAPColumnDataType;
 import com.openlap.dataset.OpenLAPDataColumn;
 import com.openlap.dataset.OpenLAPDataSet;
+import com.openlap.dataset.OpenLAPPortConfig;
+import com.openlap.dataset.OpenLAPPortMapping;
 import com.openlap.infrastructure.exception.ValidationException;
 import com.openlap.template.VisualizationCodeGenerator;
 import java.util.ArrayList;
@@ -39,7 +41,7 @@ class LegacyC3StringsTest {
     parameters.put("chartTitle", label);
     parameters.put("width", 750.5);
     parameters.put("showLegend", "true");
-    var prepared = LegacyC3Strings.copyForLegacy(source, parameters);
+    var prepared = LegacyC3Strings.copyForLegacy(source, mapping(source, "category", "value"), parameters);
 
     assertThat(prepared.data()).isNotSameAs(source);
     assertThat(prepared.parameters()).isNotSameAs(parameters);
@@ -54,11 +56,31 @@ class LegacyC3StringsTest {
   }
 
   @Test
+  void unmappedMissingStatisticsDoNotBlockRenderingOfMappedValues() throws Exception {
+    var source = data("Material", 2.75);
+    var deviation = new OpenLAPDataColumn<Object>("standard_deviation", OpenLAPColumnDataType.Numeric,
+        true, "Sample standard deviation", "");
+    var missing = new ArrayList<Object>();
+    missing.add(null);
+    deviation.setData(missing);
+    source.addOpenLAPDataColumn(deviation);
+
+    var prepared = LegacyC3Strings.copyForLegacy(source, mapping(source, "category", "value"), Map.of());
+
+    assertThat(prepared.data().getColumns()).containsOnlyKeys("category", "value");
+    assertThat(prepared.data().getColumns().get("value").getData()).containsExactly(2.75);
+    assertThat(source.getColumns().get("standard_deviation").getData()).containsExactly((Object) null);
+    assertThatThrownBy(() -> LegacyC3Strings.copyForLegacy(
+        source, mapping(source, "category", "standard_deviation"), Map.of()))
+        .isInstanceOf(ValidationException.class).hasMessageContaining("finite numbers");
+  }
+
+  @Test
   void otherProvidersKeepTheirExistingDatasetAndEscapingContracts() throws Exception {
     VisualizationCodeGenerator other = mock(VisualizationCodeGenerator.class);
     var source = data("Already escaped \\n or apostrophe ' stays owned by this provider", 1);
     Map<String, Object> parameters = Map.of("chartTitle", "Apex's existing behavior");
-    var prepared = LegacyC3Strings.prepare(other, source, parameters);
+    var prepared = LegacyC3Strings.prepare(other, source, mapping(source, "category", "value"), parameters);
     assertThat(prepared.data()).isSameAs(source);
     assertThat(prepared.parameters()).isSameAs(parameters);
     verifyNoInteractions(other);
@@ -67,23 +89,34 @@ class LegacyC3StringsTest {
   @Test
   void unquotedNumericAndBooleanParametersCannotInjectJavaScript() throws Exception {
     var source = data("Material", 1);
-    assertThatThrownBy(() -> LegacyC3Strings.copyForLegacy(source, Map.of("width", "750;bad()")))
+    var mapping = mapping(source, "category", "value");
+    assertThatThrownBy(() -> LegacyC3Strings.copyForLegacy(source, mapping, Map.of("width", "750;bad()")))
         .isInstanceOf(ValidationException.class).hasMessageContaining("finite numbers");
-    assertThatThrownBy(() -> LegacyC3Strings.copyForLegacy(source, Map.of("showLegend", "true;bad()")))
+    assertThatThrownBy(() -> LegacyC3Strings.copyForLegacy(source, mapping, Map.of("showLegend", "true;bad()")))
         .isInstanceOf(ValidationException.class).hasMessageContaining("true or false");
-    assertThatThrownBy(() -> LegacyC3Strings.copyForLegacy(source, Map.of("height", -1)))
+    assertThatThrownBy(() -> LegacyC3Strings.copyForLegacy(source, mapping, Map.of("height", -1)))
         .isInstanceOf(ValidationException.class).hasMessageContaining("dimensions");
   }
 
   @Test
   void mislabeledNumericOutputCannotBecomeExecutableCode() throws Exception {
     var source = data("Material", "1];bad()");
-    assertThatThrownBy(() -> LegacyC3Strings.copyForLegacy(source, Map.of()))
+    var mapping = mapping(source, "category", "value");
+    assertThatThrownBy(() -> LegacyC3Strings.copyForLegacy(source, mapping, Map.of()))
         .isInstanceOf(ValidationException.class).hasMessageContaining("finite numbers");
     source.getColumns().get("value").getData().clear();
     source.getColumns().get("value").getData().add(Double.NaN);
-    assertThatThrownBy(() -> LegacyC3Strings.copyForLegacy(source, Map.of()))
+    assertThatThrownBy(() -> LegacyC3Strings.copyForLegacy(source, mapping, Map.of()))
         .isInstanceOf(ValidationException.class).hasMessageContaining("finite numbers");
+  }
+
+  private static OpenLAPPortConfig mapping(OpenLAPDataSet source, String... ids) {
+    var ports = new ArrayList<OpenLAPPortMapping>();
+    for (String id : ids) {
+      var config = source.getColumns().get(id).getConfigurationData();
+      ports.add(new OpenLAPPortMapping(config, config));
+    }
+    return new OpenLAPPortConfig(ports);
   }
 
   private static OpenLAPDataSet data(String text, Object numeric) throws Exception {

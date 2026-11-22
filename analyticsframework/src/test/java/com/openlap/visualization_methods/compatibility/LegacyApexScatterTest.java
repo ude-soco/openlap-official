@@ -56,7 +56,7 @@ class LegacyApexScatterTest {
     var generator = mock(VisualizationCodeGenerator.class);
     var source = dataset("A ' name");
     Map<String, Object> options = Map.of("chartTitle", "Original provider's title");
-    var inputs = LegacyApexScatter.prepare(generator, source, options);
+    var inputs = LegacyApexScatter.prepare(generator, source, mapping(), options);
     assertThat(inputs.data()).isSameAs(source);
     assertThat(inputs.parameters()).isSameAs(options);
     String code = "Unknown provider output";

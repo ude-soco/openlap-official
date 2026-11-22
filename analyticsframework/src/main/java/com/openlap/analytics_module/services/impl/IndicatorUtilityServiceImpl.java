@@ -424,9 +424,9 @@ public class IndicatorUtilityServiceImpl implements IndicatorUtilityService {
                     : new org.bson.Document(visType.getVisualizationDescriptor()),
                 (Map<String, Object>) visualizationParams);
         var inputs = com.openlap.visualization_methods.compatibility.LegacyC3Strings.prepare(
-            visualizationCodeGenerator, analyzedDataSet, checkedParams);
+            visualizationCodeGenerator, analyzedDataSet, visualizationMappings, checkedParams);
         inputs = com.openlap.visualization_methods.compatibility.LegacyApexScatter.prepare(
-            visualizationCodeGenerator, inputs.data(), inputs.parameters());
+            visualizationCodeGenerator, inputs.data(), visualizationMappings, inputs.parameters());
         indicatorCode =
             visualizationCodeGenerator.generateVisualizationCode(
                 inputs.data(), visualizationMappings, inputs.parameters());

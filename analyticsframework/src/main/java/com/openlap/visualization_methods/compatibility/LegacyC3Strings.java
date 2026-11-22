@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.openlap.dataset.OpenLAPColumnDataType;
 import com.openlap.dataset.OpenLAPDataColumn;
 import com.openlap.dataset.OpenLAPDataSet;
+import com.openlap.dataset.OpenLAPPortConfig;
 import com.openlap.exceptions.OpenLAPDataColumnException;
 import com.openlap.infrastructure.exception.ValidationException;
 import com.openlap.template.VisualizationCodeGenerator;
@@ -16,6 +17,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -56,8 +58,8 @@ public final class LegacyC3Strings {
   }
 
   public static Inputs prepare(VisualizationCodeGenerator generator, OpenLAPDataSet data,
-      Map<String, Object> parameters) {
-    return supports(generator) ? copyForLegacy(data, parameters) : new Inputs(data, parameters);
+      OpenLAPPortConfig mapping, Map<String, Object> parameters) {
+    return supports(generator) ? copyForLegacy(data, mapping, parameters) : new Inputs(data, parameters);
   }
 
   /** Identity is bound to the loaded code archive, not editable catalog/provider labels. */
@@ -81,9 +83,17 @@ public final class LegacyC3Strings {
     }
   }
 
-  static Inputs copyForLegacy(OpenLAPDataSet source, Map<String, Object> parameters) {
+  static Inputs copyForLegacy(OpenLAPDataSet source, OpenLAPPortConfig mapping,
+      Map<String, Object> parameters) {
     OpenLAPDataSet copy = new OpenLAPDataSet();
-    for (var original : source.getColumns().values()) {
+    Set<String> copied = new HashSet<>();
+    for (var port : mapping.getMapping()) {
+      String id = port.getOutputPort().getId();
+      if (!copied.add(id)) continue;
+      var original = source.getColumns().get(id);
+      if (original == null || original.getData() == null) {
+        throw invalid("A mapped chart column is unavailable. Review the source analysis.");
+      }
       var config = original.getConfigurationData();
       var column = new OpenLAPDataColumn<Object>(config.getId(), config.getType(), config.isRequired(),
           literal(config.getTitle()), literal(config.getDescription()));
