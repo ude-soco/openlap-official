@@ -17,6 +17,7 @@ import { ElementsBar } from "./components/elements-bar";
 import { StylesBar } from "./components/styles";
 import { FiltersBar } from "./components/filter";
 import DescriptorFields from "./components/descriptor-fields";
+import IscCustomizationFields from "./components/isc-customization-fields";
 import { getCustomizationFields } from "../../utils/visualization-descriptor";
 
 const HEIGHT = "440px";
@@ -26,17 +27,20 @@ const ChartCustomizationControls = ({
   setState,
   chartConfiguration,
   categories,
+  series,
+  seriesName,
   chartId,
   onClose,
   visualizationDescriptor,
 }) => {
   const [value, setValue] = useState("1");
   const descriptor = visualizationDescriptor?.schemaVersion === 1 ? visualizationDescriptor : null;
+  const iscLayout = descriptor?.customizationLayout === "isc";
   const canFilter = chartConfiguration.categoriesFilteringAvailable || chartConfiguration.sortingOrderChangeable;
   const tabs = [
-    { value: "1", group: "elements", label: "ELEMENTS" },
-    { value: "2", group: "styles", label: "STYLES" },
-    { value: "3", group: "filters", label: "FILTERS" },
+    { value: "1", group: "elements", label: iscLayout ? "elements" : "ELEMENTS" },
+    { value: "2", group: "styles", label: iscLayout ? "style" : "STYLES" },
+    { value: "3", group: "filters", label: iscLayout ? "filters" : "FILTERS" },
   ].filter((tab) => descriptor
     ? getCustomizationFields(descriptor).some((field) => field.group === tab.group)
     : tab.value !== "3" || canFilter);
@@ -79,13 +83,22 @@ const ChartCustomizationControls = ({
                 onChange={handleChangeTab}
                 sx={{ width: "100%" }}
               >
-                {tabs.map((tab) => <Tab key={tab.value} label={tab.label} value={tab.value} />)}
+                {tabs.map((tab) => (
+                  <Tab key={tab.value} label={tab.label} value={tab.value}
+                    sx={iscLayout ? { minWidth: 0, textTransform: "none" } : undefined} />
+                ))}
               </TabList>
             </Box>
-            {descriptor ? tabs.map((tab) => (
+            {iscLayout ? tabs.map((tab) => (
+              <TabPanel key={tab.value} value={tab.value} sx={{ height: 500, overflowY: "auto" }}>
+                <IscCustomizationFields descriptor={descriptor} group={tab.group} state={state} setState={setState}
+                  categories={categories} series={series} seriesName={seriesName} />
+              </TabPanel>
+            )) : descriptor ? tabs.map((tab) => (
               <TabPanel key={tab.value} value={tab.value}>
                 <Box sx={{ height: HEIGHT, overflowY: "auto", px: 1 }}>
-                  <DescriptorFields descriptor={descriptor} group={tab.group} state={state} setState={setState} />
+                  <DescriptorFields descriptor={descriptor} group={tab.group} state={state} setState={setState}
+                    categories={categories} series={series} />
                 </Box>
               </TabPanel>
             )) : <>
@@ -132,6 +145,8 @@ ChartCustomizationControls.propTypes = {
   setState: PropTypes.func.isRequired,
   chartConfiguration: PropTypes.object.isRequired,
   categories: PropTypes.array,
+  series: PropTypes.array,
+  seriesName: PropTypes.string,
   chartId: PropTypes.string,
   onClose: PropTypes.func,
   visualizationDescriptor: PropTypes.object,

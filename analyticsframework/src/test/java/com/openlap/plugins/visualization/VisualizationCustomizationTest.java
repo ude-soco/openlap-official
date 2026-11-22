@@ -49,6 +49,21 @@ class VisualizationCustomizationTest {
     Document title=control("title","text","Visible").append("visibleWhen",new Document("id","mode").append("equals",0));
     assertThat(VisualizationCustomization.validate(descriptor(mode,title),Map.of("mode",-0.0))).containsEntry("title","Visible");
   }
+  @Test void dataDrivenControlsPreserveStableLabelsAndRejectInvalidOrRepeatedSelections() {
+    Document descriptor=descriptor(control("hiddenCategories","categoryFilter",List.of()),
+        control("seriesColors","seriesColors",List.of()).append("source","category"));
+    var hidden=List.of("A.1", "$Example");
+    var colors=List.of(Map.of("key","A.1","color","#123456"));
+    assertThat(VisualizationCustomization.validate(descriptor,Map.of("hiddenCategories",hidden,"seriesColors",colors)))
+        .containsEntry("hiddenCategories",hidden).containsEntry("seriesColors",colors);
+    for (Map<String,Object> invalid : List.of(
+        Map.<String,Object>of("hiddenCategories", List.of("A", "A")),
+        Map.<String,Object>of("hiddenCategories", List.of(12)),
+        Map.<String,Object>of("seriesColors", List.of(Map.of("key","A","color","red"))),
+        Map.<String,Object>of("seriesColors", List.of(colors.get(0), colors.get(0))))) {
+      assertThatThrownBy(() -> VisualizationCustomization.validate(descriptor,invalid)).hasMessageContaining("Invalid value");
+    }
+  }
   @Test void declaredTextDimensionsFollowTheirOwnSchemaAndPreservePercentages() {
     Document descriptor=descriptor(control("width","text","100%"),control("height","text","auto"));
     assertThat(VisualizationCustomization.validate(descriptor,Map.of()))

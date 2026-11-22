@@ -8,9 +8,17 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SectionCard from "../../../common/components/section-card/section-card";
 
 const GROUP_NAMES = { elements: "Elements", styles: "Styles", filters: "Filters" };
-const TYPE_NAMES = { text: "Text", number: "Number", boolean: "On/off", select: "Choice", color: "Color" };
+const TYPE_NAMES = {
+  text: "Text", number: "Number", boolean: "On/off", select: "Choice", color: "Color",
+  categoryFilter: "Category selector", seriesColors: "Individual colors",
+};
 const display = (value) => value === true ? "On" : value === false ? "Off"
   : value === "" ? "Empty text" : value == null ? "Not specified" : String(value);
+const defaultDisplay = ({ type, defaultValue }) => {
+  if (!Array.isArray(defaultValue)) return display(defaultValue);
+  if (type === "categoryFilter") return defaultValue.length ? `${defaultValue.length} hidden` : "All categories visible";
+  return defaultValue.length ? `${defaultValue.length} custom colors` : "Automatic colors";
+};
 
 /** A readable summary of approved manifest metadata, never executable plugin UI. */
 export default function PluginRuntimeReview({ manifest, entries = [] }) {
@@ -84,7 +92,7 @@ export default function PluginRuntimeReview({ manifest, entries = [] }) {
                               <ListItem key={field.id} disableGutters sx={{ display: "block" }}>
                                 <Typography variant="body2" sx={{ fontWeight: 500 }}>{field.label || field.id} · {TYPE_NAMES[field.type] || field.type}</Typography>
                                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", overflowWrap: "anywhere" }}>
-                                  Default: {display(field.defaultValue)}
+                                  Default: {defaultDisplay(field)}
                                   {field.min != null ? ` · Minimum: ${field.min}` : ""}
                                   {field.max != null ? ` · Maximum: ${field.max}` : ""}
                                   {field.step != null ? ` · Step: ${field.step}` : ""}

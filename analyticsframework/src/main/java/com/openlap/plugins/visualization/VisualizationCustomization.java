@@ -5,6 +5,7 @@ import org.bson.Document;
 
 /** Values use stable plugin keys; executable UI expressions and unknown parameters are not accepted. */
 public final class VisualizationCustomization {
+  private static final int MAX_DATA_ENTRIES = 2_000;
   private VisualizationCustomization() {}
 
   public static Map<String, Object> validate(Document descriptor, Map<String, Object> supplied) {
@@ -63,10 +64,31 @@ public final class VisualizationCustomization {
           }
         }
         break;
-      case "color": valid = value instanceof String && ((String)value).matches("#[a-fA-F0-9]{6}"); break;
+      case "color": valid = hexColor(value); break;
       case "select": valid = ((List<?>)control.getOrDefault("options", List.of())).stream().map(item -> (Map<?,?>)item).anyMatch(option -> equalValue(option.get("value"),value)); break;
+      case "categoryFilter": valid = validDataEntries(value, false); break;
+      case "seriesColors": valid = validDataEntries(value, true); break;
       default: valid = value instanceof String && ((String)value).length() <= 10000 && ((String)value).indexOf('\0') < 0;
     }
     if (!valid) throw VisualizationManifest.invalid("Invalid value for chart customization: " + control.getString("label") + ".");
+  }
+
+  private static boolean hexColor(Object value) {
+    return value instanceof String text && text.matches("#[a-fA-F0-9]{6}");
+  }
+
+  private static boolean validDataEntries(Object value, boolean colors) {
+    if (!(value instanceof List<?> entries) || entries.size() > MAX_DATA_ENTRIES) return false;
+    Set<String> labels = new HashSet<>();
+    for (Object item : entries) {
+      Object key = item;
+      if (colors) {
+        if (!(item instanceof Map<?, ?> entry) || entry.size() != 2 || !hexColor(entry.get("color"))) return false;
+        key = entry.get("key");
+      }
+      if (!(key instanceof String label) || label.isBlank() || label.length() > 10_000
+          || label.indexOf('\0') >= 0 || !labels.add(label)) return false;
+    }
+    return true;
   }
 }

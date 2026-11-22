@@ -50,8 +50,20 @@ public final class CommunitySanitizer {
   }
 
   public static Object visualizationParams(Indicator source) {
-    if (source.getVisualizationTechniqueReference() == null) return Map.of();
-    return safeStyle(parse(source.getVisualizationTechniqueReference().getAdditionalParams()));
+    var reference = source.getVisualizationTechniqueReference();
+    if (reference == null) return Map.of();
+    JsonElement values = parse(reference.getAdditionalParams());
+    var chart = reference.getVisType();
+    var descriptor = chart == null ? null : chart.getVisualizationDescriptor();
+    if (values.isJsonObject() && descriptor != null && descriptor.get("customizations") instanceof List<?> controls) {
+      for (Object item : controls) {
+        if (item instanceof Map<?, ?> control && control.get("id") instanceof String id
+            && ("categoryFilter".equals(control.get("type")) || "seriesColors".equals(control.get("type")))) {
+          values.getAsJsonObject().remove(id);
+        }
+      }
+    }
+    return safeStyle(values);
   }
 
   /** Retains numbers, booleans, colors and known style enums; drops arbitrary labels/links/code. */

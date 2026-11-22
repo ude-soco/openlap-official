@@ -29,6 +29,7 @@ import { getVisualizationDefaults } from "/src/pages/indicators/indicator-editor
 import { defaultParams } from "/src/pages/indicators/indicator-editor/basic-indicator/components/visualization/utils/visualization-data.js";
 const descriptor = {
   schemaVersion: 1, id: "new-chart", runtimeId: "native", description: "A new reusable chart.",
+  inputRoles: { category: "labels", series: "groups" },
   customizations: [
     { id: "caption", label: "Chart caption", type: "text", group: "elements", defaultValue: "Plugin default" },
     { id: "showLabels", label: "Show values", type: "boolean", group: "elements", defaultValue: true },
@@ -39,14 +40,40 @@ const descriptor = {
     { id: "typedChoice", label: "Typed choice", type: "select", group: "styles", defaultValue: false, options: [
       { value: false, label: "Boolean false" }, { value: "false", label: "Text false" }, { value: 0, label: "Zero" } ] },
     { id: "limit", label: "Number of values", type: "number", group: "filters", min: 1, max: 20, step: 1, defaultValue: 10 },
+    { id: "hiddenCategories", label: "Visible categories", type: "categoryFilter", group: "filters", defaultValue: [] },
+    { id: "seriesColors", label: "Series colors", type: "seriesColors", source: "series", group: "styles", defaultValue: [] },
   ],
 };
-const inputs = [{ id: "labels", type: "Text", required: true }, { id: "values", type: "Numeric", required: true }];
+const inputs = [{ id: "labels", type: "Text", required: true }, { id: "values", type: "Numeric", required: true },
+  { id: "groups", type: "Text", required: false }];
 const newChart = { id: "new", name: "New reusable chart", imageCode: "UnknownPluginChart", chartInputs: inputs,
   chartConfiguration: {}, visualizationDescriptor: descriptor };
 const legacyChart = { id: "legacy", name: "Existing bar chart", imageCode: "Bar", chartInputs: inputs,
   chartConfiguration: { showHideLegendAvailable: true, chartTitleAvailable: true } };
 const brokenIconChart = { ...newChart, id: "broken", name: "Broken icon chart", visualizationDescriptor: { ...descriptor, iconAssetId: "missing-icon" } };
+const control = (group, id, type, defaultValue) => ({ id, group, type, defaultValue });
+const positions = (id, group, defaultValue, ...values) => ({ ...control(group, id, "select", defaultValue),
+  options: values.map((value) => ({ value })) });
+const iscBar = { ...newChart, id: "isc-bar", visualizationDescriptor: { ...descriptor, id: "bar", customizationLayout: "isc",
+  seriesPalette: ["#1976d2", "#e66b19"], customizations: [
+    ...["showLegend", "showYAxis", "showXAxis", "showYAxisTitle", "showXAxisTitle", "showValues"].map((id) => control("elements", id, "boolean", true)),
+    control("elements", "showValuesBackground", "boolean", false),
+    ...["chartTitle", "chartSubtitle", "xAxisLabel"].map((id) => ({ ...control("elements", id, "text", ""), label: id === "xAxisLabel" ? "X-axis label" : id })),
+    positions("legendPosition", "elements", "bottom", "top", "right", "bottom", "left"),
+    positions("titlePosition", "elements", "left", "left", "center", "right"),
+    positions("valuesPosition", "elements", "center", "top", "center", "bottom"),
+    control("styles", "seriesColor", "color", "#1976d2"),
+    control("styles", "useSeriesColors", "boolean", false),
+    control("styles", "dataLabelsColor", "color", "#000000"),
+    control("styles", "dataLabelsForeColor", "color", "#ffffff"),
+    control("filters", "hiddenCategories", "categoryFilter", []),
+    positions("sortingOrder", "filters", "original", "original", "asc", "desc"),
+  ] } };
+const iscPie = { ...iscBar, id: "isc-pie", visualizationDescriptor: { ...iscBar.visualizationDescriptor, id: "pie",
+  customizations: [...iscBar.visualizationDescriptor.customizations.filter(({ id, group }) => !["showYAxis", "showXAxis",
+    "showYAxisTitle", "showXAxisTitle", "valuesPosition", "xAxisLabel"].includes(id) && group !== "filters"),
+    { ...control("styles", "seriesColors", "seriesColors", []), source: "category" }],
+} };
 const runtimeManifest = { schemaVersion: 1, pluginId: "org.openlap.fixture", pluginVersion: "2.4.0",
   assets: [
     { id: "style", path: "web/native-2.4.0.css", kind: "style", sha256: "1".repeat(64) },
@@ -56,8 +83,14 @@ const runtimeManifest = { schemaVersion: 1, pluginId: "org.openlap.fixture", plu
   charts: [{ ...descriptor, implementingClass: "org.openlap.fixture.Bar", iconAssetId: "chart-icon" },
     { id: "line", implementingClass: "org.openlap.fixture.Line", runtimeId: "native", customizations: [] }],
 };
-const columns = { category: { configurationData: { id: "category", type: "Text" }, data: ["Alpha"] },
-  amount: { configurationData: { id: "amount", type: "Numeric" }, data: [4] } };
+const columns = { category: { configurationData: { id: "category", type: "Text" }, data: ["Alpha", "Beta", "Alpha", "Gamma"] },
+  series: { configurationData: { id: "series", type: "Text" }, data: ["Group A", "Group B", "Group B", "Group A"] },
+  amount: { configurationData: { id: "amount", type: "Numeric", title: "Event count" }, data: [4, 3, 2, 1] } };
+const mapping = { mapping: [
+  { inputPort: { id: "labels" }, outputPort: { id: "category" } },
+  { inputPort: { id: "values" }, outputPort: { id: "amount" } },
+  { inputPort: { id: "groups" }, outputPort: { id: "series" } },
+] };
 function Fixture() {
   const [visualization, setVisualization] = useState({ selectedType: legacyChart,
     params: getVisualizationDefaults(legacyChart, defaultParams), mapping: { mapping: [] } });
@@ -68,12 +101,17 @@ function Fixture() {
   window.__descriptorFixture = { snapshot: () => visualization, unsupported: () => setVisualization((previous) => ({
     ...previous, selectedType: { ...previous.selectedType, visualizationDescriptor: { ...descriptor,
       customizations: [...descriptor.customizations, { id: "extension", type: "executable", group: "elements" }] } },
-  })), enableIcon: () => setWithIcon(true), legacyReview: () => setLegacyReview(true) };
+  })), enableIcon: () => setWithIcon(true), legacyReview: () => setLegacyReview(true),
+    isc: (kind) => {
+      const chart = kind === "pie" ? iscPie : iscBar;
+      setVisualization({ selectedType: chart,
+        params: getVisualizationDefaults(chart, defaultParams, { xAxisLabel: "Saved axis title", valuesPosition: "bottom" }), mapping });
+    } };
   return <MemoryRouter><ThemeProvider theme={createAppTheme(createTheme())}><CssBaseline />
     <Stack component="main" sx={{ gap: 3, p: 2, maxWidth: 1100, mx: "auto" }}>
       <ChartTypeOptions types={[legacyChart, declaredNew, brokenIconChart]} analyzedData={columns} selectedTypeId={visualization.selectedType.id}
         onSelect={(chart) => setVisualization({ selectedType: chart,
-          params: getVisualizationDefaults(chart, defaultParams), mapping: { mapping: [] } })} />
+          params: getVisualizationDefaults(chart, defaultParams), mapping })} />
       <button onClick={() => setOpen((value) => !value)}>{open ? "Close panel" : "Reopen panel"}</button>
       <BasicContext.Provider value={{ visualization, setVisualization, analysis: { analyzedData: columns } }}>
         {open && <Stack data-testid="customization" sx={{ width: { xs: "100%", md: 340 } }}><ChartCustomizationPanel /></Stack>}
@@ -170,7 +208,34 @@ async function waitForServer(child) {
     await panel.getByRole("combobox", { name: "Typed choice", exact: true }).click();
     await page.getByRole("option", { name: "Zero", exact: true }).click();
     await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.typedChoice === 0);
+    const group = panel.getByRole("combobox", { name: "Series", exact: true });
+    await group.click();
+    await page.getByRole("option", { name: "Group B", exact: true }).click();
+    const color = panel.getByRole("textbox", { name: "Color", exact: true });
+    await color.fill("#15ab90");
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.seriesColors
+      .some(({ key, color }) => key === "Group B" && color === "#15ab90"));
+    await group.click();
+    await page.getByRole("option", { name: "Group A", exact: true }).click();
+    await color.fill("#9f8621");
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.seriesColors.length === 2);
+    await panel.getByRole("button", { name: "Reset color", exact: true }).click();
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.seriesColors.length === 1 &&
+      window.__descriptorFixture.snapshot().params.seriesColors[0].key === "Group B");
     await panel.getByRole("tab", { name: "FILTERS", exact: true }).click();
+    await panel.getByText("3 of 3 included", { exact: true }).waitFor();
+    const categories = panel.getByRole("combobox", { name: "Visible categories", exact: true });
+    await categories.click();
+    await categories.fill("Beta");
+    await page.getByRole("option", { name: "Beta", exact: true }).click();
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.hiddenCategories.join() === "Beta");
+    await categories.fill("Alpha");
+    await page.getByRole("option", { name: "Alpha", exact: true }).click();
+    await categories.fill("Gamma");
+    const lastCategory = page.getByRole("option", { name: "Gamma", exact: true });
+    await lastCategory.waitFor();
+    assert.equal(await lastCategory.getAttribute("aria-disabled"), "true");
+    await categories.press("Escape");
     const limit = panel.getByRole("spinbutton", { name: "Number of values", exact: true });
     assert.equal(await limit.inputValue(), "10");
     await limit.fill("");
@@ -189,6 +254,15 @@ async function waitForServer(child) {
     assert.equal(await panel.getByRole("switch", { name: "Show values", exact: true }).isChecked(), false);
     await panel.getByRole("tab", { name: "FILTERS", exact: true }).click();
     assert.equal(await limit.inputValue(), "8", "Reopening controls preserves edited values instead of reapplying defaults");
+    await panel.getByText("1 of 3 included", { exact: true }).waitFor();
+    await panel.getByRole("button", { name: "Show all categories", exact: true }).click();
+    await panel.getByText("3 of 3 included", { exact: true }).waitFor();
+    await panel.getByRole("tab", { name: "STYLES", exact: true }).click();
+    await group.click();
+    await page.getByRole("option", { name: "Group B", exact: true }).click();
+    assert.equal(await color.inputValue(), "#15ab90", "A color is stored with its series name across panel toggles");
+    await panel.getByRole("button", { name: "Reset all colors", exact: true }).click();
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.seriesColors.length === 0);
     await page.evaluate(() => window.__descriptorFixture.unsupported());
     await panel.getByRole("tab", { name: "ELEMENTS", exact: true }).click();
     await panel.getByRole("alert").filter({ hasText: "Some customization controls require a newer OpenLAP version." }).waitFor();
@@ -199,6 +273,97 @@ async function waitForServer(child) {
     await page.getByRole("button", { name: /^Existing bar chart\./ }).click();
     await panel.getByRole("switch", { name: "Show legend", exact: true }).waitFor();
     assert.equal(await panel.getByRole("textbox", { name: "Chart caption", exact: true }).count(), 0);
+
+    await page.setViewportSize({ width: 1280, height: 1000 });
+    await page.evaluate(() => window.__descriptorFixture.isc("bar"));
+    await panel.getByRole("tab", { name: "elements", exact: true }).waitFor();
+    assert.deepEqual(await panel.getByRole("tab").allTextContents(), ["elements", "style", "filters"]);
+    const proof = process.env.OPENLAP_DESCRIPTOR_PROOF_DIR;
+    const captureIscPanel = (name) => panel.locator(".MuiPaper-root").first().screenshot({
+      path: path.join(proof, name), animations: "disabled", style: ".MuiTouchRipple-root { display: none; }",
+    });
+    if (proof) {
+      await fs.mkdir(proof, { recursive: true });
+      const tab = panel.getByRole("tabpanel");
+      await captureIscPanel("isc-chart-elements-top.png");
+      await tab.evaluate((element) => { element.scrollTop = element.scrollHeight; });
+      await captureIscPanel("isc-chart-elements-bottom.png");
+    }
+    const legendPosition = panel.getByRole("radiogroup", { name: "Legend Position", exact: true });
+    assert.equal(await legendPosition.getByRole("radio").count(), 4);
+    await legendPosition.getByRole("radio", { name: "Right", exact: true }).check();
+    await panel.getByRole("group", { name: "Axes", exact: true }).getByRole("checkbox", { name: "Horizontal" }).uncheck();
+    const axesTitles = panel.getByRole("group", { name: "Axes Titles", exact: true });
+    assert.ok(await axesTitles.getByRole("checkbox", { name: "Horizontal" }).isChecked(), "Axis ticks and titles are independent");
+    await axesTitles.getByRole("checkbox", { name: "Vertical" }).uncheck();
+    await panel.getByRole("textbox", { name: "Chart title", exact: true }).fill("A title");
+    await panel.getByRole("switch", { name: "Show labels background", exact: true }).check();
+    const labelPosition = panel.getByRole("radiogroup", { name: "Labels Position", exact: true });
+    assert.ok(await labelPosition.getByRole("radio", { name: "Bottom", exact: true }).isChecked(), "Previously saved Bottom placement remains selected");
+    await labelPosition.getByRole("radio", { name: "Center", exact: true }).check();
+    assert.equal(await labelPosition.getByRole("radio").count(), 2, "New edits expose the ISC Top and Center placements");
+    await panel.getByRole("button", { name: "Additional settings", exact: true }).click();
+    assert.equal(await panel.getByRole("textbox", { name: "X-axis label", exact: true }).inputValue(), "Saved axis title");
+    await page.waitForFunction(() => {
+      const options = window.__descriptorFixture.snapshot().params;
+      return options.legendPosition === "right" && !options.showXAxis && !options.showYAxisTitle &&
+        options.showXAxisTitle && options.chartTitle === "A title" && options.showValuesBackground &&
+        options.valuesPosition === "center" && options.xAxisLabel === "Saved axis title";
+    });
+
+    await panel.getByRole("tab", { name: "style", exact: true }).click();
+    assert.equal(await panel.getByLabel("Color for Event count", { exact: true }).inputValue(), "#1976d2");
+    assert.equal(await panel.getByLabel("Data labels color", { exact: true }).inputValue(), "#000000");
+    assert.equal(await panel.getByLabel("Data labels fore color", { exact: true }).inputValue(), "#ffffff");
+    if (proof) await captureIscPanel("isc-chart-style.png");
+    await panel.getByRole("switch", { name: "Use series colors", exact: true }).check();
+    await panel.getByLabel("Color for Event count", { exact: true }).fill("#123456");
+    await panel.getByLabel("Data labels fore color", { exact: true }).fill("#fedcba");
+    await page.waitForFunction(() => {
+      const options = window.__descriptorFixture.snapshot().params;
+      return options.useSeriesColors && options.seriesColor === "#123456" && options.dataLabelsForeColor === "#fedcba";
+    });
+    await panel.getByRole("tab", { name: "filters", exact: true }).click();
+    const filter = panel.getByRole("combobox", { name: "Categories Filter", exact: true });
+    const sort = panel.getByRole("radiogroup", { name: "Data Sorting", exact: true });
+    assert.equal(await panel.locator(".MuiAutocomplete-tag").count(), 3, "Two visible category chips and overflow count");
+    await panel.getByText("+1", { exact: true }).waitFor();
+    assert.equal(await sort.locator("input:checked").count(), 0);
+    if (proof) await captureIscPanel("isc-chart-filters.png");
+    await panel.locator(".MuiChip-root").filter({ hasText: "Beta" }).locator(".MuiChip-deleteIcon").click();
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.hiddenCategories.join() === "Beta");
+    await filter.fill("Beta");
+    await page.getByRole("option", { name: "Beta", exact: true }).click();
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.hiddenCategories.length === 0);
+    await filter.press("Escape");
+    await page.getByRole("listbox").waitFor({ state: "hidden" });
+    await sort.getByText("Descending", { exact: true }).click();
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.sortingOrder === "desc");
+    await panel.getByRole("button", { name: "Reset sort", exact: true }).click();
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.sortingOrder === "original");
+    assert.equal(await sort.locator("input:checked").count(), 0);
+    for (const width of [320, 390, 768, 1280]) {
+      await page.setViewportSize({ width, height: 1000 });
+      for (const tab of ["elements", "style", "filters"]) {
+        await panel.getByRole("tab", { name: tab, exact: true }).click();
+        assert.ok(await panel.getByRole("tabpanel").evaluate((node) => node.scrollWidth <= node.clientWidth + 1),
+          tab + " does not overflow at " + width);
+      }
+    }
+    await page.getByRole("button", { name: "Close panel", exact: true }).click();
+    await page.getByRole("button", { name: "Reopen panel", exact: true }).click();
+    assert.equal(await panel.getByRole("textbox", { name: "Chart title", exact: true }).inputValue(), "A title");
+    await page.evaluate(() => window.__descriptorFixture.isc("pie"));
+    await panel.getByRole("switch", { name: "Show legend", exact: true }).waitFor();
+    assert.equal(await panel.getByRole("group", { name: "Axes", exact: true }).count(), 0);
+    assert.equal(await panel.getByRole("tab", { name: "filters", exact: true }).count(), 0);
+    await panel.getByRole("tab", { name: "style", exact: true }).click();
+    const betaColor = panel.getByLabel("Color for Beta", { exact: true });
+    assert.equal(await betaColor.inputValue(), "#e66b19", "Swatches use the runtime's palette in displayed slice order");
+    await betaColor.fill("#7357b4");
+    await page.waitForFunction(() => window.__descriptorFixture.snapshot().params.seriesColors
+      .some(({ key, color }) => key === "Beta" && color === "#7357b4"));
+
     const review = page.getByTestId("runtime-review");
     await review.getByRole("region", { name: "Browser runtime and customizations", exact: true }).waitFor();
     await review.getByText("org.openlap.fixture", { exact: true }).waitFor();
@@ -226,7 +391,7 @@ async function waitForServer(child) {
     assert.deepEqual(errors, []);
     assert.deepEqual(external, []);
     assert.deepEqual(iconRequests.sort(), ["/api/v1/code/visualizations/broken/icon", "/api/v1/code/visualizations/new/icon"]);
-    console.log("PASS: reusable chart visibility and declared icons; native controls/defaults/validation; readable admin runtime review; mobile layout; legacy fallback; only approved icon requests");
+    console.log("PASS: reusable chart visibility and declared icons; native controls/defaults/validation; ISC-style layout, colors and filters; readable admin runtime review; mobile layout; legacy fallback; only approved icon requests");
     await context.close();
   } catch (error) {
     console.error(serverOutput.slice(-2000));
