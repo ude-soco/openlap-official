@@ -9,7 +9,7 @@ import { uniqueCustomizationLabels } from "../../../utils/visualization-descript
 const filterOptions = createFilterOptions({ limit: 100 });
 const validColor = (value) => typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
 
-export function CategoryFilterField({ field, choices, value, error, update }) {
+export function CategoryFilterField({ field, choices, value, error, update, showChips }) {
   const categories = uniqueCustomizationLabels(choices);
   const categoryNames = new Set(categories);
   const hidden = uniqueCustomizationLabels(value);
@@ -19,14 +19,19 @@ export function CategoryFilterField({ field, choices, value, error, update }) {
   return (
     <Stack sx={{ gap: 0.5, minWidth: 0 }}>
       <Autocomplete
-        size="small"
+        size={showChips ? "medium" : "small"}
         multiple
+        limitTags={showChips ? 2 : -1}
         disableClearable
         disableCloseOnSelect
         disabled={!categories.length}
         options={categories}
         filterOptions={filterOptions}
         value={included}
+        sx={showChips && included.length > 2 ? {
+          // Keep the sort controls in place when Autocomplete collapses tags on blur.
+          "& .MuiAutocomplete-inputRoot": { height: 94, alignContent: "flex-start", overflowY: "auto" },
+        } : undefined}
         getOptionDisabled={(category) => included.length === 1 && category === included[0]}
         onChange={(_, next) => {
           if (!next.length) return;
@@ -43,20 +48,27 @@ export function CategoryFilterField({ field, choices, value, error, update }) {
             <span>{category}</span>
           </li>
         )}
-        renderValue={(selection) => selection.length > 0 && (
-          <Chip size="small" label={`${selection.length} of ${categories.length} included`} />
-        )}
+        renderValue={showChips
+          ? (selection, getItemProps) => selection.map((category, index) => {
+            const { key, ...itemProps } = getItemProps({ index });
+            return <Chip {...itemProps} key={key} label={category} disabled={included.length === 1} />;
+          })
+          : (selection) => selection.length > 0 && (
+            <Chip size="small" label={`${selection.length} of ${categories.length} included`} />
+          )}
         renderInput={(params) => (
           <TextField {...params} label={field.label || field.id} error={Boolean(error)}
-            placeholder="Search categories"
+            placeholder={showChips ? undefined : "Search categories"}
             helperText={error || (!categories.length ? "Map a category column to choose what to show."
               : !included.length ? "Include at least one category to preview the chart."
-                : field.help || "Choose which categories appear in the chart.")} />
+                : !showChips && (field.help || "Choose which categories appear in the chart."))} />
         )}
       />
-      <Button size="small" disabled={!hidden.length && !error} sx={{ alignSelf: "flex-start" }} onClick={() => update([])}>
-        Show all categories
-      </Button>
+      {(!showChips || (categories.length > 0 && !included.length) || error) && (
+        <Button size="small" disabled={!hidden.length && !error} sx={{ alignSelf: "flex-start" }} onClick={() => update([])}>
+          Show all categories
+        </Button>
+      )}
     </Stack>
   );
 }
@@ -132,5 +144,5 @@ const fieldProps = {
   error: PropTypes.string,
   update: PropTypes.func.isRequired,
 };
-CategoryFilterField.propTypes = { ...fieldProps, value: PropTypes.array };
+CategoryFilterField.propTypes = { ...fieldProps, value: PropTypes.array, showChips: PropTypes.bool };
 SeriesColorsField.propTypes = { ...fieldProps, value: PropTypes.array, primaryColor: PropTypes.string };

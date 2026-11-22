@@ -7,6 +7,7 @@ import ChartCustomizationControls from "./chart-customization-controls";
 import {
   getMappedCategoryValues,
   getMappedCustomizationValues,
+  getMappedSeriesName,
   getVisualizationDefaults,
   getVisualizationDescriptor,
 } from "../../utils/visualization-descriptor";
@@ -47,6 +48,7 @@ const ChartCustomizationPanel = ({ onClose }) => {
       visualizationDescriptor={getVisualizationDescriptor(chart)}
       categories={getMappedCategoryValues(chart, visualization.mapping, analysis.analyzedData)}
       series={getMappedCustomizationValues(chart, visualization.mapping, analysis.analyzedData, "series")}
+      seriesName={getMappedSeriesName(chart, visualization.mapping, analysis.analyzedData)}
       onClose={onClose}
     />
   );

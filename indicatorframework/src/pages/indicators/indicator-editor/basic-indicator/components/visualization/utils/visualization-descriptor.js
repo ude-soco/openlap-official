@@ -101,6 +101,16 @@ export function getMappedCategoryValues(chart, mapping, dataset) {
   return getMappedCustomizationValues(chart, mapping, dataset, "category");
 }
 
+export function getMappedSeriesName(chart, mapping, dataset) {
+  const descriptor = getVisualizationDescriptor(chart);
+  if (descriptor?.customizationLayout !== "isc") return undefined;
+  if (descriptor.id === "scatter") return "Observations";
+  const input = chart?.chartInputs?.find(({ type }) => type === "Numeric");
+  const output = mapping?.mapping?.find(({ inputPort }) => inputPort?.id === input?.id)?.outputPort;
+  const column = (dataset?.columns || dataset || {})[output?.id];
+  return column?.configurationData?.title || output?.title || output?.name;
+}
+
 export function getVisualizationDescription(chart, legacy = {}) {
   const descriptor = getVisualizationDescriptor(chart);
   return descriptor?.description ? { ...legacy, summary: descriptor.description } : legacy;
