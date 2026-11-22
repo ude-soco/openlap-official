@@ -28,6 +28,8 @@ const names = new Map([
 ]);
 const palette = ["#b2458b", "#168370", "#b85417", "#6253b4", "#7c6417", "#55744a", "#b64550"];
 const roots = new WeakMap();
+const valueBackground = { fill: "#fff", stroke: "#c7c7c7", rx: 3 };
+const barLabelPosition = { top: "top", center: "center", bottom: "insideBottom" };
 
 function formatNumber(value) {
   return Number.isFinite(value) ? String(Number(value.toPrecision(8))) : "";
@@ -73,6 +75,7 @@ function scatterData(rows) {
     groups.get(key).push(point);
   }
   return [...groups].map(([key, points]) => ({
+    key,
     name: key ?? (hasGroups ? "Ungrouped" : "Observations"), points,
   }));
 }
@@ -100,42 +103,54 @@ function ChartTooltip({ active, payload, kind }) {
   );
 }
 
-function sliceChart(kind, rows, colors, options) {
-  const data = rows.map((row, index) => ({ ...row, fill: colors[index % colors.length] }));
+function ChartLegend({ options }) {
+  if (!options.showLegend) return null;
+  const position = options.legendPosition || "bottom";
+  const side = position === "left" || position === "right";
+  return <Legend position={position} offset={8} itemSorter={null}
+    wrapperStyle={{ maxWidth: side ? "42%" : "100%", overflowWrap: "anywhere" }} />;
+}
+
+function sliceChart(kind, rows, colorFor, options) {
+  const data = rows.map((row, index) => ({ ...row, fill: colorFor(row.category, index) }));
   return (
     <PieChart accessibilityLayer>
       <Tooltip content={<ChartTooltip kind={kind} />} />
-      {options.showLegend && <Legend />}
+      {options.showLegend && <ChartLegend options={options} />}
       <Pie data={data} dataKey="value" nameKey="category" outerRadius="80%"
         innerRadius={kind === "donut" ? "45%" : 0} isAnimationActive={false}
-        label={options.showValues ? ({ value }) => formatNumber(value) : false} />
+        label={options.showValues ? { position: "outside", dataKey: "value", formatter: formatNumber,
+          background: options.showValuesBackground ? valueBackground : false } : false} />
     </PieChart>
   );
 }
 
-function scatterChart(rows, colors, options) {
+function scatterChart(rows, colorFor, options) {
   const data = scatterData(rows);
   return (
     <ScatterChart accessibilityLayer margin={{ top: 20, right: 20, bottom: 12, left: 12 }}>
       {options.showGrid && <CartesianGrid vertical={false} />}
       <XAxis type="number" dataKey="x" tickFormatter={formatNumber} tickMargin={8}
+        hide={options.showXAxis === false}
         height={options.xAxisLabel ? 50 : 32}
         label={{ value: options.xAxisLabel, position: "insideBottom", offset: 0 }} />
       <YAxis type="number" dataKey="y" tickFormatter={formatNumber} tickMargin={8}
+        hide={options.showYAxis === false}
         width={options.yAxisLabel ? 64 : 48}
         label={{ value: options.yAxisLabel, angle: -90, position: "insideLeft" }} />
       <Tooltip content={<ChartTooltip kind="scatter" />} />
-      {options.showLegend && <Legend />}
-      {data.map(({ name, points }, index) => (
-        <Scatter key={index} name={name} data={points} fill={colors[index % colors.length]} isAnimationActive={false}>
-          {options.showValues && <LabelList dataKey="y" position="top" formatter={formatNumber} />}
+      {options.showLegend && <ChartLegend options={options} />}
+      {data.map(({ key, name, points }, index) => (
+        <Scatter key={index} name={name} data={points} fill={colorFor(key, index)} isAnimationActive={false}>
+          {options.showValues && <LabelList dataKey="y" position="top" formatter={formatNumber}
+            background={options.showValuesBackground ? valueBackground : false} />}
         </Scatter>
       ))}
     </ScatterChart>
   );
 }
 
-function categoryChart(kind, rows, colors, options) {
+function categoryChart(kind, rows, colorFor, options) {
   const { data, series } = categoricalData(rows, kind);
   const area = kind === "area" || kind === "grouped-area" || kind === "stacked-area";
   const Series = kind === "bar" ? Bar : area ? Area : Line;
@@ -145,14 +160,16 @@ function categoryChart(kind, rows, colors, options) {
       margin={{ top: 22, right: 20, bottom: 16, left: 12 }}>
       {options.showGrid && <CartesianGrid vertical={false} />}
       <XAxis type="category" dataKey="position" tickFormatter={nameOf} tickMargin={8}
+        hide={options.showXAxis === false}
         height={options.xAxisLabel ? 60 : 44} textAnchor="end" angle={-22} minTickGap={10}
         label={{ value: options.xAxisLabel, position: "insideBottom", offset: 0 }} />
       <YAxis type="number" tickFormatter={formatNumber} tickMargin={8} width={options.yAxisLabel ? 64 : 48}
+        hide={options.showYAxis === false}
         label={{ value: options.yAxisLabel, angle: -90, position: "insideLeft" }} />
       <Tooltip content={<ChartTooltip kind={kind} />} />
-      {options.showLegend && <Legend />}
+      {options.showLegend && <ChartLegend options={options} />}
       {series.map(({ key, name }, index) => {
-        const color = colors[index % colors.length];
+        const color = colorFor(grouped.has(kind) ? name : null, index);
         const styling = area ? {
           fillOpacity: kind === "grouped-area" ? 0.25 : 0.42,
           stackId: kind === "stacked-area" ? "total" : undefined,
@@ -160,7 +177,9 @@ function categoryChart(kind, rows, colors, options) {
         return (
           <Series key={key} type="linear" dataKey={key} name={name} fill={color} stroke={color}
             strokeWidth={kind === "bar" ? 0 : 2} connectNulls={false} isAnimationActive={false} {...styling}>
-            {options.showValues && <LabelList dataKey={key} position="top" formatter={formatNumber} />}
+            {options.showValues && <LabelList dataKey={key}
+              position={(kind === "bar" && barLabelPosition[options.valuesPosition]) || "top"}
+              formatter={formatNumber} background={options.showValuesBackground ? valueBackground : false} />}
           </Series>
         );
       })}
@@ -171,13 +190,18 @@ function categoryChart(kind, rows, colors, options) {
 function Chart({ kind, rows, options }) {
   const primary = /^#[\da-f]{6}$/i.test(options.seriesColor || "") ? options.seriesColor.toLowerCase() : "#1976d2";
   const colors = [primary, ...palette.filter((color) => color !== primary)];
-  const chart = radial.has(kind) ? sliceChart(kind, rows, colors, options)
-    : kind === "scatter" ? scatterChart(rows, colors, options) : categoryChart(kind, rows, colors, options);
+  const colorFor = window.OpenLAPChartOptions?.colorScale(options, palette)
+    ?? ((_, index) => colors[index % colors.length]);
+  const chart = radial.has(kind) ? sliceChart(kind, rows, colorFor, options)
+    : kind === "scatter" ? scatterChart(rows, colorFor, options) : categoryChart(kind, rows, colorFor, options);
   return (
     <div role="group" aria-label={options.chartTitle || names.get(kind)} style={{ width: "100%", minWidth: 0 }}>
-      {options.chartTitle && <div style={{ textAlign: "center", overflowWrap: "anywhere", fontWeight: 600 }}>
-        {options.chartTitle}
-      </div>}
+      {(options.chartTitle || options.chartSubtitle) && (
+        <div style={{ textAlign: options.titlePosition || "center", overflowWrap: "anywhere", paddingInline: 12 }}>
+          {options.chartTitle && <div style={{ fontWeight: 600 }}>{options.chartTitle}</div>}
+          {options.chartSubtitle && <div style={{ fontSize: 14, color: "#52606d" }}>{options.chartSubtitle}</div>}
+        </div>
+      )}
       <ResponsiveContainer width="100%" height={options.height ?? 420} minWidth={0}>
         {chart}
       </ResponsiveContainer>

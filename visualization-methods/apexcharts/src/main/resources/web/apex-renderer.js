@@ -7,7 +7,7 @@
     ["stacked-area", "area"], ["multi-line", "line"],
   ]);
   const grouped = new Set(["grouped-area", "stacked-area", "multi-line"]);
-  const palette = ["#e66b19", "#368747", "#8054a6", "#c73e57", "#008883", "#ab7400", "#686cc3"];
+  const palette = ["#1976d2", "#e66b19", "#368747", "#8054a6", "#c73e57", "#008883", "#ab7400", "#686cc3"];
   const activeCharts = new WeakMap();
   const htmlCharacters = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 
@@ -30,6 +30,7 @@
     const scatterGroups = [...groups.values()];
     return {
       names: [...groups.keys()].map((name) => name ?? (hasGroups ? "Ungrouped" : "Observations")),
+      colorKeys: [...groups.keys()],
       series: scatterGroups.map((points, index) => ({
         name: `series-${index + 1}`,
         data: points.map(({ x, y }) => ({ x, y })),
@@ -69,6 +70,7 @@
       categories,
       labelById,
       names: radial ? labels : names,
+      colorKeys: radial ? labels : isGrouped ? names : [null],
       series: radial ? values[0] : values.map((data, index) => ({ name: `series-${index + 1}`, data })),
       point(seriesIndex, pointIndex) {
         const index = radial ? seriesIndex : pointIndex;
@@ -98,12 +100,17 @@
 
     const radial = type === "pie" || type === "donut";
     const model = kind === "scatter" ? scatterData(rows) : categoryData(rows, kind);
-    const firstColor = options.seriesColor || "#1976d2";
+    const color = window.OpenLAPChartOptions.colorScale(options, palette);
+    const showXAxis = options.showXAxis !== false;
+    const titlePosition = options.titlePosition || "center";
     const xaxis = {
       type: kind === "scatter" ? "numeric" : "category",
-      title: { text: options.xAxisLabel || undefined },
+      title: { text: showXAxis ? options.xAxisLabel || undefined : undefined },
       tooltip: { enabled: false },
+      axisBorder: { show: showXAxis },
+      axisTicks: { show: showXAxis },
       labels: {
+        show: showXAxis,
         showDuplicates: true,
         formatter: kind === "scatter" ? formatNumber : (id) => model.labelById.get(id) ?? "",
       },
@@ -120,16 +127,25 @@
         zoom: { enabled: false },
         toolbar: { show: false },
       },
-      colors: [firstColor, ...palette.filter((color) => color !== firstColor.toLowerCase())],
+      colors: model.colorKeys.map(color),
       series: model.series,
-      title: { text: options.chartTitle || undefined, align: "center" },
+      title: { text: options.chartTitle || undefined, align: titlePosition },
+      subtitle: { text: options.chartSubtitle || undefined, align: titlePosition },
       legend: {
         show: options.showLegend,
+        position: options.legendPosition || "bottom",
         showForSingleSeries: true,
         formatter: (_, { seriesIndex }) => escapeHtml(model.names[seriesIndex] ?? ""),
       },
       dataLabels: {
         enabled: options.showValues,
+        background: {
+          enabled: Boolean(options.showValuesBackground),
+          backgroundColor: "#ffffff",
+          foreColor: "#212121",
+          borderColor: "#c5c5c5",
+          opacity: 0.95,
+        },
         formatter: radial ? (_, { seriesIndex }) => formatNumber(model.series[seriesIndex]) : formatNumber,
       },
       stroke: { curve: "straight", width: type === "line" || type === "area" ? 2 : 0 },
@@ -148,8 +164,16 @@
     if (radial) {
       setup.labels = model.categories;
     } else {
+      const showYAxis = options.showYAxis !== false;
       setup.xaxis = xaxis;
-      setup.yaxis = { title: { text: options.yAxisLabel || undefined }, labels: { formatter: formatNumber } };
+      setup.yaxis = {
+        show: showYAxis,
+        title: { text: showYAxis ? options.yAxisLabel || undefined : undefined },
+        labels: { show: showYAxis, formatter: formatNumber },
+      };
+      if (kind === "bar" && options.valuesPosition) {
+        setup.plotOptions = { bar: { dataLabels: { position: options.valuesPosition } } };
+      }
       if (type === "area") setup.fill = { type: "solid", opacity: kind === "grouped-area" ? 0.25 : 0.45 };
     }
 

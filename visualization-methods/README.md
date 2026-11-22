@@ -16,6 +16,13 @@ previews, saved charts, and iframe embeds.
 Grouped charts retain gaps where a series has no observation for a category.
 Scatter plots keep separate observations when X values repeat.
 
+The four plugins share the same customization controls. **Elements** includes
+titles and subtitles, alignment, legend position, axis visibility, and value
+labels with optional backgrounds. **Styles** includes chart height, grid lines,
+and colors for individual slices or series where available. Bar charts also let
+you position their labels and use **Filters** to sort by value or show and hide
+categories. Category filters and colors follow exact data labels across reordering.
+
 ## Build and try locally
 
 From the OpenLAP root with JDK 21, Python 3, and Node.js 22 or later with npm, run:
@@ -28,10 +35,10 @@ The build writes one JAR to each library's `target/` directory.
 
 | Directory | JAR |
 | --- | --- |
-| `c3/target/` | `OpenLAP-C3-1.0.0.jar` |
-| `apexcharts/target/` | `OpenLAP-ApexCharts-1.0.0.jar` |
-| `plotly/target/` | `OpenLAP-Plotly-1.0.0.jar` |
-| `recharts/target/` | `OpenLAP-Recharts-1.0.0.jar` |
+| `c3/target/` | `OpenLAP-C3-1.1.0.jar` |
+| `apexcharts/target/` | `OpenLAP-ApexCharts-1.1.0.jar` |
+| `plotly/target/` | `OpenLAP-Plotly-1.1.0.jar` |
+| `recharts/target/` | `OpenLAP-Recharts-1.1.0.jar` |
 
 Keep local copies in the repository's ignored `artifacts/visualizations/` folder.
 
@@ -41,6 +48,10 @@ copy the JARs into `analyticsframework/jars/visualization_methods/` and restart
 the backend. In the Indicator Editor, choose the new library in **Visualization**.
 The bundled libraries have distinct names and chart IDs, so they can be installed
 alongside historical plugins used by existing saved indicators.
+
+Version 1.1.0 uses the current OpenLAP backend and frontend for category filters
+and data colors. Use **Upload new version** to add the updated JAR to an existing
+managed library. Saved charts continue to resolve their original plugin versions.
 
 ## Chart implementations
 
@@ -60,5 +71,5 @@ To check the packaged contracts against the backend:
 
 ```sh
 cd analyticsframework
-./mvnw -Dtest=BundledVisualizationQualification,VisualizationManifestInspectionTest test
+./mvnw -Dtest=BundledVisualizationQualification,VisualizationManifestInspectionTest,VisualizationCustomizationTest test
 ```

@@ -73,16 +73,37 @@ def control(identifier, label, kind, default, group, **details):
     return {"id": identifier, "label": label, "type": kind, "defaultValue": default, "group": group, **details}
 
 
+def choice(identifier, label, default, group, options, **details):
+    return control(identifier, label, "select", default, group,
+                   options=[{"value": value, "label": name} for value, name in options], **details)
+
+
 def customizations(kind):
     controls = [
         control("chartTitle", "Chart title", "text", "", "elements"),
+        control("chartSubtitle", "Chart subtitle", "text", "", "elements"),
+        choice("titlePosition", "Title and subtitle alignment", "center", "elements",
+               [("left", "Left"), ("center", "Center"), ("right", "Right")]),
         control("showLegend", "Show legend", "boolean", True, "elements"),
+        choice("legendPosition", "Legend position", "bottom", "elements",
+               [("top", "Top"), ("right", "Right"), ("bottom", "Bottom"), ("left", "Left")],
+               visibleWhen={"id": "showLegend", "equals": True}),
         control("showValues", "Show values", "boolean", False, "elements"),
+        control("showValuesBackground", "Value label background", "boolean", False, "elements",
+                visibleWhen={"id": "showValues", "equals": True}),
     ]
+    if kind == "bar":
+        controls.append(choice("valuesPosition", "Value label position", "top", "elements",
+                               [("top", "Top"), ("center", "Center"), ("bottom", "Bottom")],
+                               visibleWhen={"id": "showValues", "equals": True}))
     if kind not in SLICES:
         controls.extend((
-            control("xAxisLabel", "X-axis label", "text", "", "elements"),
-            control("yAxisLabel", "Y-axis label", "text", "", "elements"),
+            control("showXAxis", "Show X-axis", "boolean", True, "elements"),
+            control("xAxisLabel", "X-axis label", "text", "", "elements",
+                    visibleWhen={"id": "showXAxis", "equals": True}),
+            control("showYAxis", "Show Y-axis", "boolean", True, "elements"),
+            control("yAxisLabel", "Y-axis label", "text", "", "elements",
+                    visibleWhen={"id": "showYAxis", "equals": True}),
             control("showGrid", "Show grid lines", "boolean", True, "styles"),
         ))
     controls.extend((
@@ -91,6 +112,16 @@ def customizations(kind):
         control("height", "Chart height", "number", 420, "styles", min=320, max=800, step=20,
                 help="Height of the chart in pixels. Its width follows the available space."),
     ))
+    if kind in SLICES:
+        controls.append(control("seriesColors", "Slice colors", "seriesColors", [], "styles", source="category"))
+    elif kind in GROUPED or kind == "scatter":
+        controls.append(control("seriesColors", "Series colors", "seriesColors", [], "styles", source="series"))
+    if kind == "bar":
+        controls.extend((
+            choice("sortingOrder", "Data order", "original", "filters",
+                   [("original", "Original order"), ("asc", "Value ascending"), ("desc", "Value descending")]),
+            control("hiddenCategories", "Visible categories", "categoryFilter", [], "filters"),
+        ))
     return controls
 
 
@@ -136,6 +167,7 @@ def prepare(library, output, version):
         engine_version = build_recharts(output)
         renderer = "recharts-renderer.js"
 
+    asset("chart-options", "chart-options.js", "script", (MODULE / "chart-options.js").read_bytes())
     renderer_source = (output / "web" if library == "recharts"
                        else MODULE / library / "src/main/resources/web") / renderer
     asset("renderer", renderer, "script", renderer_source.read_bytes(), generated=False)

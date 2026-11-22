@@ -17,16 +17,12 @@
     return Number.isFinite(value) ? String(Number(value.toPrecision(8))) : "";
   }
 
-  function colorAt(colors, index) {
-    return colors[index % colors.length];
-  }
-
   function translucent(color, opacity) {
     const components = [1, 3, 5].map(index => Number.parseInt(color.slice(index, index + 2), 16));
     return `rgba(${components.join(",")},${opacity})`;
   }
 
-  function scatterTraces(rows, options, colors) {
+  function scatterTraces(rows, options, colorFor) {
     const groups = new Map();
     const hasGroups = rows.some(row => row.series != null);
     for (const row of rows) {
@@ -40,7 +36,7 @@
       name: plainText(group ?? (hasGroups ? "Ungrouped" : "Observations")),
       x: points.map(point => point.x),
       y: points.map(point => point.y),
-      marker: { color: colorAt(colors, index), size: 8 },
+      marker: { color: colorFor(group, index), size: 8 },
       text: options.showValues ? points.map(point => formatNumber(point.y)) : undefined,
       textposition: "top center",
       customdata: points.map(point => [point.label ? plainText(point.label) + "<br>" : ""]),
@@ -63,14 +59,15 @@
     return { labels, series: [...groups].map(([name, values]) => [name, labels.map(label => values.get(label) ?? null)]) };
   }
 
-  function categoryTrace(name, values, labels, kind, showValues, color) {
+  function categoryTrace(name, values, labels, kind, options, color) {
     const escapedName = plainText(name);
     const bar = kind === "bar";
     const stacked = kind === "stacked-area";
     const area = kind === "area" || kind === "grouped-area" || stacked;
+    const barLabelPosition = { top: "end", center: "middle", bottom: "start" }[options.valuesPosition];
     return {
       type: bar ? "bar" : "scatter",
-      mode: bar ? undefined : showValues ? "lines+markers+text" : area ? "lines" : "lines+markers",
+      mode: bar ? undefined : options.showValues ? "lines+markers+text" : area ? "lines" : "lines+markers",
       name: escapedName,
       // Numeric positions keep repeated display labels as separate observations.
       x: labels.map((_, index) => index),
@@ -81,8 +78,11 @@
       fill: area && !stacked ? "tozeroy" : undefined,
       fillcolor: area ? translucent(color, kind === "grouped-area" ? 0.24 : 0.42) : undefined,
       connectgaps: bar ? undefined : false,
-      text: showValues ? values.map(formatNumber) : undefined,
-      textposition: bar ? showValues ? "auto" : "none" : "top center",
+      text: options.showValues ? values.map(formatNumber) : undefined,
+      ...(bar ? {
+        textposition: options.showValues ? barLabelPosition ? "inside" : "auto" : "none",
+        insidetextanchor: barLabelPosition,
+      } : { textposition: "top center" }),
       customdata: labels.map(label => [plainText(label), escapedName]),
       // Plotly needs a zero baseline where a stacked series has no observation.
       // Keep those positions out of numeric labels and flag them in tooltips.
@@ -91,7 +91,7 @@
     };
   }
 
-  function pieTrace(rows, kind, options, colors) {
+  function pieTrace(rows, kind, options, colorFor) {
     const values = rows.map(row => row.value);
     const total = values.reduce((sum, value) => sum + value, 0);
     if (!Number.isFinite(total) || total <= 0 || values.some(value => value < 0)) {
@@ -116,15 +116,40 @@
     });
     return {
       type: "pie", values, labels, hovertext: originals, sort: false,
-      marker: { colors: rows.map((_, index) => colorAt(colors, index)) },
+      marker: { colors: rows.map((row, index) => colorFor(row.category, index)) },
       hole: kind === "donut" ? 0.48 : 0,
       textinfo: options.showValues ? "value" : "none",
       hovertemplate: "%{hovertext}<br>Value: %{value}<extra></extra>",
     };
   }
 
-  function axis(title, showGrid) {
-    return { title: { text: plainText(title || "") }, showgrid: showGrid, automargin: true, zeroline: false };
+  function axis(title, showGrid, enabled) {
+    return { title: { text: plainText(title || "") }, showgrid: showGrid,
+      visible: enabled !== false, automargin: true, zeroline: false };
+  }
+
+  function legend(position) {
+    const boxes = {
+      top: { orientation: "h", x: 0.5, xanchor: "center", y: 1.02, yanchor: "bottom" },
+      bottom: { orientation: "h", x: 0.5, xanchor: "center", y: 0, yref: "container", yanchor: "bottom" },
+      left: { orientation: "v", x: -0.04, xanchor: "right", y: 0.5, yanchor: "middle" },
+      right: { orientation: "v", x: 1.04, xanchor: "left", y: 0.5, yanchor: "middle" },
+    };
+    return { ...(boxes[position] ?? boxes.bottom), traceorder: "normal" };
+  }
+
+  function heading(options) {
+    const { chartTitle, chartSubtitle } = options;
+    const align = ["left", "right"].includes(options.titlePosition) ? options.titlePosition : "center";
+    return {
+      text: plainText(chartTitle || chartSubtitle || ""),
+      font: chartTitle ? undefined : { size: 14, color: "#52606d" },
+      subtitle: chartTitle && chartSubtitle ? { text: plainText(chartSubtitle), font: { size: 14, color: "#52606d" } } : undefined,
+      x: { left: 0, center: 0.5, right: 1 }[align],
+      xanchor: align,
+      pad: { l: 12, r: 12 },
+      automargin: true,
+    };
   }
 
   async function render(target, kind, rows, options) {
@@ -143,6 +168,7 @@
       throw new Error("The chart needs finite numerical values and valid labels.");
     }
     charts.get(target)?.observer?.disconnect();
+    charts.get(target)?.clearBackgrounds?.();
     if (charts.has(target)) plotly.purge(target);
     if (!rows.length) {
       charts.delete(target);
@@ -153,14 +179,19 @@
     const firstColor = typeof options.seriesColor === "string" && /^#[a-f0-9]{6}$/i.test(options.seriesColor)
       ? options.seriesColor.toLowerCase() : palette[0];
     const colors = [firstColor, ...palette.filter(color => color !== firstColor)];
+    const colorFor = window.OpenLAPChartOptions?.colorScale(options, palette)
+      ?? ((_, index) => colors[index % colors.length]);
     const height = options.height ?? 420;
+    const legendPosition = options.legendPosition || "bottom";
+    const titleMargin = options.chartTitle && options.chartSubtitle ? 72
+      : options.chartTitle || options.chartSubtitle ? 52 : 24;
     const layout = {
-      title: { text: plainText(options.chartTitle || ""), x: 0.5, xanchor: "center", automargin: true },
+      title: heading(options),
       height,
       autosize: true,
-      margin: { t: options.chartTitle ? 52 : 24, r: 18, b: 50, l: radial ? 18 : 52 },
+      margin: { t: titleMargin, r: 18, b: options.showLegend && legendPosition === "bottom" ? 86 : 50, l: radial ? 18 : 52 },
       showlegend: options.showLegend,
-      legend: { orientation: "h", xanchor: "center", x: 0.5, traceorder: "normal" },
+      legend: legend(legendPosition),
       font: { family: "system-ui, sans-serif", color: "#303b48" },
       hovermode: "closest",
       paper_bgcolor: "transparent",
@@ -168,12 +199,12 @@
     };
     let traces;
     if (radial) {
-      traces = [pieTrace(rows, kind, options, colors)];
+      traces = [pieTrace(rows, kind, options, colorFor)];
     } else {
-      layout.xaxis = axis(options.xAxisLabel, options.showGrid);
-      layout.yaxis = axis(options.yAxisLabel, options.showGrid);
+      layout.xaxis = axis(options.xAxisLabel, options.showGrid, options.showXAxis);
+      layout.yaxis = axis(options.yAxisLabel, options.showGrid, options.showYAxis);
       if (scatter) {
-        traces = scatterTraces(rows, options, colors);
+        traces = scatterTraces(rows, options, colorFor);
       } else {
         const { labels, series } = categories(rows, kind, options.yAxisLabel || "Value");
         const tickStride = Math.max(1, Math.ceil(labels.length / 12));
@@ -184,25 +215,31 @@
           tickangle: ticks.length > 6 ? -35 : "auto",
         });
         traces = series.map(([name, values], index) => categoryTrace(name, values, labels, kind,
-          options.showValues, colorAt(colors, index)));
+          options, colorFor(grouped.has(kind) ? name : null, index)));
       }
     }
 
     target.style.width = "100%";
     target.style.height = `${height}px`;
     target.setAttribute("role", "group");
-    target.setAttribute("aria-label", options.chartTitle || `${kind.replaceAll("-", " ")} chart`);
+    target.setAttribute("aria-label", options.chartTitle || options.chartSubtitle || `${kind.replaceAll("-", " ")} chart`);
     const state = {};
     charts.set(target, state);
     await plotly.newPlot(target, traces, layout, {
       displayModeBar: false, displaylogo: false, showLink: false, scrollZoom: false,
       responsive: typeof ResizeObserver === "undefined",
     });
-    if (typeof ResizeObserver !== "undefined" && charts.get(target) === state) {
+    if (charts.get(target) !== state) return;
+    if (options.showValues && options.showValuesBackground) {
+      state.clearBackgrounds = window.OpenLAPChartOptions?.valueBackgrounds(target,
+        ".barlayer text.bartext, .scatterlayer .textpoint text, .pielayer .slicetext text");
+    }
+    if (typeof ResizeObserver !== "undefined") {
       let width = target.clientWidth;
       state.observer = new ResizeObserver(() => {
         if (!target.isConnected) {
           state.observer.disconnect();
+          state.clearBackgrounds?.();
           return;
         }
         const nextWidth = target.clientWidth;

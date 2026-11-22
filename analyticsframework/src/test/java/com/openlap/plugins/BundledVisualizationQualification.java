@@ -11,6 +11,7 @@ import com.openlap.exceptions.UnTransformableData;
 import com.openlap.exceptions.VisualizationCodeGenerationException;
 import com.openlap.plugins.artifacts.PluginKind;
 import com.openlap.plugins.management.PluginInspector;
+import com.openlap.plugins.visualization.VisualizationCustomization;
 import com.openlap.template.VisualizationCodeGenerator;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -18,6 +19,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.jar.JarFile;
 import org.bson.Document;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,7 +39,7 @@ class BundledVisualizationQualification {
   })
   void qualifiesAllChartsAndTheSharedRuntime(String module, String delivery, String library, String renderer)
       throws Exception {
-    Path path = Path.of("../visualization-methods", module, "target", "OpenLAP-" + delivery + "-1.0.0.jar");
+    Path path = Path.of("../visualization-methods", module, "target", "OpenLAP-" + delivery + "-1.1.0.jar");
     assertThat(path).as("Build visualization-methods before qualifying the plugins").isRegularFile();
     var plugin = new PluginInspector().inspect(PluginKind.VISUALIZATION, path);
     assertThat(plugin.getLibrary().getString("name")).isEqualTo(library + " (bundled)");
@@ -53,6 +56,7 @@ class BundledVisualizationQualification {
     try (var loader = new URLClassLoader(new URL[] {path.toUri().toURL()}, getClass().getClassLoader())) {
       for (Document entry : plugin.getEntries()) {
         String kind = descriptor(entry).getString("id");
+        assertControls(descriptor(entry), kind);
         var plot = instance(loader, entry);
         Map<String, List<?>> data = switch (kind) {
           case "scatter" -> Map.of("x", List.of(2, 2), "y", List.of(3, 5), "label", List.of("<A>", "B"),
@@ -70,6 +74,18 @@ class BundledVisualizationQualification {
       var scatter = instance(loader, chart(plugin.getEntries(), "scatter"));
       assertThat(generate(scatter, Map.of("x", List.of(2, 2), "y", List.of(3, 5)), Map.of()))
           .contains("[{\"x\":2.0,\"y\":3.0},{\"x\":2.0,\"y\":5.0}]");
+      var bar = chart(plugin.getEntries(), "bar");
+      var customization = VisualizationCustomization.validate(descriptor(bar), Map.of(
+          "sortingOrder", "asc", "hiddenCategories", List.of("Private category"),
+          "chartSubtitle", "<Subtitle>", "titlePosition", "right", "legendPosition", "left",
+          "showXAxis", false, "showValues", true, "showValuesBackground", true, "valuesPosition", "center"));
+      assertThat(generate(instance(loader, bar), Map.of("category", List.of("High", "Private category", "Low", "Tie"),
+          "value", List.of(8, 5, 2, 2)), customization))
+          .containsSubsequence("\"category\":\"Low\"", "\"category\":\"Tie\"", "\"category\":\"High\"")
+          .contains("\"chartSubtitle\":\"\\u003cSubtitle\\u003e\"", "\"titlePosition\":\"right\"",
+              "\"legendPosition\":\"left\"", "\"showXAxis\":false", "\"showValuesBackground\":true",
+              "\"valuesPosition\":\"center\"")
+          .doesNotContain("Private category");
       var grouped = instance(loader, chart(plugin.getEntries(), "grouped-area"));
       assertThatThrownBy(() -> generate(grouped, Map.of("category", List.of("A", "A"),
           "value", List.of(3, 5), "series", List.of("East", "East")), Map.of()))
@@ -78,6 +94,21 @@ class BundledVisualizationQualification {
       assertThatThrownBy(() -> generate(pie, Map.of("category", List.of("A", "B"), "value", List.of(-3, 5)), Map.of()))
           .isInstanceOf(VisualizationCodeGenerationException.class).hasMessageContaining("non-negative");
     }
+  }
+
+  private static void assertControls(Document descriptor, String kind) {
+    var controls = descriptor.getList("customizations", Document.class).stream()
+        .collect(Collectors.toMap(control -> control.getString("id"), control -> control));
+    assertThat(controls).containsKeys("chartSubtitle", "titlePosition", "legendPosition", "showValuesBackground", "seriesColor");
+    boolean radial = Set.of("pie", "donut").contains(kind);
+    if (radial) assertThat(controls).doesNotContainKeys("showXAxis", "showYAxis");
+    else assertThat(controls).containsKeys("showXAxis", "showYAxis");
+    if (kind.equals("bar")) assertThat(controls).containsKeys("valuesPosition", "sortingOrder", "hiddenCategories");
+    else assertThat(controls).doesNotContainKeys("valuesPosition", "sortingOrder", "hiddenCategories");
+    if (radial || Set.of("scatter", "multi-line", "grouped-area", "stacked-area").contains(kind)) {
+      assertThat(controls.get("seriesColors")).containsEntry("type", "seriesColors")
+          .containsEntry("source", radial ? "category" : "series");
+    } else assertThat(controls).doesNotContainKey("seriesColors");
   }
 
   private static Document descriptor(Document entry) {

@@ -53,4 +53,4 @@ jobs:
           for archive in "${archives[@]}"; do cmp "$RUNNER_TEMP/${archive##*/}" "$archive"; done
       - name: Qualify chart generation and manifest inspection
         working-directory: analyticsframework
-        run: ./mvnw -B -Dtest=BundledVisualizationQualification,VisualizationManifestInspectionTest test
+        run: ./mvnw -B -Dtest=BundledVisualizationQualification,VisualizationManifestInspectionTest,VisualizationCustomizationTest test

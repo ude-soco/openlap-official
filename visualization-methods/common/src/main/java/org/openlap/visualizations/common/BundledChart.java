@@ -9,6 +9,8 @@ import com.openlap.exceptions.VisualizationCodeGenerationException;
 import com.openlap.template.DataTransformer;
 import com.openlap.template.VisualizationCodeGenerator;
 import com.openlap.template.model.ChartConfiguration;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,12 +76,25 @@ public abstract class BundledChart extends VisualizationCodeGenerator {
 
   @Override
   public final String visualizationCode(DataTransformer transformer, Map<String, Object> options) {
+    var supplied = options == null ? Map.<String, Object>of() : options;
     List<?> rows = ((ChartRows) transformer).rows();
     if (kind().usesSlices()) validateSlices(rows);
+    if (kind() == ChartKind.BAR) rows = barRows(rows, supplied);
     String id = "openlap-chart-" + UUID.randomUUID();
     return "<div id=\"" + id + "\"></div><script>window." + renderer()
         + ".render(document.getElementById(" + JSON.toJson(id) + "),"
-        + JSON.toJson(kind().id) + "," + JSON.toJson(rows) + "," + JSON.toJson(controls(options)) + ");</script>";
+        + JSON.toJson(kind().id) + "," + JSON.toJson(rows) + "," + JSON.toJson(controls(supplied)) + ");</script>";
+  }
+
+  private static List<ChartRows.CategoryValue> barRows(List<?> rows, Map<String, Object> options) {
+    var hidden = new HashSet<>(entries(options, "hiddenCategories"));
+    var visible = rows.stream().map(ChartRows.CategoryValue.class::cast).filter(row -> !hidden.contains(row.category()));
+    var byValue = Comparator.comparingDouble(ChartRows.CategoryValue::value);
+    return switch (choice(options, "sortingOrder", "original", "asc", "desc")) {
+      case "asc" -> visible.sorted(byValue).toList();
+      case "desc" -> visible.sorted(byValue.reversed()).toList();
+      default -> visible.toList();
+    };
   }
 
   private static void validateSlices(List<?> rows) {
@@ -94,14 +109,20 @@ public abstract class BundledChart extends VisualizationCodeGenerator {
     }
   }
 
-  private Map<String, Object> controls(Map<String, Object> input) {
-    var options = input == null ? Map.<String, Object>of() : input;
+  private Map<String, Object> controls(Map<String, Object> options) {
     var result = new LinkedHashMap<String, Object>();
     result.put("chartTitle", text(options, "chartTitle", ""));
+    result.put("chartSubtitle", text(options, "chartSubtitle", ""));
+    result.put("titlePosition", choice(options, "titlePosition", "center", "left", "right"));
     result.put("showLegend", flag(options, "showLegend", true));
+    result.put("legendPosition", choice(options, "legendPosition", "bottom", "top", "left", "right"));
     result.put("showValues", flag(options, "showValues", false));
+    result.put("showValuesBackground", flag(options, "showValuesBackground", false));
+    if (kind() == ChartKind.BAR) result.put("valuesPosition", choice(options, "valuesPosition", "top", "center", "bottom"));
     if (!kind().usesSlices()) {
+      result.put("showXAxis", flag(options, "showXAxis", true));
       result.put("xAxisLabel", text(options, "xAxisLabel", ""));
+      result.put("showYAxis", flag(options, "showYAxis", true));
       result.put("yAxisLabel", text(options, "yAxisLabel", ""));
       result.put("showGrid", flag(options, "showGrid", true));
     }
@@ -110,6 +131,9 @@ public abstract class BundledChart extends VisualizationCodeGenerator {
       throw new VisualizationCodeGenerationException("Choose a six-digit hexadecimal color.");
     }
     result.put("seriesColor", color);
+    if (kind().usesSlices() || kind().usesSeries() || kind() == ChartKind.SCATTER) {
+      result.put("seriesColors", entries(options, "seriesColors"));
+    }
     Object height = options.getOrDefault("height", 420);
     if (!(height instanceof Number number) || !Double.isFinite(number.doubleValue())
         || number.doubleValue() < 320 || number.doubleValue() > 800) {
@@ -117,6 +141,18 @@ public abstract class BundledChart extends VisualizationCodeGenerator {
     }
     result.put("height", height);
     return result;
+  }
+
+  private static List<?> entries(Map<String, Object> options, String key) {
+    Object value = options.getOrDefault(key, List.of());
+    if (value instanceof List<?> entries && entries.size() <= 2_000) return entries;
+    throw new VisualizationCodeGenerationException("Choose valid chart options for " + key + ".");
+  }
+
+  private static String choice(Map<String, Object> options, String key, String fallback, String... choices) {
+    String value = text(options, key, fallback);
+    if (fallback.equals(value) || List.of(choices).contains(value)) return value;
+    throw new VisualizationCodeGenerationException("Choose an available chart option for " + key + ".");
   }
 
   private static String text(Map<String, Object> options, String key, String fallback) {
