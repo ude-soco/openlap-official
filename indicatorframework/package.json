@@ -39,7 +39,7 @@
     "@mui/x-data-grid": "^9.18.0",
     "@mui/x-date-pickers": "^9.18.0",
     "@tiptap/pm": "^3.34.0",
-    "@tiptap/react": "^3.34.0",
+    "@tiptap/react": "^3.35.0",
     "@tiptap/starter-kit": "^3.34.0",
     "apexcharts": "^8.9.1",
     "axios": "^1.21.1",
