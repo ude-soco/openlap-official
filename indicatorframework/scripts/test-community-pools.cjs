@@ -160,6 +160,22 @@ async function screenshot(page, name) {
     await page.getByRole("heading", { name: "Indicator Pool", exact: true }).waitFor();
     await until(() => page.getByRole("button", { name: "View Material views", exact: true }).count(), "Pool loaded");
     assert.equal(await page.getByText(/private creator|creator@example|original-owner-id/).count(), 0);
+    const queryInput = page.getByRole("textbox", { name: "Search indicators", exact: true });
+    const searchButton = page.getByRole("button", { name: "Search", exact: true });
+    const clearSearch = page.getByRole("button", { name: "Clear search", exact: true });
+    const searchArea = page.getByRole("search", { name: "Community indicator search" });
+    const typeFilter = page.getByRole("combobox", { name: /^Indicator type/ });
+    await queryInput.focus();
+    const queryLabel = await searchArea.getByText("Search indicators", { exact: true }).boundingBox();
+    const [inputBox, submitBox, filterBox, searchBox] = await Promise.all(
+      [queryInput, searchButton, typeFilter, searchArea].map((control) => control.boundingBox()));
+    assert.ok(queryLabel.y + queryLabel.height <= inputBox.y + 1, "The persistent label sits above the empty query field");
+    assert.ok(inputBox.width > searchBox.width / 2, "The query gets most of the desktop search row");
+    assert.ok(submitBox.x >= inputBox.x + inputBox.width - 1
+      && Math.abs((inputBox.y + inputBox.height / 2) - (submitBox.y + submitBox.height / 2)) < 3,
+      "The Search action sits beside the query on the same baseline");
+    assert.ok(filterBox.y >= submitBox.y + submitBox.height, "Filters start below the primary search row");
+    assert.equal(await searchButton.isDisabled(), true);
     await noOverflow(page); await screenshot(page, "indicator-pool-desktop.png");
     await page.getByRole("button", { name: "Go to next page", exact: true }).click();
     await until(() => f.calls.some((call) => call.endpoint === "v1/community/indicators" && call.query.page === "1"), "Pagination sent to server");
@@ -187,11 +203,12 @@ async function screenshot(page, name) {
     assert.equal(f.calls.at(-1).body.type, "COMPOSITE");
     await choose(page, "Indicator type", "All indicator types");
     await page.getByRole("button", { name: "Basic search", exact: true }).click();
-    await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("not a matching item");
-    await page.getByRole("button", { name: "Search", exact: true }).click();
+    await queryInput.fill("not a matching item");
+    assert.equal(await clearSearch.isVisible(), true, "Typed text can be cleared before it is submitted");
+    await queryInput.press("Enter");
     await page.getByText("No matching community indicators", { exact: true }).waitFor();
     await noOverflow(page);
-    await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("Material views");
+    await queryInput.fill("Material views");
     f.listPlans.push({ fallback: true });
     await page.getByRole("button", { name: "Search", exact: true }).click();
     await page.getByText("Semantic search is unavailable. Showing matches by indicator name.", { exact: true }).waitFor();
@@ -224,8 +241,11 @@ async function screenshot(page, name) {
     await closeDetail(page);
     await page.getByText("Saved to dashboard", { exact: true }).waitFor();
 
-    await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("");
+    await clearSearch.focus();
+    await clearSearch.press("Enter");
     await until(async () => await page.getByRole("button", { name: "View Compare learning activities", exact: true }).count() === 1, "Search cleared");
+    assert.equal(await queryInput.inputValue(), "");
+    assert.equal(await queryInput.evaluate((input) => input === document.activeElement), true, "Clearing returns focus to the query");
     f.examplePlans.push({ result: { status: "EXAMPLE_UNAVAILABLE", message: "This sample is temporarily unavailable." } });
     f.previewPlans.push({ result: { status: "NO_DATA", message: "No matching data for your user." } });
     await page.getByRole("button", { name: "View Compare learning activities", exact: true }).click();
@@ -305,6 +325,16 @@ async function screenshot(page, name) {
     await screenshot(page, "indicator-community-preview.png");
     await closeDetail(page);
     await page.setViewportSize({ width: 390, height: 844 }); await noOverflow(page);
+    const mobileBoxes = await Promise.all([queryInput, searchButton, page.getByRole("button", { name: "Advanced search" }), typeFilter]
+      .map((control) => control.boundingBox()));
+    for (const bounds of mobileBoxes) {
+      assert.ok(bounds && bounds.width > 0 && bounds.x >= 0 && bounds.x + bounds.width <= 391,
+        "Search actions and filters fit the mobile viewport");
+    }
+    const [mobileInput, mobileSearch, mobileAdvanced, mobileFilter] = mobileBoxes;
+    assert.ok(mobileSearch.y >= mobileInput.y + mobileInput.height && mobileAdvanced.y >= mobileInput.y + mobileInput.height,
+      "Narrow screens give the query a full row above both actions");
+    assert.ok(mobileFilter.y >= mobileSearch.y + mobileSearch.height, "Mobile filters follow the search actions");
     await screenshot(page, "indicator-pool-mobile.png");
     await openSample("Material views", "basic"); await screenshot(page, "indicator-community-sample-mobile.png"); await tryPersonal();
     await page.getByText("Your data is compatible. Ready to save.", { exact: true }).waitFor();
