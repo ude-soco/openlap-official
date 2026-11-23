@@ -14,7 +14,7 @@ run from `analyticsframework` unless another directory is shown.
   persisted data, existing clients and published plugin APIs keep their JSON contracts.
   Both Jackson families use aligned, patched BOMs.
 - Historical C3 and ApexCharts plugins use `javafx.util.Pair` and the retained
-  `Customization` compatibility class. The backend includes `javafx-base` 21.0.13
+  `Customization` compatibility class. The backend includes `javafx-base` 21.0.13.1
   for that binary API. CI exercises the historical generators against the packaged app.
 - Both Mongo templates preserve legacy string storage for decimal and large-integer
   values and annotation-based index creation. Configuration changes do not convert

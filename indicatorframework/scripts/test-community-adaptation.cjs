@@ -330,16 +330,16 @@ async function until(check, label) { const end = Date.now() + 12000; while (!awa
       await page.getByRole("table", { name: "Source indicators to adapt", exact: true }).waitFor();
       await page.getByRole("button", { name: "Edit source", exact: true }).first().click();
       await page.getByRole("heading", { name: "Edit source selections", exact: true }).waitFor();
-      assert.equal(await editorNavigation.navigator(page).count(), 1, "Only the embedded Basic navigator is visible while editing a complex source");
       await editorNavigation.assertLanding(page, "Dataset", "dataset");
+      assert.equal(await editorNavigation.navigator(page).count(), 1, "Only the embedded Basic navigator is visible while editing a complex source");
       await editorNavigation.chooseStep(page, "Filters", "filters");
       await until(() => page.getByRole("radio", { name: "Use only my data", exact: true }).isChecked(), "New complex source defaults to only-my-data");
       assert.equal(await page.getByRole("radio", { name: "Use all except my data", exact: true }).isEnabled(), true);
       assert.equal(await page.getByRole("radio", { name: "Use data of all users", exact: true }).isEnabled(), true);
       await page.getByRole("radio", { name: "Use data of all users", exact: true }).click();
       await page.getByRole("button", { name: "Back to sources", exact: true }).click();
-      assert.equal(await editorNavigation.navigator(page).count(), 1, "Returning to complex sources restores one parent navigator");
       await editorNavigation.assertLanding(page, "Select indicators", "sources");
+      assert.equal(await editorNavigation.navigator(page).count(), 1, "Returning to complex sources restores one parent navigator");
       await until(() => Promise.resolve(drafts.get(id).configuration.sourceDrafts["source-one"].filters.selectedUserFilter === "INCLUDE_ME"),
         "Complex source scope autosaves in its parent draft");
       await page.getByText("Draft saved", { exact: true }).waitFor();
