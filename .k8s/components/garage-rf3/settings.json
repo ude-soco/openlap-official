@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "installationId": "",
+  "statefulSetName": "garage-rf3",
+  "rpcServiceName": "garage-rf3-rpc",
+  "namespace": "",
+  "clusterDomain": "cluster.local",
+  "bucket": "configure-private-bucket",
+  "region": "garage",
+  "capacityBytes": 0,
+  "zones": ["", "", ""],
+  "expectedNodeIds": [],
+  "expectedBucketId": ""
+}

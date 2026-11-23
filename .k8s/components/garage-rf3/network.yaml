@@ -1,0 +1,76 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: garage-rf3-nodes
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: garage-rf3
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/component: garage-rf3
+    ports:
+    - protocol: TCP
+      port: 3901
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/component: garage-rf3-bootstrap
+    ports:
+    - protocol: TCP
+      port: 3903
+  - from:
+    - podSelector:
+        matchLabels:
+          openlap-plugin-storage-client: "true"
+    ports:
+    - protocol: TCP
+      port: 3900
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/component: garage-rf3
+    ports:
+    - protocol: TCP
+      port: 3901
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: garage-rf3-bootstrap
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: garage-rf3-bootstrap
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/component: garage-rf3
+    ports:
+    - protocol: TCP
+      port: 3903
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
