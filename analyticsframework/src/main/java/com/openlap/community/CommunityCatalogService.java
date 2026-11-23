@@ -61,9 +61,12 @@ public class CommunityCatalogService {
     long total = mongo.count(query, collection(kind));
     query.fields().include("communityId").include("communityMetadata");
     List<Document> rows = mongo.find(query.with(pageable), Document.class, collection(kind));
+    return new PageImpl<>(publicRows(request, kind, rows), pageable, total);
+  }
+  List<Map<String, Object>> publicRows(HttpServletRequest request, String kind, List<Document> rows) {
     User owner = tokens.getUserFromToken(request);
     Map<String, String> copied = copiedIds(kind, rows.stream().map(row -> row.getString("communityId")).toList(), owner.getId());
-    return new PageImpl<>(rows.stream().map(row -> row(row, copied.get(row.getString("communityId")))).toList(), pageable, total);
+    return rows.stream().map(row -> row(row, copied.get(row.getString("communityId")))).toList();
   }
   private static void addFilter(List<Criteria> terms, String key, String value) {
     if (value != null && !value.isBlank()) terms.add(Criteria.where("communityMetadata." + key).is(limit(value, 200)));
