@@ -23,7 +23,7 @@
         <!-- Keep both Jackson families aligned and above the October 2026 fix. -->
         <jackson-2-bom.version>2.21.8</jackson-2-bom.version>
         <jackson-bom.version>3.1.8</jackson-bom.version>
-        <aws.sdk.version>2.59.0</aws.sdk.version>
+        <aws.sdk.version>2.59.5</aws.sdk.version>
         <!-- Spring AI 2.0 targets Boot 4.1. The CPU artifacts keep inference offline. -->
         <spring-ai.version>2.0.3</spring-ai.version>
         <pytorch.version>2.7.1</pytorch.version>
@@ -241,7 +241,7 @@
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-base</artifactId>
-            <version>21.0.13</version>
+            <version>21.0.13.1</version>
         </dependency>
         <dependency>
             <groupId>org.javassist</groupId>
