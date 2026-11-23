@@ -87,7 +87,7 @@ class CommunityVectorSearch {
       }
       // Only a complete scan can establish that an old search revision is obsolete.
       store.remove(obsolete);
-      if (!ready && queryable) LOG.info("Community indicator vector index is available.");
+      if (!ready && queryable) LOG.info("Community indicator semantic search is ready.");
       ready = queryable;
       failed = false;
     } catch (RuntimeException unavailable) {

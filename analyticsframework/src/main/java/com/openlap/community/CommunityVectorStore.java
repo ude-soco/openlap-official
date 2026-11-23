@@ -31,9 +31,16 @@ class CommunityVectorStore {
   private final MongoClient client;
   private final MongoDatabase database;
   private final MongoCollection<Document> vectors;
+  private final boolean aggregateCosine;
 
   CommunityVectorStore(@Qualifier("primaryMongoTemplate") MongoTemplate primary,
-      @Value("${openlap.semantic-search.mongodb-uri:}") String uri) {
+      @Value("${openlap.semantic-search.mongodb-uri:}") String uri,
+      @Value("${openlap.semantic-search.engine:vector-index}") String engine) {
+    aggregateCosine = switch (engine) {
+      case "mongo-aggregation" -> true;
+      case "vector-index" -> false;
+      default -> throw new IllegalArgumentException("Select vector-index or mongo-aggregation for the semantic search engine.");
+    };
     if (uri.isBlank()) {
       client = null;
       database = primary.getDb();
@@ -54,6 +61,10 @@ class CommunityVectorStore {
     if (database.listCollectionNames().filter(new Document("name", COLLECTION)).first() == null) {
       try { database.createCollection(COLLECTION); }
       catch (MongoCommandException race) { if (race.getErrorCode() != 48) throw race; }
+    }
+    if (aggregateCosine) {
+      vectors.createIndex(new Document("version", 1).append("type", 1).append("method", 1).append("chart", 1));
+      return true;
     }
     var status = vectors.aggregate(List.of(new Document("$listSearchIndexes", new Document("name", INDEX)))).first();
     if (status != null) return Boolean.TRUE.equals(status.getBoolean("queryable"));
@@ -96,15 +107,39 @@ class CommunityVectorStore {
   record Hit(String id, String fingerprint, double score) {}
 
   List<Hit> rank(float[] vector, CommunitySearchRequest request, int limit) {
+    var pipeline = aggregateCosine ? aggregationRanking(vector, request, limit) : indexedRanking(vector, request, limit);
+    var result = new ArrayList<Hit>();
+    try (var rows = vectors.aggregate(pipeline).iterator()) {
+      while (rows.hasNext()) {
+        if (result.size() == limit) return List.of(); // Extra derived revisions: refresh before serving this page.
+        var row = rows.next();
+        result.add(new Hit(row.getString("communityId"), row.getString("fingerprint"), row.getDouble("score")));
+      }
+    }
+    return result;
+  }
+
+  private static List<Document> indexedRanking(float[] vector, CommunitySearchRequest request, int limit) {
     var options = new Document("index", INDEX).append("path", "embedding").append("queryVector", numbers(vector))
         .append("exact", true).append("limit", limit).append("filter", vectorFilter(request));
     var project = new Document("_id", 0).append("communityId", 1).append("fingerprint", 1)
         .append("score", new Document("$meta", "vectorSearchScore"));
-    var result = new ArrayList<Hit>();
-    for (var row : vectors.aggregate(List.of(new Document("$vectorSearch", options), new Document("$project", project)))) {
-      result.add(new Hit(row.getString("communityId"), row.getString("fingerprint"), row.getDouble("score")));
-    }
-    return result;
+    return List.of(new Document("$vectorSearch", options), new Document("$project", project));
+  }
+
+  private static List<Document> aggregationRanking(float[] vector, CommunitySearchRequest request, int limit) {
+    // Both vectors are unit length. Their dot product is cosine similarity; MongoDB Vector Search
+    // reports this score on a 0..1 scale. $zip and $reduce also work on ordinary MongoDB 4.4.
+    var pairs = new Document("$zip", new Document("inputs", List.of("$embedding", numbers(vector))));
+    var product = new Document("$multiply", List.of(
+        new Document("$arrayElemAt", List.of("$$this", 0)), new Document("$arrayElemAt", List.of("$$this", 1))));
+    var cosine = new Document("$reduce", new Document("input", pairs).append("initialValue", 0.0)
+        .append("in", new Document("$add", List.of("$$value", product))));
+    var score = new Document("$divide", List.of(new Document("$add", List.of(1, cosine)), 2));
+    // Apply the budget *before* scoring. limit is the bounded number of eligible catalog entries.
+    return List.of(new Document("$match", vectorFilter(request)), new Document("$limit", limit + 1),
+        new Document("$match", new Document("embedding", new Document("$size", CommunitySearchEncoder.DIMENSIONS))),
+        new Document("$project", new Document("_id", 0).append("communityId", 1).append("fingerprint", 1).append("score", score)));
   }
 
   static Document vectorFilter(CommunitySearchRequest request) {
