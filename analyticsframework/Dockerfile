@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/root/.m2 \
   mvn "$@" package -DfinalName=${PACKAGE_NAME}
 
 
-FROM amazoncorretto:25.0.5@sha256:019e58087ba4c114c817094f70d3d522bcd13e80ce9edbba6e1c67e5700bad63
+FROM amazoncorretto:25.0.5@sha256:288b5647146a21027688b52cc23d802ee6badb6f28632111b606b79262d9fc5f
 WORKDIR /opt/app
 
 ARG PACKAGE_NAME=analyticsframework
