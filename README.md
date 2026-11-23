@@ -62,7 +62,7 @@ flowchart LR
 | Component | Current stack |
 | --- | --- |
 | [`indicatorframework/`](indicatorframework/) | React 19, MUI 9, MUI X 9, Vite 8, React Router 7, ApexCharts 8, Tiptap 3 |
-| [`analyticsframework/`](analyticsframework/) | Spring Boot 4.1, Spring Security 7, Spring Data MongoDB; REST API under `/api` |
+| [`analyticsframework/`](analyticsframework/) | Spring Boot 4.2, Spring Security 7, Spring Data MongoDB. REST API under `/api` |
 | Java and build | Java 17 minimum; Java 25 LTS qualified. Maven 3.10 wrapper included. |
 | JavaScript runtime | Node 22 locally and in frontend regression CI, selected by `.nvmrc`; the frontend container build uses Node 26.13. |
 | Data and plugins | Separate OpenLAP and Learning Locker MongoDB databases; local JARs or configured S3-compatible storage. |

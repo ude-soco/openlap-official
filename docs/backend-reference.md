@@ -7,7 +7,7 @@ run from `analyticsframework` unless another directory is shown.
 
 ## Runtime and compatibility
 
-- Spring Boot 4.1 exposes the REST API under `/api` on port `8090` by default.
+- Spring Boot 4.2 exposes the REST API under `/api` on port `8090` by default.
 - The Maven wrapper selects Maven 3.10.0. The application compiles to Java 17;
   the qualified container toolchain uses Java 25 LTS.
 - HTTP and WebSocket converters retain the Jackson 2 compatibility bridge so
