@@ -35,6 +35,7 @@ public class CommunityVectorSearchTest {
     var query = new CommunitySearchRequest("advanced", "old basic search", " Monitor ", "activity weekly", "", "visit frequency",
         null, null, null, null, null, null, null);
     query.validate();
+    assertThat(query.toString()).doesNotContain("activity weekly", "old basic search", "visit frequency");
     assertThat(query.embeddingText()).isEqualTo("Goal: Monitor activity weekly\nIndicator: visit frequency");
     assertThat(query.fallbackText()).isEqualTo("visit frequency");
     assertThatThrownBy(() -> new CommunitySearchRequest("advanced", "unused", "Monitor", "", null, null,

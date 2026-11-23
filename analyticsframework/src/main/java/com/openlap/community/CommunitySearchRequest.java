@@ -50,6 +50,11 @@ public record CommunitySearchRequest(String mode, String text, String goalVerb, 
     return question.isEmpty() ? goalDescription : question;
   }
 
+  // Spring MVC uses toString() when logging decoded request bodies at DEBUG.
+  @Override public String toString() {
+    return "CommunitySearchRequest";
+  }
+
   private static String clean(String value, int limit) {
     if (value == null) return "";
     if (value.length() > limit) throw new ValidationException("The search text is too long. Shorten it and try again.");
