@@ -1,11 +1,14 @@
 package com.openlap.community;
 
 import jakarta.annotation.PreDestroy;
+import org.springframework.ai.transformers.ResourceCacheService;
 import org.springframework.ai.transformers.TransformersEmbeddingModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -18,12 +21,15 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.Map;
+import java.util.Objects;
 
 /** The same pinned E5 model encodes public indicator fields and users' search queries. */
 @Component
 @ConditionalOnClass(name = "org.springframework.ai.transformers.TransformersEmbeddingModel")
 @ConditionalOnProperty(name = "openlap.semantic-search.enabled", havingValue = "true")
 class E5CommunitySearchEncoder implements CommunitySearchEncoder {
+    private static final String E5_SOURCE = "https://huggingface.co/intfloat/e5-small-v2/resolve/"
+            + "ffb93f3bd4047442299a41ebb6fa998a38507c52/";
     private static final String MODEL_SHA = "4b8205be2a3c5fc53c6534d76a2012064f7309c162b806f2889c6ec8ec4fdcba";
     private static final String TOKENIZER_SHA = "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66";
 
@@ -66,9 +72,8 @@ class E5CommunitySearchEncoder implements CommunitySearchEncoder {
         if (model != null) return model;
         TransformersEmbeddingModel candidate = new TransformersEmbeddingModel();
         try {
-            candidate.setModelResource(verified("model.onnx", MODEL_SHA));
-            candidate.setTokenizerResource(verified("tokenizer.json", TOKENIZER_SHA));
-            candidate.setDisableCaching(true);
+            candidate.setModelResource(verifiedResource(directory, new UrlResource(E5_SOURCE + "model.onnx"), MODEL_SHA));
+            candidate.setTokenizerResource(verifiedResource(directory, new UrlResource(E5_SOURCE + "tokenizer.json"), TOKENIZER_SHA));
             candidate.setResourceCacheDirectory(directory.toString());
             candidate.setTokenizerOptions(Map.of("truncation", "true", "maxLength", "512", "padding", "false"));
             candidate.afterPropertiesSet();
@@ -80,20 +85,27 @@ class E5CommunitySearchEncoder implements CommunitySearchEncoder {
             } catch (Exception closeFailure) {
                 failure.addSuppressed(closeFailure);
             }
-            throw new IllegalStateException("Local E5 model is unavailable. Run scripts/prepare-semantic-model.py.", failure);
+            throw new IllegalStateException("Local E5 model is unavailable. Check the model cache and connectivity to Hugging Face.", failure);
         }
     }
 
-    private FileSystemResource verified(String name, String expected) throws IOException, NoSuchAlgorithmException {
-        Path path = directory.resolve(name);
+    static Resource verifiedResource(Path directory, Resource remote, String expected) throws IOException, NoSuchAlgorithmException {
+        String name = Objects.requireNonNull(remote.getFilename());
+        Path local = directory.resolve(name);
+        // Earlier installations and pre-provisioned offline deployments supply these two files directly.
+        boolean provided = Files.isRegularFile(local);
+        Resource file = provided ? new FileSystemResource(local)
+                : new ResourceCacheService(directory.toFile()).getCachedResource(remote);
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        try (InputStream input = new DigestInputStream(Files.newInputStream(path), digest)) {
+        try (InputStream input = new DigestInputStream(file.getInputStream(), digest)) {
             input.transferTo(OutputStream.nullOutputStream());
         }
         if (!expected.equals(HexFormat.of().formatHex(digest.digest()))) {
+            // An incomplete cache write can be retried by the indexer. Never remove a supplied file.
+            if (!provided) Files.deleteIfExists(file.getFile().toPath());
             throw new IOException("Checksum mismatch for " + name);
         }
-        return new FileSystemResource(path);
+        return file;
     }
 
     @PreDestroy

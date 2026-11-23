@@ -6,13 +6,9 @@ Open **Advanced search** to choose a goal verb and describe your goal, question 
 
 ## Run semantic search locally
 
-1. Follow the [local installation guide](../README.md#local-installation) for the application databases, backend and frontend. From the repository root, download the pinned English E5 model and tokenizer. The helper verifies both checksums and stores the files under the Git-ignored `artifacts/semantic-search/e5-small-v2` directory.
+Start with the [local installation guide](../README.md#local-installation) for the application databases, backend and frontend.
 
-   ```sh
-   python3 scripts/prepare-semantic-model.py
-   ```
-
-2. Use a MongoDB instance that supports `$vectorSearch` and search-index management. To try this alongside the ordinary local databases, start a dedicated development instance with fresh volumes.
+1. Use a MongoDB instance that supports `$vectorSearch` and search-index management. To try this alongside the ordinary local databases, start a dedicated development instance with fresh volumes.
 
    ```sh
    docker run -d --name openlap-search-mongo \
@@ -24,7 +20,7 @@ Open **Advanced search** to choose a goal verb and describe your goal, question 
 
    If the primary MongoDB already supports vector search, you can use it directly by omitting `openlap.semantic-search.mongodb-uri` in the next step.
 
-3. Start the backend with the semantic-search Maven profile and the runtime flag. This example uses the application databases from the local installation guide. Adjust those settings for your own installation.
+2. Start the backend with the semantic-search Maven profile and the runtime flag. This example uses the application databases from the local installation guide. Adjust those settings for your own installation.
 
    ```sh
    cd analyticsframework
@@ -38,7 +34,11 @@ Open **Advanced search** to choose a goal verb and describe your goal, question 
 
    Start the frontend as usual. Once the backend logs `Community indicator vector index is available.`, try a search against completed indicators in your pool. The API reports `searchMode: semantic` for a ranked response. If the model or index is unavailable, the pool labels the results as name matches. While browsing with no query, the pool uses the ordinary catalog.
 
-For a container build, pass `--build-arg SEMANTIC_SEARCH=true` to the backend Dockerfile. Mount the verified model directory read-only, and point `openlap.semantic-search.model-directory` at it. Set the same runtime properties through Spring configuration. The model runs locally and requires no hosted embedding account. The database identity needs permission to create the derived collection, maintain its documents, list and create its search index, and query it.
+The first time indexing or a search needs an embedding, Spring AI downloads the pinned English `intfloat/e5-small-v2` model and tokenizer from Hugging Face. Allow outbound HTTPS for that first download. OpenLAP verifies both checksums, then computes embeddings locally. Later runs can reuse the files offline.
+
+When started from `analyticsframework/`, the backend uses `../artifacts/semantic-search/e5-small-v2` as its cache. To use another location, set `openlap.semantic-search.model-directory`. Previously downloaded `model.onnx` and `tokenizer.json` files in that directory are also recognized.
+
+For a container build, pass `--build-arg SEMANTIC_SEARCH=true` to the backend Dockerfile. Mount a persistent volume, set `openlap.semantic-search.model-directory` to its mount point, and allow writes for the first download. The database identity needs permission to create the derived collection, maintain its documents, list and create its search index, and query it.
 
 ## How results are ranked
 
@@ -57,7 +57,7 @@ Basic search encodes the entered text once. Advanced search combines the supplie
 
 The derived collection is `community_indicator_vectors_v1` and its vector index is `community_semantic_v1`. The backend periodically reconciles new, edited and removed indicators (every five minutes by default). The source catalog governs eligibility on every request. If the index cannot supply a complete filtered result or a displayed record has changed, that request falls back to name search. The default limit for exact ranking is 10,000 filtered candidates. Operators can tune `openlap.semantic-search.refresh-seconds` and `openlap.semantic-search.max-candidates` for their pool.
 
-To run the offline encoder and ranking tests with the downloaded assets, run this from `analyticsframework/`.
+To test the encoder and ranking with the real model, run this from `analyticsframework/`. The tests use the same download and cache behavior as the backend.
 
 ```sh
 DJL_OFFLINE=true ./mvnw -Psemantic-search \
