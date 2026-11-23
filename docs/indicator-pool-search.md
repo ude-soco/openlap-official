@@ -38,7 +38,9 @@ The first time indexing or a search needs an embedding, Spring AI downloads the 
 
 When started from `analyticsframework/`, the backend uses `../artifacts/semantic-search/e5-small-v2` as its cache. To use another location, set `openlap.semantic-search.model-directory`. Previously downloaded `model.onnx` and `tokenizer.json` files in that directory are also recognized.
 
-For a container build, pass `--build-arg SEMANTIC_SEARCH=true` to the backend Dockerfile. Mount a persistent volume, set `openlap.semantic-search.model-directory` to its mount point, and allow writes for the first download. The database identity needs permission to create the derived collection, maintain its documents, list and create its search index, and query it.
+The backend image published from `main` with the `edge` tag includes the semantic-search runtime, model and tokenizer. Pull requests build and check the same variant. For a local container build, pass `--build-arg SEMANTIC_SEARCH=true` to the backend Dockerfile. The build verifies the pinned files and runs an offline ranking check on the packaged backend. The model card and MIT license are included under `/opt/models/e5-small-v2`.
+
+To enable semantic search in a deployment, set `openlap.semantic-search.enabled=true` and configure a vector-capable MongoDB connection. The bundled model works offline on each backend replica. The database identity needs permission to create the derived collection, maintain its documents, list and create its search index, and query it.
 
 ## How results are ranked
 
