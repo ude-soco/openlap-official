@@ -13,8 +13,9 @@ import PageHeader from "../page-header/page-header.jsx";
 import { WorkspaceDashboard, WorkspaceTable } from "../workspace-dashboard/workspace-dashboard.jsx";
 import { MEDIUM, WIDE, dateColumn, detailColumn, actionColumn, dashboardDateTime }
   from "../workspace-dashboard/workspace-dashboard-styles.js";
-import { communityError, communityTypeName, requestCommunityFilters, requestCommunityPool } from "./community-pool-api.js";
+import { communityError, communityTypeName, requestCommunityFilters, requestCommunityPool, searchCommunityIndicators } from "./community-pool-api.js";
 import CommunityPoolDetail from "./community-pool-detail.jsx";
+import IndicatorPoolSearch from "./indicator-pool-search.jsx";
 
 const SORT_FIELDS = { name: "Name", updatedAt: "Last updated" };
 const EMPTY_FILTERS = { types: [], methods: [], charts: [], goals: [] };
@@ -22,8 +23,10 @@ const EMPTY_FILTERS = { types: [], methods: [], charts: [], goals: [] };
 export default function CommunityPoolPage({ kind }) {
   const { api } = useContext(AuthContext);
   const isc = kind === "isc", title = isc ? "ISC Pool" : "Indicator Pool";
-  const [query, setQuery] = useState({ page: 0, size: 10, search: "", sortBy: "updatedAt", sortDirection: "desc", type: "", method: "", chart: "", goal: "" });
+  const [query, setQuery] = useState({ page: 0, size: 10, search: "", criteria: null, sortBy: "updatedAt", sortDirection: "desc", type: "", method: "", chart: "", goal: "" });
   const [search, setSearch] = useState("");
+  const [searchFormKey, setSearchFormKey] = useState(0);
+  const [nameFallback, setNameFallback] = useState(false);
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
@@ -33,9 +36,10 @@ export default function CommunityPoolPage({ kind }) {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
+    if (!isc) return;
     const timer = setTimeout(() => setQuery((previous) => previous.search === search ? previous : { ...previous, page: 0, search }), 300);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [isc, search]);
   useEffect(() => {
     const controller = new AbortController(); let current = true;
     requestCommunityFilters(api, kind, controller.signal).then((result) => { if (current) setFilters({ ...EMPTY_FILTERS, ...result }); })
@@ -44,10 +48,15 @@ export default function CommunityPoolPage({ kind }) {
   }, [api, kind, reload]);
   useEffect(() => {
     const controller = new AbortController(); let current = true;
-    setLoading(true); setError("");
-    requestCommunityPool(api, kind, query, controller.signal).then((result) => {
+    setLoading(true); setError(""); setNameFallback(false);
+    const { criteria, ...options } = query;
+    const request = kind === "indicators" && criteria
+      ? searchCommunityIndicators(api, criteria, options, controller.signal)
+      : requestCommunityPool(api, kind, options, controller.signal);
+    request.then((result) => {
       if (!current) return;
       setRows(result.content || []); setTotal(result.totalElements || 0);
+      setNameFallback(result.searchMode === "name");
       if (!(result.content || []).length && query.page > 0) setQuery((previous) => ({ ...previous,
         page: Math.max(0, Math.ceil((result.totalElements || 0) / previous.size) - 1) }));
     }).catch((failure) => { if (current) setError(communityError(failure, "Could not load the community pool. Please try again.")); })
@@ -56,6 +65,7 @@ export default function CommunityPoolPage({ kind }) {
   }, [api, kind, query, reload]);
 
   const update = (patch) => setQuery((previous) => ({ ...previous, page: 0, ...patch }));
+  const applySearch = (criteria) => update({ criteria, sortBy: criteria ? "relevance" : "updatedAt", sortDirection: "desc" });
   const sort = (sortBy) => setQuery((previous) => ({ ...previous, page: 0, sortBy,
     sortDirection: previous.sortBy === sortBy && previous.sortDirection === "asc" ? "desc" : "asc" }));
   const header = (field, label) => <TableSortLabel active={query.sortBy === field}
@@ -66,7 +76,13 @@ export default function CommunityPoolPage({ kind }) {
     {[...new Set([...(values || []), query[field]].filter(Boolean))].map((value) =>
       <MenuItem key={value} value={value}>{field === "type" ? communityTypeName(value) : value}</MenuItem>)}
   </TextField>;
-  const filtered = Boolean(query.search || query.type || query.method || query.chart || query.goal);
+  const filtered = Boolean(query.criteria || query.search || query.type || query.method || query.chart || query.goal);
+  const clearFilters = () => {
+    setSearch("");
+    setSearchFormKey((previous) => previous + 1);
+    update({ search: "", criteria: null, type: "", method: "", chart: "", goal: "",
+      ...(query.sortBy === "relevance" ? { sortBy: "updatedAt", sortDirection: "desc" } : {}) });
+  };
   const saved = (id, copiedId) => setRows((previous) => previous.map((row) => row.id === id ? { ...row, copiedId } : row));
 
   return <Stack sx={{ gap: 2, minWidth: 0 }}>
@@ -76,24 +92,30 @@ export default function CommunityPoolPage({ kind }) {
     <WorkspaceDashboard>
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Box component="section" aria-label={`${title} controls`} sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center" }}>
-          <TextField size="small" label={isc ? "Search ISCs" : "Search indicators"} placeholder="Search by name" value={search}
+          {isc ? <TextField size="small" label="Search ISCs" placeholder="Search by name" value={search}
             sx={{ flex: "2 1 240px", minWidth: 160 }} onChange={(event) => setSearch(event.target.value)}
             slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }} />
+            : <IndicatorPoolSearch key={searchFormKey} applied={Boolean(query.criteria)} onSearch={applySearch} />}
           {!isc && filter("type", "Indicator type", filters.types)}
           {!isc && filter("method", "Analytics method", filters.methods)}
           {isc && filter("goal", "Goal", filters.goals)}
           {filter("chart", "Chart", filters.charts)}
         </Box>
+        {nameFallback && <Alert severity="info" sx={{ mt: 2 }}>
+          Semantic search is unavailable. Showing matches by indicator name.
+        </Alert>}
         <Stack direction="row" sx={{ display: "flex", [WIDE]: { display: "none" }, gap: 1, alignItems: "center", mt: 2 }}>
-          <TextField select size="small" fullWidth label="Sort by" value={query.sortBy} onChange={(event) => update({ sortBy: event.target.value })}>
+          <TextField select size="small" fullWidth label="Sort by" value={query.sortBy} onChange={(event) => update({ sortBy: event.target.value,
+            ...(event.target.value === "relevance" ? { sortDirection: "desc" } : {}) })}>
+            {query.criteria && <MenuItem value="relevance">Relevance</MenuItem>}
             {Object.entries(SORT_FIELDS).map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
           </TextField>
-          <Tooltip title={query.sortDirection === "asc" ? "Sort descending" : "Sort ascending"}>
+          {query.sortBy !== "relevance" && <Tooltip title={query.sortDirection === "asc" ? "Sort descending" : "Sort ascending"}>
             <IconButton color="primary" aria-label={query.sortDirection === "asc" ? "Sort descending" : "Sort ascending"}
               onClick={() => update({ sortDirection: query.sortDirection === "asc" ? "desc" : "asc" })}>
               {query.sortDirection === "asc" ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
             </IconButton>
-          </Tooltip>
+          </Tooltip>}
         </Stack>
       </Paper>
       {error && <Alert severity="error" action={<Button color="inherit" onClick={() => setReload((previous) => previous + 1)}>Retry</Button>}>{error}</Alert>}
@@ -103,7 +125,7 @@ export default function CommunityPoolPage({ kind }) {
           <HubOutlinedIcon color="disabled" sx={{ fontSize: 40, mb: 1 }} />
           <Typography sx={{ fontWeight: 600 }}>{filtered ? "No matching community indicators" : "No community indicators yet"}</Typography>
           <Typography variant="body2" color="text.secondary">{filtered ? "Try another search or adjust the filters." : "Completed indicators will appear here."}</Typography>
-          {filtered && <Button sx={{ mt: 1 }} onClick={() => { setSearch(""); update({ search: "", type: "", method: "", chart: "", goal: "" }); }}>Clear filters</Button>}
+          {filtered && <Button sx={{ mt: 1 }} onClick={clearFilters}>Clear filters</Button>}
         </Box>}
         header={<TableRow>
           <TableCell sortDirection={query.sortBy === "name" ? query.sortDirection : false}>{header("name", isc ? "ISC" : "Indicator")}</TableCell>

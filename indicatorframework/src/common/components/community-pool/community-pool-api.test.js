@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { canSaveCommunityPreview, communityError, requestCommunityCopy,
-  requestCommunityDetail, requestCommunityExample, requestCommunityPool, requestCommunityPreview } from "./community-pool-api.js";
+  requestCommunityDetail, requestCommunityExample, requestCommunityPool, requestCommunityPreview, requestSearchGoals,
+  searchCommunityIndicators } from "./community-pool-api.js";
 
 test("community save requires a successful current preview receipt and a rendered chart", () => {
   assert.equal(canSaveCommunityPreview({ status: "READY", receiptId: "proof" }, true), true);
@@ -36,4 +37,23 @@ test("pool API uses dedicated community endpoints and a receipt-gated POST copy"
 test("transport diagnostics do not become community-facing errors", () => {
   assert.equal(communityError({ message: "private URL and token" }, "Try again."), "Try again.");
   assert.equal(communityError({ response: { data: { message: "No matching data." } } }, "Try again."), "No matching data.");
+});
+
+test("semantic queries stay in the POST body and carry the current pool filters and pagination", async () => {
+  const calls = [], signal = new AbortController().signal;
+  const api = { post: async (...args) => { calls.push(args); return { data: { data: { searchMode: "semantic" } } }; } };
+  const options = { page: 1, size: 10, sortBy: "relevance", sortDirection: "desc", type: "BASIC", chart: "Bar Chart", method: "Count items" };
+  for (const criteria of [{ mode: "basic", text: "Who reads the course material?" },
+    { mode: "advanced", goalVerb: "Monitor", goalDescription: "", question: "Who reads?", indicatorDescription: "" }]) {
+    assert.deepEqual(await searchCommunityIndicators(api, criteria, { ...options, goal: "", search: "" }, signal), { searchMode: "semantic" });
+    assert.deepEqual(calls.at(-1), ["v1/community/indicators/search", { ...criteria, ...options }, { signal }]);
+  }
+});
+
+test("advanced search offers unique active goal verbs from the ISC vocabulary", async () => {
+  const api = { get: async (path) => {
+    assert.equal(path, "v1/analytics/goals/active");
+    return { data: { data: [{ verb: "Monitor" }, { verb: "Compare" }, { verb: "Monitor" }, {}] } };
+  } };
+  assert.deepEqual(await requestSearchGoals(api), ["Compare", "Monitor"]);
 });

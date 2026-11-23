@@ -24,6 +24,10 @@
         <jackson-2-bom.version>2.21.8</jackson-2-bom.version>
         <jackson-bom.version>3.1.8</jackson-bom.version>
         <aws.sdk.version>2.59.0</aws.sdk.version>
+        <!-- Spring AI 2.0 targets Boot 4.1. The CPU artifacts keep inference offline. -->
+        <spring-ai.version>2.0.3</spring-ai.version>
+        <pytorch.version>2.7.1</pytorch.version>
+        <pytorch.classifier>linux-x86_64</pytorch.classifier>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <finalName>${project.artifactId}-${project.version}</finalName>
     </properties>
@@ -318,6 +322,71 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>semantic-search</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.springframework.ai</groupId>
+                    <artifactId>spring-ai-transformers</artifactId>
+                    <version>${spring-ai.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>ai.djl.pytorch</groupId>
+                    <artifactId>pytorch-jni</artifactId>
+                    <version>${pytorch.version}-0.36.0</version>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>ai.djl.pytorch</groupId>
+                    <artifactId>pytorch-native-cpu</artifactId>
+                    <version>${pytorch.version}</version>
+                    <classifier>${pytorch.classifier}</classifier>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>3.6.1</version>
+                        <executions>
+                            <execution>
+                                <id>semantic-search-encoder</id>
+                                <phase>generate-sources</phase>
+                                <goals><goal>add-source</goal></goals>
+                                <configuration>
+                                    <sources><source>src/semantic-search/java</source></sources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>semantic-search-encoder-tests</id>
+                                <phase>generate-test-sources</phase>
+                                <goals><goal>add-test-source</goal></goals>
+                                <configuration>
+                                    <sources><source>src/semantic-search/test</source></sources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>cpu-macos-arm64</id>
+            <activation><os><family>mac</family><arch>aarch64</arch></os></activation>
+            <properties><pytorch.classifier>osx-aarch64</pytorch.classifier></properties>
+        </profile>
+        <profile>
+            <id>cpu-linux-arm64</id>
+            <activation><os><name>Linux</name><arch>aarch64</arch></os></activation>
+            <properties><pytorch.classifier>linux-aarch64</pytorch.classifier></properties>
+        </profile>
+        <profile>
+            <id>cpu-windows-amd64</id>
+            <activation><os><family>Windows</family><arch>amd64</arch></os></activation>
+            <properties><pytorch.classifier>win-x86_64</pytorch.classifier></properties>
+        </profile>
         <profile>
             <id>plugin-artifact-it</id>
             <build>

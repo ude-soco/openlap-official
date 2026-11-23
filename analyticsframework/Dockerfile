@@ -9,8 +9,10 @@ RUN --mount=type=cache,target=/root/.m2 \
 
 ADD . .
 ARG PACKAGE_NAME=analyticsframework
+ARG SEMANTIC_SEARCH=false
 RUN --mount=type=cache,target=/root/.m2 \
-  mvn package -DfinalName=${PACKAGE_NAME}
+  if [ "$SEMANTIC_SEARCH" = true ]; then set -- -Psemantic-search; fi && \
+  mvn "$@" package -DfinalName=${PACKAGE_NAME}
 
 
 FROM amazoncorretto:25.0.5@sha256:019e58087ba4c114c817094f70d3d522bcd13e80ce9edbba6e1c67e5700bad63
@@ -21,6 +23,7 @@ ENV JAR=${PACKAGE_NAME}.jar
 COPY --from=build /opt/app/target/${JAR} .
 
 ENV DATA_DIR="/opt/app/data"
+ENV DJL_OFFLINE=true
 COPY ./jars ${DATA_DIR}/jars
 
 CMD java -jar ${JAR}
