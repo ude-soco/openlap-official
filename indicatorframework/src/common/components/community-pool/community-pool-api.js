@@ -7,6 +7,14 @@ const dataOf = (response) => response.data.data;
 
 export const requestCommunityPool = async (api, kind, query, signal) =>
   dataOf(await api.get(`${pathFor(kind)}?${new URLSearchParams(query)}`, { signal }));
+export const searchCommunityIndicators = async (api, criteria, { page, size, type, method, chart, sortBy, sortDirection }, signal) =>
+  dataOf(await api.post(`${pathFor("indicators")}/search`, {
+    ...criteria, page, size, type, method, chart, sortBy, sortDirection,
+  }, { signal }));
+export const requestSearchGoals = async (api, signal) => {
+  const goals = dataOf(await api.get("v1/analytics/goals/active", { signal }));
+  return [...new Set(goals.map((goal) => goal.verb?.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+};
 export const requestCommunityFilters = async (api, kind, signal) =>
   dataOf(await api.get(`${pathFor(kind)}/filters`, { signal }));
 export const requestCommunityDetail = async (api, kind, id, signal) =>

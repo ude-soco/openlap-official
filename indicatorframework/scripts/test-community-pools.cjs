@@ -49,18 +49,23 @@ async function fixture(browser, roles = ["ROLE_USER"]) {
       catch (failure) { if (!/Target.*closed|Route is already handled|route.*cancel|intercepted.*finished/i.test(failure.message)) throw failure; }
     };
     if (endpoint === "v1/users/my") return send({ data: { name: "Community fixture viewer", email: "community.viewer@example.test", roles } });
+    if (endpoint === "v1/analytics/goals/active") return send({ data: [{ verb: "Monitor" }, { verb: "Compare" }] });
     if (endpoint === "v1/code/render") return route.fulfill({ contentType: "text/html", body: frameHtml });
     const collection = endpoint.match(/^v1\/community\/(indicators|isc)$/);
-    if (collection && method === "GET") {
-      const plan = listPlans.shift() || {}, kind = collection[1], rows = kind === "isc" ? specifications : indicators;
-      let result = rows.filter((row) => (!query.search || row.name.toLowerCase().includes(query.search.toLowerCase()))
-        && ["type", "method", "chart", "goal"].every((key) => !query[key] || row[key] === query[key]));
-      result.sort((a, b) => String(a[query.sortBy] || "").localeCompare(String(b[query.sortBy] || "")) * (query.sortDirection === "asc" ? 1 : -1));
-      const totalElements = result.length, page = Number(query.page || 0), size = Number(query.size || 10);
+    const semantic = endpoint === "v1/community/indicators/search" && method === "POST";
+    if ((collection && method === "GET") || semantic) {
+      const plan = listPlans.shift() || {}, rows = collection?.[1] === "isc" ? specifications : indicators;
+      const options = semantic ? body : query;
+      const term = semantic ? (body.text || body.indicatorDescription || body.question || body.goalDescription) : query.search;
+      const match = term === "Which readings were opened?" ? "Material views" : term;
+      let result = rows.filter((row) => (!match || row.name.toLowerCase().includes(match.toLowerCase()))
+        && ["type", "method", "chart", "goal"].every((key) => !options[key] || row[key] === options[key]));
+      result.sort((a, b) => String(a[options.sortBy] || "").localeCompare(String(b[options.sortBy] || "")) * (options.sortDirection === "asc" ? 1 : -1));
+      const totalElements = result.length, page = Number(options.page || 0), size = Number(options.size || 10);
       result = result.slice(page * size, (page + 1) * size).map((row) => ({ ...row, copiedId: copies.get(row.id) || null }));
       if (plan.hold) { plan.started = true; await plan.hold.promise; }
       if (plan.fail) return send({ message: "The community pool is temporarily unavailable." }, 503);
-      return send({ data: { content: result, totalElements } });
+      return send({ data: { content: result, totalElements, ...(semantic ? { searchMode: plan.fallback ? "name" : "semantic" } : {}) } });
     }
     const filters = endpoint.match(/^v1\/community\/(indicators|isc)\/filters$/);
     if (filters) return send({ data: { types: ["BASIC", "COMPOSITE", "MULTI_LEVEL"], methods: ["Count items", "Cluster items"], charts: ["Bar Chart", "Scatter Chart"], goals: ["Monitoring"] } });
@@ -165,10 +170,31 @@ async function screenshot(page, name) {
     await choose(page, "Indicator type", "Composite");
     await until(async () => await page.getByRole("button", { name: "View Compare learning activities", exact: true }).count() === 1 && await page.getByRole("button", { name: "View Material views", exact: true }).count() === 0, "Type filter applied");
     await choose(page, "Indicator type", "All indicator types");
+    await page.getByRole("button", { name: "Advanced search", exact: true }).click();
+    await choose(page, "I want to", "Monitor");
+    assert.equal(await page.getByRole("button", { name: "Search", exact: true }).isDisabled(), true, "A goal verb alone is incomplete");
+    const questionInput = page.getByRole("textbox", { name: "I am interested in knowing", exact: true });
+    await questionInput.fill("Which readings were opened?");
+    await page.getByRole("textbox", { name: "Describe your goal", exact: true }).fill("Understand resource use");
+    assert.equal(f.calls.some((call) => call.endpoint.endsWith("/search")), false, "Advanced editing waits for submission");
+    await questionInput.press("Enter");
+    await until(() => f.calls.some((call) => call.body?.question === "Which readings were opened?" && call.body.goalVerb === "Monitor"
+      && call.body.goalDescription === "Understand resource use" && call.body.sortBy === "relevance"), "Advanced search submitted ISC fields");
+    await until(async () => await page.getByRole("button", { name: "View Material views", exact: true }).count() === 1
+      && await page.getByRole("button", { name: "View Compare learning activities", exact: true }).count() === 0, "Semantic query found the related indicator");
+    await choose(page, "Indicator type", "Composite");
+    await page.getByText("No matching community indicators", { exact: true }).waitFor();
+    assert.equal(f.calls.at(-1).body.type, "COMPOSITE");
+    await choose(page, "Indicator type", "All indicator types");
+    await page.getByRole("button", { name: "Basic search", exact: true }).click();
     await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("not a matching item");
+    await page.getByRole("button", { name: "Search", exact: true }).click();
     await page.getByText("No matching community indicators", { exact: true }).waitFor();
     await noOverflow(page);
     await page.getByRole("textbox", { name: "Search indicators", exact: true }).fill("Material views");
+    f.listPlans.push({ fallback: true });
+    await page.getByRole("button", { name: "Search", exact: true }).click();
+    await page.getByText("Semantic search is unavailable. Showing matches by indicator name.", { exact: true }).waitFor();
     await until(async () => await page.getByRole("button", { name: "View Material views", exact: true }).count() === 1, "Search applied");
     const held = { hold: deferred() }; f.previewPlans.push(held);
     await openSample("Material views", "basic");
@@ -288,6 +314,8 @@ async function screenshot(page, name) {
     console.log("PASS community catalog, sample-first chart, explicit personal Basic/Composite/Multilevel preview gate, expiry, stale preview and responsive layout");
 
     await page.goto(new URL("isc/pool", base).href);
+    await page.getByRole("textbox", { name: "Search ISCs", exact: true }).waitFor();
+    assert.equal(await page.getByRole("button", { name: "Advanced search" }).count(), 0);
     await page.getByRole("button", { name: "View Monitor learning materials", exact: true }).click();
     await page.getByRole("heading", { name: "Illustrative preview", exact: true }).waitFor();
     await until(async () => await page.locator(".apexcharts-svg").count() > 0, "Synthetic ISC chart paints");
