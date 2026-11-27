@@ -1,6 +1,6 @@
 # The official image provides MongoDB 4.4.30 and Database Tools 100.10.0.
 # Keep the runtime and tools together: their native library dependencies matter.
-FROM --platform=linux/amd64 mongo:4.4.30@sha256:4be76f674fc4b27859816811b8baa3c51830eb1dbf4ca81a51e26b79edd662ef
+FROM --platform=linux/amd64 mongo:9.0.8@sha256:b0c835c26e5997413e985000f1013c275377cd9607761c1784d486f6dd620b7f
 
 WORKDIR /opt/openlap-checkpoint
 COPY scripts/plugin-checkpoint/ /opt/openlap-checkpoint/
